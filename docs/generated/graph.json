@@ -708,6 +708,15 @@
         "status": "query"
       },
       {
+        "id": "capability:intents.binding",
+        "kind": "capability",
+        "label": "intents.binding",
+        "summary": "What a piece of work is bound to before it starts",
+        "route": "/cockpit/capabilities/intents.binding",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:intents.coverage",
         "kind": "capability",
         "label": "intents.coverage",
@@ -2528,6 +2537,14 @@
         "label": "intent.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/intent.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/intent_binding.rs",
+        "kind": "file",
+        "label": "intent_binding.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_binding.rs",
         "external": true
       },
       {
@@ -6068,6 +6085,39 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0111",
+        "kind": "adr",
+        "label": "adr-0111",
+        "summary": "A task names what it serves, and the binding is derived, pinned and never stored",
+        "route": "/cockpit/objects/adr/adr-0111",
+        "source": ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-07",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+            "file:.ai/repo/adrs/0075-intent-realization-is-a-join-and-closed-work-does-not-outrank-evidence.md",
+            "file:.ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+            "rule:project.an-intent-outlives-its-sessions",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent_binding.rs",
+            "file:lib/intent_binding.sh",
+            "file:.ai/repo/project/intents/intent-bound-work.yaml",
+            "test:test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            "test:test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+            "test:test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
+          ],
+          "tags": [
+            "intent",
+            "session",
+            "handover",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -8161,17 +8211,16 @@
         "id": "majordomus://claim/intent-in-session-context",
         "kind": "claim",
         "label": "intent-in-session-context",
-        "summary": "A session will load the intents its task serves when it starts",
+        "summary": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
         "route": "/cockpit/objects/claim/intent-in-session-context",
         "source": "docs/CLAIMS.yaml",
-        "status": "planned",
+        "status": "guaranteed",
         "facts": {
-          "claim": "A session will load the intents its task serves when it starts",
-          "implementation": "-",
-          "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it.",
-          "responsibility": "none",
+          "claim": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
+          "implementation": "lib/intent_binding.sh",
+          "responsibility": "state",
           "source": "docs/PLANNING.md",
-          "test": "-"
+          "test": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
         }
       },
       {
@@ -8242,17 +8291,16 @@
         "id": "majordomus://claim/intent-refused-at-plan-start",
         "kind": "claim",
         "label": "intent-refused-at-plan-start",
-        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "summary": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
         "route": "/cockpit/objects/claim/intent-refused-at-plan-start",
         "source": "docs/CLAIMS.yaml",
-        "status": "planned",
+        "status": "guaranteed",
         "facts": {
-          "claim": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
-          "implementation": "-",
-          "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed.",
-          "responsibility": "none",
+          "claim": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
+          "implementation": "apps/majordomus-cli/src/intent_binding.rs",
+          "responsibility": "plan",
           "source": "docs/PLANNING.md",
-          "test": "-"
+          "test": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
         }
       },
       {
@@ -12345,6 +12393,18 @@
         }
       },
       {
+        "id": "majordomus://critique/intent-bound-work",
+        "kind": "critique",
+        "label": "intent-bound-work",
+        "summary": "intent-bound-work",
+        "route": "/cockpit/objects/critique/intent-bound-work",
+        "source": ".ai/repo/project/critiques/intent-bound-work.yaml",
+        "facts": {
+          "intent": "intent-bound-work",
+          "reviewed_at": "f7b9d6d4c8"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-planning",
         "kind": "critique",
         "label": "intent-planning",
@@ -13854,7 +13914,7 @@
         "id": "majordomus://document/docs/claims/intent-in-session-context.md",
         "kind": "document",
         "label": "docs/claims/intent-in-session-context.md",
-        "summary": "A session will load the intents its task serves when it starts",
+        "summary": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
         "route": "/cockpit/objects/document/docs-claims-intent-in-session-context-md",
         "source": "docs/claims/intent-in-session-context.md"
       },
@@ -13894,7 +13954,7 @@
         "id": "majordomus://document/docs/claims/intent-refused-at-plan-start.md",
         "kind": "document",
         "label": "docs/claims/intent-refused-at-plan-start.md",
-        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "summary": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
         "route": "/cockpit/objects/document/docs-claims-intent-refused-at-plan-start-md",
         "source": "docs/claims/intent-refused-at-plan-start.md"
       },
@@ -16785,6 +16845,20 @@
         }
       },
       {
+        "id": "majordomus://gap/intent-bound-work",
+        "kind": "gap",
+        "label": "intent-bound-work",
+        "summary": "intent-bound-work",
+        "route": "/cockpit/objects/gap/intent-bound-work",
+        "source": ".ai/repo/project/gaps/intent-bound-work.yaml",
+        "facts": {
+          "intent": "intent-bound-work",
+          "observed_at": "f7b9d6d4c8",
+          "recorded_at": "2026-10-07",
+          "recorded_by": "claude-code (session fcbeae95, primary checkout; three read-only audit agents over int/batch-intent)"
+        }
+      },
+      {
         "id": "majordomus://gap/intent-planning",
         "kind": "gap",
         "label": "intent-planning",
@@ -16985,6 +17059,13 @@
         "source": "lib/init.sh"
       },
       {
+        "id": "majordomus://implementation/lib/intent_binding.sh",
+        "kind": "implementation",
+        "label": "lib/intent_binding.sh",
+        "route": "/cockpit/objects/implementation/lib-intent-binding-sh",
+        "source": "lib/intent_binding.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/json_scan.awk",
         "kind": "implementation",
         "label": "lib/json_scan.awk",
@@ -17151,6 +17232,29 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/objects/implementation/lib-watch-sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/intent-bound-work",
+        "kind": "intent",
+        "label": "intent-bound-work",
+        "summary": "Work starts bound to the intent it serves, and a worker resumes knowing whether that intent moved",
+        "route": "/cockpit/objects/intent/intent-bound-work",
+        "source": ".ai/repo/project/intents/intent-bound-work.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.an-intent-outlives-its-sessions",
+            "rule:project.derived-once",
+            "adr:adr-0070",
+            "adr:adr-0073",
+            "adr:adr-0111"
+          ],
+          "milestones": [
+            "intent-bound-work"
+          ],
+          "updated_at": "2026-10-07"
+        }
       },
       {
         "id": "majordomus://intent/intent-lifecycle",
@@ -29313,6 +29417,240 @@
         }
       },
       {
+        "id": "majordomus://issue/I2000",
+        "kind": "issue",
+        "label": "I2000",
+        "summary": "What a piece of work serves is one derivation, with a revision",
+        "route": "/cockpit/objects/issue/i2000",
+        "source": ".ai/repo/project/issues/I2000.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "current_state": "Intents::preflight takes an issue or paths. No exemption class exists. No revision of an intent, its links or its critique is computed.",
+          "depends_on": [],
+          "desired_state": "intents.binding answers the same value on every surface; ambiguity, an unknown or retired intent, an undeclared exemption class and a missing reason are refusals with a cause.",
+          "evidence_required": [
+            "binding_resolves_issue_intent_and_paths",
+            "ambiguous_paths_are_refused",
+            "an_exemption_is_a_declared_class_with_a_reason",
+            "plan_revision_moves_only_with_the_plan"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/intent_binding.rs",
+            ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md",
+            ".ai/repo/project",
+            "docs"
+          ],
+          "serves": [
+            "intent-bound-work#binding-is-resolved",
+            "intent-bound-work#exemption-is-typed"
+          ],
+          "slug": "a-binding-is-derived-once",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "cargo test --lib intent_binding",
+            "cargo test --test intent_binding"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2001",
+        "kind": "issue",
+        "label": "I2001",
+        "summary": "start asks what the task serves and refuses a refused binding where the policy requires it",
+        "route": "/cockpit/objects/issue/i2001",
+        "source": ".ai/repo/project/issues/I2001.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "current_state": "start takes a description, a scope, requires, a profile and an owner, and reads no intent.",
+          "depends_on": [
+            "I2000"
+          ],
+          "desired_state": "A task record carries issue, intent or exemption with its reason, and binding_revision; a refused binding is refused (exit 15) naming the cause and the three ways through.",
+          "evidence_required": [
+            "start_refuses_a_refused_binding",
+            "an_absent_policy_key_changes_nothing",
+            "realization_and_binding_agree",
+            "scope_only_binding_rate_measured"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/intent_binding.sh",
+            ".ai/repo/policy.yaml",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            "docs",
+            "lib/common.sh",
+            "share/schemas/majordomus/policy",
+            "share/schemas/majordomus/current",
+            "share/skeleton",
+            "share/events.yaml",
+            "share/allow",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/tests/intent_realization.rs"
+          ],
+          "serves": [
+            "intent-bound-work#start-is-gated"
+          ],
+          "slug": "start-asks-what-the-task-serves",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 04_start_check"
+          ],
+          "why": "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2002",
+        "kind": "issue",
+        "label": "I2002",
+        "summary": "The context of a bound task says what the intent asks of this work",
+        "route": "/cockpit/objects/issue/i2002",
+        "source": ".ai/repo/project/issues/I2002.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The context of a bound task names the intent, its statement, its invariants and each served criterion with its evidence state",
+            "The context of an exempt task names the class and the reason",
+            "An unreadable binding is reported as unknown, never as no intent",
+            "The section follows PROFILE, has the JSON section id intent, and under budget loses its gap conditions before anything else and is never dropped whole"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "majordomus context has no intent section; intent preflight renders the same facts for a reader who asks.",
+          "depends_on": [
+            "I2001"
+          ],
+          "desired_state": "The section is present for a bound task, absent with a named reason for an unbound one, and says so when the binding cannot be read.",
+          "evidence_required": [
+            "context_carries_the_intent_section"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/context.sh",
+            "lib/intent_binding.sh",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+          ],
+          "serves": [
+            "intent-bound-work#worker-is-briefed"
+          ],
+          "slug": "context-briefs-from-the-binding",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 23_context"
+          ],
+          "why": "A worker is handed the scope of the task and nothing of what the work is for; the criteria live in a record the briefing never opens."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2003",
+        "kind": "issue",
+        "label": "I2003",
+        "summary": "A handover pins the binding it was written under, and resolving it reports drift",
+        "route": "/cockpit/objects/issue/i2003",
+        "source": ".ai/repo/project/issues/I2003.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A handover of a bound task carries the binding revision",
+            "After a criterion of the intent is edited, --resolve reports the plan revision changed",
+            "A handover of an unbound task carries no pin and --resolve prints no Intent line",
+            "The front matter carries plan_revision and evidence_standing as two keys, a body that forges either is refused like every other computed key, and a checkpoint carries neither",
+            "An ordinary commit that changes no intent, link or critique leaves plan_revision unchanged"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "A handover's front matter carries the task, the branch and the head. --resolve prints Match, Git state, Freshness and Divergence.",
+          "depends_on": [
+            "I2001"
+          ],
+          "desired_state": "--resolve prints an Intent line: unchanged, or which of the two revisions moved, or unknown when the binding cannot be read.",
+          "evidence_required": [
+            "resolve_reports_intent_drift"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/handover.sh",
+            "lib/common.sh",
+            "lib/intent_binding.sh",
+            "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh"
+          ],
+          "serves": [
+            "intent-bound-work#resume-detects-drift"
+          ],
+          "slug": "a-handover-pins-the-binding",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved",
+            "bash test/run.sh 05_handover"
+          ],
+          "why": "A resumed worker is told how far the commit moved and nothing about whether the criteria it was working to were rewritten, or the critique reopened, in between."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2004",
+        "kind": "issue",
+        "label": "I2004",
+        "summary": "plan start refuses an issue whose binding is refused, in both engines",
+        "route": "/cockpit/objects/issue/i2004",
+        "source": ".ai/repo/project/issues/I2004.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Under required, plan start on an issue serving an uncritiqued intent is refused by the Rust engine and by the shell engine with the same message",
+            "The plan.transition capability refuses the same start over HTTP and MCP",
+            "With the policy key absent, cases 133 and 582 pass unchanged"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "plan::check refuses a start only when the issue is not READY; the shell engine does the same, and cases 133 and 582 hold the two equal.",
+          "depends_on": [
+            "I2000"
+          ],
+          "evidence_required": [
+            "plan_start_refuses_a_refused_binding_in_both_engines"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "lib/plan.sh",
+            "lib/intent_binding.sh",
+            "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+            "test/cases/133_plan_transition.sh"
+          ],
+          "serves": [
+            "intent-bound-work#start-is-gated"
+          ],
+          "slug": "plan-start-asks-the-binding",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines",
+            "bash test/run.sh 133_plan_transition",
+            "bash test/run.sh 582_the_done_guard_holds_in_both_engines"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30081,6 +30419,69 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-bound-work",
+        "kind": "milestone",
+        "label": "intent-bound-work",
+        "summary": "A task is bound to the intent it serves",
+        "route": "/cockpit/objects/milestone/intent-bound-work",
+        "source": ".ai/repo/project/milestones/intent-bound-work.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A task started with --issue, --intent or by scope resolves through intents.binding, and an ambiguous or refused binding does not start where the policy requires binding",
+            "An exemption is a policy-declared class with a reason, recorded in the task record and the ledger",
+            "The context of a bound task carries the intent section, from the binding",
+            "A handover carries the binding revision and --resolve reports drift",
+            "The command line, HTTP and MCP answer the same binding"
+          ],
+          "created_at": "2026-10-07",
+          "depends_on": [
+            "intent-planning"
+          ],
+          "desired_state": "One derivation, `Intents::binding`, answered by `intents.binding` on every surface and asked by start, context and handover.",
+          "evidence_required": [],
+          "non_scope": [
+            "Refusing a finish on unmet criteria",
+            "Producing or executing a critique",
+            "Moving the task lifecycle from shell to Rust (ADR 0047)"
+          ],
+          "order": 120,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/tests",
+            "lib/start.sh",
+            "lib/context.sh",
+            "lib/handover.sh",
+            "lib/common.sh",
+            "lib/intent_binding.sh",
+            "lib/plan.sh",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "share",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            ".ai/repo/rules/project",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-bound-work",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_binding",
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved"
           ]
         }
       },
@@ -35198,12 +35599,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "kind": "rule",
-        "label": "project.an-intent-outlives-its-sessions@2",
+        "label": "project.an-intent-outlives-its-sessions@3",
         "summary": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
-        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-2",
-        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md",
+        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-3",
+        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -41759,6 +42160,27 @@
         "source": "test/cases/95_skills.sh"
       },
       {
+        "id": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "kind": "test",
+        "label": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-960-a-task-starts-bound-to-what-it-serves-sh",
+        "source": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "kind": "test",
+        "label": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "route": "/cockpit/objects/test/test-cases-961-a-resumed-task-is-told-its-intent-moved-sh",
+        "source": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "test",
+        "label": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "route": "/cockpit/objects/test/test-cases-962-plan-start-asks-the-binding-in-both-engines-sh",
+        "source": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "kind": "test",
         "label": "test/cases/96_rust_public_api_quality.sh",
@@ -45491,6 +45913,26 @@
       },
       {
         "source": "capability:intent_realization.work",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -49281,7 +49723,7 @@
       },
       {
         "source": "majordomus://adr/adr-0075",
-        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "kind": "put_in_force"
       },
       {
@@ -50397,6 +50839,76 @@
       {
         "source": "majordomus://adr/adr-0107",
         "target": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "file:apps/majordomus-cli/src/intent_binding.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0073",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0075",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0107",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://implementation/lib/intent_binding.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://intent/intent-bound-work",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://test/test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
         "kind": "put_in_force"
       },
       {
@@ -52455,6 +52967,16 @@
         "kind": "defined_in"
       },
       {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "majordomus://implementation/lib/intent_binding.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/intent-links-resolve",
         "target": "file:apps/majordomus-cli/src/intent.rs",
         "kind": "implemented_by"
@@ -52536,6 +53058,11 @@
       },
       {
         "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "file:apps/majordomus-cli/src/intent_binding.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -52543,6 +53070,11 @@
         "source": "majordomus://claim/intent-refused-at-plan-start",
         "target": "majordomus://document/docs/PLANNING.md",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/intent-stage-derived",
@@ -55710,6 +56242,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-bound-work",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-planning",
         "target": "kind:critique",
         "kind": "is_a"
@@ -57500,6 +58037,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/intent-bound-work",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-planning",
         "target": "kind:gap",
         "kind": "is_a"
@@ -57635,6 +58177,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/intent_binding.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/json_scan.awk",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -57752,6 +58299,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-bound-work",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -61930,6 +62482,76 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2000",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2000",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2001",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2001",
+        "target": "majordomus://issue/I2000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2001",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2002",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2002",
+        "target": "majordomus://issue/I2001",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2002",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2003",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2003",
+        "target": "majordomus://issue/I2001",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2003",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2004",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2004",
+        "target": "majordomus://issue/I2000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2004",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -62028,6 +62650,16 @@
         "source": "majordomus://milestone/foundation",
         "target": "kind:milestone",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-bound-work",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-bound-work",
+        "target": "majordomus://milestone/intent-planning",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/intent-lifecycle",
@@ -63135,17 +63767,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
@@ -66261,6 +66893,21 @@
       },
       {
         "source": "majordomus://test/test/cases/95_skills.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -69511,6 +70158,11 @@
       },
       {
         "source": "module:intents",
+        "target": "capability:intents.binding",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
         "target": "capability:intents.coverage",
         "kind": "composes"
       },
@@ -70016,8 +70668,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2316,
-      "edges": 5156,
+      "nodes": 2332,
+      "edges": 5202,
       "acyclic": true,
       "truncated": false
     }

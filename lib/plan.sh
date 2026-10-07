@@ -450,6 +450,19 @@ mj_plan_transition() {
   case "$what" in
     start)
       [ "$st" = READY ] || mj_die "$MJ_EX_REFUSED" "$id is $st, not READY${bb:+ (waiting on $bb)}"
+      # Where the policy requires binding, a transition is held to it as a task is (ADR
+      # 0111): an issue whose binding is refused does not become ACTIVE through this door
+      # either. The question and the sentence are plan::check's, asked of the same capability.
+      # shellcheck source=intent_binding.sh
+      . "$MJ_LIB_DIR/intent_binding.sh"
+      mj_load_policy 2>/dev/null || true
+      if [ "$(mj_binding_mode)" = required ]; then
+        if mj_binding_ask "$id" "" "" "" ""; then
+          [ "$MJ_BIND_STANDING" != refused ] || mj_die "$MJ_EX_REFUSED" "$id may not start: $(mj_binding_get '.refusal')"
+        else
+          mj_die "$MJ_EX_REFUSED" "$id may not start: $MJ_BIND_WHY; the binding is unknown, and unknown is never a pass (run: $MJ_BIND_FIX)"
+        fi
+      fi
       mj_plan_stamp "$id" started_at started_event plan_start "$now"
       printf 'plan: %s ACTIVE\n' "$id" ;;
     verify)

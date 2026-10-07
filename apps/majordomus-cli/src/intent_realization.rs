@@ -1230,6 +1230,13 @@ pub fn tasks_from_ledger(
                     for p in payload_str(e, "scope").split_whitespace() {
                         push_once(&mut unit.scope, p);
                     }
+                    // the issue the worker named at start (ADR 0111) is a declared link,
+                    // exactly as an issue cited in the title is: the binding and this join
+                    // must not disagree about what one task said it executes
+                    let named = payload_str(e, "issue");
+                    if !named.is_empty() {
+                        push_once(&mut unit.named_issues, &named);
+                    }
                 }
                 "task.checkpoint" => unit.outcome = "active".into(),
                 "task.handed_over" => {
@@ -1321,6 +1328,9 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
             u.title = r.task.clone();
             for p in &r.scope {
                 push_once(&mut u.scope, p);
+            }
+            if !r.issue.is_empty() {
+                push_once(&mut u.named_issues, &r.issue);
             }
         }
         for i in issue_tokens(&u.title, &ids) {

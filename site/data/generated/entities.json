@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 81,
+      "count": 82,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 81
+      "count": 82
     },
     {
       "kind": "application",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 1
+      "count": 2
     },
     {
       "kind": "deployment",
@@ -141,7 +141,7 @@
       "route": null,
       "title": null,
       "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-      "count": 1
+      "count": 2
     },
     {
       "kind": "implementation",
@@ -149,7 +149,7 @@
       "route": null,
       "title": null,
       "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-      "count": 50
+      "count": 51
     },
     {
       "kind": "intent",
@@ -157,7 +157,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 2
+      "count": 3
     },
     {
       "kind": "issue",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 257
+      "count": 262
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 24
+      "count": 25
     },
     {
       "kind": "moment",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 370
+      "count": 373
     },
     {
       "kind": "use-case",
@@ -4022,6 +4022,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0107/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
         }
       ]
     },
@@ -4179,6 +4186,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0075/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
         }
       ]
     },
@@ -4235,9 +4249,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.an-intent-outlives-its-sessions@2",
+          "label": "project.an-intent-outlives-its-sessions@3",
           "kind": "rule",
-          "route": "/rules/project-an-intent-outlives-its-sessions-2/",
+          "route": "/rules/project-an-intent-outlives-its-sessions-3/",
           "external": false
         },
         {
@@ -4255,7 +4269,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6000,6 +6022,124 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0111",
+      "identity": "adr-0111",
+      "slug": "adr-0111",
+      "cockpit": "/cockpit/objects/adr/adr-0111",
+      "title": "A task names what it serves, and the binding is derived, pinned and never stored",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "session",
+        "handover",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent_binding.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0073",
+          "kind": "adr",
+          "route": "/adrs/adr-0073/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0075",
+          "kind": "adr",
+          "route": "/adrs/adr-0075/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/intent_binding.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "intent-bound-work",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.an-intent-outlives-its-sessions@3",
+          "kind": "rule",
+          "route": "/rules/project-an-intent-outlives-its-sessions-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -9165,10 +9305,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
-      "identity": "project.an-intent-outlives-its-sessions@2",
-      "slug": "project-an-intent-outlives-its-sessions-2",
-      "cockpit": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-2",
+      "id": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
+      "identity": "project.an-intent-outlives-its-sessions@3",
+      "slug": "project-an-intent-outlives-its-sessions-3",
+      "cockpit": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-3",
       "title": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
       "status": "active",
       "tags": [
@@ -9178,7 +9318,7 @@
         "provenance",
         "evidence"
       ],
-      "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md",
+      "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md",
       "references": [
         {
           "edge": "depends_on",
@@ -9201,6 +9341,13 @@
           "label": "adr-0075",
           "kind": "adr",
           "route": "/adrs/adr-0075/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
           "external": false
         }
       ]
@@ -9733,6 +9880,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
@@ -9748,9 +9902,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.an-intent-outlives-its-sessions@2",
+          "label": "project.an-intent-outlives-its-sessions@3",
           "kind": "rule",
-          "route": "/rules/project-an-intent-outlives-its-sessions-2/",
+          "route": "/rules/project-an-intent-outlives-its-sessions-3/",
           "external": false
         },
         {
@@ -13769,6 +13923,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-plan-carries-the-intent-it-serves@1",
           "kind": "rule",
@@ -13777,9 +13938,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.an-intent-outlives-its-sessions@2",
+          "label": "project.an-intent-outlives-its-sessions@3",
           "kind": "rule",
-          "route": "/rules/project-an-intent-outlives-its-sessions-2/",
+          "route": "/rules/project-an-intent-outlives-its-sessions-3/",
           "external": false
         },
         {

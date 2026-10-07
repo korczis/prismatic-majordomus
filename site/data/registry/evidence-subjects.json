@@ -399,6 +399,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:intents.binding",
+      "path": "/evidence/capabilities/intents-binding/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intents.coverage",
       "path": "/evidence/capabilities/intents-coverage/"
     },
@@ -2484,6 +2489,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent binding",
+      "path": "/evidence/commands/intent-binding/"
+    },
+    {
+      "kind": "command",
       "subject": "command:intent coverage",
       "path": "/evidence/commands/intent-coverage/"
     },
@@ -4274,6 +4284,18 @@
       "programs": [],
       "members": [
         "command:intent realization"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.binding": {
+      "kind": "capability",
+      "id": "intents.binding",
+      "page": "/evidence/capabilities/intents-binding/",
+      "programs": [],
+      "members": [
+        "command:intent binding"
       ],
       "routes": [],
       "mechanisms": [],
@@ -7572,15 +7594,20 @@
     "claim:intent-in-session-context": {
       "kind": "claim",
       "id": "intent-in-session-context",
-      "status": "planned",
+      "status": "guaranteed",
       "page": "/evidence/claims/intent-in-session-context/",
       "programs": [],
       "members": [],
       "routes": [
         {
           "via": "claim",
+          "test": "suite:960_a_task_starts_bound_to_what_it_serves",
+          "path": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+          "category": "e2e",
           "inputs": [
-            "docs/PLANNING.md"
+            "docs/PLANNING.md",
+            "lib/intent_binding.sh",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
           ]
         }
       ],
@@ -7682,15 +7709,20 @@
     "claim:intent-refused-at-plan-start": {
       "kind": "claim",
       "id": "intent-refused-at-plan-start",
-      "status": "planned",
+      "status": "guaranteed",
       "page": "/evidence/claims/intent-refused-at-plan-start/",
       "programs": [],
       "members": [],
       "routes": [
         {
           "via": "claim",
+          "test": "suite:962_plan_start_asks_the_binding_in_both_engines",
+          "path": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+          "category": "e2e",
           "inputs": [
-            "docs/PLANNING.md"
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
           ]
         }
       ],
@@ -13322,6 +13354,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent binding": {
+      "kind": "command",
+      "id": "intent binding",
+      "page": "/evidence/commands/intent-binding/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:intent coverage": {
       "kind": "command",
       "id": "intent coverage",
@@ -17855,6 +17906,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_intent_binding": {
+      "kind": "mcp",
+      "id": "majordomus_intent_binding",
+      "alias_of": "capability:intents.binding",
+      "programs": [],
+      "members": [
+        "capability:intents.binding"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_intent_coverage": {
       "kind": "mcp",
       "id": "majordomus_intent_coverage",
@@ -20604,7 +20667,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/intent_realization.rs",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         },
         {
@@ -20614,7 +20677,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         },
         {
@@ -20624,7 +20687,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         },
         {
@@ -20634,7 +20697,27 @@
           "category": "e2e",
           "inputs": [
             "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:960_a_task_starts_bound_to_what_it_serves",
+          "path": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:961_a_resumed_task_is_told_its_intent_moved",
+          "path": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         }
       ],
@@ -24462,6 +24545,7 @@
     "crate:integration_merged_branches",
     "crate:integration_refresh_trail",
     "crate:integration_repair",
+    "crate:intent_binding",
     "crate:lease_busy",
     "crate:lease_declared",
     "crate:live_own_writes",

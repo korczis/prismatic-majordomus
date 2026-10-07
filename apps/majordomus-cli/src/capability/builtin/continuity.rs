@@ -498,6 +498,29 @@ pub struct ActiveTask {
     /// The commit it started at.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub head: String,
+    /// The issue the worker said this task executes (`start --issue`). A name, never state:
+    /// what it serves is answered by `intents.binding` on every read (ADR 0111).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub issue: String,
+    /// The intent the worker said this task serves (`start --intent`).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub intent: String,
+    /// The exemption class the worker gave instead (`start --exempt`).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub exemption: String,
+    /// The reason given with the exemption.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub exemption_because: String,
+    /// The standing `intents.binding` answered when the task started — what `start` was
+    /// told then, not where the work stands now.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub binding: String,
+    /// The pin of what the work was for when the task started.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub plan_revision: String,
+    /// The pin of where the served criteria's evidence stood when the task started.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub evidence_standing: String,
 }
 
 /// What the lifecycle of this checkout is holding.
@@ -982,6 +1005,13 @@ pub(crate) fn read_task(path: &Path) -> Option<ActiveTask> {
         requires,
         started_at: s("started_at"),
         head: s("head"),
+        issue: s("issue"),
+        intent: s("intent"),
+        exemption: s("exemption"),
+        exemption_because: s("exemption_because"),
+        binding: s("binding"),
+        plan_revision: s("plan_revision"),
+        evidence_standing: s("evidence_standing"),
     })
 }
 

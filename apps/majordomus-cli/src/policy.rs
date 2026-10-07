@@ -5,7 +5,8 @@
 
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::error::{Error, Result};
@@ -162,6 +163,105 @@ pub struct Policy {
     /// which is what this repository's own history already satisfies.
     #[serde(default)]
     pub commit: crate::commit::CommitPolicy,
+    /// `intent:` — whether work must be bound to what it serves before it starts, and the
+    /// exemption classes a worker may give instead. Absent is `off`: a repository whose
+    /// policy predates the block starts work exactly as it did (ADR 0111).
+    #[serde(default)]
+    pub intent: IntentPolicy,
+}
+
+/// How strictly a start is held to its binding.
+///
+/// ```
+/// use majordomus_cli::policy::BindingMode;
+/// // a policy that says nothing asks for nothing
+/// assert_eq!(BindingMode::default(), BindingMode::Off);
+/// let m: BindingMode = serde_json::from_str("\"required\"").unwrap();
+/// assert_eq!(m, BindingMode::Required);
+/// assert_eq!(m.as_str(), "required");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BindingMode {
+    /// Nothing is asked unless the worker names an issue, an intent or an exemption.
+    #[default]
+    Off,
+    /// Every start asks; a refused binding is reported and the work starts.
+    Advisory,
+    /// Every start asks; a refused or unreadable binding does not start.
+    Required,
+}
+
+impl BindingMode {
+    /// The word the policy file and every surface use.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::BindingMode;
+    /// assert_eq!(BindingMode::Advisory.as_str(), "advisory");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            BindingMode::Off => "off",
+            BindingMode::Advisory => "advisory",
+            BindingMode::Required => "required",
+        }
+    }
+}
+
+/// One exemption class: a named reason work may proceed under no intent.
+///
+/// ```
+/// use majordomus_cli::policy::ExemptionClass;
+/// let c: ExemptionClass = serde_json::from_str(
+///     r#"{"id": "emergency", "description": "Restoring a broken trunk"}"#,
+/// )
+/// .unwrap();
+/// assert_eq!(c.id, "emergency");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+pub struct ExemptionClass {
+    /// The word a worker gives: `--exempt <id>`.
+    pub id: String,
+    /// What the class is for, in one line.
+    #[serde(default)]
+    pub description: String,
+}
+
+/// `intent:` — the binding a start is held to (ADR 0111).
+///
+/// ```
+/// use majordomus_cli::policy::{BindingMode, IntentPolicy};
+/// // absent: off, and no exemption class exists to give
+/// let absent = IntentPolicy::default();
+/// assert_eq!(absent.binding, BindingMode::Off);
+/// assert!(absent.exemption("maintenance").is_none());
+/// let p: IntentPolicy = serde_json::from_str(
+///     r#"{"binding": "required", "exemptions": [{"id": "maintenance"}]}"#,
+/// )
+/// .unwrap();
+/// assert!(p.exemption("maintenance").is_some());
+/// assert!(p.exemption("because-i-say-so").is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+pub struct IntentPolicy {
+    /// `intent.binding:` — `off`, `advisory` or `required`.
+    #[serde(default)]
+    pub binding: BindingMode,
+    /// `intent.exemptions:` — the classes a worker may give instead of naming work.
+    #[serde(default)]
+    pub exemptions: Vec<ExemptionClass>,
+}
+
+impl IntentPolicy {
+    /// The declared class with this id, when the policy declares one.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::IntentPolicy;
+    /// assert!(IntentPolicy::default().exemption("x").is_none());
+    /// ```
+    pub fn exemption(&self, id: &str) -> Option<&ExemptionClass> {
+        self.exemptions.iter().find(|c| c.id == id)
+    }
 }
 
 /// `session:` — what the episode boundary does beyond drawing itself.

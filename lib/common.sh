@@ -1153,7 +1153,7 @@ mj_record_body()  { awk 'c>=2{print} /^---$/{c++}' "$1"; }
 
 # refuse a body that carries fields Majordomus computes: prose must not forge identity
 mj_reject_identity() {
-  grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$1"
+  grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files|bound_issue|bound_intent|bound_exemption|plan_revision|evidence_standing):' "$1"
 }
 
 # collect staging files an earlier writer was killed before it could unlink. A SIGKILL runs

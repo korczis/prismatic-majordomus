@@ -47,6 +47,7 @@ pub mod http;
 pub mod index;
 pub(crate) mod integration;
 pub mod intent;
+pub mod intent_binding;
 pub mod intent_plan;
 pub mod intent_realization;
 pub mod intent_review;

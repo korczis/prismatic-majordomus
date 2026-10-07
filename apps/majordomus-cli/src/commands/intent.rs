@@ -59,6 +59,32 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 0
             })
         }
+        IntentCommand::Binding {
+            issue,
+            intent,
+            paths,
+            exempt,
+            because,
+        } => {
+            let mut input = json!({ "paths": paths.join(",") });
+            for (key, value) in [
+                ("issue", issue),
+                ("intent", intent),
+                ("exemption", exempt),
+                ("because", because),
+            ] {
+                if let Some(value) = value {
+                    input[key] = json!(value);
+                }
+            }
+            let v = call(&app.context, &["intent", "binding"], input)?;
+            emit(format, &v, binding_text)?;
+            Ok(if v["standing"] == "refused" {
+                EXIT_INVALID
+            } else {
+                0
+            })
+        }
         IntentCommand::Realization { intent } => {
             let mut input = json!({});
             if let Some(intent) = intent {
@@ -378,10 +404,48 @@ fn words(v: &Value) -> Vec<&str> {
         .collect()
 }
 
+/// The standing, what was named, then what the preflight prints for the same issues and
+/// intents, the pins, the notes and every refusal with its cause.
+fn binding_text(v: &Value) -> String {
+    let mut out = vec![format!("standing    {}", s(v, "standing"))];
+    let named = &v["named"];
+    for key in ["issue", "intent"] {
+        if named[key].is_string() {
+            out.push(format!("named       {key} {}", s(named, key)));
+        }
+    }
+    let exemption = &v["exemption"];
+    if exemption.is_object() {
+        out.push(format!(
+            "exempt      {} — {}",
+            s(exemption, "class"),
+            s(exemption, "because")
+        ));
+    }
+    held_text(v, &mut out);
+    if !s(v, "plan_revision").is_empty() {
+        out.push(format!("plan        {}", s(v, "plan_revision")));
+        out.push(format!("evidence    {}", s(v, "evidence_standing")));
+    }
+    for n in words(&v["notes"]) {
+        out.push(format!("note        {n}"));
+    }
+    refusals_text(v, &mut out);
+    out.join("\n")
+}
+
 /// The verdict, each issue with its own, each intent the work is held to with what it asks
 /// of the worker, then every refusal with its cause.
 fn preflight_text(v: &Value) -> String {
     let mut out = vec![format!("verdict     {}", s(v, "verdict"))];
+    held_text(v, &mut out);
+    refusals_text(v, &mut out);
+    out.join("\n")
+}
+
+/// The issues, the intents the work is held to and their governance: the part a preflight
+/// and a binding print alike, because a binding is the preflight's answer with more beside it.
+fn held_text(v: &Value, out: &mut Vec<String>) {
     for i in v["issues"].as_array().into_iter().flatten() {
         let serves = words(&i["serves"]);
         out.push(format!(
@@ -452,6 +516,10 @@ fn preflight_text(v: &Value) -> String {
     for g in words(&v["governance"]) {
         out.push(format!("governance  {g}"));
     }
+}
+
+/// Every refusal, with its cause first: the word a reader greps for.
+fn refusals_text(v: &Value, out: &mut Vec<String>) {
     for r in v["refusals"].as_array().into_iter().flatten() {
         out.push(format!(
             "refusal     {}  {}",
@@ -459,7 +527,6 @@ fn preflight_text(v: &Value) -> String {
             s(r, "message")
         ));
     }
-    out.join("\n")
 }
 
 #[cfg(test)]

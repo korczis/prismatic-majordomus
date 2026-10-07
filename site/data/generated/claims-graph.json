@@ -921,7 +921,7 @@
       "status": "guaranteed",
       "route": "/guarantees/intent-preflight-names-the-intent/",
       "external": false,
-      "note": "`majordomus intent preflight --issue <id>` (or `--path`) follows the criteria the issue declares in `serves`, never its milestone alone, and judges each link by the coverage `intent validate` reports from. It answers `serves` (exit 0) when every link holds and each intent served has a critique with no blocking finding open, `maintenance` (exit 0) for an issue that serves nothing under a milestone no live intent names, and `refused` (exit 10) naming its cause: unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued or open_blocking_finding. The MCP tool answers the same. It is a question a worker asks, not a step any command takes for it: `plan start` does not run it."
+      "note": "`majordomus intent preflight --issue <id>` (or `--path`) follows the criteria the issue declares in `serves`, never its milestone alone, and judges each link by the coverage `intent validate` reports from. It answers `serves` (exit 0) when every link holds and each intent served has a critique with no blocking finding open, `maintenance` (exit 0) for an issue that serves nothing under a milestone no live intent names, and `refused` (exit 10) naming its cause: unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued or open_blocking_finding. The MCP tool answers the same. `majordomus start` and `plan start` ask the same join through `intents.binding` (intent-in-session-context, intent-refused-at-plan-start)."
     },
     {
       "id": "claim:intent-cockpit-pages",
@@ -935,20 +935,20 @@
     {
       "id": "claim:intent-in-session-context",
       "kind": "claim",
-      "label": "A session will load the intents its task serves when it starts",
-      "status": "planned",
+      "label": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
+      "status": "guaranteed",
       "route": "/guarantees/intent-in-session-context/",
       "external": false,
-      "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it."
+      "note": "`majordomus start --issue <id>` (or `--intent <id>`) asks `intents.binding` what the task serves and records what was named with two pins; `majordomus context` then carries an INTENT section read from the binding on every call — statement, invariants, the served criteria with the state of their evidence, the critique and the gap — and says `unknown` when the binding cannot be read. A handover pins the binding, and `handover --resolve` answers `unchanged`, `evidence_moved` or `plan_changed` (test/cases/961). A task that names nothing is briefed with no intent, and under policy `intent.binding: off` nothing asks. The record holds names and hashes only: no stage, verdict or criterion is stored (ADR 0111)."
     },
     {
       "id": "claim:intent-refused-at-plan-start",
       "kind": "claim",
-      "label": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
-      "status": "planned",
+      "label": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
+      "status": "guaranteed",
       "route": "/guarantees/intent-refused-at-plan-start/",
       "external": false,
-      "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed."
+      "note": "Under policy `intent.binding: required`, `majordomus plan start`, the `plan.transition` capability and `majordomus start` each ask `intents.binding` and refuse a refused binding, with the same sentence in both plan engines, writing nothing; an answer that cannot be read refuses too. Under `advisory` a task's refused binding is reported and it starts; with the key absent or `off`, `plan start` succeeds as before and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` afterwards (intent-plan-reviewed). This repository's own policy is `advisory`."
     },
     {
       "id": "claim:intent-closes-github-milestones",
@@ -2308,6 +2308,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/intent_binding.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_binding.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/intent_plan.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/intent_plan.rs",
@@ -2675,6 +2682,13 @@
       "id": "impl:lib/init.sh",
       "kind": "implementation",
       "label": "lib/init.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/intent_binding.sh",
+      "kind": "implementation",
+      "label": "lib/intent_binding.sh",
       "route": null,
       "external": false
     },
@@ -4203,6 +4217,20 @@
       "label": "test/cases/95_skills.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/95_skills.sh"
+    },
+    {
+      "id": "test:test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+      "kind": "test",
+      "label": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+    },
+    {
+      "id": "test:test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+      "kind": "test",
+      "label": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
     },
     {
       "id": "test:test/cases/96_site_deploy.sh",
@@ -5886,6 +5914,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:intent-in-session-context",
+      "target": "impl:lib/intent_binding.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-refused-at-plan-start",
+      "target": "impl:apps/majordomus-cli/src/intent_binding.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mcp-stdio-surface",
       "target": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
       "kind": "implemented_by"
@@ -6978,6 +7016,16 @@
     {
       "source": "claim:intent-cockpit-pages",
       "target": "test:apps/majordomus-cli/tests/intent_realization.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-in-session-context",
+      "target": "test:test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-refused-at-plan-start",
+      "target": "test:test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
       "kind": "proved_by"
     },
     {

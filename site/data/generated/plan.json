@@ -7,7 +7,7 @@
   },
   "active_milestone": "M003",
   "next_ready": "I0806",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::cancelled\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::ready\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::done\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::ready\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::blocked\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::blocked\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::blocked\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::blocked\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::blocked\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::blocked\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::blocked\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::blocked\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::blocked\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::blocked\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::blocked\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::blocked\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::ready\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::blocked\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::blocked\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::blocked\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::done\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::done\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::ready\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::ready\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::ready\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::ready\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::active\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::ready\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::ready\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1201[\"I1201<br/>An identity provider is a declarative object, and Google and Facebook are two of them\"]:::ready\n    I1202[\"I1202<br/>One typed provider model reads the objects, and no code names a provider\"]:::blocked\n    I1203[\"I1203<br/>One flow serves every provider, and it refuses everything it did not start\"]:::blocked\n    I1204[\"I1204<br/>The session is signed, short, and revocable from the server\"]:::blocked\n    I1205[\"I1205<br/>Identity is resolved once, in the router, and every surface reads it from there\"]:::blocked\n    I1206[\"I1206<br/>What an anonymous reader may do is derived from the effect classification, not from a list\"]:::blocked\n    I1207[\"I1207<br/>No credential reaches any output, and hostile provider metadata renders safely\"]:::blocked\n    I1208[\"I1208<br/>Adding a provider is one file, removing one is one deletion, and both are executed rather than described\"]:::blocked\n    I1301[\"I1301<br/>A workspace is a declared object of the layer; only its content is local\"]:::done\n    I1302[\"I1302<br/>Identity, provenance and support level are typed fields, not prose\"]:::ready\n    I1303[\"I1303<br/>The store is bounded, measured and invisible to every published projection\"]:::blocked\n    I1304[\"I1304<br/>The browser transport is the one this repository already drives\"]:::blocked\n    I1305[\"I1305<br/>An observed contract has a fingerprint, a compatibility state and a fixture\"]:::blocked\n    I1306[\"I1306<br/>A sync resumes, repeats itself without harm, and says how fresh it is\"]:::blocked\n    I1307[\"I1307<br/>The ChatGPT shape is mapped from evidence and never becomes the canonical model\"]:::blocked\n    I1308[\"I1308<br/>The executable's share is one capability, shaped like continuity\"]:::blocked\n    I1309[\"I1309<br/>The boundaries this milestone asserts are gates, not sentences\"]:::blocked\n    I1310[\"I1310<br/>The subsystem is documented where a person looks, and the plan is closed against the repository\"]:::blocked\n    I1401[\"I1401<br/>The identity of a projected record is what the record carries, not what its title says\"]:::done\n    I1402[\"I1402<br/>A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them\"]:::done\n    I1403[\"I1403<br/>Backfill the projection once, deliberately, and record what it created\"]:::ready\n    I1404[\"I1404<br/>The drift check is a gate, so a projection that stops being applied cannot stay silent\"]:::done\n    I1405[\"I1405<br/>A pull request names the issue it realises, and the edge is derived rather than remembered\"]:::done\n    I1406[\"I1406<br/>The plan's derivations are capabilities, so every surface reads the readiness the terminal reads\"]:::done\n    I1407[\"I1407<br/>One issue travels the whole path and back, as an executable case\"]:::done\n    I1408[\"I1408<br/>The documents stop claiming a projection nobody runs\"]:::done\n    I1409[\"I1409<br/>Derived data stops hashing inputs it cannot control\"]:::ready\n    I1501[\"I1501<br/>An execution a person starts is an execution the server can see\"]:::ready\n    I1502[\"I1502<br/>A server serving code that no longer exists stops calling itself ready\"]:::ready\n    I1503[\"I1503<br/>A closed session is not closed a second time under the same identity\"]:::ready\n    I1504[\"I1504<br/>One development transition is a capability, end to end\"]:::ready\n    I1505[\"I1505<br/>A mutating capability leaves a durable event, and the ledger can be read back\"]:::blocked\n    I1506[\"I1506<br/>The lifecycle commands become non-interactive capabilities\"]:::blocked\n    I1507[\"I1507<br/>Issues, milestones, sessions and peers reach the Cockpit as projections\"]:::blocked\n    I1508[\"I1508<br/>The navigation is derived from the dispatcher, not kept beside it\"]:::ready\n    I1509[\"I1509<br/>A detail page that pages nothing has outgrown the reason it pages nothing\"]:::ready\n    I1510[\"I1510<br/>A gap the audit calls planned names a plan object that exists\"]:::ready\n    I1511[\"I1511<br/>The documentation surface answers in a checkout that has not built the site\"]:::ready\n    I1512[\"I1512<br/>Gate state is something the runtime can answer\"]:::ready\n    I1516[\"I1516<br/>The adapter composes a projected body in one place\"]:::active\n    I1520[\"I1520<br/>A step that runs out of time says so itself\"]:::active\n    I1600[\"I1600<br/>The challenge is one recorded run, and every public surface replays it\"]:::ready\n    I1900[\"I1900<br/>An intent is a typed record whose stage and satisfaction are derived\"]:::ready\n    I1901[\"I1901<br/>An issue names the intent criterion it serves, and coverage is derived\"]:::blocked\n    I1902[\"I1902<br/>The gap and the critique of an intent are typed records the plan is held to\"]:::blocked\n    I1903[\"I1903<br/>The work realising an intent is joined across episodes, providers and handovers\"]:::blocked\n    I1945[\"I1945<br/>The test-evidence decision and its plan are recorded\"]:::active\n    I1946[\"I1946<br/>The verdict words are status words of the design system\"]:::ready\n    I1947[\"I1947<br/>Every feature reaches a test, and every use case has a feature\"]:::ready\n    I1948[\"I1948<br/>Evidence is judged at the presented revision, by one freshness function\"]:::ready\n    I1949[\"I1949<br/>CI evidence is recorded clean, and its report is the tracked ledger's verdict\"]:::ready\n    I1950[\"I1950<br/>Text a run printed is redacted by one rule set\"]:::ready\n    I1951[\"I1951<br/>Evidence runs are typed, and a recording carries what its run measured\"]:::blocked\n    I1952[\"I1952<br/>Evidence subjects are derived once, in Rust\"]:::blocked\n    I1953[\"I1953<br/>Evidence answers by subject, on every surface\"]:::blocked\n    I1954[\"I1954<br/>Every runner reaches the ledger, through the recording branch\"]:::blocked\n    I1955[\"I1955<br/>The evidence publication is an allow-listed projection\"]:::blocked\n    I1956[\"I1956<br/>The Cockpit shows evidence by subject\"]:::blocked\n    I1957[\"I1957<br/>Every test line is read, and a local run stays local\"]:::blocked\n    I1958[\"I1958<br/>Evidence has one route per subject, and every panel is joined to its subject\"]:::blocked\n    I1959[\"I1959<br/>The evidence publication is typed, bound to its build, and kept on gh-pages\"]:::blocked\n    I1960[\"I1960<br/>Every widget names its proof\"]:::blocked\n    I1961[\"I1961<br/>A deploy verifies the evidence routes it publishes\"]:::blocked\n    I1962[\"I1962<br/>The evidence gates read subject findings and widgets\"]:::blocked\n    I1963[\"I1963<br/>Evidence is tested end to end\"]:::blocked\n    I1964[\"I1964<br/>The evidence reference is documented and held to the tree\"]:::blocked\n    I1965[\"I1965<br/>The entry preflight reads the one verdict\"]:::blocked\n    I1966[\"I1966<br/>The composed graph is whole or its generation refuses\"]:::ready\n    I1967[\"I1967<br/>A reporter that sets a flag is a reporter\"]:::ready\n    I1980[\"I1980<br/>A layer names the tool version it was written for, and doctor tells version skew from defects\"]:::ready\n    I1981[\"I1981<br/>A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv\"]:::ready\n    I1982[\"I1982<br/>Plan stamps written before seals existed are re-sealed by a command that keeps their original times\"]:::blocked\n    I1983[\"I1983<br/>Upgrading the vendored rules reports or applies the policy and source keys those rules depend on\"]:::blocked\n    I1984[\"I1984<br/>Knowledge candidates never leave untracked files on a trunk that only pull requests change\"]:::ready\n    I1985[\"I1985<br/>A knowledge candidate relates to its own decision and commit, not to the whole episode\"]:::blocked\n    I1986[\"I1986<br/>The vendored rule package says nothing that is only true of this repository\"]:::ready\n    I1987[\"I1987<br/>A knowledge record's file provenance survives the file's deletion\"]:::ready\n    I1988[\"I1988<br/>A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands\"]:::blocked\n    I1989[\"I1989<br/>init seeds a scope for the stack it finds, not for this repository's\"]:::ready\n    I1990[\"I1990<br/>The pre-push check judges the refs being pushed, or says why the checkout's task binds them\"]:::ready\n    I1991[\"I1991<br/>A comment-only edit of the policy regenerates no bootstrap\"]:::ready\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0809 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    I1201 --> I1202\n    I1202 --> I1203\n    I1202 --> I1208\n    I1203 --> I1204\n    I1204 --> I1205\n    I1204 --> I1207\n    I1205 --> I1206\n    I1206 --> I1208\n    I1301 --> I1302\n    I1302 --> I1303\n    I1302 --> I1304\n    I1302 --> I1307\n    I1303 --> I1306\n    I1303 --> I1308\n    I1303 --> I1309\n    I1304 --> I1305\n    I1305 --> I1306\n    I1305 --> I1307\n    I1308 --> I1309\n    I1308 --> I1310\n    I1309 --> I1310\n    I1401 --> I1402\n    I1401 --> I1403\n    I1401 --> I1405\n    I1402 --> I1403\n    I1402 --> I1404\n    I1404 --> I1403\n    I1404 --> I1407\n    I1404 --> I1408\n    I1405 --> I1407\n    I1406 --> I1407\n    I1504 --> I1505\n    I1504 --> I1506\n    I1505 --> I1506\n    I1505 --> I1507\n    I1506 --> I1507\n    I1900 --> I1901\n    I1900 --> I1903\n    I1901 --> I1902\n    I1946 --> I1958\n    I1946 --> I1960\n    I1947 --> I1952\n    I1948 --> I1951\n    I1948 --> I1952\n    I1948 --> I1965\n    I1949 --> I1951\n    I1950 --> I1955\n    I1951 --> I1953\n    I1951 --> I1954\n    I1952 --> I1953\n    I1952 --> I1958\n    I1952 --> I1962\n    I1953 --> I1955\n    I1953 --> I1956\n    I1953 --> I1962\n    I1954 --> I1959\n    I1955 --> I1957\n    I1955 --> I1958\n    I1955 --> I1959\n    I1956 --> I1963\n    I1958 --> I1960\n    I1958 --> I1961\n    I1959 --> I1960\n    I1959 --> I1961\n    I1959 --> I1963\n    I1960 --> I1962\n    I1960 --> I1963\n    I1962 --> I1964\n    I1963 --> I1964\n    I1980 --> I1982\n    I1980 --> I1983\n    I1981 --> I1988\n    I1984 --> I1985\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::cancelled\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::ready\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::done\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::ready\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::blocked\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::blocked\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::blocked\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::blocked\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::blocked\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::blocked\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::blocked\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::blocked\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::blocked\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::blocked\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::blocked\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::blocked\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::ready\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::blocked\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::blocked\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::blocked\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::done\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::done\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::ready\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::ready\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::ready\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::ready\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::active\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::ready\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::ready\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1201[\"I1201<br/>An identity provider is a declarative object, and Google and Facebook are two of them\"]:::ready\n    I1202[\"I1202<br/>One typed provider model reads the objects, and no code names a provider\"]:::blocked\n    I1203[\"I1203<br/>One flow serves every provider, and it refuses everything it did not start\"]:::blocked\n    I1204[\"I1204<br/>The session is signed, short, and revocable from the server\"]:::blocked\n    I1205[\"I1205<br/>Identity is resolved once, in the router, and every surface reads it from there\"]:::blocked\n    I1206[\"I1206<br/>What an anonymous reader may do is derived from the effect classification, not from a list\"]:::blocked\n    I1207[\"I1207<br/>No credential reaches any output, and hostile provider metadata renders safely\"]:::blocked\n    I1208[\"I1208<br/>Adding a provider is one file, removing one is one deletion, and both are executed rather than described\"]:::blocked\n    I1301[\"I1301<br/>A workspace is a declared object of the layer; only its content is local\"]:::done\n    I1302[\"I1302<br/>Identity, provenance and support level are typed fields, not prose\"]:::ready\n    I1303[\"I1303<br/>The store is bounded, measured and invisible to every published projection\"]:::blocked\n    I1304[\"I1304<br/>The browser transport is the one this repository already drives\"]:::blocked\n    I1305[\"I1305<br/>An observed contract has a fingerprint, a compatibility state and a fixture\"]:::blocked\n    I1306[\"I1306<br/>A sync resumes, repeats itself without harm, and says how fresh it is\"]:::blocked\n    I1307[\"I1307<br/>The ChatGPT shape is mapped from evidence and never becomes the canonical model\"]:::blocked\n    I1308[\"I1308<br/>The executable's share is one capability, shaped like continuity\"]:::blocked\n    I1309[\"I1309<br/>The boundaries this milestone asserts are gates, not sentences\"]:::blocked\n    I1310[\"I1310<br/>The subsystem is documented where a person looks, and the plan is closed against the repository\"]:::blocked\n    I1401[\"I1401<br/>The identity of a projected record is what the record carries, not what its title says\"]:::done\n    I1402[\"I1402<br/>A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them\"]:::done\n    I1403[\"I1403<br/>Backfill the projection once, deliberately, and record what it created\"]:::ready\n    I1404[\"I1404<br/>The drift check is a gate, so a projection that stops being applied cannot stay silent\"]:::done\n    I1405[\"I1405<br/>A pull request names the issue it realises, and the edge is derived rather than remembered\"]:::done\n    I1406[\"I1406<br/>The plan's derivations are capabilities, so every surface reads the readiness the terminal reads\"]:::done\n    I1407[\"I1407<br/>One issue travels the whole path and back, as an executable case\"]:::done\n    I1408[\"I1408<br/>The documents stop claiming a projection nobody runs\"]:::done\n    I1409[\"I1409<br/>Derived data stops hashing inputs it cannot control\"]:::ready\n    I1501[\"I1501<br/>An execution a person starts is an execution the server can see\"]:::ready\n    I1502[\"I1502<br/>A server serving code that no longer exists stops calling itself ready\"]:::ready\n    I1503[\"I1503<br/>A closed session is not closed a second time under the same identity\"]:::ready\n    I1504[\"I1504<br/>One development transition is a capability, end to end\"]:::ready\n    I1505[\"I1505<br/>A mutating capability leaves a durable event, and the ledger can be read back\"]:::blocked\n    I1506[\"I1506<br/>The lifecycle commands become non-interactive capabilities\"]:::blocked\n    I1507[\"I1507<br/>Issues, milestones, sessions and peers reach the Cockpit as projections\"]:::blocked\n    I1508[\"I1508<br/>The navigation is derived from the dispatcher, not kept beside it\"]:::ready\n    I1509[\"I1509<br/>A detail page that pages nothing has outgrown the reason it pages nothing\"]:::ready\n    I1510[\"I1510<br/>A gap the audit calls planned names a plan object that exists\"]:::ready\n    I1511[\"I1511<br/>The documentation surface answers in a checkout that has not built the site\"]:::ready\n    I1512[\"I1512<br/>Gate state is something the runtime can answer\"]:::ready\n    I1516[\"I1516<br/>The adapter composes a projected body in one place\"]:::active\n    I1520[\"I1520<br/>A step that runs out of time says so itself\"]:::active\n    I1600[\"I1600<br/>The challenge is one recorded run, and every public surface replays it\"]:::ready\n    I1900[\"I1900<br/>An intent is a typed record whose stage and satisfaction are derived\"]:::ready\n    I1901[\"I1901<br/>An issue names the intent criterion it serves, and coverage is derived\"]:::blocked\n    I1902[\"I1902<br/>The gap and the critique of an intent are typed records the plan is held to\"]:::blocked\n    I1903[\"I1903<br/>The work realising an intent is joined across episodes, providers and handovers\"]:::blocked\n    I1945[\"I1945<br/>The test-evidence decision and its plan are recorded\"]:::active\n    I1946[\"I1946<br/>The verdict words are status words of the design system\"]:::ready\n    I1947[\"I1947<br/>Every feature reaches a test, and every use case has a feature\"]:::ready\n    I1948[\"I1948<br/>Evidence is judged at the presented revision, by one freshness function\"]:::ready\n    I1949[\"I1949<br/>CI evidence is recorded clean, and its report is the tracked ledger's verdict\"]:::ready\n    I1950[\"I1950<br/>Text a run printed is redacted by one rule set\"]:::ready\n    I1951[\"I1951<br/>Evidence runs are typed, and a recording carries what its run measured\"]:::blocked\n    I1952[\"I1952<br/>Evidence subjects are derived once, in Rust\"]:::blocked\n    I1953[\"I1953<br/>Evidence answers by subject, on every surface\"]:::blocked\n    I1954[\"I1954<br/>Every runner reaches the ledger, through the recording branch\"]:::blocked\n    I1955[\"I1955<br/>The evidence publication is an allow-listed projection\"]:::blocked\n    I1956[\"I1956<br/>The Cockpit shows evidence by subject\"]:::blocked\n    I1957[\"I1957<br/>Every test line is read, and a local run stays local\"]:::blocked\n    I1958[\"I1958<br/>Evidence has one route per subject, and every panel is joined to its subject\"]:::blocked\n    I1959[\"I1959<br/>The evidence publication is typed, bound to its build, and kept on gh-pages\"]:::blocked\n    I1960[\"I1960<br/>Every widget names its proof\"]:::blocked\n    I1961[\"I1961<br/>A deploy verifies the evidence routes it publishes\"]:::blocked\n    I1962[\"I1962<br/>The evidence gates read subject findings and widgets\"]:::blocked\n    I1963[\"I1963<br/>Evidence is tested end to end\"]:::blocked\n    I1964[\"I1964<br/>The evidence reference is documented and held to the tree\"]:::blocked\n    I1965[\"I1965<br/>The entry preflight reads the one verdict\"]:::blocked\n    I1966[\"I1966<br/>The composed graph is whole or its generation refuses\"]:::ready\n    I1967[\"I1967<br/>A reporter that sets a flag is a reporter\"]:::ready\n    I1980[\"I1980<br/>A layer names the tool version it was written for, and doctor tells version skew from defects\"]:::ready\n    I1981[\"I1981<br/>A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv\"]:::ready\n    I1982[\"I1982<br/>Plan stamps written before seals existed are re-sealed by a command that keeps their original times\"]:::blocked\n    I1983[\"I1983<br/>Upgrading the vendored rules reports or applies the policy and source keys those rules depend on\"]:::blocked\n    I1984[\"I1984<br/>Knowledge candidates never leave untracked files on a trunk that only pull requests change\"]:::ready\n    I1985[\"I1985<br/>A knowledge candidate relates to its own decision and commit, not to the whole episode\"]:::blocked\n    I1986[\"I1986<br/>The vendored rule package says nothing that is only true of this repository\"]:::ready\n    I1987[\"I1987<br/>A knowledge record's file provenance survives the file's deletion\"]:::ready\n    I1988[\"I1988<br/>A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands\"]:::blocked\n    I1989[\"I1989<br/>init seeds a scope for the stack it finds, not for this repository's\"]:::ready\n    I1990[\"I1990<br/>The pre-push check judges the refs being pushed, or says why the checkout's task binds them\"]:::ready\n    I1991[\"I1991<br/>A comment-only edit of the policy regenerates no bootstrap\"]:::ready\n    I2000[\"I2000<br/>What a piece of work serves is one derivation, with a revision\"]:::blocked\n    I2001[\"I2001<br/>start asks what the task serves and refuses a refused binding where the policy requires it\"]:::blocked\n    I2002[\"I2002<br/>The context of a bound task says what the intent asks of this work\"]:::blocked\n    I2003[\"I2003<br/>A handover pins the binding it was written under, and resolving it reports drift\"]:::blocked\n    I2004[\"I2004<br/>plan start refuses an issue whose binding is refused, in both engines\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0809 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    I1201 --> I1202\n    I1202 --> I1203\n    I1202 --> I1208\n    I1203 --> I1204\n    I1204 --> I1205\n    I1204 --> I1207\n    I1205 --> I1206\n    I1206 --> I1208\n    I1301 --> I1302\n    I1302 --> I1303\n    I1302 --> I1304\n    I1302 --> I1307\n    I1303 --> I1306\n    I1303 --> I1308\n    I1303 --> I1309\n    I1304 --> I1305\n    I1305 --> I1306\n    I1305 --> I1307\n    I1308 --> I1309\n    I1308 --> I1310\n    I1309 --> I1310\n    I1401 --> I1402\n    I1401 --> I1403\n    I1401 --> I1405\n    I1402 --> I1403\n    I1402 --> I1404\n    I1404 --> I1403\n    I1404 --> I1407\n    I1404 --> I1408\n    I1405 --> I1407\n    I1406 --> I1407\n    I1504 --> I1505\n    I1504 --> I1506\n    I1505 --> I1506\n    I1505 --> I1507\n    I1506 --> I1507\n    I1900 --> I1901\n    I1900 --> I1903\n    I1901 --> I1902\n    I1946 --> I1958\n    I1946 --> I1960\n    I1947 --> I1952\n    I1948 --> I1951\n    I1948 --> I1952\n    I1948 --> I1965\n    I1949 --> I1951\n    I1950 --> I1955\n    I1951 --> I1953\n    I1951 --> I1954\n    I1952 --> I1953\n    I1952 --> I1958\n    I1952 --> I1962\n    I1953 --> I1955\n    I1953 --> I1956\n    I1953 --> I1962\n    I1954 --> I1959\n    I1955 --> I1957\n    I1955 --> I1958\n    I1955 --> I1959\n    I1956 --> I1963\n    I1958 --> I1960\n    I1958 --> I1961\n    I1959 --> I1960\n    I1959 --> I1961\n    I1959 --> I1963\n    I1960 --> I1962\n    I1960 --> I1963\n    I1962 --> I1964\n    I1963 --> I1964\n    I1980 --> I1982\n    I1980 --> I1983\n    I1981 --> I1988\n    I1984 --> I1985\n    I2000 --> I2001\n    I2000 --> I2004\n    I2001 --> I2002\n    I2001 --> I2003\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -1264,6 +1264,88 @@
         "by_status": {
           "READY": 0,
           "BLOCKED": 0,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
+      "id": "intent-bound-work",
+      "slug": "intent-bound-work",
+      "status": "BLOCKED",
+      "order": 120,
+      "priority": "p1",
+      "title": "A task is bound to the intent it serves",
+      "problem": "The intent engine can say which intent an issue or a set of paths serves (intent preflight), and nothing asks it. `start` takes a description and a scope; the task record names no issue and no intent; the context a worker is handed says nothing of the criteria the work is for; a handover carries a commit and no trace of the intent it was written under. Work under an intent whose plan was never critiqued is found by `intent validate` after it began, not refused before.",
+      "outcome": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.",
+      "current_state": "intents.preflight exists with no caller. The task record has no issue, intent or exemption field. No exemption class exists anywhere. Nothing computes a revision of an intent, its plan or its critique.",
+      "desired_state": "One derivation, `Intents::binding`, answered by `intents.binding` on every surface and asked by start, context and handover.",
+      "scope": [
+        "apps/majordomus-cli/src/intent.rs",
+        "apps/majordomus-cli/src/intent_binding.rs",
+        "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "apps/majordomus-cli/src/commands/intent.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/policy.rs",
+        "apps/majordomus-cli/tests",
+        "lib/start.sh",
+        "lib/context.sh",
+        "lib/handover.sh",
+        "lib/common.sh",
+        "lib/intent_binding.sh",
+        "lib/plan.sh",
+        "apps/majordomus-cli/src/plan.rs",
+        "apps/majordomus-cli/src/intent_realization.rs",
+        "share",
+        ".ai/repo/policy.yaml",
+        ".ai/repo/project",
+        ".ai/repo/adrs",
+        ".ai/repo/rules/project",
+        "docs",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Refusing a finish on unmet criteria",
+        "Producing or executing a critique",
+        "Moving the task lifecycle from shell to Rust (ADR 0047)"
+      ],
+      "acceptance_criteria": [
+        "A task started with --issue, --intent or by scope resolves through intents.binding, and an ambiguous or refused binding does not start where the policy requires binding",
+        "An exemption is a policy-declared class with a reason, recorded in the task record and the ledger",
+        "The context of a bound task carries the intent section, from the binding",
+        "A handover carries the binding revision and --resolve reports drift",
+        "The command line, HTTP and MCP answer the same binding"
+      ],
+      "validation": [
+        "majordomus intent validate",
+        "cargo test --test intent_binding",
+        "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+        "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved"
+      ],
+      "evidence_required": [],
+      "risks": [
+        "The records, the ADR and the tests they name land in one change: a criterion whose evidence reference does not resolve fails intent validate, so no part of this milestone reaches the trunk without the rest.",
+        "Requiring binding in this repository refuses the scope-only `start` every session uses today; the refusal must name the three ways through (an issue, an intent, an exemption) or it reads as the tool being broken.",
+        "A pin stored in a task is one step from stored intent state; it must stay a hash compared on read and never a stage or a verdict (rule project.an-intent-outlives-its-sessions)."
+      ],
+      "evidence": [],
+      "issues": [
+        "I2000",
+        "I2001",
+        "I2002",
+        "I2003",
+        "I2004"
+      ],
+      "mermaid": "flowchart LR\n    I2000[\"I2000<br/>What a piece of work serves is one derivation, with a revision\"]:::blocked\n    I2001[\"I2001<br/>start asks what the task serves and refuses a refused binding where the policy requires it\"]:::blocked\n    I2002[\"I2002<br/>The context of a bound task says what the intent asks of this work\"]:::blocked\n    I2003[\"I2003<br/>A handover pins the binding it was written under, and resolving it reports drift\"]:::blocked\n    I2004[\"I2004<br/>plan start refuses an issue whose binding is refused, in both engines\"]:::blocked\n    I2000 --> I2001\n    I2000 --> I2004\n    I2001 --> I2002\n    I2001 --> I2003\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 5,
+        "required": 5,
+        "by_status": {
+          "READY": 0,
+          "BLOCKED": 5,
           "ACTIVE": 0,
           "VERIFY": 0,
           "DONE": 0,
@@ -16264,6 +16346,285 @@
       "started_at": "",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I2000",
+      "slug": "a-binding-is-derived-once",
+      "milestone": "intent-bound-work",
+      "status": "BLOCKED",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "What a piece of work serves is one derivation, with a revision",
+      "depends_on": [],
+      "blocked_by": [
+        "milestone:intent-bound-work"
+      ],
+      "dependents": [
+        "I2001",
+        "I2004"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/intent_binding.rs",
+        "apps/majordomus-cli/src/intent.rs",
+        "apps/majordomus-cli/src/policy.rs",
+        "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "apps/majordomus-cli/src/commands/intent.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/tests/intent_binding.rs",
+        ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+        ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md",
+        ".ai/repo/project",
+        "docs"
+      ],
+      "non_scope": [],
+      "objective": "Add Intents::binding over the preflight: the work named by an issue, an intent, paths or a declared exemption resolves to a standing (bound, maintenance, exempt, refused), the intents and criteria served, and two pins of what was resolved — plan_revision, a hash of each served intent's statement, invariants and criteria, the links that reach it and its critique, and evidence_standing, a hash of the served criteria's evidence states; answer it as the read-only capability intents.binding on the command line, HTTP and MCP.",
+      "why": "intent preflight answers what an issue serves and has no caller; nothing takes an intent by id, nothing knows an exemption, several intents reached by paths are all judged and none is called ambiguous, and nothing computes a revision a later reader could compare.",
+      "current_state": "Intents::preflight takes an issue or paths. No exemption class exists. No revision of an intent, its links or its critique is computed.",
+      "desired_state": "intents.binding answers the same value on every surface; ambiguity, an unknown or retired intent, an undeclared exemption class and a missing reason are refusals with a cause.",
+      "acceptance_criteria": [
+        "An issue, an intent id and paths each resolve to the criteria served, a plan_revision that changes when the intent, the links or the critique change and at no other time, and an evidence_standing that changes when a served criterion's evidence state does",
+        "ADR 0111 records the decision and rule project.an-intent-outlives-its-sessions v3 states that a name a worker declared and a hash compared on read are not intent state",
+        "Paths reaching more than one intent with no issue named are refused as ambiguous_intent",
+        "An exemption of a class the policy declares, with a reason, is standing exempt; an undeclared class or an empty reason is refused",
+        "The command line, HTTP and MCP answer the same binding"
+      ],
+      "validation": [
+        "cargo test --lib intent_binding",
+        "cargo test --test intent_binding"
+      ],
+      "evidence_required": [
+        "binding_resolves_issue_intent_and_paths",
+        "ambiguous_paths_are_refused",
+        "an_exemption_is_a_declared_class_with_a_reason",
+        "plan_revision_moves_only_with_the_plan"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2001",
+      "slug": "start-asks-what-the-task-serves",
+      "milestone": "intent-bound-work",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "start asks what the task serves and refuses a refused binding where the policy requires it",
+      "depends_on": [
+        "I2000"
+      ],
+      "blocked_by": [
+        "I2000",
+        "milestone:intent-bound-work"
+      ],
+      "dependents": [
+        "I2002",
+        "I2003"
+      ],
+      "scope": [
+        "lib/start.sh",
+        "lib/intent_binding.sh",
+        ".ai/repo/policy.yaml",
+        "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "docs",
+        "lib/common.sh",
+        "share/schemas/majordomus/policy",
+        "share/schemas/majordomus/current",
+        "share/skeleton",
+        "share/events.yaml",
+        "share/allow",
+        "apps/majordomus-cli/src/intent_realization.rs",
+        "apps/majordomus-cli/tests/intent_realization.rs"
+      ],
+      "non_scope": [],
+      "objective": "Give start the flags --issue, --intent, --exempt and --because; ask intents.binding through the built executable; under policy intent.binding: required refuse a refused or unreadable binding, under advisory report it, and when the key is absent change nothing. Record what was named and the revision in the task record and the task.started ledger event.",
+      "why": "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused.",
+      "current_state": "start takes a description, a scope, requires, a profile and an owner, and reads no intent.",
+      "desired_state": "A task record carries issue, intent or exemption with its reason, and binding_revision; a refused binding is refused (exit 15) naming the cause and the three ways through.",
+      "acceptance_criteria": [
+        "Under required, start with a refused binding is refused (exit 15) and writes no task record",
+        "Under required, start with --exempt of a declared class and --because starts and the ledger carries both",
+        "With the policy key absent, start with no new flag behaves exactly as before",
+        "continuity.state reports what the active task named",
+        "The policy schema, the task record schema and the task.started event declare the new keys, and doctor passes with the policy key set",
+        "intent realization reads the issue a task named from the ledger as a declared link, and agrees with intents.binding about the same task",
+        "A scope that lies outside the named issue's scope is said in the binding as a note the start prints",
+        "Under required an unreadable binding (no built executable, no jq) refuses naming the command that builds it; under advisory it warns; with the key absent a flag that was given is still asked and an unreadable answer refuses",
+        "The share of scope-only starts that bind against this repository's plan is measured before this repository's policy is set to required, and the value chosen is recorded with the measurement"
+      ],
+      "validation": [
+        "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+        "bash test/run.sh 04_start_check"
+      ],
+      "evidence_required": [
+        "start_refuses_a_refused_binding",
+        "an_absent_policy_key_changes_nothing",
+        "realization_and_binding_agree",
+        "scope_only_binding_rate_measured"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2002",
+      "slug": "context-briefs-from-the-binding",
+      "milestone": "intent-bound-work",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The context of a bound task says what the intent asks of this work",
+      "depends_on": [
+        "I2001"
+      ],
+      "blocked_by": [
+        "I2001",
+        "milestone:intent-bound-work"
+      ],
+      "dependents": [],
+      "scope": [
+        "lib/context.sh",
+        "lib/intent_binding.sh",
+        "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+      ],
+      "non_scope": [],
+      "objective": "Add an INTENT section to majordomus context for a task that named an issue or an intent: statement, invariants, the criteria served with the state of their evidence, the critique's open blocking findings and the gap's conditions, each read from intents.binding and bounded by the context budget.",
+      "why": "A worker is handed the scope of the task and nothing of what the work is for; the criteria live in a record the briefing never opens.",
+      "current_state": "majordomus context has no intent section; intent preflight renders the same facts for a reader who asks.",
+      "desired_state": "The section is present for a bound task, absent with a named reason for an unbound one, and says so when the binding cannot be read.",
+      "acceptance_criteria": [
+        "The context of a bound task names the intent, its statement, its invariants and each served criterion with its evidence state",
+        "The context of an exempt task names the class and the reason",
+        "An unreadable binding is reported as unknown, never as no intent",
+        "The section follows PROFILE, has the JSON section id intent, and under budget loses its gap conditions before anything else and is never dropped whole"
+      ],
+      "validation": [
+        "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+        "bash test/run.sh 23_context"
+      ],
+      "evidence_required": [
+        "context_carries_the_intent_section"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2003",
+      "slug": "a-handover-pins-the-binding",
+      "milestone": "intent-bound-work",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "A handover pins the binding it was written under, and resolving it reports drift",
+      "depends_on": [
+        "I2001"
+      ],
+      "blocked_by": [
+        "I2001",
+        "milestone:intent-bound-work"
+      ],
+      "dependents": [],
+      "scope": [
+        "lib/handover.sh",
+        "lib/common.sh",
+        "lib/intent_binding.sh",
+        "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh"
+      ],
+      "non_scope": [],
+      "objective": "Write issue, intent and binding_revision into a handover's front matter when the task is bound, and have handover --resolve ask intents.binding again and say whether the plan revision or the evidence standing changed since.",
+      "why": "A resumed worker is told how far the commit moved and nothing about whether the criteria it was working to were rewritten, or the critique reopened, in between.",
+      "current_state": "A handover's front matter carries the task, the branch and the head. --resolve prints Match, Git state, Freshness and Divergence.",
+      "desired_state": "--resolve prints an Intent line: unchanged, or which of the two revisions moved, or unknown when the binding cannot be read.",
+      "acceptance_criteria": [
+        "A handover of a bound task carries the binding revision",
+        "After a criterion of the intent is edited, --resolve reports the plan revision changed",
+        "A handover of an unbound task carries no pin and --resolve prints no Intent line",
+        "The front matter carries plan_revision and evidence_standing as two keys, a body that forges either is refused like every other computed key, and a checkpoint carries neither",
+        "An ordinary commit that changes no intent, link or critique leaves plan_revision unchanged"
+      ],
+      "validation": [
+        "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved",
+        "bash test/run.sh 05_handover"
+      ],
+      "evidence_required": [
+        "resolve_reports_intent_drift"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I2004",
+      "slug": "plan-start-asks-the-binding",
+      "milestone": "intent-bound-work",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "plan start refuses an issue whose binding is refused, in both engines",
+      "depends_on": [
+        "I2000"
+      ],
+      "blocked_by": [
+        "I2000",
+        "milestone:intent-bound-work"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/plan.rs",
+        "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "lib/plan.sh",
+        "lib/intent_binding.sh",
+        "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "test/cases/133_plan_transition.sh"
+      ],
+      "non_scope": [],
+      "objective": "Where the policy requires binding, have the start transition ask the binding of the issue before it stamps: plan::check in the Rust engine through the intent engine, and the shell engine through the built executable, with the same refusal text; where the policy does not require it, neither engine changes.",
+      "why": "A task is one way work begins and a plan transition is the other; plan start moves an issue to ACTIVE on its status alone, so work on an intent whose plan was never critiqued begins through it unrefused and is found by intent validate afterwards.",
+      "current_state": "plan::check refuses a start only when the issue is not READY; the shell engine does the same, and cases 133 and 582 hold the two equal.",
+      "desired_state": "Under required, plan start on an issue whose binding is refused is refused in both engines with the binding's refusal, over the command line, HTTP and MCP; a maintenance issue and a bound issue start as before.",
+      "acceptance_criteria": [
+        "Under required, plan start on an issue serving an uncritiqued intent is refused by the Rust engine and by the shell engine with the same message",
+        "The plan.transition capability refuses the same start over HTTP and MCP",
+        "With the policy key absent, cases 133 and 582 pass unchanged"
+      ],
+      "validation": [
+        "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines",
+        "bash test/run.sh 133_plan_transition",
+        "bash test/run.sh 582_the_done_guard_holds_in_both_engines"
+      ],
+      "evidence_required": [
+        "plan_start_refuses_a_refused_binding_in_both_engines"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -16319,7 +16680,8 @@
         "I1987",
         "I1989",
         "I1990",
-        "I1991"
+        "I1991",
+        "I2000"
       ]
     },
     {
@@ -16362,7 +16724,9 @@
         "I1982",
         "I1983",
         "I1985",
-        "I1988"
+        "I1988",
+        "I2001",
+        "I2004"
       ]
     },
     {
@@ -16403,7 +16767,9 @@
         "I1506",
         "I1902",
         "I1953",
-        "I1954"
+        "I1954",
+        "I2002",
+        "I2003"
       ]
     },
     {
@@ -17851,6 +18217,22 @@
     {
       "from": "I1984",
       "to": "I1985"
+    },
+    {
+      "from": "I2000",
+      "to": "I2001"
+    },
+    {
+      "from": "I2000",
+      "to": "I2004"
+    },
+    {
+      "from": "I2001",
+      "to": "I2002"
+    },
+    {
+      "from": "I2001",
+      "to": "I2003"
     }
   ],
   "findings": [

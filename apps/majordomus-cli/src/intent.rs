@@ -1925,7 +1925,19 @@ impl Intents {
                 ),
             ));
         }
+        self.preflight_issues(plan, gaps, critiques, &issues)
+    }
 
+    /// The preflight over issues already resolved: what [`Intents::preflight`] answers once
+    /// it knows which issues the work executes, and what [`crate::intent_binding`] asks when
+    /// it resolved them another way — the open issues serving an intent a worker named.
+    pub(crate) fn preflight_issues(
+        &self,
+        plan: &Plan,
+        gaps: &[GapRecord],
+        critiques: &[CritiqueRecord],
+        issues: &[&crate::plan::PlanIssue],
+    ) -> IntentPreflight {
         // The links are judged by the coverage validation reports from, over outlines of the
         // intents already derived, so a link `intent validate` calls broken is refused here
         // too; the preflight may refuse more, never less.
@@ -1950,7 +1962,7 @@ impl Intents {
         // is bounded to these, never every intent
         let mut reached: Vec<(String, BTreeSet<String>)> = Vec::new();
 
-        for i in &issues {
+        for i in issues {
             let mut mine: Vec<IntentPreflightRefusal> = cov
                 .findings
                 .iter()
