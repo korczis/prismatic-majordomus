@@ -59,8 +59,10 @@ would be a regression bought with nothing.
 ## Failure behaviour
 
 A layer that will not load after a move is not an error to the client: the last generation
-that did load goes on being served, the reason is logged, and the stamp is recorded so the
-failure is not retried on every request. A repository that is not a git work tree has no
+that did load goes on being served and the reason is logged. The failed load consumes no
+change: the generation keeps the stamp and the write count it was built at, and the failure is
+recorded beside it, so the same state is read again once `RETRY_AFTER` has passed — never on
+every request, never given up on — and a further move or write is read at once. A repository that is not a git work tree has no
 moves to follow and is pinned, which is said once in the log.
 
 ## Verification

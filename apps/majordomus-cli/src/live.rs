@@ -296,9 +296,10 @@ struct Watch {
     /// The clock a failed load's retry interval is measured on: the process's own, or a
     /// test's, so that the interval is asserted rather than slept through.
     clock: Arc<dyn Fn() -> Instant + Send + Sync>,
-    /// The stamp the last load failed at, and when. The generation keeps the stamp it was
-    /// built at, so the change stays unconsumed and is read again.
-    failed: Mutex<Option<(String, Instant)>>,
+    /// The stamp and the write count the last load failed at, and when. The generation keeps
+    /// the stamp and the count it was built at, so the change stays unconsumed and is read
+    /// again.
+    failed: Mutex<Option<(String, u64, Instant)>>,
     /// How many loads were attempted: what a test counts to hold a failing load to one
     /// attempt per interval.
     loads: AtomicU64,
@@ -472,7 +473,7 @@ impl Live {
         let taken = watch.stamp.take();
         {
             let state = read(&self.state);
-            if state.current(&taken) || watch.waiting(&taken) {
+            if state.current(&taken) || watch.waiting(&taken, state.ctx.executor.writes()) {
                 return View {
                     generation: state.number,
                     ctx: Arc::clone(&state.ctx),
@@ -510,10 +511,10 @@ impl Live {
         watch.loads.fetch_add(1, Ordering::SeqCst);
         let built = crate::app::App::load(&watch.args);
         let mut state = write(&self.state);
-        state.writes = writes;
         match built {
             Ok(app) => {
                 *lock(&watch.failed) = None;
+                state.writes = writes;
                 state.ctx = Arc::new(app.context.continuing(&previous));
                 state.number += 1;
                 state.stamp = taken;
@@ -532,7 +533,7 @@ impl Live {
                 // not consumed by a load that failed to read it; the failure is recorded
                 // instead, and holds the retry off for RETRY_AFTER — never once per request,
                 // never given up on (Watch::waiting).
-                *lock(&watch.failed) = Some((taken, (watch.clock)()));
+                *lock(&watch.failed) = Some((taken, writes, (watch.clock)()));
                 tracing::warn!(
                     error = %e,
                     "the repository moved but the layer would not load; serving generation {} and reading it again in {}s, or at once when it moves again",
@@ -694,13 +695,15 @@ fn head_of(ctx: &Context) -> String {
 }
 
 impl Watch {
-    /// Whether `taken` is the stamp the last load failed at, inside the retry interval: the
-    /// previous generation answers, and nothing is loaded. A stamp that moved since, or an
-    /// interval that has passed, is read again.
-    fn waiting(&self, taken: &str) -> bool {
+    /// Whether `taken` and `writes` are the stamp and the write count the last load failed
+    /// at, inside the retry interval: the previous generation answers, and nothing is loaded.
+    /// A stamp or a count that moved since, or an interval that has passed, is read again.
+    fn waiting(&self, taken: &str, writes: u64) -> bool {
         lock(&self.failed)
             .as_ref()
-            .is_some_and(|(stamp, at)| stamp == taken && (self.clock)() < *at + RETRY_AFTER)
+            .is_some_and(|(stamp, failed_at, at)| {
+                stamp == taken && *failed_at == writes && (self.clock)() < *at + RETRY_AFTER
+            })
     }
 }
 
@@ -871,6 +874,48 @@ mod tests {
             l.live.view().generation,
             1,
             "a new move is read at once, whatever the interval"
+        );
+        assert_eq!(l.loads(), 2);
+    }
+
+    #[test]
+    fn a_write_whose_reload_fails_is_read_again_after_the_interval() {
+        let l = Layer::new();
+        // the layer is broken in the work tree and this process writes: no git control file
+        // moves, so only the write count says the repository moved
+        let good = std::fs::read_to_string(l.manifest()).expect("a manifest");
+        std::fs::write(l.manifest(), format!("{good}a_key_nothing_declares: 1\n"))
+            .expect("the manifest is written");
+        l.live.current().executor.count_write();
+        assert_eq!(l.live.view().generation, 0, "the layer will not load");
+        assert_eq!(l.loads(), 1);
+        std::fs::write(l.manifest(), &good).expect("the manifest is written");
+        assert_eq!(
+            l.live.view().generation,
+            0,
+            "inside the interval, nothing is loaded"
+        );
+        assert_eq!(l.loads(), 1);
+        l.advance(RETRY_AFTER);
+        assert_eq!(
+            l.live.view().generation,
+            1,
+            "the write the failed load did not read is read once the interval has passed"
+        );
+        assert_eq!(l.loads(), 2);
+    }
+
+    #[test]
+    fn a_new_write_after_a_failed_load_is_read_at_once() {
+        let l = Layer::new();
+        let good = l.break_and_commit();
+        assert_eq!(l.live.view().generation, 0);
+        std::fs::write(l.manifest(), good).expect("the manifest is written");
+        l.live.current().executor.count_write();
+        assert_eq!(
+            l.live.view().generation,
+            1,
+            "a write is a move, read at once whatever the interval"
         );
         assert_eq!(l.loads(), 2);
     }

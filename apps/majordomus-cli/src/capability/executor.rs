@@ -188,6 +188,13 @@ impl CapabilityExecutor {
         Ok(value)
     }
 
+    /// Count one repository mutation, as a successful mutating call does: what a test of a
+    /// reader of [`Executor::writes`] needs without a layer that a mutation can succeed on.
+    #[cfg(test)]
+    pub(crate) fn count_write(&self) {
+        self.writes.fetch_add(1, Ordering::SeqCst);
+    }
+
     /// How many calls of a capability whose effect is a repository mutation have succeeded
     /// through this executor.
     ///
