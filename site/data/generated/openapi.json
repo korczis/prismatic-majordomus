@@ -292,7 +292,6 @@
     "schema-CommitTrailer": "docs/api/commit/",
     "schema-CommitVerdict": "docs/api/commit/",
     "schema-Comparison": "docs/api/objects/",
-    "schema-CompileInput": "docs/api/shared/",
     "schema-CompiledContext": "docs/api/devcontext/",
     "schema-CompilerPolicy": "docs/api/devcontext/",
     "schema-Completion": "docs/api/gates/",
@@ -468,7 +467,6 @@
     "schema-ExecutionView": "docs/api/executions/",
     "schema-ExecutorWait": "docs/api/integration/",
     "schema-Exemption": "docs/api/quality/",
-    "schema-ExplainInput": "docs/api/shared/",
     "schema-Explanation": "docs/api/devcontext/",
     "schema-Exposure": "docs/api/capabilities/",
     "schema-FacetValue": "docs/api/why/",
@@ -1064,7 +1062,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 170,
-    "schemas": 839,
+    "schemas": 837,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1446,7 +1444,6 @@
     "CommitTrailer": "commit",
     "CommitVerdict": "commit",
     "Comparison": "objects",
-    "CompileInput": "shared",
     "CompiledContext": "devcontext",
     "CompilerPolicy": "devcontext",
     "Completion": "gates",
@@ -1622,7 +1619,6 @@
     "ExecutionView": "executions",
     "ExecutorWait": "integration",
     "Exemption": "quality",
-    "ExplainInput": "shared",
     "Explanation": "devcontext",
     "Exposure": "capabilities",
     "FacetValue": "why",
@@ -8408,82 +8404,6 @@
           "value": "size"
         }
       ],
-      "variants": []
-    },
-    {
-      "description": "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.\n\nThe seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and\n`intent` all contribute, and naming several is the normal case rather than a conflict.\n`intent` is the only one the compiler infers from, which is why every entry it produces\ncarries `Selector::IntentMatch` and a confidence below one.\n\n`deny_unknown_fields` is deliberate. This is the input of a served capability, so a\nmisspelled field is a request that does not mean what its author thought; refusing it is\nthe difference between a typo and a silently smaller answer.\n\n```\nuse majordomus_cli::devcontext::CompileInput;\nuse serde_json::json;\n\n// the smallest legitimate request, which is not the same as no request\nlet nothing: CompileInput = serde_json::from_value(json!({})).unwrap();\nassert_eq!(nothing, CompileInput::default());\nassert!(nothing.issue.is_none() && nothing.paths.is_empty());\n\n// the seeds combine rather than compete\nlet both: CompileInput = serde_json::from_value(json!({\n    \"issue\": \"I0301\",\n    \"paths\": [\"apps/majordomus-cli/src\"],\n    \"intent\": \"explain the budget\",\n    \"budget_tokens\": 4_000,\n})).unwrap();\nassert_eq!(both.issue.as_deref(), Some(\"I0301\"));\nassert_eq!(both.paths, [\"apps/majordomus-cli/src\"]);\nassert_eq!(both.budget_tokens, Some(4_000));\n\n// and a misspelled field is refused rather than quietly ignored\nlet typo = serde_json::from_value::<CompileInput>(json!({\"max_dept\": 2}));\nassert!(typo.is_err(), \"a typo must not become a smaller answer\");\n```",
-      "home": "shared",
-      "is_enum": false,
-      "name": "CompileInput",
-      "properties": [
-        {
-          "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
-          "name": "issue",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "A milestone id or slug, or its canonical identifier.",
-          "name": "milestone",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
-          "name": "intent",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
-          "name": "paths",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
-          "name": "uris",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.",
-          "name": "budget_tokens",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.",
-          "name": "max_depth",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.",
-          "name": "floor",
-          "refs": [],
-          "required": false,
-          "type": "number | null"
-        },
-        {
-          "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
-          "name": "all_blocking_rules",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [],
-      "values": [],
       "variants": []
     },
     {
@@ -19232,89 +19152,6 @@
       "used_by_schemas": [
         "PublicApiQuality"
       ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "The input of `devcontext.explain`: one identifier, and the request to judge it under.\n\nThe request is not optional context for the question — it is half of the question.\n\"Why is this ADR not in my context\" has no answer in the abstract: it is in or out of a\n*particular* compiled answer, and \"excluded for budget\" is only actionable when the\nbudget it did not fit in is known. So the same fields `compile` takes are `flatten`ed in\nhere, which also means the wire form is one flat object rather than a nested `request`,\nand the command line can share its flags.\n\n```\nuse majordomus_cli::devcontext::ExplainInput;\nuse serde_json::json;\n\n// flattened: the request's fields sit beside `uri`, not under it\nlet input: ExplainInput = serde_json::from_value(json!({\n    \"uri\": \"majordomus://adr/0052\",\n    \"budget_tokens\": 2_000,\n    \"max_depth\": 1,\n})).unwrap();\nassert_eq!(input.uri, \"majordomus://adr/0052\");\nassert_eq!(input.request.budget_tokens, Some(2_000));\nassert_eq!(input.request.max_depth, Some(1));\n\n// and the identifier alone is a complete question, judged under the default request\nlet bare: ExplainInput = serde_json::from_value(json!({\"uri\": \"majordomus://adr/0052\"}))\n    .unwrap();\nassert_eq!(bare.request, Default::default());\n```",
-      "home": "shared",
-      "is_enum": false,
-      "name": "ExplainInput",
-      "properties": [
-        {
-          "description": "The canonical identifier to explain.",
-          "name": "uri",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
-          "name": "issue",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "A milestone id or slug, or its canonical identifier.",
-          "name": "milestone",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
-          "name": "intent",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
-          "name": "paths",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
-          "name": "uris",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.",
-          "name": "budget_tokens",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.",
-          "name": "max_depth",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.",
-          "name": "floor",
-          "refs": [],
-          "required": false,
-          "type": "number | null"
-        },
-        {
-          "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
-          "name": "all_blocking_rules",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [],
       "values": [],
       "variants": []
     },

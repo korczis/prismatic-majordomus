@@ -6,7 +6,7 @@
     "version": "0.15.0"
   },
   "registry": {
-    "fingerprint": "9eee91ed411403e3bf8ff1a846ac55f8e36c36801b9036a36b5c9d621ceb784e",
+    "fingerprint": "dd02777618302bbb187b4e5cbeeca40a775a29d2506742dd5aaea81ed32a1b78",
     "summary": {
       "total": 2011,
       "builtin": 172,
@@ -9231,86 +9231,80 @@
         "input": {
           "name": "DevContextInput",
           "schema": {
-            "$ref": "#/$defs/CompileInput",
-            "description": "The input of `devcontext.compile`: what to compile a context about.\n\nA newtype over `devcontext::CompileInput` so that the schema component the OpenAPI\ndocument carries is named for the operation rather than for the domain type, the way\nevery other module's input is.",
-            "title": "DevContextInput",
-            "$defs": {
-              "CompileInput": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "issue": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
-                  },
-                  "milestone": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "A milestone id or slug, or its canonical identifier."
-                  },
-                  "intent": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
-                  },
-                  "paths": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
-                  },
-                  "uris": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
-                  },
-                  "budget_tokens": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "format": "uint64",
-                    "minimum": 0,
-                    "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
-                  },
-                  "max_depth": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "format": "uint",
-                    "minimum": 0,
-                    "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
-                  },
-                  "floor": {
-                    "type": [
-                      "number",
-                      "null"
-                    ],
-                    "format": "double",
-                    "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
-                  },
-                  "all_blocking_rules": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
-                  }
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+              },
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A milestone id or slug, or its canonical identifier."
+              },
+              "intent": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 },
-                "description": "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.\n\nThe seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and\n`intent` all contribute, and naming several is the normal case rather than a conflict.\n`intent` is the only one the compiler infers from, which is why every entry it produces\ncarries `Selector::IntentMatch` and a confidence below one.\n\n`deny_unknown_fields` is deliberate. This is the input of a served capability, so a\nmisspelled field is a request that does not mean what its author thought; refusing it is\nthe difference between a typo and a silently smaller answer.\n\n```\nuse majordomus_cli::devcontext::CompileInput;\nuse serde_json::json;\n\n// the smallest legitimate request, which is not the same as no request\nlet nothing: CompileInput = serde_json::from_value(json!({})).unwrap();\nassert_eq!(nothing, CompileInput::default());\nassert!(nothing.issue.is_none() && nothing.paths.is_empty());\n\n// the seeds combine rather than compete\nlet both: CompileInput = serde_json::from_value(json!({\n    \"issue\": \"I0301\",\n    \"paths\": [\"apps/majordomus-cli/src\"],\n    \"intent\": \"explain the budget\",\n    \"budget_tokens\": 4_000,\n})).unwrap();\nassert_eq!(both.issue.as_deref(), Some(\"I0301\"));\nassert_eq!(both.paths, [\"apps/majordomus-cli/src\"]);\nassert_eq!(both.budget_tokens, Some(4_000));\n\n// and a misspelled field is refused rather than quietly ignored\nlet typo = serde_json::from_value::<CompileInput>(json!({\"max_dept\": 2}));\nassert!(typo.is_err(), \"a typo must not become a smaller answer\");\n```"
+                "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
+              },
+              "uris": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+              },
+              "budget_tokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
+              },
+              "max_depth": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint",
+                "minimum": 0,
+                "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
+              },
+              "floor": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "format": "double",
+                "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
+              },
+              "all_blocking_rules": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
               }
-            }
+            },
+            "description": "The input of `devcontext.compile`: what to compile a context about.",
+            "title": "DevContextInput"
           }
         },
         "output": {
@@ -10103,93 +10097,87 @@
         "input": {
           "name": "DevContextExplainInput",
           "schema": {
-            "$ref": "#/$defs/ExplainInput",
-            "description": "The input of `devcontext.explain`: one identifier, and the request to judge it under.",
-            "title": "DevContextExplainInput",
-            "$defs": {
-              "ExplainInput": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "uri": {
-                    "type": "string",
-                    "description": "The canonical identifier to explain."
-                  },
-                  "issue": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
-                  },
-                  "milestone": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "A milestone id or slug, or its canonical identifier."
-                  },
-                  "intent": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
-                  },
-                  "paths": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
-                  },
-                  "uris": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
-                  },
-                  "budget_tokens": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "format": "uint64",
-                    "minimum": 0,
-                    "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
-                  },
-                  "max_depth": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "format": "uint",
-                    "minimum": 0,
-                    "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
-                  },
-                  "floor": {
-                    "type": [
-                      "number",
-                      "null"
-                    ],
-                    "format": "double",
-                    "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
-                  },
-                  "all_blocking_rules": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
-                  }
-                },
-                "required": [
-                  "uri"
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "uri": {
+                "type": "string",
+                "description": "The canonical identifier to explain."
+              },
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
                 ],
-                "description": "The input of `devcontext.explain`: one identifier, and the request to judge it under.\n\nThe request is not optional context for the question — it is half of the question.\n\"Why is this ADR not in my context\" has no answer in the abstract: it is in or out of a\n*particular* compiled answer, and \"excluded for budget\" is only actionable when the\nbudget it did not fit in is known. So the same fields `compile` takes are `flatten`ed in\nhere, which also means the wire form is one flat object rather than a nested `request`,\nand the command line can share its flags.\n\n```\nuse majordomus_cli::devcontext::ExplainInput;\nuse serde_json::json;\n\n// flattened: the request's fields sit beside `uri`, not under it\nlet input: ExplainInput = serde_json::from_value(json!({\n    \"uri\": \"majordomus://adr/0052\",\n    \"budget_tokens\": 2_000,\n    \"max_depth\": 1,\n})).unwrap();\nassert_eq!(input.uri, \"majordomus://adr/0052\");\nassert_eq!(input.request.budget_tokens, Some(2_000));\nassert_eq!(input.request.max_depth, Some(1));\n\n// and the identifier alone is a complete question, judged under the default request\nlet bare: ExplainInput = serde_json::from_value(json!({\"uri\": \"majordomus://adr/0052\"}))\n    .unwrap();\nassert_eq!(bare.request, Default::default());\n```"
+                "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+              },
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A milestone id or slug, or its canonical identifier."
+              },
+              "intent": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Repository-relative paths the work touches, added to whatever the seeds declare."
+              },
+              "uris": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+              },
+              "budget_tokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent."
+              },
+              "max_depth": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint",
+                "minimum": 0,
+                "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent."
+              },
+              "floor": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "format": "double",
+                "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent."
+              },
+              "all_blocking_rules": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
               }
-            }
+            },
+            "required": [
+              "uri"
+            ],
+            "description": "The input of `devcontext.explain`: one identifier, and the request to judge it under.",
+            "title": "DevContextExplainInput"
           }
         },
         "output": {
@@ -69486,7 +69474,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e08fe111c1f7992e821232be3879437164321a6e29bad7cca5035be3e223b45d",
+    "fingerprint": "883ad08b6324cc8d14d9c813c2299289abaecb2481744307b788796ce2ab6602",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
