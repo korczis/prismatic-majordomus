@@ -7,8 +7,8 @@
 #
 #   1. Its commands are in `bash` fences the gate extracts, so each is one the project runs
 #      (the reading commands), or carries the reason it cannot run here (the acting ones).
-#   2. Every number it states about the executor is the constant the code declares: read from
-#      the Rust source by name, never copied here a third time.
+#   2. The numbers it states about the executor, each listed below, are the constants the
+#      code declares: read from the Rust source by name, never copied here a third time.
 #   3. Its Commands table and the command line are the same list: every `prs` subcommand has
 #      a row, and every row names a subcommand that exists.
 #
@@ -36,6 +36,8 @@ numbers() {
   says integration/drain.rs ROLLOUT_MERGES_BEFORE_CONTINUOUS '5' 'five verified merges'
   says integration/drain.rs LEASE_STALE_AFTER 'Duration::from_secs(1800)' '30 minutes'
   says integration/drain.rs INTERVAL_SECONDS '30..=900' '30 to 900'
+  says integration/drain.rs CONTINUOUS_TRANSIENT_LIMIT '3' 'at most three consecutive cycles'
+  says integration/drain.rs DRAIN_STEPS_PER_MERGE '3' 'three steps for each merge asked for'
   says integration/drain.rs REFRESHED_HEAD_REPORTS_WITHIN 'Duration::from_secs(4 * 3600)' 'four hours'
   says integration/wait.rs STARVING_AFTER '3' 'passed over three times'
   says integration/mod.rs OBSERVATION_STALE_AFTER 'std::time::Duration::from_secs(3600)' 'than an hour'
@@ -45,6 +47,10 @@ numbers() {
   says integration/bounded.rs FORGE_READ 'Duration::from_secs(60)' '60 seconds'
   says integration/bounded.rs FORGE_WRITE 'Duration::from_secs(120)' '120 seconds'
   says integration/bounded.rs GIT_TRANSFER 'Duration::from_secs(300)' '300 seconds'
+  # the retry policy is one value with fields, read as the source spells them
+  grep -A3 '^pub const FORGE: Backoff' "$SRC/integration/retry.rs" | tr -d ' \n' | grep -q 'attempts:4,initial:Duration::from_secs(2),' \
+    || { echo "    retry::FORGE is no longer four attempts starting at 2 s: update the case and the document together"; bad=1; }
+  case "$flat" in *'at most four attempts with waits of 2, 4 and 8 seconds'*) ;; *) echo "    the document does not say 'at most four attempts with waits of 2, 4 and 8 seconds'"; bad=1 ;; esac
   # the interval's default is an argument's, not a constant's
   grep -q 'default_value_t = 300, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS)' "$SRC/cli.rs" \
     || { echo "    the interval's default in cli.rs is no longer 300"; bad=1; }
@@ -74,7 +80,7 @@ echo "    the document's commands are extracted by the gate"
 listed="$("$ROOT/scripts/ci/doc-command-check" --list 2>/dev/null | grep -c '^docs/INTEGRATION.md' || true)"
 [ "${listed:-0}" -ge 10 ] || { echo "    doc-command-check extracts $listed command(s) from docs/INTEGRATION.md; its fences are not the kind the gate reads"; exit 1; }
 
-echo "    every number it states is the constant the code declares"
+echo "    the numbers it states are the constants the code declares"
 numbers "$DOC"
 
 echo "    its Commands table is the command line's subcommands"

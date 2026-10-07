@@ -15,6 +15,7 @@
 use std::io::Read;
 use std::process::{Command, Output, Stdio};
 use std::sync::mpsc::{channel, Receiver};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// A read of the forge or of the remote's refs: `gh` listing or viewing, `git ls-remote`.
@@ -30,16 +31,48 @@ const POLL: Duration = Duration::from_millis(25);
 /// pipe open would otherwise hold the call after the child itself is gone.
 const DRAINED_WITHIN: Duration = Duration::from_secs(2);
 
-/// Read a pipe to its end on a thread of its own, so a child that writes more than a pipe
-/// holds never waits on a reader that is waiting on it.
-fn reader<R: Read + Send + 'static>(pipe: Option<R>) -> Receiver<Vec<u8>> {
-    let (tx, rx) = channel();
+/// One stream of a child, read on a thread of its own so a child that writes more than a
+/// pipe holds never waits on a reader that is waiting on it. What has been read is shared,
+/// so it is still there when the stream never ends.
+struct Stream {
+    read: Arc<Mutex<Vec<u8>>>,
+    ended: Receiver<()>,
+}
+
+fn reader<R: Read + Send + 'static>(pipe: Option<R>) -> Stream {
+    let read = Arc::new(Mutex::new(Vec::new()));
+    let (tx, ended) = channel();
+    let into = Arc::clone(&read);
     std::thread::spawn(move || {
-        let mut buffer = Vec::new();
-        let _ = pipe.map(|mut p| p.read_to_end(&mut buffer));
-        let _ = tx.send(buffer);
+        let mut chunk = [0u8; 8192];
+        let mut pipe = pipe;
+        // until the stream ends: a read that fails ends it like its end does
+        while let Some(n) = pipe
+            .as_mut()
+            .and_then(|p| p.read(&mut chunk).ok())
+            .filter(|n| *n > 0)
+        {
+            let _ = into
+                .lock()
+                .map(|mut all| all.extend_from_slice(&chunk[..n]));
+        }
+        let _ = tx.send(());
     });
-    rx
+    Stream { read, ended }
+}
+
+impl Stream {
+    /// What the stream held, waiting until `until` for it to end. A descendant of the child
+    /// that kept the pipe open never ends it: what was read by then is what is returned.
+    fn drained(self, until: Instant) -> Vec<u8> {
+        let _ = self
+            .ended
+            .recv_timeout(until.saturating_duration_since(Instant::now()));
+        self.read
+            .lock()
+            .map(|mut all| std::mem::take(&mut *all))
+            .unwrap_or_default()
+    }
 }
 
 /// Run `cmd` to its end and return what it wrote, or kill it once `limit` has passed.
@@ -79,12 +112,13 @@ pub fn output_within(cmd: &mut Command, what: &str, limit: Duration) -> std::io:
             _ => std::thread::sleep(POLL),
         }
     };
-    let drained = |rx: Receiver<Vec<u8>>| rx.recv_timeout(DRAINED_WITHIN).unwrap_or_default();
+    // one wait for both streams of a child that has ended
+    let until = Instant::now() + DRAINED_WITHIN;
     ended
         .map(|status| Output {
             status,
-            stdout: drained(stdout),
-            stderr: drained(stderr),
+            stdout: stdout.drained(until),
+            stderr: stderr.drained(until),
         })
         .ok_or_else(|| {
             let _ = child.kill();
@@ -97,6 +131,19 @@ pub fn output_within(cmd: &mut Command, what: &str, limit: Duration) -> std::io:
                 ),
             )
         })
+}
+
+/// What a bounded call answered, as the callers that only want its words read it: what it
+/// wrote when it succeeded, what it complained of when it did not, and the error when it
+/// could not be run or did not end in time.
+pub fn answered(out: std::io::Result<Output>) -> Result<String, String> {
+    match out {
+        Ok(out) if out.status.success() => {
+            Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+        }
+        Ok(out) => Err(String::from_utf8_lossy(&out.stderr).trim().to_string()),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 /// The two bounds a `git` call that reaches the remote is given, as methods beside
@@ -184,10 +231,33 @@ mod tests {
         )
         .unwrap();
         assert!(out.status.success());
+        // and what it wrote before it ended is not lost with the stream that never ends
+        assert_eq!(out.stdout, b"said");
         assert!(
             began.elapsed() < Duration::from_secs(15),
             "{:?}",
             began.elapsed()
+        );
+    }
+
+    #[test]
+    fn an_answer_is_its_words_its_complaint_or_why_it_could_not_be_had() {
+        let within =
+            |script: &str, limit: Duration| output_within(&mut sh(script), "the call", limit);
+        assert_eq!(
+            answered(within("printf ' said '", Duration::from_secs(30))),
+            Ok("said".into())
+        );
+        assert_eq!(
+            answered(within(
+                "printf refused >&2; exit 1",
+                Duration::from_secs(30)
+            )),
+            Err("refused".into())
+        );
+        assert_eq!(
+            answered(within("sleep 30", Duration::from_millis(100))),
+            Err("the call timed out after 0 s and was killed".into())
         );
     }
 

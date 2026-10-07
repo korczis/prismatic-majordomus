@@ -24,8 +24,9 @@ pub struct Backoff {
     pub max: Duration,
 }
 
-/// The forge's policy: four attempts, waiting 2 s, 4 s and 8 s — under fifteen seconds in
-/// all, short enough that a drain step is not held for minutes by a forge that is down.
+/// The forge's policy: four attempts, waiting 2 s, 4 s and 8 s — under fifteen seconds of
+/// waiting in all, short enough that a drain step is not held for minutes by a forge that is
+/// down. Each attempt is itself bounded ([`super::bounded`]), so one that hangs ends too.
 pub const FORGE: Backoff = Backoff {
     attempts: 4,
     initial: Duration::from_secs(2),

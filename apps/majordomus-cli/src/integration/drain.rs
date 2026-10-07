@@ -1491,7 +1491,9 @@ pub fn drain_until(
             return Ok(report);
         }
     }
-    let max_steps = max.saturating_mul(3).max(3);
+    let max_steps = max
+        .saturating_mul(DRAIN_STEPS_PER_MERGE)
+        .max(DRAIN_STEPS_PER_MERGE);
     while report.merged.len() < max {
         if stop.is_some_and(|s| s.load(std::sync::atomic::Ordering::SeqCst)) {
             report.stopped = "asked to stop; the step in progress finished first".into();
@@ -1602,6 +1604,11 @@ pub struct ContinuousOptions {
 /// the forge — a timeout, a 5xx, a rate limit — before it ends: long enough for a blip,
 /// short enough that an outage is not hidden for hours.
 pub const CONTINUOUS_TRANSIENT_LIMIT: usize = 3;
+
+/// How many steps a drain takes for each merge it was asked for, and the fewest it takes at
+/// all: a queue that keeps moving under the executor, or a candidate refused again and again,
+/// ends the drain at this bound instead of holding it.
+pub const DRAIN_STEPS_PER_MERGE: usize = 3;
 
 /// Wait one interval, a second at a time, until it passes or a stop is asked for.
 fn wait_interval(
@@ -2201,8 +2208,16 @@ impl Integrator for ForgeIntegrator<'_> {
             // — forward, sideways or back, or deleted — is refused here. A listing that fails is
             // its own refusal, in git's words, so an outage is classed as one (transient) and
             // never reported as a branch that moved.
-            let listed = git_in(&["ls-remote", "origin", &format!("refs/heads/{}", a.head_ref)])
-                .map_err(|e| format!("the branch could not be listed: {e}"))?;
+            // a read of the remote, and bounded like every other: a listing that never
+            // answers would hold the lease this act keeps alive
+            let listed = super::bounded::answered(
+                Command::new("git")
+                    .arg("-C")
+                    .arg(&dir)
+                    .args(["ls-remote", "origin", &format!("refs/heads/{}", a.head_ref)])
+                    .output_within_read("git ls-remote"),
+            )
+            .map_err(|e| format!("the branch could not be listed: {e}"))?;
             let remote = listed.split_whitespace().next().unwrap_or("nothing");
             if remote != head {
                 return Err(format!(

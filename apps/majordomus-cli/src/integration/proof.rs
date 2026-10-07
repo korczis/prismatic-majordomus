@@ -101,11 +101,18 @@ pub struct DryRunProof {
 }
 
 fn run(root: &Path, program: &str, args: &[&str]) -> Result<String, String> {
-    let out = Command::new(program)
-        .current_dir(root)
-        .args(args)
-        .output()
-        .map_err(|e| format!("{program} could not run: {e}"))?;
+    // the proof reads the remote and the forge, and neither may hang it (super::bounded); the
+    // limit of a transfer is ample for the local git it also asks
+    let what = format!(
+        "{program} {}",
+        args.iter().take(2).copied().collect::<Vec<_>>().join(" ")
+    );
+    let out = super::bounded::output_within(
+        Command::new(program).current_dir(root).args(args),
+        &what,
+        super::bounded::GIT_TRANSFER,
+    )
+    .map_err(|e| format!("{program} could not run: {e}"))?;
     if !out.status.success() {
         return Err(format!(
             "{program} {} exited {}: {}",

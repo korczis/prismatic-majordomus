@@ -5432,12 +5432,82 @@ fn a_refused_candidate_is_held_until_its_head_or_master_moves() {
     assert_eq!(report.merged, vec![1]);
 }
 
+/// What of a source file ships: everything but its tests. A declared test module
+/// (`#[cfg(test)] mod tests;`) is another file and only its two lines go; an inline one is
+/// the rest of the file.
+fn shipped(text: &str) -> String {
+    let mut out = String::new();
+    let mut lines = text.lines().peekable();
+    while let Some(line) = lines.next() {
+        if line.trim() == "#[cfg(test)]" {
+            let next = lines.peek().map_or("", |l| l.trim());
+            if next.starts_with("mod ") && next.ends_with(';') {
+                lines.next();
+                continue;
+            }
+            if next.starts_with("mod ") {
+                break;
+            }
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+    out
+}
+
+/// The lines of a shipped source that write a disposition, a lane or the gates of an
+/// assessment, or build one by hand: `file:line: code`.
+fn disposition_writers(rel: &str, text: &str) -> Vec<String> {
+    // the line numbers are the file's own, so the scan walks the file and skips what
+    // `shipped` drops
+    let kept = shipped(text);
+    let mut kept_lines = kept.lines().peekable();
+    let mut found = Vec::new();
+    for (n, line) in text.lines().enumerate() {
+        if kept_lines.peek() != Some(&line) {
+            continue;
+        }
+        kept_lines.next();
+        let code = line.trim_start();
+        if code.starts_with("//") {
+            continue;
+        }
+        // a field, then `=` alone: an assignment, spaced or not, and neither a comparison
+        // (`==`, `!=`, `<=`) nor a match arm (`=>`)
+        let assigns = [".disposition", ".lane", ".gates"].iter().any(|field| {
+            code.match_indices(field).any(|(at, _)| {
+                let rest = code[at + field.len()..].trim_start();
+                rest.starts_with('=') && !rest.starts_with("==") && !rest.starts_with("=>")
+            })
+        });
+        let builds = code.contains("PullRequestAssessment {")
+            && !code.contains("struct PullRequestAssessment")
+            && !code.contains("impl ");
+        if assigns || builds {
+            found.push(format!("{rel}:{}: {code}", n + 1));
+        }
+    }
+    found
+}
+
 /// Only the classifier decides a disposition. Outside `integration/classify.rs` no shipped
 /// source assigns one, builds an assessment by hand, or moves one between lanes: the
 /// executor's refusals and the merge method are gates the classifier answers, so "ready
 /// exactly when every gate passed" has no second writer to break it.
 #[test]
 fn only_the_classifier_writes_a_disposition() {
+    // the scan is seen to fail first: a writer below a declared test module, which is where
+    // the one this change removed lived, and none inside an inline test module
+    let planted = "pub mod retry;\n#[cfg(test)]\nmod tests;\npub mod wait;\n\nfn hold(a: &mut A) {\n    a.disposition = D::NeedsRepair;\n    a.lane = a.disposition.lane();\n    if a.disposition == D::Ready {}\n    a.gates=vec![];\n    match a.disposition => {}\n}\n\n#[cfg(test)]\nmod unit {\n    fn f(a: &mut A) {\n        a.disposition = D::Ready;\n    }\n}\n";
+    assert_eq!(
+        disposition_writers("integration/mod.rs", planted),
+        [
+            "integration/mod.rs:7: a.disposition = D::NeedsRepair;",
+            "integration/mod.rs:8: a.lane = a.disposition.lane();",
+            "integration/mod.rs:10: a.gates=vec![];"
+        ]
+    );
+
     fn sources(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
         for entry in std::fs::read_dir(dir).unwrap().flatten() {
             let path = entry.path();
@@ -5457,6 +5527,7 @@ fn only_the_classifier_writes_a_disposition() {
         src.display()
     );
     let mut writers = Vec::new();
+    let mut scanned = 0;
     for file in files {
         let rel = file.strip_prefix(&src).unwrap().display().to_string();
         // the classifier is the writer; this file is test code throughout
@@ -5469,33 +5540,22 @@ fn only_the_classifier_writes_a_disposition() {
         if !rel.starts_with("integration/") && !text.contains("PullRequestAssessment") {
             continue;
         }
-        // what ships: everything above a file's own test module
-        let shipped = text.split("\n#[cfg(test)]\nmod ").next().unwrap_or(&text);
-        for (n, line) in shipped.lines().enumerate() {
-            let code = line.trim_start();
-            if code.starts_with("//") {
-                continue;
-            }
-            let assigns = [".disposition = ", ".lane = ", ".gates = "]
-                .iter()
-                .any(|w| code.contains(w));
-            let builds = code.contains("PullRequestAssessment {")
-                && !code.contains("struct PullRequestAssessment")
-                && !code.contains("impl ");
-            if assigns || builds {
-                writers.push(format!("{rel}:{}: {code}", n + 1));
-            }
+        if rel == "integration/mod.rs" {
+            // the file the second writer lived in is scanned to its end, not to its
+            // declaration of this test module
+            assert!(
+                shipped(&text).contains("fn computed("),
+                "integration/mod.rs is not scanned whole"
+            );
         }
+        scanned += 1;
+        writers.extend(disposition_writers(&rel, &text));
     }
+    assert!(scanned > 10, "only {scanned} source(s) were scanned");
     assert!(
         writers.is_empty(),
         "a disposition is written outside the classifier:\n{}",
         writers.join("\n")
-    );
-    let module = std::fs::read_to_string(src.join("integration/mod.rs")).unwrap();
-    assert!(
-        !module.contains("fn executor_feedback"),
-        "the second writer is back"
     );
 }
 
