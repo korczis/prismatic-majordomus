@@ -83,6 +83,7 @@
     "op-lifecycle-providers": "docs/api/lifecycle/",
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
+    "op-mcp-projection": "docs/api/mcp/",
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
@@ -454,9 +455,10 @@
     "schema-ExecutableIdentity": "docs/api/server/",
     "schema-ExecutionConcurrency": "docs/api/capabilities/",
     "schema-ExecutionDiagnostic": "docs/api/executions/",
-    "schema-ExecutionEffect": "docs/api/capabilities/",
+    "schema-ExecutionEffect": "docs/api/shared/",
     "schema-ExecutionError": "docs/api/executions/",
     "schema-ExecutionEvent": "docs/api/executions/",
+    "schema-ExecutionHints": "docs/api/mcp/",
     "schema-ExecutionId": "docs/api/executions/",
     "schema-ExecutionLinks": "docs/api/executions/",
     "schema-ExecutionList": "docs/api/executions/",
@@ -605,8 +607,18 @@
     "schema-Materiality": "docs/api/reasoning/",
     "schema-Matrix": "docs/api/product/",
     "schema-MatrixRow": "docs/api/product/",
+    "schema-McpClient": "docs/api/mcp/",
+    "schema-McpClientStanding": "docs/api/mcp/",
+    "schema-McpEffectCount": "docs/api/mcp/",
     "schema-McpExposure": "docs/api/capabilities/",
+    "schema-McpFinding": "docs/api/mcp/",
+    "schema-McpProjection": "docs/api/mcp/",
     "schema-McpResource": "docs/api/capabilities/",
+    "schema-McpResourceSummary": "docs/api/mcp/",
+    "schema-McpServerIdentity": "docs/api/mcp/",
+    "schema-McpServing": "docs/api/mcp/",
+    "schema-McpToolEntry": "docs/api/mcp/",
+    "schema-McpTransportEntry": "docs/api/mcp/",
     "schema-Measured": "docs/api/design/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
@@ -1022,6 +1034,7 @@
     "tag-intents": "docs/api/intents/",
     "tag-knowledge_base": "docs/api/knowledge-base/",
     "tag-lifecycle": "docs/api/lifecycle/",
+    "tag-mcp": "docs/api/mcp/",
     "tag-mesh": "docs/api/mesh/",
     "tag-models": "docs/api/models/",
     "tag-objects": "docs/api/objects/",
@@ -1048,9 +1061,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 170,
-    "schemas": 824,
-    "tags": 51
+    "operations": 171,
+    "schemas": 835,
+    "tags": 52
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1218,6 +1231,7 @@
     "lifecycle.providers": "lifecycle",
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
+    "mcp.projection": "mcp",
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
@@ -1593,9 +1607,10 @@
     "ExecutableIdentity": "server",
     "ExecutionConcurrency": "capabilities",
     "ExecutionDiagnostic": "executions",
-    "ExecutionEffect": "capabilities",
+    "ExecutionEffect": "shared",
     "ExecutionError": "executions",
     "ExecutionEvent": "executions",
+    "ExecutionHints": "mcp",
     "ExecutionId": "executions",
     "ExecutionLinks": "executions",
     "ExecutionList": "executions",
@@ -1744,8 +1759,18 @@
     "Materiality": "reasoning",
     "Matrix": "product",
     "MatrixRow": "product",
+    "McpClient": "mcp",
+    "McpClientStanding": "mcp",
+    "McpEffectCount": "mcp",
     "McpExposure": "capabilities",
+    "McpFinding": "mcp",
+    "McpProjection": "mcp",
     "McpResource": "capabilities",
+    "McpResourceSummary": "mcp",
+    "McpServerIdentity": "mcp",
+    "McpServing": "mcp",
+    "McpToolEntry": "mcp",
+    "McpTransportEntry": "mcp",
     "Measured": "design",
     "MeshDoctorReport": "mesh",
     "MeshEvent": "mesh",
@@ -16761,6 +16786,7 @@
         "lifecycle.recovery",
         "lifecycle.runtime",
         "health.live",
+        "mcp.projection",
         "mesh.status",
         "mesh.claim",
         "mesh.release",
@@ -18222,14 +18248,19 @@
     },
     {
       "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.",
-      "home": "capabilities",
+      "home": "shared",
       "is_enum": true,
       "name": "ExecutionEffect",
       "properties": [],
       "type": "\"read\" | \"process_state\" | \"repository_mutation\"",
-      "used_by": [],
+      "used_by": [
+        "mcp.projection"
+      ],
       "used_by_schemas": [
-        "ExecutionPolicy"
+        "ExecutionPolicy",
+        "McpEffectCount",
+        "McpToolEntry",
+        "Row"
       ],
       "values": [
         {
@@ -18577,6 +18608,49 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "ExecutionHints",
+      "properties": [
+        {
+          "description": "The call changes nothing, anywhere.",
+          "name": "read_only",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The call may overwrite or remove something that outlives this process.",
+          "name": "destructive",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "A second identical call changes nothing the first did not.",
+          "name": "idempotent",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities.",
+          "name": "open_world",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpToolEntry"
+      ],
+      "values": [],
+      "variants": []
     },
     {
       "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.",
@@ -26477,6 +26551,109 @@
       "variants": []
     },
     {
+      "description": "One client the distribution declares a project-scoped configuration for.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpClient",
+      "properties": [
+        {
+          "description": "The provider id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person knows it by.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file it reads, repository-relative.",
+          "name": "config",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where that file stands here.",
+          "name": "standing",
+          "refs": [
+            "McpClientStanding"
+          ],
+          "required": true,
+          "type": "McpClientStanding"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a client's project-scoped configuration stands in this repository.",
+      "home": "mcp",
+      "is_enum": true,
+      "name": "McpClientStanding",
+      "properties": [],
+      "type": "\"wired\" | \"foreign\" | \"absent\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpClient"
+      ],
+      "values": [
+        {
+          "description": "The file exists and names the launcher: this client starts this repository's server.",
+          "value": "wired"
+        },
+        {
+          "description": "The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing.",
+          "value": "foreign"
+        },
+        {
+          "description": "The file does not exist: this client starts no server here until it is written.",
+          "value": "absent"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many tools have one effect.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpEffectCount",
+      "properties": [
+        {
+          "description": "The effect.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
+        },
+        {
+          "description": "How many tools have it.",
+          "name": "tools",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How, if at all, a capability appears to an MCP client.",
       "home": "capabilities",
       "is_enum": false,
@@ -26508,6 +26685,157 @@
       "variants": []
     },
     {
+      "description": "Something about the projection a person should act on.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpFinding",
+      "properties": [
+        {
+          "description": "The stable code.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The MCP projection of this registry in this repository.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpProjection",
+      "properties": [
+        {
+          "description": "Who answers `initialize`.",
+          "name": "server",
+          "refs": [
+            "McpServerIdentity"
+          ],
+          "required": true,
+          "type": "McpServerIdentity"
+        },
+        {
+          "description": "The protocol versions accepted, newest first.",
+          "name": "protocol_versions",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "How a client reaches the server.",
+          "name": "transports",
+          "refs": [
+            "McpTransportEntry"
+          ],
+          "required": true,
+          "type": "array of McpTransportEntry"
+        },
+        {
+          "description": "What of the protocol is served.",
+          "name": "serving",
+          "refs": [
+            "McpServing"
+          ],
+          "required": true,
+          "type": "McpServing"
+        },
+        {
+          "description": "How many tools the registry projects, whatever the filter asked for.",
+          "name": "tool_count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The tools asked for, in registry order.",
+          "name": "tools",
+          "refs": [
+            "McpToolEntry"
+          ],
+          "required": true,
+          "type": "array of McpToolEntry"
+        },
+        {
+          "description": "The tools counted by effect, every effect present.",
+          "name": "effects",
+          "refs": [
+            "McpEffectCount"
+          ],
+          "required": true,
+          "type": "array of McpEffectCount"
+        },
+        {
+          "description": "The tools that write the repository, by name. The `initialize` instructions name the\nsame ones.",
+          "name": "writers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The resources.",
+          "name": "resources",
+          "refs": [
+            "McpResourceSummary"
+          ],
+          "required": true,
+          "type": "McpResourceSummary"
+        },
+        {
+          "description": "Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names.",
+          "name": "launcher_in_repository",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The clients the distribution declares a configuration for, and where each stands.",
+          "name": "clients",
+          "refs": [
+            "McpClient"
+          ],
+          "required": true,
+          "type": "array of McpClient"
+        },
+        {
+          "description": "What a person should act on. Empty is nothing to do.",
+          "name": "findings",
+          "refs": [
+            "McpFinding"
+          ],
+          "required": true,
+          "type": "array of McpFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mcp.projection"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "An MCP resource: its URI and the short name a client lists.",
       "home": "capabilities",
       "is_enum": false,
@@ -26532,6 +26860,225 @@
       "used_by": [],
       "used_by_schemas": [
         "McpExposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The resources a client can read.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpResourceSummary",
+      "properties": [
+        {
+          "description": "Resources a builtin capability answers.",
+          "name": "builtin",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Objects of this repository's layer, each one more resource.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The URI shape of an object's resource.",
+          "name": "template",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who answers `initialize`, as it answers.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpServerIdentity",
+      "properties": [
+        {
+          "description": "The server name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version: this executable's, never one of the protocol adapter's own.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the server serves of the protocol, and what it does not.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpServing",
+      "properties": [
+        {
+          "description": "The methods a request may name. Anything else is answered `-32601`.",
+          "name": "methods",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Tools: every capability that declares one.",
+          "name": "tools",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Resources: every capability that declares one, and every object of the layer.",
+          "name": "resources",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Prompts. Not served: the repository's prompt assets are resources, because a prompt\nserved unrendered would read as finished.",
+          "name": "prompts",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked.",
+          "name": "notifications",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One tool, as the registry projects it.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpToolEntry",
+      "properties": [
+        {
+          "description": "The name a client calls.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability it projects; `capabilities.describe` answers its schemas.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The module that composes the capability.",
+          "name": "module",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a call changes.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
+        },
+        {
+          "description": "What a caller may assume before calling; the tool's annotations are this value.",
+          "name": "hints",
+          "refs": [
+            "ExecutionHints"
+          ],
+          "required": true,
+          "type": "ExecutionHints"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One way a client reaches the server.",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpTransportEntry",
+      "properties": [
+        {
+          "description": "`stdio` or `http`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it is reached: the command a client starts, or the path on the shared server.",
+          "name": "reached_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Sessions attached to this process over it right now.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
       ],
       "values": [],
       "variants": []
@@ -40289,6 +40836,15 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "What a call changes: nothing, this process's memory, or the repository. The same\nclassification every projection reads, so the matrix answers \"where is it reachable\"\nand \"what does reaching it risk\" in one row.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
         },
         {
           "description": "The command line, when it declares one and clap has it.",
@@ -54122,6 +54678,83 @@
         }
       ],
       "slug": "lifecycle"
+    },
+    {
+      "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers.",
+      "name": "mcp",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mcp?effect=repository_mutation\"",
+          "description": "Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository's server. Reads the registry and one file per declared client; writes nothing.",
+          "home": "mcp",
+          "id": "mcp.projection",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "mcp",
+            "uri": "majordomus://mcp"
+          },
+          "mcp_tool": "majordomus_mcp",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool.",
+              "examples": [
+                {
+                  "case": "writers",
+                  "value": "\"repository_mutation\""
+                }
+              ],
+              "name": "effect",
+              "required": false,
+              "type": "ExecutionEffect | null"
+            }
+          ],
+          "path": "/api/v1/mcp",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mcp",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The MCP projection of this registry: the result.",
+              "schema": "McpProjection",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "McpProjection",
+          "stability": "experimental",
+          "summary": "The MCP projection of this registry"
+        }
+      ],
+      "slug": "mcp"
     },
     {
       "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",

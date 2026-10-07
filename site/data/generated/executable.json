@@ -1549,6 +1549,23 @@
       "tool": "majordomus_lifecycle_runtime"
     },
     {
+      "api_anchor": "/docs/api/mcp/#op-mcp-projection",
+      "claims": [],
+      "cli": null,
+      "id": "mcp.projection",
+      "kind": "query",
+      "module": "mcp",
+      "module_route": "/registry/modules/mcp/",
+      "resource": "majordomus://mcp",
+      "route": "/registry/capabilities/mcp-projection/",
+      "slug": "mcp-projection",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "tests": [],
+      "title": "The MCP projection of this registry",
+      "tool": "majordomus_mcp"
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-claim",
       "claims": [],
       "cli": null,
@@ -3609,9 +3626,9 @@
     ]
   },
   "counts": {
-    "capabilities": 172,
+    "capabilities": 173,
     "claims": 77,
-    "modules": 51
+    "modules": 52
   },
   "generator": "majordomus-cli 0.14.0",
   "modules": [
@@ -4366,6 +4383,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "title": "Session lifecycle"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "mcp.projection",
+          "route": "/registry/capabilities/mcp-projection/",
+          "slug": "mcp-projection"
+        }
+      ],
+      "claims": [],
+      "id": "mcp",
+      "route": "/registry/modules/mcp/",
+      "slug": "mcp",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "title": "MCP projection"
     },
     {
       "capabilities": [

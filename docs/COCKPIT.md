@@ -72,6 +72,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/mesh` | the discovered nodes of this process's runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
 | `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor's credential presence (never a value), and their routing | `models.list` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
+| `/cockpit/mcp` | the MCP projection: server and protocol versions, transports with the sessions attached now, the methods served and what is not, the tools that write the repository, every tool with its effect (narrowed by `?effect=`), the client configurations and where each stands here, and where each executable capability is reachable (command line, HTTP, MCP tool, MCP resource) | `mcp.projection`, `capabilities.projections` |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |

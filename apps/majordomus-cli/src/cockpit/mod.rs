@@ -24,6 +24,7 @@
 pub mod assets;
 pub mod html;
 pub(crate) mod intents;
+pub(crate) mod mcp;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod reasoning;
@@ -103,6 +104,7 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/release", "release"),
     ("/cockpit/design", "design"),
     ("/cockpit/api", "api"),
+    ("/cockpit/mcp", "mcp"),
     ("/cockpit/search", ""),
     ("/cockpit/activity", ""),
 ];
@@ -236,6 +238,7 @@ impl Cockpit {
             "/cockpit/release" => pages::release(ctx),
             "/cockpit/design" => pages::design(ctx),
             "/cockpit/api" => pages::api(ctx),
+            "/cockpit/mcp" => mcp::page(ctx, query),
             "/cockpit/search" => pages::search(ctx, query),
             "/cockpit/activity" => pages::activity(ctx),
             other => {
