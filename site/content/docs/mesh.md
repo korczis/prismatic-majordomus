@@ -416,7 +416,7 @@ out, and a link, once dialed, replicates both ways.
 `--host` lasts as long as that one process. For a machine that should always be dialable,
 export `MAJORDOMUS_HTTP_HOST=0.0.0.0` in the shell's startup file: it is not mesh
 configuration — it names the interface every local server of this machine binds, whoever
-starts it — and [`MCP.md`](@/docs/mcp.md#the-interface-is-the-machines-to-name) says what it
+starts it — and [`MCP.md`](@/docs/mcp.md#the-machine-names-the-interface) says what it
 exposes.
 
 ## This repository's mesh

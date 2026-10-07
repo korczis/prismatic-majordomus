@@ -74,7 +74,7 @@ interface in `MAJORDOMUS_HTTP_HOST`. Entry inherits that variable and passes it 
 not read it, and `.envrc` does not set it. Because `.envrc.local` is sourced after the one
 call above, a value written there arrives too late for the server that call starts: it
 belongs in the shell's own startup file
-([`MCP.md`](MCP.md#the-interface-is-the-machines-to-name)).
+([`MCP.md`](MCP.md#the-machine-names-the-interface)).
 
 The rules that hold this shut are `project.envrc-is-an-adapter`
 ([`.ai/repo/rules/project/envrc-is-an-adapter.v2.md`](../.ai/repo/rules/project/envrc-is-an-adapter.v2.md)) —

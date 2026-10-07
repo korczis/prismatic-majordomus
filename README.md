@@ -545,7 +545,7 @@ leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing un
 tracked tree. Loopback is the default and no tracked file can move it; a machine that
 should be reachable from another exports `MAJORDOMUS_HTTP_HOST=0.0.0.0` in its own
 environment, and every server started there binds it
-([`docs/MCP.md`](docs/MCP.md#the-interface-is-the-machines-to-name)).
+([`docs/MCP.md`](docs/MCP.md#the-machine-names-the-interface)).
 
 **One web surface, discovered from its producer.** What the server serves is not a list
 anybody keeps. A *surface* — the home page, the documentation, the Cockpit, Swagger UI, the

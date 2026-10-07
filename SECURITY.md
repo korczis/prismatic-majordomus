@@ -28,7 +28,7 @@ it is described as real.
   on a command line, and a server bound beyond loopback says so in its log every time it
   starts. The surface has no authentication, so a machine that names `0.0.0.0` hands every
   host that reaches it the read surface and the declared writing commands
-  (`docs/MCP.md`, "The interface is the machine's to name";
+  (`docs/MCP.md`, "The machine names the interface";
   `test/cases/992_the_local_bind_is_the_machines_to_name.sh`).
 - **The mesh is off until a person turns it on.** The Rust executable's mesh (ADR 0050,
   ADR 0067) is the one declared exception on the executable's side: no discovery socket and
