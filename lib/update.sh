@@ -118,7 +118,9 @@ H
   local p
   for p in $plan; do printf '%s %s\n' "${p%%:*}" "${p#*:}"; done
   # the layer then records that it was brought up to this version (`doctor` reads it)
+  # (not in the tool's own source tree, whose stamp is `release bump`'s alone: mj_is_tool_source)
   local stamp=0; [ "$wf" = "$MJ_VERSION" ] || stamp=1
+  mj_is_tool_source && stamp=0
   [ "$stamp" = 1 ] && printf 'stamp %s written_for %s -> %s\n' "$(mj_rel "$MJ_AI_MANIFEST")" "${wf:-(none)}" "$MJ_VERSION"
   if [ "$dry" = 1 ]; then rm -rf "$tmp"; return 0; fi
 

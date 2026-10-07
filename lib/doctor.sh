@@ -479,14 +479,20 @@ mj_validate_policy_defaults() {
 #     finding it makes is suspect; a failure, naming the upgrade.
 # A value that is not a version is a defect of the manifest.
 mj_layer_version_grade() {
-  local wf rel; wf="$(mj_man written_for)"; rel="$(mj_rel "$MJ_AI_MANIFEST")"
+  local wf rel remedy="majordomus update"; wf="$(mj_man written_for)"; rel="$(mj_rel "$MJ_AI_MANIFEST")"
+  # the tool's own source tree is stamped by `release bump`, and not before the release
+  # installed to work on it reads the key: until then it names no version, by design
+  if mj_is_tool_source; then
+    remedy="majordomus release bump"
+    [ -n "$wf" ] || { mj_info layout "$rel" "names no tool version (written_for) yet: this is the tool's own source tree, which release bump stamps once the last release reads the key"; return 0; }
+  fi
   if [ -z "$wf" ]; then
-    mj_warn layout "$rel" "names no tool version (written_for): it was written before a layer recorded one, so a finding majordomus $MJ_VERSION adds may be version skew, not a defect" "majordomus update"
+    mj_warn layout "$rel" "names no tool version (written_for): it was written before a layer recorded one, so a finding majordomus $MJ_VERSION adds may be version skew, not a defect" "$remedy"
   elif ! mj_is_version "$wf"; then
-    mj_doctrine_fail layout "$rel" "written_for '$wf' is not a version (X.Y.Z)" "majordomus update"; return 1
+    mj_doctrine_fail layout "$rel" "written_for '$wf' is not a version (X.Y.Z)" "$remedy"; return 1
   else
     case "$(mj_version_cmp "$wf" "$MJ_VERSION")" in
-      -1) mj_warn layout "$rel" "written for majordomus $wf, older than this executable ($MJ_VERSION): a finding this version adds may be version skew, not a defect" "majordomus update" ;;
+      -1) mj_warn layout "$rel" "written for majordomus $wf, older than this executable ($MJ_VERSION): a finding this version adds may be version skew, not a defect" "$remedy" ;;
       0) mj_doctrine_ok layout "$rel" "written for majordomus $wf, this executable" ;;
       *) mj_doctrine_fail layout "$rel" "written for majordomus $wf, newer than this executable ($MJ_VERSION): upgrade the tool before trusting any other finding" "majordomus version"; return 1 ;;
     esac

@@ -282,6 +282,13 @@ mj_manifest_from_newer_tool() {
   MJ_MANIFEST_ERROR="it was written for majordomus $wf, newer than this executable ($MJ_VERSION); upgrade the tool"
 }
 
+# This repository is the tool's own source tree. Its layer is written by the version it
+# releases, so its written_for has one writer, `majordomus release bump`, which stamps it only
+# from the release after the first one that reads the key: every released tool refuses a
+# manifest key it does not know, and a stamp written here by `update` would refuse this
+# repository to every session running the installed tool.
+mj_is_tool_source() { [ -f "$MJ_ROOT/apps/majordomus-cli/Cargo.toml" ] && [ -f "$MJ_ROOT/bin/majordomus" ]; }
+
 # A tool version: X.Y.Z, optionally followed by a pre-release or build suffix.
 mj_is_version() { printf '%s' "$1" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'; }
 

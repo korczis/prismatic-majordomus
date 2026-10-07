@@ -13,13 +13,15 @@
 //!   apps/majordomus-cli/Cargo.lock   derived     cargo's record; the writer keeps it in step
 //!   generator stamps, the changelog  generated   `majordomus generate`
 //!   .ai/repo/releases/*.yaml         records     the release pipeline, after publication
-//!   .ai/manifest.yaml written_for    stamped     `release bump`, beside the authority
+//!   .ai/manifest.yaml written_for    stamped     `release bump`, once the last release reads it
 //! ```
 //!
-//! The repository's own layer names the tool version it was written for, as every adopter's
-//! does (`init` stamps it, `update` advances it). Here the layer is written *by* the version
-//! being released, so the writer that raises the authority stamps it in the same commit, and
-//! `scripts/ci/release-check` refuses a tree whose layer names another.
+//! Every layer names the tool version it was written for (`init` stamps it, `update`
+//! advances it, `doctor` grades it). This repository's layer is written by the version it
+//! releases, so [`stamp_layer`] puts that version beside the authority — but only from the
+//! release after the one that first reads the key ([`WRITTEN_FOR_READ_SINCE`]): every
+//! released tool refuses a manifest key it does not know, and a stamp the installed tool
+//! cannot read would refuse this repository to every session running it.
 //!
 //! The shell tool used to state the version a second time, by hand, because an installed
 //! tree has no `Cargo.toml` and the tool cannot read one at run time. It reads
@@ -63,8 +65,55 @@ pub const PROJECTION: &str = "share/version.txt";
 /// in step, by cargo's rule, in the same command that raises the manifest.
 pub const LOCK: &str = "apps/majordomus-cli/Cargo.lock";
 
-/// The repository's own AI layer manifest, whose `written_for` the writer stamps.
+/// The repository's own AI layer manifest, whose `written_for` [`stamp_layer`] stamps.
 pub const LAYER_MANIFEST: &str = ".ai/manifest.yaml";
+
+/// The first release that reads `written_for` in a layer manifest. A release before it refuses
+/// the key, so this repository's layer is stamped only once its last release is at least this
+/// one: by then the tool installed to work on it reads what it is given.
+pub const WRITTEN_FOR_READ_SINCE: &str = "0.15.0";
+
+/// Whether a bump stamps this repository's layer: when the last release, which is the tool
+/// installed to work here, reads `written_for` ([`WRITTEN_FOR_READ_SINCE`]). Nothing released,
+/// or a release that cannot be read as a version, stamps nothing.
+pub fn stamps_layer_after(last_release: Option<&str>) -> bool {
+    // the const is a version (a test holds it), and nothing released is below every version
+    last_release.and_then(Version::parse) >= Version::parse(WRITTEN_FOR_READ_SINCE)
+}
+
+/// Stamp [`LAYER_MANIFEST`]'s `written_for` with `to`: the line replaced where the layer has
+/// one, inserted after its `schema:` line where it has none, a second dropped, and every other
+/// byte kept. Whether anything was written; a tree with no layer has nothing to stamp.
+pub fn stamp_layer(root: &Path, to: &str) -> std::io::Result<bool> {
+    let layer = root.join(LAYER_MANIFEST);
+    let Ok(text) = std::fs::read_to_string(&layer) else {
+        return Ok(false);
+    };
+    let stamp = format!("written_for: \"{to}\"");
+    let mut out = String::with_capacity(text.len() + stamp.len() + 1);
+    let mut done = false;
+    for line in text.lines() {
+        // every written_for line is dropped, and the stamp stands where the first was, or
+        // after the schema line: a second would be a second answer
+        let replaced = line.starts_with("written_for:");
+        if !replaced {
+            out.push_str(line);
+            out.push('\n');
+        }
+        if !done && (replaced || line.starts_with("schema:")) {
+            out.push_str(&stamp);
+            out.push('\n');
+            done = true;
+        }
+    }
+    let changed = out != text;
+    (if changed {
+        std::fs::write(&layer, out)
+    } else {
+        Ok(())
+    })
+    .map(|()| changed)
+}
 
 /// Where the tool's own files live, and so where a version written by hand is refused.
 ///
@@ -834,13 +883,12 @@ pub fn diagnose(root: &Path) -> Vec<Diagnostic> {
 }
 
 /// Write `to` into the one place the version is authored, keep the lock's record of it in
-/// step, stamp the layer's `written_for` with it, and say which files changed.
+/// step, and say which files changed.
 ///
-/// Byte-exact and narrow: the manifest's `version` line inside `[package]`, the `version`
-/// line of the lock's own `majordomus-cli` entry — the one line cargo would rewrite — and the
-/// `written_for` line of [`LAYER_MANIFEST`], inserted after its `schema:` line where it has
-/// none. Nothing else in any of them is read or rewritten, so a dependency at the same
-/// version is untouched. [`PROJECTION`], the generator stamps and the changelog are not written here:
+/// Byte-exact and narrow: the manifest's `version` line inside `[package]`, and the `version`
+/// line of the lock's own `majordomus-cli` entry — the one line cargo would rewrite. Nothing
+/// else in either file is read or rewritten, so a dependency at the same version is
+/// untouched. [`PROJECTION`], the generator stamps and the changelog are not written here:
 /// they are derived, and `scripts/derive` derives them.
 ///
 /// ```
@@ -902,32 +950,6 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
         if out != text {
             std::fs::write(&lock, out)?;
             written.push(LOCK.to_string());
-        }
-    }
-
-    // The layer this tree is: written for the version it releases.
-    let layer = root.join(LAYER_MANIFEST);
-    if let Ok(text) = std::fs::read_to_string(&layer) {
-        let stamp = format!("written_for: \"{to}\"");
-        let mut out = String::with_capacity(text.len() + stamp.len() + 1);
-        let mut done = false;
-        for line in text.lines() {
-            // every written_for line is dropped, and the stamp stands where the first was, or
-            // after the schema line: a second would be a second answer
-            let replaced = line.starts_with("written_for:");
-            if !replaced {
-                out.push_str(line);
-                out.push('\n');
-            }
-            if !done && (replaced || line.starts_with("schema:")) {
-                out.push_str(&stamp);
-                out.push('\n');
-                done = true;
-            }
-        }
-        if out != text {
-            written.push(LAYER_MANIFEST.to_string());
-            return std::fs::write(&layer, out).map(|()| written);
         }
     }
 
@@ -1594,49 +1616,60 @@ mod tests {
         );
     }
 
-    /// The writer stamps the repository's own layer with the version it raises to: inserted
-    /// after `schema:` where the layer names none, the old one replaced where it does, a
-    /// second line dropped, and every other byte kept.
+    /// The first release that reads `written_for` comes after the last one that did not, and
+    /// is a version: a const nudged below it would stamp a layer the installed tool refuses.
     #[test]
-    fn the_writer_stamps_the_layer_with_the_version_it_raises_to() {
+    fn the_layer_is_stamped_only_after_a_release_that_reads_it() {
+        let read_since = Version::parse(WRITTEN_FOR_READ_SINCE).expect("a version");
+        // 0.14.0 is the last release that refuses the key
+        assert!(read_since > Version::parse("0.14.0").unwrap());
+        assert!(!stamps_layer_after(None), "nothing released stamps nothing");
+        assert!(!stamps_layer_after(Some("0.14.0")));
+        assert!(!stamps_layer_after(Some("not-a-version")));
+        assert!(stamps_layer_after(Some(WRITTEN_FOR_READ_SINCE)));
+        assert!(stamps_layer_after(Some("9.0.0")));
+    }
+
+    /// The stamp: inserted after `schema:` where the layer names none, the old one replaced
+    /// where it does (above the schema line or below it), a duplicate dropped, every other
+    /// byte kept, and nothing written when it already stands.
+    #[test]
+    fn the_layer_stamp_replaces_one_line_and_keeps_the_rest() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        std::fs::create_dir_all(root.join("apps/majordomus-cli")).unwrap();
+        assert!(
+            !stamp_layer(root, "1.0.0").unwrap(),
+            "no layer, nothing stamped"
+        );
         std::fs::create_dir_all(root.join(".ai")).unwrap();
-        std::fs::write(root.join(MANIFEST), "[package]\nversion = \"0.8.0\"\n").unwrap();
         let layer = root.join(LAYER_MANIFEST);
+        let read = || std::fs::read_to_string(&layer).unwrap();
         std::fs::write(
             &layer,
             "# kept\nschema: ai-repository/v1\nrepo:\n  path: repo\n",
         )
         .unwrap();
+        assert!(stamp_layer(root, "0.9.0").unwrap());
         assert_eq!(
-            write(root, "0.9.0").unwrap(),
-            vec![MANIFEST.to_string(), LAYER_MANIFEST.to_string()]
-        );
-        assert_eq!(
-            std::fs::read_to_string(&layer).unwrap(),
+            read(),
             "# kept\nschema: ai-repository/v1\nwritten_for: \"0.9.0\"\nrepo:\n  path: repo\n"
         );
-        // a stale stamp is replaced, and a duplicate is dropped
         std::fs::write(
             &layer,
             "schema: ai-repository/v1\nwritten_for: \"0.1.0\"\nrepo:\n  path: repo\nwritten_for: \"0.2.0\"\n",
         )
         .unwrap();
-        write(root, "1.0.0").unwrap();
+        assert!(stamp_layer(root, "1.0.0").unwrap());
         assert_eq!(
-            std::fs::read_to_string(&layer).unwrap(),
+            read(),
             "schema: ai-repository/v1\nwritten_for: \"1.0.0\"\nrepo:\n  path: repo\n"
         );
-        // a layer already stamped with the version is not written again
-        assert_eq!(write(root, "1.0.0").unwrap(), Vec::<String>::new());
-        // a stamp written above the schema line is replaced where it stands
-        std::fs::write(&layer, "written_for: \"0.1.0\"\nschema: ai-repository/v1\n").unwrap();
-        write(root, "1.0.0").unwrap();
-        assert_eq!(
-            std::fs::read_to_string(&layer).unwrap(),
-            "written_for: \"1.0.0\"\nschema: ai-repository/v1\n"
+        assert!(
+            !stamp_layer(root, "1.0.0").unwrap(),
+            "already stamped, nothing written"
         );
+        std::fs::write(&layer, "written_for: \"0.1.0\"\nschema: ai-repository/v1\n").unwrap();
+        assert!(stamp_layer(root, "1.0.0").unwrap());
+        assert_eq!(read(), "written_for: \"1.0.0\"\nschema: ai-repository/v1\n");
     }
 }

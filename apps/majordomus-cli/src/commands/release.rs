@@ -593,19 +593,21 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
 
     let to = to.to_string();
     let declared = current.to_string();
-    // the version stands; the layer's record of it may not (a merge, a hand edit, an update by
-    // another tool), and the writer is what puts it beside the version
-    if to == declared && !dry_run {
-        let stamped = version::write(&root, &to).map_err(|e| Error::io(root.clone(), e))?;
-        if !stamped.is_empty() {
-            return writeln!(
-                out,
-                "release: the version is already {to}; {} stamped with it",
-                stamped.join(", ")
-            )
-            .map(|()| 0)
-            .map_err(Error::Transport);
-        }
+    // This repository's layer is stamped with the version beside it, from the release after
+    // the first one that reads the key (version::WRITTEN_FOR_READ_SINCE): before that, the
+    // tool installed to work here would refuse the manifest.
+    let stamps_layer = version::stamps_layer_after(selection.report.last_release.as_deref())
+        && root.join(version::LAYER_MANIFEST).is_file();
+    let stamp = |to: &str| version::stamp_layer(&root, to).map_err(|e| Error::io(root.clone(), e));
+    if to == declared && stamps_layer && !dry_run && stamp(&to)? {
+        // the version stands, and the layer's record of it had fallen behind
+        return writeln!(
+            out,
+            "release: the version is already {to}; {} stamped with it",
+            version::LAYER_MANIFEST
+        )
+        .map(|()| 0)
+        .map_err(Error::Transport);
     }
     if to == declared {
         match plan {
@@ -655,13 +657,12 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     }
 
     if dry_run {
-        // what the writer would write, the layer's record of the version among it, then what
-        // derivation owes: said once
-        let layer = root.join(version::LAYER_MANIFEST).is_file();
+        // what the writer would write, the layer's record of the version among it when it is
+        // stamped, then what derivation owes: said once
         let unwritten: String = [version::MANIFEST, version::LOCK]
             .iter()
             .map(|f| format!("         {f} (unwritten)\n"))
-            .chain(layer.then(|| {
+            .chain(stamps_layer.then(|| {
                 format!(
                     "         {} written_for (unwritten)\n",
                     version::LAYER_MANIFEST
@@ -673,7 +674,13 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
             .map_err(Error::Transport);
     }
 
+    // the layer first: a stamp that cannot be written leaves the version as it was
+    let layer_stamped = stamps_layer && stamp(&to)?;
     let written = version::write(&root, &to).map_err(|e| Error::io(root.clone(), e))?;
+    let written: Vec<String> = written
+        .into_iter()
+        .chain(layer_stamped.then(|| version::LAYER_MANIFEST.to_string()))
+        .collect();
     for f in &written {
         writeln!(out, "         {f} written").map_err(Error::Transport)?;
     }

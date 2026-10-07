@@ -375,6 +375,8 @@ else: each target carries its own provenance.
   dry run prints the stamp it would write (`stamp .ai/manifest.yaml written_for <old> ->
   <new>`) and writes nothing. A layer written for a **newer** tool is refused (`15`) before
   anything is written: this executable does not know its rules, and would lower the version.
+  In the tool's own source tree `update` leaves the stamp alone: there it is `release bump`'s,
+  written one release after the first that reads it (`RELEASE.md`).
 - `--dry-run` prints what would change; `--diff <target>` shows the diff for one. For a
   region projection the diff is of the region, not of the host document.
 - Refuses (`15`) to overwrite content whose current hash matches neither the stamp it

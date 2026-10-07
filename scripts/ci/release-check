@@ -113,9 +113,12 @@ fi
 # Every layer names the tool version it was written for (`written_for` in .ai/manifest.yaml):
 # init stamps it, update advances it, and doctor grades an older one as version skew and a
 # newer one as a failure. This repository's layer is written by the version it releases, so
-# `release bump` stamps it beside the authority (release/version.rs, LAYER_MANIFEST). A tree
-# whose layer names another version would release a tool whose own doctor calls its own
-# repository skewed, or written by a tool from the future.
+# `release bump` stamps it beside the authority (release/version.rs, LAYER_MANIFEST), and only
+# from the release after the first one that reads the key (WRITTEN_FOR_READ_SINCE): every
+# released tool refuses a manifest key it does not know, so a stamp written sooner would
+# refuse this repository to the tool installed to work on it. No stamp yet is therefore fine;
+# a stamp naming another version than the tree declares would release a tool whose own doctor
+# calls its own repository skewed, or written by a tool from the future.
 LAYER_PATH="$(rust_const LAYER_MANIFEST)"
 if [ -z "$LAYER_PATH" ]; then
   fail "$MODULE declares no LAYER_MANIFEST, so the layer's written_for cannot be compared with the version"
@@ -123,10 +126,14 @@ elif [ ! -f "$LAYER_PATH" ]; then
   ok "this tree has no AI layer ($LAYER_PATH) whose written_for could fall behind"
 elif [ -n "$crate" ]; then
   written="$(sed -n 's/^written_for: *"\{0,1\}\([^"]*\)"\{0,1\} *$/\1/p' "$LAYER_PATH" | head -n 1)"
-  if [ "$written" = "$crate" ]; then
+  if [ -z "$written" ]; then
+    # not yet stamped: `release bump` writes it from the release after the first one that
+    # reads the key (WRITTEN_FOR_READ_SINCE), and a layer that names none is read by every tool
+    ok "$LAYER_PATH names no written_for yet; release bump stamps it once the last release reads the key"
+  elif [ "$written" = "$crate" ]; then
     ok "$LAYER_PATH is written for $written, the version the tree declares"
   else
-    fail "$LAYER_PATH is written for '${written:-no version}' and the tree declares '$crate'; \`majordomus release bump\` stamps it beside the version, and \`majordomus update\` brings it up to the tool's"
+    fail "$LAYER_PATH is written for '$written' and the tree declares '$crate'; \`majordomus release bump\` stamps it beside the version"
   fi
 fi
 

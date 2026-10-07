@@ -66,7 +66,8 @@ directory that does not exist, which is a repository with no plan. Unknown keys 
 
 `written_for` is the tool version the layer was last written for, `X.Y.Z`, quoted: `init`
 and `migrate` stamp it with their own version, `update` advances it once it has brought the
-layer up, and `release bump` stamps this repository's own beside the version it raises. A
+layer up, and `release bump` stamps this repository's own beside the version it raises, from
+the release after the first one that reads the key. A
 layer written before it existed names none. `doctor` grades it against the executable that
 runs: older or absent is version skew (`WARN`, naming `majordomus update`), the same is `OK`,
 newer is a `FAIL` naming the upgrade. A manifest an executable cannot read and that names a

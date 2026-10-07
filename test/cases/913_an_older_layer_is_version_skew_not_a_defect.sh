@@ -50,6 +50,21 @@ expect_grep "OK +layout +\.ai/manifest\.yaml — written for majordomus $tool, t
 expect_exit 0 "$MJ" update
 expect_no_grep '^stamp '
 
+echo "    in the tool's own source tree the stamp is release bump's alone: update leaves it"
+# every released tool refuses a manifest key it does not know, so the tool's own repository
+# is stamped by its release writer, one release after the reader shipped, and never by update
+mkdir -p apps/majordomus-cli bin && : > apps/majordomus-cli/Cargo.toml && : > bin/majordomus
+sed -i.bak '/^written_for:/d' .ai/manifest.yaml && rm -f .ai/manifest.yaml.bak
+expect_exit 0 "$MJ" update
+expect_no_grep '^stamp '
+[ -z "$(written)" ] || { echo "    update stamped the tool's own source tree"; exit 1; }
+expect_exit 0 "$MJ" doctor
+expect_grep "INFO layout +\.ai/manifest\.yaml — names no tool version \(written_for\) yet: this is the tool's own source tree"
+expect_no_grep 'WARN layout +\.ai/manifest\.yaml'
+rm -rf apps bin
+expect_exit 0 "$MJ" update
+[ "$(written)" = "$tool" ] || { echo "    update did not stamp an adopter's layer again"; exit 1; }
+
 echo "    a value that is not a version is a defect of the manifest"
 sed -i.bak 's/^written_for: .*/written_for: "soon"/' .ai/manifest.yaml && rm -f .ai/manifest.yaml.bak
 expect_exit 10 "$MJ" doctor
