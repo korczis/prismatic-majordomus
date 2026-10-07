@@ -1240,7 +1240,9 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "features": list["counts"]["features"],
         // the domains a reader is shown: stable, and named by a stable feature
         "domains": ctx.product.public_domains().iter().filter(|d| !d.features.is_empty()).count(),
-        "web_surfaces": ctx.web.surfaces.len(),
+        // what every checkout has, as web.json lists it: a report a producer wrote here is
+        // served here and counted nowhere, or the count would follow who ran the suite
+        "web_surfaces": crate::generate::surfaces_every_checkout_has(&ctx.web).count(),
     });
 
     // The doctrine the product rests on: every rule a public feature names, once, carrying the
