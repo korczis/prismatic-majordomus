@@ -30,7 +30,24 @@ evidence_required:
   - a_spliced_body_is_recognised_as_its_own
 risk: "Low. The change removes a duplicate definition; the rendering it keeps is the one every other surface already prints."
 created_at: 2026-09-15
-updated_at: 2026-09-30
+updated_at: 2026-10-07T13:27:24Z
 started_at: 2026-09-15
 unsealed_stamps:
   - started_at 2026-09-15
+verified_at: 2026-10-07T13:27:22Z
+verified_event: sha256:f2466031808c2079896d2b677c39d2a5794f64a7699f19507b10e81b1ec44e1a
+completed_at: 2026-10-07T13:27:24Z
+completed_event: sha256:e9f5f3c72dfcb90679e1af378e37b5925e63b2c08a00c56e8559303d67b6eba1
+evidence:
+  - covers: the_two_compositions_are_one
+    type: test
+    command: "bash test/run.sh 45_github_projection"
+    result: "ok at b4a781c668: case 45 refuses a second composition and a marker written without ending its line; the fix is a19588c506 (PR #690)"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:27:14Z
+  - covers: a_spliced_body_is_recognised_as_its_own
+    type: test
+    command: "bash test/run.sh 602_a_spliced_body_is_recognised_as_its_own; scripts/ci/github-check"
+    result: "ok at b4a781c668: the body --apply posts reads back insync; github-check against the live remote reports 0 finding(s), 0 record(s) adopt"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:27:15Z
