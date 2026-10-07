@@ -174,10 +174,11 @@ impl Session {
         let app = App::load(&args.repo)?;
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
+        let (http_host, _) = crate::cli::local_http_host(args.http_host.as_deref());
         let shared = SharedServer::start(
             Arc::clone(&live),
             crate::VERSION,
-            &args.http_host,
+            &http_host,
             args.http_port,
             true,
             None,

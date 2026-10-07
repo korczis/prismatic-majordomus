@@ -16,9 +16,20 @@ it is described as real.
   that server wrote into its own lease file, so that a worker is told who else is holding
   their paths. It is bounded (`--max-time`), it is optional — no lease, no `curl`, no
   answer, or a lease naming anything but loopback, and the section is simply not written —
-  and it sends nothing but the request. `test/cases/08_no_forbidden_constructs.sh` refuses
+  and it sends nothing but the request. A server bound to every interface publishes the
+  unspecified address (`0.0.0.0`), which names no host; it is asked at `127.0.0.1` on the
+  same port, so the request still cannot leave the machine
+  (`test/cases/106_context_peers.sh`). `test/cases/08_no_forbidden_constructs.sh` refuses
   every other network client in `bin/`, `lib/` and `share/`, and refuses this one if it
   stops being that single bounded call.
+- **A local server listens on loopback until this machine says otherwise.** The Rust
+  executable's `serve` and `mcp` bind `127.0.0.1`. Nothing tracked can change that: the one
+  thing that moves it is `MAJORDOMUS_HTTP_HOST` in a machine's own environment, or `--host`
+  on a command line, and a server bound beyond loopback says so in its log every time it
+  starts. The surface has no authentication, so a machine that names `0.0.0.0` hands every
+  host that reaches it the read surface and the declared writing commands
+  (`docs/MCP.md`, "The interface is the machine's to name";
+  `test/cases/992_the_local_bind_is_the_machines_to_name.sh`).
 - **The mesh is off until a person turns it on.** The Rust executable's mesh (ADR 0050,
   ADR 0067) is the one declared exception on the executable's side: no discovery socket and
   no link opens until the repository commits a `mesh` declaration with `enabled: true`.
