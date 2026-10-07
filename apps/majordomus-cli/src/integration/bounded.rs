@@ -149,6 +149,8 @@ pub fn answered(out: std::io::Result<Output>) -> Result<String, String> {
 /// The two bounds a `git` call that reaches the remote is given, as methods beside
 /// `Command::output`, so a call site changes one word.
 pub trait Bounded {
+    /// [`output_within`] `limit`, naming the call `what`.
+    fn output_bounded(&mut self, what: &str, limit: Duration) -> std::io::Result<Output>;
     /// [`output_within`] the limit of a read of the remote ([`FORGE_READ`]).
     fn output_within_read(&mut self, what: &str) -> std::io::Result<Output>;
     /// [`output_within`] the limit of a transfer of objects ([`GIT_TRANSFER`]).
@@ -156,6 +158,9 @@ pub trait Bounded {
 }
 
 impl Bounded for Command {
+    fn output_bounded(&mut self, what: &str, limit: Duration) -> std::io::Result<Output> {
+        output_within(self, what, limit)
+    }
     fn output_within_read(&mut self, what: &str) -> std::io::Result<Output> {
         output_within(self, what, FORGE_READ)
     }

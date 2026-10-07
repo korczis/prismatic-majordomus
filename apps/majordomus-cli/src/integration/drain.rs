@@ -1809,12 +1809,11 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
         "gh {}",
         args.iter().take(3).copied().collect::<Vec<_>>().join(" ")
     );
-    let out = super::bounded::output_within(
-        Command::new("gh").current_dir(root).args(args),
-        &what,
-        limit,
-    )
-    .map_err(|e| format!("gh could not run: {e}"))?;
+    let out = Command::new("gh")
+        .current_dir(root)
+        .args(args)
+        .output_bounded(&what, limit)
+        .map_err(|e| format!("gh could not run: {e}"))?;
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
     } else {

@@ -291,12 +291,11 @@ fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> 
         "gh {}",
         args.iter().take(3).copied().collect::<Vec<_>>().join(" ")
     );
-    let out = super::bounded::output_within(
-        Command::new("gh").current_dir(root).args(args),
-        &what,
-        super::bounded::FORGE_READ,
-    )
-    .map_err(|e| ForgeError(format!("the GitHub CLI (gh) could not run: {e}")))?;
+    let out = Command::new("gh")
+        .current_dir(root)
+        .args(args)
+        .output_bounded(&what, super::bounded::FORGE_READ)
+        .map_err(|e| ForgeError(format!("the GitHub CLI (gh) could not run: {e}")))?;
     Ok((
         out.status.success(),
         String::from_utf8_lossy(&out.stdout).into_owned(),
