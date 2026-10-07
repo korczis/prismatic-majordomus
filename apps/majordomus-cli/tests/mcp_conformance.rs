@@ -753,6 +753,53 @@ const SECRETS: &[(&str, &str)] = &[
 /// The marker every planted secret shares: what the output is searched for.
 const MARK: &str = "mjconformance";
 
+/// Everything the server lists in this repository, read, and every read tool, asked with
+/// the inputs its own capability declares: the listing session, the sweep session, and
+/// what each request of the sweep asked for.
+fn sweep(f: &Fixture) -> (Exchange, Exchange, BTreeMap<u64, String>) {
+    // what the server lists, first, in this repository
+    let mut requests = opening();
+    requests.push(request(2, "tools/list", json!({})));
+    requests.push(request(3, "resources/list", json!({})));
+    let listing = standalone_with(f, SECRETS, &requests);
+    let resources: Vec<String> = listing.by_id()[&3]["result"]["resources"]
+        .as_array()
+        .expect("resources")
+        .iter()
+        .map(|r| r["uri"].as_str().unwrap().to_string())
+        .collect();
+
+    // then everything it lists, read, and every read tool, asked
+    let mut requests = opening();
+    let mut asked: BTreeMap<u64, String> = BTreeMap::new();
+    let mut id = 1000;
+    for uri in &resources {
+        requests.push(request(id, "resources/read", json!({ "uri": uri })));
+        asked.insert(id, format!("resources/read {uri}"));
+        id += 1;
+    }
+    let tools = read_tools(f);
+    assert!(
+        tools.len() >= 20,
+        "the sweep asks the registry's read tools, or it proves nothing"
+    );
+    for t in &tools {
+        let cases = if t.cases.is_empty() {
+            vec![("empty", json!({}))]
+        } else {
+            t.cases.clone()
+        };
+        for (name, input) in cases {
+            requests.push(call(id, &t.tool, input));
+            asked.insert(id, format!("{} ({}) case {name}", t.tool, t.id));
+            id += 1;
+        }
+    }
+    let x = standalone_with(f, SECRETS, &requests);
+
+    (listing, x, asked)
+}
+
 /// A secret in the server's environment, in a remote URL and in an HTTP header of the
 /// repository's git configuration, and in an untracked `.env`, never reaches a client — not
 /// through `initialize`, not through a listing, not through any listed resource, and not
@@ -778,45 +825,7 @@ fn no_secret_in_the_environment_or_the_repository_reaches_a_client() {
     ]);
     f.write(".env", "API_TOKEN=mjconformance-dotenv-secret\n");
 
-    // what the server lists, first, in this repository
-    let mut requests = opening();
-    requests.push(request(2, "tools/list", json!({})));
-    requests.push(request(3, "resources/list", json!({})));
-    let listing = standalone_with(&f, SECRETS, &requests);
-    let resources: Vec<String> = listing.by_id()[&3]["result"]["resources"]
-        .as_array()
-        .expect("resources")
-        .iter()
-        .map(|r| r["uri"].as_str().unwrap().to_string())
-        .collect();
-
-    // then everything it lists, read, and every read tool, asked
-    let mut requests = opening();
-    let mut asked: BTreeMap<u64, String> = BTreeMap::new();
-    let mut id = 1000;
-    for uri in &resources {
-        requests.push(request(id, "resources/read", json!({ "uri": uri })));
-        asked.insert(id, format!("resources/read {uri}"));
-        id += 1;
-    }
-    let tools = read_tools(&f);
-    assert!(
-        tools.len() >= 20,
-        "the sweep asks the registry's read tools, or it proves nothing"
-    );
-    for t in &tools {
-        let cases = if t.cases.is_empty() {
-            vec![("empty", json!({}))]
-        } else {
-            t.cases.clone()
-        };
-        for (name, input) in cases {
-            requests.push(call(id, &t.tool, input));
-            asked.insert(id, format!("{} ({}) case {name}", t.tool, t.id));
-            id += 1;
-        }
-    }
-    let x = standalone_with(&f, SECRETS, &requests);
+    let (listing, x, asked) = sweep(&f);
     assert_eq!(x.code, Some(0), "{}", x.stderr);
 
     for (stream, text) in [
@@ -854,6 +863,125 @@ fn no_secret_in_the_environment_or_the_repository_reaches_a_client() {
         failures.len(),
         asked.len(),
         failures.join("\n")
+    );
+}
+
+/// The shell tool, as a repository runs it from this checkout.
+fn shell(f: &Fixture, args: &[&str], stdin: &str) -> (Option<i32>, String, String) {
+    let tool = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../bin/majordomus");
+    let mut child = Command::new(tool)
+        .args(args)
+        .current_dir(f.root())
+        .env_remove("MAJORDOMUS_ROOT")
+        .env_remove("MAJORDOMUS_SHARE")
+        .env("XDG_STATE_HOME", state_home(f))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn the shell tool");
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(stdin.as_bytes())
+        .expect("stdin");
+    let out = child.wait_with_output().expect("wait");
+    (
+        out.status.code(),
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    )
+}
+
+/// Every file under `dir`, `.git` excepted, whose bytes contain `mark`.
+fn files_holding(dir: &Path, mark: &str, found: &mut Vec<String>) {
+    for entry in std::fs::read_dir(dir).expect("read_dir").flatten() {
+        let path = entry.path();
+        if path.file_name().is_some_and(|n| n == ".git") {
+            continue;
+        }
+        if path.is_dir() {
+            files_holding(&path, mark, found);
+        } else if let Ok(bytes) = std::fs::read(&path) {
+            if String::from_utf8_lossy(&bytes).contains(mark) {
+                found.push(path.display().to_string());
+            }
+        }
+    }
+}
+
+/// The rule is not "drop whatever stands before the at sign". Over ssh the login is how
+/// the remote is reached and is no secret, so `ssh://git:<password>@host` is served as
+/// `ssh://git@host`: the password goes and the identity still says which repository this
+/// is. And the server is not the only writer: the shell tool writes the same identity into
+/// a shared record, which is tracked and pushed, so the record it writes under that remote
+/// holds no password either, and neither does what the server answers when it reads the
+/// record back.
+#[test]
+fn a_remote_keeps_its_login_and_no_shared_record_holds_its_password() {
+    const SERVED: &str = "ssh://git@host.invalid/o/r.git";
+    let f = Fixture::empty_git();
+    for args in [&["init"][..], &["update"][..]] {
+        let (code, _, err) = shell(&f, args, "");
+        assert_eq!(code, Some(0), "majordomus {args:?}: {err}");
+    }
+    f.git(&["add", "-A"]);
+    f.commit("the layer");
+    f.git(&[
+        "remote",
+        "add",
+        "origin",
+        "ssh://git:mjconformanceSshPassword0002@host.invalid/o/r.git",
+    ]);
+
+    // the shell writes a shared record under that remote
+    let (code, _, err) = shell(&f, &["session", "start", "--worker", "conformance/ssh"], "");
+    assert_eq!(code, Some(0), "session start: {err}");
+    let (code, out, err) = shell(
+        &f,
+        &["session", "close"],
+        "The remote carried a password and the record does not.\n",
+    );
+    assert_eq!(code, Some(0), "session close: {err}");
+    let record = f.root().join(out.lines().last().unwrap_or_default().trim());
+    assert!(
+        record.starts_with(f.root().join(".ai/repo/sessions")) && record.is_file(),
+        "session close named no shared record: {out}"
+    );
+    let written = std::fs::read_to_string(&record).expect("the record");
+    assert!(
+        written.contains(SERVED),
+        "the shared record does not name the repository by its login-only URL:\n{written}"
+    );
+    let mut holding = Vec::new();
+    files_holding(&f.root(), MARK, &mut holding);
+    assert!(
+        holding.is_empty(),
+        "the remote's password was written into: {}",
+        holding.join(", ")
+    );
+
+    // and the server, reading that repository and that record, answers the same
+    let (listing, x, _) = sweep(&f);
+    assert_eq!(x.code, Some(0), "{}", x.stderr);
+    for (stream, text) in [
+        ("listing stdout", &listing.stdout),
+        ("listing stderr", &listing.stderr),
+        ("sweep stdout", &x.stdout),
+        ("sweep stderr", &x.stderr),
+    ] {
+        let leaks = around(text, MARK);
+        assert!(
+            leaks.is_empty(),
+            "the remote's password reached the client through {stream}, {} time(s):\n{}",
+            leaks.len(),
+            leaks.join("\n")
+        );
+    }
+    assert!(
+        x.stdout.contains(SERVED),
+        "no answer of the sweep names the remote as {SERVED}: the login was dropped with the password, or the identity is not served"
     );
 }
 
