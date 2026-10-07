@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Make the exposure of backend-only surfaces — the API console, live status, runtime reads — follow from availability metadata, and prove both projections behave correctly."
 why: "The published site has no server. A link to a runtime console on it is a broken promise, and the usual fix is a check on the page's own address, which is a rule hidden where nobody will find it."
-current_state: "The availability metadata this issue asks for exists: web::Availability is ServedOnly, PublishedOnly or Both, ProjectionRoute::linkable() answers from it alone, and a doctest asserts the Swagger console is not linkable. The Cockpit renders an unavailable surface as unavailable (cockpit/pages.rs) and the running-server side is exercised by test/cases/89_web_surface.sh and apps/majordomus-cli/tests/projections.rs. What is still missing is the half this issue exists for: nothing asserts over the built static tree that it carries no active link to a runtime-only surface -- scripts/site-check does not ask the question, and the site source happens to contain no such link rather than being prevented from gaining one. This issue has been ACTIVE since 2026-09-06 and nothing advanced it on 2026-09-10. Measured on master 6042f4286, 2026-09-10."
+current_state: "web::Availability is ServedOnly, PublishedOnly or Both and ProjectionRoute::linkable() answers from it alone. The running-server side is exercised by test/cases/89_web_surface.sh and apps/majordomus-cli/tests/projections.rs. The static side, missing when this was measured on 2026-09-10, is check 18 of scripts/site-check: it reads every route the projection declares served-only from the generated OpenAPI, refuses a published page that links one, and requires each to be named on /docs/api/ as needing a server. The site job runs it on every build. Measured on master b4a781c668, 2026-10-07."
 desired_state: "Exposure follows from availability metadata alone, and there is a test for each projection that keeps it that way."
 scope:
   - apps/majordomus-cli/src/http/swagger.rs
@@ -29,7 +29,26 @@ evidence_required:
   - both_projections_tested
 risk: "This is the check that quietly rots, because a broken link on a published page fails nothing. The test for it has to run on every build."
 created_at: 2026-09-06
-updated_at: 2026-09-10
+updated_at: 2026-10-07T13:30:04Z
 started_at: 2026-09-06T17:35:07Z
 unsealed_stamps:
   - started_at 2026-09-06T17:35:07Z
+verified_at: 2026-10-07T13:30:01Z
+verified_event: sha256:d0284269c43d00f28a6fe349bcccd9da7bfb371f08927c769246ecf8614f14e4
+completed_at: 2026-10-07T13:30:04Z
+completed_event: sha256:1048f233647fd7243ea147b890b87b529ee5e02b18c462f36f4b97d717bd2bd8
+evidence:
+  - covers: availability_drives_exposure
+    type: ci
+    command: "scripts/site-check (check 18), site job of the validate run on master"
+    result: "OK surface: every served-only route is named on /docs/api/ and linked from nowhere: /api/v1 /swagger /mcp /events /cockpit; site-check: 0 failure(s), at b4a781c668"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/37599731616/job/112721318632"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:29:59Z
+  - covers: both_projections_tested
+    type: ci
+    command: "bash test/run.sh 89_web_surface (suite-shard 2) and scripts/site-check (site job), validate run on master"
+    result: "ok 89_web_surface for the running server; OK surface for the static build; both at b4a781c668 in one run"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/37599731616"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:30:00Z
