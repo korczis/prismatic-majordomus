@@ -682,6 +682,11 @@ impl Router {
                 // tree, and a reader can only say so if the server names its own
                 "commit": crate::COMMIT,
                 "dirty": crate::DIRTY,
+                // and whether that code still exists: null while the file this process was
+                // started from is the file on disk, the reason once it has been replaced —
+                // the same answer `health.ready` gives, so a client reading only this
+                // document can tell a current server from one serving yesterday's code
+                "stale": crate::lease::serving_replaced_code(),
                 "description": crate::about::SUMMARY,
                 "reference": crate::about::REFERENCE_URL,
                 // the repository's name and not its path: this answer is served to whoever
