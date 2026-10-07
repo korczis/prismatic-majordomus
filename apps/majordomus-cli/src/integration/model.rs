@@ -56,6 +56,36 @@ pub struct PullRequestObservation {
     /// Who has been asked to review and has not yet: logins, or team slugs.
     #[serde(default)]
     pub review_requests: Vec<String>,
+    /// The forge's word for what the author is to the repository (`OWNER`, `MEMBER`,
+    /// `COLLABORATOR`, `CONTRIBUTOR`, ...), verbatim; empty when it was not read. `gh pr list`
+    /// does not report it, so it comes with the cross-references. An empty word authorises
+    /// nothing.
+    #[serde(default)]
+    pub author_association: String,
+    /// Whether the cross-references to it were read whole. One that was not is held: a
+    /// declaration that was not read is never taken for none.
+    #[serde(default)]
+    pub cross_references: CrossReferenceRead,
+}
+
+/// Whether every cross-reference to a pull request was read: the pull requests that mention it,
+/// one of which may declare that it supersedes it.
+///
+/// ```text
+/// use majordomus_cli::integration::CrossReferenceRead;
+/// assert_eq!(CrossReferenceRead::default(), CrossReferenceRead::Unread, "fail closed");
+/// assert_eq!(serde_json::to_string(&CrossReferenceRead::Truncated).unwrap(), "\"truncated\"");
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CrossReferenceRead {
+    /// Not read: the forge did not answer for it, or the record predates the read.
+    #[default]
+    Unread,
+    /// Read in part: more cross-references than the pages that are read hold.
+    Truncated,
+    /// Read whole.
+    Whole,
 }
 
 /// One reviewer's latest review.
@@ -341,12 +371,13 @@ pub enum PullRequestDisposition {
     /// master as an equal patch: strong evidence from git, eligible for closure under policy.
     /// (Before 0.13 this was the word `superseded`.)
     Redundant,
-    /// Its body, or the body of another pull request, declares that a successor replaces it,
-    /// and that successor landed: no longer open, its head contained in master. The successor
-    /// is [`PullRequestAssessment::superseded_by`]. Eligible for closure under policy.
+    /// A successor was declared for it by someone the repository lets declare one — an owner,
+    /// member or collaborator, in a pull request of this repository — and that successor
+    /// landed: git finds its head or its merge commit in master. The successor is
+    /// [`PullRequestAssessment::superseded_by`]. Eligible for closure under policy.
     Superseded,
-    /// Weak evidence: only derived artifacts would change, or its declared successor was closed
-    /// without its head landing. Surfaced for a person; never closed automatically.
+    /// Weak evidence: only derived artifacts would change, or its declared successor was merged
+    /// somewhere master does not contain. Surfaced for a person; never closed automatically.
     PossiblyRedundant,
     /// Targets a branch other than the integration base.
     OtherBase,
@@ -477,7 +508,10 @@ pub enum EvidenceKind {
     /// The forge has auto-merge armed; emitted whenever it is.
     AutoMerge,
     /// One declared successor: which pull request replaces this one, whose body said so, and
-    /// whether it landed. One entry per successor declared.
+    /// whether it landed. One entry per authorised successor (status `open`, `landed`,
+    /// `not_landed` or `unread`), one per declaration nobody entitled made
+    /// (`possible_supersession`), and one when the pull requests that mention it were not all
+    /// read (`references_truncated`, `references_unread`).
     Supersession,
     /// What the repository's settings allow the executor; emitted when they allow no merge
     /// commit.
@@ -587,9 +621,10 @@ pub enum IntegrationGate {
     Label,
     /// The forge has no auto-merge armed on it.
     AutoMerge,
-    /// No successor is declared to replace it. Asked before the relation to master, because
-    /// a pull request whose successor landed usually conflicts with what the successor
-    /// brought, and is superseded rather than conflicting.
+    /// No authorised successor is declared to replace it, and the pull requests that mention
+    /// it were all read. Asked before the relation to master, because a pull request whose
+    /// successor landed usually conflicts with what the successor brought, and is superseded
+    /// rather than conflicting. A declaration nobody entitled made does not fail it.
     Supersession,
     /// Its head is not on master already, and git could say that it merges cleanly.
     RelationToMaster,
@@ -666,7 +701,7 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
 `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
 `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, \
-`dependency_unread:#N`. \
+`dependency_unread:#N`, `declarations_unread`. \
 A code outside this list (an older trail's) is carried verbatim.";
 
 /// One machine-readable reason, typed. Its wire form is the `code` or `code:payload` string
@@ -696,20 +731,21 @@ pub enum ReasonCode {
     /// `merge_commit_not_allowed`: the repository's settings allow no merge commit, and the
     /// executor never squashes or rebases.
     MergeCommitNotAllowed,
-    /// `superseded_by:#N`: a declared successor, N, landed (no longer open, its head contained
-    /// in master).
+    /// `superseded_by:#N`: an authorised declared successor, N, landed (no longer open, its
+    /// head or its merge commit contained in master).
     SupersededBy {
         /// The successor.
         number: u64,
     },
-    /// `successor_open:#N`: a declared successor, N, is still open; this one waits for it to
-    /// land and must not land itself meanwhile.
+    /// `successor_open:#N`: an authorised declared successor, N, is still open; this one waits
+    /// for it to land and must not land itself meanwhile.
     SuccessorOpen {
         /// The successor.
         number: u64,
     },
-    /// `successor_not_landed:#N`: a declared successor, N, is no longer open, but its head is
-    /// not contained in master (closed unmerged, or merged by a squash or a rebase).
+    /// `successor_not_landed:#N`: an authorised declared successor, N, is merged, but master
+    /// contains neither its head nor its merge commit. A successor closed unmerged gives no
+    /// reason: it releases the hold.
     SuccessorNotLanded {
         /// The successor.
         number: u64,
@@ -811,6 +847,9 @@ pub enum ReasonCode {
         /// The dependency.
         number: u64,
     },
+    /// `declarations_unread`: the pull requests that mention it were not all read, and one of
+    /// them may declare that it supersedes it. Held: never merged, never closed.
+    DeclarationsUnread,
     /// A code this vocabulary does not name, verbatim: what an older trail line may carry.
     /// Nothing here produces one, and [`std::str::FromStr`] refuses it.
     Unrecognised(String),
@@ -854,6 +893,7 @@ impl ReasonCode {
             ReasonCode::DependencyCycle { .. } => "dependency_cycle",
             ReasonCode::DependencyClosedUnmerged { .. } => "dependency_closed_unmerged",
             ReasonCode::DependencyUnread { .. } => "dependency_unread",
+            ReasonCode::DeclarationsUnread => "declarations_unread",
             ReasonCode::Unrecognised(s) => s.split_once(':').map_or(s.as_str(), |(c, _)| c),
         }
     }
@@ -971,6 +1011,7 @@ impl std::str::FromStr for ReasonCode {
             ("contains_master", None) => ReasonCode::ContainsMaster,
             ("required_checks_passed", None) => ReasonCode::RequiredChecksPassed,
             ("required_checks_skipped", None) => ReasonCode::RequiredChecksSkipped,
+            ("declarations_unread", None) => ReasonCode::DeclarationsUnread,
             ("executor_merge_refused", Some(p)) => {
                 ReasonCode::ExecutorMergeRefused { head: p.into() }
             }
@@ -1085,8 +1126,9 @@ pub struct PullRequestAssessment {
     pub disposition: PullRequestDisposition,
     /// The successor that landed and replaces it, exactly when the disposition is
     /// `superseded`: the disposition stays one word on the wire, and this is its `by`.
-    /// Absent otherwise; a successor still open, or closed without landing, is in the
-    /// `supersession` evidence and the reasons instead.
+    /// Absent otherwise; a successor still open, or merged somewhere master does not contain,
+    /// is in the `supersession` evidence and the reasons instead, and one closed unmerged is
+    /// evidence only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub superseded_by: Option<u64>,
     /// The issue of `.ai/repo/project/issues/` its head branch names — a path component equal

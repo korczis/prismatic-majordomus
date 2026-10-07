@@ -18432,7 +18432,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The evidence, as reason codes."
               action:
@@ -18481,10 +18481,10 @@ capabilities:
                 description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
               - type: string
                 const: superseded
-                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                description: "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
@@ -18644,7 +18644,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
@@ -18827,7 +18827,7 @@ capabilities:
                 description: The forge has auto-merge armed; emitted whenever it is.
               - type: string
                 const: supersession
-                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
               - type: string
                 const: repository_settings
                 description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -19012,7 +19012,7 @@ capabilities:
                   - "null"
                 format: uint64
                 minimum: 0
-                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only."
               issue:
                 type:
                   - string
@@ -19029,7 +19029,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
               gates:
@@ -19173,10 +19173,10 @@ capabilities:
                 description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
               - type: string
                 const: superseded
-                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                description: "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
@@ -19234,7 +19234,7 @@ capabilities:
                 description: The forge has no auto-merge armed on it.
               - type: string
                 const: supersession
-                description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+                description: "No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it."
               - type: string
                 const: relation_to_master
                 description: "Its head is not on master already, and git could say that it merges cleanly."
@@ -19557,7 +19557,7 @@ capabilities:
                 description: The forge has auto-merge armed; emitted whenever it is.
               - type: string
                 const: supersession
-                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
               - type: string
                 const: repository_settings
                 description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -20239,7 +20239,7 @@ capabilities:
                   - "null"
                 format: uint64
                 minimum: 0
-                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only."
               issue:
                 type:
                   - string
@@ -20256,7 +20256,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
               gates:
@@ -20400,10 +20400,10 @@ capabilities:
                 description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
               - type: string
                 const: superseded
-                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                description: "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
@@ -20461,7 +20461,7 @@ capabilities:
                 description: The forge has no auto-merge armed on it.
               - type: string
                 const: supersession
-                description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+                description: "No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it."
               - type: string
                 const: relation_to_master
                 description: "Its head is not on master already, and git could say that it merges cleanly."
@@ -20784,7 +20784,7 @@ capabilities:
                 description: The forge has auto-merge armed; emitted whenever it is.
               - type: string
                 const: supersession
-                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
               - type: string
                 const: repository_settings
                 description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -21127,7 +21127,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:

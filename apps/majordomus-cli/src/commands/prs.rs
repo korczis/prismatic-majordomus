@@ -1111,6 +1111,8 @@ mod tests {
             cross_repository: false,
             latest_reviews: Vec::new(),
             review_requests: Vec::new(),
+            author_association: "OWNER".into(),
+            cross_references: crate::integration::CrossReferenceRead::Whole,
         }
     }
 

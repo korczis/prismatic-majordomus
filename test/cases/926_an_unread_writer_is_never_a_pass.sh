@@ -96,10 +96,12 @@ case "$1 $2" in
   "pr list")
     case " $* " in
       *" --state open "*) cat "$S/prs.json" ;;
-      *" --state closed "*) echo '[]' ;;
-      *) unexpected "a list that is neither the open nor the closed pull requests" ;;
+      *) unexpected "a list that is not the open pull requests" ;;
     esac ;;
   "api graphql")
+    # the declarations read every observation makes (ADR 0101 §6, D4): each open pull request
+    # an owner's, a branch of this repository, mentioned by none
+    case "$4" in *timelineItems*) jq -c '{data:{repository:{pullRequests:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[.[]|{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[]}}]}}}}' "$S/prs.json"; exit 0 ;; esac
     # the writers read, argument by argument: raw strings for the query, the owner and the
     # name, one typed value, and no cursor (nothing here has a second page to ask for)
     [ "$3 $5 $6 $7 $8 $9" = "-f -f owner=o -f name=r -F" ] || unexpected "the writers read's arguments"
@@ -173,7 +175,7 @@ unmerged() {
 writers "$(written 1 "$MOVED" false "$ci_passed")"
 look
 unread "a head that moved"
-[ "$(asked '^api graphql .* -f owner=o -f name=r -F n=50$')" = 1 ] \
+[ "$(asked '^api graphql .*statusCheckRollup.* -f owner=o -f name=r -F n=50$')" = 1 ] \
   || { echo "    the writers were not read once, as the adapter reads them:"; grep '^api' "$STATE/log" | cut -c1-120; exit 1; }
 [ "$(asked ' -F number=')" = 0 ] || { echo "    a pull request whose contexts fitted the page was read alone"; exit 1; }
 unmerged "a head that moved"
@@ -199,7 +201,7 @@ touch "$STATE/writers-refused"
 : > "$STATE/log"
 expect_exit 12 prs refresh
 expect_grep 'HTTP 403'
-[ "$(asked '^api graphql ')" = 1 ] || { echo "    a refusal was asked for $(asked '^api graphql ') time(s), not once: it is an answer, not an outage"; exit 1; }
+[ "$(asked '^api graphql .*statusCheckRollup')" = 1 ] || { echo "    a refusal was asked for $(asked '^api graphql .*statusCheckRollup') time(s), not once: it is an answer, not an outage"; exit 1; }
 [ "$(cksum < "$OBS")" = "$before" ] || { echo "    a refresh whose writers read was refused rewrote the stored observation"; exit 1; }
 queue
 unread "the writers refused, read from the stored observation"

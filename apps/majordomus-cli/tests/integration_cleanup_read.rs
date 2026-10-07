@@ -97,10 +97,10 @@ case "$1 $2" in
   "api repos/o/r/commits/master") printf '{{"sha":"%s"}}\n' "$(git -C "{origin}" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{{"required_status_checks":{{"contexts":["ci"]}}}}' ;;
   "api repos/o/r/rules/branches/master") echo '[]' ;;
+  "api graphql") jq -c '{{data:{{repository:{{pullRequests:{{pageInfo:{{hasNextPage:false,endCursor:null}},nodes:[.[]|{{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{{pageInfo:{{hasNextPage:false,endCursor:null}},nodes:[]}}}}]}}}}}}}}' "{dir}/open.json" ;;
   "pr list")
     case " $* " in
       *" --state merged "*) cat "{dir}/merged.json" ;;
-      *" --state closed "*) echo '[]' ;;
       *) cat "{dir}/open.json" ;;
     esac ;;
   *) echo UNEXPECTED >> "{log}"; exit 1 ;;

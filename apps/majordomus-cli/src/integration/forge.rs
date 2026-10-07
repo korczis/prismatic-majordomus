@@ -12,6 +12,15 @@
 //! every open pull request's checks once more, from the forge's GraphQL rollup
 //! ([`WRITERS_QUERY`]), with the app of each ([`attributed_checks()`], [`attribute()`]). A
 //! base that binds nothing asks nothing more.
+//!
+//! Who may declare that one pull request replaces another is the forge's word too, and
+//! `gh pr list` does not carry it. So whenever a pull request is open, the refresh reads, with
+//! every open one, its author's association and the pull requests that mention it
+//! ([`DECLARATIONS_QUERY`], [`declarations()`], [`declare()`]): a declaration about an open pull
+//! request is read from that pull request's own cross-references, never from a bounded search
+//! of closed ones. One whose cross-references could not be read whole says so
+//! ([`CrossReferenceRead`]), and the classifier holds it and no other. A read the forge would
+//! not answer is not a hold: it fails the observation, and none is recorded from a part.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -22,12 +31,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::model::{
-    CheckKind, CheckObservation, CheckRunState, PullRequestObservation, RequiredCheck,
-    ReviewObservation, ReviewPolicy,
+    CheckKind, CheckObservation, CheckRunState, CrossReferenceRead, PullRequestObservation,
+    RequiredCheck, ReviewObservation, ReviewPolicy,
 };
 
-/// The recorded observation's schema version.
-pub const OBSERVATION_SCHEMA: u32 = 3;
+/// The recorded observation's schema version. 4 since a declaration is read from the
+/// cross-references of the pull request it is about, with who made it: a record of 3 carries
+/// neither and is refused until `prs refresh`.
+pub const OBSERVATION_SCHEMA: u32 = 4;
 
 /// Where the pull-request heads are fetched to: a namespace of this tool's own, so no
 /// fetch ever moves a ref a person or another tool owns.
@@ -68,7 +79,8 @@ pub struct ForgeObservation {
     /// Every open pull request.
     pub pull_requests: Vec<PullRequestObservation>,
     /// Pull requests that are no longer open and that a supersession names, by number: a
-    /// closed one whose body says it supersedes an open one, and every successor an open
+    /// closed or merged one that mentions an open one and whose body says it supersedes it,
+    /// read from that open one's cross-references, and every successor or dependency an open
     /// one's body names that is not open. What decides whether a declared successor landed.
     /// Empty in an observation recorded before it was read.
     #[serde(default)]
@@ -181,25 +193,81 @@ pub fn merged_branches_of(
 /// A pull request that is no longer open, as the forge reported it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedPullRequest {
-    /// Whether the forge says it was merged, rather than closed unmerged. Evidence only: a
-    /// successor landed when git finds its head in master, whatever the forge calls it.
+    /// Whether the forge says it was merged, rather than closed unmerged. Evidence, and the
+    /// difference between a successor that released its hold (closed) and one merged somewhere
+    /// master does not contain. Never what makes a successor landed: git does.
     pub merged: bool,
     /// The commit its branch pointed at when it was merged or closed.
     pub head_sha: String,
     /// The body, for the supersessions it declares; never rendered.
     #[serde(default)]
     pub body: String,
+    /// Its merge commit, as the forge named it; empty when it has none or it was not read.
+    #[serde(default)]
+    pub merge_commit: String,
+    /// Its author's login; empty when unread. Evidence only.
+    #[serde(default)]
+    pub author: String,
+    /// The forge's word for what its author is to the repository; empty when unread.
+    #[serde(default)]
+    pub author_association: String,
+    /// Whether its head lives in a fork. A record that does not say is read as a fork.
+    #[serde(default = "unread_is_a_fork")]
+    pub cross_repository: bool,
+    /// The branch it asked to merge into; empty when unread. Evidence only.
+    #[serde(default)]
+    pub base_ref: String,
+    /// How many files the forge says it changes; zero when unread. A veto, never a proof: a
+    /// pull request that changes no file brought nothing to master, wherever its head now
+    /// points, so it is never a successor that landed.
+    #[serde(default)]
+    pub changed_files: u64,
+}
+
+/// What a resolved pull request that does not say where its head lives is read as: a fork,
+/// which declares nothing.
+fn unread_is_a_fork() -> bool {
+    true
 }
 
 /// How many open pull requests one observation lists. A forge with as many open as this may
 /// have more, and the queue says so.
 pub const OPEN_LIMIT: usize = 500;
 
-/// How many closed pull requests declaring a supersession are read, newest first.
-pub const RESOLVED_LIMIT: usize = 200;
+/// How many open pull requests one page of the declarations read asks for.
+pub const DECLARATIONS_PAGE: usize = 50;
 
-/// One pull request that is no longer open, from `gh pr list --state closed --json` or
-/// `gh pr view --json` output: `None` for an open one, or one without a head.
+/// How many pages of one pull request's cross-references are read, a hundred each: five
+/// thousand mentions. One that more pull requests and issues mention is held, never taken to
+/// have no declaration. Every mention counts, an issue's and another repository's too, so the
+/// bound is what an outsider must exceed to hold a pull request, and the cost of reading up
+/// to it is theirs to raise; it is far above any mention count this repository has seen.
+pub const REFERENCE_PAGES: usize = 50;
+
+/// What `gh pr view` is asked of a successor or dependency that is no longer open: what
+/// [`resolved_of()`] reads, but for the author's association, which `gh pr view` does not
+/// carry.
+pub const RESOLVED_FIELDS: &str =
+    "number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles";
+
+/// One pull request that is no longer open, from the source of a cross-reference
+/// ([`DECLARATIONS_QUERY`]) or from `gh pr view --json` output: `None` for an open one, or one
+/// without a head. What a reading does not say fails closed: no merge commit, no author, no
+/// association, a head read as a fork's and no changed file, so it declares nothing and
+/// never landed.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::resolved_of;
+/// let viewed = serde_json::json!({"number": 7, "state": "MERGED", "headRefOid": "h7",
+///     "mergeCommit": {"oid": "m7"}});
+/// let (number, read) = resolved_of(&viewed).unwrap();
+/// assert_eq!((number, read.merged, read.merge_commit.as_str()), (7, true, "m7"));
+/// assert!(read.cross_repository && read.author_association.is_empty(), "unread declares nothing");
+/// assert_eq!(read.changed_files, 0, "and changed nothing");
+/// assert!(resolved_of(&serde_json::json!({"number": 7, "state": "OPEN", "headRefOid": "h7"})).is_none());
+/// ```
 pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
     let number = v.get("number")?.as_u64()?;
     let merged = match v.get("state")?.as_str()? {
@@ -211,25 +279,36 @@ pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
     if head_sha.is_empty() {
         return None;
     }
-    let body = v
-        .get("body")
-        .and_then(Value::as_str)
-        .unwrap_or("")
-        .to_string();
+    let text = |pointer: &str| {
+        v.pointer(pointer)
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string()
+    };
     Some((
         number,
         ResolvedPullRequest {
             merged,
             head_sha,
-            body,
+            body: text("/body"),
+            merge_commit: text("/mergeCommit/oid"),
+            author: text("/author/login"),
+            author_association: text("/authorAssociation"),
+            cross_repository: v
+                .get("isCrossRepository")
+                .and_then(Value::as_bool)
+                .unwrap_or(true),
+            base_ref: text("/baseRefName"),
+            changed_files: v.get("changedFiles").and_then(Value::as_u64).unwrap_or(0),
         },
     ))
 }
 
 /// The pull requests no longer open that a supersession or a dependency involving an open one
-/// names: closed ones whose body says they supersede an open one (`closed`, the forge's answer
-/// to a search), and the successors and dependencies open bodies name that are not open, each
-/// read with `view`. One `view` cannot read is left out, and the classifier says it is unread.
+/// names: closed or merged ones whose body says they supersede an open one (`closed`: the
+/// sources of the open ones' cross-references, as [`declare()`] returned them), and the
+/// successors and dependencies open bodies name that are not open, each read with `view`. One
+/// `view` cannot read is left out, and the classifier says it is unread.
 pub fn resolved_for(
     open: &[PullRequestObservation],
     closed: &Value,
@@ -445,6 +524,9 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
             .get("isCrossRepository")
             .and_then(Value::as_bool)
             .unwrap_or(false),
+        // `gh pr list` reports neither: the declarations read does ([`declare()`])
+        author_association: String::new(),
+        cross_references: CrossReferenceRead::Unread,
         latest_reviews: v
             .get("latestReviews")
             .and_then(Value::as_array)
@@ -973,6 +1055,312 @@ fn gh_graphql(root: &Path, args: &[String]) -> Result<Value, ForgeError> {
     gh_json(root, &args.iter().map(String::as_str).collect::<Vec<_>>())
 }
 
+/// The GraphQL read of who may declare and what was declared: the open pull requests, newest
+/// first as `gh pr list` lists them, each with its author's association, whether its head
+/// lives in a fork, and the first hundred cross-references to it. The source of a
+/// cross-reference that is a pull request is read with everything [`resolved_of()`] reads: its
+/// state, body, head, merge commit, whether its head lives in a fork, its author and that
+/// author's association, its base, and how many files it changes. Two flags share a name: the
+/// event's `isCrossRepository` says the mention came from another repository, and a pull
+/// request's says its head lives in a fork. Variables: `owner`, `name`, `n` (the page size)
+/// and `after` (the cursor of the page before, absent for the first).
+pub const DECLARATIONS_QUERY: &str = "query($owner:String!,$name:String!,$n:Int!,$after:String){\
+repository(owner:$owner,name:$name){\
+pullRequests(states:OPEN,first:$n,after:$after,orderBy:{field:CREATED_AT,direction:DESC}){\
+pageInfo{hasNextPage endCursor}\
+nodes{number authorAssociation isCrossRepository \
+timelineItems(first:100,itemTypes:[CROSS_REFERENCED_EVENT]){\
+pageInfo{hasNextPage endCursor}\
+nodes{...on CrossReferencedEvent{isCrossRepository source{__typename \
+...on PullRequest{number state body headRefOid mergeCommit{oid} isCrossRepository \
+authorAssociation author{login} baseRefName changedFiles}}}}}}}}}";
+
+/// The GraphQL read of one pull request's cross-references, a page at a time: what
+/// [`DECLARATIONS_QUERY`] asks of every open pull request, asked of the one whose
+/// cross-references did not fit a page. Variables: `owner`, `name`, `number` and `after` (the
+/// cursor of the page of cross-references before, absent for the first).
+pub const DECLARATIONS_OF_QUERY: &str =
+    "query($owner:String!,$name:String!,$number:Int!,$after:String){\
+repository(owner:$owner,name:$name){\
+pullRequest(number:$number){number authorAssociation isCrossRepository \
+timelineItems(first:100,after:$after,itemTypes:[CROSS_REFERENCED_EVENT]){\
+pageInfo{hasNextPage endCursor}\
+nodes{...on CrossReferencedEvent{isCrossRepository source{__typename \
+...on PullRequest{number state body headRefOid mergeCommit{oid} isCrossRepository \
+authorAssociation author{login} baseRefName changedFiles}}}}}}}}";
+
+/// One page of the cross-references to one pull request.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReferencePage {
+    /// The forge's word for what the pull request's author is to the repository; empty when
+    /// the node does not say.
+    pub association: String,
+    /// Whether the pull request's head lives in a fork, as this read said it; `None` when the
+    /// node does not say.
+    pub cross_repository: Option<bool>,
+    /// The pull requests of this repository that mention it, each as the forge described it.
+    pub sources: Vec<Value>,
+    /// Whether these are all of them: only when the forge says no more follow.
+    pub complete: bool,
+    /// Where the next page of cross-references starts, when the forge named a cursor.
+    pub cursor: Option<String>,
+}
+
+/// One pull request node of a declarations answer, read as a [`ReferencePage`]. A source is
+/// kept only when the event says the mention came from this repository and the source is a
+/// numbered pull request: a `#N` written in another repository is not this repository's #N,
+/// an issue declares nothing, and an event that does not say where it came from is not
+/// trusted to be from here. Unlike a rollup, a node without `timelineItems` is not complete:
+/// what was not listed was not read.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::reference_page_of;
+/// let node = serde_json::json!({"number": 1, "authorAssociation": "OWNER",
+///     "isCrossRepository": false, "timelineItems": {
+///     "pageInfo": {"hasNextPage": true, "endCursor": "c1"},
+///     "nodes": [{"isCrossRepository": false, "source": {"__typename": "PullRequest", "number": 2}},
+///               {"isCrossRepository": true, "source": {"__typename": "PullRequest", "number": 3}},
+///               {"isCrossRepository": false, "source": {"__typename": "Issue"}}]}});
+/// let page = reference_page_of(&node);
+/// assert_eq!((page.association.as_str(), page.sources.len()), ("OWNER", 1));
+/// assert_eq!(page.cross_repository, Some(false));
+/// assert_eq!((page.complete, page.cursor.as_deref()), (false, Some("c1")));
+/// assert!(!reference_page_of(&serde_json::json!({"number": 1})).complete, "unlisted is unread");
+/// ```
+pub fn reference_page_of(node: &Value) -> ReferencePage {
+    let items = node.get("timelineItems");
+    let info = |k: &str| items.and_then(|t| t.pointer(k));
+    ReferencePage {
+        association: node
+            .get("authorAssociation")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string(),
+        cross_repository: node.get("isCrossRepository").and_then(Value::as_bool),
+        sources: items
+            .and_then(|t| t.get("nodes"))
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter(|event| event.get("isCrossRepository").and_then(Value::as_bool) == Some(false))
+            .filter_map(|event| event.get("source"))
+            .filter(|source| source.get("number").and_then(Value::as_u64).is_some())
+            .cloned()
+            .collect(),
+        complete: info("/pageInfo/hasNextPage").and_then(Value::as_bool) == Some(false),
+        cursor: info("/pageInfo/endCursor")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+    }
+}
+
+/// What was read about one open pull request: who its author is to the repository, where its
+/// head lives, and the pull requests that mention it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DeclarationRead {
+    /// The forge's word for what its author is to the repository; empty when unread.
+    pub association: String,
+    /// Whether its head lives in a fork, as this read said it; `None` when it did not say.
+    /// Only `Some(false)` lets its author declare anything ([`declare()`]).
+    pub cross_repository: Option<bool>,
+    /// The pull requests of this repository that mention it; empty unless `read` is whole.
+    pub sources: Vec<Value>,
+    /// Whether every cross-reference was read.
+    pub read: CrossReferenceRead,
+}
+
+impl DeclarationRead {
+    /// One page's answer as a read: whole with its sources when the page is all of them,
+    /// truncated — with no source, since a part of the references is not the references —
+    /// when it is not.
+    fn of(page: ReferencePage, sources: Vec<Value>) -> Self {
+        let (sources, read) = if page.complete {
+            (sources, CrossReferenceRead::Whole)
+        } else {
+            (Vec::new(), CrossReferenceRead::Truncated)
+        };
+        DeclarationRead {
+            association: page.association,
+            cross_repository: page.cross_repository,
+            sources,
+            read,
+        }
+    }
+}
+
+/// The declarations read, by open pull request number. What [`declarations()`] answers and
+/// [`declare()`] applies.
+pub type Declarations = BTreeMap<u64, DeclarationRead>;
+
+/// Every numbered pull request node of one [`DECLARATIONS_QUERY`] answer, as it was read from
+/// that page alone: whole when its cross-references fit, truncated — with no source — when
+/// they did not.
+fn declarations_of(page: &Value) -> Declarations {
+    page.pointer("/data/repository/pullRequests/nodes")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|node| {
+            let number = node.get("number").and_then(Value::as_u64)?;
+            let mut page = reference_page_of(node);
+            let sources = std::mem::take(&mut page.sources);
+            Some((number, DeclarationRead::of(page, sources)))
+        })
+        .collect()
+}
+
+/// Every cross-reference to one pull request, read a page at a time with
+/// [`DECLARATIONS_OF_QUERY`]: `ask` answers the page after a cursor (`None` first). Whole when
+/// the forge says no more follow; truncated, with no source, when a page says more follow and
+/// names no cursor, or [`REFERENCE_PAGES`] pages were not enough. `None` when the forge no
+/// longer shows the pull request: nothing was read of it, and unread is never a shorter list.
+/// A page the forge would not answer is the error it gave: a failed read is not a hold.
+fn whole_references(
+    mut ask: impl FnMut(Option<&str>) -> Result<Value, ForgeError>,
+) -> Result<Option<DeclarationRead>, ForgeError> {
+    let mut sources: Vec<Value> = Vec::new();
+    let mut cursor: Option<String> = None;
+    let mut last: Option<ReferencePage> = None;
+    for _ in 0..REFERENCE_PAGES {
+        let answer = ask(cursor.as_deref())?;
+        let Some(node) = answer
+            .pointer("/data/repository/pullRequest")
+            .filter(|node| node.is_object())
+        else {
+            return Ok(None);
+        };
+        let mut page = reference_page_of(node);
+        sources.append(&mut page.sources);
+        cursor = page.cursor.clone();
+        let stop = page.complete || cursor.is_none();
+        last = Some(page);
+        if stop {
+            break;
+        }
+    }
+    // the last page read says whether more follow: one that does not is the whole
+    Ok(last.map(|page| DeclarationRead::of(page, sources)))
+}
+
+/// What is declared about the open pull requests `wanted` names, and by whom. `page` answers
+/// one [`DECLARATIONS_QUERY`] page after a cursor (`None` first); pages are asked for until
+/// every wanted pull request was seen, the forge has no more, or `limit` pull requests' worth
+/// of pages were asked for. A wanted one that was not read whole by then — its
+/// cross-references did not fit its page, or no page listed it — is asked for alone with
+/// `rest` (its number, then the cursor), [`REFERENCE_PAGES`] pages at most; one that still
+/// does not fit is truncated, with no source at all, and held.
+///
+/// The two ways a read falls short are kept apart. A truncated read is that pull request's:
+/// it is held and the others are decided. A read the forge would not answer — a page, or one
+/// pull request's references — is an error, and the caller makes no observation from it:
+/// what was not read is never an observation with a part missing. One the forge no longer
+/// shows when asked for alone is unread — with the association a page gave it, or else absent
+/// from the answer, which [`declare()`] leaves unread too.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::declarations;
+/// use majordomus_cli::integration::CrossReferenceRead;
+/// let page = serde_json::json!({"data": {"repository": {"pullRequests": {
+///   "pageInfo": {"hasNextPage": false}, "nodes": [
+///     {"number": 1, "authorAssociation": "OWNER", "isCrossRepository": false, "timelineItems": {
+///        "pageInfo": {"hasNextPage": false}, "nodes": []}}]}}}});
+/// let wanted = [1, 2].into_iter().collect();
+/// let gone = |_: u64, _: Option<&str>| Ok(serde_json::json!({"data": {"repository": {"pullRequest": null}}}));
+/// let read = declarations(&wanted, 500, |_| Ok(page.clone()), gone).unwrap();
+/// assert_eq!((read[&1].association.as_str(), read[&1].read), ("OWNER", CrossReferenceRead::Whole));
+/// assert!(!read.contains_key(&2), "one the forge no longer shows is unread, and #1 still is read");
+/// let refused = |_: u64, _: Option<&str>| Err(ForgeError("HTTP 403".into()));
+/// assert!(declarations(&wanted, 500, |_| Ok(page.clone()), refused).is_err(), "a failed read is an error");
+/// ```
+pub fn declarations(
+    wanted: &BTreeSet<u64>,
+    limit: usize,
+    mut page: impl FnMut(Option<&str>) -> Result<Value, ForgeError>,
+    mut rest: impl FnMut(u64, Option<&str>) -> Result<Value, ForgeError>,
+) -> Result<Declarations, ForgeError> {
+    let mut read = Declarations::new();
+    let mut cursor: Option<String> = None;
+    for _ in 0..limit.div_ceil(DECLARATIONS_PAGE) {
+        if wanted.iter().all(|n| read.contains_key(n)) {
+            break;
+        }
+        let answer = page(cursor.as_deref())?;
+        read.extend(declarations_of(&answer));
+        cursor = next_cursor(&answer);
+        if cursor.is_none() {
+            break;
+        }
+    }
+    let whole = |read: &Declarations, n: &u64| {
+        read.get(n)
+            .is_some_and(|d| d.read == CrossReferenceRead::Whole)
+    };
+    let alone: Vec<u64> = wanted
+        .iter()
+        .copied()
+        .filter(|n| !whole(&read, n))
+        .collect();
+    for number in alone {
+        let entry = whole_references(|after| rest(number, after))?;
+        // one the forge no longer shows is not a truncation: what a page said of its author
+        // is kept, and its references are unread
+        if let Some(kept) = read.get_mut(&number).filter(|_| entry.is_none()) {
+            kept.read = CrossReferenceRead::Unread;
+        }
+        read.extend(entry.map(|entry| (number, entry)));
+    }
+    Ok(read)
+}
+
+/// Give each observed pull request what the declarations read said of it: its author's
+/// association, and whether its cross-references were read whole. One the read does not name
+/// keeps no association and `unread`, so it authorises nothing and is held. Returns the
+/// sources of every named pull request's cross-references, in number order, as one array:
+/// what [`resolved_for()`] reads the closed declarers from.
+///
+/// Where a head lives is half of who may declare, and `gh pr list` reads an absent answer as
+/// "this repository". So an association is recorded only for a pull request this read placed:
+/// one it says lives here (`Some(false)`), or one the list already calls a fork, which
+/// declares nothing whatever its association. For one this read did not place, or placed in a
+/// fork the list did not see, no association is recorded, and it authorises nothing. The
+/// list's own flag is left as it was read.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::{declare, pull_request_of, DeclarationRead, Declarations};
+/// use majordomus_cli::integration::CrossReferenceRead;
+/// let mut prs = vec![pull_request_of(&serde_json::json!({"number": 1})).unwrap(),
+///                    pull_request_of(&serde_json::json!({"number": 2})).unwrap()];
+/// let mut read = Declarations::new();
+/// read.insert(1, DeclarationRead { association: "OWNER".into(), cross_repository: Some(false),
+///     sources: vec![serde_json::json!({"number": 7})], read: CrossReferenceRead::Whole });
+/// let sources = declare(&mut prs, &read);
+/// assert_eq!(sources, serde_json::json!([{"number": 7}]));
+/// assert_eq!(prs[0].cross_references, CrossReferenceRead::Whole);
+/// assert_eq!(prs[1].cross_references, CrossReferenceRead::Unread, "not named: held");
+/// ```
+pub fn declare(prs: &mut [PullRequestObservation], read: &Declarations) -> Value {
+    let mut sources: BTreeMap<u64, &[Value]> = BTreeMap::new();
+    for pr in prs.iter_mut() {
+        if let Some(said) = read.get(&pr.number) {
+            let placed = said.cross_repository == Some(false) || pr.cross_repository;
+            pr.author_association = if placed {
+                said.association.clone()
+            } else {
+                String::new()
+            };
+            pr.cross_references = said.read;
+            sources.insert(pr.number, &said.sources);
+        }
+    }
+    Value::Array(sources.into_values().flatten().cloned().collect())
+}
+
 impl Forge for GhForge<'_> {
     fn observe(&self) -> Result<ForgeObservation, ForgeError> {
         let root = self.root;
@@ -1089,15 +1477,15 @@ impl Forge for GhForge<'_> {
         let bound = required_checks
             .as_ref()
             .is_some_and(|r| r.iter().any(|c| c.app_id.is_some()));
+        let (owner, name) = repository
+            .split_once('/')
+            .unwrap_or((repository.as_str(), ""));
+        let wanted: BTreeSet<u64> = pull_requests.iter().map(|p| p.number).collect();
+        let ask = |query: &str, typed: &str, after: Option<&str>| {
+            gh_graphql(root, &writers_args(query, owner, name, typed, after))
+        };
         if bound {
-            let (owner, name) = repository
-                .split_once('/')
-                .unwrap_or((repository.as_str(), ""));
-            let wanted: BTreeSet<u64> = pull_requests.iter().map(|p| p.number).collect();
             let size = format!("n={WRITERS_PAGE}");
-            let ask = |query: &str, typed: &str, after: Option<&str>| {
-                gh_graphql(root, &writers_args(query, owner, name, typed, after))
-            };
             let read = attributed_checks(
                 &wanted,
                 OPEN_LIMIT,
@@ -1106,35 +1494,26 @@ impl Forge for GhForge<'_> {
             )?;
             attribute(&mut pull_requests, &read);
         }
-        // a successor that landed is no longer listed among the open ones: closed pull requests
-        // whose body declares a supersession are read with their heads, so the one they
-        // replace is still known to be replaced once they are gone
-        let closed = gh_json(
-            root,
-            &[
-                "pr",
-                "list",
-                "--state",
-                "closed",
-                "--search",
-                "supersedes in:body sort:updated-desc",
-                "--limit",
-                &RESOLVED_LIMIT.to_string(),
-                "--json",
-                "number,state,headRefOid,body",
-            ],
+        // who may declare a replacement, and what was declared: every open pull request is
+        // read with its author's association and the pull requests that mention it. A
+        // successor that landed is no longer listed among the open ones, and it is found
+        // among the cross-references of the one it replaces, whenever it was closed: no
+        // bounded search of closed pull requests decides. Nothing open, nothing asked; a read
+        // that is partial holds the pull request it was about, and no other; a read that
+        // fails makes no observation at all.
+        let size = format!("n={DECLARATIONS_PAGE}");
+        let read = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |after| ask(DECLARATIONS_QUERY, &size, after),
+            |number, after| ask(DECLARATIONS_OF_QUERY, &format!("number={number}"), after),
         )?;
+        let sources = declare(&mut pull_requests, &read);
         let mut unreadable = None;
-        let resolved = resolved_for(&pull_requests, &closed, |m| {
+        let resolved = resolved_for(&pull_requests, &sources, |m| {
             match gh_retrying(
                 root,
-                &[
-                    "pr",
-                    "view",
-                    &m.to_string(),
-                    "--json",
-                    "number,state,headRefOid,body",
-                ],
+                &["pr", "view", &m.to_string(), "--json", RESOLVED_FIELDS],
             ) {
                 Ok((true, out, _)) => serde_json::from_str(&out).ok(),
                 // not a pull request, or refused: the successor is unread, never landed
@@ -1328,6 +1707,16 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
         }
     })
     .map_err(ForgeError)
+}
+
+/// Tests only: an observed pull request as a whole declarations read leaves it, its author
+/// the repository's owner. What a fixture built from `gh pr list` output needs before a
+/// queue is built from it: a pull request whose cross-references were not read is held.
+#[cfg(test)]
+pub(crate) fn read_whole(mut pr: PullRequestObservation) -> PullRequestObservation {
+    pr.author_association = "OWNER".into();
+    pr.cross_references = CrossReferenceRead::Whole;
+    pr
 }
 
 #[cfg(test)]
@@ -2091,6 +2480,573 @@ mod tests {
         assert_eq!(
             merged_branches_given(&heads, "master", || Some(merged)).map(|v| v.len()),
             Some(1)
+        );
+    }
+
+    /// A pull request source of a cross-reference, with everything the read asks of it.
+    fn source(number: u64, state: &str, body: &str, association: &str, fork: bool) -> Value {
+        json!({"__typename": "PullRequest", "number": number, "state": state, "body": body,
+               "headRefOid": format!("h{number}"), "mergeCommit": {"oid": format!("m{number}")},
+               "isCrossRepository": fork, "authorAssociation": association,
+               "author": {"login": "ana"}, "baseRefName": "master", "changedFiles": 3})
+    }
+
+    /// One cross-reference from this repository.
+    fn mention(source: Value) -> Value {
+        json!({"isCrossRepository": false, "source": source})
+    }
+
+    /// One open pull request node of a declarations answer.
+    fn declared_node(number: u64, more: Value, cursor: Value, events: Vec<Value>) -> Value {
+        json!({"number": number, "authorAssociation": "OWNER", "isCrossRepository": false,
+            "timelineItems": {
+                "pageInfo": {"hasNextPage": more, "endCursor": cursor}, "nodes": events}})
+    }
+
+    fn references_page(more: Value, cursor: Value, events: Vec<Value>) -> Value {
+        json!({"data": {"repository": {"pullRequest": declared_node(1, more, cursor, events)}}})
+    }
+
+    #[test]
+    fn a_resolved_pull_request_is_read_with_who_declared_and_where_it_merged() {
+        let (number, read) =
+            resolved_of(&source(7, "MERGED", "Supersedes #1", "COLLABORATOR", false)).unwrap();
+        assert_eq!(number, 7);
+        assert_eq!(
+            read,
+            ResolvedPullRequest {
+                merged: true,
+                head_sha: "h7".into(),
+                body: "Supersedes #1".into(),
+                merge_commit: "m7".into(),
+                author: "ana".into(),
+                author_association: "COLLABORATOR".into(),
+                cross_repository: false,
+                base_ref: "master".into(),
+                changed_files: 3,
+            }
+        );
+        // what a reading does not say fails closed
+        let bare = ResolvedPullRequest {
+            merged: true,
+            head_sha: "h".into(),
+            body: String::new(),
+            merge_commit: String::new(),
+            author: String::new(),
+            author_association: String::new(),
+            cross_repository: true,
+            base_ref: String::new(),
+            changed_files: 0,
+        };
+        let (_, read) =
+            resolved_of(&json!({"number": 7, "state": "MERGED", "headRefOid": "h"})).unwrap();
+        assert_eq!(read, bare);
+        let (_, read) = resolved_of(&json!({"number": 7, "state": "MERGED", "headRefOid": "h",
+            "mergeCommit": null, "author": null, "authorAssociation": null,
+            "isCrossRepository": null, "baseRefName": null, "changedFiles": null}))
+        .unwrap();
+        assert_eq!(read, bare, "a null is not an answer");
+        // and so does a record that predates the fields
+        let recorded: ResolvedPullRequest =
+            serde_json::from_str(r#"{"merged":true,"head_sha":"h"}"#).unwrap();
+        assert_eq!(
+            recorded, bare,
+            "a record that does not say is read as a fork"
+        );
+        assert!(unread_is_a_fork());
+    }
+
+    #[test]
+    fn a_pull_request_the_list_names_has_no_reference_read() {
+        let listed = pull_request_of(&json!({"number": 1, "authorAssociation": "OWNER"})).unwrap();
+        assert_eq!(
+            listed.author_association, "",
+            "gh pr list does not report it"
+        );
+        assert_eq!(listed.cross_references, CrossReferenceRead::Unread);
+        // a record written before either was read says the same
+        let mut record = serde_json::to_value(&listed).unwrap();
+        let fields = record.as_object_mut().unwrap();
+        assert_eq!(fields.remove("cross_references"), Some(json!("unread")));
+        assert_eq!(fields.remove("author_association"), Some(json!("")));
+        let older: PullRequestObservation = serde_json::from_value(record).unwrap();
+        assert_eq!(older, listed);
+        let words: Vec<Value> = [
+            CrossReferenceRead::Unread,
+            CrossReferenceRead::Truncated,
+            CrossReferenceRead::Whole,
+        ]
+        .iter()
+        .map(|w| serde_json::to_value(w).unwrap())
+        .collect();
+        assert_eq!(words, [json!("unread"), json!("truncated"), json!("whole")]);
+        let whole = read_whole(listed);
+        assert_eq!(
+            (whole.author_association.as_str(), whole.cross_references),
+            ("OWNER", CrossReferenceRead::Whole)
+        );
+    }
+
+    #[test]
+    fn a_reference_page_is_read_per_pull_request() {
+        let kept = source(2, "MERGED", "Supersedes #1", "OWNER", false);
+        let node = declared_node(
+            1,
+            json!(false),
+            json!("c9"),
+            vec![
+                mention(kept.clone()),
+                // an issue mentions it: no number, no declaration
+                mention(json!({"__typename": "Issue"})),
+                // written in another repository: its #1 is not this #1
+                json!({"isCrossRepository": true,
+                       "source": source(3, "MERGED", "Supersedes #1", "OWNER", false)}),
+                // an event that does not say where it came from is not taken to be from here
+                json!({"source": source(4, "MERGED", "Supersedes #1", "OWNER", false)}),
+                json!({"isCrossRepository": false}),
+                json!({}),
+            ],
+        );
+        let page = reference_page_of(&node);
+        assert_eq!(page.association, "OWNER");
+        assert_eq!(page.cross_repository, Some(false));
+        assert_eq!(page.sources, [kept]);
+        assert_eq!((page.complete, page.cursor.as_deref()), (true, Some("c9")));
+        let more = reference_page_of(&declared_node(1, json!(true), json!("c1"), vec![]));
+        assert_eq!((more.complete, more.cursor.as_deref()), (false, Some("c1")));
+        let unsaid = reference_page_of(&json!({"number": 1, "timelineItems": {"nodes": []}}));
+        assert!(
+            !unsaid.complete,
+            "not saying whether more follow is not `no more`"
+        );
+        assert_eq!((unsaid.association.as_str(), unsaid.cursor), ("", None));
+        assert_eq!(unsaid.cross_repository, None, "not said is not `here`");
+        let null = reference_page_of(&json!({"number": 1, "isCrossRepository": null}));
+        assert_eq!(null.cross_repository, None, "a null is not an answer");
+        for unlisted in [
+            json!({"number": 1}),
+            json!({"number": 1, "timelineItems": null}),
+            Value::Null,
+        ] {
+            let page = reference_page_of(&unlisted);
+            assert!(
+                !page.complete,
+                "what was not listed was not read: {unlisted}"
+            );
+            assert!(page.sources.is_empty());
+        }
+    }
+
+    #[test]
+    fn every_page_of_declarations_is_asked_for_once() {
+        let wanted: BTreeSet<u64> = [1, 2].into_iter().collect();
+        let none = |number: u64, _: Option<&str>| -> Result<Value, ForgeError> {
+            panic!("#{number} was asked for alone")
+        };
+        let declarer = || mention(source(7, "MERGED", "Supersedes #1", "OWNER", false));
+        let pages = |after: Option<&str>| match after {
+            None => writers_page(
+                true,
+                json!("c1"),
+                vec![declared_node(2, json!(false), Value::Null, vec![])],
+            ),
+            _ => writers_page(
+                false,
+                Value::Null,
+                vec![
+                    declared_node(1, json!(false), Value::Null, vec![declarer()]),
+                    json!({"authorAssociation": "OWNER"}),
+                ],
+            ),
+        };
+        let mut asked: Vec<Option<String>> = Vec::new();
+        let read = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |after| {
+                asked.push(after.map(str::to_string));
+                Ok(pages(after))
+            },
+            none,
+        )
+        .unwrap();
+        assert_eq!(asked, [None, Some("c1".to_string())]);
+        assert_eq!(read.keys().copied().collect::<Vec<_>>(), [1, 2]);
+        assert_eq!(read[&1].read, CrossReferenceRead::Whole);
+        assert_eq!(read[&1].association, "OWNER");
+        assert_eq!(read[&1].cross_repository, Some(false));
+        assert_eq!(read[&1].sources.len(), 1);
+        assert!(read[&2].sources.is_empty());
+
+        // the newest are listed first: once every observed number was seen, nothing more is asked
+        let mut calls = 0;
+        let newest: BTreeSet<u64> = [2].into_iter().collect();
+        let read = declarations(
+            &newest,
+            OPEN_LIMIT,
+            |after| {
+                calls += 1;
+                Ok(pages(after))
+            },
+            none,
+        )
+        .unwrap();
+        assert_eq!((calls, read.contains_key(&2)), (1, true));
+
+        // nothing open, nothing asked
+        let read = declarations(
+            &BTreeSet::new(),
+            OPEN_LIMIT,
+            |_| panic!("a page was asked for"),
+            none,
+        )
+        .unwrap();
+        assert!(read.is_empty());
+    }
+
+    #[test]
+    fn one_no_page_listed_is_asked_for_alone_and_a_refusal_fails_the_read() {
+        let wanted: BTreeSet<u64> = [1, 2].into_iter().collect();
+        let declarer = || mention(source(7, "MERGED", "Supersedes #1", "OWNER", false));
+        let first = || {
+            writers_page(
+                true,
+                json!("c1"),
+                vec![declared_node(2, json!(false), Value::Null, vec![])],
+            )
+        };
+        let alone = || references_page(json!(false), Value::Null, vec![declarer()]);
+
+        // a limit of one page stops the paging, though the forge has more: #1 is asked for alone
+        let (mut calls, mut asked) = (0, Vec::new());
+        let read = declarations(
+            &wanted,
+            1,
+            |_| {
+                calls += 1;
+                Ok(first())
+            },
+            |number, after| {
+                asked.push((number, after.map(str::to_string)));
+                Ok(alone())
+            },
+        )
+        .unwrap();
+        assert_eq!((calls, asked), (1, vec![(1, None)]));
+        assert_eq!(read[&1].read, CrossReferenceRead::Whole);
+        assert_eq!(read[&1].sources.len(), 1);
+
+        // a page the forge refuses fails the read: nothing is asked for alone to stand in
+        // for it, and what the pages before it said is no observation
+        let mut asked = Vec::new();
+        let failed = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |after| match after {
+                None => Ok(first()),
+                _ => Err(ForgeError("HTTP 403".into())),
+            },
+            |number, _| {
+                asked.push(number);
+                Ok(alone())
+            },
+        );
+        assert_eq!(failed.unwrap_err().0, "HTTP 403");
+        assert!(asked.is_empty(), "a failed page is not papered over");
+
+        // one asked for alone that the forge refuses fails the read too, whatever was read
+        // of the others
+        let failed = declarations(
+            &wanted,
+            1,
+            |_| Ok(first()),
+            |_, _| Err(ForgeError("HTTP 502".into())),
+        );
+        assert_eq!(failed.unwrap_err().0, "HTTP 502");
+    }
+
+    #[test]
+    fn a_timeline_that_does_not_fit_a_page_is_read_whole_or_held() {
+        let wanted: BTreeSet<u64> = [1].into_iter().collect();
+        let declarer = |n: u64| mention(source(n, "MERGED", "Supersedes #1", "OWNER", false));
+        // #1's cross-references did not fit, though the page shows one that would close it;
+        // #7 is truncated too, and nobody observed it
+        let first = || {
+            writers_page(
+                false,
+                Value::Null,
+                vec![
+                    declared_node(1, json!(true), json!("x1"), vec![declarer(5)]),
+                    declared_node(7, json!(true), json!("x7"), vec![]),
+                ],
+            )
+        };
+        let mut asked: Vec<(u64, Option<String>)> = Vec::new();
+        let read = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |_| Ok(first()),
+            |number, after| {
+                asked.push((number, after.map(str::to_string)));
+                Ok(match after {
+                    None => references_page(json!(true), json!("x1"), vec![declarer(5)]),
+                    _ => references_page(json!(false), Value::Null, vec![declarer(6)]),
+                })
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            asked,
+            [(1, None), (1, Some("x1".to_string()))],
+            "#7 was not observed, and is not asked again"
+        );
+        assert_eq!(read[&1].read, CrossReferenceRead::Whole);
+        let numbers: Vec<u64> = read[&1]
+            .sources
+            .iter()
+            .filter_map(|s| s.get("number").and_then(Value::as_u64))
+            .collect();
+        assert_eq!(numbers, [5, 6], "every page of its references, in order");
+        assert_eq!(read[&7].read, CrossReferenceRead::Truncated);
+
+        // each way the whole cannot be read holds it, with no source at all and with who its
+        // author is, which a page did say
+        let asked_alone = |answer: &dyn Fn(Option<&str>) -> Result<Value, ForgeError>| {
+            let mut pages = 0;
+            let read = declarations(
+                &wanted,
+                OPEN_LIMIT,
+                |_| Ok(first()),
+                |_, after| {
+                    pages += 1;
+                    answer(after)
+                },
+            );
+            (pages, read)
+        };
+        let held = |answer: &dyn Fn(Option<&str>) -> Result<Value, ForgeError>| {
+            let (pages, read) = asked_alone(answer);
+            let read = read.unwrap();
+            assert_eq!(
+                (read[&1].association.as_str(), read[&1].cross_repository),
+                ("OWNER", Some(false)),
+                "who its author is was still read"
+            );
+            assert!(
+                read[&1].sources.is_empty(),
+                "a part of the references is not the references"
+            );
+            (pages, read[&1].read)
+        };
+        let more = |cursor: Value| Ok(references_page(json!(true), cursor, vec![declarer(5)]));
+        assert_eq!(
+            held(&|_| more(Value::Null)),
+            (1, CrossReferenceRead::Truncated),
+            "more follow, and no cursor says where"
+        );
+        assert_eq!(
+            held(&|_| more(json!("x"))),
+            (REFERENCE_PAGES, CrossReferenceRead::Truncated),
+            "more pages than are read"
+        );
+        // what the forge no longer shows is unread, not truncated: a refresh may read it
+        assert_eq!(
+            held(&|_| Ok(json!({"data": {"repository": {"pullRequest": null}}}))),
+            (1, CrossReferenceRead::Unread),
+            "a pull request the forge no longer shows was not read"
+        );
+        // a page of references the forge refuses is neither: the read failed, on whichever
+        // page, and nothing is held on a part of it
+        let (pages, failed) = asked_alone(&|_| Err(ForgeError("HTTP 502".into())));
+        assert_eq!((pages, failed.unwrap_err().0.as_str()), (1, "HTTP 502"));
+        let (pages, failed) = asked_alone(&|after| match after {
+            None => more(json!("x")),
+            _ => Err(ForgeError("HTTP 503".into())),
+        });
+        assert_eq!((pages, failed.unwrap_err().0.as_str()), (2, "HTTP 503"));
+    }
+
+    #[test]
+    fn only_a_pull_request_the_read_names_is_marked() {
+        let listed = |number: u64| pull_request_of(&json!({"number": number})).unwrap();
+        let mut prs = vec![listed(1), listed(2), listed(3)];
+        let mut read = Declarations::new();
+        // read out of order, and of one nobody observed
+        read.insert(
+            2,
+            DeclarationRead {
+                association: "CONTRIBUTOR".into(),
+                cross_repository: Some(false),
+                sources: vec![json!({"number": 8})],
+                read: CrossReferenceRead::Whole,
+            },
+        );
+        read.insert(
+            1,
+            DeclarationRead {
+                association: "OWNER".into(),
+                cross_repository: Some(false),
+                sources: vec![json!({"number": 7}), json!({"number": 9})],
+                read: CrossReferenceRead::Whole,
+            },
+        );
+        read.insert(
+            40,
+            DeclarationRead {
+                association: "OWNER".into(),
+                cross_repository: Some(false),
+                sources: vec![json!({"number": 41})],
+                read: CrossReferenceRead::Whole,
+            },
+        );
+        let sources = declare(&mut prs, &read);
+        assert_eq!(
+            sources,
+            json!([{"number": 7}, {"number": 9}, {"number": 8}]),
+            "every source of every observed one, in number order"
+        );
+        let said: Vec<(&str, CrossReferenceRead)> = prs
+            .iter()
+            .map(|p| (p.author_association.as_str(), p.cross_references))
+            .collect();
+        assert_eq!(
+            said,
+            [
+                ("OWNER", CrossReferenceRead::Whole),
+                ("CONTRIBUTOR", CrossReferenceRead::Whole),
+                ("", CrossReferenceRead::Unread)
+            ],
+            "#3 was not named: nobody's, and held"
+        );
+        // a truncated read marks it truncated, and never whole
+        let mut read = Declarations::new();
+        read.insert(
+            3,
+            DeclarationRead {
+                association: "MEMBER".into(),
+                cross_repository: Some(false),
+                sources: Vec::new(),
+                read: CrossReferenceRead::Truncated,
+            },
+        );
+        assert_eq!(declare(&mut prs, &read), json!([]));
+        assert_eq!(
+            (prs[2].author_association.as_str(), prs[2].cross_references),
+            ("MEMBER", CrossReferenceRead::Truncated)
+        );
+    }
+
+    #[test]
+    fn an_association_is_recorded_only_for_one_the_read_placed() {
+        // (what the list said, what the declarations read said) of where the head lives
+        let marked = |listed: Value, said: Option<bool>| {
+            let mut prs =
+                vec![pull_request_of(&json!({"number": 1, "isCrossRepository": listed})).unwrap()];
+            let mut read = Declarations::new();
+            read.insert(
+                1,
+                DeclarationRead {
+                    association: "OWNER".into(),
+                    cross_repository: said,
+                    sources: Vec::new(),
+                    read: CrossReferenceRead::Whole,
+                },
+            );
+            declare(&mut prs, &read);
+            let pr = prs.remove(0);
+            assert_eq!(pr.cross_references, CrossReferenceRead::Whole);
+            (pr.author_association, pr.cross_repository)
+        };
+        let owner = |fork: bool| ("OWNER".to_string(), fork);
+        let nobody = (String::new(), false);
+        assert_eq!(marked(json!(false), Some(false)), owner(false));
+        // the list reads an absent or null flag as `this repository`: only the read's own
+        // word that it lives here lets its author declare
+        assert_eq!(marked(Value::Null, Some(false)), owner(false));
+        assert_eq!(marked(json!(false), None), nobody, "absent: unauthorised");
+        assert_eq!(marked(Value::Null, None), nobody, "absent twice");
+        assert_eq!(marked(json!(false), Some(true)), nobody, "the two disagree");
+        // a fork declares nothing whatever its association, so the word is kept as evidence,
+        // and the list's own flag is left as it was read
+        assert_eq!(marked(json!(true), Some(true)), owner(true));
+        assert_eq!(marked(json!(true), None), owner(true));
+        assert_eq!(marked(json!(true), Some(false)), owner(true));
+    }
+
+    #[test]
+    fn the_forge_is_asked_exactly_this() {
+        assert_eq!(
+            DECLARATIONS_QUERY,
+            "query($owner:String!,$name:String!,$n:Int!,$after:String){repository(owner:$owner,name:$name){pullRequests(states:OPEN,first:$n,after:$after,orderBy:{field:CREATED_AT,direction:DESC}){pageInfo{hasNextPage endCursor}nodes{number authorAssociation isCrossRepository timelineItems(first:100,itemTypes:[CROSS_REFERENCED_EVENT]){pageInfo{hasNextPage endCursor}nodes{...on CrossReferencedEvent{isCrossRepository source{__typename ...on PullRequest{number state body headRefOid mergeCommit{oid} isCrossRepository authorAssociation author{login} baseRefName changedFiles}}}}}}}}}"
+        );
+        assert_eq!(
+            DECLARATIONS_OF_QUERY,
+            "query($owner:String!,$name:String!,$number:Int!,$after:String){repository(owner:$owner,name:$name){pullRequest(number:$number){number authorAssociation isCrossRepository timelineItems(first:100,after:$after,itemTypes:[CROSS_REFERENCED_EVENT]){pageInfo{hasNextPage endCursor}nodes{...on CrossReferencedEvent{isCrossRepository source{__typename ...on PullRequest{number state body headRefOid mergeCommit{oid} isCrossRepository authorAssociation author{login} baseRefName changedFiles}}}}}}}}"
+        );
+        for query in [DECLARATIONS_QUERY, DECLARATIONS_OF_QUERY] {
+            let (opened, closed) = (query.matches('{').count(), query.matches('}').count());
+            assert_eq!(opened, closed, "{query}");
+            assert!(!query.contains('\n'), "{query}");
+        }
+        assert_eq!(
+            writers_args(DECLARATIONS_QUERY, "o", "r", "n=50", None),
+            [
+                "api",
+                "graphql",
+                "-f",
+                format!("query={DECLARATIONS_QUERY}").as_str(),
+                "-f",
+                "owner=o",
+                "-f",
+                "name=r",
+                "-F",
+                "n=50"
+            ]
+        );
+        assert_eq!(format!("n={DECLARATIONS_PAGE}"), "n=50");
+        assert_eq!(
+            RESOLVED_FIELDS,
+            "number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles"
+        );
+        assert_eq!(REFERENCE_PAGES, 50);
+        assert_eq!(OBSERVATION_SCHEMA, 4);
+    }
+
+    #[test]
+    fn a_closed_declarer_is_resolved_from_the_cross_references() {
+        let listed = |number: u64| pull_request_of(&json!({"number": number})).unwrap();
+        let mut open = vec![listed(1), listed(2)];
+        let mut read = Declarations::new();
+        read.insert(
+            1,
+            DeclarationRead {
+                association: "OWNER".into(),
+                cross_repository: Some(false),
+                sources: vec![
+                    source(5, "CLOSED", "Supersedes #1", "CONTRIBUTOR", true),
+                    // still open: it speaks for itself, among the open ones
+                    source(2, "OPEN", "Supersedes #1", "OWNER", false),
+                    // mentions #1 and supersedes only what is not open
+                    source(6, "MERGED", "See #1.\nSupersedes #40", "OWNER", false),
+                    // mentions #1 in prose
+                    source(8, "MERGED", "this supersedes #1", "OWNER", false),
+                ],
+                read: CrossReferenceRead::Whole,
+            },
+        );
+        let sources = declare(&mut open, &read);
+        let resolved = resolved_for(&open, &sources, |n| panic!("#{n} was viewed"));
+        assert_eq!(resolved.keys().copied().collect::<Vec<_>>(), [5]);
+        let five = &resolved[&5];
+        assert_eq!(
+            (
+                five.merged,
+                five.author_association.as_str(),
+                five.cross_repository,
+                five.merge_commit.as_str()
+            ),
+            (false, "CONTRIBUTOR", true, "m5"),
+            "who declared is kept, for the classifier to weigh"
         );
     }
 

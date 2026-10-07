@@ -6,23 +6,23 @@
     "version": "0.14.0"
   },
   "registry": {
-    "fingerprint": "58b522efab6d0086a38f7c14b495617c14c782dd39951edfd21c8b79e93027d1",
+    "fingerprint": "e6bddf79ee53c84c8a39a0de2c1daf76addaed119b53b4215873e5642b328b4f",
     "summary": {
-      "total": 1920,
+      "total": 1932,
       "builtin": 172,
-      "declarative": 1748,
+      "declarative": 1760,
       "by_kind": {
         "command": 22,
         "query": 150,
-        "resource": 1748
+        "resource": 1760
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 36,
-        "implemented": 1756
+        "implemented": 1768
       },
       "mcp_tools": 166,
-      "mcp_resources": 1801,
+      "mcp_resources": 1813,
       "http_routes": 170,
       "cli_commands": 90,
       "modules": 84,
@@ -25506,7 +25506,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "The evidence, as reason codes."
@@ -25584,12 +25584,12 @@
                   {
                     "type": "string",
                     "const": "superseded",
-                    "description": "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                    "description": "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
                   },
                   {
                     "type": "string",
                     "const": "possibly_redundant",
-                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
                   },
                   {
                     "type": "string",
@@ -25808,7 +25808,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
@@ -26102,7 +26102,7 @@
                   {
                     "type": "string",
                     "const": "supersession",
-                    "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+                    "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
                   },
                   {
                     "type": "string",
@@ -26369,7 +26369,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+                    "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only."
                   },
                   "issue": {
                     "type": [
@@ -26392,7 +26392,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
@@ -26607,12 +26607,12 @@
                   {
                     "type": "string",
                     "const": "superseded",
-                    "description": "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                    "description": "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
                   },
                   {
                     "type": "string",
                     "const": "possibly_redundant",
-                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
                   },
                   {
                     "type": "string",
@@ -26705,7 +26705,7 @@
                   {
                     "type": "string",
                     "const": "supersession",
-                    "description": "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+                    "description": "No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it."
                   },
                   {
                     "type": "string",
@@ -27207,7 +27207,7 @@
                   {
                     "type": "string",
                     "const": "supersession",
-                    "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+                    "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
                   },
                   {
                     "type": "string",
@@ -28178,7 +28178,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+                    "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only."
                   },
                   "issue": {
                     "type": [
@@ -28201,7 +28201,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
@@ -28416,12 +28416,12 @@
                   {
                     "type": "string",
                     "const": "superseded",
-                    "description": "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                    "description": "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
                   },
                   {
                     "type": "string",
                     "const": "possibly_redundant",
-                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
                   },
                   {
                     "type": "string",
@@ -28514,7 +28514,7 @@
                   {
                     "type": "string",
                     "const": "supersession",
-                    "description": "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+                    "description": "No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it."
                   },
                   {
                     "type": "string",
@@ -29016,7 +29016,7 @@
                   {
                     "type": "string",
                     "const": "supersession",
-                    "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+                    "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
                   },
                   {
                     "type": "string",
@@ -29513,7 +29513,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
@@ -68403,7 +68403,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 367,
+        "capabilities": 379,
         "capability_ids": []
       },
       {
@@ -68493,7 +68493,7 @@
     ]
   },
   "index": {
-    "fingerprint": "241396a590ead75c00b3dce9b2a2c0b3661139a0700ea15846e62d47267e9899",
+    "fingerprint": "56077ab67dda87730a01da17d9cb59686087c189457415a28586c8fbc5aab84e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -68546,7 +68546,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 367,
+      "test": 379,
       "use-case": 48,
       "workspace": 1
     },
@@ -69823,7 +69823,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 25611,
+        "bytes": 31454,
         "tags": [
           "integration",
           "git",
@@ -73332,7 +73332,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 8082
+        "bytes": 8653
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -73665,7 +73665,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 45376
+        "bytes": 53236
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -82482,15 +82482,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.integration-follows-the-current-master@2",
+        "uri": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "rule",
-        "identity": "project.integration-follows-the-current-master@2",
+        "identity": "project.integration-follows-the-current-master@3",
         "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "description": "An integration decision names the master and head it was taken against and is acted on only while a fresh observation still says the same; a merge invalidates every earlier plan; required checks, reviews and branch protection are never bypassed; closure demands stronger evidence than merging; one executor mutates a base branch at a time; and every act is recorded.",
-        "path": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
+        "description": "An integration decision names the master and head it was taken against and is acted on only while a fresh observation still says the same; a merge invalidates every earlier plan; required checks, reviews and branch protection are never bypassed; a pull request is closed only on git's proof that its work is on master or on an authorised declaration whose successor landed; one executor mutates a base branch at a time; and every act is recorded.",
+        "path": ".ai/repo/rules/project/integration-follows-the-current-master.v3.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6572,
+        "bytes": 9444,
         "tags": [
           "integration",
           "git",
@@ -86055,7 +86055,7 @@
         "identity": "test/cases/720_integration_follows_the_current_master.sh",
         "path": "test/cases/720_integration_follows_the_current_master.sh",
         "source_class": "case",
-        "bytes": 13602
+        "bytes": 14226
       },
       {
         "uri": "majordomus://test/test/cases/721_the_suite_shards_are_the_whole_suite.sh",
@@ -86143,7 +86143,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 11438
+        "bytes": 12062
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -86151,7 +86151,7 @@
         "identity": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "source_class": "case",
-        "bytes": 7775
+        "bytes": 8399
       },
       {
         "uri": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
@@ -86159,7 +86159,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 6424
+        "bytes": 7048
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
@@ -86367,7 +86367,7 @@
         "identity": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "source_class": "case",
-        "bytes": 15464
+        "bytes": 16264
       },
       {
         "uri": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
@@ -86375,7 +86375,7 @@
         "identity": "test/cases/852_a_dry_run_moves_nothing.sh",
         "path": "test/cases/852_a_dry_run_moves_nothing.sh",
         "source_class": "case",
-        "bytes": 7483
+        "bytes": 8107
       },
       {
         "uri": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
@@ -86383,7 +86383,7 @@
         "identity": "test/cases/855_racing_executors_merge_once.sh",
         "path": "test/cases/855_racing_executors_merge_once.sh",
         "source_class": "case",
-        "bytes": 6070
+        "bytes": 6694
       },
       {
         "uri": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
@@ -86391,7 +86391,7 @@
         "identity": "test/cases/856_racing_worktrees_share_one_lease.sh",
         "path": "test/cases/856_racing_worktrees_share_one_lease.sh",
         "source_class": "case",
-        "bytes": 6355
+        "bytes": 6979
       },
       {
         "uri": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
@@ -86399,7 +86399,7 @@
         "identity": "test/cases/857_required_checks_are_authoritative.sh",
         "path": "test/cases/857_required_checks_are_authoritative.sh",
         "source_class": "case",
-        "bytes": 13568
+        "bytes": 14075
       },
       {
         "uri": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
@@ -86407,7 +86407,7 @@
         "identity": "test/cases/858_reviews_are_authoritative.sh",
         "path": "test/cases/858_reviews_are_authoritative.sh",
         "source_class": "case",
-        "bytes": 5172
+        "bytes": 5796
       },
       {
         "uri": "majordomus://test/test/cases/85_deployment_bind.sh",
@@ -86439,7 +86439,7 @@
         "identity": "test/cases/861_a_successor_that_landed_supersedes.sh",
         "path": "test/cases/861_a_successor_that_landed_supersedes.sh",
         "source_class": "case",
-        "bytes": 8382
+        "bytes": 11735
       },
       {
         "uri": "majordomus://test/test/cases/86_deployment_projections.sh",
@@ -86527,7 +86527,7 @@
         "identity": "test/cases/911_repair_decides_and_moves_nothing.sh",
         "path": "test/cases/911_repair_decides_and_moves_nothing.sh",
         "source_class": "case",
-        "bytes": 9028
+        "bytes": 9584
       },
       {
         "uri": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
@@ -86535,7 +86535,7 @@
         "identity": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
         "path": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
         "source_class": "case",
-        "bytes": 11616
+        "bytes": 12172
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -86559,7 +86559,7 @@
         "identity": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
         "path": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
         "source_class": "case",
-        "bytes": 13654
+        "bytes": 14224
       },
       {
         "uri": "majordomus://test/test/cases/926_an_unread_writer_is_never_a_pass.sh",
@@ -86567,7 +86567,7 @@
         "identity": "test/cases/926_an_unread_writer_is_never_a_pass.sh",
         "path": "test/cases/926_an_unread_writer_is_never_a_pass.sh",
         "source_class": "case",
-        "bytes": 16033
+        "bytes": 16483
       },
       {
         "uri": "majordomus://test/test/cases/927_an_unbound_base_asks_for_no_writer.sh",
@@ -86575,7 +86575,23 @@
         "identity": "test/cases/927_an_unbound_base_asks_for_no_writer.sh",
         "path": "test/cases/927_an_unbound_base_asks_for_no_writer.sh",
         "source_class": "case",
-        "bytes": 12509
+        "bytes": 13084
+      },
+      {
+        "uri": "majordomus://test/test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+        "kind": "test",
+        "identity": "test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+        "path": "test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+        "source_class": "case",
+        "bytes": 19802
+      },
+      {
+        "uri": "majordomus://test/test/cases/929_a_forks_declaration_decides_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/929_a_forks_declaration_decides_nothing.sh",
+        "path": "test/cases/929_a_forks_declaration_decides_nothing.sh",
+        "source_class": "case",
+        "bytes": 17375
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -86584,6 +86600,86 @@
         "path": "test/cases/92_openapi_reference.sh",
         "source_class": "case",
         "bytes": 10894
+      },
+      {
+        "uri": "majordomus://test/test/cases/930_an_own_body_is_tested_on_its_author.sh",
+        "kind": "test",
+        "identity": "test/cases/930_an_own_body_is_tested_on_its_author.sh",
+        "path": "test/cases/930_an_own_body_is_tested_on_its_author.sh",
+        "source_class": "case",
+        "bytes": 17297
+      },
+      {
+        "uri": "majordomus://test/test/cases/931_a_closed_successor_releases_the_hold.sh",
+        "kind": "test",
+        "identity": "test/cases/931_a_closed_successor_releases_the_hold.sh",
+        "path": "test/cases/931_a_closed_successor_releases_the_hold.sh",
+        "source_class": "case",
+        "bytes": 17649
+      },
+      {
+        "uri": "majordomus://test/test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+        "kind": "test",
+        "identity": "test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+        "path": "test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+        "source_class": "case",
+        "bytes": 17688
+      },
+      {
+        "uri": "majordomus://test/test/cases/933_every_page_of_cross_references_is_read.sh",
+        "kind": "test",
+        "identity": "test/cases/933_every_page_of_cross_references_is_read.sh",
+        "path": "test/cases/933_every_page_of_cross_references_is_read.sh",
+        "source_class": "case",
+        "bytes": 19266
+      },
+      {
+        "uri": "majordomus://test/test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+        "path": "test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+        "source_class": "case",
+        "bytes": 20210
+      },
+      {
+        "uri": "majordomus://test/test/cases/935_an_older_observation_is_refused.sh",
+        "kind": "test",
+        "identity": "test/cases/935_an_older_observation_is_refused.sh",
+        "path": "test/cases/935_an_older_observation_is_refused.sh",
+        "source_class": "case",
+        "bytes": 18844
+      },
+      {
+        "uri": "majordomus://test/test/cases/936_the_rule_names_every_closure_ground.sh",
+        "kind": "test",
+        "identity": "test/cases/936_the_rule_names_every_closure_ground.sh",
+        "path": "test/cases/936_the_rule_names_every_closure_ground.sh",
+        "source_class": "case",
+        "bytes": 5646
+      },
+      {
+        "uri": "majordomus://test/test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+        "kind": "test",
+        "identity": "test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+        "path": "test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+        "source_class": "case",
+        "bytes": 18910
+      },
+      {
+        "uri": "majordomus://test/test/cases/938_a_truncated_cross_reference_read_holds.sh",
+        "kind": "test",
+        "identity": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
+        "path": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
+        "source_class": "case",
+        "bytes": 20645
+      },
+      {
+        "uri": "majordomus://test/test/cases/939_a_batch_landed_successor_supersedes.sh",
+        "kind": "test",
+        "identity": "test/cases/939_a_batch_landed_successor_supersedes.sh",
+        "path": "test/cases/939_a_batch_landed_successor_supersedes.sh",
+        "source_class": "case",
+        "bytes": 19772
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -87639,7 +87735,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 367
+      "objects": 379
     },
     {
       "name": "use-case",

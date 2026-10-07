@@ -76,14 +76,16 @@ with one canonical state, one classification and one executor.
    `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`,
    `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`,
    `required_checks_unread`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`,
-   `dependency_unread:#N`, and, on a ready one, `contains_master` with
+   `dependency_unread:#N`, `declarations_unread`, and, on a ready one, `contains_master` with
    `required_checks_passed` or `required_checks_skipped`. The trail, the OpenAPI string
    arrays and the Cockpit read the same strings as before, and a code an older trail carries
    that this list does not name is kept verbatim. Evidence has a typed kind, with the wire
    words it had (`required_checks`, `review`, `relation_to_master`, `dependency`, `label`,
    `draft`, `base`, plus `required_check`, one per required context, `auto_merge` whenever
    the forge has auto-merge armed, `repository_settings` when the settings allow no merge
-   commit, and `supersession`, one per declared successor; `freshness` is reserved), and a
+   commit, and `supersession`, one per declared successor, one per declaration nobody
+   entitled made and one when the pull request's cross-references were not read whole;
+   `freshness` is reserved), and a
    source: the forge observation at its moment, or git on a named master and head.
 2. **The relation to master is git's.** `git merge-tree --write-tree` with this clone's
    drivers, and `git check-attr merge` for which paths are derived, from master's own
@@ -188,15 +190,23 @@ with one canonical state, one classification and one executor.
    as its successor, and a line of N's body that opens with `Supersedes #M` names N as M's,
    from the other side. The `supersession` gate is asked before `relation_to_master`, because
    a pull request whose successor landed usually conflicts with what the successor brought,
-   and is superseded rather than conflicting. A successor that is no longer open and whose
-   head git finds in master landed: the pull request is `superseded`
-   (`superseded_by:#N`), and the assessment names N in `superseded_by`. A successor still
-   open makes it `waiting_for_dependency` (`successor_open:#N`): it must not land while its
-   successor may, and once the successor lands it is closed rather than merged. A successor
-   closed without its head landing, closed unmerged or merged by a squash or a rebase, leaves
-   it `possibly_redundant` (`successor_not_landed:#N`) for a person; one that cannot be read
-   is `unknown` (`successor_unread:#N`). Of several successors, one that landed decides,
-   then one still open, then one that did not land.
+   and is superseded rather than conflicting. A declaration counts only from someone the
+   repository lets declare one: the pull request whose body carries it is a branch of this
+   repository and its author is an `OWNER`, `MEMBER` or `COLLABORATOR`, in either direction,
+   tested on the author of the body that speaks. Anyone else's, a fork's, or one whose
+   association was not read is evidence (`possible_supersession`, naming who said it) and
+   changes no disposition. A successor landed when git finds its head or its merge commit in
+   master, whatever the forge calls it: one merged by a squash, and one closed after a batch
+   carried its head in, both landed. An authorised successor still open holds the pull
+   request (`successor_open:#N`, `waiting_for_dependency`): it must not land while its
+   successor may, and once the successor lands it is closed rather than merged. One that
+   landed makes it `superseded` (`superseded_by:#N`), and the assessment names N in
+   `superseded_by`; one closed unmerged releases it to its own relation; one merged somewhere
+   master does not contain leaves it `possibly_redundant` (`successor_not_landed:#N`) for a
+   person; one that cannot be read is `unknown` (`successor_unread:#N`). A pull request whose
+   cross-references were not read whole is `unknown` (`declarations_unread`) before any of
+   that: an unread declaration is never taken for none. Of several successors, one that
+   landed decides, then one still open, then one merged elsewhere, then one unread.
 4. **One merge at a time, and no plan survives it.** The executor's step takes no plan. It
    observes the forge, decides, observes again, and acts only if the second decision names
    the same master and head and still says `ready`. `drain` is a loop over that step. There
@@ -226,8 +236,10 @@ with one canonical state, one classification and one executor.
    ancestor of master (`head_reachable_from_master`), its merge changes no file
    (`merge_changes_nothing`), or every commit it has and master lacks is on master as an
    equal patch (`patch_ids_upstream`). A `superseded` pull request is closed because a
-   declared successor landed, and the closing comment names that successor. Weak evidence is
-   never closed: one that differs only in derived output, or whose successor did not land, is
+   successor an owner, member or collaborator declared for it landed; the closing comment
+   names that successor and does not claim the closed work is on master. Weak evidence is
+   never closed: one that differs only in derived output, or whose successor was merged
+   somewhere master does not contain, is
    `possibly_redundant` and is left for a person. Age, shared paths and similar titles are
    not evidence. The trail records the closure as `closed_redundant` or `closed_superseded`.
 
@@ -242,6 +254,64 @@ with one canonical state, one classification and one executor.
    since a closure of a declared successor always carries `superseded_by:#N`. The relation to
    master keeps its own word, `superseded` (`merge_changes_nothing`), which is git's fact,
    not a disposition.
+
+   *Amended 2026-10-07 (decisions D1 to D5 of the K2/K3 audit; proposed, the owner may
+   override).* **D1** A declaration is authorised by the forge's association of the pull
+   request that carries it (`OWNER`, `MEMBER`, `COLLABORATOR`, same repository), in both
+   directions; unknown is unauthorised. **D2** An authorised declaration holds the replaced
+   pull request until its successor resolves: landed, it is `superseded` and closable; closed
+   without landing, it is released. An unauthorised one is `possible_supersession` evidence
+   and neither holds nor closes. **D3** Landed is git's fact — the successor's head or merge
+   commit is an ancestor of the base — so a successor that reached master inside a batch
+   counts; the forge's `MERGED` only words the evidence. **D4** Declarations about an open
+   pull request are read from its own cross-references (paged) and its own body, never from
+   a bounded search of closed pull requests; a read that is partial holds that pull request
+   (`declarations_unread`), and one that fails fails the observation. **D5** The rule is
+   version 3 and names all four closure grounds: ancestry, a no-change merge, every patch
+   upstream (which version 2's bullet never named, though the code closed on it), and an
+   authorised declaration whose successor landed. Before this amendment any body's
+   `Supersedes #M` held and closed #M, the closed declarers came from the 200 newest search
+   results, and the observation schema was 3; it is 4.
+
+   *Amendment to D3, 2026-10-07 (ruling R1; a narrowing the owner may reverse).* Git's fact
+   is trusted only about a head nobody could move to manufacture it. The attack: an owner's
+   open #1 says `Superseded by #7`, where #7 is a contributor's fork pull request; #1 is
+   held on it, as D2 says. The fork's author force-pushes #7's branch to any old commit of
+   master and closes #7. Its head is then an ancestor of master, and D3 as first written
+   called that landed: `prs cleanup --apply` closed #1 with none of #7's work on master. So
+   a successor the forge does **not** report merged counts as landed only when its head
+   lives in this repository and is an ancestor of the base (the batch-landed path); a
+   cross-repository successor closed unmerged never lands, wherever its head points, and
+   releases the hold exactly as one closed without landing. A successor the forge reports
+   merged lands when its head or its merge commit is an ancestor of the base, fork or not.
+   Where a resolved successor's head lives is read with it, and unread is a fork. In the
+   same spirit a successor the forge says changes no file brought nothing to master and
+   never lands, which closes the same trick played with a branch of this repository reset
+   onto master.
+
+   *Rulings of 2026-10-07 on D4 and on what counts as a declaration.* **R3** A declarations
+   read the forge will not answer fails the whole refresh (exit 12) and records no
+   observation: the one recorded before it stays as it was. Only a truncated read is a
+   per-pull-request hold. **R4** A line inside a markdown quote (`>`), a fenced code block or
+   an HTML comment is not its author's declaration; D1 put all trust on whose body speaks,
+   so only what that body states counts. A dependency keeps the lenient reading: it can only
+   make a pull request wait. **R5** An open declarer whose repository flag the declarations
+   read did not state is read as cross-repository, and authorises nothing.
+
+   *Residuals, 2026-10-07 (known, accepted, the owner's to revisit).* **R2** Truncation
+   holds, and an outsider can cause it: the page limit counts every cross-reference to a
+   pull request, and a mention by an issue or from another repository is dropped only after
+   it was paged through. Whoever writes more mentions of `owner/repo#N` than are read
+   (fifty pages of a hundred) holds #N as `unknown` (`declarations_unread`) on every
+   refresh; no command releases it, and a person decides it. That is a block and never a
+   closure, it costs the outsider one written mention each, and the rest of the queue keeps
+   moving. No release mechanism is invented here. **R6** `MEMBER` is the forge's word for an
+   organisation's member whatever their access to this repository, and it is evaluated when
+   the observation is made, not when the body was written. A former collaborator who is
+   still a member can edit the body of an old pull request of theirs in this repository to
+   `Supersedes #M`: if that pull request is open it holds #M, and if it merged long ago #M
+   is `superseded` and closable. D1 names `MEMBER` and stands; a personal repository has no
+   members and is not exposed.
 7. **One executor per base branch.** An exclusive lease under the common git directory: an
    exclusive `flock` on its file, held for the executor's life, with the holder recorded
    beside it for whoever reads. The kernel decides who holds it, so executors started at
@@ -264,8 +334,10 @@ with one canonical state, one classification and one executor.
 8. **The network is declared, not tolerated.** `prs refresh`, `prs drain`, `prs cleanup`
    and `prs repair --apply` run the GitHub CLI and `git fetch`. Every other surface renders the recorded observation
    with its age. SECURITY.md names the exception. Besides the open pull requests, an
-   observation reads the closed ones whose body declares a supersession (one search, newest
-   first, bounded) and each successor an open one names that is not open (`gh pr view`), and
+   observation reads, with every open pull request, its author's association and the pull
+   requests that mention it (`gh api graphql`, paged; a mention is a declaration only if that
+   pull request's body says `Supersedes`), and each successor or dependency an open one names
+   that is not open (`gh pr view`), and
    fetches their heads, so that git can say whether a successor landed after it stopped being
    listed as open.
 9. **Every act is recorded.** Selections, stale decisions, merge attempts, merges with the
