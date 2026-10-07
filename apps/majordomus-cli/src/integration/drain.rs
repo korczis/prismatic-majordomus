@@ -668,6 +668,11 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
     if event.actor.is_empty() {
         event.actor = actor();
     }
+    // The detail is as often relayed as composed: the standard error of a `git` or a `gh`
+    // that failed, naming the remote in whatever form it was configured. The trail is
+    // served, so a credential in that URL is removed here, at the one place every event
+    // passes, rather than trusted to have been anonymised by the tool that printed it.
+    event.detail = crate::session::public_text(&event.detail);
     if event.class.is_none() {
         // every failed act names its class, decided once, here, from what it says
         event.class = match event.action {

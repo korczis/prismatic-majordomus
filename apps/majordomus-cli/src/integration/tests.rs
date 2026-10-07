@@ -2273,6 +2273,41 @@ fn a_pull_request_that_stops_being_actionable_leaves_its_wait() {
     assert_eq!(wait::record_transitions(&root, &w.queue()).unwrap(), 0);
 }
 
+/// The trail records what a failed `git` or `gh` said, and that text names the remote in
+/// whatever form it was configured. The trail is served over HTTP and MCP, so a credential
+/// in such a URL is removed where every event is written — by this tool's own rule, not by
+/// trusting the subprocess to have anonymised its message.
+#[test]
+fn a_relayed_error_is_recorded_without_the_credential_in_its_url() {
+    let root = scratch();
+    let said = "git ls-remote failed: fatal: unable to access \
+                'https://x-access-token:ghs_trailsecret0001@example.invalid/o/r.git/': \
+                Could not resolve host: example.invalid";
+    let written = drain::record(
+        &root,
+        drain::IntegrationEvent {
+            pr: Some(1),
+            detail: said.into(),
+            ..drain::IntegrationEvent::of(drain::IntegrationAction::RefreshFailed)
+        },
+    )
+    .unwrap();
+    assert!(!written.detail.contains("ghs_trailsecret0001"), "{}", written.detail);
+    assert!(
+        written.detail.contains("'https://example.invalid/o/r.git/'"),
+        "the URL itself is kept, so the event still says which remote: {}",
+        written.detail
+    );
+    assert!(written.detail.contains("Could not resolve host"));
+    // what was returned is what is on disk, and what a reader of the trail is served
+    let trail = drain::events(&root);
+    assert_eq!(trail.last().unwrap().detail, written.detail);
+    let raw = std::fs::read_to_string(crate::integration::events_path(&root).unwrap()).unwrap();
+    assert!(!raw.contains("ghs_trailsecret0001"));
+    // and the failure is still classified from what was said
+    assert!(written.class.is_some());
+}
+
 #[test]
 fn starvation_is_visible_and_changes_no_rank() {
     let root = scratch();
