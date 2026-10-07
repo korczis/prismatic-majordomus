@@ -189,6 +189,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus intent coverage`](#majordomus-intent-coverage) | `/docs/cli/intent/coverage/` | Which work carries which criterion, and the reason every issue exists |
 | [`majordomus intent preflight`](#majordomus-intent-preflight) | `/docs/cli/intent/preflight/` | Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused |
 | [`majordomus intent binding`](#majordomus-intent-binding) | `/docs/cli/intent/binding/` | What a piece of work is bound to before it starts: the issue, the intent or the paths it names resolved to the criteria it serves, or an exemption the policy declares, with the two pins a resumed worker compares; exit 10 when refused |
+| [`majordomus intent oppose`](#majordomus-intent-oppose) | `/docs/cli/intent/oppose/` | The opposition to one intent's plan: what the derivations find about it now, what a reviewer recorded, the disposition both derive and where the critique's stamp stands; also the brief a reviewer works from; exit 10 when the disposition is reject |
+| [`majordomus intent stamp`](#majordomus-intent-stamp) | `/docs/cli/intent/stamp/` | Stamp the critique of an intent's plan with the plan revision the review was run over, the commit and the tool; writes three lines and no finding |
 | [`majordomus intent realization`](#majordomus-intent-realization) | `/docs/cli/intent/realization/` | Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence |
 | [`majordomus intent explain`](#majordomus-intent-explain) | `/docs/cli/intent/explain/` | Why an intent stands where it stands: its stage, each criterion, the work realising it |
 | [`majordomus delivery`](#majordomus-delivery) | `/docs/cli/delivery/` | Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass |
@@ -5157,7 +5159,7 @@ Examples:
 
 What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
 
-Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent binding`](#majordomus-intent-binding), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain).
+Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent binding`](#majordomus-intent-binding), [`majordomus intent oppose`](#majordomus-intent-oppose), [`majordomus intent stamp`](#majordomus-intent-stamp), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain).
 
 ```text
 majordomus intent [OPTIONS] <COMMAND>
@@ -5356,6 +5358,64 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-intent-oppose"></a>
+## `majordomus intent oppose`
+
+The opposition to one intent's plan: what the derivations find about it now, what a reviewer recorded, the disposition both derive and where the critique's stamp stands; also the brief a reviewer works from; exit 10 when the disposition is reject
+
+```text
+majordomus intent oppose [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The intent's id |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The opposition to an intent's plan** — Every finding the intent engine and the plan derive about one intent now, every finding a reviewer recorded with its resolution, the disposition both derive, and whether the critique was stamped against the plan as it stands. The same answer is the brief a reviewing session works from. Exit 10 when the disposition is `reject`.
+
+  ```console
+  $ majordomus intent oppose fixture-intent --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /disposition, /reviewed_plan, /review/state, /structural.
+
+<a id="majordomus-intent-stamp"></a>
+## `majordomus intent stamp`
+
+Stamp the critique of an intent's plan with the plan revision the review was run over, the commit and the tool; writes three lines and no finding
+
+```text
+majordomus intent stamp [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The intent's id |
+| `--check` | flag | — | Say what would be stamped and write nothing |
+| `--by` | `<REVIEWED_BY>` | — | Who reviewed, for a critique this creates |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What stamping a review would write** — The plan revision, the commit and the tool a stamp would name, and the disposition derived now, with nothing written. Without `--check` the three lines are written to the critique record and `opposition.recorded` is appended to the ledger.
+
+  ```console
+  $ majordomus intent stamp fixture-intent --check --by 'a reviewer' --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /reviewed_revision, /disposition, /written.
 
 <a id="majordomus-intent-realization"></a>
 ## `majordomus intent realization`

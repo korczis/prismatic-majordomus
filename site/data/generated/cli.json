@@ -27273,6 +27273,18 @@
           "route": "/docs/cli/intent/binding/"
         },
         {
+          "about": "The opposition to one intent's plan: what the derivations find about it now, what a reviewer recorded, the disposition both derive and where the critique's stamp stands; also the brief a reviewer works from; exit 10 when the disposition is reject",
+          "command": "majordomus intent oppose",
+          "name": "oppose",
+          "route": "/docs/cli/intent/oppose/"
+        },
+        {
+          "about": "Stamp the critique of an intent's plan with the plan revision the review was run over, the commit and the tool; writes three lines and no finding",
+          "command": "majordomus intent stamp",
+          "name": "stamp",
+          "route": "/docs/cli/intent/stamp/"
+        },
+        {
           "about": "Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence",
           "command": "majordomus intent realization",
           "name": "realization",
@@ -28200,6 +28212,321 @@
       ],
       "route": "/docs/cli/intent/binding/",
       "usage": "majordomus intent binding [OPTIONS]"
+    },
+    {
+      "about": "The opposition to one intent's plan: what the derivations find about it now, what a reviewer recorded, the disposition both derive and where the critique's stamp stands; also the brief a reviewer works from; exit 10 when the disposition is reject",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus intent",
+          "name": "intent",
+          "route": "/docs/cli/intent/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The intent's id",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus intent oppose",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "intent",
+            "oppose",
+            "fixture-intent",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus intent oppose fixture-intent --format json",
+          "description": "Every finding the intent engine and the plan derive about one intent now, every finding a reviewer recorded with its resolution, the disposition both derive, and whether the critique was stamped against the plan as it stands. The same answer is the brief a reviewing session works from. Exit 10 when the disposition is `reject`.",
+          "expectation": "exits 0; prints one JSON document carrying /disposition, /reviewed_plan, /review/state, /structural",
+          "id": "intent-oppose",
+          "setup": [],
+          "title": "The opposition to an intent's plan"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "oppose",
+      "parent_route": "/docs/cli/intent/",
+      "path": [
+        "majordomus",
+        "intent",
+        "oppose"
+      ],
+      "route": "/docs/cli/intent/oppose/",
+      "usage": "majordomus intent oppose [OPTIONS] <ID>"
+    },
+    {
+      "about": "Stamp the critique of an intent's plan with the plan revision the review was run over, the commit and the tool; writes three lines and no finding",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus intent",
+          "name": "intent",
+          "route": "/docs/cli/intent/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The intent's id",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Say what would be stamped and write nothing",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Who reviewed, for a critique this creates",
+          "long": "by",
+          "name": "reviewed_by",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REVIEWED_BY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus intent stamp",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "intent",
+            "stamp",
+            "fixture-intent",
+            "--check",
+            "--by",
+            "a reviewer",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus intent stamp fixture-intent --check --by 'a reviewer' --format json",
+          "description": "The plan revision, the commit and the tool a stamp would name, and the disposition derived now, with nothing written. Without `--check` the three lines are written to the critique record and `opposition.recorded` is appended to the ledger.",
+          "expectation": "exits 0; prints one JSON document carrying /reviewed_revision, /disposition, /written",
+          "id": "intent-stamp-check",
+          "setup": [],
+          "title": "What stamping a review would write"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "stamp",
+      "parent_route": "/docs/cli/intent/",
+      "path": [
+        "majordomus",
+        "intent",
+        "stamp"
+      ],
+      "route": "/docs/cli/intent/stamp/",
+      "usage": "majordomus intent stamp [OPTIONS] <ID>"
     },
     {
       "about": "Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence",
@@ -32094,10 +32421,10 @@
     }
   ],
   "counts": {
-    "arguments": 1385,
-    "commands": 203,
-    "examples": 205,
-    "runnable": 179
+    "arguments": 1399,
+    "commands": 205,
+    "examples": 207,
+    "runnable": 181
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.15.0",

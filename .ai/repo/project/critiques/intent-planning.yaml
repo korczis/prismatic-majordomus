@@ -1,6 +1,8 @@
 intent: intent-planning
-reviewed_at: 1d11762cb
+reviewed_at: 4f4136ea60
 reviewed_by: "claude-code (session 9dde131e, board p22) — SELF-REVIEW: the session that authored I1901 and I1902 also wrote this critique. Bootstrap provenance, stated rather than hidden: a critique carries more weight when another session or the owner writes it."
+reviewed_revision: b1c748ad8c7ae443be5ee5c93d01eebad52cc6686b8f0d41415490aa02bd8f4a
+reviewed_with: "majordomus-cli 0.15.0"
 findings:
   - id: parity-fork
     class: regression_risk
@@ -9,6 +11,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session 9dde131e), the author of the plan"
       issue: I1901
       because: Token checks moved into intent_plan; plan.rs carries serves as data and adds no finding.
   - id: seed-intent-uncovered
@@ -18,6 +21,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session 9dde131e), the author of the plan"
       issue: I1901
       because: I1900 is authored in the same change and serves all three criteria of intent-lifecycle, agreed with the owner of that intent.
   - id: observed-is-not-met
@@ -27,6 +31,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session 9dde131e), the author of the plan"
       issue: I1902
       because: Coverage strength `observed` only removes the demand for work; satisfaction stays with the evidence ledger (ADR 0070), and a satisfied condition counts only with declared observations.
   - id: no-surface-yet
@@ -36,6 +41,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session 9dde131e), the author of the plan"
       issue: I1901
       because: intent validate reports coverage and review findings, and case 386 runs them through the built executable.
   - id: gap-staleness
@@ -45,6 +51,7 @@ findings:
     blocking: false
     resolution:
       state: rejected
+      resolved_by: "claude-code (session 9dde131e), the author of the plan"
       because: observed_at is recorded so a later slice can compare it with changed paths; judging staleness needs the path set each criterion depends on, which no record carries yet, and ADR 0073 says so.
   - id: public-proof
     class: delivery_verification

@@ -389,6 +389,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:intent_opposition.record",
+      "path": "/evidence/capabilities/intent-opposition-record/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intent_opposition.review",
+      "path": "/evidence/capabilities/intent-opposition-review/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intent_realization.explain",
       "path": "/evidence/capabilities/intent-realization-explain/"
     },
@@ -2509,6 +2519,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent oppose",
+      "path": "/evidence/commands/intent-oppose/"
+    },
+    {
+      "kind": "command",
       "subject": "command:intent preflight",
       "path": "/evidence/commands/intent-preflight/"
     },
@@ -2521,6 +2536,11 @@
       "kind": "command",
       "subject": "command:intent show",
       "path": "/evidence/commands/intent-show/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent stamp",
+      "path": "/evidence/commands/intent-stamp/"
     },
     {
       "kind": "command",
@@ -4260,6 +4280,30 @@
       "programs": [],
       "members": [
         "command:prs status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intent_opposition.record": {
+      "kind": "capability",
+      "id": "intent_opposition.record",
+      "page": "/evidence/capabilities/intent-opposition-record/",
+      "programs": [],
+      "members": [
+        "command:intent stamp"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intent_opposition.review": {
+      "kind": "capability",
+      "id": "intent_opposition.review",
+      "page": "/evidence/capabilities/intent-opposition-review/",
+      "programs": [],
+      "members": [
+        "command:intent oppose"
       ],
       "routes": [],
       "mechanisms": [],
@@ -13430,6 +13474,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent oppose": {
+      "kind": "command",
+      "id": "intent oppose",
+      "page": "/evidence/commands/intent-oppose/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:intent preflight": {
       "kind": "command",
       "id": "intent preflight",
@@ -13472,6 +13535,25 @@
       "kind": "command",
       "id": "intent show",
       "page": "/evidence/commands/intent-show/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent stamp": {
+      "kind": "command",
+      "id": "intent stamp",
+      "page": "/evidence/commands/intent-stamp/",
       "programs": [
         "native"
       ],
@@ -17937,6 +18019,30 @@
       "programs": [],
       "members": [
         "capability:intent_realization.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_opposition": {
+      "kind": "mcp",
+      "id": "majordomus_intent_opposition",
+      "alias_of": "capability:intent_opposition.review",
+      "programs": [],
+      "members": [
+        "capability:intent_opposition.review"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_opposition_record": {
+      "kind": "mcp",
+      "id": "majordomus_intent_opposition_record",
+      "alias_of": "capability:intent_opposition.record",
+      "programs": [],
+      "members": [
+        "capability:intent_opposition.record"
       ],
       "routes": [],
       "mechanisms": [],
@@ -24546,6 +24652,7 @@
     "crate:integration_refresh_trail",
     "crate:integration_repair",
     "crate:intent_binding",
+    "crate:intent_opposition",
     "crate:lease_busy",
     "crate:lease_declared",
     "crate:live_own_writes",
@@ -24688,6 +24795,8 @@
     "suite:924_one_executor_across_machines",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
+    "suite:963_an_opposition_is_executed_and_names_the_plan_it_reviewed",
+    "suite:964_a_review_of_another_plan_authorises_nothing",
     "suite:97_development_semantics_gate",
     "suite:97_site_probe_attribution",
     "suite:97_vendor_evidence",

@@ -332,6 +332,14 @@
               }
             }
           }
+        },
+        "opposition": {
+          "type": "string",
+          "enum": [
+            "off",
+            "required"
+          ],
+          "description": "Whether a critique must have been stamped by `majordomus-cli intent stamp` (ADR 0112). off, or absent: an unstamped critique is a warning of intent validate and keeps authorising work; a stale one refuses the binding. required: an unstamped or stale critique fails intent validate and refuses the binding."
         }
       }
     },

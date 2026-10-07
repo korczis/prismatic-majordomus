@@ -31,8 +31,11 @@ checkpoint:
 # `off`, `start` behaves as it always did and asks only when given --issue, --intent or
 # --exempt. `advisory` reports a refused binding; `required` refuses to start on one.
 # Declare the exemption classes a worker may give with a reason before choosing `required`.
+# `opposition: required` asks that every critique was stamped by `majordomus-cli intent
+# stamp` against the plan as it stands (ADR 0112); `off` reports an unstamped one as a warning.
 intent:
   binding: off
+  opposition: off
   exemptions:
     - id: maintenance
       description: Upkeep no issue covers

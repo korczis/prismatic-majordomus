@@ -250,6 +250,41 @@ pub struct IntentPolicy {
     /// `intent.exemptions:` — the classes a worker may give instead of naming work.
     #[serde(default)]
     pub exemptions: Vec<ExemptionClass>,
+    /// `intent.opposition:` — whether a critique must have been stamped by the tool
+    /// (ADR 0112). Absent is `off`: a critique written before stamps existed keeps
+    /// authorising work, and `intent validate` says it carries none.
+    #[serde(default)]
+    pub opposition: OppositionMode,
+}
+
+/// Whether a review must have been executed and stamped.
+///
+/// ```
+/// use majordomus_cli::policy::OppositionMode;
+/// assert_eq!(OppositionMode::default(), OppositionMode::Off);
+/// let m: OppositionMode = serde_json::from_str("\"required\"").unwrap();
+/// assert!(m.is_required());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OppositionMode {
+    /// An unstamped critique is a warning, and a stale one refuses the binding only.
+    #[default]
+    Off,
+    /// An unstamped or stale critique fails `intent validate` and refuses the binding.
+    Required,
+}
+
+impl OppositionMode {
+    /// Whether the policy asks for a stamped review.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::OppositionMode;
+    /// assert!(!OppositionMode::Off.is_required());
+    /// ```
+    pub fn is_required(self) -> bool {
+        self == OppositionMode::Required
+    }
 }
 
 impl IntentPolicy {

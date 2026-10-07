@@ -1,0 +1,54 @@
+id: intent-opposition
+title: The opposition to a plan is executed
+slug: intent-opposition
+order: 125
+priority: p1
+problem: "A critique is a typed record, and execution is refused when the record is absent or has an open blocking finding. That proves a file exists. Nothing runs the review, nothing says which plan it reviewed, a critique of last month's plan authorises today's, the reviewer is a free-text line, and the review is judged the same whether a worker wrote three careful findings or `findings: []`."
+outcome: "`majordomus-cli intent oppose <intent>` derives the structural findings, the recorded findings and one disposition, and is the brief a reviewer works from; `majordomus-cli intent stamp <intent>` stamps the critique with the plan revision reviewed and who stamped it, and appends a ledger event. The binding derives the structural half again on every ask and refuses work under a stale review, a rejected plan or — where the policy requires opposition — an unstamped record."
+current_state: "CritiqueRecord carries intent, reviewed_at, reviewed_by and findings. The preflight refuses intent_not_critiqued and open_blocking_finding and compares nothing else. No capability of the intents module writes; the writer set is pinned to three."
+desired_state: "One module, intent_opposition, owns the disposition and the reviewed-plan revision and calls the existing derivations for every finding; the critique schema gains reviewed_revision, the stamp fields, a finding source and resolved_by additively; one writing capability stamps; the binding and intent validate read the same judgement."
+scope:
+  - apps/majordomus-cli/src/intent_opposition.rs
+  - apps/majordomus-cli/src/intent_review.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/policy.rs
+  - apps/majordomus-cli/tests
+  - share/schemas/majordomus/critique
+  - share/schemas/majordomus/policy
+  - share/skeleton
+  - share/allow
+  - lib/intent_binding.sh
+  - .ai/repo/policy.yaml
+  - .ai/repo/project
+  - .ai/repo/adrs
+  - .ai/repo/rules/project
+  - docs
+  - test/cases
+non_scope:
+  - Deriving a plan from an outcome
+  - A provider adapter of its own; advisors are reached through the existing reasoning plan
+  - Moving gap records
+acceptance_criteria:
+  - "intent oppose runs with no advisor and answers the same value on every surface"
+  - "A stamped review carries the plan revision reviewed and who stamped it; nothing structural and no disposition is stored"
+  - "A stale or rejected review refuses the binding of work that serves the intent"
+  - "The critiques this repository holds are stamped through the capability, and intent validate is green on the trunk at every commit"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent_opposition
+  - bash test/run.sh 963_an_opposition_is_executed_and_names_the_plan_it_reviewed
+  - bash test/run.sh 964_a_review_of_another_plan_authorises_nothing
+evidence_required: []
+depends_on: []
+risks:
+  - "Intent intent-planning states that Majordomus judges the records and does not generate a critique itself; this milestone reverses that for the structural half and must say so in the intent and in an ADR, not beside them."
+  - "A fourth writing capability widens a set three tests pin on purpose; the widening must be the declared one and nothing else."
+  - "A revision that moves on every edit turns every review stale and trains workers to re-record without reading; what the revision hashes is the whole design."
+  - "The records, the ADR and the tests they name land in one pull request and one commit to the trunk: the four issues order the work inside it and are not four landings, because a criterion whose evidence reference does not resolve fails intent validate."
+  - "This milestone needs intent-bound-work on the trunk and does not declare it as a dependency: a milestone dependency blocks every issue until the other milestone is DONE, and that one closes with its own pull request."
+created_at: 2026-10-07
+updated_at: 2026-10-07

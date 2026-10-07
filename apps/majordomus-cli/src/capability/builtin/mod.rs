@@ -54,6 +54,7 @@ pub mod gates;
 pub(crate) mod graph;
 pub mod health;
 pub(crate) mod integration;
+pub mod intent_opposition;
 pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
@@ -211,6 +212,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         why,
         intents,
         intent_realization,
+        intent_opposition,
         skills,
         web,
         design,
@@ -311,7 +313,12 @@ mod tests {
             writers.into_iter().collect::<Vec<_>>(),
             // reasoning.record writes checkout state under .ai/local, never a tracked file,
             // and is classified with the writers so that every surface asks before it runs.
-            ["plan.transition", "reasoning.record", "recover.orphans"]
+            [
+                "intent_opposition.record",
+                "plan.transition",
+                "reasoning.record",
+                "recover.orphans"
+            ]
         );
     }
 }

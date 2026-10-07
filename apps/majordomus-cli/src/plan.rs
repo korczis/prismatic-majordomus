@@ -1868,6 +1868,13 @@ pub fn transition(
 /// indented and is therefore not matched — the same blindness, deliberately, because the
 /// two engines must be blind in the same places.
 fn set_field(text: &str, key: &str, value: &str) -> String {
+    set_field_before(text, key, value, "evidence:")
+}
+
+/// Set one top-level scalar of a record: replaced where it stands, or inserted before the
+/// first line that starts with `anchor` (the block that must stay last), or appended. The
+/// one line-level writer a tracked record is edited with; every other line is left as it is.
+pub(crate) fn set_field_before(text: &str, key: &str, value: &str, anchor: &str) -> String {
     let prefix = format!("{key}:");
     let line = format!("{key}: {value}");
     if text.lines().any(|l| l.starts_with(&prefix)) {
@@ -1885,7 +1892,7 @@ fn set_field(text: &str, key: &str, value: &str) -> String {
     let mut out = String::with_capacity(text.len() + line.len() + 1);
     let mut inserted = false;
     for l in text.lines() {
-        if !inserted && l.starts_with("evidence:") {
+        if !inserted && l.starts_with(anchor) {
             out.push_str(&line);
             out.push('\n');
             inserted = true;

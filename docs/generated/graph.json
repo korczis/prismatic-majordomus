@@ -690,6 +690,24 @@
         "status": "query"
       },
       {
+        "id": "capability:intent_opposition.record",
+        "kind": "capability",
+        "label": "intent_opposition.record",
+        "summary": "Stamp the review of an intent's plan with the plan it was run over",
+        "route": "/cockpit/capabilities/intent_opposition.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:intent_opposition.review",
+        "kind": "capability",
+        "label": "intent_opposition.review",
+        "summary": "The opposition to one intent's plan, and the brief a reviewer works from",
+        "route": "/cockpit/capabilities/intent_opposition.review",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:intent_realization.explain",
         "kind": "capability",
         "label": "intent_realization.explain",
@@ -2028,6 +2046,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "kind": "file",
+        "label": "intent_opposition.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
         "kind": "file",
         "label": "intent_realization.rs",
@@ -2545,6 +2571,14 @@
         "label": "intent_binding.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/intent_binding.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/intent_opposition.rs",
+        "kind": "file",
+        "label": "intent_opposition.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_opposition.rs",
         "external": true
       },
       {
@@ -6113,6 +6147,36 @@
             "intent",
             "session",
             "handover",
+            "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0112",
+        "kind": "adr",
+        "label": "adr-0112",
+        "summary": "The opposition to a plan is executed by the tool, and a review authorises only the plan it reviewed",
+        "route": "/cockpit/objects/adr/adr-0112",
+        "source": ".ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-07",
+          "related": [
+            "file:.ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent_opposition.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+            "file:.ai/repo/project/intents/intent-opposition.yaml",
+            "test:test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+            "test:test/cases/964_a_review_of_another_plan_authorises_nothing.sh"
+          ],
+          "tags": [
+            "intent",
+            "planning",
+            "critique",
             "governance"
           ]
         }
@@ -12401,7 +12465,23 @@
         "source": ".ai/repo/project/critiques/intent-bound-work.yaml",
         "facts": {
           "intent": "intent-bound-work",
-          "reviewed_at": "f7b9d6d4c8"
+          "reviewed_at": "4f4136ea60",
+          "reviewed_revision": "e62d18758a90f48b81019f36c8b9fd86721fb17140b672231da22ff217d49f00",
+          "reviewed_with": "majordomus-cli 0.15.0"
+        }
+      },
+      {
+        "id": "majordomus://critique/intent-opposition",
+        "kind": "critique",
+        "label": "intent-opposition",
+        "summary": "intent-opposition",
+        "route": "/cockpit/objects/critique/intent-opposition",
+        "source": ".ai/repo/project/critiques/intent-opposition.yaml",
+        "facts": {
+          "intent": "intent-opposition",
+          "reviewed_at": "4f4136ea60",
+          "reviewed_revision": "329293e23aab801a5d739392db58bbcaea3089d0a3333e13eb38b14eee61d5d6",
+          "reviewed_with": "majordomus-cli 0.15.0"
         }
       },
       {
@@ -12413,7 +12493,9 @@
         "source": ".ai/repo/project/critiques/intent-planning.yaml",
         "facts": {
           "intent": "intent-planning",
-          "reviewed_at": "1d11762cb"
+          "reviewed_at": "4f4136ea60",
+          "reviewed_revision": "b1c748ad8c7ae443be5ee5c93d01eebad52cc6686b8f0d41415490aa02bd8f4a",
+          "reviewed_with": "majordomus-cli 0.15.0"
         }
       },
       {
@@ -16859,6 +16941,20 @@
         }
       },
       {
+        "id": "majordomus://gap/intent-opposition",
+        "kind": "gap",
+        "label": "intent-opposition",
+        "summary": "intent-opposition",
+        "route": "/cockpit/objects/gap/intent-opposition",
+        "source": ".ai/repo/project/gaps/intent-opposition.yaml",
+        "facts": {
+          "intent": "intent-opposition",
+          "observed_at": "4f4136ea60",
+          "recorded_at": "2026-10-07",
+          "recorded_by": "claude-code (session fcbeae95; a read-only audit agent over int/batch-intent, then first-hand reads of intent_review.rs and intent.rs)"
+        }
+      },
+      {
         "id": "majordomus://gap/intent-planning",
         "kind": "gap",
         "label": "intent-planning",
@@ -17288,6 +17384,41 @@
         }
       },
       {
+        "id": "majordomus://intent/intent-opposition",
+        "kind": "intent",
+        "label": "intent-opposition",
+        "summary": "The opposition to a plan is executed by the tool, names the plan it reviewed, and stops authorising work when that plan changes",
+        "route": "/cockpit/objects/intent/intent-opposition",
+        "source": ".ai/repo/project/intents/intent-opposition.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "adr:adr-0073",
+            "adr:adr-0070",
+            "adr:adr-0111",
+            "adr:adr-0112"
+          ],
+          "invariants": [
+            "The opposition's verdict over what the records can decide is deterministic and needs no provider, model or network; an advisor adds findings and never replaces a check",
+            "One critique record per intent remains the only record of a review, with git as its history; it stores what a reviewer found and how each finding was resolved, and the stamp of what was reviewed",
+            "No structural finding and no disposition is stored: both are derived on every read by one function that calls the coverage, the plan findings and the gap review and re-derives none of them",
+            "The stamp is written by one declared writing capability with a ledger event; reading capabilities stay read-only, and a seal is evidence of tampering, never proof of execution",
+            "A critique recorded before this intent keeps its meaning where the policy does not require opposition"
+          ],
+          "milestones": [
+            "intent-opposition"
+          ],
+          "non_goals": [
+            "Requiring any advisor, model or second session for the opposition to run or for work to start",
+            "Deriving the plan or its issues; the opposition judges a plan somebody wrote",
+            "Judging whether a criterion is met; that stays with the evidence"
+          ],
+          "updated_at": "2026-10-07"
+        }
+      },
+      {
         "id": "majordomus://intent/intent-planning",
         "kind": "intent",
         "label": "intent-planning",
@@ -17299,22 +17430,23 @@
           "governance": [
             "adr:adr-0073",
             "adr:adr-0070",
+            "adr:adr-0112",
             "rule:project.work-serves-a-declared-intent"
           ],
           "invariants": [
             "The plan engines stay identical; `serves` is data the plan carries, and only the intent engine judges it",
             "No coverage, gap or critique status is stored; every finding is derived on read",
             "Work under a milestone no intent names stays valid maintenance work and is never assigned an invented intent",
-            "Majordomus judges the records; it does not generate a plan or a critique itself"
+            "Majordomus judges the records and derives the structural half of a review from them; it authors no semantic finding and derives no plan (ADR 0112)"
           ],
           "milestones": [
             "intent-planning"
           ],
           "non_goals": [
-            "Generating issues or a critique from an intent automatically",
+            "Generating issues, or the findings a reviewer makes, from an intent automatically",
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
-          "updated_at": "2026-09-15"
+          "updated_at": "2026-10-07"
         }
       },
       {
@@ -29651,6 +29783,195 @@
         }
       },
       {
+        "id": "majordomus://issue/I2010",
+        "kind": "issue",
+        "label": "I2010",
+        "summary": "The opposition is one derivation: structural findings, recorded findings, one disposition",
+        "route": "/cockpit/objects/issue/i2010",
+        "source": ".ai/repo/project/issues/I2010.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "current_state": "Coverage, plan findings and gap findings are derived separately. The only revision is the binding's, which hashes what one task reaches and includes the critique.",
+          "depends_on": [],
+          "evidence_required": [
+            "the_opposition_runs_without_an_advisor",
+            "the_reviewed_plan_moves_only_with_the_plan"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/intent_opposition.rs"
+          ],
+          "serves": [
+            "intent-opposition#opposition-is-run"
+          ],
+          "slug": "the-opposition-is-one-derivation",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "cargo test --lib intent_opposition",
+            "cargo test --test intent_opposition"
+          ],
+          "why": "Every structural challenge to a plan is computed by three commands and none of them is the review of one intent, none says which plan it was asked about, and a reviewer is handed no bounded input."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2011",
+        "kind": "issue",
+        "label": "I2011",
+        "summary": "A recorded finding is held to its class, its subject and who resolved it",
+        "route": "/cockpit/objects/issue/i2011",
+        "source": ".ai/repo/project/issues/I2011.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A planned resolution into a cancelled issue fails intent validate, and into a DONE issue does not",
+            "invariant_conflict and dependency_order are accepted classes and an unknown one is still refused",
+            "A finding's source and a resolution's resolved_by are read, shown by the opposition and required of a resolution only under required opposition",
+            "The two critiques this repository holds carry both fields"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "A finding has id, class, subject, finding, blocking and a resolution of state, issue and because. Seven classes. A planned resolution is checked to name an issue that exists and serves the intent.",
+          "depends_on": [
+            "I2010"
+          ],
+          "evidence_required": [
+            "a_resolution_names_who_resolved_it"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_review.rs",
+            "share/schemas/majordomus/critique",
+            "share/allow",
+            "apps/majordomus-cli/tests/intent_opposition.rs",
+            ".ai/repo/project/critiques"
+          ],
+          "serves": [
+            "intent-opposition#findings-are-admitted-typed"
+          ],
+          "slug": "a-recorded-finding-is-held",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "cargo test --lib intent_review",
+            "cargo test --test intent_opposition"
+          ],
+          "why": "A worker can reject its own blocking finding with any sentence and the record keeps no trace of who did, and two things a review is asked to find have no class to be written under."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2012",
+        "kind": "issue",
+        "label": "I2012",
+        "summary": "Recording a review stamps the plan it reviewed, through one writing capability",
+        "route": "/cockpit/objects/issue/i2012",
+        "source": ".ai/repo/project/issues/I2012.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent stamp stamps an existing critique and leaves every line of its findings unchanged, on the command line and over MCP",
+            "With no critique it writes one with no findings and the stamp, which both the Rust reader and the shell flattener read",
+            "A critique whose findings do not validate is refused and nothing is written",
+            "The ledger carries opposition.recorded with the intent, the revision and the disposition derived at that moment, and share/events.yaml declares it",
+            "The writer set is the three it was and intent_opposition.record, in the pin, the module tests, about, the documents and the generated registry",
+            "ADR 0112 is proposed, names what it supersedes in ADR 0073, and says a seal or a stamp is evidence of tampering and of a run, not proof against a determined author"
+          ],
+          "created_at": "2026-10-07",
+          "depends_on": [
+            "I2011"
+          ],
+          "desired_state": "A stamped critique names the plan revision reviewed, the commit, the actor and the tool; the ledger carries the event; the record's findings are byte-identical before and after a stamp.",
+          "evidence_required": [
+            "a_review_is_stamped_and_its_findings_are_untouched"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/about.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/critique",
+            "share/allow",
+            "share/events.yaml",
+            ".ai/repo/project/critiques",
+            ".ai/repo/project/intents/intent-planning.yaml",
+            ".ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+            "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+            "docs"
+          ],
+          "serves": [
+            "intent-opposition#review-names-what-it-reviewed"
+          ],
+          "slug": "recording-a-review-stamps-the-plan",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 963_an_opposition_is_executed_and_names_the_plan_it_reviewed",
+            "cargo test --lib capability",
+            "bash test/run.sh 33_event_registry"
+          ],
+          "why": "A review says nothing of which plan it read, so a critique of last month's plan cannot be told from one of today's, and nothing in the ledger says a review was ever run."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2013",
+        "kind": "issue",
+        "label": "I2013",
+        "summary": "A stale review, a rejected plan and an unexecuted record authorise nothing",
+        "route": "/cockpit/objects/issue/i2013",
+        "source": ".ai/repo/project/issues/I2013.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "depends_on": [
+            "I2012"
+          ],
+          "evidence_required": [
+            "a_stale_review_refuses_and_a_title_edit_does_not"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/schemas/majordomus/policy",
+            "share/skeleton",
+            "share/allow",
+            "lib/intent_binding.sh",
+            ".ai/repo/policy.yaml",
+            "test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-opposition#stale-review-authorises-nothing",
+            "intent-opposition#disposition-gates-execution"
+          ],
+          "slug": "a-review-of-another-plan-authorises-nothing",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 964_a_review_of_another_plan_authorises_nothing",
+            "bash test/run.sh 386_a_plan_is_held_to_its_intent",
+            "bash test/run.sh 893_preflight_follows_what_an_issue_serves",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
+          ],
+          "why": "A critique of an earlier plan authorises the current one, and a record with an empty findings list that nobody ran anything over reads the same as a review."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30521,6 +30842,62 @@
             "majordomus intent validate",
             "cargo test --test intent",
             "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-opposition",
+        "kind": "milestone",
+        "label": "intent-opposition",
+        "summary": "The opposition to a plan is executed",
+        "route": "/cockpit/objects/milestone/intent-opposition",
+        "source": ".ai/repo/project/milestones/intent-opposition.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent oppose runs with no advisor and answers the same value on every surface",
+            "A stamped review carries the plan revision reviewed and who stamped it; nothing structural and no disposition is stored",
+            "A stale or rejected review refuses the binding of work that serves the intent",
+            "The critiques this repository holds are stamped through the capability, and intent validate is green on the trunk at every commit"
+          ],
+          "created_at": "2026-10-07",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Deriving a plan from an outcome",
+            "A provider adapter of its own; advisors are reached through the existing reasoning plan",
+            "Moving gap records"
+          ],
+          "order": 125,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/critique",
+            "share/schemas/majordomus/policy",
+            "share/skeleton",
+            "share/allow",
+            "lib/intent_binding.sh",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            ".ai/repo/rules/project",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-opposition",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_opposition",
+            "bash test/run.sh 963_an_opposition_is_executed_and_names_the_plan_it_reviewed",
+            "bash test/run.sh 964_a_review_of_another_plan_authorises_nothing"
           ]
         }
       },
@@ -42181,6 +42558,20 @@
         "source": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
       },
       {
+        "id": "majordomus://test/test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "kind": "test",
+        "label": "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "route": "/cockpit/objects/test/test-cases-963-an-opposition-is-executed-and-names-the-plan-it-reviewed-sh",
+        "source": "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-964-a-review-of-another-plan-authorises-nothing-sh",
+        "source": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "kind": "test",
         "label": "test/cases/96_rust_public_api_quality.sh",
@@ -44456,6 +44847,11 @@
         "label": "integration"
       },
       {
+        "id": "module:intent_opposition",
+        "kind": "module",
+        "label": "intent_opposition"
+      },
+      {
         "id": "module:intent_realization",
         "kind": "module",
         "label": "intent_realization"
@@ -45873,6 +46269,46 @@
       },
       {
         "source": "capability:integration.queue",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -50909,6 +51345,61 @@
       {
         "source": "majordomus://adr/adr-0111",
         "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "file:apps/majordomus-cli/src/intent_opposition.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://adr/adr-0073",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://adr/adr-0111",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://intent/intent-opposition",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://test/test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://test/test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
         "kind": "put_in_force"
       },
       {
@@ -56247,6 +56738,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-opposition",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-planning",
         "target": "kind:critique",
         "kind": "is_a"
@@ -58042,6 +58538,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/intent-opposition",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-planning",
         "target": "kind:gap",
         "kind": "is_a"
@@ -58308,6 +58809,11 @@
       },
       {
         "source": "majordomus://intent/intent-lifecycle",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-opposition",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -62552,6 +63058,61 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2010",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2010",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2011",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2011",
+        "target": "majordomus://issue/I2010",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2011",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2012",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2012",
+        "target": "majordomus://issue/I2011",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2012",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2013",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2013",
+        "target": "majordomus://issue/I2012",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2013",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -62663,6 +63224,11 @@
       },
       {
         "source": "majordomus://milestone/intent-lifecycle",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-opposition",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -66912,6 +67478,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -70147,6 +70723,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:intent_opposition",
+        "target": "capability:intent_opposition.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intent_opposition",
+        "target": "capability:intent_opposition.review",
+        "kind": "composes"
+      },
+      {
         "source": "module:intent_realization",
         "target": "capability:intent_realization.explain",
         "kind": "composes"
@@ -70668,8 +71254,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2332,
-      "edges": 5202,
+      "nodes": 2348,
+      "edges": 5240,
       "acyclic": true,
       "truncated": false
     }

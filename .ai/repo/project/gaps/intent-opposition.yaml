@@ -1,0 +1,68 @@
+intent: intent-opposition
+observed_at: 4f4136ea60
+recorded_by: claude-code (session fcbeae95; a read-only audit agent over int/batch-intent, then first-hand reads of intent_review.rs and intent.rs)
+recorded_at: 2026-10-07
+observations:
+  - id: critique-checked-by-existence
+    statement: The review compares no commit and no revision; plan_not_critiqued, executing_without_critique and executing_with_open_blocker test only that a record exists and whether a blocking finding is open
+    source: file:apps/majordomus-cli/src/intent_review.rs
+  - id: reviewer-is-free-text
+    statement: A critique record carries intent, reviewed_at, reviewed_by and findings; there is no disposition, no structured provenance and no revision of the plan reviewed
+    source: file:share/schemas/majordomus/critique/critique.v1.schema.json
+  - id: no-intent-level-revision
+    statement: The only revision computed is the binding's, over what one task reaches; nothing hashes an intent's whole plan
+    source: file:apps/majordomus-cli/src/intent_binding.rs
+  - id: structural-checks-are-scattered
+    statement: Coverage findings, plan graph findings and gap findings are each derived by their own function and reported by intent validate and plan validate; no command runs them as the review of one intent
+    source: file:apps/majordomus-cli/src/intent_plan.rs
+  - id: nothing-writes-a-critique
+    statement: The writing capabilities are pinned to plan.transition, reasoning.record and recover.orphans, and the intents module is tested to have no writer; every critique is authored by hand
+    source: file:apps/majordomus-cli/src/capability/builtin/mod.rs
+  - id: advisors-are-optional-and-local
+    statement: The reasoning plan selects advisors, decides locally when none is available, and stores its records under .ai/local, untracked; a gate reading a clone cannot see them
+    source: file:apps/majordomus-cli/src/reasoning/policy.rs
+  - id: intent-planning-forbids-it
+    statement: Intent intent-planning states as an invariant that Majordomus judges the records and does not generate a plan or a critique itself, and lists generating a critique as a non-goal
+    source: file:.ai/repo/project/intents/intent-planning.yaml
+conditions:
+  - criterion: opposition-is-run
+    state: missing
+    because: the checks exist and nothing runs them as one review with a verdict
+    observations: [structural-checks-are-scattered, no-intent-level-revision]
+  - criterion: findings-are-admitted-typed
+    state: missing
+    because: findings are validated only once the file is indexed, and a finding names no source
+    observations: [reviewer-is-free-text, advisors-are-optional-and-local]
+  - criterion: review-names-what-it-reviewed
+    state: missing
+    because: the record has no field for the plan revision or for who stamped it, and nothing writes it
+    observations: [reviewer-is-free-text, nothing-writes-a-critique]
+  - criterion: stale-review-authorises-nothing
+    state: missing
+    because: no revision is recorded and none is compared
+    observations: [critique-checked-by-existence, no-intent-level-revision]
+  - criterion: disposition-gates-execution
+    state: missing
+    because: an open blocking finding refuses and nothing else about a review is judged
+    observations: [critique-checked-by-existence]
+risks:
+  - The intent-planning invariant is in force until this change amends it; landing code that generates a critique while the invariant still says the opposite would be the contradiction the records exist to prevent
+  - Refusing stale reviews turns every edit of a criterion into a re-review; the revision must hash only what a review judges
+  - Two plan engines are held identical; the review must live in the intent engine and add no finding to plan.rs alone
+work:
+  - id: structural-opposition
+    title: "The opposition is one derivation: structural findings, recorded findings, one disposition"
+    serves: [opposition-is-run]
+    issue: I2010
+  - id: supplied-findings
+    title: A recorded finding is held to its class, its subject and who resolved it
+    serves: [findings-are-admitted-typed]
+    issue: I2011
+  - id: recorded-review
+    title: Recording a review stamps the plan it reviewed, through one writing capability
+    serves: [review-names-what-it-reviewed]
+    issue: I2012
+  - id: gate
+    title: A stale review, a rejected plan and an unexecuted record authorise nothing
+    serves: [stale-review-authorises-nothing, disposition-gates-execution]
+    issue: I2013

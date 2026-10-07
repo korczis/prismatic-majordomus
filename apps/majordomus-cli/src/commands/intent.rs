@@ -85,6 +85,43 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 0
             })
         }
+        IntentCommand::Oppose { id } => {
+            let v = call(&app.context, &["intent", "oppose"], json!({ "intent": id }))?;
+            emit(format, &v, opposition_text)?;
+            Ok(if v["disposition"] == "reject" {
+                EXIT_INVALID
+            } else {
+                0
+            })
+        }
+        IntentCommand::Stamp {
+            id,
+            check,
+            reviewed_by,
+        } => {
+            let mut input = json!({ "intent": id, "check": check });
+            if let Some(by) = reviewed_by {
+                input["reviewed_by"] = json!(by);
+            }
+            let v = call(&app.context, &["intent", "stamp"], input)?;
+            emit(format, &v, |v| {
+                format!(
+                    "{}  {}  {}\nrevision    {}\nat          {}  with {}\ndisposition {}",
+                    if v["written"] == true {
+                        "stamped"
+                    } else {
+                        "would stamp"
+                    },
+                    s(v, "intent"),
+                    s(v, "source"),
+                    s(v, "reviewed_revision"),
+                    s(v, "reviewed_at"),
+                    s(v, "reviewed_with"),
+                    s(v, "disposition"),
+                )
+            })?;
+            Ok(0)
+        }
         IntentCommand::Realization { intent } => {
             let mut input = json!({});
             if let Some(intent) = intent {
@@ -404,6 +441,67 @@ fn words(v: &Value) -> Vec<&str> {
         .collect()
 }
 
+/// The disposition first, then the review's stamp, then every finding of either half: the
+/// blocking ones a reader must answer, then the advisory ones.
+fn opposition_text(v: &Value) -> String {
+    let review = &v["review"];
+    let mut out = vec![
+        format!("disposition {}  {}", s(v, "disposition"), s(v, "intent")),
+        format!("plan        {}", s(v, "reviewed_plan")),
+        format!(
+            "review      {}{}",
+            s(review, "state"),
+            if s(review, "reviewed_revision").is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "  stamped {} at {} with {}",
+                    s(review, "reviewed_revision")
+                        .chars()
+                        .take(12)
+                        .collect::<String>(),
+                    s(review, "reviewed_at"),
+                    s(review, "reviewed_with")
+                )
+            }
+        ),
+    ];
+    for i in v["issues"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "issue       {}  {}  serves {}",
+            s(i, "id"),
+            s(i, "status"),
+            words(&i["serves"]).join(" ")
+        ));
+    }
+    for key in ["structural", "recorded"] {
+        for f in v[key].as_array().into_iter().flatten() {
+            let resolution = s(f, "resolution");
+            out.push(format!(
+                "{:<11} {}  {}  {}{}  {}",
+                key,
+                if f["blocking"] == true {
+                    "blocking"
+                } else {
+                    "advisory"
+                },
+                s(f, "id"),
+                s(f, "subject"),
+                if resolution.is_empty() {
+                    String::new()
+                } else {
+                    format!("  [{resolution}]")
+                },
+                s(f, "finding")
+            ));
+        }
+    }
+    for r in words(&v["rejecting"]) {
+        out.push(format!("rejects     {r}"));
+    }
+    out.join("\n")
+}
+
 /// The standing, what was named, then what the preflight prints for the same issues and
 /// intents, the pins, the notes and every refusal with its cause.
 fn binding_text(v: &Value) -> String {
@@ -426,6 +524,14 @@ fn binding_text(v: &Value) -> String {
     if !s(v, "plan_revision").is_empty() {
         out.push(format!("plan        {}", s(v, "plan_revision")));
         out.push(format!("evidence    {}", s(v, "evidence_standing")));
+    }
+    for r in v["reviews"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "review      {}  {}  {}",
+            s(r, "intent"),
+            s(r, "state"),
+            s(r, "disposition")
+        ));
     }
     for n in words(&v["notes"]) {
         out.push(format!("note        {n}"));
