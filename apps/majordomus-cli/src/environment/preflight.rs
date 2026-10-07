@@ -513,6 +513,29 @@ pub struct HandoverObservation {
     pub divergence: String,
 }
 
+/// What the continuity commands last left in this checkout's `continuity.json`: the
+/// handovers other devices published that could be resumed here, as the last sync computed
+/// them, and how that sync went. Read from that one file — never from the store, never from
+/// a remote — so that entering a directory costs no git call and no network.
+///
+/// A checkout that publishes and has never synced is told to sync:
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{derive, ContinuityObservation, Observations, Verdict};
+/// let mut o = Observations::empty("demo", 0);
+/// o.continuity = Some(ContinuityObservation { offers: Vec::new(), last_sync: None });
+/// let c = derive(&o).check("session.continuity").unwrap().clone();
+/// assert_eq!(c.verdict, Verdict::Unknown);
+/// assert!(c.summary.contains("never synced"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContinuityObservation {
+    /// Resumable handovers from other devices.
+    pub offers: Vec<crate::continuity::local::Offer>,
+    /// The last sync.
+    pub last_sync: Option<crate::continuity::local::SyncNote>,
+}
+
 /// Whether the policy parsed, was refused, or was never read by this call.
 ///
 /// ```
@@ -914,6 +937,9 @@ pub struct Observations {
     pub task: Option<TaskObservation>,
     /// The handover a resuming worker would get.
     pub handover: Option<HandoverObservation>,
+    /// What other devices published that could be resumed here; `None` when the
+    /// continuity commands never ran in this checkout.
+    pub continuity: Option<ContinuityObservation>,
     /// The policy.
     pub policy: PolicyObservation,
     /// The rule tally.
@@ -954,6 +980,7 @@ impl Observations {
             episode: None,
             task: None,
             handover: None,
+            continuity: None,
             policy: PolicyObservation::NotRead,
             rules: RulesObservation::Absent,
             adrs: None,
@@ -1001,6 +1028,7 @@ pub fn derive(o: &Observations) -> Preflight {
                 task_check(o),
                 context_check(o, head.as_deref(), clean),
                 handover_check(o),
+                continuity_check(o),
             ],
         },
         Section {
@@ -1304,6 +1332,83 @@ fn handover_check(o: &Observations) -> Check {
         )],
     )
     .next("majordomus handover --resolve")
+}
+
+fn continuity_check(o: &Observations) -> Check {
+    const FILE: &str = ".ai/local/state/continuity.json";
+    let Some(c) = &o.continuity else {
+        return Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::NotApplicable,
+            "no handover was published or synced from this checkout",
+            vec![],
+        );
+    };
+    if let Some(first) = c.offers.first() {
+        let more = if c.offers.len() > 1 {
+            format!(" (+{} more)", c.offers.len() - 1)
+        } else {
+            String::new()
+        };
+        let about: Vec<&str> = [first.branch.as_deref(), first.issue.as_deref()]
+            .into_iter()
+            .flatten()
+            .collect();
+        return Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Active,
+            format!(
+                "resumable handover from {} ({}){more}",
+                first.device,
+                about.join(", ")
+            ),
+            vec![Evidence::new(
+                FILE,
+                format!(
+                    "record {} published {}",
+                    &first.record[..12.min(first.record.len())],
+                    first.published_at
+                ),
+            )],
+        )
+        .next("majordomus-cli continuity plan");
+    }
+    match &c.last_sync {
+        Some(sync) if sync.outcome != "ok" => Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Degraded,
+            format!(
+                "the last sync with {} was {}; published handovers may be waiting there",
+                sync.remote, sync.outcome
+            ),
+            vec![Evidence::new(
+                FILE,
+                format!("last_sync {} at {}", sync.outcome, sync.at),
+            )],
+        )
+        .next("majordomus-cli continuity sync"),
+        Some(sync) => Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Fresh,
+            format!(
+                "nothing waiting from another device as of the last sync ({})",
+                sync.at
+            ),
+            vec![Evidence::new(FILE, format!("last_sync ok at {}", sync.at))],
+        ),
+        None => Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Unknown,
+            "this checkout publishes handovers and has never synced",
+            vec![],
+        )
+        .next("majordomus-cli continuity sync"),
+    }
 }
 
 fn policy_check(o: &Observations) -> Check {
@@ -2286,6 +2391,15 @@ pub fn observe(
         episode,
         task,
         handover,
+        continuity: crate::continuity::local::load(root)
+            .ok()
+            .filter(|s| {
+                crate::continuity::local::local_path(root).is_file() || !s.offers.is_empty()
+            })
+            .map(|s| ContinuityObservation {
+                offers: s.offers,
+                last_sync: s.last_sync,
+            }),
         policy: policy_observation,
         rules,
         adrs: environment.layer.kind("adr"),
@@ -2765,6 +2879,17 @@ fn compact_checks(p: &Preflight, unicode: bool) -> String {
             );
         }
     }
+    if let Some(c) = p
+        .check("session.continuity")
+        .filter(|c| c.verdict == Verdict::Active)
+    {
+        let _ = write!(
+            out,
+            "\n  {} {}: majordomus-cli continuity plan",
+            if unicode { "↻" } else { "*" },
+            c.summary
+        );
+    }
     out.push('\n');
     out
 }
@@ -2869,6 +2994,147 @@ mod tests {
             ..Default::default()
         });
         assert_eq!(compact_episode(&derive(&o)), "no episode");
+    }
+
+    fn offer(
+        device: &str,
+        branch: Option<&str>,
+        issue: Option<&str>,
+    ) -> crate::continuity::local::Offer {
+        crate::continuity::local::Offer {
+            record: "a".repeat(32),
+            device: device.into(),
+            branch: branch.map(str::to_string),
+            published_at: "2026-10-03T12:00:00Z".into(),
+            task: None,
+            issue: issue.map(str::to_string),
+        }
+    }
+
+    fn sync_note(outcome: &str) -> crate::continuity::local::SyncNote {
+        crate::continuity::local::SyncNote {
+            remote: "origin".into(),
+            at: "2026-10-03T12:00:00Z".into(),
+            outcome: outcome.into(),
+            detail: None,
+        }
+    }
+
+    fn continuity_of(c: Option<ContinuityObservation>) -> Check {
+        let mut o = at_head();
+        o.continuity = c;
+        derive(&o).check("session.continuity").unwrap().clone()
+    }
+
+    /// Every state `continuity.json` can be in reads as its own verdict, and only a handover
+    /// waiting from another device asks for attention on the entry line.
+    #[test]
+    fn the_continuity_check_reads_every_state_of_the_local_file() {
+        let c = continuity_of(None);
+        assert_eq!(c.verdict, Verdict::NotApplicable);
+
+        let one = continuity_of(Some(ContinuityObservation {
+            offers: vec![offer("macbook-pro", Some("feature/x"), Some("#184"))],
+            last_sync: None,
+        }));
+        assert_eq!(one.verdict, Verdict::Active);
+        assert!(one.summary.contains("macbook-pro"), "{}", one.summary);
+        assert!(one.summary.contains("feature/x, #184"), "{}", one.summary);
+        assert!(!one.summary.contains("more"), "{}", one.summary);
+        assert_eq!(
+            one.evidence[0].observed,
+            "record aaaaaaaaaaaa published 2026-10-03T12:00:00Z"
+        );
+
+        let two = continuity_of(Some(ContinuityObservation {
+            offers: vec![
+                offer("macbook-pro", None, None),
+                offer("mac-mini", None, None),
+            ],
+            last_sync: Some(sync_note("ok")),
+        }));
+        assert_eq!(two.verdict, Verdict::Active);
+        assert!(two.summary.ends_with("() (+1 more)"), "{}", two.summary);
+
+        let partial = continuity_of(Some(ContinuityObservation {
+            offers: Vec::new(),
+            last_sync: Some(sync_note("unreachable")),
+        }));
+        assert_eq!(partial.verdict, Verdict::Degraded);
+        assert!(
+            partial.summary.contains("origin was unreachable"),
+            "{}",
+            partial.summary
+        );
+
+        let fresh = continuity_of(Some(ContinuityObservation {
+            offers: Vec::new(),
+            last_sync: Some(sync_note("ok")),
+        }));
+        assert_eq!(fresh.verdict, Verdict::Fresh);
+        assert!(
+            fresh.summary.contains("2026-10-03T12:00:00Z"),
+            "{}",
+            fresh.summary
+        );
+
+        let never = continuity_of(Some(ContinuityObservation {
+            offers: Vec::new(),
+            last_sync: None,
+        }));
+        assert_eq!(never.verdict, Verdict::Unknown);
+
+        // the entry line points at the plan only when something waits
+        let mut o = at_head();
+        o.continuity = Some(ContinuityObservation {
+            offers: vec![offer("macbook-pro", Some("feature/x"), None)],
+            last_sync: None,
+        });
+        let p = derive(&o);
+        let line = compact_checks(&p, true);
+        assert!(
+            line.contains("↻ resumable handover from macbook-pro"),
+            "{line}"
+        );
+        assert!(
+            compact_checks(&p, false).contains("\n  * resumable handover"),
+            "{line}"
+        );
+        o.continuity = None;
+        assert!(!compact_checks(&derive(&o), true).contains("continuity plan"));
+    }
+
+    /// `observe` reads `continuity.json` when it exists and only then: a checkout the
+    /// continuity commands never ran in has no continuity observation at all.
+    #[test]
+    fn observe_reads_the_continuity_file_only_where_one_was_written() {
+        use crate::environment::{resolve, EnvironmentQuery, Inputs};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let repository = crate::Repository::open(repo.root()).unwrap();
+        let env = resolve(
+            &Inputs {
+                repository: &repository,
+                share: None,
+                index: None,
+                registry: None,
+                policy: None,
+            },
+            &EnvironmentQuery::fast().sealed(),
+        );
+        let observed = |root: &Path| {
+            observe(root, &env, Err("not read".into()), None, Probe::sealed()).continuity
+        };
+        assert_eq!(observed(repo.root()), None);
+
+        let state = crate::continuity::local::LocalState {
+            offers: vec![offer("macbook-pro", Some("feature/x"), None)],
+            last_sync: Some(sync_note("ok")),
+            ..Default::default()
+        };
+        crate::continuity::local::save(repo.root(), &state).unwrap();
+        let seen = observed(repo.root()).expect("the file is read");
+        assert_eq!(seen.offers, state.offers);
+        assert_eq!(seen.last_sync, state.last_sync);
     }
 
     #[test]

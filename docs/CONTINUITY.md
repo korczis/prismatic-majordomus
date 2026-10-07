@@ -516,6 +516,136 @@ flowchart TD
   kd --> kp
 ```
 
+## Across machines
+
+Everything above lives in one checkout's `.ai/local/state/`, which is never committed and
+names the machine it is on. Stopping on a laptop and continuing on a desktop therefore needs
+one more step: the handover is **published** — projected into a portable, signed record — and
+the other machine **resumes** it after a plan has said it can. The design is
+[ADR 0105](../.ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md);
+the rule is `project.session-continuity-is-portable`.
+
+```mermaid
+flowchart TD
+  ho["machine A: majordomus handover"]
+  pub["machine A: majordomus-cli continuity publish<br>refused if it carries a secret or a machine path"]
+  ref["refs/majordomus/continuity<br>records/&lt;id&gt;.json, signed by A's device key"]
+  syncA["machine A: continuity sync<br>fetch, union, push (never forced)"]
+  remote["git remote"]
+  syncB["machine B: continuity sync"]
+  plan["machine B: continuity plan<br>trust, lineage, source compatibility"]
+  resume["machine B: continuity resume<br>handover + decisions written into B's state"]
+  ctx["machine B: handover --resolve, context, the session briefing"]
+
+  ho --> pub --> ref --> syncA --> remote --> syncB --> plan --> resume --> ctx
+```
+
+### From a MacBook to a Mac mini
+
+```sh
+# MacBook, once: name the device (the key is the mesh's node key, created on first use)
+majordomus-cli continuity device --label macbook-pro
+
+# MacBook, when stopping
+majordomus handover < note.md            # # Objective / # Current State / # Next Action
+majordomus-cli continuity publish --issue '#184'
+git push                                  # the source: continuity never moves it
+majordomus-cli continuity sync            # the record: fetch, merge, push refs/majordomus/continuity
+
+# Mac mini
+git pull
+majordomus-cli continuity sync            # fetches what other devices published
+majordomus-cli continuity status          # this device, the store, what is resumable
+majordomus-cli continuity plan            # writes nothing; says what a resume would do
+majordomus-cli continuity resume          # only on a ready plan
+majordomus handover --resolve             # the MacBook's handover, as this checkout's record
+```
+
+On entry, the preflight's `session.continuity` check (and the banner's last line) says a
+resumable handover is waiting — read from `.ai/local/state/continuity.json`, which the last
+`sync` wrote, never from a remote.
+
+### What moves, and what does not
+
+| State | Moves | How |
+|---|---|---|
+| source, committed | yes | git, by the person: `git push` / `git pull` |
+| source, uncommitted | **no** | the record lists the changed paths and a fingerprint; the plan says `source_incomplete` |
+| handover (objective, state, next action) | yes | the record's `handover`, the mesh's `HandoverBody` |
+| intent: the task's title, scope, profile | yes | the record's `task`; the plan recommends the `majordomus start` to run |
+| issue, milestone | yes | carried along the line until a publication names others |
+| decisions the task recorded | yes | appended to the receiving decision log once each, marked `Carried:` |
+| lineage and provenance | yes | `parent`, `line`, device, episode, commit, `published_at`, producer version |
+| worktree path, repository id the shell compares | no | recomputed by the receiving checkout |
+| the episode, the working context | no | opened and compiled on the receiving machine |
+| PIDs, sockets, ports, the lease, build output | no | the record has no field for them |
+| credentials, secret environment values, home paths | no | a publication carrying one is refused |
+
+### Lineage, and what a conflict is
+
+A record names the record it continues — the last one this checkout published or resumed on
+the same branch — and the first record's id is its line. Two records are:
+
+| Relation | Meaning | What happens |
+|---|---|---|
+| `equal` | the same record | a second resume rewrites nothing |
+| `newer` / `older` | one descends from the other | the newer is what is offered |
+| `diverged` | same line, neither descends from the other: the same work continued twice | a plan that would pick one is a `conflict`; a person names one with `--record` |
+| `independent` | different lines: separate work | ordinary; never a conflict |
+
+The clock decides nothing: `published_at` is shown and used for an age. `sync` reports each
+line as `equal`, `remote_newer`, `local_newer`, `diverged`, `local_only` or `remote_only`.
+
+### The plan
+
+`continuity plan` (the same value over MCP as `majordomus_continuity_plan` and over HTTP as
+`GET /api/v1/continuity/plan`) answers `ready`, `ready_with_warnings`,
+`requires_source_update`, `conflict`, `choose_record`, `nothing_to_resume` or `refused`, with:
+
+- **trust** — the signer's key against the mesh declaration's `trust.allow`; an untrusted
+  signer is `refused`, and with no declaration at all the plan warns `origin_undeclared`;
+- **lineage** — `line_diverged`, `would_diverge` (this checkout continued the same work
+  elsewhere), `already_resumed`;
+- **source** — `exact`, `local_ahead` (a warning), `local_behind`, `head_missing`,
+  `branch_differs` (each `requires_source_update`, with the git command to run), `diverged`
+  (a conflict: reconcile with git first);
+- **the origin's tree** — `source_incomplete` when it was dirty, unless this checkout holds
+  the very same uncommitted change (the fingerprints agree);
+- **activity** — `origin_may_be_active` when the record came from a still-open episode less
+  than an hour ago. Advisory: nothing locks, and a crashed laptop locks nothing.
+
+The commands a plan lists are recommendations. Nothing a record says is executed.
+
+### Offline
+
+`publish` writes a local ref and never touches the network, so it works on a plane. `sync`
+against an unreachable remote exits 10, changes nothing, and records `unreachable` in
+`continuity.json`; `status` reports the store `pending` (or `never_synced`) until a sync
+reaches the remote. Nothing is lost on the way.
+
+### Security
+
+- A record is signed by the device's mesh key and identified by its content digest; an
+  altered record no longer matches its id or its signature and is refused on every read.
+- A record from another repository — a fork shares a name, not a root history — is refused,
+  and a sync with such a remote leaves none of its records in this store's tree.
+- A record of a later schema is kept and reported (`schema_too_new`, `upgrade_required`),
+  so an older executable never drops a newer one's records.
+- The continuity ref is pushed to whatever remote is synced: in a public repository its
+  records are public, like the tracked session envelopes. Sync with a private remote
+  (`--remote`) where that is not acceptable.
+
+### Troubleshooting
+
+| Symptom | Ask | Usually |
+|---|---|---|
+| nothing resumable on the other machine | `continuity status` | not synced on one side; `store.sync` says `pending` or `never_synced` |
+| `head_missing` | `continuity plan` | the source was not pushed, or not fetched |
+| `origin_untrusted` | `continuity device` on the origin | its `public_key` is not in `trust.allow` |
+| `conflict` with `line_diverged` | `continuity records` | the same work was continued on two machines; resume one with `--record` |
+| a publication refused | the refusal's field | a token or a home path in the handover body or the task title |
+| `continuity.dangling_parent` | `continuity sync` | a record continues one this store has not fetched yet |
+
 ## What this does not do
 
 It does not know who wrote which commit. A task records the commit it started at, and
@@ -539,7 +669,8 @@ It does not rank search results, embed anything, or maintain an index. `search` 
 literal grep across the record kinds in authority order. The corpus is a handful of files;
 an index would be a second source of truth that has to be kept in step with the first.
 
-It does not resolve across worktrees or branches, and it never will silently.
+It does not resolve across worktrees or branches, and it never will silently. A handover
+from another machine reaches this checkout only through `continuity resume`, after a plan.
 
 ## Related
 

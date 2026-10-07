@@ -2381,6 +2381,89 @@ fn closed_card(c: &ClosedSessions) -> El {
 /// The continuity page asks six capabilities now. Failing the whole page because one of them
 /// could not answer would hide the five that could, and the one a reader most needs is the
 /// one most likely to fail: a store nothing has written yet.
+/// The cross-machine half: this device, the record this checkout continues, the store
+/// against its remote, and the handovers other devices published that could be resumed
+/// here. Every value is `continuity.status`'s; nothing is decided in this card — a diverged
+/// line is shown because the status reports it, and the action is the command that acts.
+fn machines_card(s: &crate::continuity::Status) -> El {
+    let short = |id: &str| id[..12.min(id.len())].to_string();
+    let diverged = s
+        .lines
+        .iter()
+        .filter(|l| l.state == crate::continuity::lineage::LineState::Diverged)
+        .count();
+    let status = if diverged > 0 {
+        badge("fail", format!("{diverged} diverged"))
+    } else if s.resumable.is_empty() {
+        badge("ok", "nothing waiting")
+    } else {
+        badge("info", format!("{} resumable", s.resumable.len()))
+    };
+    let sync = serde_json::to_value(s.store.sync)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default();
+    let rows: Vec<El> = s
+        .resumable
+        .iter()
+        .map(|r| {
+            el("tr")
+                .child(el("td").child(mono(short(&r.id))))
+                .child(el("td").text(&r.device.label))
+                .child(el("td").child(mono(r.branch.clone().unwrap_or_else(|| "DETACHED".into()))))
+                .child(el("td").text(r.task.as_deref().unwrap_or("")))
+                .child(el("td").text(r.issue.as_deref().unwrap_or("")))
+                .child(el("td").text(&r.published_at))
+        })
+        .collect();
+    card_with(
+        "Other machines",
+        status,
+        el("div")
+            .child(facts(vec![
+                (
+                    "This device",
+                    Node::Element(el("span").text(format!(
+                        "{} ({})",
+                        s.device.label,
+                        short(&s.device.node)
+                    ))),
+                ),
+                (
+                    "Continues",
+                    Node::Element(match &s.position {
+                        Some(p) => mono(short(&p.record)),
+                        None => el("span").text("nothing yet on this branch"),
+                    }),
+                ),
+                (
+                    "Store",
+                    Node::Element(el("span").text(format!(
+                        "{} record(s) · {} · {}",
+                        s.store.records,
+                        s.store.remote.as_deref().unwrap_or("no remote"),
+                        sync
+                    ))),
+                ),
+            ]))
+            .child(if rows.is_empty() {
+                nothing("No other device has published a handover this checkout has not resumed, as of the last sync.")
+            } else {
+                table(&["Record", "Device", "Branch", "Intent", "Issue", "Published"], rows)
+            })
+            .children(
+                s.diagnostics
+                    .iter()
+                    .filter(|d| d.severity != crate::model::Severity::Info)
+                    .map(|d| alert("warn", format!("{}: {}", d.code, d.message)))
+                    .collect::<Vec<_>>(),
+            )
+            .child(el("p").class("mj-prose").text(
+                "A handover published on another machine reaches this one through a sync with the git remote, and is resumed only on a plan that checked its signer, its lineage and this checkout's source.",
+            )),
+    )
+}
+
 fn section_error(title: &str, e: String) -> El {
     card(title, alert("fail", e))
 }
@@ -2537,6 +2620,12 @@ pub fn continuity(ctx: &Context) -> Page {
                 "No checkpoint resolves here yet.",
             ))
             .child(blockers)
+            .child(
+                match ask::<crate::continuity::Status>(ctx, "continuity.status", json!({})) {
+                    Ok(s) => machines_card(&s),
+                    Err(e) => section_error("Other machines", e),
+                },
+            )
             .child(match ask::<Episodes>(ctx, "lifecycle.episodes", json!({})) {
                 Ok(e) => episodes_card(&e),
                 Err(e) => section_error("Every open episode", e),

@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub(crate) mod continuity_transfer;
 pub(crate) mod convergence;
 pub mod dashboard;
 pub(crate) mod delivery;
@@ -313,7 +314,14 @@ mod tests {
             writers.into_iter().collect::<Vec<_>>(),
             // reasoning.record writes checkout state under .ai/local, never a tracked file,
             // and is classified with the writers so that every surface asks before it runs.
-            ["plan.transition", "reasoning.record", "recover.orphans"]
+            [
+                "continuity.publish",
+                "continuity.resume",
+                "continuity.sync",
+                "plan.transition",
+                "reasoning.record",
+                "recover.orphans"
+            ]
         );
     }
 }
