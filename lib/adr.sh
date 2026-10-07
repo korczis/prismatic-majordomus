@@ -927,7 +927,7 @@ mj_adr_propose() {
   lock="$MJ_ADRS_DIR/.id.lock"
   mj_adr_lock_take "$lock"
   # from here the identity is ours until the record exists; every exit releases the lock
-  trap 'mj_adr_lock_release "'"$lock"'"' EXIT
+  trap 'mj_adr_lock_release "'"$lock"'"; mj_cleanup' EXIT
   here="$(mj_adr_numbers_here "$MJ_ADRS_DIR" | mj_adr_high_water)"
   [ "$here" -gt "$surveyed" ] && surveyed="$here"
   num="$(printf '%04d' "$((surveyed + 1))")"
@@ -961,7 +961,7 @@ mj_adr_propose() {
   fi
   mv "$tmp" "$dest"
   mj_adr_lock_release "$lock"
-  trap - EXIT
+  trap mj_cleanup EXIT
 
   mj_ledger_append adr.proposed "\"adr\":\"adr-$num\",\"title\":\"$(mj_json_esc "$title")\""
   if [ "$MJ_JSON" = 1 ]; then
