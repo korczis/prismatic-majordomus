@@ -2,12 +2,30 @@
 // shown once the script runs; pressing a tab selects it alone and shows its panel alone; the arrow
 // keys move the selection, as the ARIA tabs pattern asks, and only the selected tab is in the tab
 // order.
+// A press is a pointer click the tab heard. A click that returns is not one: the event goes to whatever is under the
+// pointer when the button is released, so the tab is brought into view at once (which ends a smooth scroll of the
+// document still in flight) and is asked whether the click reached it. One that did not is the driver's miss, noted on
+// stderr and made once more; one that did is judged as it stands, and never repeated.
+const press = async (page, sel, note) => {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    await page.evaluate((sel) => {
+      const t = document.querySelector(sel);
+      t.scrollIntoView({ block: 'center', behavior: 'instant' });
+      t.__mjHeard = false;
+      if (!t.__mjArmed) { t.__mjArmed = true; t.addEventListener('click', () => { t.__mjHeard = true; }, true); }
+    }, sel);
+    await page.locator(sel).click();
+    if (await page.evaluate((sel) => document.querySelector(sel).__mjHeard, sel)) return true;
+    if (attempt === 1) note();
+  }
+  return false;
+};
 export default {
   id: 'kit-tabs',
   title: 'a kit tab selects itself alone, shows its panel alone, and the arrow keys move it',
   width: 1280,
   claims: (el) => el.attrs.role === 'tab' && 'data-kit-tab' in el.attrs,
-  async exercise({ controls, page, fail }) {
+  async exercise({ controls, page, route, fail }) {
     const groups = await page.evaluate((ns) => {
       const byList = new Map();
       for (const n of ns) {
@@ -33,11 +51,10 @@ export default {
     let n = 0;
     for (const group of groups) {
       for (const [i, id] of group.entries()) {
-        const tab = page.locator(`[data-mj-control="${id}"]`);
-        await tab.scrollIntoViewIfNeeded();
-        await tab.click();
+        const heard = await press(page, `[data-mj-control="${id}"]`, () => process.stderr.write(`interaction-probe: ${route}: [kit-tabs] tab ${i + 1} of ${group.length} was clicked and the click event did not reach it; clicking it once more\n`));
         const state = await read(group, i);
-        if (state.listHidden) fail('a tab strip is still hidden after the script ran');
+        if (!heard) fail(`tab ${i + 1} of ${group.length} was clicked twice and the click event reached it neither time`);
+        else if (state.listHidden) fail('a tab strip is still hidden after the script ran');
         else if (state.missing) fail(`a tab strip has ${state.missing} tab(s) whose panel does not exist`);
         else if (!state.ok) fail(`pressing tab ${i + 1} of ${group.length} does not select it alone, show its panel alone and put it alone in the tab order`);
         n++;
