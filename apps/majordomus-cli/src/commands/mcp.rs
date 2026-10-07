@@ -387,14 +387,67 @@ fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
     m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
+/// The word an inspection puts before a diagnostic: the verdict words every other report
+/// of this tool begins a line with.
+fn level(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Error => "FAIL",
+        Severity::Warning => "WARN",
+        Severity::Info => "INFO",
+    }
+}
+
+/// What an inspection says about the projection, one line each: who answers and with which
+/// protocol versions, how many tools carry each effect, the tools that write the
+/// repository, where each declared client's configuration stands, and what that leaves to
+/// be done.
+fn projection_lines(p: &crate::capability::builtin::mcp::McpProjection) -> Vec<String> {
+    // an effect and a standing are written as the words they serialise to, which are the
+    // words every other surface shows
+    fn word<T: serde::Serialize>(value: T) -> String {
+        serde_json::to_value(value)
+            .ok()
+            .and_then(|v| v.as_str().map(String::from))
+            .unwrap_or_default()
+    }
+    let mut lines = vec![
+        format!("server      {} {}", p.server.name, p.server.version),
+        format!("protocol    {}", p.protocol_versions.join(", ")),
+    ];
+    lines.extend(
+        p.effects
+            .iter()
+            .map(|e| format!("effect      {:<20} {} tool(s)", word(e.effect), e.tools)),
+    );
+    lines.extend(p.writers.iter().map(|name| format!("writes      {name}")));
+    lines.extend(
+        p.clients
+            .iter()
+            .map(|c| format!("client      {:<24} {}", c.config, word(c.standing))),
+    );
+    lines.extend(
+        p.findings
+            .iter()
+            .map(|f| format!("WARN {:<22} - — {} ({})", f.code, f.message, f.remedy)),
+    );
+    lines
+}
+
 fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     let index = surface.index();
+    // the projection as the capability every other surface asks describes it, so that what
+    // this prints about the protocol, the effects and the clients is not a second account
+    let described = crate::capability::builtin::mcp::describe(
+        &surface.context(),
+        crate::capability::builtin::mcp::McpProjectionInput::default(),
+    );
     match format {
         OutputFormat::Json => {
             let v = json!({
                 "repository": surface.repository_info().map_err(|e| Error::Protocol { reason: e.to_string() })?,
+                "mcp": described,
                 "resources": &*surface.resources(),
                 "tools": &*surface.tools(),
             });
@@ -408,16 +461,10 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
             .map_err(Error::Transport)?;
         }
         OutputFormat::Text => {
-            let w = |out: &mut std::io::StdoutLock<'_>, line: String| {
-                writeln!(out, "{line}").map_err(Error::Transport)
-            };
-            w(&mut out, format!("repository  {}", index.repository.root))?;
-            w(
-                &mut out,
+            // the lines first, then one write: an inspection is printed whole or not at all
+            let mut lines = vec![
+                format!("repository  {}", index.repository.root),
                 format!("discovery   {}", index.repository.discovery),
-            )?;
-            w(
-                &mut out,
                 format!(
                     "state       {}",
                     match index.state {
@@ -425,41 +472,54 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
                         crate::index::State::Degraded => "degraded",
                     }
                 ),
-            )?;
-            for (kind, n) in index.kinds() {
-                w(&mut out, format!("kind        {kind:<12} {n}"))?;
-            }
+            ];
+            lines.extend(
+                index
+                    .kinds()
+                    .into_iter()
+                    .map(|(kind, n)| format!("kind        {kind:<12} {n}")),
+            );
             let summary = surface.registry().summary();
-            w(
-                &mut out,
+            lines.push(format!(
+                "capabilities {} ({} builtin, {} declarative)",
+                summary.total, summary.builtin, summary.declarative
+            ));
+            lines.extend(projection_lines(&described));
+            lines.extend(
+                surface
+                    .resources()
+                    .iter()
+                    .map(|r| format!("resource    {}", r.uri)),
+            );
+            lines.extend(
+                surface
+                    .tools()
+                    .iter()
+                    .map(|t| format!("tool        {}", t.name)),
+            );
+            lines.extend(index.diagnostics.iter().map(|d| {
                 format!(
-                    "capabilities {} ({} builtin, {} declarative)",
-                    summary.total, summary.builtin, summary.declarative
-                ),
-            )?;
-            for r in surface.resources().iter() {
-                w(&mut out, format!("resource    {}", r.uri))?;
-            }
-            for t in surface.tools().iter() {
-                w(&mut out, format!("tool        {}", t.name))?;
-            }
-            for d in &index.diagnostics {
-                let level = match d.severity {
-                    Severity::Error => "FAIL",
-                    Severity::Warning => "WARN",
-                    Severity::Info => "INFO",
-                };
-                w(
-                    &mut out,
-                    format!(
-                        "{level:<4} {:<22} {} — {}",
-                        d.code,
-                        d.path.as_deref().unwrap_or("-"),
-                        d.message
-                    ),
-                )?;
-            }
+                    "{:<4} {:<22} {} — {}",
+                    level(d.severity),
+                    d.code,
+                    d.path.as_deref().unwrap_or("-"),
+                    d.message
+                )
+            }));
+            writeln!(out, "{}", lines.join("\n")).map_err(Error::Transport)?;
         }
     }
     Ok(if index.errors() > 0 { 10 } else { 0 })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_diagnostic_is_introduced_by_the_verdict_word_of_its_severity() {
+        assert_eq!(level(Severity::Error), "FAIL");
+        assert_eq!(level(Severity::Warning), "WARN");
+        assert_eq!(level(Severity::Info), "INFO");
+    }
 }

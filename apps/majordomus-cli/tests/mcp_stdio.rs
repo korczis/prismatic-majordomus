@@ -184,33 +184,51 @@ fn handshake_discovery_and_a_real_round_trip() {
         .expect("objects.list is announced as a tool");
     assert!(list_tool["inputSchema"]["properties"]["kind"].is_object());
     assert!(list_tool["outputSchema"]["properties"]["objects"].is_object());
-    // the hint follows the kind, and the kind is read from the registry rather than from a
-    // list of tool names here: a capability that becomes a command is caught by this
-    let kinds: std::collections::BTreeMap<String, bool> =
+    // the hints follow the capability's effect, read from the registry rather than from a
+    // list of tool names here: a capability that becomes a command, or a command that starts
+    // writing the repository, is caught by this. Until ADR 0110 this loop asserted
+    // `destructiveHint == false` for every tool, which was the constant the server sent and
+    // was false of every tool that writes the repository.
+    let hints: std::collections::BTreeMap<String, majordomus_cli::capability::Hints> =
         majordomus_cli::capability::builtin::all()
             .into_iter()
-            .map(|e| {
-                (
-                    e.capability.id.to_string(),
-                    e.capability.kind.is_read_only(),
-                )
-            })
+            .map(|e| (e.capability.id.to_string(), e.capability.execution.hints()))
             .collect();
     for t in r[&5]["result"]["tools"].as_array().unwrap() {
         let id = t["_meta"]["majordomus"]["id"].as_str().expect("the id");
-        let expected = *kinds
+        let expected = hints
             .get(id)
             .unwrap_or_else(|| panic!("{id} is announced and is not a builtin"));
+        let a = &t["annotations"];
         assert_eq!(
-            t["annotations"]["readOnlyHint"], expected,
-            "readOnlyHint of {} ({id})",
+            a["readOnlyHint"], expected.read_only,
+            "{} ({id})",
             t["name"]
         );
-        assert_eq!(t["annotations"]["destructiveHint"], false);
+        assert_eq!(
+            a["destructiveHint"], expected.destructive,
+            "{} ({id})",
+            t["name"]
+        );
+        assert_eq!(
+            a["idempotentHint"], expected.idempotent,
+            "{} ({id})",
+            t["name"]
+        );
+        assert_eq!(
+            a["openWorldHint"], expected.open_world,
+            "{} ({id})",
+            t["name"]
+        );
     }
     assert!(
-        kinds.values().any(|read_only| !read_only),
+        hints.values().any(|h| !h.read_only),
         "the fixture has at least one command, or this assertion proves nothing"
+    );
+    assert!(
+        hints.values().any(|h| h.destructive),
+        "the registry has at least one tool that writes the repository, or the destructive \
+         hint was never asserted true"
     );
 
     let get = &r[&6]["result"];
