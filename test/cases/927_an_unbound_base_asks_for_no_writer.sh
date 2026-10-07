@@ -2,17 +2,19 @@
 # Who wrote a check is read only when the base binds a context to an app, and then it is read
 # page by page until every listed pull request was seen (ADR 0101; rule
 # project.integration-follows-the-current-master). Through the real command line against a
-# scripted forge, as case 857 does. The forge here answers `gh api graphql` only when it is
-# called exactly as the adapter calls it, and only for the pages this case serves:
+# scripted forge, as case 857 does. The forge here answers the writers read only when it is
+# called exactly as the adapter calls it, and only for the pages this case serves; the
+# declarations read every refresh makes, bound base or not (ADR 0101 §6, D4), it answers from
+# the open list: each pull request an owner's, a branch of this repository, mentioned by none.
 #
 #   1. a base that binds nothing asks for no writer. Three shapes of it: contexts only, a
 #      `checks` entry with no `app_id`, and `app_id` -1 (the forge's "any source"). Each time
-#      the refresh succeeds, the log holds no `api graphql`, and a passing check run (#1) and
+#      the refresh succeeds, the log holds no writers read, and a passing check run (#1) and
 #      a passing commit status (#2) named `ci` are both ready: what the unbound stubs of the
 #      other cases rely on
 #   2. the base binds `ci` to app 15368 and the forge serves the writers in two pages of 50:
 #      fifty nodes (#51 down to #2, newest first, as the query orders them) and then #1 behind
-#      `-f after=<cursor>`. The log holds exactly two `api graphql` calls, each with owner and
+#      `-f after=<cursor>`. The log holds exactly two writers reads, each with owner and
 #      name as raw strings (`-f`) and only the page size typed (`-F n=50`); the second carries
 #      the first page's cursor. #1, on the last page, is attributed: ready, its evidence
 #      naming the app. The second page says more follow, and nothing more is asked: paging
@@ -70,11 +72,11 @@ case "$1 $2" in
   "api repos/o/r/rules/branches/master") cat "$STATE/rules.json" ;;
   "pr list")
     case " $* " in
-      *" --state closed "*) echo '[]' ;;
       *" --state open "*) cat "$STATE/prs.json" ;;
       *) unexpected "this pull request list" ;;
     esac ;;
   "api graphql")
+    case "$4" in *timelineItems*) jq -c '{data:{repository:{pullRequests:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[.[]|{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[]}}]}}}}' "$STATE/prs.json"; exit 0 ;; esac
     [ "$3" = -f ] && [ "$5" = -f ] && [ "$6" = owner=o ] && [ "$7" = -f ] && [ "$8" = name=r ] \
       && [ "$9" = -F ] && [ "${10}" = n=50 ] || unexpected "a writers read in another form"
     case "$4" in
@@ -107,7 +109,8 @@ look() {
   [ -n "$q" ] || { echo "    status printed no queue"; exit 1; }
 }
 field() { printf '%s' "$q" | jq -r --argjson n "$1" ".assessments[] | select(.number == \$n) | $2"; }
-asked() { local n; n="$(grep -c '^api graphql ' "$STATE/log")" || :; printf '%s' "${n:-0}"; }
+# how many writers reads the forge's log holds, apart from the declarations reads beside them
+asked() { local n; n="$(grep -c '^api graphql .*statusCheckRollup' "$STATE/log")" || :; printf '%s' "${n:-0}"; }
 ready() {   # <number> <what it is>
   [ "$(field "$1" .disposition)" = ready ] \
     || { echo "    #$1 ($2) is $(field "$1" .disposition), not ready"; field "$1" '{reasons, evidence}'; exit 1; }
@@ -170,7 +173,7 @@ printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":true,"e
 
 look
 [ "$(asked)" = 2 ] || { echo "    the writers were asked for $(asked) time(s), not twice (one per page):"; grep '^api graphql ' "$STATE/log" | cut -c1-60; said; exit 1; }
-grep '^api graphql ' "$STATE/log" > "$STATE/asked"
+grep '^api graphql .*statusCheckRollup' "$STATE/log" > "$STATE/asked"
 sed -n 1p "$STATE/asked" | grep -q ' -f owner=o -f name=r -F n=50$' \
   || { echo "    the first page was not asked for with raw owner and name and no cursor:"; sed -n 1p "$STATE/asked" | sed 's/.*}}}}}}}}//'; exit 1; }
 sed -n 2p "$STATE/asked" | grep -q ' -f owner=o -f name=r -F n=50 -f after=cursor-one$' \

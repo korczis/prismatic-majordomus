@@ -78,7 +78,7 @@ git config merge.derived.driver "$W/scripts/merge-derived %O %A %B %P"
 printf '%s\t%s\n' 1 feature/1  2 feature/2  4 feature/4  5 feature/5 > "$STATE/prs.tsv"
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
-echo "\$*" >> "$STATE/log"
+[ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
 case "\$1 \$2" in
   "repo view") echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
@@ -86,7 +86,6 @@ case "\$1 \$2" in
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
   "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list")
-    case " \$* " in *" --state closed "*) echo '[]'; exit 0 ;; esac
     printf '['; sep=''
     while IFS='	' read -r n br; do
       h="\$(git -C "$ORIGIN" rev-parse "refs/heads/\$br")"
@@ -96,6 +95,11 @@ case "\$1 \$2" in
       sep=','
     done < "$STATE/prs.tsv"
     printf ']\n' ;;
+  # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
+  # this repository, and no pull request mentions it. The list is this forge's own, unlogged
+  "api graphql")
+    nodes="\$(DECLARATIONS=1 "\$0" pr list --state open | grep -o '"number":[0-9]*' | sed 's/.*/{&,"authorAssociation":"OWNER","isCrossRepository":false,"timelineItems":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[]}}/' | paste -sd, -)"
+    printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[%s]}}}}\n' "\$nodes" ;;
   *) echo "WRITE-OR-UNEXPECTED \$*" >> "$STATE/log"; exit 1 ;;
 esac
 EOF

@@ -146,6 +146,11 @@ fn move_trail(old: &Path, path: &Path) -> Result<(), String> {
 }
 
 /// The last recorded observation, if any.
+///
+/// A record of another schema is refused, older or newer, and never read as empty or as
+/// current: its schema is read before anything else of it, so a record a newer executable
+/// wrote is refused by its number and not by whatever field this one cannot parse. The
+/// message names both schemas and the one command that records an observation this reads.
 pub fn load_observation(root: &Path) -> Result<Option<ForgeObservation>, String> {
     let path = state_path(root, OBSERVATION_FILE);
     let text = match std::fs::read_to_string(&path) {
@@ -153,16 +158,21 @@ pub fn load_observation(root: &Path) -> Result<Option<ForgeObservation>, String>
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(e) => return Err(format!("{}: {e}", path.display())),
     };
-    let obs: ForgeObservation =
-        serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))?;
-    if obs.schema != OBSERVATION_SCHEMA {
-        return Err(format!(
-            "{}: schema {}, this reads {OBSERVATION_SCHEMA}",
-            path.display(),
-            obs.schema
-        ));
+    let at = |e: serde_json::Error| format!("{}: {e}", path.display());
+    let record: serde_json::Value = serde_json::from_str(&text).map_err(at)?;
+    let other = record
+        .get("schema")
+        .and_then(serde_json::Value::as_u64)
+        .filter(|schema| *schema != u64::from(OBSERVATION_SCHEMA));
+    match other {
+        Some(schema) => Err(format!(
+            "{}: schema {schema}, this reads {OBSERVATION_SCHEMA}; majordomus prs refresh \
+             records an observation this reads",
+            path.display()
+        )),
+        // one that names no schema is no observation: the fields say so
+        None => serde_json::from_value(record).map(Some).map_err(at),
     }
-    Ok(Some(obs))
 }
 
 fn write_atomic(path: &Path, text: &str) -> Result<(), String> {
@@ -429,9 +439,11 @@ pub fn build_queue(
 
 /// Build the queue from an observation, against `master_sha`. `relation` answers what a
 /// head is to master; the command line passes git, a test passes a table. It is asked about
-/// every open pull request, and about every declared successor that is no longer open (a
-/// pull request built from what the forge reported of it): such a successor landed exactly
-/// when its head is `contained`. `shape` answers what each open pull request's merge changes
+/// every open pull request, and about every authorised declared successor that is no longer
+/// open (a pull request built from what the forge reported of it, at its head and then, when
+/// the head is not on master, at its merge commit): such a successor landed exactly when one
+/// of the two is `contained`, whatever the forge calls it. A declaration nobody entitled made
+/// asks nothing of it. `shape` answers what each open pull request's merge changes
 /// by kind ([`ChangeShape`]): its authored paths decide overlaps and risk, and two that raise
 /// the version or change a release overlap as such. A pull request it does not answer is
 /// assessed on its relation's paths alone.
@@ -516,6 +528,8 @@ pub fn build_queue_shaped(
             .filter_map(|(s, p)| s.map(|s| (p.number, s)))
             .collect(),
         superseded_by: BTreeMap::new(),
+        possible_supersessions: BTreeMap::new(),
+        references_unread: BTreeMap::new(),
         dependency_states: obs
             .resolved
             .iter()
@@ -537,7 +551,18 @@ pub fn build_queue_shaped(
             obs.pull_requests.len()
         ));
     }
-    queue.superseded_by = successors(obs, &queue.open, &mut relation);
+    let declared = successors(obs, &queue.open, &mut relation);
+    queue.superseded_by = declared.authorised;
+    queue.possible_supersessions = declared.possible;
+    // a pull request whose cross-references were not read whole is held, and the queue says
+    // which and why: a declaration that was not read is never taken for none
+    queue.references_unread = obs
+        .pull_requests
+        .iter()
+        .filter(|p| p.cross_references != CrossReferenceRead::Whole)
+        .map(|p| (p.number, p.cross_references))
+        .collect();
+    diagnostics.extend(references_unread_diagnostic(&queue.references_unread));
     for (p, r) in obs.pull_requests.iter().zip(&relations) {
         let authored = match (queue.shapes.get(&p.number), r) {
             (Some(s), _) => s.authored.clone(),
@@ -768,38 +793,143 @@ pub fn executor_feedback(queue: &mut IntegrationQueue, trail: &[drain::Integrati
     }
 }
 
-/// The declared successors of every open pull request, each with what became of it: open; or
-/// no longer open and landed when `relation` finds its head contained in master; or not landed;
-/// or unread, when the forge did not report it or git could not answer.
-fn successors(
-    obs: &ForgeObservation,
+/// The queue's word on the pull requests whose cross-references were not read whole: one
+/// line naming them, and which were read in part and which not at all. Nothing when every one
+/// was read whole.
+fn references_unread_diagnostic(unread: &BTreeMap<u64, CrossReferenceRead>) -> Option<String> {
+    let named = |want: Option<CrossReferenceRead>| {
+        unread
+            .iter()
+            .filter(|(_, read)| want.is_none_or(|w| w == **read))
+            .map(|(n, _)| format!("#{n}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let part = |label: &str, want: CrossReferenceRead| {
+        Some(named(Some(want)))
+            .filter(|numbers| !numbers.is_empty())
+            .map(|numbers| format!("{label}: {numbers}"))
+    };
+    let parts: Vec<String> = [
+        part("truncated", CrossReferenceRead::Truncated),
+        part("unread", CrossReferenceRead::Unread),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    (!unread.is_empty()).then(|| {
+        format!(
+            "the pull requests that mention {} were not all read ({}): each is held, never \
+             merged and never closed. majordomus prs refresh reads an unread one again; a \
+             truncated one has more mentions than are read ({} were read, and a mention by \
+             an issue or from another repository counts toward that limit), which no \
+             refresh clears: a person decides it (docs/INTEGRATION.md, held by its mentions)",
+            named(None),
+            parts.join("; "),
+            forge::REFERENCE_PAGES * 100
+        )
+    })
+}
+
+/// What the bodies of an observation declare about replacement, sorted by who said it.
+struct DeclaredSuccessors {
+    /// Replaced → its authorised successors, each with what became of it.
+    authorised: BTreeMap<u64, Vec<classify::Successor>>,
+    /// Replaced → the declarations nobody entitled made about it.
+    possible: BTreeMap<u64, Vec<classify::PossibleSupersession>>,
+}
+
+/// One declaration, by the pull request whose body carries it.
+struct Declarer<'a> {
+    number: u64,
+    login: &'a str,
+    association: &'a str,
+    cross_repository: bool,
+    /// An open one of this repository of which nothing was read: neither who its author is
+    /// to the repository nor the pull requests that mention it.
+    unread: bool,
+}
+
+impl Declarer<'_> {
+    fn authorised(&self) -> bool {
+        classify::declaration_is_authorised(self.association, self.cross_repository)
+    }
+
+    /// How much its word weighs when two bodies declare one pair: an authorised one over one
+    /// that could not be read, and that over one that is not authorised.
+    fn weight(&self) -> u8 {
+        if self.authorised() {
+            2
+        } else {
+            u8::from(self.unread)
+        }
+    }
+}
+
+/// The declared successors of every open pull request. A declaration counts only from someone
+/// the repository lets declare one ([`classify::declaration_is_authorised()`]), tested on the
+/// author of the body that speaks: the replaced one's own (`Superseded by`), an open
+/// successor's, or a resolved one's (`Supersedes`). An authorised successor comes with what
+/// became of it: open; or no longer open and landed when `relation` finds its head, or else
+/// its merge commit, contained in master — whatever the forge calls it; or not landed; or
+/// unread, when the forge did not report it or git could not answer. Anyone else's declaration
+/// is listed as possible and nothing is asked of git about it. When two bodies declare one
+/// pair, an authorised one stands over an unauthorised one, and of two alike the replaced
+/// one's own body stands.
+///
+/// Git's word is asked only of a successor that can have landed. One the forge says changes
+/// no file brought nothing to master wherever its head points, and one closed unmerged with
+/// its head in a fork has a head its owner could point anywhere before closing: neither is a
+/// landing, whatever master contains. And an open pull request of which nothing could be read
+/// may be one whose word counts: what it says it supersedes is held until a refresh reads it,
+/// never released on a read that failed.
+fn successors<'a>(
+    obs: &'a ForgeObservation,
     open: &BTreeSet<u64>,
     relation: &mut impl FnMut(&PullRequestObservation) -> RelationToMaster,
-) -> BTreeMap<u64, Vec<classify::Successor>> {
-    use classify::{declared_supersessions, Successor, SuccessorState};
-    // replaced → successor → whose body said so (the first to)
-    let mut declared: BTreeMap<u64, BTreeMap<u64, u64>> = BTreeMap::new();
-    let mut declare = |replaced: u64, successor: u64, by: u64| {
-        if replaced != successor && open.contains(&replaced) {
-            declared
-                .entry(replaced)
-                .or_default()
-                .entry(successor)
-                .or_insert(by);
+) -> DeclaredSuccessors {
+    use classify::{declared_supersessions, PossibleSupersession, Successor, SuccessorState};
+    // (replaced, successor) → whose body said so
+    let mut declared: BTreeMap<(u64, u64), Declarer<'a>> = BTreeMap::new();
+    let mut declare = |replaced: u64, successor: u64, by: Declarer<'a>| {
+        let pair = (replaced, successor);
+        let stands = declared
+            .get(&pair)
+            .is_some_and(|kept| kept.weight() >= by.weight());
+        if replaced != successor && open.contains(&replaced) && !stands {
+            declared.insert(pair, by);
         }
     };
+    let of_open = |p: &'a PullRequestObservation| Declarer {
+        number: p.number,
+        login: &p.author,
+        association: &p.author_association,
+        cross_repository: p.cross_repository,
+        unread: !p.cross_repository
+            && p.author_association.is_empty()
+            && p.cross_references == CrossReferenceRead::Unread,
+    };
+    // the replaced one's own body first, so that of two authorised bodies it is the one named
     for p in &obs.pull_requests {
-        let s = declared_supersessions(&p.body);
-        for m in s.superseded_by {
-            declare(p.number, m, p.number);
+        for m in declared_supersessions(&p.body).superseded_by {
+            declare(p.number, m, of_open(p));
         }
-        for n in s.supersedes {
-            declare(n, p.number, p.number);
+    }
+    for p in &obs.pull_requests {
+        for n in declared_supersessions(&p.body).supersedes {
+            declare(n, p.number, of_open(p));
         }
     }
     for (m, r) in &obs.resolved {
         for n in declared_supersessions(&r.body).supersedes {
-            declare(n, *m, *m);
+            let by = Declarer {
+                number: *m,
+                login: &r.author,
+                association: &r.author_association,
+                cross_repository: r.cross_repository,
+                unread: false,
+            };
+            declare(n, *m, by);
         }
     }
     let mut state_of = |m: u64| -> SuccessorState {
@@ -809,12 +939,20 @@ fn successors(
         let Some(r) = obs.resolved.get(&m) else {
             return SuccessorState::Unread;
         };
-        let head = PullRequestObservation {
+        // what cannot be a landing is decided before git is asked where its head is
+        if r.changed_files == 0 {
+            return SuccessorState::Empty { merged: r.merged };
+        }
+        if r.cross_repository && !r.merged {
+            return SuccessorState::ForkClosed;
+        }
+        // the pull request the forge described, at one commit of it
+        let at = |sha: &str| PullRequestObservation {
             number: m,
             title: String::new(),
-            author: String::new(),
+            author: r.author.clone(),
             head_ref: String::new(),
-            head_sha: r.head_sha.clone(),
+            head_sha: sha.to_string(),
             base_ref: obs.base.clone(),
             draft: false,
             labels: Vec::new(),
@@ -824,34 +962,75 @@ fn successors(
             checks: Vec::new(),
             review_decision: String::new(),
             auto_merge: false,
-            cross_repository: false,
+            cross_repository: r.cross_repository,
             latest_reviews: Vec::new(),
             review_requests: Vec::new(),
+            author_association: r.author_association.clone(),
+            cross_references: CrossReferenceRead::Whole,
         };
-        match relation(&head) {
-            RelationToMaster::Contained => SuccessorState::Landed {
+        // landed is git's fact: the head, or the merge commit, is in master. The forge's
+        // word that it merged is in no condition here.
+        let head = relation(&at(&r.head_sha));
+        let contained = |r: &RelationToMaster| matches!(r, RelationToMaster::Contained);
+        if contained(&head) {
+            SuccessorState::Landed {
                 head_sha: r.head_sha.clone(),
                 merged: r.merged,
-            },
-            RelationToMaster::Unknown { .. } => SuccessorState::Unread,
-            _ => SuccessorState::NotLanded { merged: r.merged },
+                by_merge_commit: false,
+            }
+        } else if !r.merge_commit.is_empty() && contained(&relation(&at(&r.merge_commit))) {
+            SuccessorState::Landed {
+                head_sha: r.merge_commit.clone(),
+                merged: r.merged,
+                by_merge_commit: true,
+            }
+        } else if matches!(head, RelationToMaster::Unknown { .. }) {
+            SuccessorState::Unread
+        } else {
+            SuccessorState::NotLanded { merged: r.merged }
         }
     };
     let mut states: BTreeMap<u64, SuccessorState> = BTreeMap::new();
-    declared
-        .into_iter()
-        .map(|(n, by)| {
-            let list = by
-                .into_iter()
-                .map(|(m, declared_in)| Successor {
-                    number: m,
-                    declared_in,
-                    state: states.entry(m).or_insert_with(|| state_of(m)).clone(),
-                })
-                .collect();
-            (n, list)
-        })
-        .collect()
+    let mut found = DeclaredSuccessors {
+        authorised: BTreeMap::new(),
+        possible: BTreeMap::new(),
+    };
+    for ((replaced, successor), by) in declared {
+        // its own body's word that it replaces another, when nothing was read of it
+        let unread = by.unread && by.number == successor;
+        if by.authorised() || unread {
+            let state = if unread {
+                SuccessorState::DeclarerUnread
+            } else {
+                states
+                    .entry(successor)
+                    .or_insert_with(|| state_of(successor))
+                    .clone()
+            };
+            found
+                .authorised
+                .entry(replaced)
+                .or_default()
+                .push(Successor {
+                    number: successor,
+                    declared_in: by.number,
+                    state,
+                });
+        } else {
+            found
+                .possible
+                .entry(replaced)
+                .or_default()
+                .push(PossibleSupersession {
+                    successor,
+                    declared_in: by.number,
+                    declared_by: by.login.to_string(),
+                    association: by.association.to_string(),
+                    cross_repository: by.cross_repository,
+                });
+        }
+    }
+    found
 }
 
 /// The queue of this checkout, from the last recorded observation, with relations decided
@@ -1091,6 +1270,7 @@ mod queue_branches {
             "body": body, "statusCheckRollup": [], "reviewDecision": "",
             "autoMergeRequest": null, "isCrossRepository": false
         }))
+        .map(forge::read_whole)
         .unwrap();
         ForgeObservation {
             schema: OBSERVATION_SCHEMA,
@@ -1142,6 +1322,12 @@ mod queue_branches {
                 merged: true,
                 head_sha: "h2".into(),
                 body: String::new(),
+                merge_commit: String::new(),
+                author: "a".into(),
+                author_association: "OWNER".into(),
+                cross_repository: false,
+                base_ref: "master".into(),
+                changed_files: 1,
             },
         )]);
         let q = build_queue(&observation("Superseded by #2", resolved), "m", unknown);
@@ -1157,6 +1343,522 @@ mod queue_branches {
     fn a_recording_read_with_nothing_observed_refuses() {
         let dir = tempfile::tempdir().unwrap();
         assert!(queue_and_record(dir.path()).is_err());
+    }
+}
+
+#[cfg(test)]
+mod declared_successors {
+    //! Who may declare a successor, which body is believed when two speak, and what git —
+    //! never the forge — says became of one: over hand-built observations and a relation
+    //! keyed on the commit asked about.
+
+    use super::*;
+    use std::cell::RefCell;
+
+    fn open(n: u64, body: &str, association: &str, fork: bool) -> PullRequestObservation {
+        let mut p = forge::pull_request_of(&serde_json::json!({
+            "number": n, "title": "t", "author": {"login": format!("u{n}")},
+            "headRefName": format!("f/{n}"), "headRefOid": format!("h{n}"),
+            "baseRefName": "master", "body": body, "isCrossRepository": fork
+        }))
+        .map(forge::read_whole)
+        .unwrap();
+        p.author_association = association.into();
+        p
+    }
+
+    fn gone(merged: bool, n: u64, body: &str, association: &str) -> forge::ResolvedPullRequest {
+        forge::ResolvedPullRequest {
+            merged,
+            head_sha: format!("h{n}"),
+            body: body.into(),
+            merge_commit: String::new(),
+            author: format!("u{n}"),
+            author_association: association.into(),
+            cross_repository: false,
+            base_ref: "master".into(),
+            changed_files: 1,
+        }
+    }
+
+    fn obs(
+        prs: Vec<PullRequestObservation>,
+        resolved: Vec<(u64, forge::ResolvedPullRequest)>,
+    ) -> ForgeObservation {
+        ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: prs,
+            resolved: resolved.into_iter().collect(),
+            delete_branch_on_merge: None,
+        }
+    }
+
+    /// The queue of `o`, with git answering by commit: `contained` are in master, `unknown`
+    /// could not be read, and every other commit is behind. Returns the queue and every pull
+    /// request the relation was asked about, as it was handed over.
+    fn queue(
+        o: &ForgeObservation,
+        contained: &[&str],
+        unknown: &[&str],
+    ) -> (IntegrationQueue, Vec<PullRequestObservation>) {
+        let asked = RefCell::new(Vec::new());
+        let q = build_queue(o, "m", |p| {
+            asked.borrow_mut().push(p.clone());
+            if contained.contains(&p.head_sha.as_str()) {
+                RelationToMaster::Contained
+            } else if unknown.contains(&p.head_sha.as_str()) {
+                RelationToMaster::Unknown {
+                    reason: "not fetched".into(),
+                }
+            } else {
+                RelationToMaster::Behind {
+                    behind: 1,
+                    authored: vec!["a.txt".into()],
+                }
+            }
+        });
+        (q, asked.into_inner())
+    }
+
+    fn supersession(a: &PullRequestAssessment) -> Vec<(&str, &str)> {
+        a.evidence
+            .iter()
+            .filter(|e| e.kind == EvidenceKind::Supersession)
+            .map(|e| (e.status.as_str(), e.detail.as_str()))
+            .collect()
+    }
+
+    fn gate_passed(a: &PullRequestAssessment) -> bool {
+        a.gates
+            .iter()
+            .any(|g| g.gate == IntegrationGate::Supersession && g.passed)
+    }
+
+    #[test]
+    fn a_declaration_counts_only_from_who_may_declare() {
+        let mut fork = gone(true, 3, "Supersedes #1", "COLLABORATOR");
+        fork.cross_repository = true;
+        let mut o = obs(
+            vec![
+                open(1, "", "OWNER", false),
+                open(4, "Supersedes #1", "NONE", false),
+            ],
+            vec![
+                (2, gone(true, 2, "Supersedes #1", "CONTRIBUTOR")),
+                (3, fork),
+            ],
+        );
+        // every one of them is on master, and that changes nothing
+        let (q, asked) = queue(&o, &["h2", "h3", "h5"], &[]);
+        let a = q.get(1).unwrap();
+        assert!(gate_passed(a), "{:?}", a.reasons);
+        assert_ne!(a.disposition, PullRequestDisposition::Superseded);
+        assert_ne!(a.disposition, PullRequestDisposition::WaitingForDependency);
+        assert_eq!(a.superseded_by, None);
+        let said = supersession(a);
+        assert_eq!(
+            said.iter().map(|(status, _)| *status).collect::<Vec<_>>(),
+            ["possible_supersession"; 3],
+            "{said:?}"
+        );
+        assert!(said[0]
+            .1
+            .starts_with("#2 by u2 (CONTRIBUTOR) says it supersedes #1"));
+        assert!(said[1]
+            .1
+            .starts_with("#3 by u3 (COLLABORATOR, from a fork) says"));
+        assert!(said[2]
+            .1
+            .starts_with("#4 by u4 (NONE) says it supersedes #1"));
+        assert_eq!(
+            asked
+                .iter()
+                .map(|p| p.head_sha.as_str())
+                .collect::<Vec<_>>(),
+            ["h1", "h4"],
+            "git is not asked about a declaration nobody entitled made"
+        );
+        assert!(gate_passed(q.get(4).unwrap()), "the declarer is not held");
+
+        // a member says so too: that one counts, and the others are still only said
+        o.resolved
+            .insert(5, gone(true, 5, "Supersedes #1", "MEMBER"));
+        let (q, _) = queue(&o, &["h2", "h3", "h5"], &[]);
+        let a = q.get(1).unwrap();
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+        assert_eq!(a.superseded_by, Some(5));
+        let said = supersession(a);
+        assert_eq!(said[0].0, "landed", "{said:?}");
+        assert_eq!(
+            said.iter()
+                .filter(|(status, _)| *status == "possible_supersession")
+                .count(),
+            3
+        );
+    }
+
+    #[test]
+    fn the_replaced_ones_own_body_is_tested_on_its_own_author() {
+        let decided = |association: &str, fork: bool| {
+            let o = obs(
+                vec![
+                    open(1, "Superseded by #2", association, fork),
+                    open(2, "", "OWNER", false),
+                ],
+                vec![],
+            );
+            queue(&o, &[], &[]).0.get(1).unwrap().clone()
+        };
+        let a = decided("OWNER", false);
+        assert_eq!(a.disposition, PullRequestDisposition::WaitingForDependency);
+        assert_eq!(a.reasons[0], "successor_open:#2");
+        for (association, fork, who) in [
+            ("CONTRIBUTOR", false, "its author u1 (CONTRIBUTOR) is not"),
+            ("OWNER", true, "its author u1 (OWNER, from a fork) is not"),
+            ("", false, "its author u1 (association unread) is not"),
+        ] {
+            let a = decided(association, fork);
+            assert!(gate_passed(&a), "{association} {fork}: {:?}", a.reasons);
+            assert!(
+                !a.reasons.iter().any(|r| *r == "successor_open:#2"),
+                "{:?}",
+                a.reasons
+            );
+            let said = supersession(&a);
+            assert_eq!(said.len(), 1, "{said:?}");
+            assert_eq!(said[0].0, "possible_supersession");
+            assert!(
+                said[0].1.starts_with("its body says superseded by #2, but")
+                    && said[0].1.contains(who),
+                "{}",
+                said[0].1
+            );
+        }
+    }
+
+    #[test]
+    fn a_pair_both_bodies_declare_is_the_replaced_ones_own() {
+        let said_of = |replaced: &str, successor: &str| {
+            let o = obs(
+                vec![
+                    open(2, "Supersedes #3", successor, false),
+                    open(3, "Superseded by #2", replaced, false),
+                ],
+                vec![],
+            );
+            let (q, _) = queue(&o, &[], &[]);
+            supersession(q.get(3).unwrap())
+                .into_iter()
+                .map(|(status, detail)| (status.to_string(), detail.to_string()))
+                .collect::<Vec<_>>()
+        };
+        // both may declare: one successor, named by the replaced one's own body
+        let said = said_of("OWNER", "OWNER");
+        assert_eq!(said.len(), 1, "{said:?}");
+        assert_eq!(said[0].0, "open");
+        assert!(
+            said[0].1.contains("its body says superseded by #2"),
+            "{}",
+            said[0].1
+        );
+        // only the successor may: its declaration stands over the one that does not count
+        let said = said_of("CONTRIBUTOR", "OWNER");
+        assert_eq!(
+            said.len(),
+            1,
+            "no possible supersession beside it: {said:?}"
+        );
+        assert_eq!(said[0].0, "open");
+        assert!(
+            said[0].1.contains("#2 says it supersedes #3"),
+            "{}",
+            said[0].1
+        );
+        // only the replaced one may: its own stands, and the other adds nothing
+        let said = said_of("OWNER", "CONTRIBUTOR");
+        assert_eq!(said.len(), 1, "{said:?}");
+        assert!(
+            said[0].1.contains("its body says superseded by #2"),
+            "{}",
+            said[0].1
+        );
+        // neither may: said once, by the one who said it first, and nothing is held
+        let said = said_of("NONE", "CONTRIBUTOR");
+        assert_eq!(said.len(), 1, "{said:?}");
+        assert_eq!(said[0].0, "possible_supersession");
+        assert!(
+            said[0].1.starts_with("its body says superseded by #2, but"),
+            "{}",
+            said[0].1
+        );
+    }
+
+    #[test]
+    fn a_successor_landed_when_git_finds_its_head_or_its_merge_commit() {
+        // #1's own body, an owner's, names #2: what became of #2 is all that varies
+        let fork = std::cell::Cell::new(true);
+        let files = std::cell::Cell::new(1);
+        let decided = |merged: bool, merge_commit: &str, contained: &[&str], unknown: &[&str]| {
+            let mut two = gone(merged, 2, "", "CONTRIBUTOR");
+            two.merge_commit = merge_commit.into();
+            two.cross_repository = fork.get();
+            two.changed_files = files.get();
+            let o = obs(
+                vec![open(1, "Superseded by #2", "OWNER", false)],
+                vec![(2, two)],
+            );
+            let (q, asked) = queue(&o, contained, unknown);
+            let commits: Vec<String> = asked.iter().map(|p| p.head_sha.clone()).collect();
+            (q.get(1).unwrap().clone(), commits, asked)
+        };
+        let evidence = |a: &PullRequestAssessment| supersession(a)[0].1.to_string();
+
+        let (a, commits, asked) = decided(true, "mc2", &["h2"], &[]);
+        assert_eq!(a.superseded_by, Some(2));
+        assert!(evidence(&a).contains("is merged, and master contains its head h2"));
+        assert_eq!(
+            commits,
+            ["h1", "h2"],
+            "its head landed: the merge commit is not asked"
+        );
+        // git is asked about the pull request the forge described, not a blank one
+        let two = &asked[1];
+        assert_eq!(
+            (
+                two.number,
+                two.author.as_str(),
+                two.author_association.as_str(),
+                two.cross_repository,
+                two.base_ref.as_str(),
+                two.cross_references
+            ),
+            (
+                2,
+                "u2",
+                "CONTRIBUTOR",
+                true,
+                "master",
+                CrossReferenceRead::Whole
+            )
+        );
+
+        let (a, commits, _) = decided(true, "mc2", &["mc2"], &[]);
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+        assert!(
+            evidence(&a).contains("is merged, and master contains its merge commit mc2"),
+            "{}",
+            evidence(&a)
+        );
+        assert_eq!(commits, ["h1", "h2", "mc2"]);
+
+        let (a, commits, _) = decided(true, "", &[], &[]);
+        assert_eq!(a.disposition, PullRequestDisposition::PossiblyRedundant);
+        assert_eq!(a.reasons[0], "successor_not_landed:#2");
+        assert_eq!(
+            commits,
+            ["h1", "h2"],
+            "no merge commit: nothing more to ask"
+        );
+
+        let (a, commits, _) = decided(true, "mc2", &[], &[]);
+        assert_eq!(a.reasons[0], "successor_not_landed:#2");
+        assert_eq!(commits, ["h1", "h2", "mc2"]);
+
+        // closed unmerged with its head in a fork: wherever that head points — on master
+        // here — it replaces nothing, and git is not asked about it
+        let (a, commits, _) = decided(false, "mc2", &["h2", "mc2"], &[]);
+        assert!(gate_passed(&a), "{:?}", a.reasons);
+        assert_eq!(a.superseded_by, None);
+        assert!(
+            evidence(&a).contains("was closed unmerged and its head lives in a fork"),
+            "{}",
+            evidence(&a)
+        );
+        assert_eq!(commits, ["h1"], "a fork's closed head proves nothing");
+        fork.set(false);
+
+        // closed unmerged and nowhere on master: it replaces nothing
+        let (a, _, _) = decided(false, "", &[], &[]);
+        assert!(gate_passed(&a), "{:?}", a.reasons);
+        assert!(
+            evidence(&a).contains("was closed unmerged, and master contains neither"),
+            "{}",
+            evidence(&a)
+        );
+
+        // a head git cannot read says nothing, and a merge commit on master still lands it
+        let (a, _, _) = decided(true, "mc2", &["mc2"], &["h2"]);
+        assert_eq!(a.superseded_by, Some(2));
+        assert!(evidence(&a).contains("its merge commit mc2"));
+        let (a, _, _) = decided(true, "", &[], &["h2"]);
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        assert_eq!(a.reasons[0], "successor_unread:#2");
+        let (a, _, _) = decided(true, "mc2", &[], &["h2"]);
+        assert_eq!(
+            a.reasons[0], "successor_unread:#2",
+            "unread, never `not landed`"
+        );
+
+        // the forge calls it closed; a batch carried its head into master: it landed
+        let (a, _, _) = decided(false, "", &["h2"], &[]);
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+        assert!(
+            evidence(&a).contains("is closed, and master contains its head h2"),
+            "{}",
+            evidence(&a)
+        );
+        // and the forge's word that it merged lands nothing
+        let (a, _, _) = decided(true, "mc2", &[], &[]);
+        assert_ne!(a.disposition, PullRequestDisposition::Superseded);
+
+        // one the forge says changes no file brought nothing, wherever its head points: a
+        // branch reset onto master and closed releases, and one called merged is a person's
+        files.set(0);
+        let (a, commits, _) = decided(false, "mc2", &["h2", "mc2"], &[]);
+        assert!(gate_passed(&a), "{:?}", a.reasons);
+        assert_eq!(a.superseded_by, None);
+        assert!(
+            evidence(&a).contains("#2 (its body says superseded by #2) is closed, and the forge names no file it changes")
+                && evidence(&a).contains("and #1 is decided on its own"),
+            "{}",
+            evidence(&a)
+        );
+        assert_eq!(
+            commits,
+            ["h1"],
+            "git is not asked where an empty one points"
+        );
+        let (a, _, _) = decided(true, "mc2", &["h2", "mc2"], &[]);
+        assert_eq!(a.disposition, PullRequestDisposition::PossiblyRedundant);
+        assert_eq!(a.reasons[0], "successor_not_landed:#2");
+        assert!(
+            evidence(&a).contains("is merged, and the forge names no file it changes")
+                && !evidence(&a).contains("decided on its own"),
+            "{}",
+            evidence(&a)
+        );
+    }
+
+    #[test]
+    fn an_open_declarer_nothing_was_read_of_holds_what_it_names() {
+        // #2 says it supersedes #1, and neither who its author is nor what mentions it could
+        // be read: its word may count, so #1 is held, never released on a read that failed
+        let unread = |fork: bool| {
+            let mut two = open(2, "Supersedes #1", "", fork);
+            two.cross_references = CrossReferenceRead::Unread;
+            two
+        };
+        let o = obs(vec![open(1, "", "OWNER", false), unread(false)], vec![]);
+        let (q, asked) = queue(&o, &[], &[]);
+        let a = q.get(1).unwrap();
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        assert_eq!(a.reasons[0], "successor_unread:#2");
+        assert_eq!(a.superseded_by, None);
+        let said = supersession(a);
+        assert_eq!(said[0].0, "unread");
+        assert!(
+            said[0]
+                .1
+                .contains("#2 (#2 says it supersedes #1) is open, and who its author is")
+                && said[0].1.contains("#1 is held until it is read"),
+            "{}",
+            said[0].1
+        );
+        assert_eq!(asked.len(), 2, "nothing is asked of git about a successor");
+        // the replaced one's own word, a contributor's, does not stand over it
+        let o = obs(
+            vec![
+                open(1, "Superseded by #2", "CONTRIBUTOR", false),
+                unread(false),
+            ],
+            vec![],
+        );
+        let (q, _) = queue(&o, &[], &[]);
+        assert_eq!(q.get(1).unwrap().reasons[0], "successor_unread:#2");
+        // and an owner's own word does: #2 is its successor, open
+        let o = obs(
+            vec![open(1, "Superseded by #2", "OWNER", false), unread(false)],
+            vec![],
+        );
+        let (q, _) = queue(&o, &[], &[]);
+        assert_eq!(q.get(1).unwrap().reasons[0], "successor_open:#2");
+        // one the list calls a fork declares nothing, read or not: evidence only
+        let o = obs(vec![open(1, "", "OWNER", false), unread(true)], vec![]);
+        let (q, _) = queue(&o, &[], &[]);
+        let a = q.get(1).unwrap();
+        assert!(gate_passed(a), "{:?}", a.reasons);
+        assert_eq!(supersession(a)[0].0, "possible_supersession");
+        // nor does one whose references were read and whose head the read did not place
+        let mut placed = unread(false);
+        placed.cross_references = CrossReferenceRead::Whole;
+        let o = obs(vec![open(1, "", "OWNER", false), placed], vec![]);
+        let (q, _) = queue(&o, &[], &[]);
+        assert!(gate_passed(q.get(1).unwrap()));
+        // what an unread one's own body says replaces it holds nothing more than its own hold
+        let mut own = unread(false);
+        own.body = "Superseded by #1".into();
+        let o = obs(vec![open(1, "", "OWNER", false), own], vec![]);
+        let (q, _) = queue(&o, &[], &[]);
+        let a = q.get(2).unwrap();
+        assert_eq!(a.reasons[0], "declarations_unread");
+        assert_eq!(supersession(a)[1].0, "possible_supersession");
+    }
+
+    #[test]
+    fn a_pull_request_whose_references_were_not_read_is_held_and_the_queue_says_so() {
+        let mut truncated = open(1, "", "OWNER", false);
+        truncated.cross_references = CrossReferenceRead::Truncated;
+        let mut unread = open(2, "", "", false);
+        unread.cross_references = CrossReferenceRead::Unread;
+        let o = obs(
+            vec![truncated, unread.clone(), open(3, "", "OWNER", false)],
+            vec![],
+        );
+        let (q, _) = queue(&o, &[], &[]);
+        for n in [1, 2] {
+            let a = q.get(n).unwrap();
+            assert_eq!(a.disposition, PullRequestDisposition::Unknown, "#{n}");
+            assert_eq!(a.reasons[0], "declarations_unread", "#{n}");
+        }
+        assert!(gate_passed(q.get(3).unwrap()));
+        let said: Vec<&String> = q
+            .diagnostics
+            .iter()
+            .filter(|d| d.contains("were not all read"))
+            .collect();
+        assert_eq!(
+            said,
+            ["the pull requests that mention #1 #2 were not all read (truncated: #1; unread: #2): \
+              each is held, never merged and never closed. majordomus prs refresh reads an \
+              unread one again; a truncated one has more mentions than are read (5000 were \
+              read, and a mention by an issue or from another repository counts toward that \
+              limit), which no refresh clears: a person decides it (docs/INTEGRATION.md, held \
+              by its mentions)"]
+        );
+        let (q, _) = queue(&obs(vec![unread], vec![]), &[], &[]);
+        assert!(
+            q.diagnostics
+                .iter()
+                .any(|d| d.contains("mention #2 were not all read (unread: #2)")),
+            "{:?}",
+            q.diagnostics
+        );
+        let (q, _) = queue(&obs(vec![open(3, "", "OWNER", false)], vec![]), &[], &[]);
+        assert!(
+            !q.diagnostics
+                .iter()
+                .any(|d| d.contains("were not all read")),
+            "{:?}",
+            q.diagnostics
+        );
     }
 }
 
@@ -1188,6 +1890,7 @@ mod issue_tests {
                     "statusCheckRollup": [], "reviewDecision": "", "autoMergeRequest": null,
                     "isCrossRepository": false
                 }))
+                .map(forge::read_whole)
             })
             .collect();
         let obs = ForgeObservation {
@@ -1277,6 +1980,7 @@ mod dependency_queue {
             "updatedAt": "2026-10-01T00:00:00Z", "body": body, "statusCheckRollup": [],
             "reviewDecision": "", "autoMergeRequest": null, "isCrossRepository": false
         }))
+        .map(forge::read_whole)
         .unwrap()
     }
 
@@ -1317,6 +2021,12 @@ mod dependency_queue {
                     merged,
                     head_sha: format!("{n:040}"),
                     body: String::new(),
+                    merge_commit: String::new(),
+                    author: "a".into(),
+                    author_association: "OWNER".into(),
+                    cross_repository: false,
+                    base_ref: "master".into(),
+                    changed_files: 1,
                 },
             );
         }

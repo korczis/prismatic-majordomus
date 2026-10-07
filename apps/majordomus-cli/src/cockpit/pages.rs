@@ -7392,6 +7392,8 @@ mod tests {
             cross_repository: false,
             latest_reviews: Vec::new(),
             review_requests: Vec::new(),
+            author_association: "OWNER".into(),
+            cross_references: crate::integration::CrossReferenceRead::Whole,
         }
     }
 
@@ -7579,6 +7581,12 @@ mod tests {
                 merged: true,
                 head_sha: sha.clone(),
                 body: String::new(),
+                merge_commit: String::new(),
+                author: "someone".into(),
+                author_association: "OWNER".into(),
+                cross_repository: false,
+                base_ref: "master".into(),
+                changed_files: 1,
             };
             store_observation(
                 &root,

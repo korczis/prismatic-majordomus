@@ -134,9 +134,10 @@ case "$1 $2" in
   "api repos/o/r/commits/master") printf '{{"sha":"%s"}}\n' "$(git -C "{origin}" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{{"required_status_checks":{{"contexts":["ci"]}}}}' ;;
   "api repos/o/r/rules/branches/master") echo '[]' ;;
+  "api graphql") jq -c '{{data:{{repository:{{pullRequests:{{pageInfo:{{hasNextPage:false,endCursor:null}},nodes:[.[]|{{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{{pageInfo:{{hasNextPage:false,endCursor:null}},nodes:[]}}}}]}}}}}}}}' "{state}/prs.json" ;;
   "pr list")
     case " $* " in
-      *" --state closed "*|*" --state merged "*) echo '[]' ;;
+      *" --state merged "*) echo '[]' ;;
       *"number,headRefOid,state,labels"*)
         # the proof's own snapshot: the second one closes the cycle
         n=$(cat "{state}/snapshots" 2>/dev/null || echo 0); n=$((n + 1)); echo $n > "{state}/snapshots"
