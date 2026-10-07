@@ -3095,6 +3095,13 @@ pub const LOOPBACK_HOST: &str = "127.0.0.1";
 pub const HTTP_HOST_ENV: &str = "MAJORDOMUS_HTTP_HOST";
 
 /// Where the interface a local server binds came from.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_http_host, HostOrigin};
+/// // only an address the environment supplied is announced in the log as the variable's
+/// assert_eq!(resolve_http_host(None, Some("0.0.0.0")).1, HostOrigin::Environment);
+/// assert_ne!(HostOrigin::Flag, HostOrigin::Default);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HostOrigin {
     /// `--host` or `--http-host` on this command line.
@@ -3140,6 +3147,15 @@ pub fn resolve_http_host(flag: Option<&str>, environment: Option<&str>) -> (Stri
 /// [`resolve_http_host`] against this process's environment: what `serve`, `mcp` and
 /// `server.status` all read, so that the address a server binds and the address the status
 /// calls desired cannot disagree.
+///
+/// ```
+/// use majordomus_cli::cli::{local_http_host, HostOrigin};
+/// // a flag is the answer whatever the environment holds
+/// assert_eq!(
+///     local_http_host(Some("127.0.0.1")),
+///     ("127.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
 pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
     let environment = std::env::var(HTTP_HOST_ENV).ok();
     let (host, origin) = resolve_http_host(flag, environment.as_deref());
