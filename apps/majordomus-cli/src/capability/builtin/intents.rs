@@ -383,15 +383,16 @@ fn intent_binding(
     ctx: &Context,
     input: IntentBindingInput,
 ) -> Result<IntentBinding, CapabilityError> {
-    let (plan, intents) = derived(ctx)?;
-    Ok(bind(
-        &intents,
-        &plan,
-        &GapRecord::all(&ctx.index),
-        &CritiqueRecord::all(&ctx.index),
-        &intent_policy(ctx),
-        input.request(),
-    ))
+    derived(ctx).map(|(plan, intents)| {
+        bind(
+            &intents,
+            &plan,
+            &GapRecord::all(&ctx.index),
+            &CritiqueRecord::all(&ctx.index),
+            &intent_policy(ctx),
+            input.request(),
+        )
+    })
 }
 
 /// The module the registry composes: six read-only capabilities over one derivation, each

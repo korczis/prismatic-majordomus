@@ -981,4 +981,112 @@ mod tests {
             "unchanged"
         );
     }
+    /// A synthetic repository with a plan: one intent `x` over milestone `m`, one issue
+    /// serving it, one maintenance issue, and a policy that requires binding.
+    fn planned() -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let write = |rel: &str, text: &str| {
+            let path = root.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, text).unwrap();
+        };
+        let mut sources =
+            std::fs::read_to_string(root.join(".ai/repo/knowledge/sources.yaml")).unwrap();
+        for kind in ["milestone", "issue", "intent", "critique"] {
+            sources.push_str(&format!(
+                "  - id: {kind}\n    kind: {kind}\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/project/{kind}s/*.yaml'\n    required: false\n"
+            ));
+        }
+        write(".ai/repo/knowledge/sources.yaml", &sources);
+        write(
+            ".ai/repo/policy.yaml",
+            "version: 1\ncontext:\n  always_loaded_budget_lines: 150\nintent:\n  binding: required\n",
+        );
+        write(
+            ".ai/repo/project/project.yaml",
+            "schema_version: 1\nname: Synthetic\nrepository: example/synthetic\ndefault_branch: master\n",
+        );
+        for m in ["m", "ops"] {
+            write(
+                &format!(".ai/repo/project/milestones/{m}.yaml"),
+                &format!("id: {m}\ntitle: Milestone {m}\nslug: {m}\norder: 0\npriority: p1\nproblem: \"A problem.\"\noutcome: \"An outcome.\"\nacceptance_criteria:\n  - It is reached\nvalidation:\n  - \"true\"\nevidence_required: []\n"),
+            );
+        }
+        let issue = |id: &str, milestone: &str, serves: &str| {
+            format!("id: {id}\nmilestone: {milestone}\ntitle: Issue {id}\nslug: issue-{id}\npriority: p1\nprofile: implementation\nobjective: \"Do it.\"\nscope:\n  - lib\n{serves}acceptance_criteria:\n  - It is done\nvalidation:\n  - \"true\"\nevidence_required:\n  - proof\n")
+        };
+        write(
+            ".ai/repo/project/issues/I0001.yaml",
+            &issue("I0001", "m", "serves:\n  - x#case\n"),
+        );
+        write(
+            ".ai/repo/project/issues/I0002.yaml",
+            &issue("I0002", "ops", ""),
+        );
+        write(
+            ".ai/repo/project/intents/x.yaml",
+            "id: x\ntitle: The x is true\nstatement: \"x holds.\"\ninvariants:\n  - Nothing else breaks\nmilestones:\n  - m\nsatisfaction:\n  - id: case\n    criterion: The case passes\n    evidence: test\n    ref: docs/DOC_0.md\n",
+        );
+        repo
+    }
+
+    #[test]
+    fn a_required_policy_refuses_the_start_of_work_whose_binding_is_refused() {
+        use crate::plan::{check, Transition, TransitionError};
+        let repo = planned();
+        let index = repo.index().unwrap();
+        let plan = Plan::build(&index);
+        assert!(
+            plan.issue("I0001").is_some(),
+            "the fixture's plan is not indexed"
+        );
+
+        // nobody critiqued the plan of x: the transition is refused, in the binding's words
+        let why = start_refusal(&index, &plan, "I0001").expect("a refusal");
+        assert!(why.starts_with("I0001 may not start: "), "{why}");
+        assert!(why.contains("never critiqued"), "{why}");
+        assert_eq!(
+            check(
+                &index,
+                &plan,
+                "I0001",
+                Transition::Start,
+                "2026-10-07T00:00:00Z"
+            ),
+            Err(TransitionError::Refused(why))
+        );
+        // maintenance is not this gate's to refuse
+        assert_eq!(start_refusal(&index, &plan, "I0002"), None);
+
+        // critiqued, it starts
+        std::fs::create_dir_all(repo.root().join(".ai/repo/project/critiques")).unwrap();
+        std::fs::write(
+            repo.root().join(".ai/repo/project/critiques/x.yaml"),
+            "intent: x\nreviewed_at: c0ffee\nreviewed_by: the test\nfindings: []\n",
+        )
+        .unwrap();
+        let index = repo.index().unwrap();
+        let plan = Plan::build(&index);
+        assert_eq!(start_refusal(&index, &plan, "I0001"), None);
+
+        // the capability answers the same binding in process
+        let ctx = repo.context().unwrap();
+        let bound = ctx
+            .execute("intents.binding", json!({ "issue": "I0001", "paths": "" }))
+            .unwrap();
+        assert_eq!(bound["standing"], "bound");
+        assert_eq!(bound["intents"][0]["id"], "x");
+
+        // an evidence ledger nobody can read leaves the binding unknown, and unknown refuses
+        std::fs::create_dir_all(repo.root().join(".ai/repo/evidence")).unwrap();
+        std::fs::write(
+            repo.root().join(".ai/repo/evidence/ledger.json"),
+            "{ not json",
+        )
+        .unwrap();
+        let why = start_refusal(&index, &plan, "I0001").expect("unknown is never a pass");
+        assert!(why.contains("could not be read"), "{why}");
+        assert!(why.contains("unknown is never a pass"), "{why}");
+    }
 }
