@@ -1,6 +1,6 @@
 # File schemas — every file Majordomus reads or writes
 
-As implemented in v0.1. Every field listed here is both written by something and read by
+As implemented. Every field listed here is both written by something and read by
 something. A field that loses one of those is removed, not kept "for later".
 
 Conventions:
@@ -74,7 +74,7 @@ or carries a tracked file, or when pre-.ai project data still sits under `.major
 The one canonical, provider-neutral policy.
 
 ```yaml
-version: 1                               # schema version; only 1 is valid in v0.1
+version: 1                               # schema version; only 1 is valid
 
 context:
   always_loaded_budget_lines: 150        # hard cap on the always-loaded projection
@@ -82,7 +82,7 @@ context:
   recent_decisions: 5                    # decisions offered to a worker, newest first
   max_list_items: 20                     # cap on any list inside the assembled context
   strategy: minimum-sufficient           # documentation of intent; projected into instructions
-  transcript_is_state: false             # projected as a rule; never true in v0.1
+  transcript_is_state: false             # projected as a rule; never true
 
 profiles:
   default: implementation                # must name a file in profiles/
@@ -161,7 +161,7 @@ guessed at. `fingerprints.yaml` records `mode` alongside the hash, and for a reg
 hash covers the region — an edit outside the markers is the repository's business and is
 never reported as drift.
 
-`wired_by` values in v0.1: `git-hook:<name>` (resolved through `core.hooksPath` or
+`wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
@@ -210,7 +210,7 @@ description: reproduce, isolate, fix, and prove a defect fixed
 
 capability: strong            # fast | standard | strong | strongest — projections map this
 effort: high                  # low | medium | high | xhigh | max; omit to inherit the default
-effort_escalation:            # optional; projected as guidance, not enforced in v0.1
+effort_escalation:            # optional; projected as guidance, not enforced
   after_blocked_attempts: 2
   to: xhigh
 verbosity: concise            # terse | concise | detailed
@@ -1618,7 +1618,7 @@ can rot.
 
 `finish` accepts `--note <file>`. For `completed` it needs the handover's required
 sections; for `partial`/`blocked` a `# Next Action`; for `no_match`/`failed` a
-`# Reason`. The profile's `output_contract` fields may lead as a YAML block; v0.1 records
+`# Reason`. The profile's `output_contract` fields may lead as a YAML block; `finish` records
 the note but does not validate that block. On success the note is copied to
 `state/completed/<id>.md`.
 

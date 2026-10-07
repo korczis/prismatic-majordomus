@@ -1,6 +1,6 @@
 # CLI specification — `majordomus`
 
-Behaviour of v0.1 as implemented and tested in `test/cases/`. Where implementation and this
+Behaviour as implemented and tested in `test/cases/`. Where implementation and this
 document disagree, the document is wrong and changes in the same commit as the fix.
 
 One executable, `bin/majordomus`, portable shell (bash 3.2 and BSD userland are the floor). Subcommands are dispatched to

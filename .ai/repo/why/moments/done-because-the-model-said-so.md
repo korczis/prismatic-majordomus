@@ -107,5 +107,5 @@ the exit code, duration and tree that were actually observed.
 ## What it does not do
 
 It runs the verification command you give it; it does not decide which tests matter. The
-regression-test requirement in the `debugging` profile is a path heuristic and says so in
-its message. It does not review code.
+regression-test requirement in the `debugging` profile checks only whether a test-shaped
+path was touched, not what the test proves. It does not review code.

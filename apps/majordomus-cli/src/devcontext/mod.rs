@@ -832,10 +832,8 @@ pub fn compile(ctx: &Context, input: CompileInput) -> Result<CompiledContext, Ca
         .map(intent_terms)
         .unwrap_or_default();
 
-    let graph =
-        crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, index).ok_or_else(|| {
-            CapabilityError::Internal("the composed graph is no longer derived".into())
-        })?;
+    // whole: a selection over a prefix would miss every object sorted past MAX_NODES
+    let graph = crate::graph::composed_complete(&ctx.registry, index);
 
     let request = select::Request {
         seeds: object_seeds.iter().cloned().collect(),
@@ -1084,10 +1082,7 @@ pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, Capabi
 /// assert_eq!(again, rules);
 /// ```
 pub fn policy(ctx: &Context) -> Result<CompilerPolicy, CapabilityError> {
-    let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, ctx.index.as_ref())
-        .ok_or_else(|| {
-            CapabilityError::Internal("the composed graph is no longer derived".into())
-        })?;
+    let graph = crate::graph::composed_complete(&ctx.registry, ctx.index.as_ref());
     let mut kinds: BTreeMap<Tier, Vec<String>> = BTreeMap::new();
     for kind in graph.node_kinds.keys() {
         kinds
