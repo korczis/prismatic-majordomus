@@ -717,6 +717,28 @@ fn the_cockpit_page_shows_the_tools_the_server_lists() {
     );
 }
 
+/// A page asked for an effect that is none of the three is not an empty page and not the
+/// whole one: the capability refuses the input, and the page says the capability did not
+/// answer, with the status of a failure.
+#[test]
+fn the_cockpit_page_says_so_when_the_capability_refuses_what_it_was_asked() {
+    let f = Fixture::new();
+    let served = serve(&f);
+    let (status, _, page) = served.request_with(
+        "GET",
+        "/cockpit/mcp?effect=nonsense",
+        None,
+        &[("Accept", "text/html")],
+    );
+    assert_eq!(status, 500, "{}", trim(&page));
+    assert!(
+        page.contains("The capability behind this page did not answer"),
+        "{}",
+        trim(&page)
+    );
+    assert!(tools_table(&page).is_none(), "a refused page lists no tool");
+}
+
 /// The table whose header row reads Tool, Capability, Title, Effect, in that order: its
 /// text from `<table` to `</table>`.
 fn tools_table(page: &str) -> Option<&str> {

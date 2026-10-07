@@ -399,22 +399,118 @@ pub fn standing(root: &Path, config: &str) -> McpClientStanding {
     }
 }
 
+/// How many tools carry each effect, in the order the effects are declared; an effect no tool
+/// has is left out rather than counted as zero.
+fn effect_counts(all: &[McpToolEntry]) -> Vec<McpEffectCount> {
+    [
+        Effect::Read,
+        Effect::ProcessState,
+        Effect::RepositoryMutation,
+    ]
+    .into_iter()
+    .map(|effect| McpEffectCount {
+        effect,
+        tools: all.iter().filter(|t| t.effect == effect).count(),
+    })
+    .filter(|count| count.tools > 0)
+    .collect()
+}
+
+/// What the client configurations of this repository leave to be done: one finding for
+/// each configuration that exists and does not start this repository's server, and one
+/// when no declared client has a configuration at all.
+fn client_findings(clients: &[McpClient], launcher_in_repository: bool) -> Vec<McpFinding> {
+    let command = if launcher_in_repository {
+        "bin/majordomus-mcp"
+    } else {
+        LAUNCHER
+    };
+    let mut findings: Vec<McpFinding> = clients
+        .iter()
+        .filter(|c| c.standing == McpClientStanding::Foreign)
+        .map(|c| McpFinding {
+            code: "mcp_client_config_foreign".into(),
+            message: format!(
+                "{} exists and does not name {LAUNCHER}, so {} does not start this repository's server from it",
+                c.config, c.title
+            ),
+            remedy: format!(
+                "add a `majordomus` server to {} whose command is {command}",
+                c.config
+            ),
+        })
+        .collect();
+    if !clients.is_empty()
+        && clients
+            .iter()
+            .all(|c| c.standing == McpClientStanding::Absent)
+    {
+        findings.push(McpFinding {
+            code: "mcp_no_client_configured".into(),
+            message: "no declared client has a configuration in this repository, so none of them starts its server".into(),
+            remedy: format!(
+                "write one of {} naming the command {LAUNCHER}; docs/MCP.md shows each form",
+                clients
+                    .iter()
+                    .map(|c| c.config.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        });
+    }
+    findings
+}
+
 fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection, CapabilityError> {
+    Ok(describe(ctx, input))
+}
+
+/// The projection as the capability answers it, for a caller inside this program that
+/// already holds the context: `mcp --inspect` prints the same value the tool, the resource
+/// and the route are asked for, and reading it cannot fail, because nothing in it is
+/// fetched — the registry, the peer board and the layer's index are in the context, and a
+/// client configuration that cannot be read is one that is absent.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::{describe, McpProjectionInput};
+/// use majordomus_cli::capability::{builtin, CapabilityRegistry, Context, Effect};
+/// use majordomus_cli::git::GitState;
+/// use majordomus_cli::index::{Index, RepositoryInfo, State};
+/// use std::sync::Arc;
+/// // an index with no objects and no declared provider: the registry alone answers
+/// let index = Index {
+///     repository: RepositoryInfo {
+///         root: "/tmp/doc".into(), layer_schema: "ai-repository/v1".into(),
+///         sections: Default::default(), git: GitState::Unavailable { reason: "doc".into() },
+///         discovery: "filesystem".into(), source_classes: vec![], kind_sources: vec![],
+///         scope_origin: majordomus_cli::scope::Origin::Distribution, scope_path: String::new(),
+///         observed: Default::default(),
+///     },
+///     objects: vec![], diagnostics: vec![], state: State::Ok, fingerprint: String::new(),
+///     scoped: Default::default(), distribution: None, providers: Default::default(),
+///     share: None,
+/// };
+/// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).with_index(&index).build().unwrap();
+/// let ctx = Context::new(Arc::new(index), Arc::new(registry));
+///
+/// let all = describe(&ctx, McpProjectionInput::default());
+/// assert_eq!(all.tools.len(), all.tool_count);
+/// assert_eq!(all.effects.iter().map(|e| e.tools).sum::<usize>(), all.tool_count);
+/// // no provider is declared, so there is no client and nothing to be done about one
+/// assert!(all.clients.is_empty() && all.findings.is_empty());
+///
+/// // one effect narrows the tools listed and nothing else
+/// let writers = describe(&ctx, McpProjectionInput { effect: Some(Effect::RepositoryMutation) });
+/// assert_eq!(writers.tool_count, all.tool_count);
+/// assert_eq!(writers.tools.len(), all.writers.len());
+/// assert!(writers.tools.iter().all(|t| all.writers.contains(&t.name)));
+/// ```
+pub fn describe(ctx: &Context, input: McpProjectionInput) -> McpProjection {
     use crate::mcp::protocol;
     use crate::peers::Transport;
 
     let all = tools(&ctx.registry);
-    let mut effects = Vec::new();
-    for effect in [
-        Effect::Read,
-        Effect::ProcessState,
-        Effect::RepositoryMutation,
-    ] {
-        let n = all.iter().filter(|t| t.effect == effect).count();
-        if n > 0 {
-            effects.push(McpEffectCount { effect, tools: n });
-        }
-    }
+    let effects = effect_counts(&all);
     let writers = all
         .iter()
         .filter(|t| t.effect == Effect::RepositoryMutation)
@@ -448,45 +544,7 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
         .collect();
     crate::order::canonical(&mut clients);
 
-    let mut findings = Vec::new();
-    for c in &clients {
-        if c.standing == McpClientStanding::Foreign {
-            findings.push(McpFinding {
-                code: "mcp_client_config_foreign".into(),
-                message: format!(
-                    "{} exists and does not name {LAUNCHER}, so {} does not start this repository's server from it",
-                    c.config, c.title
-                ),
-                remedy: format!(
-                    "add a `majordomus` server to {} whose command is {}",
-                    c.config,
-                    if launcher_in_repository {
-                        "bin/majordomus-mcp"
-                    } else {
-                        LAUNCHER
-                    }
-                ),
-            });
-        }
-    }
-    if !clients.is_empty()
-        && clients
-            .iter()
-            .all(|c| c.standing == McpClientStanding::Absent)
-    {
-        findings.push(McpFinding {
-            code: "mcp_no_client_configured".into(),
-            message: "no declared client has a configuration in this repository, so none of them starts its server".into(),
-            remedy: format!(
-                "write one of {} naming the command {LAUNCHER}; docs/MCP.md shows each form",
-                clients
-                    .iter()
-                    .map(|c| c.config.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-        });
-    }
+    let findings = client_findings(&clients, launcher_in_repository);
 
     let builtin = ctx
         .registry
@@ -500,7 +558,7 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
         })
         .count();
 
-    Ok(McpProjection {
+    McpProjection {
         server: McpServerIdentity {
             name: protocol::SERVER_NAME.into(),
             title: protocol::SERVER_TITLE.into(),
@@ -544,7 +602,7 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
         launcher_in_repository,
         clients,
         findings,
-    })
+    }
 }
 
 /// The `mcp` module: the one capability that describes the MCP projection, composed into
@@ -634,5 +692,108 @@ mod tests {
         assert_eq!(me.capability, "mcp.projection");
         assert_eq!(me.effect, Effect::Read);
         assert!(me.hints.read_only);
+    }
+
+    /// An effect is counted when a tool has it and left out when none does: a row saying
+    /// "0 tools" would be a row about nothing.
+    #[test]
+    fn an_effect_no_tool_has_is_not_counted() {
+        let all = tools(&registry());
+        let counted = effect_counts(&all);
+        assert_eq!(
+            counted.iter().map(|c| c.tools).sum::<usize>(),
+            all.len(),
+            "every tool has exactly one of the declared effects"
+        );
+        let reads: Vec<McpToolEntry> = all
+            .iter()
+            .filter(|t| t.effect == Effect::Read)
+            .cloned()
+            .collect();
+        let only = effect_counts(&reads);
+        assert_eq!(only.len(), 1);
+        assert_eq!(only[0].effect, Effect::Read);
+        assert_eq!(only[0].tools, reads.len());
+        assert!(effect_counts(&[]).is_empty());
+    }
+
+    /// The standing is what the file says: absent, there and naming something else, or
+    /// naming the launcher.
+    #[test]
+    fn a_configuration_stands_where_its_file_says() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        assert_eq!(standing(dir.path(), ".mcp.json"), McpClientStanding::Absent);
+        std::fs::write(
+            dir.path().join(".mcp.json"),
+            r#"{"mcpServers":{"other":{"command":"x"}}}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            standing(dir.path(), ".mcp.json"),
+            McpClientStanding::Foreign
+        );
+        std::fs::write(
+            dir.path().join(".mcp.json"),
+            format!(r#"{{"mcpServers":{{"majordomus":{{"command":"bin/{LAUNCHER}"}}}}}}"#),
+        )
+        .unwrap();
+        assert_eq!(standing(dir.path(), ".mcp.json"), McpClientStanding::Wired);
+    }
+
+    fn client(config: &str, standing: McpClientStanding) -> McpClient {
+        McpClient {
+            id: config.trim_start_matches('.').into(),
+            title: format!("the client of {config}"),
+            config: config.into(),
+            standing,
+        }
+    }
+
+    /// A configuration that exists and starts something else is named, with the command
+    /// that would start this repository's server: the checkout's own launcher when the
+    /// repository carries one, the installed one otherwise.
+    #[test]
+    fn a_foreign_configuration_is_a_finding_that_names_the_command() {
+        let clients = [
+            client(".mcp.json", McpClientStanding::Foreign),
+            client(".codex/config.toml", McpClientStanding::Wired),
+        ];
+        let here = client_findings(&clients, true);
+        assert_eq!(here.len(), 1);
+        assert_eq!(here[0].code, "mcp_client_config_foreign");
+        assert!(here[0].message.contains(".mcp.json"));
+        assert!(here[0].message.contains("the client of .mcp.json"));
+        assert!(here[0]
+            .remedy
+            .ends_with("whose command is bin/majordomus-mcp"));
+
+        let installed = client_findings(&clients, false);
+        assert_eq!(installed.len(), 1);
+        assert!(installed[0]
+            .remedy
+            .ends_with(&format!("whose command is {LAUNCHER}")));
+    }
+
+    /// No configuration anywhere is one finding that lists where one could be written; a
+    /// wired client, or no declared client at all, is none.
+    #[test]
+    fn no_configuration_at_all_is_one_finding_and_a_wired_one_is_none() {
+        let absent = [
+            client(".mcp.json", McpClientStanding::Absent),
+            client(".gemini/settings.json", McpClientStanding::Absent),
+        ];
+        let findings = client_findings(&absent, false);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].code, "mcp_no_client_configured");
+        assert!(findings[0]
+            .remedy
+            .contains(".mcp.json, .gemini/settings.json"));
+
+        let wired = [
+            client(".mcp.json", McpClientStanding::Wired),
+            client(".gemini/settings.json", McpClientStanding::Absent),
+        ];
+        assert!(client_findings(&wired, true).is_empty());
+        assert!(client_findings(&[], true).is_empty());
     }
 }
