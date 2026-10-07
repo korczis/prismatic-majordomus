@@ -535,9 +535,21 @@ mod tests {
             );
             if c.execution.effect == crate::capability::model::Effect::RepositoryMutation {
                 writers += 1;
-                assert_eq!(a["readOnlyHint"], false, "{} writes the repository", tool.name);
-                assert_eq!(a["destructiveHint"], true, "{} writes the repository", tool.name);
-                assert_eq!(a["idempotentHint"], false, "{} writes the repository", tool.name);
+                assert_eq!(
+                    a["readOnlyHint"], false,
+                    "{} writes the repository",
+                    tool.name
+                );
+                assert_eq!(
+                    a["destructiveHint"], true,
+                    "{} writes the repository",
+                    tool.name
+                );
+                assert_eq!(
+                    a["idempotentHint"], false,
+                    "{} writes the repository",
+                    tool.name
+                );
             }
             if a["readOnlyHint"] == true {
                 assert_eq!(c.execution.effect, crate::capability::model::Effect::Read);

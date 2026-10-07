@@ -462,7 +462,10 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
                     .ok()
                     .and_then(|v| v.as_str().map(String::from))
                     .unwrap_or_default();
-                w(&mut out, format!("effect      {word:<20} {} tool(s)", e.tools))?;
+                w(
+                    &mut out,
+                    format!("effect      {word:<20} {} tool(s)", e.tools),
+                )?;
             }
             for name in &p.writers {
                 w(&mut out, format!("writes      {name}"))?;

@@ -639,6 +639,15 @@ impl ExecutionPolicy {
 /// annotations, held once on the model so that no projection states its own.
 ///
 /// Classified by [`ExecutionPolicy::hints`], never declared.
+///
+/// ```
+/// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy, Hints};
+/// let read: Hints = ExecutionPolicy::classify(CapabilityKind::Query).hints();
+/// assert_eq!(
+///     serde_json::to_value(read).unwrap(),
+///     serde_json::json!({ "read_only": true, "destructive": false, "idempotent": true, "open_world": false })
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ExecutionHints")]
 pub struct Hints {

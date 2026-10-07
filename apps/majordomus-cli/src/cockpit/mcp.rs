@@ -145,11 +145,12 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
             .methods
             .iter()
             .map(|m| row(vec![cell(mono(m.clone())), cell(badge("ok", "served"))]))
-            .chain(
-                not_served
-                    .iter()
-                    .map(|w| row(vec![text_cell(w.clone()), cell(badge("info", "not served"))])),
-            )
+            .chain(not_served.iter().map(|w| {
+                row(vec![
+                    text_cell(w.clone()),
+                    cell(badge("info", "not served")),
+                ])
+            }))
             .collect(),
     );
     let overview = card_with(
@@ -182,7 +183,12 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
         let rows: Vec<El> = p
             .writers
             .iter()
-            .filter_map(|name| matrix.rows.iter().find(|r| r.mcp_tool.as_ref() == Some(name)))
+            .filter_map(|name| {
+                matrix
+                    .rows
+                    .iter()
+                    .find(|r| r.mcp_tool.as_ref() == Some(name))
+            })
             .map(|r| {
                 row(vec![
                     cell(mono(r.mcp_tool.clone().unwrap_or_default())),

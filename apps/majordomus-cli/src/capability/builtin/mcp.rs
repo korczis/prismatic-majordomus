@@ -87,6 +87,15 @@ impl BenchmarkCases for McpProjectionInput {
 }
 
 /// Who answers `initialize`, as it answers.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpServerIdentity;
+/// let s: McpServerIdentity = serde_json::from_value(serde_json::json!({
+///     "name": "majordomus", "title": "Majordomus", "version": "0.14.0",
+/// })).unwrap();
+/// // the version is the executable's: the protocol adapter has none of its own to drift
+/// assert_eq!((s.name.as_str(), s.version.as_str()), ("majordomus", "0.14.0"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpServerIdentity {
     /// The server name.
@@ -98,6 +107,15 @@ pub struct McpServerIdentity {
 }
 
 /// One way a client reaches the server.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpTransportEntry;
+/// let t: McpTransportEntry = serde_json::from_value(serde_json::json!({
+///     "id": "stdio", "reached_by": "majordomus mcp", "attached": 1,
+/// })).unwrap();
+/// // a count of sessions at the moment of asking, not a claim that a server is running
+/// assert_eq!((t.id.as_str(), t.attached), ("stdio", 1));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpTransportEntry {
     /// `stdio` or `http`.
@@ -109,6 +127,17 @@ pub struct McpTransportEntry {
 }
 
 /// What the server serves of the protocol, and what it does not.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpServing;
+/// let s: McpServing = serde_json::from_value(serde_json::json!({
+///     "methods": ["initialize", "tools/call"], "tools": true, "resources": true,
+///     "prompts": false, "notifications": false,
+/// })).unwrap();
+/// // what is not served is stated, so a client does not learn it from a refusal
+/// assert!(s.tools && !s.prompts && !s.notifications);
+/// assert!(!s.methods.iter().any(|m| m.starts_with("prompts/")));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpServing {
     /// The methods a request may name. Anything else is answered `-32601`.
@@ -126,6 +155,19 @@ pub struct McpServing {
 }
 
 /// One tool, as the registry projects it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpToolEntry;
+/// use majordomus_cli::capability::Effect;
+/// let t: McpToolEntry = serde_json::from_value(serde_json::json!({
+///     "name": "majordomus_plan_transition", "capability": "plan.transition",
+///     "module": "plan", "title": "Move an issue", "effect": "repository_mutation",
+///     "hints": { "read_only": false, "destructive": true, "idempotent": false, "open_world": false },
+/// })).unwrap();
+/// assert_eq!(t.effect, Effect::RepositoryMutation);
+/// // the hints are the effect's classification, carried beside it rather than restated
+/// assert!(t.hints.destructive && !t.hints.read_only && !t.hints.idempotent);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpToolEntry {
     /// The name a client calls.
@@ -143,6 +185,14 @@ pub struct McpToolEntry {
 }
 
 /// How many tools have one effect.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpEffectCount;
+/// use majordomus_cli::capability::Effect;
+/// let c: McpEffectCount =
+///     serde_json::from_value(serde_json::json!({ "effect": "read", "tools": 149 })).unwrap();
+/// assert_eq!((c.effect, c.tools), (Effect::Read, 149));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpEffectCount {
     /// The effect.
@@ -152,6 +202,15 @@ pub struct McpEffectCount {
 }
 
 /// The resources a client can read.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpResourceSummary;
+/// let r: McpResourceSummary = serde_json::from_value(serde_json::json!({
+///     "builtin": 54, "objects": 1742, "template": "majordomus://<kind>/<identity>",
+/// })).unwrap();
+/// // the two counts together are the length of `resources/list`
+/// assert_eq!(r.builtin + r.objects, 1796);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpResourceSummary {
     /// Resources a builtin capability answers.
@@ -163,6 +222,14 @@ pub struct McpResourceSummary {
 }
 
 /// Where a client's project-scoped configuration stands in this repository.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpClientStanding;
+/// // the words a caller reads, as they are written on every surface
+/// assert_eq!(serde_json::to_value(McpClientStanding::Wired).unwrap(), "wired");
+/// assert_eq!(serde_json::to_value(McpClientStanding::Foreign).unwrap(), "foreign");
+/// assert_eq!(serde_json::to_value(McpClientStanding::Absent).unwrap(), "absent");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum McpClientStanding {
@@ -176,6 +243,18 @@ pub enum McpClientStanding {
 }
 
 /// One client the distribution declares a project-scoped configuration for.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::{McpClient, McpClientStanding};
+/// let mut clients: Vec<McpClient> = serde_json::from_value(serde_json::json!([
+///     { "id": "gemini", "title": "Gemini CLI", "config": ".gemini/settings.json", "standing": "absent" },
+///     { "id": "claude-code", "title": "Claude Code", "config": ".mcp.json", "standing": "wired" },
+/// ])).unwrap();
+/// // ordered by the provider's id, whatever order the distribution declared them in
+/// majordomus_cli::order::canonical(&mut clients);
+/// assert_eq!(clients[0].id, "claude-code");
+/// assert_eq!(clients[0].standing, McpClientStanding::Wired);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpClient {
     /// The provider id.
@@ -197,6 +276,17 @@ impl crate::order::Ordered for McpClient {
 }
 
 /// Something about the projection a person should act on.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpFinding;
+/// let f: McpFinding = serde_json::from_value(serde_json::json!({
+///     "code": "mcp_client_config_foreign",
+///     "message": ".mcp.json exists and does not name majordomus-mcp",
+///     "remedy": "add a `majordomus` server to .mcp.json whose command is majordomus-mcp",
+/// })).unwrap();
+/// // a finding always says what to do, not only what is wrong
+/// assert!(!f.code.is_empty() && !f.remedy.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpFinding {
     /// The stable code.
@@ -208,6 +298,27 @@ pub struct McpFinding {
 }
 
 /// The MCP projection of this registry in this repository.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp::McpProjection;
+/// let p: McpProjection = serde_json::from_value(serde_json::json!({
+///     "server": { "name": "majordomus", "title": "Majordomus", "version": "0.14.0" },
+///     "protocol_versions": ["2025-06-18"],
+///     "transports": [{ "id": "stdio", "reached_by": "majordomus mcp", "attached": 0 }],
+///     "serving": { "methods": ["initialize"], "tools": true, "resources": true, "prompts": false, "notifications": false },
+///     "tool_count": 2,
+///     "tools": [],
+///     "effects": [{ "effect": "read", "tools": 1 }, { "effect": "repository_mutation", "tools": 1 }],
+///     "writers": ["majordomus_plan_transition"],
+///     "resources": { "builtin": 1, "objects": 0, "template": "majordomus://<kind>/<identity>" },
+///     "launcher_in_repository": false,
+///     "clients": [],
+///     "findings": [],
+/// })).unwrap();
+/// // the count is of every tool, whatever the `effect` filter narrowed `tools` to
+/// assert_eq!(p.tool_count, p.effects.iter().map(|e| e.tools).sum::<usize>());
+/// assert!(p.tools.is_empty() && p.writers.len() == 1);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpProjection {
     /// Who answers `initialize`.
@@ -358,7 +469,11 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
             });
         }
     }
-    if !clients.is_empty() && clients.iter().all(|c| c.standing == McpClientStanding::Absent) {
+    if !clients.is_empty()
+        && clients
+            .iter()
+            .all(|c| c.standing == McpClientStanding::Absent)
+    {
         findings.push(McpFinding {
             code: "mcp_no_client_configured".into(),
             message: "no declared client has a configuration in this repository, so none of them starts its server".into(),
@@ -377,7 +492,12 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
         .registry
         .iter()
         .filter(|c| matches!(c.provenance, Provenance::Builtin { .. }))
-        .filter(|c| c.exposure.mcp.as_ref().is_some_and(|m| m.resource.is_some()))
+        .filter(|c| {
+            c.exposure
+                .mcp
+                .as_ref()
+                .is_some_and(|m| m.resource.is_some())
+        })
         .count();
 
     Ok(McpProjection {
@@ -427,7 +547,18 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
     })
 }
 
-/// The module.
+/// The `mcp` module: the one capability that describes the MCP projection, composed into
+/// the application like every other module, so that describing the projection is itself a
+/// tool, a resource and a route of it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::mcp;
+/// let m = mcp::module();
+/// assert_eq!(m.id.as_str(), "mcp");
+/// let c = &m.capabilities[0].capability;
+/// assert_eq!(c.exposure.mcp.as_ref().unwrap().tool.as_deref(), Some("majordomus_mcp"));
+/// assert_eq!(c.exposure.mcp.as_ref().unwrap().resource.as_ref().unwrap().uri, mcp::MCP_URI);
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "mcp",

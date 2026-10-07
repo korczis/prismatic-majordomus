@@ -92,8 +92,8 @@ fn tool_shaped(text: &str) -> BTreeSet<String> {
         while end < bytes.len() && word(bytes[end]) {
             end += 1;
         }
-        let continues = start > 0
-            && (bytes[start - 1].is_ascii_alphanumeric() || bytes[start - 1] == b'_');
+        let continues =
+            start > 0 && (bytes[start - 1].is_ascii_alphanumeric() || bytes[start - 1] == b'_');
         // `majordomus_*` is a way of writing "every tool", not a tool
         if !continues && end > start + PREFIX.len() {
             found.insert(text[start..end].trim_end_matches('_').to_string());

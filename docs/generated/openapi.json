@@ -29715,7 +29715,7 @@
           "idempotent",
           "open_world"
         ],
-        "description": "What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared."
+        "description": "What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared.\n\n```\nuse majordomus_cli::capability::{CapabilityKind, ExecutionPolicy, Hints};\nlet read: Hints = ExecutionPolicy::classify(CapabilityKind::Query).hints();\nassert_eq!(\n    serde_json::to_value(read).unwrap(),\n    serde_json::json!({ \"read_only\": true, \"destructive\": false, \"idempotent\": true, \"open_world\": false })\n);\n```"
       },
       "ExecutionId": {
         "type": "string",
@@ -35921,7 +35921,7 @@
           "config",
           "standing"
         ],
-        "description": "One client the distribution declares a project-scoped configuration for."
+        "description": "One client the distribution declares a project-scoped configuration for.\n\n```\nuse majordomus_cli::capability::builtin::mcp::{McpClient, McpClientStanding};\nlet mut clients: Vec<McpClient> = serde_json::from_value(serde_json::json!([\n    { \"id\": \"gemini\", \"title\": \"Gemini CLI\", \"config\": \".gemini/settings.json\", \"standing\": \"absent\" },\n    { \"id\": \"claude-code\", \"title\": \"Claude Code\", \"config\": \".mcp.json\", \"standing\": \"wired\" },\n])).unwrap();\n// ordered by the provider's id, whatever order the distribution declared them in\nmajordomus_cli::order::canonical(&mut clients);\nassert_eq!(clients[0].id, \"claude-code\");\nassert_eq!(clients[0].standing, McpClientStanding::Wired);\n```"
       },
       "McpClientStanding": {
         "oneOf": [
@@ -35941,7 +35941,7 @@
             "description": "The file does not exist: this client starts no server here until it is written."
           }
         ],
-        "description": "Where a client's project-scoped configuration stands in this repository."
+        "description": "Where a client's project-scoped configuration stands in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpClientStanding;\n// the words a caller reads, as they are written on every surface\nassert_eq!(serde_json::to_value(McpClientStanding::Wired).unwrap(), \"wired\");\nassert_eq!(serde_json::to_value(McpClientStanding::Foreign).unwrap(), \"foreign\");\nassert_eq!(serde_json::to_value(McpClientStanding::Absent).unwrap(), \"absent\");\n```"
       },
       "McpEffectCount": {
         "type": "object",
@@ -35961,7 +35961,7 @@
           "effect",
           "tools"
         ],
-        "description": "How many tools have one effect."
+        "description": "How many tools have one effect.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpEffectCount;\nuse majordomus_cli::capability::Effect;\nlet c: McpEffectCount =\n    serde_json::from_value(serde_json::json!({ \"effect\": \"read\", \"tools\": 149 })).unwrap();\nassert_eq!((c.effect, c.tools), (Effect::Read, 149));\n```"
       },
       "McpExposure": {
         "type": "object",
@@ -36008,7 +36008,7 @@
           "message",
           "remedy"
         ],
-        "description": "Something about the projection a person should act on."
+        "description": "Something about the projection a person should act on.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpFinding;\nlet f: McpFinding = serde_json::from_value(serde_json::json!({\n    \"code\": \"mcp_client_config_foreign\",\n    \"message\": \".mcp.json exists and does not name majordomus-mcp\",\n    \"remedy\": \"add a `majordomus` server to .mcp.json whose command is majordomus-mcp\",\n})).unwrap();\n// a finding always says what to do, not only what is wrong\nassert!(!f.code.is_empty() && !f.remedy.is_empty());\n```"
       },
       "McpProjection": {
         "type": "object",
@@ -36099,7 +36099,7 @@
           "clients",
           "findings"
         ],
-        "description": "The MCP projection of this registry in this repository."
+        "description": "The MCP projection of this registry in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjection;\nlet p: McpProjection = serde_json::from_value(serde_json::json!({\n    \"server\": { \"name\": \"majordomus\", \"title\": \"Majordomus\", \"version\": \"0.14.0\" },\n    \"protocol_versions\": [\"2025-06-18\"],\n    \"transports\": [{ \"id\": \"stdio\", \"reached_by\": \"majordomus mcp\", \"attached\": 0 }],\n    \"serving\": { \"methods\": [\"initialize\"], \"tools\": true, \"resources\": true, \"prompts\": false, \"notifications\": false },\n    \"tool_count\": 2,\n    \"tools\": [],\n    \"effects\": [{ \"effect\": \"read\", \"tools\": 1 }, { \"effect\": \"repository_mutation\", \"tools\": 1 }],\n    \"writers\": [\"majordomus_plan_transition\"],\n    \"resources\": { \"builtin\": 1, \"objects\": 0, \"template\": \"majordomus://<kind>/<identity>\" },\n    \"launcher_in_repository\": false,\n    \"clients\": [],\n    \"findings\": [],\n})).unwrap();\n// the count is of every tool, whatever the `effect` filter narrowed `tools` to\nassert_eq!(p.tool_count, p.effects.iter().map(|e| e.tools).sum::<usize>());\nassert!(p.tools.is_empty() && p.writers.len() == 1);\n```"
       },
       "McpResource": {
         "type": "object",
@@ -36144,7 +36144,7 @@
           "objects",
           "template"
         ],
-        "description": "The resources a client can read."
+        "description": "The resources a client can read.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpResourceSummary;\nlet r: McpResourceSummary = serde_json::from_value(serde_json::json!({\n    \"builtin\": 54, \"objects\": 1742, \"template\": \"majordomus://<kind>/<identity>\",\n})).unwrap();\n// the two counts together are the length of `resources/list`\nassert_eq!(r.builtin + r.objects, 1796);\n```"
       },
       "McpServerIdentity": {
         "type": "object",
@@ -36167,7 +36167,7 @@
           "title",
           "version"
         ],
-        "description": "Who answers `initialize`, as it answers."
+        "description": "Who answers `initialize`, as it answers.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServerIdentity;\nlet s: McpServerIdentity = serde_json::from_value(serde_json::json!({\n    \"name\": \"majordomus\", \"title\": \"Majordomus\", \"version\": \"0.14.0\",\n})).unwrap();\n// the version is the executable's: the protocol adapter has none of its own to drift\nassert_eq!((s.name.as_str(), s.version.as_str()), (\"majordomus\", \"0.14.0\"));\n```"
       },
       "McpServing": {
         "type": "object",
@@ -36203,7 +36203,7 @@
           "prompts",
           "notifications"
         ],
-        "description": "What the server serves of the protocol, and what it does not."
+        "description": "What the server serves of the protocol, and what it does not.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServing;\nlet s: McpServing = serde_json::from_value(serde_json::json!({\n    \"methods\": [\"initialize\", \"tools/call\"], \"tools\": true, \"resources\": true,\n    \"prompts\": false, \"notifications\": false,\n})).unwrap();\n// what is not served is stated, so a client does not learn it from a refusal\nassert!(s.tools && !s.prompts && !s.notifications);\nassert!(!s.methods.iter().any(|m| m.starts_with(\"prompts/\")));\n```"
       },
       "McpToolEntry": {
         "type": "object",
@@ -36241,7 +36241,7 @@
           "effect",
           "hints"
         ],
-        "description": "One tool, as the registry projects it."
+        "description": "One tool, as the registry projects it.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpToolEntry;\nuse majordomus_cli::capability::Effect;\nlet t: McpToolEntry = serde_json::from_value(serde_json::json!({\n    \"name\": \"majordomus_plan_transition\", \"capability\": \"plan.transition\",\n    \"module\": \"plan\", \"title\": \"Move an issue\", \"effect\": \"repository_mutation\",\n    \"hints\": { \"read_only\": false, \"destructive\": true, \"idempotent\": false, \"open_world\": false },\n})).unwrap();\nassert_eq!(t.effect, Effect::RepositoryMutation);\n// the hints are the effect's classification, carried beside it rather than restated\nassert!(t.hints.destructive && !t.hints.read_only && !t.hints.idempotent);\n```"
       },
       "McpTransportEntry": {
         "type": "object",
@@ -36266,7 +36266,7 @@
           "reached_by",
           "attached"
         ],
-        "description": "One way a client reaches the server."
+        "description": "One way a client reaches the server.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpTransportEntry;\nlet t: McpTransportEntry = serde_json::from_value(serde_json::json!({\n    \"id\": \"stdio\", \"reached_by\": \"majordomus mcp\", \"attached\": 1,\n})).unwrap();\n// a count of sessions at the moment of asking, not a claim that a server is running\nassert_eq!((t.id.as_str(), t.attached), (\"stdio\", 1));\n```"
       },
       "Measured": {
         "type": "object",

@@ -200,10 +200,26 @@ fn handshake_discovery_and_a_real_round_trip() {
             .get(id)
             .unwrap_or_else(|| panic!("{id} is announced and is not a builtin"));
         let a = &t["annotations"];
-        assert_eq!(a["readOnlyHint"], expected.read_only, "{} ({id})", t["name"]);
-        assert_eq!(a["destructiveHint"], expected.destructive, "{} ({id})", t["name"]);
-        assert_eq!(a["idempotentHint"], expected.idempotent, "{} ({id})", t["name"]);
-        assert_eq!(a["openWorldHint"], expected.open_world, "{} ({id})", t["name"]);
+        assert_eq!(
+            a["readOnlyHint"], expected.read_only,
+            "{} ({id})",
+            t["name"]
+        );
+        assert_eq!(
+            a["destructiveHint"], expected.destructive,
+            "{} ({id})",
+            t["name"]
+        );
+        assert_eq!(
+            a["idempotentHint"], expected.idempotent,
+            "{} ({id})",
+            t["name"]
+        );
+        assert_eq!(
+            a["openWorldHint"], expected.open_world,
+            "{} ({id})",
+            t["name"]
+        );
     }
     assert!(
         hints.values().any(|h| !h.read_only),
