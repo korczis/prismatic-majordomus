@@ -621,7 +621,7 @@ re-aims. [`CONTINUITY.md`](@/docs/continuity.md) has the model and the whole pat
 keep true by hand:
 
 ```bash
-majordomus mcp --inspect | grep -E '^(server|protocol|effect|writes|client) '
+majordomus mcp --inspect    # its lines beginning server, protocol, effect, writes and client are this answer
 curl -s http://127.0.0.1:8741/api/v1/mcp | jq '{server, protocol_versions, effects, writers, clients}'
 curl -s 'http://127.0.0.1:8741/api/v1/mcp?effect=repository_mutation' | jq '.tools[].name'
 ```

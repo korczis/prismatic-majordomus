@@ -103,15 +103,15 @@ frame 5 | jq -e '.result.structuredContent as $p | ($p.tools | length) > 0 and (
 
 # the same answer over HTTP, and on the Cockpit's page
 serve_up "$S/serve.out" "$S/serve.err" || exit 1
-curl -fsS "$U/api/v1/mcp" > "$S/http.json" || { echo "    GET /api/v1/mcp failed"; exit 1; }
+curl -fsS --max-time 30 "$U/api/v1/mcp" > "$S/http.json" || { echo "    GET /api/v1/mcp failed"; exit 1; }
 jq -c '[.tools[] | {name, effect}] | sort_by(.name)' "$S/http.json" > "$S/http"
 cmp -s "$S/described" "$S/http" || { echo "    HTTP describes other tools than MCP does"; exit 1; }
 # the word HTTP answers for a refusal is the one MCP carried
-code="$(curl -s -o "$S/miss.json" -w '%{http_code}' "$U/api/v1/capability?id=no.such.capability")"
+code="$(curl -s --max-time 30 -o "$S/miss.json" -w '%{http_code}' "$U/api/v1/capability?id=no.such.capability")"
 [ "$code" = 404 ] || { echo "    an unknown capability answered $code over HTTP"; exit 1; }
 jq -e '.error.code == "not_found"' "$S/miss.json" >/dev/null || { echo "    HTTP names another category:"; cat "$S/miss.json"; exit 1; }
 
-code="$(curl -s -o "$S/page.html" -w '%{http_code}' "$U/cockpit/mcp")"
+code="$(curl -s --max-time 30 -o "$S/page.html" -w '%{http_code}' "$U/cockpit/mcp")"
 [ "$code" = 200 ] || { echo "    /cockpit/mcp answered $code"; exit 1; }
 # every tool the registry projects is on the page, and the page says where its numbers came from
 jq -r '.[].name' "$S/described" > "$S/names"
@@ -124,11 +124,11 @@ grep -q 'data-capability="mcp.projection"' "$S/page.html" || { echo "    the pag
 grep -qF "writes the repository" "$S/page.html" || { echo "    the page does not say which tools write"; exit 1; }
 grep -qF 'majordomus-mcp' "$S/page.html" || { echo "    the page shows no client configuration"; exit 1; }
 # narrowed, it shows the writers and not a read
-code="$(curl -s -o "$S/writers.html" -w '%{http_code}' "$U/cockpit/mcp?effect=repository_mutation")"
+code="$(curl -s --max-time 30 -o "$S/writers.html" -w '%{http_code}' "$U/cockpit/mcp?effect=repository_mutation")"
 [ "$code" = 200 ] || { echo "    the narrowed page answered $code"; exit 1; }
 grep -qF '>majordomus_plan_transition<' "$S/writers.html" || { echo "    the narrowed page lost the writer"; exit 1; }
 # the area is in the navigation of every page, so a reader and the route crawl both reach it
-curl -fsS "$U/cockpit" | grep -q 'href="/cockpit/mcp"' || { echo "    the Cockpit's navigation has no MCP entry"; exit 1; }
+curl -fsS --max-time 30 "$U/cockpit" | grep -q 'href="/cockpit/mcp"' || { echo "    the Cockpit's navigation has no MCP entry"; exit 1; }
 serve_down
 
 # --- 5. describing a projection changes nothing

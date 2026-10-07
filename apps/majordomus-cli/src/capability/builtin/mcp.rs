@@ -188,6 +188,14 @@ pub struct McpClient {
     pub standing: McpClientStanding,
 }
 
+/// A client is the provider it belongs to, and is ordered by that id: the order every other
+/// listing of providers reads in, whatever order the distribution declared them in.
+impl crate::order::Ordered for McpClient {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// Something about the projection a person should act on.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct McpFinding {
@@ -327,7 +335,7 @@ fn projection(ctx: &Context, input: McpProjectionInput) -> Result<McpProjection,
             })
         })
         .collect();
-    clients.sort_by(|a, b| crate::order::natural_cmp(&a.id, &b.id));
+    crate::order::canonical(&mut clients);
 
     let mut findings = Vec::new();
     for c in &clients {
