@@ -114,9 +114,25 @@ templates read the dataset and name nothing:
 | Route | Template | What it renders |
 |---|---|---|
 | `/` | `site/templates/index.html` | the chapters (features that declare themselves featured, in weight order), the interfaces, the matrix, the graph, the providers, the kinds and the doctrine |
-| `/features/` | `features-section.html` | every non-draft feature, the interfaces, the graph, the providers |
-| `/features/<id>/` | `feature.html` | the feature's own prose, then everything derived from its references |
+| `/features/` | `features-section.html` | every non-draft feature as a card, grouped by the domain it names in the domains' weight order, with any feature no shown domain holds listed apart; the interfaces, the graph, the providers |
+| `/features/<id>/` | `feature.html` | a breadcrumb through its domain, its promise, its own prose, then everything derived from its references: why it exists, how it works, where it sits, its interfaces, its evidence, how to use it, where the page came from and the features related to it |
 | `/features/matrix/` | `features-matrix.html` | features against interfaces, and modules, commands and kinds against the features that name them, and how much of each feature is proven |
+
+A feature in a list is drawn by one partial, `site/templates/partials/feature-card.html`:
+its name linked to its page, its status, its one-sentence headline, the interfaces it reaches,
+how many claims it names and how many of those name the test that settles them, and how many
+use cases show it in use. It takes a feature of the dataset or a domain's member alike; a
+count the data does not carry is left out, and a zero it does carry is said in words. A
+feature page's related features come from relationships the dataset holds — the features it
+names and that name it, its domain's other members, and the features that share a use case
+or a claim with it — each card saying which. `scripts/site-check` (check `features`) holds
+the index and the pages to the dataset: every public feature is one card on `/features/`,
+in its domain's group; every card on the site names a public feature and links its page; a
+feature with a domain carries it in its breadcrumb; and the templates that draw features
+select none by hand and print no number of their own.
+`test/cases/810_a_feature_is_explored_under_its_domain.sh` adds one feature file to a copy of
+this repository, builds the site the way the build does, finds the feature's card under its
+domain and its page under the domain's trail, then removes the file and finds nothing left.
 
 `site/data/marketing.toml` is the one hand-written file: positioning sentences and button
 labels, held to a line budget, carrying no number and no capability claim. Routes that

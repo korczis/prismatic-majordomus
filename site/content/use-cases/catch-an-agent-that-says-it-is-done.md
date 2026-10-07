@@ -1,6 +1,6 @@
 +++
 title = "Catch an agent that says it is done when it is not"
-description = "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes."
+description = "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository's own verification passes."
 weight = 2
 [extra]
 id = "catch-an-agent-that-says-it-is-done"

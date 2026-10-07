@@ -5,12 +5,20 @@
 {% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
-{#- Every feature of the product, from data/registry/product.json. This template names no
-    feature, no module, no command and no interface: the cards are the features the layer
-    declares, the marks are what the executable derived from each one's references, and the
-    filters are built from the dataset's own areas and surfaces (ADR 23). -#}
+{#- Every feature of the product, from data/registry/product.json, grouped by the domain it
+    names (ADR 0104). This template names no feature, no domain, no module, no command and no
+    interface: the groups are the domains the layer declares, in the weight order the
+    executable gives them, and only those a stable feature names; each group's cards are its
+    members, drawn by the one feature card (partials/feature-card.html). A public feature no
+    shown domain holds is listed after them under its own heading, so a feature is never left
+    out without the page saying so. -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set public = [f for f in model.features if f.status != "draft"] -%}
+{%- set shown = [d for d in model.domains if d.status == "stable" and d.features | length > 0] -%}
+{#- a domain's members are the stable features that name it (ADR 0104), so the rest of the
+    public features are the ones that are not stable or name no shown domain -#}
+{%- set shown_ids = [d.id for d in shown] -%}
+{%- set unfiled = [f for f in public if f.status != "stable" or f.domain not in shown_ids] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -18,16 +26,61 @@
   <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1>
   <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
   <nav aria-label="Ways into the product" class="mt-6 flex flex-wrap gap-2 text-sm">
-    <a href="#features" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse {{ public | length }} features</a>
-    <a href="{{ get_url(path='/features/matrix/', trailing_slash=true) }}" class="rounded-base border border-brand bg-brand-softer px-3 py-1.5 font-medium text-fg-brand-strong hover:bg-neutral-secondary-medium">Every feature against every interface</a>
+    <a href="#features" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse {{ public | length }} features by domain</a>
+    <a href="{{ get_url(path='/features/matrix/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Every feature against every interface</a>
     <a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">The problems these answer</a>
   </nav>
 </div></div>
 
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
+  {#- ------------------------------------------------------- the features, by domain -#}
+  <section id="features" class="scroll-mt-24" aria-labelledby="features-h">
+    <h2 id="features-h" class="text-2xl font-bold tracking-tight text-heading">The features, by domain</h2>
+    <p class="mt-2 max-w-3xl text-body">Each feature names the one domain it belongs to in its own file, and each card is that file. The words are editorial; every mark, count and link on a card is derived from what the file names.</p>
+    {%- if shown | length > 1 or unfiled | length > 0 %}
+    <nav aria-label="Domains on this page" class="mt-5">
+      <ul class="flex flex-wrap gap-2 text-sm">
+        {%- for d in shown %}
+        <li><a href="#in-{{ d.id }}" class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">{{ d.title }}<span class="font-mono text-xs text-body-subtle">{{ d.features | length }}</span></a></li>
+        {%- endfor %}
+        {%- if unfiled | length > 0 %}
+        <li><a href="#in-unassigned" class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Unassigned<span class="font-mono text-xs text-body-subtle">{{ unfiled | length }}</span></a></li>
+        {%- endif %}
+      </ul>
+    </nav>
+    {%- endif %}
+
+    {%- for d in shown %}
+    <section id="in-{{ d.id }}" class="mt-10 scroll-mt-24 border-t border-default pt-6" aria-labelledby="in-{{ d.id }}-h" data-features-domain="{{ d.id }}">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 id="in-{{ d.id }}-h" class="text-xl font-bold tracking-tight text-heading">{{ d.title }}</h3>
+        <a href="{{ base }}{{ d.route }}" class="text-sm font-medium text-fg-brand hover:underline">The {{ d.title | lower }} domain &rarr;</a>
+      </div>
+      <p class="mt-2 max-w-3xl text-sm leading-relaxed text-body">{{ d.headline }}</p>
+      <ul class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3" aria-label="Features filed under {{ d.title }}">
+        {%- for m in d.features %}
+        <li class="min-w-0">{% set f = m %}{% set surfaces = model.surfaces %}{% set card_level = "h4" %}{% include "partials/feature-card.html" %}</li>
+        {%- endfor %}
+      </ul>
+    </section>
+    {%- endfor %}
+
+    {%- if unfiled | length > 0 %}
+    <section id="in-unassigned" class="mt-10 scroll-mt-24 border-t border-default pt-6" aria-labelledby="in-unassigned-h" data-features-domain="">
+      <h3 id="in-unassigned-h" class="text-xl font-bold tracking-tight text-heading">Unassigned</h3>
+      <p class="mt-2 max-w-3xl text-sm leading-relaxed text-body">Public features no domain shown above holds: a feature that names no domain, or one whose domain is not shown because it is not stable. <code class="font-mono text-xs">majordomus product validate</code> says which.</p>
+      <ul class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3" aria-label="Features filed under no shown domain">
+        {%- for x in unfiled %}
+        <li class="min-w-0">{% set f = x %}{% set surfaces = model.surfaces %}{% set card_level = "h4" %}{% include "partials/feature-card.html" %}</li>
+        {%- endfor %}
+      </ul>
+    </section>
+    {%- endif %}
+  </section>
+
   {#- ------------------------------------------------------------------ interfaces -#}
-  <section aria-labelledby="interfaces">
+  <section class="mt-14" aria-labelledby="interfaces">
     <h2 id="interfaces" class="text-2xl font-bold tracking-tight text-heading">One registry, every interface</h2>
     <p class="mt-2 max-w-3xl text-body">A feature is on an interface because a capability module, a shell command or an object kind it names is projected there. The number under each is counted from that, at build time.</p>
     <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -40,30 +93,6 @@
       </a></li>
       {%- endfor %}
     </ul>
-  </section>
-
-  {#- ------------------------------------------------------------------- the cards -#}
-  <section id="features" class="mt-14 scroll-mt-24" aria-labelledby="features-h">
-    <h2 id="features-h" class="text-2xl font-bold tracking-tight text-heading">What the product is</h2>
-    <p class="mt-2 max-w-3xl text-body">One card per feature file under the layer. The words are editorial; every mark, count and link beside them is derived from what that file names.</p>
-    <ol class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {%- for f in public %}
-      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5">
-        <p class="flex flex-wrap items-baseline gap-2">
-          <a href="{{ base }}{{ f.route }}" class="text-lg font-semibold tracking-tight text-heading hover:text-fg-brand hover:underline">{{ f.title }}</a>
-        </p>
-        <p class="mt-2 text-sm leading-relaxed text-body">{{ f.summary }}</p>
-        <div class="mt-4">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
-        <dl class="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-body-subtle">
-          {%- if f.counts.capabilities > 0 %}<div class="flex gap-1"><dt>capabilities</dt><dd class="text-heading">{{ f.counts.capabilities }}</dd></div>{% endif -%}
-          {%- if f.counts.objects > 0 %}<div class="flex gap-1"><dt>objects</dt><dd class="text-heading">{{ f.counts.objects }}</dd></div>{% endif -%}
-          {%- if f.counts.rules > 0 %}<div class="flex gap-1"><dt>rules</dt><dd class="text-heading">{{ f.counts.rules }}</dd></div>{% endif -%}
-          {%- if f.counts.moments > 0 %}<div class="flex gap-1"><dt>moments</dt><dd class="text-heading">{{ f.counts.moments }}</dd></div>{% endif -%}
-        </dl>
-        <a href="{{ base }}{{ f.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">What it is, and what it does not do →</a>
-      </li>
-      {%- endfor %}
-    </ol>
   </section>
 
   {#- ------------------------------------------------------------------- the graph -#}

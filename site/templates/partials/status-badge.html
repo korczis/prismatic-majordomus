@@ -1,0 +1,36 @@
+{#- One status, shown as a word with a glyph: the site's single status primitive for a claim,
+    its recorded evidence and a feature.
+
+    The caller sets, before the include:
+      status        the state word (unused when status_kind is "proof", which reads its own)
+      status_kind   "claim"   a status docs/CLAIMS.yaml declares for a claim (guaranteed,
+                              advisory, planned, rejected): what the file says, never a verdict
+                    "proof"   what `majordomus evidence show` derived for one claim from the
+                              recorded runs, read here from data/registry/product.json
+                              `evidence`; needs status_claim
+                    "feature" a feature's status, as feature/v1 declares it
+                    ""        any other filed state word (a CI verdict, a lifecycle word)
+      status_claim  the claim id, for status_kind "proof"
+      status_label  optional words to show instead of the word itself
+
+    The colour is the status the word is filed under in share/design/tokens.yaml, through the
+    generated status sheet; the glyph is chosen by the same filing, so this file names no
+    state word and a word filed tomorrow is drawn tomorrow. Neither colour nor glyph carries
+    the meaning alone: the word is always printed, and a screen reader hears which axis it is
+    on. A declared status is filed neutral, so it is never drawn as a pass; only a supported
+    verdict is (scripts/ci/homepage-check, check `evidence`). The `data-status-kind` and
+    `data-status` attributes are what scripts/site-check reads to hold every rendered badge
+    to the vocabulary of its kind. -#}
+{%- set sb_design = load_data(path="data/registry/design.json") -%}
+{%- set sb_kind = status_kind | default(value="") -%}
+{%- set sb_proof = sb_kind == "proof" -%}
+{%- set sb_model = load_data(path="data/registry/product.json") -%}{%- set sb_ev = sb_model.evidence -%}
+{%- set sb_claim = (status_claim | default(value="")) if sb_proof else "" -%}
+{%- set sb_known = sb_proof and sb_ev.available and sb_claim in sb_ev.claims -%}
+{%- set sb_label = status_label | default(value="") -%}
+{%- set sb_word = sb_ev.claims[sb_claim].state if sb_known else ("unknown" if sb_proof else status | lower) -%}
+{%- set sb_text = sb_ev.claims[sb_claim].label if sb_known else ("unknown" if sb_proof else (sb_label if sb_label else status)) -%}
+{%- set sb_role = sb_design.states[sb_word] if sb_word in sb_design.states else "neutral" -%}
+{%- set sb_glyphs = {"ok": "✓", "warn": "!", "bad": "✕", "info": "•", "neutral": "○"} -%}
+{%- set sb_axes = {"claim": "declared status", "proof": "recorded evidence", "feature": "feature status"} -%}
+<span class="mj-badge mj-badge--{{ sb_word }} relative" data-status="{{ sb_word }}"{% if sb_kind %} data-status-kind="{{ sb_kind }}"{% endif %}{% if sb_kind == "proof" %} data-claim="{{ sb_claim }}"{% endif %}><span aria-hidden="true">{{ sb_glyphs[sb_role] }}</span>{% if sb_kind in sb_axes %}<span class="sr-only">{{ sb_axes[sb_kind] }}: </span>{% endif %}{{ sb_text }}</span>

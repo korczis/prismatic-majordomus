@@ -228,6 +228,9 @@ pub struct Builder {
     nodes: BTreeMap<String, Node>,
     edges: BTreeSet<Edge>,
     truncated: bool,
+    /// The most nodes this graph takes: [`MAX_NODES`] for a graph a person is shown, none
+    /// for the composed graph read as data ([`composed_complete`]).
+    limit: usize,
 }
 
 impl Builder {
@@ -248,7 +251,28 @@ impl Builder {
             nodes: BTreeMap::new(),
             edges: BTreeSet::new(),
             truncated: false,
+            limit: MAX_NODES,
         }
+    }
+
+    /// Take at most `limit` nodes instead of [`MAX_NODES`].
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{Builder, Node};
+    ///
+    /// let thing = |id: &str| Node { id: id.into(), kind: "thing".into(), label: id.into(),
+    ///     summary: None, route: None, source: None, status: None, external: false,
+    ///     facts: Default::default() };
+    /// let mut b = Builder::new("g", "G", "two things, room for one", "example")
+    ///     .node_kind("thing", "a thing")
+    ///     .limit(1);
+    /// assert!(b.node(thing("a")));
+    /// assert!(!b.node(thing("b")), "no room past the limit");
+    /// assert!(b.finish().metadata.truncated);
+    /// ```
+    pub fn limit(mut self, limit: usize) -> Self {
+        self.limit = limit;
+        self
     }
 
     /// Declare what a node kind means. Every kind a node carries must be declared.
@@ -266,7 +290,7 @@ impl Builder {
     /// Add a node, or keep the one already there. Answers whether there is room for more:
     /// a derivation that walks a large collection stops when this says no.
     pub fn node(&mut self, node: Node) -> bool {
-        if self.nodes.len() >= MAX_NODES && !self.nodes.contains_key(&node.id) {
+        if self.nodes.len() >= self.limit && !self.nodes.contains_key(&node.id) {
             self.truncated = true;
             return false;
         }
@@ -413,6 +437,48 @@ pub fn derive(id: &str, registry: &CapabilityRegistry, index: &Index) -> Option<
         .iter()
         .find(|(known, _)| *known == id)
         .map(|(_, f)| f(registry, index))
+}
+
+/// A graph that is to be committed as data, refused if it is a prefix: a graph past
+/// [`MAX_NODES`] is shown to a person truncated, but a projection written to the repository
+/// that silently stopped at the bound would drop whatever sorted past it from every reader.
+///
+/// ```
+/// use majordomus_cli::graph::{whole, Builder};
+///
+/// let g = Builder::new("g", "G", "nothing yet", "example").finish();
+/// assert!(whole(g).is_ok(), "a graph that stopped nowhere is whole");
+/// ```
+pub fn whole(graph: Graph) -> Result<Graph, String> {
+    if graph.metadata.truncated {
+        return Err(format!(
+            "the `{}` graph stopped at {MAX_NODES} nodes and would be committed as a prefix of the repository; derive it whole (graph::composed_complete) or raise the bound",
+            graph.id
+        ));
+    }
+    Ok(graph)
+}
+
+/// [`derive()`], for a graph committed as data: `Err` when no such graph exists or when it
+/// stopped at [`MAX_NODES`] ([`whole`]).
+///
+/// ```
+/// use majordomus_cli::graph;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// assert!(graph::derive_whole("why", &ctx.registry, ctx.index.as_ref()).is_ok());
+/// assert!(graph::derive_whole("no-such-graph", &ctx.registry, ctx.index.as_ref()).is_err());
+/// ```
+pub fn derive_whole(
+    id: &str,
+    registry: &CapabilityRegistry,
+    index: &Index,
+) -> Result<Graph, String> {
+    derive(id, registry, index)
+        .ok_or_else(|| format!("this executable derives no `{id}` graph"))
+        .and_then(whole)
 }
 
 /// Every graph, described but not derived. Deriving all of them to list them would read
@@ -899,15 +965,43 @@ fn composed_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
     compose(registry, &index.objects)
 }
 
+/// The composed graph whole, every object of the index in it: what the generated
+/// `docs/generated/graph.json` carries and what the development-context compiler selects
+/// from. [`MAX_NODES`] bounds a graph a person is shown; a reader of the graph as data —
+/// the site's entity pages and catalogue counts, a context selection — would take a prefix
+/// for the repository and miss whatever sorted past it.
+///
+/// ```
+/// use majordomus_cli::graph;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let whole = graph::composed_complete(&ctx.registry, ctx.index.as_ref());
+/// assert_eq!(whole.id, graph::COMPOSED);
+/// assert!(!whole.metadata.truncated);
+/// ```
+pub fn composed_complete(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    let _phase = crate::perf::phase(crate::perf::Phase::GraphBuild);
+    crate::perf::Counters::bump(&crate::perf::COUNTERS.graph_builds);
+    compose_with(registry, &index.objects, usize::MAX)
+}
+
 /// The composition itself, over the two registries rather than over an index: the same
 /// derivation, testable without a repository on disk.
 fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
+    compose_with(registry, objects, MAX_NODES)
+}
+
+/// [`compose`], taking at most `limit` nodes.
+fn compose_with(registry: &CapabilityRegistry, objects: &[Object], limit: usize) -> Graph {
     let mut b = Builder::new(
         "composed",
         "Everything, composed",
         "The capability registry and every object of the layer in one graph: each module with the capabilities it composes, each capability with the transports it is projected through, and every indexed object under the kind that owns it. The node kinds are the kinds that were indexed, so a kind added to the layer appears here without this derivation being edited.",
         "the capability registry and every object of the index",
     )
+    .limit(limit)
     .node_kind("module", "a capability module of this executable")
     .node_kind("capability", "one capability, declared once and projected")
     .node_kind(
@@ -2072,6 +2166,36 @@ mod tests {
         let mut edges = g.edges.clone();
         edges.sort();
         assert_eq!(g.edges, edges);
+    }
+
+    #[test]
+    fn a_graph_that_stopped_at_the_bound_is_refused_as_data() {
+        let objects: Vec<Object> = (0..MAX_NODES + 1)
+            .map(|i| object("rule", &format!("r{i:05}"), "A rule"))
+            .collect();
+        let refused = whole(compose(&registry(), &objects)).unwrap_err();
+        assert!(refused.contains("`composed` graph stopped at"), "{refused}");
+        assert!(whole(compose(&registry(), &objects[..3])).is_ok());
+    }
+
+    #[test]
+    fn the_composed_graph_read_as_data_is_whole_past_the_display_bound() {
+        let objects: Vec<Object> = (0..MAX_NODES + 3)
+            .map(|i| object("rule", &format!("r{i:05}"), "A rule"))
+            .collect();
+        let shown = compose(&registry(), &objects);
+        assert!(
+            shown.metadata.truncated,
+            "a graph a person is shown stops at the bound"
+        );
+        assert_eq!(shown.nodes.len(), MAX_NODES);
+        let whole = compose_with(&registry(), &objects, usize::MAX);
+        assert!(!whole.metadata.truncated);
+        let last = format!("majordomus://rule/r{:05}", MAX_NODES + 2);
+        assert!(
+            whole.nodes.iter().any(|n| n.id == last),
+            "the object sorted last is in the graph read as data"
+        );
     }
 
     #[test]

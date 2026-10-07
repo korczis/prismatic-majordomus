@@ -547,8 +547,10 @@ mj_epoch() {
 #   one that validates in five.
 MJ_FLATTEN_AWK='
   function trim(s){ sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
+  # inside single quotes YAML has one escape, a doubled quote for one quote
   function unq(v){
-    if (v ~ /^".*"$/ || v ~ /^\047.*\047$/) return substr(v,2,length(v)-2)
+    if (v ~ /^\047.*\047$/) { v=substr(v,2,length(v)-2); gsub(/\047\047/,"\047",v); return v }
+    if (v ~ /^".*"$/) return substr(v,2,length(v)-2)
     sub(/[ \t]+#.*$/,"",v); return trim(v)
   }
   function join(a,b){ return (a=="" ? b : a "." b) }

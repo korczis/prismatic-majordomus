@@ -73,11 +73,26 @@ echo "moved" > moved.txt
 git add moved.txt && git commit -qm "a change while the server runs"
 H2="$(git rev-parse HEAD)"
 
-get /api/v1/repository > "$S/r2.json"
+# The server re-reads on the request that notices the move, and a request that arrives while
+# another is rebuilding is answered from the generation that exists — the new one is the next
+# call's (crate::live, Live::reload). So the new head is asked for until it comes, within a
+# bound: a server that never re-reads still fails here, and one that answered a single request
+# from the rebuild in flight does not. On a failure the server's own account of its reloads is
+# printed, so the next occurrence names its mechanism instead of only its symptom.
+i=0
+while :; do
+  get /api/v1/repository > "$S/r2.json"
+  [ "$(jq -r '.repository.git.head' "$S/r2.json")" = "$H2" ] && break
+  i=$((i+1))
+  [ "$i" -lt 20 ] || {
+    echo "    the server did not re-read the repository within 10 s of the commit (head $H1 still)"
+    grep -E 'repository moved|would not load' "$S/err.txt" | tail -n 5 | sed 's/^/      /'
+    exit 1
+  }
+  sleep 0.5
+done
 I2="$(jq -r '.repository.observed.index.observed_at' "$S/r2.json")"
 G2="$(jq -r '.repository.observed.git.observed_at' "$S/r2.json")"
-[ "$(jq -r '.repository.git.head' "$S/r2.json")" = "$H2" ] \
-  || { echo "    the server did not re-read the repository after the commit (head $H1 still)"; exit 1; }
 [[ "$I2" > "$I1" ]] || { echo "    the index observation did not move with the new picture: $I1 -> $I2"; exit 1; }
 [[ "$G2" > "$G1" ]] || { echo "    the git observation did not move with the new picture: $G1 -> $G2"; exit 1; }
 
