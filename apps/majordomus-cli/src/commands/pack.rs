@@ -10,12 +10,14 @@
 use std::io::Write;
 use std::path::PathBuf;
 
-use serde_json::json;
+use serde::de::DeserializeOwned;
+use serde_json::{json, Value};
 
 use crate::app::App;
+use crate::capability::handler::Context;
 use crate::cli::{OutputFormat, PackArgs, PackCommand};
 use crate::error::{Error, Result};
-use crate::pack::{PackFinding, PackPlan, PackVerdict, Profiles};
+use crate::pack::{PackFinding, PackPlan, PackVerdict};
 
 /// The exit code when a finding stands.
 pub const EXIT_FINDINGS: u8 = 10;
@@ -24,108 +26,117 @@ pub const EXIT_UNMEASURED: u8 = 12;
 
 /// Run `majordomus pack`.
 pub fn run(args: PackArgs) -> Result<u8> {
+    let stdout = std::io::stdout();
+    run_to(args, &mut stdout.lock())
+}
+
+/// Run `majordomus pack`, writing what it prints to `out`.
+fn run_to<W: Write>(args: PackArgs, out: &mut W) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let ctx = &app.context;
-    let root = PathBuf::from(&ctx.index.repository.root);
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
+    let format = args.format;
     match args.command {
-        PackCommand::Plan { profile } => {
-            let value = execute(ctx, "plan", json!({ "profile": profile }))?;
-            let plan: PackPlan = decode(&value)?;
-            match args.format {
-                OutputFormat::Json => print_json(&mut out, &value)?,
-                OutputFormat::Text => render_plan(&mut out, &plan)?,
-            }
-            Ok(plan_code(&plan))
-        }
-        PackCommand::Verify { dir } => {
-            let value = execute(ctx, "verify", json!({ "dir": dir }))?;
-            let verdict: PackVerdict = decode(&value)?;
-            match args.format {
-                OutputFormat::Json => print_json(&mut out, &value)?,
-                OutputFormat::Text => render_verdict(&mut out, &verdict)?,
-            }
-            Ok(verdict_code(&verdict))
-        }
+        PackCommand::Plan { profile } => answer(
+            ctx,
+            "plan",
+            json!({ "profile": profile }),
+            format,
+            out,
+            render_plan,
+            plan_code,
+        ),
+        PackCommand::Verify { dir } => answer(
+            ctx,
+            "verify",
+            json!({ "dir": dir }),
+            format,
+            out,
+            render_verdict,
+            verdict_code,
+        ),
         PackCommand::Build {
             profile,
             out: dest,
             force,
-        } => {
-            let share = crate::share::Share::locate(ctx.index.share.as_deref(), &root)?
-                .dir()
-                .to_path_buf();
-            let planned = crate::pack::plan(&root, &share, profile.as_deref());
-            if !planned.plan.passes {
-                match args.format {
-                    OutputFormat::Json => print_json(&mut out, &json!({ "plan": planned.plan }))?,
-                    OutputFormat::Text => render_plan(&mut out, &planned.plan)?,
-                }
-                return Ok(plan_code(&planned.plan));
-            }
-            let profiles =
-                Profiles::load(&share, &root).map_err(|reason| Error::Protocol { reason })?;
-            let dest = dest
-                .map(|d| if d.is_absolute() { d } else { root.join(d) })
-                .unwrap_or_else(|| crate::pack::default_out(&root, &planned.plan));
-            if dest.join(crate::pack::MANIFEST).is_file() && !force {
-                return Err(Error::Protocol {
-                    reason: format!(
-                        "{} already holds a pack; pass --force to replace it",
-                        dest.display()
-                    ),
-                });
-            }
-            let verdict = crate::pack::build(&planned, &profiles, &root, &dest)
-                .map_err(|reason| Error::Protocol { reason })?;
-            match args.format {
-                OutputFormat::Json => print_json(
-                    &mut out,
-                    &json!({ "plan": planned.plan, "out": dest.display().to_string(), "verdict": verdict }),
-                )?,
-                OutputFormat::Text => {
-                    render_plan(&mut out, &planned.plan)?;
-                    render_verdict(&mut out, &verdict)?;
-                }
-            }
-            Ok(verdict_code(&verdict))
-        }
+        } => build(ctx, profile.as_deref(), dest, force, format, out),
     }
 }
 
-fn execute(
-    ctx: &crate::capability::handler::Context,
+/// Ask the registry's `pack.<word>` capability, read its answer as `T`, print it in the
+/// format asked for, and exit by it. A capability that refuses the input, or answers with
+/// something that is not a `T`, is the one error.
+fn answer<T: DeserializeOwned, W: Write>(
+    ctx: &Context,
     word: &str,
-    input: serde_json::Value,
-) -> Result<serde_json::Value> {
+    input: Value,
+    format: OutputFormat,
+    out: &mut W,
+    render: fn(&T) -> String,
+    code: fn(&T) -> u8,
+) -> Result<u8> {
+    type Failure = Box<dyn std::error::Error>;
     let words = ["pack".to_string(), word.to_string()];
-    let id = ctx
-        .registry
-        .by_cli(&words)
-        .map(|c| c.id.as_str())
-        .ok_or_else(|| Error::Protocol {
-            reason: format!("no capability is exposed as `majordomus pack {word}`"),
-        })?;
-    ctx.execute(id, input).map_err(|e| Error::Protocol {
-        reason: e.to_string(),
-    })
+    // a word no capability is exposed under asks the registry for no capability, which it
+    // refuses like any unknown id
+    let id = ctx.registry.by_cli(&words).map_or("", |c| c.id.as_str());
+    ctx.execute(id, input)
+        .map_err(Failure::from)
+        .and_then(|value| {
+            serde_json::from_value::<T>(value.clone())
+                .map(|answer| (value, answer))
+                .map_err(Failure::from)
+        })
+        .map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })
+        .and_then(|(value, answer)| {
+            emit(out, format, &value, &render(&answer)).map(|()| code(&answer))
+        })
 }
 
-fn decode<T: serde::de::DeserializeOwned>(value: &serde_json::Value) -> Result<T> {
-    serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
-        reason: format!(
-            "the pack capability answered with something this command cannot read: {e}"
-        ),
-    })
+/// `majordomus pack build`: plan with the same function the capability calls, write the pack
+/// only when the plan passes, and print the plan with the verdict on what was written.
+fn build<W: Write>(
+    ctx: &Context,
+    profile: Option<&str>,
+    dest: Option<PathBuf>,
+    force: bool,
+    format: OutputFormat,
+    out: &mut W,
+) -> Result<u8> {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let planned = crate::capability::builtin::pack::planned(ctx, profile);
+    let plan = &planned.plan;
+    if !plan.passes {
+        return emit(out, format, &json!({ "plan": plan }), &render_plan(plan))
+            .map(|()| plan_code(plan));
+    }
+    // a relative destination is the repository's; joining an absolute one keeps it whole
+    let dest = dest.map_or_else(|| crate::pack::default_out(&root, plan), |d| root.join(d));
+    if dest.join(crate::pack::MANIFEST).is_file() && !force {
+        return Err(Error::Protocol {
+            reason: format!(
+                "{} already holds a pack; pass --force to replace it",
+                dest.display()
+            ),
+        });
+    }
+    crate::pack::build(&planned, &root, &dest)
+        .map_err(|reason| Error::Protocol { reason })
+        .and_then(|verdict| {
+            let value =
+                json!({ "plan": plan, "out": dest.display().to_string(), "verdict": verdict });
+            let text = render_plan(plan) + &render_verdict(&verdict);
+            emit(out, format, &value, &text).map(|()| verdict_code(&verdict))
+        })
 }
 
-fn print_json<W: Write>(out: &mut W, value: &serde_json::Value) -> Result<()> {
-    writeln!(
-        out,
-        "{}",
-        serde_json::to_string_pretty(value).unwrap_or_else(|_| value.to_string())
-    )
+/// Print an answer: the value, pretty, for `--format json`, and the rendering otherwise.
+fn emit<W: Write>(out: &mut W, format: OutputFormat, value: &Value, text: &str) -> Result<()> {
+    match format {
+        OutputFormat::Json => writeln!(out, "{value:#}"),
+        OutputFormat::Text => out.write_all(text.as_bytes()),
+    }
     .map_err(Error::Transport)
 }
 
@@ -149,115 +160,83 @@ fn verdict_code(v: &PackVerdict) -> u8 {
     }
 }
 
-fn render_findings<W: Write>(out: &mut W, findings: &[PackFinding]) -> Result<()> {
-    for f in findings {
-        writeln!(
-            out,
-            "FAIL  {}  {}  {}\n      remedy: {}",
-            f.code,
-            f.path.as_deref().unwrap_or("-"),
-            f.message,
-            f.remedy
-        )
-        .map_err(Error::Transport)?;
-    }
-    Ok(())
+fn render_findings(findings: &[PackFinding]) -> String {
+    findings
+        .iter()
+        .map(|f| {
+            format!(
+                "FAIL  {}  {}  {}\n      remedy: {}\n",
+                f.code,
+                f.path.as_deref().unwrap_or("-"),
+                f.message,
+                f.remedy
+            )
+        })
+        .collect()
 }
 
 /// The terminal rendering of a plan: the findings, what was left out, the shards, the verdict.
-fn render_plan<W: Write>(out: &mut W, plan: &PackPlan) -> Result<()> {
-    let w = |out: &mut W, s: String| writeln!(out, "{s}").map_err(Error::Transport);
+fn render_plan(plan: &PackPlan) -> String {
     if !plan.measured {
-        return w(
-            out,
-            format!(
-                "pack plan: not measured: {}",
-                plan.reason.as_deref().unwrap_or("no reason given")
-            ),
-        );
+        let why = plan.reason.as_deref().unwrap_or("no reason given");
+        return format!("pack plan: not measured: {why}\n");
     }
-    render_findings(out, &plan.findings)?;
-    w(
-        out,
-        format!(
-            "pack: profile {} at {} — {} of {} tracked file(s), {} bytes, {} tokens ({})",
-            plan.profile,
-            plan.commit
-                .as_deref()
-                .map(|c| &c[..c.len().min(12)])
-                .unwrap_or("no commit"),
-            plan.selected,
-            plan.tracked,
-            plan.bytes,
-            plan.tokens,
-            plan.tokenizer
-        ),
-    )?;
+    let mut s = render_findings(&plan.findings);
+    let commit = plan.commit.as_deref().unwrap_or("no commit");
+    s += &format!(
+        "pack: profile {} at {} — {} of {} tracked file(s), {} bytes, {} tokens ({})\n",
+        plan.profile,
+        &commit[..commit.len().min(12)],
+        plan.selected,
+        plan.tracked,
+        plan.bytes,
+        plan.tokens,
+        plan.tokenizer
+    );
     if !plan.index_matches_head {
-        w(
-            out,
-            "      the index holds staged changes HEAD does not; commit them first".into(),
-        )?;
+        s += "      the index holds staged changes HEAD does not; commit them first\n";
     }
     for (reason, n) in &plan.dropped {
-        w(out, format!("      left out: {n} ({reason})"))?;
+        s += &format!("      left out: {n} ({reason})\n");
     }
     for d in &plan.dropped_files {
-        w(out, format!("        {} ({})", d.path, d.reason.as_str()))?;
+        s += &format!("        {} ({})\n", d.path, d.reason.as_str());
     }
     if let Some(l) = plan.limits {
-        w(
-            out,
-            format!(
-                "      shards: {} + index, of at most {} file(s) of {} tokens",
-                plan.shards.len(),
-                l.max_count,
-                l.max_tokens
-            ),
-        )?;
+        s += &format!(
+            "      shards: {} + index, of at most {} file(s) of {} tokens\n",
+            plan.shards.len(),
+            l.max_count,
+            l.max_tokens
+        );
     }
-    for s in &plan.shards {
-        w(
-            out,
-            format!(
-                "        {}  {} file(s), {} tokens",
-                s.file, s.files, s.tokens
-            ),
-        )?;
+    for sh in &plan.shards {
+        s += &format!(
+            "        {}  {} file(s), {} tokens\n",
+            sh.file, sh.files, sh.tokens
+        );
     }
-    if plan.passes {
-        w(out, "pack plan: clean".into())
+    s + &if plan.passes {
+        "pack plan: clean\n".to_string()
     } else {
-        w(
-            out,
-            format!("pack plan: {} finding(s)", plan.findings.len()),
-        )
+        format!("pack plan: {} finding(s)\n", plan.findings.len())
     }
 }
 
 /// The terminal rendering of a verdict on a written pack.
-fn render_verdict<W: Write>(out: &mut W, v: &PackVerdict) -> Result<()> {
-    let w = |out: &mut W, s: String| writeln!(out, "{s}").map_err(Error::Transport);
+fn render_verdict(v: &PackVerdict) -> String {
     if !v.measured {
-        return w(
-            out,
-            format!(
-                "pack verify: not measured: {}",
-                v.reason.as_deref().unwrap_or("no reason given")
-            ),
-        );
+        let why = v.reason.as_deref().unwrap_or("no reason given");
+        return format!("pack verify: not measured: {why}\n");
     }
-    render_findings(out, &v.findings)?;
-    w(
-        out,
-        format!(
-            "pack {}: {} file(s) to upload, {} source file(s), the largest {} tokens",
-            v.dir, v.files, v.sources, v.largest_tokens
-        ),
-    )?;
-    if v.passes {
-        w(out, "pack verify: clean".into())
+    let mut s = render_findings(&v.findings);
+    s += &format!(
+        "pack {}: {} file(s) to upload, {} source file(s), the largest {} tokens\n",
+        v.dir, v.files, v.sources, v.largest_tokens
+    );
+    s + &if v.passes {
+        "pack verify: clean\n".to_string()
     } else {
-        w(out, format!("pack verify: {} finding(s)", v.findings.len()))
+        format!("pack verify: {} finding(s)\n", v.findings.len())
     }
 }

@@ -5883,7 +5883,7 @@ majordomus pack build [OPTIONS] [PROFILE]
 | argument | value | default | description |
 |---|---|---|---|
 | `<PROFILE>` | `<PROFILE>` | — | A profile of share/archive.yaml (default: its `default`) |
-| `--out` | `<DIR>` | — | Write here instead of tmp/packs/<repo>-<profile>-<commit> |
+| `--out` | `<DIR>` | — | Write here instead of `tmp/packs/<repo>-<profile>-<commit>` |
 | `--force` | flag | — | Replace a pack already at the destination (never a directory that is not a pack) |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |

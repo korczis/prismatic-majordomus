@@ -6,7 +6,7 @@
     "version": "0.14.0"
   },
   "registry": {
-    "fingerprint": "da994188003347d3bd60a1356cdd3535b5f901689bc4145a06dabad355c6f383",
+    "fingerprint": "940520c0f1d202bc7c731ddfa5c4942f98dcc4deeb12858106d81a6061e2d8f9",
     "summary": {
       "total": 1918,
       "builtin": 174,
@@ -42467,7 +42467,7 @@
               "findings",
               "passes"
             ],
-            "description": "The verdict on a written pack: whether it could be read, what its manifest names, how\nmany files and sources it holds, and every finding against it.\n\nThe examples below build a pack of a repository holding `main.rs`.\n\n```\nuse majordomus_cli::pack::{build, plan, verify, PackVerdict, Profiles};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n# std::fs::create_dir_all(&root).unwrap();\n# std::fs::create_dir_all(&share).unwrap();\n# std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n\").unwrap();\n# let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n#     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n#     .status().unwrap().success());\n# git(&[\"init\", \"-q\"]);\n# std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n# git(&[\"add\", \"-A\"]);\n# git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet profiles = Profiles::load(&share, &root).unwrap();\nlet out = dir.path().join(\"pack\");\nlet v: PackVerdict = build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();\nassert_eq!((v.files, v.sources), (2, 1), \"the index and one shard, carrying one file\");\nassert_eq!(v.profile.as_deref(), Some(\"chat\"));\n// a directory with no manifest is not measured, which is not a pass\nlet v: PackVerdict = verify(dir.path(), &profiles, &root);\nassert!(!v.measured && !v.passes);\n```",
+            "description": "The verdict on a written pack: whether it could be read, what its manifest names, how\nmany files and sources it holds, and every finding against it.\n\nThe examples below build a pack of a repository holding `main.rs`.\n\n```\nuse majordomus_cli::pack::{build, plan, verify, PackVerdict, Profiles};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n# std::fs::create_dir_all(&root).unwrap();\n# std::fs::create_dir_all(&share).unwrap();\n# std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n\").unwrap();\n# let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n#     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n#     .status().unwrap().success());\n# git(&[\"init\", \"-q\"]);\n# std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n# git(&[\"add\", \"-A\"]);\n# git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet profiles = Profiles::load(&share, &root).unwrap();\nlet out = dir.path().join(\"pack\");\nlet v: PackVerdict = build(&plan(&root, &share, None), &root, &out).unwrap();\nassert_eq!((v.files, v.sources), (2, 1), \"the index and one shard, carrying one file\");\nassert_eq!(v.profile.as_deref(), Some(\"chat\"));\n// a directory with no manifest is not measured, which is not a pass\nlet v: PackVerdict = verify(dir.path(), &profiles, &root);\nassert!(!v.measured && !v.passes);\n```",
             "title": "PackVerdict",
             "$defs": {
               "PackFinding": {
@@ -69026,7 +69026,7 @@
     ]
   },
   "index": {
-    "fingerprint": "22d72f8f27134f609e430ac64bad396297c85c4445ff241765ac0253d76b21ab",
+    "fingerprint": "4403e01b7ab38c379c192a14a5f4bbd756ed34bd49b87c78b6e9efe1d718f93e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -114724,7 +114724,7 @@
                 "name": "out",
                 "long": "out",
                 "positional": false,
-                "help": "Write here instead of tmp/packs/<repo>-<profile>-<commit>",
+                "help": "Write here instead of `tmp/packs/<repo>-<profile>-<commit>`",
                 "value_name": "DIR",
                 "takes_value": true,
                 "required": false,

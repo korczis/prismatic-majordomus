@@ -25,8 +25,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IndexEntry, PackFinding, PackPlan, PackProfile, Planned, Profiles, ShardPlan, INDEX, MANIFEST,
-    MANIFEST_SCHEMA,
+    DropReason, IndexEntry, PackFinding, PackPlan, PackProfile, Planned, Profiles, ShardPlan,
+    INDEX, MANIFEST, MANIFEST_SCHEMA,
 };
 use crate::economics::context::count_tokens;
 use crate::policy::sha256_bytes_hex;
@@ -223,21 +223,12 @@ fn index_text(profile: &PackProfile, p: &PackPlan, shards: &[ManifestShard]) -> 
     }
     s.push_str("\n## What is not here, and why\n\n");
     s.push_str("The file set is the git index and the content is the index's blobs, so nothing untracked was ever a candidate: no build output, no dependency directory, no cache, no worktree and no local AI-layer state. Of what the index tracks, the profile left out:\n\n");
-    for (reason, n) in &p.dropped {
-        let why = match reason.as_str() {
-            "derived" => {
-                "generated projections of files that are here (`merge=derived` in `.gitattributes`)"
-            }
-            "binary" => "not text: a binary extension, a NUL byte or content that is not UTF-8",
-            "artifact" => "build output, caches and worktree containers committed by accident",
-            "worktree" => {
-                "gitlinks: nested repositories or worktrees whose content is not in this index"
-            }
-            "link" => "symbolic links, whose content is a path on the committing machine",
-            "excluded" => "matched by the profile's exclude list",
-            _ => "",
+    for reason in DropReason::ALL {
+        let Some(n) = p.dropped.get(reason.as_str()) else {
+            continue;
         };
-        s.push_str(&format!("- {reason}: {n} — {why}\n"));
+        let (word, why) = (reason.as_str(), reason.meaning());
+        s.push_str(&format!("- {word}: {n} — {why}\n"));
     }
     if !p.dropped_files.is_empty() {
         s.push_str("\nEvery file left out for a reason other than `derived`:\n\n");
@@ -301,8 +292,7 @@ pub(super) fn write(planned: &Planned, out: &Path) -> Result<(), String> {
     }
     let mut shards = Vec::new();
     for ((sh, text), paths) in planned.plan.shards.iter().zip(texts).zip(paths) {
-        std::fs::write(out.join(&sh.file), &text)
-            .map_err(|e| format!("cannot write {}: {e}", sh.file))?;
+        put(out, &sh.file, &text)?;
         shards.push(ManifestShard {
             file: sh.file.clone(),
             sha256: sha256_bytes_hex(text.as_bytes()),
@@ -311,7 +301,7 @@ pub(super) fn write(planned: &Planned, out: &Path) -> Result<(), String> {
         });
     }
     let index = index_text(&planned.profile, &planned.plan, &shards);
-    std::fs::write(out.join(INDEX), &index).map_err(|e| format!("cannot write {INDEX}: {e}"))?;
+    put(out, INDEX, &index)?;
     let manifest = Manifest {
         schema: MANIFEST_SCHEMA.into(),
         profile: planned.plan.profile.clone(),
@@ -327,9 +317,15 @@ pub(super) fn write(planned: &Planned, out: &Path) -> Result<(), String> {
         shards,
         dropped: planned.plan.dropped.clone(),
     };
-    let json = serde_json::to_string_pretty(&manifest).map_err(|e| e.to_string())?;
-    std::fs::write(out.join(MANIFEST), json + "\n")
-        .map_err(|e| format!("cannot write {MANIFEST}: {e}"))
+    // a manifest is plain data and always serialises; were it ever not to, it would be the
+    // manifest that could not be written
+    let json = serde_json::to_string_pretty(&manifest).unwrap_or_default();
+    put(out, MANIFEST, &(json + "\n"))
+}
+
+/// Write one file of a pack, or name the one that could not be written.
+fn put(out: &Path, name: &str, text: &str) -> Result<(), String> {
+    std::fs::write(out.join(name), text).map_err(|e| format!("cannot write {name}: {e}"))
 }
 
 /// The verdict on a written pack: whether it could be read, what its manifest names, how
@@ -354,7 +350,7 @@ pub(super) fn write(planned: &Planned, out: &Path) -> Result<(), String> {
 /// # git(&["commit", "-q", "-m", "one"]);
 /// let profiles = Profiles::load(&share, &root).unwrap();
 /// let out = dir.path().join("pack");
-/// let v: PackVerdict = build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();
+/// let v: PackVerdict = build(&plan(&root, &share, None), &root, &out).unwrap();
 /// assert_eq!((v.files, v.sources), (2, 1), "the index and one shard, carrying one file");
 /// assert_eq!(v.profile.as_deref(), Some("chat"));
 /// // a directory with no manifest is not measured, which is not a pass
@@ -414,7 +410,7 @@ fn finding(code: &str, path: Option<&str>, message: String, remedy: &str) -> Pac
 /// # git(&["commit", "-q", "-m", "one"]);
 /// let profiles = Profiles::load(&share, &root).unwrap();
 /// let out = dir.path().join("pack");
-/// build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();
+/// build(&plan(&root, &share, None), &root, &out).unwrap();
 /// assert!(verify(&out, &profiles, &root).passes);
 /// // a file dropped into the pack after it was built is a stray
 /// std::fs::write(out.join("99-extra.md"), "extra\n").unwrap();
@@ -468,17 +464,17 @@ pub fn verify(dir: &Path, profiles: &Profiles, root: &Path) -> PackVerdict {
     let mut expected: BTreeSet<String> = manifest.shards.iter().map(|s| s.file.clone()).collect();
     expected.insert(INDEX.into());
     expected.insert(MANIFEST.into());
-    if let Ok(read) = std::fs::read_dir(dir) {
-        for e in read.flatten() {
-            let name = e.file_name().to_string_lossy().into_owned();
-            if !expected.contains(&name) {
-                f.push(finding(
-                    "pack.stray",
-                    Some(&name),
-                    format!("{name} is in the pack and not in its manifest"),
-                    "remove it; only what the manifest names is sent",
-                ));
-            }
+    // the manifest was just read from this directory, so it lists; were it not to, every
+    // file the manifest names is reported missing below
+    for e in std::fs::read_dir(dir).into_iter().flatten().flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        if !expected.contains(&name) {
+            f.push(finding(
+                "pack.stray",
+                Some(&name),
+                format!("{name} is in the pack and not in its manifest"),
+                "remove it; only what the manifest names is sent",
+            ));
         }
     }
 

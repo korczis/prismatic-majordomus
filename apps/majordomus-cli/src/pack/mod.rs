@@ -52,7 +52,7 @@
 mod shard;
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
@@ -87,13 +87,14 @@ const FILL_PERCENT: u64 = 95;
 /// file system resolves it to, and on macOS `/var` and `/tmp` are `/private/var` and
 /// `/private/tmp` — so each is listed in every spelling it has.
 pub(crate) fn machine_paths(root: &Path) -> Vec<String> {
+    machine_paths_for(root, std::env::var_os("HOME").map(PathBuf::from))
+}
+
+/// [`machine_paths`] for the home directory `home`: none, `/`, and a hosted runner's home
+/// name no person's machine and add nothing to the checkout.
+fn machine_paths_for(root: &Path, home: Option<PathBuf>) -> Vec<String> {
     let mut bases = vec![root.to_path_buf()];
-    if let Some(home) = std::env::var_os("HOME").filter(|h| h.len() > 1) {
-        let home = PathBuf::from(home);
-        if !is_runner_home(&home) {
-            bases.push(home);
-        }
-    }
+    bases.extend(home.filter(|h| h.as_os_str().len() > 1 && !is_runner_home(h)));
     let mut out = BTreeSet::new();
     for base in bases {
         let resolved = std::fs::canonicalize(&base).unwrap_or_else(|_| base.clone());
@@ -154,6 +155,36 @@ impl DropReason {
             DropReason::Binary => "binary",
             DropReason::Derived => "derived",
             DropReason::Excluded => "excluded",
+        }
+    }
+
+    /// Every reason, in the order of their words, which is the order a report lists them in.
+    pub(crate) const ALL: [DropReason; 6] = [
+        DropReason::Artifact,
+        DropReason::Binary,
+        DropReason::Derived,
+        DropReason::Excluded,
+        DropReason::Link,
+        DropReason::Worktree,
+    ];
+
+    /// What the reason means to a reader of the pack's index.
+    pub(crate) fn meaning(self) -> &'static str {
+        match self {
+            DropReason::Derived => {
+                "generated projections of files that are here (`merge=derived` in `.gitattributes`)"
+            }
+            DropReason::Binary => {
+                "not text: a binary extension, a NUL byte or content that is not UTF-8"
+            }
+            DropReason::Artifact => {
+                "build output, caches and worktree containers committed by accident"
+            }
+            DropReason::Worktree => {
+                "gitlinks: nested repositories or worktrees whose content is not in this index"
+            }
+            DropReason::Link => "symbolic links, whose content is a path on the committing machine",
+            DropReason::Excluded => "matched by the profile's exclude list",
         }
     }
 
@@ -228,7 +259,7 @@ pub struct PackProfile {
 /// assert!(p.binary_extensions.contains("png"), "extensions are compared in lower case");
 /// assert_eq!(p.profiles.len(), 2);
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Profiles {
     /// The profile used when none is named.
     pub default: String,
@@ -720,6 +751,9 @@ pub struct Planned {
     pub plan: PackPlan,
     /// The profile it was planned with.
     pub profile: PackProfile,
+    /// The profiles it was chosen from, which verify what [`build`] writes; empty when the
+    /// profiles could not be read.
+    pub profiles: Profiles,
     /// The selected files, in shard order, with their shard's index into `plan.shards`.
     pub(crate) files: Vec<(usize, Selected)>,
 }
@@ -762,13 +796,11 @@ pub fn plan(root: &Path, share: &Path, profile: Option<&str>) -> Planned {
         Ok(p) => p.clone(),
         Err(e) => return unmeasured(&label, e),
     };
-    match plan_with(root, &profiles, &chosen) {
-        Ok(p) => p,
-        Err(e) => unmeasured(&chosen.id, e),
-    }
+    plan_with(root, &profiles, &chosen).unwrap_or_else(|e| unmeasured(&chosen.id, e))
 }
 
-fn unmeasured(profile: &str, reason: String) -> Planned {
+/// A plan that could not be made, with the reason: never a pass, and never built.
+pub(crate) fn unmeasured(profile: &str, reason: String) -> Planned {
     Planned {
         plan: PackPlan::unmeasured(profile, reason),
         profile: PackProfile {
@@ -782,6 +814,7 @@ fn unmeasured(profile: &str, reason: String) -> Planned {
             orientation: Vec::new(),
             shards: None,
         },
+        profiles: Profiles::default(),
         files: Vec::new(),
     }
 }
@@ -793,12 +826,7 @@ pub(crate) fn plan_with(
     profiles: &Profiles,
     profile: &PackProfile,
 ) -> Result<Planned, String> {
-    let entries = index_entries(root)?;
-    let derived = if profile.derived == "drop" {
-        derived_paths(root, &entries)?
-    } else {
-        BTreeSet::new()
-    };
+    let (entries, derived) = index_entries(root, profile.derived == "drop")?;
     let exclude: Vec<Glob> = profile.exclude.iter().map(|g| Glob::new(g)).collect();
     let include: Vec<Glob> = profile.include.iter().map(|g| Glob::new(g)).collect();
     let artifacts = profile.artifacts == "drop";
@@ -983,6 +1011,7 @@ pub(crate) fn plan_with(
     Ok(Planned {
         plan,
         profile: profile.clone(),
+        profiles: profiles.clone(),
         files,
     })
 }
@@ -1013,30 +1042,70 @@ pub(crate) fn names_machine(text: &str, machine: &[String]) -> Option<usize> {
         .map(|n| n + 1)
 }
 
-/// Every entry of the index, stage 0, in git's order.
-fn index_entries(root: &Path) -> Result<Vec<IndexEntry>, String> {
-    let out = crate::git::read_only(root)
-        .args(["ls-files", "-s", "-z"])
-        .output()
-        .map_err(|e| format!("cannot run git: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "git ls-files: {}",
+/// Run git in `root` with `input` on its standard input and answer what it printed. A git
+/// that cannot be started (a root that does not exist) and a git that fails are both an
+/// error naming the subcommand, so every read below has one way to fail.
+fn git_output(root: &Path, args: &[&str], input: Vec<u8>) -> Result<Vec<u8>, String> {
+    // absolute, so that `-C` and the working directory name the same place; a root with no
+    // absolute form becomes the empty path, which no process can be started in
+    let root = std::path::absolute(root).unwrap_or_default();
+    let run = crate::git::read_only(&root)
+        .current_dir(&root)
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            let writer = child
+                .stdin
+                .take()
+                .map(|mut stdin| std::thread::spawn(move || stdin.write_all(&input)));
+            let out = child.wait_with_output();
+            let _ = writer.map(std::thread::JoinHandle::join);
+            out
+        });
+    match run {
+        Ok(out) if out.status.success() => Ok(out.stdout),
+        Ok(out) => Err(format!(
+            "git {}: {}",
+            args[0],
             String::from_utf8_lossy(&out.stderr).trim()
-        ));
+        )),
+        Err(e) => Err(format!("cannot run git {}: {e}", args[0])),
     }
+}
+
+/// Every entry of the index in git's order, and, when `derived` is asked, the paths
+/// `.gitattributes` marks `merge=derived`, asked of git itself.
+fn index_entries(
+    root: &Path,
+    derived: bool,
+) -> Result<(Vec<IndexEntry>, BTreeSet<String>), String> {
+    git_output(root, &["ls-files", "-s", "-z"], Vec::new())
+        .and_then(|out| parse_index(&out))
+        .and_then(|entries| {
+            if derived {
+                derived_paths(root, &entries).map(|d| (entries, d))
+            } else {
+                Ok((entries, BTreeSet::new()))
+            }
+        })
+}
+
+/// The records of `git ls-files -s -z`: `<mode> <oid> <stage>\t<path>`. A record that is not
+/// a stage-0 entry is a conflict nobody resolved, and a pack of it would carry one side.
+fn parse_index(out: &[u8]) -> Result<Vec<IndexEntry>, String> {
     let mut entries = Vec::new();
-    for record in out.stdout.split(|b| *b == 0).filter(|r| !r.is_empty()) {
+    for record in out.split(|b| *b == 0).filter(|r| !r.is_empty()) {
         let record = String::from_utf8_lossy(record);
-        // "<mode> <oid> <stage>\t<path>"
-        let Some((meta, path)) = record.split_once('\t') else {
-            continue;
-        };
-        let mut parts = meta.split(' ');
-        let (Some(mode), Some(oid), Some(stage)) = (parts.next(), parts.next(), parts.next())
-        else {
-            continue;
-        };
+        let (meta, path) = record.split_once('\t').unwrap_or((&record, ""));
+        let mut parts = meta.splitn(3, ' ');
+        let (mode, oid, stage) = (
+            parts.next().unwrap_or_default(),
+            parts.next().unwrap_or_default(),
+            parts.next().unwrap_or_default(),
+        );
         if stage != "0" {
             return Err(format!(
                 "{path} is unmerged in the index; resolve the conflict before packing"
@@ -1053,84 +1122,49 @@ fn index_entries(root: &Path) -> Result<Vec<IndexEntry>, String> {
 
 /// The paths `.gitattributes` marks `merge=derived`, asked of git itself.
 fn derived_paths(root: &Path, entries: &[IndexEntry]) -> Result<BTreeSet<String>, String> {
-    let mut child = crate::git::read_only(root)
-        .args(["check-attr", "-z", "--stdin", "merge"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|e| format!("cannot run git check-attr: {e}"))?;
-    let mut stdin = child.stdin.take().ok_or("git check-attr has no stdin")?;
     let paths: Vec<u8> = entries
         .iter()
         .flat_map(|e| e.path.bytes().chain(std::iter::once(0)))
         .collect();
-    let writer = std::thread::spawn(move || stdin.write_all(&paths));
-    let mut out = Vec::new();
-    child
-        .stdout
-        .take()
-        .ok_or("git check-attr has no stdout")?
-        .read_to_end(&mut out)
-        .map_err(|e| format!("git check-attr: {e}"))?;
-    let _ = writer.join();
-    let status = child.wait().map_err(|e| format!("git check-attr: {e}"))?;
-    if !status.success() {
-        return Err("git check-attr failed".into());
-    }
-    // "<path>\0merge\0<value>\0" per path
-    let fields: Vec<&[u8]> = out.split(|b| *b == 0).collect();
-    Ok(fields
-        .chunks(3)
-        .filter(|c| c.len() == 3 && c[2] == b"derived")
-        .map(|c| String::from_utf8_lossy(c[0]).into_owned())
-        .collect())
+    git_output(root, &["check-attr", "-z", "--stdin", "merge"], paths).map(|out| {
+        // "<path>\0merge\0<value>\0" per path
+        let fields: Vec<&[u8]> = out.split(|b| *b == 0).collect();
+        fields
+            .chunks(3)
+            .filter(|c| c.len() == 3 && c[2] == b"derived")
+            .map(|c| String::from_utf8_lossy(c[0]).into_owned())
+            .collect()
+    })
 }
 
 /// The content of every entry's blob, in order, through one `git cat-file --batch`.
 fn read_blobs(root: &Path, entries: &[IndexEntry]) -> Result<Vec<Vec<u8>>, String> {
-    let mut child = crate::git::read_only(root)
-        .args(["cat-file", "--batch"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|e| format!("cannot run git cat-file: {e}"))?;
-    let mut stdin = child.stdin.take().ok_or("git cat-file has no stdin")?;
     let request: Vec<u8> = entries
         .iter()
         .flat_map(|e| e.oid.bytes().chain(std::iter::once(b'\n')))
         .collect();
-    let writer = std::thread::spawn(move || stdin.write_all(&request));
-    let mut out = Vec::new();
-    child
-        .stdout
-        .take()
-        .ok_or("git cat-file has no stdout")?
-        .read_to_end(&mut out)
-        .map_err(|e| format!("git cat-file: {e}"))?;
-    let _ = writer.join();
-    let _ = child.wait();
-    // "<oid> blob <size>\n<content>\n" per object
+    git_output(root, &["cat-file", "--batch"], request).and_then(|out| split_blobs(&out, entries))
+}
+
+/// The objects of a `git cat-file --batch` answer, one per entry: `<oid> blob <size>\n`,
+/// the content and a newline. Anything else — a missing object, an answer cut short — is
+/// named by the entry it was the answer for.
+fn split_blobs(out: &[u8], entries: &[IndexEntry]) -> Result<Vec<Vec<u8>>, String> {
     let mut blobs = Vec::with_capacity(entries.len());
     let mut at = 0;
     for e in entries {
-        let nl = out[at..]
-            .iter()
-            .position(|b| *b == b'\n')
-            .ok_or_else(|| format!("git cat-file ended before {}", e.path))?;
-        let header = String::from_utf8_lossy(&out[at..at + nl]).into_owned();
-        let size: usize = header
-            .rsplit(' ')
-            .next()
-            .and_then(|s| s.parse().ok())
-            .filter(|_| header.split(' ').nth(1) == Some("blob"))
-            .ok_or_else(|| format!("{}: git cat-file answered '{header}'", e.path))?;
+        let rest = out.get(at..).unwrap_or_default();
+        let nl = rest.iter().position(|b| *b == b'\n').unwrap_or(rest.len());
+        let header = String::from_utf8_lossy(&rest[..nl]).into_owned();
         let start = at + nl + 1;
-        let end = start + size;
-        if end > out.len() {
-            return Err(format!("git cat-file ended inside {}", e.path));
-        }
+        let end = header
+            .strip_prefix(&format!("{} blob ", e.oid))
+            .and_then(|size| size.parse::<usize>().ok())
+            .map(|size| start + size)
+            .filter(|end| *end <= out.len());
+        let Some(end) = end else {
+            return Err(format!("{}: git cat-file answered '{header}'", e.path));
+        };
         blobs.push(out[start..end].to_vec());
         at = end + 1;
     }
@@ -1138,21 +1172,18 @@ fn read_blobs(root: &Path, entries: &[IndexEntry]) -> Result<Vec<Vec<u8>>, Strin
 }
 
 fn head(root: &Path) -> Option<String> {
-    let out = crate::git::read_only(root)
-        .args(["rev-parse", "--verify", "-q", "HEAD"])
-        .output()
-        .ok()?;
-    out.status
-        .success()
-        .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+    git_output(root, &["rev-parse", "--verify", "-q", "HEAD"], Vec::new())
+        .ok()
+        .map(|out| String::from_utf8_lossy(&out).trim().to_string())
 }
 
 fn index_matches_head(root: &Path) -> bool {
-    crate::git::read_only(root)
-        .args(["diff", "--cached", "--quiet", "HEAD", "--"])
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+    git_output(
+        root,
+        &["diff", "--cached", "--quiet", "HEAD", "--"],
+        Vec::new(),
+    )
+    .is_ok()
 }
 
 /// Where a pack of `plan` is written when no directory is named: under the repository's
@@ -1160,12 +1191,13 @@ fn index_matches_head(root: &Path) -> bool {
 /// name is its primary checkout's, which a linked worktree shares: a worktree's directory
 /// is named for its branch.
 pub(crate) fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
-    let common = crate::git::read_only(root)
-        .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let common = git_output(
+        root,
+        &["rev-parse", "--path-format=absolute", "--git-common-dir"],
+        Vec::new(),
+    )
+    .ok()
+    .map(|o| PathBuf::from(String::from_utf8_lossy(&o).trim()));
     let named = common
         .as_deref()
         .filter(|c| c.file_name().is_some_and(|n| n == ".git"))
@@ -1173,8 +1205,8 @@ pub(crate) fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
         .unwrap_or(root);
     let repo = named
         .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "repository".into());
+        .unwrap_or(std::ffi::OsStr::new("repository"))
+        .to_string_lossy();
     let short: String = plan
         .commit
         .as_deref()
@@ -1194,7 +1226,7 @@ pub(crate) fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
 /// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
 ///
 /// ```
-/// use majordomus_cli::pack::{build, plan, Profiles, INDEX, MANIFEST};
+/// use majordomus_cli::pack::{build, plan, INDEX, MANIFEST};
 /// # use std::process::Command;
 /// # let dir = tempfile::tempdir().unwrap();
 /// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
@@ -1209,53 +1241,45 @@ pub(crate) fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
 /// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
 /// # git(&["add", "-A"]);
 /// # git(&["commit", "-q", "-m", "one"]);
-/// let profiles = Profiles::load(&share, &root).unwrap();
 /// let out = dir.path().join("pack");
-/// let verdict = build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();
+/// let verdict = build(&plan(&root, &share, None), &root, &out).unwrap();
 /// assert!(verdict.passes, "{:?}", verdict.findings);
 /// assert!(out.join(INDEX).is_file() && out.join(MANIFEST).is_file());
 /// // a plan with a finding is never written
-/// let refused = build(&plan(&root, &share, Some("bare")), &profiles, &root, &out);
+/// let refused = build(&plan(&root, &share, Some("bare")), &root, &out);
 /// assert!(refused.is_err());
 /// ```
-pub fn build(
-    planned: &Planned,
-    profiles: &Profiles,
-    root: &Path,
-    out: &Path,
-) -> Result<PackVerdict, String> {
+pub fn build(planned: &Planned, root: &Path, out: &Path) -> Result<PackVerdict, String> {
     if !planned.plan.passes {
         return Err("the plan has findings; a pack with a finding is not built".into());
     }
     if out.exists() {
-        let mut names = std::fs::read_dir(out)
+        let names: Vec<String> = std::fs::read_dir(out)
             .map_err(|e| format!("cannot read {}: {e}", out.display()))?
             .flatten()
             .map(|e| e.file_name().to_string_lossy().into_owned())
-            .peekable();
-        if names.peek().is_some() {
-            if !out.join(MANIFEST).is_file() {
-                return Err(format!(
-                    "{} is not empty and holds no {MANIFEST}: it is not a pack, and nothing in it is removed",
-                    out.display()
-                ));
-            }
-            for name in names {
-                if name == MANIFEST || (name.ends_with(".md") && !name.contains('/')) {
-                    std::fs::remove_file(out.join(&name))
-                        .map_err(|e| format!("cannot replace {name}: {e}"))?;
-                } else {
-                    return Err(format!(
-                        "{} holds {name}, which no pack writes; remove it by hand",
-                        out.display()
-                    ));
-                }
-            }
+            .collect();
+        // every name is judged before anything is removed, so a refusal removes nothing
+        if !names.is_empty() && !out.join(MANIFEST).is_file() {
+            return Err(format!(
+                "{} is not empty and holds no {MANIFEST}: it is not a pack, and nothing in it is removed",
+                out.display()
+            ));
+        }
+        if let Some(name) = names.iter().find(|n| *n != MANIFEST && !n.ends_with(".md")) {
+            return Err(format!(
+                "{} holds {name}, which no pack writes; remove it by hand",
+                out.display()
+            ));
+        }
+        for name in &names {
+            std::fs::remove_file(out.join(name))
+                .map_err(|e| format!("cannot replace {name}: {e}"))?;
         }
     }
     std::fs::create_dir_all(out).map_err(|e| format!("cannot create {}: {e}", out.display()))?;
     shard::write(planned, out)?;
-    Ok(verify(out, profiles, root))
+    Ok(verify(out, &planned.profiles, root))
 }
 
 #[cfg(test)]

@@ -235,6 +235,13 @@ fn the_command_line_renders_every_verdict_and_exits_by_it() {
         "{out}"
     );
 
+    // the default profile declares no limits: measured, and refused for that
+    let (code, out, _) = pack(&f, &["plan"]);
+    assert_eq!(code, 10, "{out}");
+    assert!(out.contains("FAIL  pack.no_limits  -  "), "{out}");
+    // the remedy names `shards:`; what is absent is the line that counts shards
+    assert!(!out.contains("      shards: "), "{out}");
+
     let (code, out, _) = pack(&f, &["plan", "tight"]);
     assert_eq!(code, 10, "{out}");
     assert!(out.contains("FAIL  pack.file_too_large  "), "{out}");
@@ -319,4 +326,49 @@ fn the_library_plans_the_same_tree_the_tools_answer_about() {
     majordomus_cli::order::canonical_strings(&mut ordered);
     assert_eq!(dropped, ordered, "the dropped files are in canonical order");
     assert!(dropped.contains(&"src/logo.png"), "{dropped:?}");
+}
+
+#[test]
+fn the_command_line_refuses_what_it_cannot_answer() {
+    let f = fixture();
+    // a directory outside the repository is refused by the capability, not read
+    let (code, out, err) = pack(&f, &["verify", "../elsewhere"]);
+    assert_ne!(code, 0, "{out}{err}");
+    assert!(err.contains("leaves the repository"), "{err}");
+
+    // a destination that is not a pack is refused, and nothing in it is removed
+    f.write("tmp/mine/keep.txt", "mine\n");
+    let (code, _, err) = pack(&f, &["build", "chatgpt", "--out", "tmp/mine"]);
+    assert_ne!(code, 0);
+    assert!(err.contains("it is not a pack"), "{err}");
+    assert!(f.path("tmp/mine/keep.txt").is_file());
+
+    // profiles that cannot be read: the plan is unmeasured and the verifier refuses
+    let (code, _, _) = pack(&f, &["build", "chatgpt", "--out", "tmp/packs/p"]);
+    assert_eq!(code, 0);
+    f.write(".ai/repo/archive.yaml", "profiles: 7\n");
+    let (code, out, _) = pack(&f, &["plan", "chatgpt"]);
+    assert_eq!(code, 12, "{out}");
+    assert!(out.contains(".ai/repo/archive.yaml"), "{out}");
+    let (code, out, err) = pack(&f, &["verify", "tmp/packs/p"]);
+    assert_ne!(code, 0, "{out}{err}");
+    assert!(err.contains(".ai/repo/archive.yaml"), "{err}");
+}
+
+#[test]
+fn outside_a_repository_there_is_nothing_to_pack() {
+    let plain = tempfile::tempdir().unwrap();
+    let out = Command::new(common::BIN)
+        .args(["pack", "plan"])
+        .current_dir(plain.path())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .output()
+        .unwrap();
+    assert!(!out.status.success());
+    assert!(
+        out.stdout.is_empty(),
+        "nothing is planned outside a repository"
+    );
 }

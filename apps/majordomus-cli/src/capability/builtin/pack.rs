@@ -25,7 +25,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::pack::{PackPlan, PackVerdict, Profiles};
+use crate::pack::{PackPlan, PackVerdict, Planned, Profiles};
 use crate::{capability, module};
 
 use super::{get, mcp};
@@ -95,10 +95,20 @@ fn share_dir(ctx: &Context, root: &Path) -> Result<PathBuf, CapabilityError> {
         .map_err(|e| CapabilityError::Internal(e.to_string()))
 }
 
-fn plan(ctx: &Context, input: PackPlanInput) -> Result<PackPlan, CapabilityError> {
+/// The plan of `profile` for the repository the context reads, with the content it was
+/// made from: what `pack.plan` answers and what `majordomus pack build` writes. A
+/// distribution that cannot be found is a plan that could not be measured, as an unreadable
+/// profiles file is.
+pub(crate) fn planned(ctx: &Context, profile: Option<&str>) -> Planned {
     let root = PathBuf::from(&ctx.index.repository.root);
-    let share = share_dir(ctx, &root)?;
-    Ok(crate::pack::plan(&root, &share, input.profile.as_deref()).plan)
+    match share_dir(ctx, &root) {
+        Ok(share) => crate::pack::plan(&root, &share, profile),
+        Err(e) => crate::pack::unmeasured(profile.unwrap_or(""), e.to_string()),
+    }
+}
+
+fn plan(ctx: &Context, input: PackPlanInput) -> Result<PackPlan, CapabilityError> {
+    Ok(planned(ctx, input.profile.as_deref()).plan)
 }
 
 /// The directory a verify input names, refused when it leaves the repository.
@@ -202,6 +212,27 @@ mod tests {
         assert!(inside(root, "../other").is_err());
         assert!(inside(root, "tmp/../../x").is_err());
         assert!(inside(root, "/etc").is_err());
+    }
+
+    /// A context whose distribution is named and is not there: the one way a share can
+    /// fail to be found whatever the environment of the run holds.
+    #[test]
+    fn a_distribution_that_cannot_be_found_is_unmeasured_and_verifies_nothing() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let built = repo.context().expect("a context");
+        let mut index = repo.index().expect("an index");
+        index.share = Some(PathBuf::from("/nonexistent/share"));
+        let ctx = Context::new(std::sync::Arc::new(index), built.registry.clone());
+
+        let p = plan(&ctx, PackPlanInput::default()).expect("answered");
+        assert!(!p.measured && !p.passes, "{p:?}");
+        assert!(p.reason.is_some_and(|r| r.contains("/nonexistent/share")));
+
+        let input = PackVerifyInput {
+            dir: "tmp/packs/x".into(),
+        };
+        let e = verify(&ctx, input).expect_err("refused");
+        assert!(matches!(e, CapabilityError::Internal(_)), "{e}");
     }
 
     #[test]

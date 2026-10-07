@@ -282,7 +282,7 @@ pub enum PackCommand {
     Build {
         /// A profile of share/archive.yaml (default: its `default`)
         profile: Option<String>,
-        /// Write here instead of tmp/packs/<repo>-<profile>-<commit>
+        /// Write here instead of `tmp/packs/<repo>-<profile>-<commit>`
         #[arg(long, value_name = "DIR")]
         out: Option<PathBuf>,
         /// Replace a pack already at the destination (never a directory that is not a pack)
