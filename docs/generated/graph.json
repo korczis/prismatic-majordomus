@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.14.0",
+  "generator": "majordomus-cli 0.15.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -720,7 +720,7 @@
         "id": "capability:intents.list",
         "kind": "capability",
         "label": "intents.list",
-        "summary": "Every intent, with its derived stage",
+        "summary": "Every intent, with its derived stage and verdict",
         "route": "/cockpit/capabilities/intents.list",
         "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
@@ -729,7 +729,7 @@
         "id": "capability:intents.preflight",
         "kind": "capability",
         "label": "intents.preflight",
-        "summary": "Which intent a piece of work serves",
+        "summary": "Which intent a piece of work serves, or why it may not proceed",
         "route": "/cockpit/capabilities/intents.preflight",
         "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
@@ -2163,6 +2163,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/cockpit/intents.rs",
+        "kind": "file",
+        "label": "intents.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/intents.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2536,6 +2544,14 @@
         "label": "intent_realization.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/intent_realization.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/intent_review.rs",
+        "kind": "file",
+        "label": "intent_review.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_review.rs",
         "external": true
       },
       {
@@ -2944,6 +2960,22 @@
         "label": "http_serve.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/http_serve.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/intent.rs",
+        "kind": "file",
+        "label": "intent.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/intent.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/intent_realization.rs",
+        "kind": "file",
+        "label": "intent_realization.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/intent_realization.rs",
         "external": true
       },
       {
@@ -6009,6 +6041,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0107",
+        "kind": "adr",
+        "label": "adr-0107",
+        "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "route": "/cockpit/objects/adr/adr-0107",
+        "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-05",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "rule:project.completion-never-decides-satisfaction",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:.ai/repo/project/milestones/intent-lifecycle.yaml",
+            "test:test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -6835,7 +6894,6 @@
         "facts": {
           "claim": "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own",
           "implementation": "lib/update.sh",
-          "note": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.",
           "responsibility": "projection",
           "source": "docs/DESIGN.md",
           "test": "test/cases/03_update.sh"
@@ -8032,6 +8090,185 @@
           "responsibility": "doctor",
           "source": "docs/INSTALL.md",
           "test": "test/cases/85_installer.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-closes-github-milestones",
+        "kind": "claim",
+        "label": "intent-closes-github-milestones",
+        "summary": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+        "route": "/cockpit/objects/claim/intent-closes-github-milestones",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+          "implementation": "-",
+          "note": "The GitHub projection closes a milestone from its derived plan status alone and reads no intent. Closed work the evidence contradicts is refused by the intent-realization gate, not by the tracker.",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-cockpit-pages",
+        "kind": "claim",
+        "label": "intent-cockpit-pages",
+        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "route": "/cockpit/objects/claim/intent-cockpit-pages",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
+          "responsibility": "plan",
+          "source": "docs/COCKPIT.md",
+          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-command-deployment-evidence",
+        "kind": "claim",
+        "label": "intent-command-deployment-evidence",
+        "summary": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+        "route": "/cockpit/objects/claim/intent-command-deployment-evidence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+          "implementation": "-",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-criteria-covered",
+        "kind": "claim",
+        "label": "intent-criteria-covered",
+        "summary": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+        "route": "/cockpit/objects/claim/intent-criteria-covered",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+          "implementation": "apps/majordomus-cli/src/intent_plan.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-in-session-context",
+        "kind": "claim",
+        "label": "intent-in-session-context",
+        "summary": "A session will load the intents its task serves when it starts",
+        "route": "/cockpit/objects/claim/intent-in-session-context",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "A session will load the intents its task serves when it starts",
+          "implementation": "-",
+          "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it.",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-links-resolve",
+        "kind": "claim",
+        "label": "intent-links-resolve",
+        "summary": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+        "route": "/cockpit/objects/claim/intent-links-resolve",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-plan-reviewed",
+        "kind": "claim",
+        "label": "intent-plan-reviewed",
+        "summary": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+        "route": "/cockpit/objects/claim/intent-plan-reviewed",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+          "implementation": "apps/majordomus-cli/src/intent_review.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-preflight-names-the-intent",
+        "kind": "claim",
+        "label": "intent-preflight-names-the-intent",
+        "summary": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+        "route": "/cockpit/objects/claim/intent-preflight-names-the-intent",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "apps/majordomus-cli/tests/intent.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-realization-held-to-evidence",
+        "kind": "claim",
+        "label": "intent-realization-held-to-evidence",
+        "summary": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+        "route": "/cockpit/objects/claim/intent-realization-held-to-evidence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+          "implementation": "apps/majordomus-cli/src/intent_realization.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-refused-at-plan-start",
+        "kind": "claim",
+        "label": "intent-refused-at-plan-start",
+        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "route": "/cockpit/objects/claim/intent-refused-at-plan-start",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+          "implementation": "-",
+          "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed.",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-stage-derived",
+        "kind": "claim",
+        "label": "intent-stage-derived",
+        "summary": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+        "route": "/cockpit/objects/claim/intent-stage-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
         }
       },
       {
@@ -12614,6 +12851,14 @@
         "source": "docs/INTEGRATION.md"
       },
       {
+        "id": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
+        "kind": "document",
+        "label": "docs/INTEGRATION_ROLLOUT.md",
+        "summary": "Integration rollout record",
+        "route": "/cockpit/objects/document/docs-integration-rollout-md",
+        "source": "docs/INTEGRATION_ROLLOUT.md"
+      },
+      {
         "id": "majordomus://document/docs/KNOWLEDGE.md",
         "kind": "document",
         "label": "docs/KNOWLEDGE.md",
@@ -13572,6 +13817,94 @@
         "summary": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
         "route": "/cockpit/objects/document/docs-claims-installer-verifies-before-installing-md",
         "source": "docs/claims/installer-verifies-before-installing.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-closes-github-milestones.md",
+        "kind": "document",
+        "label": "docs/claims/intent-closes-github-milestones.md",
+        "summary": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+        "route": "/cockpit/objects/document/docs-claims-intent-closes-github-milestones-md",
+        "source": "docs/claims/intent-closes-github-milestones.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-cockpit-pages.md",
+        "kind": "document",
+        "label": "docs/claims/intent-cockpit-pages.md",
+        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "route": "/cockpit/objects/document/docs-claims-intent-cockpit-pages-md",
+        "source": "docs/claims/intent-cockpit-pages.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-command-deployment-evidence.md",
+        "kind": "document",
+        "label": "docs/claims/intent-command-deployment-evidence.md",
+        "summary": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+        "route": "/cockpit/objects/document/docs-claims-intent-command-deployment-evidence-md",
+        "source": "docs/claims/intent-command-deployment-evidence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-criteria-covered.md",
+        "kind": "document",
+        "label": "docs/claims/intent-criteria-covered.md",
+        "summary": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+        "route": "/cockpit/objects/document/docs-claims-intent-criteria-covered-md",
+        "source": "docs/claims/intent-criteria-covered.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-in-session-context.md",
+        "kind": "document",
+        "label": "docs/claims/intent-in-session-context.md",
+        "summary": "A session will load the intents its task serves when it starts",
+        "route": "/cockpit/objects/document/docs-claims-intent-in-session-context-md",
+        "source": "docs/claims/intent-in-session-context.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-links-resolve.md",
+        "kind": "document",
+        "label": "docs/claims/intent-links-resolve.md",
+        "summary": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+        "route": "/cockpit/objects/document/docs-claims-intent-links-resolve-md",
+        "source": "docs/claims/intent-links-resolve.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-plan-reviewed.md",
+        "kind": "document",
+        "label": "docs/claims/intent-plan-reviewed.md",
+        "summary": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+        "route": "/cockpit/objects/document/docs-claims-intent-plan-reviewed-md",
+        "source": "docs/claims/intent-plan-reviewed.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-preflight-names-the-intent.md",
+        "kind": "document",
+        "label": "docs/claims/intent-preflight-names-the-intent.md",
+        "summary": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+        "route": "/cockpit/objects/document/docs-claims-intent-preflight-names-the-intent-md",
+        "source": "docs/claims/intent-preflight-names-the-intent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-realization-held-to-evidence.md",
+        "kind": "document",
+        "label": "docs/claims/intent-realization-held-to-evidence.md",
+        "summary": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+        "route": "/cockpit/objects/document/docs-claims-intent-realization-held-to-evidence-md",
+        "source": "docs/claims/intent-realization-held-to-evidence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-refused-at-plan-start.md",
+        "kind": "document",
+        "label": "docs/claims/intent-refused-at-plan-start.md",
+        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "route": "/cockpit/objects/document/docs-claims-intent-refused-at-plan-start-md",
+        "source": "docs/claims/intent-refused-at-plan-start.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-stage-derived.md",
+        "kind": "document",
+        "label": "docs/claims/intent-stage-derived.md",
+        "summary": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+        "route": "/cockpit/objects/document/docs-claims-intent-stage-derived-md",
+        "source": "docs/claims/intent-stage-derived.md"
       },
       {
         "id": "majordomus://document/docs/claims/interfaces-are-projections.md",
@@ -15982,7 +16315,14 @@
             "evidence-gates-done",
             "roadmap-derived",
             "github-projection",
-            "task-dependencies"
+            "task-dependencies",
+            "intent-stage-derived",
+            "intent-links-resolve",
+            "intent-criteria-covered",
+            "intent-plan-reviewed",
+            "intent-realization-held-to-evidence",
+            "intent-preflight-names-the-intent",
+            "intent-cockpit-pages"
           ],
           "cockpit": [
             "intents"
@@ -29778,10 +30118,6 @@
           ],
           "order": 96,
           "priority": "p1",
-          "risks": [
-            "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
-            "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
-          ],
           "scope": [
             ".ai/repo/project",
             ".ai/repo/ci/gates.yaml",
@@ -29795,7 +30131,7 @@
             "test/cases"
           ],
           "slug": "intent-lifecycle",
-          "updated_at": "2026-09-15",
+          "updated_at": "2026-10-05",
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
@@ -34878,12 +35214,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "kind": "rule",
-        "label": "project.an-intent-outlives-its-sessions@1",
+        "label": "project.an-intent-outlives-its-sessions@2",
         "summary": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
-        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-1",
-        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md",
+        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-2",
+        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -35037,6 +35373,28 @@
             "shell",
             "process",
             "agents"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "kind": "rule",
+        "label": "project.completion-never-decides-satisfaction@2",
+        "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "route": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-2",
+        "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-serves-a-declared-intent@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
           ]
         }
       },
@@ -43315,6 +43673,48 @@
         "source": "test/cases/88_rust_command_tested.sh"
       },
       {
+        "id": "majordomus://test/test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-890-an-intent-criterion-is-met-only-by-current-evidence-sh",
+        "source": "test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
+        "kind": "test",
+        "label": "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
+        "route": "/cockpit/objects/test/test-cases-892-what-is-said-of-intents-is-what-the-claims-matrix-says-sh",
+        "source": "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "kind": "test",
+        "label": "test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-893-preflight-follows-what-an-issue-serves-sh",
+        "source": "test/cases/893_preflight_follows_what_an_issue_serves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/894_github_sync_applies_only_the_trunk.sh",
+        "kind": "test",
+        "label": "test/cases/894_github_sync_applies_only_the_trunk.sh",
+        "route": "/cockpit/objects/test/test-cases-894-github-sync-applies-only-the-trunk-sh",
+        "source": "test/cases/894_github_sync_applies_only_the_trunk.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "kind": "test",
+        "label": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "route": "/cockpit/objects/test/test-cases-895-a-finished-task-does-not-satisfy-an-intent-sh",
+        "source": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "kind": "test",
+        "label": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "route": "/cockpit/objects/test/test-cases-899-a-bootstrap-names-only-rules-in-force-sh",
+        "source": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "test",
         "label": "test/cases/89_web_surface.sh",
@@ -50963,7 +51363,7 @@
       },
       {
         "source": "majordomus://adr/adr-0075",
-        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "kind": "put_in_force"
       },
       {
@@ -52039,6 +52439,46 @@
       {
         "source": "majordomus://adr/adr-0104",
         "target": "test:apps/majordomus-cli/tests/product.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
         "kind": "put_in_force"
       },
       {
@@ -54024,6 +54464,186 @@
       {
         "source": "majordomus://claim/installer-verifies-before-installing",
         "target": "majordomus://test/test/cases/85_installer.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-closes-github-milestones",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-closes-github-milestones",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-cockpit-pages",
+        "target": "file:apps/majordomus-cli/src/cockpit/intents.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-cockpit-pages",
+        "target": "file:apps/majordomus-cli/tests/intent_realization.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-cockpit-pages",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-cockpit-pages",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-command-deployment-evidence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-command-deployment-evidence",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "file:apps/majordomus-cli/src/intent_plan.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "file:apps/majordomus-cli/src/intent_review.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-preflight-names-the-intent",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-preflight-names-the-intent",
+        "target": "file:apps/majordomus-cli/tests/intent.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-preflight-names-the-intent",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-preflight-names-the-intent",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "file:apps/majordomus-cli/src/intent_realization.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "majordomus://test/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "kind": "tested_by"
       },
       {
@@ -57482,6 +58102,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/KNOWLEDGE.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -58078,6 +58703,61 @@
       },
       {
         "source": "majordomus://document/docs/claims/installer-verifies-before-installing.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-closes-github-milestones.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-cockpit-pages.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-command-deployment-evidence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-criteria-covered.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-in-session-context.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-links-resolve.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-plan-reviewed.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-preflight-names-the-intent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-realization-held-to-evidence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-refused-at-plan-start.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-stage-derived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -64537,17 +65217,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
@@ -64629,6 +65309,21 @@
       {
         "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "majordomus://rule/project.portable-shell@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
       {
@@ -67843,6 +68538,36 @@
       },
       {
         "source": "majordomus://test/test/cases/88_rust_command_tested.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/894_github_sync_applies_only_the_trunk.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -71688,8 +72413,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2344,
-      "edges": 5154,
+      "nodes": 2379,
+      "edges": 5219,
       "acyclic": true,
       "truncated": false
     }

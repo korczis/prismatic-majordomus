@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.14.0
+# Generator: majordomus-cli 0.15.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.14.0"
+  version: "0.15.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -72,7 +72,7 @@ tags:
   - name: intent_realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   - name: intents
-    description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+    description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   - name: knowledge_base
     description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
   - name: lifecycle
@@ -4254,14 +4254,14 @@ paths:
   "/api/v1/intents":
     get:
       operationId: intents.list
-      summary: "Every intent, with its derived stage"
-      description: "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so."
+      summary: "Every intent, with its derived stage and verdict"
+      description: "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, the stage those two derive — declared, planned, executing, verifying or satisfied, or cancelled or superseded when the record says so — and the verdict the criteria alone derive (ADR 0107): satisfied when every criterion is met, unsatisfied when a test or claim criterion is not, unknown when only command or deployment criteria are unmet or none is declared, with the criteria holding it back."
       tags:
         - intents
       parameters: []
       responses:
         "200":
-          description: "Every intent, with its derived stage: the result."
+          description: "Every intent, with its derived stage and verdict: the result."
           content:
             "application/json":
               schema:
@@ -4425,8 +4425,8 @@ paths:
   "/api/v1/intents/preflight":
     get:
       operationId: intents.preflight
-      summary: Which intent a piece of work serves
-      description: "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names."
+      summary: "Which intent a piece of work serves, or why it may not proceed"
+      description: "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria."
       tags:
         - intents
       parameters:
@@ -4451,7 +4451,7 @@ paths:
               value: ""
       responses:
         "200":
-          description: "Which intent a piece of work serves: the result."
+          description: "Which intent a piece of work serves, or why it may not proceed: the result."
           content:
             "application/json":
               schema:
@@ -4498,7 +4498,7 @@ paths:
     get:
       operationId: intent_realization.work
       summary: "Which work realises which intent, and what each still lacks"
-      description: "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met. Live work serving no intent is a warning."
+      description: "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning."
       tags:
         - intent_realization
       parameters:
@@ -4560,7 +4560,7 @@ paths:
     get:
       operationId: intents.record
       summary: "One intent, with everything derived about it"
-      description: "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`."
+      description: "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`."
       tags:
         - intents
       parameters:
@@ -14671,6 +14671,21 @@ components:
         - soft_limit
         - hard_limit
       description: "When the edge considers a machine loaded, in requests."
+    ConditionState:
+      oneOf:
+        - type: string
+          const: satisfied
+          description: Already true at the observed commit.
+        - type: string
+          const: missing
+          description: Not true; work is needed.
+        - type: string
+          const: conflicting
+          description: Something in the repository contradicts it.
+        - type: string
+          const: unknown
+          description: Not determined. Never read as satisfied.
+      description: "The state of one criterion as the gap observed it. Four values, because \"not determined\"\nhas to be writable: an omitted criterion is refused, and `Unknown` is never a pass.\n\n```\nuse majordomus_cli::intent_review::ConditionState;\nassert_eq!(serde_json::to_string(&ConditionState::Conflicting).unwrap(), \"\\\"conflicting\\\"\");\nassert_ne!(ConditionState::Unknown, ConditionState::Satisfied);\n```"
     Confidence:
       oneOf:
         - type: string
@@ -15634,6 +15649,77 @@ components:
         - blocks
         - weight
       description: "One unfinished issue that holds back downstream work, and how much."
+    CritiqueClass:
+      oneOf:
+        - type: string
+          const: missed_requirement
+          description: Does the plan miss something the intent requires?
+        - type: string
+          const: unproven_assumption
+          description: Which assumption is unproven?
+        - type: string
+          const: insufficient_work
+          description: Which criterion lacks sufficient work?
+        - type: string
+          const: unnecessary_work
+          description: Which work item is unnecessary?
+        - type: string
+          const: regression_risk
+          description: What could regress?
+        - type: string
+          const: surface_missing
+          description: Which related surface must also change?
+        - type: string
+          const: delivery_verification
+          description: Which deployment or runtime verification is required?
+      description: "The class of a critique finding: the question the adversarial pass asked. Closed, so that a\nreview's findings can be counted by question rather than read as prose.\n\n```\nuse majordomus_cli::intent_review::CritiqueClass;\nassert_eq!(\n    serde_json::to_string(&CritiqueClass::DeliveryVerification).unwrap(),\n    \"\\\"delivery_verification\\\"\"\n);\n```"
+    CritiqueFinding:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique within the critique.
+        class:
+          anyOf:
+            - "$ref": "#/components/schemas/CritiqueClass"
+            - type: "null"
+          description: "The class, or `None` for a class this module does not know."
+        class_text:
+          type: string
+          description: As written.
+        subject:
+          type: string
+          description: "`<intent>#<criterion>`, an issue id or a milestone id."
+        finding:
+          type: string
+          description: The finding.
+        blocking:
+          type: boolean
+          description: Whether execution may not start while it is open.
+        resolution:
+          anyOf:
+            - "$ref": "#/components/schemas/ResolutionState"
+            - type: "null"
+          description: "The resolution, or `None` for a state this module does not know."
+        resolution_text:
+          type: string
+          description: As written.
+        issue:
+          type: string
+          description: "The issue that carries it, when planned."
+        because:
+          type: string
+          description: "Why, when rejected."
+      required:
+        - id
+        - class_text
+        - subject
+        - finding
+        - blocking
+        - resolution_text
+        - issue
+        - because
+      description: "One critique finding: what the review found, what it is about, whether it blocks execution,\nand how it was resolved. `class` and `resolution` are `None` when the record spells one this\nmodule does not know, and the `_text` fields keep what was written.\n\n```\nuse majordomus_cli::intent_review::{CritiqueFinding, CritiqueRecord, ResolutionState};\nlet c = CritiqueRecord::from_metadata(\"c.yaml\", &serde_json::json!({\n    \"intent\": \"x\",\n    \"findings\": [{\"id\": \"f1\", \"class\": \"regression_risk\", \"subject\": \"x#a\",\n                  \"blocking\": true, \"resolution\": {\"state\": \"planned\", \"issue\": \"I1\"}}],\n}));\nlet finding: &CritiqueFinding = &c.findings[0];\nassert!(finding.blocking);\nassert_eq!(finding.resolution, Some(ResolutionState::Planned));\nassert_eq!(finding.issue, \"I1\");\n```"
     DashboardCard:
       type: object
       properties:
@@ -20938,6 +21024,34 @@ components:
           const: invalid
           description: "A timestamp that does not parse, or one in the future."
       description: "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
+    GapCondition:
+      type: object
+      properties:
+        criterion:
+          type: string
+          description: The criterion id of the intent.
+        state:
+          anyOf:
+            - "$ref": "#/components/schemas/ConditionState"
+            - type: "null"
+          description: "The state, or `None` when the record spells one this module does not know."
+        state_text:
+          type: string
+          description: "As written, so a finding can quote an unknown state."
+        because:
+          type: string
+          description: Why.
+        observations:
+          type: array
+          items:
+            type: string
+          description: The observation ids it rests on.
+      required:
+        - criterion
+        - state_text
+        - because
+        - observations
+      description: "One criterion's state against the observations, as the record spells it. `state` is `None`\nwhen the file names a state this module does not know, and `state_text` keeps what was\nwritten so the finding can quote it.\n\n```\nuse majordomus_cli::intent_review::{ConditionState, GapCondition};\nlet c = GapCondition {\n    criterion: \"criteria-are-covered\".into(),\n    state: Some(ConditionState::Missing),\n    state_text: \"missing\".into(),\n    because: \"nothing relates a criterion to an issue\".into(),\n    observations: vec![\"no-serves-field\".into()],\n};\nassert_eq!(c.state, Some(ConditionState::Missing));\nassert!(!c.observations.is_empty());\n```"
     Gate:
       type: object
       properties:
@@ -22774,6 +22888,11 @@ components:
         met:
           type: boolean
           description: "Derived: the state is `current`."
+        proof:
+          anyOf:
+            - "$ref": "#/components/schemas/ProofState"
+            - type: "null"
+          description: "Derived: the evidence module's own verdict behind `state`, for a `test` or `claim`\ncriterion whose reference resolves. A met criterion rests on `proven` (a pass at this\nrevision) or `inputs_unchanged` (a pass whose named inputs have not moved since, which\nis not proof at this revision), and every surface shows which, so `met` is never the\none tick for both."
         reproduce:
           type:
             - string
@@ -22786,7 +22905,7 @@ components:
         - ref
         - state
         - met
-      description: "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
+      description: "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    proof: Some(ProofState::NotRun),\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
     IntentEpisode:
       type: object
       properties:
@@ -22804,23 +22923,23 @@ components:
       oneOf:
         - type: string
           const: current
-          description: "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+          description: "A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger's own included,\nleaves it current. A test that proves no claim naming an implementation names no code\nunder test, so for it nothing but the ledger may have changed since the run. The only\nstate that meets a criterion; the criterion's `proof` says whether it rests on\n`proven` or on `inputs_unchanged`."
         - type: string
           const: stale
-          description: "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+          description: "A pass that is not current evidence: something the criterion names has changed since\nit, it names no code under test and anything but the ledger and the plan's own records\nhas changed since, the\ntest no longer hashes to what ran, the run's commit is not in this history (or git\ncould not compare it), or the run measured a tree that was not its commit — a run on a\ndirty tree, which no later tree can be matched against."
         - type: string
           const: failing
-          description: The latest recorded run did not pass.
+          description: "The latest recorded run failed, timed out or errored."
         - type: string
           const: not_run
-          description: The reference resolves and nothing has been recorded for it.
+          description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
         - type: string
           const: not_derivable
           description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
         - type: string
           const: unresolved
           description: The reference is empty or names nothing this repository holds.
-      description: "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+      description: "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module's one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
     IntentExplanation:
       type: object
       properties:
@@ -22956,6 +23075,13 @@ components:
             format: uint
             minimum: 0
           description: "How many in each stage, keyed by the stage word."
+        verdicts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many with each verdict, keyed by the verdict word."
         intents:
           type: array
           items:
@@ -22964,8 +23090,9 @@ components:
       required:
         - count
         - stages
+        - verdicts
         - intents
-      description: "Every intent, with its derived stage, and how many there are in each stage: what\n`majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer\nwith, out of one derivation.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentList;\nlet empty = IntentList {\n    count: 0,\n    stages: std::collections::BTreeMap::new(),\n    intents: vec![],\n};\n// a repository that declares no intent answers the route, with nothing in it\nassert_eq!(empty.count, 0);\n```"
+      description: "Every intent, with its derived stage and verdict, and how many there are in each: what\n`majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer\nwith, out of one derivation.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentList;\nlet empty = IntentList {\n    count: 0,\n    stages: std::collections::BTreeMap::new(),\n    verdicts: std::collections::BTreeMap::new(),\n    intents: vec![],\n};\n// a repository that declares no intent answers the route, with nothing in it\nassert_eq!(empty.count, 0);\n```"
     IntentMilestone:
       type: object
       properties:
@@ -22988,34 +23115,202 @@ components:
       type: object
       properties:
         verdict:
-          type: string
-          description: "`serves` or `refused`."
+          "$ref": "#/components/schemas/IntentPreflightVerdict"
+          description: "`serves`, `maintenance` or `refused`: refused when any issue is, else serves when any\nissue serves an intent, else maintenance."
         issues:
           type: array
           items:
-            type: string
-          description: "The issues the work was resolved to: the one named, or the open issues whose scope\ncovers a path."
+            "$ref": "#/components/schemas/IntentPreflightIssue"
+          description: "The issues the work was resolved to — the one named, or the open issues whose scope\ncovers a path — each with its own verdict."
         matches:
           type: array
           items:
             "$ref": "#/components/schemas/IntentPreflightMatch"
-          description: "Every intent reached, with the link."
+          description: "Every intent an issue serves, with the link."
+        intents:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentPreflightIntent"
+          description: "The intents the work serves, and no other, each with what it asks of the worker."
         governance:
           type: array
           items:
             type: string
-          description: "The governance of every intent reached, each entry once, in first-seen order."
+          description: "The governance of those intents, each entry once, in first-seen order."
+        refusals:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentPreflightRefusal"
+          description: "Every reason the preflight refused, in issue order; empty unless the verdict is\n`refused`."
         refusal:
           type:
             - string
             - "null"
-          description: "When refused: the link that is missing."
+          description: "When refused: every refusal's sentence, joined, for a reader who wants one line."
       required:
         - verdict
         - issues
         - matches
+        - intents
         - governance
-      description: "Which intent a piece of work serves, or why it serves none: the issues it resolved to, every\nintent reached with its link, the governance those intents load, and — when nothing is\nreached — the first link that is missing.\n\n```\nuse majordomus_cli::intent::IntentPreflight;\nlet refused = IntentPreflight {\n    verdict: \"refused\".into(),\n    issues: vec![],\n    matches: vec![],\n    governance: vec![],\n    refusal: Some(\"no open issue's scope covers README.md\".into()),\n};\nassert_eq!(refused.verdict, \"refused\");\nassert!(refused.refusal.is_some());\n```"
+        - refusals
+      description: "Which intent a piece of work serves, whether it is maintenance, or why it may not proceed:\nthe issues it resolved to with a verdict each, every intent reached with its link, what\nthose intents require of the worker, and every refusal with its cause.\n\n```\nuse majordomus_cli::intent::{\n    IntentPreflight, IntentPreflightCause, IntentPreflightRefusal, IntentPreflightVerdict,\n};\nlet refused = IntentPreflight {\n    verdict: IntentPreflightVerdict::Refused,\n    issues: vec![],\n    matches: vec![],\n    intents: vec![],\n    governance: vec![],\n    refusals: vec![IntentPreflightRefusal::new(\n        None,\n        IntentPreflightCause::NoIssueCoversPaths,\n        \"no open issue's scope covers README.md\".into(),\n    )],\n    refusal: Some(\"no open issue's scope covers README.md\".into()),\n};\nassert_eq!(refused.verdict, IntentPreflightVerdict::Refused);\nassert_eq!(refused.refusals[0].cause, IntentPreflightCause::NoIssueCoversPaths);\n```"
+    IntentPreflightCause:
+      oneOf:
+        - type: string
+          const: unknown_issue
+          description: The issue named is not an issue of the plan.
+        - type: string
+          const: no_issue_covers_paths
+          description: "No open issue's scope covers any of the paths."
+        - type: string
+          const: issue_serves_nothing
+          description: "The issue's milestone realises a live intent and the issue serves none of its criteria."
+        - type: string
+          const: serves_another_intent
+          description: The issue serves a criterion of an intent whose milestones do not include its own.
+        - type: string
+          const: serves_unknown_criterion
+          description: "The issue serves an intent or a criterion that does not exist, or a token that is not\n`<intent>#<criterion>`."
+        - type: string
+          const: intent_not_critiqued
+          description: "An intent the issue serves has no critique: its plan was never reviewed."
+        - type: string
+          const: open_blocking_finding
+          description: The critique of an intent the issue serves has a blocking finding still open.
+      description: "Why a preflight refused, as a word a reader greps for.\n\n```\nuse majordomus_cli::intent::IntentPreflightCause;\nassert_eq!(\n    serde_json::to_string(&IntentPreflightCause::OpenBlockingFinding).unwrap(),\n    \"\\\"open_blocking_finding\\\"\"\n);\nassert_ne!(\n    IntentPreflightCause::IntentNotCritiqued,\n    IntentPreflightCause::IssueServesNothing\n);\n```"
+    IntentPreflightCritique:
+      type: object
+      properties:
+        source:
+          type: string
+          description: Repository-relative path of the record.
+        reviewed_at:
+          type: string
+          description: The commit the plan was reviewed at.
+        reviewed_by:
+          type: string
+          description: Who or what reviewed it.
+        open_blocking:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CritiqueFinding"
+          description: "Every blocking finding whose resolution is `open`; work may not start while one is."
+      required:
+        - source
+        - reviewed_at
+        - reviewed_by
+        - open_blocking
+      description: "The critique of an intent as a preflight reads it: where it is, when and by whom the plan\nwas reviewed, and the blocking findings still open.\n\n```\nuse majordomus_cli::intent::IntentPreflightCritique;\nlet c = IntentPreflightCritique {\n    source: \".ai/repo/project/critiques/x.yaml\".into(),\n    reviewed_at: \"c3f20da\".into(),\n    reviewed_by: \"another session\".into(),\n    open_blocking: vec![],\n};\nassert!(c.open_blocking.is_empty());\n```"
+    IntentPreflightGap:
+      type: object
+      properties:
+        source:
+          type: string
+          description: Repository-relative path of the record.
+        observed_at:
+          type: string
+          description: The commit the observations were made on.
+        conditions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/GapCondition"
+          description: "The gap's answer for each criterion the work serves, in the gap's order."
+        risks:
+          type: array
+          items:
+            type: string
+          description: The risks it recorded.
+      required:
+        - source
+        - observed_at
+        - conditions
+        - risks
+      description: "The recorded gap of an intent as a preflight reads it, bounded to the criteria the work\nserves: what was observed of each, at which commit, and the risks.\n\n```\nuse majordomus_cli::intent::IntentPreflightGap;\nlet g = IntentPreflightGap {\n    source: \".ai/repo/project/gaps/x.yaml\".into(),\n    observed_at: \"c3f20da\".into(),\n    conditions: vec![],\n    risks: vec![\"the schema may refuse old records\".into()],\n};\nassert_eq!(g.risks.len(), 1);\n```"
+    IntentPreflightIntent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The identity.
+        title:
+          type: string
+          description: One line.
+        stage:
+          "$ref": "#/components/schemas/IntentStage"
+          description: Its derived stage.
+        statement:
+          type: string
+          description: What must become true.
+        criteria:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentCriterion"
+          description: "The criteria the work serves, each with the state of its evidence now, in the intent's\norder."
+        invariants:
+          type: array
+          items:
+            type: string
+          description: What must stay true.
+        non_goals:
+          type: array
+          items:
+            type: string
+          description: What is deliberately not required.
+        governance:
+          type: array
+          items:
+            type: string
+          description: The governance a worker on this intent loads.
+        critique:
+          anyOf:
+            - "$ref": "#/components/schemas/IntentPreflightCritique"
+            - type: "null"
+          description: The critique of its plan; absent when none was ever recorded.
+        gap:
+          anyOf:
+            - "$ref": "#/components/schemas/IntentPreflightGap"
+            - type: "null"
+          description: "Its recorded gap, bounded to the criteria above; absent when none was recorded."
+      required:
+        - id
+        - title
+        - stage
+        - statement
+        - criteria
+        - invariants
+        - non_goals
+        - governance
+      description: "One intent the work is held to, with what a worker needs before touching it: the statement,\nthe criteria the work serves with the live state of their evidence, the invariants and\nnon-goals, the governance, the critique and the gap. Only the intents the work reaches are\ncarried, never every intent.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIntent, IntentStage};\nlet i = IntentPreflightIntent {\n    id: \"x\".into(),\n    title: \"X\".into(),\n    stage: IntentStage::Planned,\n    statement: \"It becomes true.\".into(),\n    criteria: vec![],\n    invariants: vec![],\n    non_goals: vec![],\n    governance: vec![],\n    critique: None,\n    gap: None,\n};\n// no critique recorded is carried as an absence, never as an empty review\nassert!(i.critique.is_none());\n```"
+    IntentPreflightIssue:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue id.
+        milestone:
+          type: string
+          description: Its milestone.
+        verdict:
+          "$ref": "#/components/schemas/IntentPreflightVerdict"
+          description: What the preflight concluded about this issue.
+        serves:
+          type: array
+          items:
+            type: string
+          description: "The `<intent>#<criterion>` references it declares, as declared."
+        intents:
+          type: array
+          items:
+            type: string
+          description: "The live intents whose milestones include its milestone, sorted."
+      required:
+        - issue
+        - milestone
+        - verdict
+        - serves
+        - intents
+      description: "One issue the work resolved to, and what the preflight concluded about it.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIssue, IntentPreflightVerdict};\nlet i = IntentPreflightIssue {\n    issue: \"I0007\".into(),\n    milestone: \"ops\".into(),\n    verdict: IntentPreflightVerdict::Maintenance,\n    serves: vec![],\n    intents: vec![],\n};\n// a milestone no intent names carries maintenance, which is not a refusal\nassert_eq!(i.verdict, IntentPreflightVerdict::Maintenance);\n```"
     IntentPreflightMatch:
       type: object
       properties:
@@ -23034,13 +23329,49 @@ components:
         issue:
           type: string
           description: The issue that links the work to that milestone.
+        criteria:
+          type: array
+          items:
+            type: string
+          description: "The criteria of the intent the issue declares it serves, in the intent's order."
       required:
         - intent
         - title
         - stage
         - milestone
         - issue
-      description: "One intent a piece of work serves, and the link that says so: issue to milestone to intent,\neach step named rather than asserted.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n};\nassert_eq!(m.issue, \"I1900\");\n```"
+        - criteria
+      description: "One intent a piece of work serves, and the link that says so: issue to the criteria it\ndeclares in `serves`, each criterion's intent naming the issue's milestone.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n    criteria: vec![\"stage-is-derived\".into()],\n};\nassert_eq!(m.issue, \"I1900\");\n```"
+    IntentPreflightRefusal:
+      type: object
+      properties:
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue it is about; absent when no issue was resolved at all.
+        cause:
+          "$ref": "#/components/schemas/IntentPreflightCause"
+          description: The cause.
+        message:
+          type: string
+          description: "What is wrong, in one sentence."
+      required:
+        - cause
+        - message
+      description: "One reason a preflight refused: which issue, the cause, and one sentence of what is wrong.\n\n```\nuse majordomus_cli::intent::{IntentPreflightCause, IntentPreflightRefusal};\nlet r = IntentPreflightRefusal::new(\n    Some(\"I1900\"),\n    IntentPreflightCause::IntentNotCritiqued,\n    \"intent x has no critique\".into(),\n);\nassert_eq!(r.cause, IntentPreflightCause::IntentNotCritiqued);\nassert_eq!(r.issue.as_deref(), Some(\"I1900\"));\n```"
+    IntentPreflightVerdict:
+      oneOf:
+        - type: string
+          const: serves
+          description: "The work serves at least one criterion of a live intent, every link holds, and the\nplan of every intent it serves was critiqued with no blocking finding left open."
+        - type: string
+          const: maintenance
+          description: "The work sits under milestones no live intent names and serves no criterion of a live\nintent: operational work, allowed where `majordomus intent validate` allows it."
+        - type: string
+          const: refused
+          description: "A link is missing or points at nothing, or an intent it serves may not be executed yet."
+      description: "What a preflight concluded, about one issue or about the whole piece of work.\n\n```\nuse majordomus_cli::intent::IntentPreflightVerdict;\n// the words every surface answers with\nassert_eq!(\n    serde_json::to_string(&IntentPreflightVerdict::Maintenance).unwrap(),\n    \"\\\"maintenance\\\"\"\n);\nassert_ne!(IntentPreflightVerdict::Serves, IntentPreflightVerdict::Refused);\n```"
     IntentRealization:
       type: object
       properties:
@@ -23231,6 +23562,50 @@ components:
         - warnings
         - findings
       description: "What the intent model refuses: whether it is valid, how many intents were examined, and\nevery finding with its level. Warnings are reported and do not make it invalid.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentValidation;\nlet v = IntentValidation {\n    valid: true,\n    intents: 2,\n    failures: 0,\n    warnings: 20,\n    findings: vec![],\n};\n// twenty warnings and no failure is a valid model\nassert!(v.valid);\n```"
+    IntentVerdict:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/IntentVerdictState"
+          description: "Derived: what the evidence says."
+        reasons:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentVerdictReason"
+          description: "Every criterion that is not met, with the state of its evidence."
+      required:
+        - state
+        - reasons
+      description: "Whether the evidence alone settles an intent, and which criteria hold it back: every\nunmet criterion, in the order the record declares them. Empty when the verdict is\n`satisfied`, and when it is `unknown` because the intent declares no criterion.\n\n```\nuse majordomus_cli::intent::{verdict, IntentVerdict, IntentVerdictState};\n// an intent that declares no criterion cannot be settled by evidence\nlet v: IntentVerdict = verdict(&[]);\nassert_eq!(v.state, IntentVerdictState::Unknown);\nassert!(v.reasons.is_empty());\n```"
+    IntentVerdictReason:
+      type: object
+      properties:
+        criterion:
+          type: string
+          description: "The criterion's id."
+        evidence:
+          type: string
+          description: "Its kind of evidence: `test`, `claim`, `command` or `deployment`."
+        state:
+          "$ref": "#/components/schemas/IntentEvidenceState"
+          description: "The state of that evidence, as the criterion reports it."
+      required:
+        - criterion
+        - evidence
+        - state
+      description: "One criterion that holds a verdict back from `satisfied`: which one, the kind of evidence\nit names, and the state that evidence is in — the criterion's own words, not new ones.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentVerdictReason};\nlet r = IntentVerdictReason {\n    criterion: \"probe-passes\".into(),\n    evidence: \"test\".into(),\n    state: IntentEvidenceState::NotRun,\n};\nassert_eq!(r.state, IntentEvidenceState::NotRun);\n```"
+    IntentVerdictState:
+      oneOf:
+        - type: string
+          const: satisfied
+          description: Every criterion has current evidence.
+        - type: string
+          const: unsatisfied
+          description: "A criterion the ledger or the claim join can settle (`test`, `claim`) is not met."
+        - type: string
+          const: unknown
+          description: "Every unmet criterion is of a kind the ledger cannot yet settle (`command`,\n`deployment`), or the intent declares no criterion: the evidence cannot answer."
+      description: "What the evidence alone says about an intent, as a word: derived from its criteria and\nnever from the plan, so it can read `satisfied` while a milestone is still open (ADR 0107).\n\n```\nuse majordomus_cli::intent::IntentVerdictState;\nlet word = serde_json::to_string(&IntentVerdictState::Unsatisfied).unwrap();\nassert_eq!(word, \"\\\"unsatisfied\\\"\");\nassert_eq!(IntentVerdictState::Satisfied.as_str(), \"satisfied\");\n```"
     IntentView:
       type: object
       properties:
@@ -23266,6 +23641,9 @@ components:
           format: uint
           minimum: 0
           description: "Derived: how many criteria are met."
+        verdict:
+          "$ref": "#/components/schemas/IntentVerdict"
+          description: "Derived from the criteria alone, never from the plan: whether the evidence settles the\nintent, and which criteria hold it back."
         governance:
           type: array
           items:
@@ -23293,10 +23671,11 @@ components:
         - milestones
         - satisfaction
         - met
+        - verdict
         - governance
         - non_goals
         - source
-      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, and the stage that follows from both.\n\n```\nuse majordomus_cli::intent::{IntentStage, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n```"
+      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, the stage that follows from both, and the verdict that\nfollows from the evidence alone.\n\n```\nuse majordomus_cli::intent::{verdict, IntentStage, IntentVerdictState, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    verdict: verdict(&[]),\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n// and one declaring no criterion cannot be settled by evidence\nassert_eq!(view.verdict.state, IntentVerdictState::Unknown);\n```"
     IntentWorkKind:
       oneOf:
         - type: string
@@ -31478,6 +31857,18 @@ components:
           const: full
           description: "Everything, including the index. Writes the cache."
       description: "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\"."
+    ResolutionState:
+      oneOf:
+        - type: string
+          const: open
+          description: Not yet resolved.
+        - type: string
+          const: planned
+          description: Carried by an issue.
+        - type: string
+          const: rejected
+          description: "Judged not to apply, with a reason."
+      description: "How a critique finding was resolved: not yet, by planning work that serves the intent, or\nby rejecting it with a reason. A blocking finding left `Open` refuses execution.\n\n```\nuse majordomus_cli::intent_review::ResolutionState;\nassert_eq!(serde_json::to_string(&ResolutionState::Planned).unwrap(), \"\\\"planned\\\"\");\nassert_ne!(ResolutionState::Open, ResolutionState::Rejected);\n```"
     Resolved:
       type: object
       properties:
@@ -36568,7 +36959,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.14.0
+  generator: majordomus-cli 0.15.0
   infrastructure:
     - id: home
       path: /
@@ -36613,4 +37004,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.14.0
+x-majordomus-generator: majordomus-cli 0.15.0

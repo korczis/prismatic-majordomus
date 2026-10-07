@@ -32,6 +32,7 @@ use crate::intent::{
     IntentFinding, IntentPreflight, IntentView, Intents, RepositoryEvidence, INTENT,
 };
 use crate::intent_plan::IntentCoverage;
+use crate::intent_review::{CritiqueRecord, GapRecord};
 use crate::plan::Plan;
 use crate::{capability, module};
 
@@ -42,7 +43,7 @@ pub const INTENTS_URI: &str = "majordomus://intents";
 
 // ---------------------------------------------------------------- views
 
-/// Every intent, with its derived stage, and how many there are in each stage: what
+/// Every intent, with its derived stage and verdict, and how many there are in each: what
 /// `majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer
 /// with, out of one derivation.
 ///
@@ -51,6 +52,7 @@ pub const INTENTS_URI: &str = "majordomus://intents";
 /// let empty = IntentList {
 ///     count: 0,
 ///     stages: std::collections::BTreeMap::new(),
+///     verdicts: std::collections::BTreeMap::new(),
 ///     intents: vec![],
 /// };
 /// // a repository that declares no intent answers the route, with nothing in it
@@ -62,6 +64,8 @@ pub struct IntentList {
     pub count: usize,
     /// How many in each stage, keyed by the stage word.
     pub stages: std::collections::BTreeMap<String, usize>,
+    /// How many with each verdict, keyed by the verdict word.
+    pub verdicts: std::collections::BTreeMap<String, usize>,
     /// Every intent, in identity order.
     pub intents: Vec<IntentView>,
 }
@@ -219,12 +223,17 @@ fn derived(ctx: &Context) -> Result<(Plan, Intents), CapabilityError> {
 fn intent_list(ctx: &Context, _: Empty) -> Result<IntentList, CapabilityError> {
     let (_, intents) = derived(ctx)?;
     let mut stages = std::collections::BTreeMap::new();
+    let mut verdicts = std::collections::BTreeMap::new();
     for i in &intents.intents {
         *stages.entry(i.stage.as_str().to_string()).or_insert(0) += 1;
+        *verdicts
+            .entry(i.verdict.state.as_str().to_string())
+            .or_insert(0) += 1;
     }
     Ok(IntentList {
         count: intents.intents.len(),
         stages,
+        verdicts,
         intents: intents.intents,
     })
 }
@@ -271,7 +280,13 @@ fn intent_preflight(
         ));
     }
     let (plan, intents) = derived(ctx)?;
-    Ok(intents.preflight(&plan, issue, &paths))
+    Ok(intents.preflight(
+        &plan,
+        &GapRecord::all(&ctx.index),
+        &CritiqueRecord::all(&ctx.index),
+        issue,
+        &paths,
+    ))
 }
 
 /// The module the registry composes: five read-only capabilities over one derivation, each
@@ -292,13 +307,13 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "intents",
         title: "Intent",
-        description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
+        description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
                 id: "intents.list",
-                title: "Every intent, with its derived stage",
-                description: "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.",
+                title: "Every intent, with its derived stage and verdict",
+                description: "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, the stage those two derive — declared, planned, executing, verifying or satisfied, or cancelled or superseded when the record says so — and the verdict the criteria alone derive (ADR 0107): satisfied when every criterion is met, unsatisfied when a test or claim criterion is not, unknown when only command or deployment criteria are unmet or none is declared, with the criteria holding it back.",
                 input: Empty,
                 output: IntentList,
                 stability: Stability::BehaviorallyVerified,
@@ -317,7 +332,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "intents.record",
                 title: "One intent, with everything derived about it",
-                description: "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`.",
+                description: "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`.",
                 input: IntentRecordInput,
                 output: IntentView,
                 stability: Stability::BehaviorallyVerified,
@@ -364,8 +379,8 @@ pub fn module() -> ModuleDescriptor {
             },
             capability! {
                 id: "intents.preflight",
-                title: "Which intent a piece of work serves",
-                description: "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.",
+                title: "Which intent a piece of work serves, or why it may not proceed",
+                description: "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
                 input: IntentPreflightInput,
                 output: IntentPreflight,
                 stability: Stability::BehaviorallyVerified,

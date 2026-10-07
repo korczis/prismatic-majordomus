@@ -60,6 +60,17 @@ chmod +x "$STUB/gh"
 sed 's/^objective: .*/objective: "Moved after it was projected."/' \
   .ai/repo/project/issues/I0001.yaml > "$T/i.yaml" && mv "$T/i.yaml" .ai/repo/project/issues/I0001.yaml
 
+# --apply projects only a clean tree at the tip of the remote's default branch, so the moved
+# plan is committed and published to a local bare remote as its trunk; the stub's files are
+# no part of the tree.
+printf '/stub/\n/remote.git/\n/*.tsv\n/posted.md\n' >> .git/info/exclude
+git add -A >/dev/null; git commit -qm "the plan moves" >/dev/null
+git init -q --bare "$T/remote.git"
+# --no-prune: a global fetch.prune deletes a ref an explicit refspec has just written
+git -C "$T/remote.git" fetch -q --no-prune "$T" HEAD:refs/heads/trunk
+git -C "$T/remote.git" symbolic-ref HEAD refs/heads/trunk
+git remote add origin "$T/remote.git"; git fetch -q origin; git remote set-head origin trunk >/dev/null
+
 apply() {
   PATH="$STUB:$PATH" MJ_GH_PACE=0 MJ_STUB_MS="$MS_TSV" MJ_STUB_IS="$IS_TSV" \
     MJ_STUB_POSTED="$POSTED" "$SYNC" --apply

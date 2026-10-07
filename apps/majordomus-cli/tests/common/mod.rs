@@ -538,7 +538,7 @@ governance:
   - rule:project.alpha
 ";
 
-const ISSUE: &str = "id: I0001
+pub const ISSUE: &str = "id: I0001
 milestone: fixture-milestone
 title: The bounded piece of work
 slug: issue-I0001

@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# claims: none
+# claims: intent-criteria-covered, intent-plan-reviewed
 # A plan is held to its intent before execution, and a finished milestone is not a plan.
 #
 # An issue names the intent criterion it serves; coverage from criterion to milestone to
@@ -174,7 +174,9 @@ YAML
 commit "a complete gap"
 clean "a complete gap"
 
-# --- work starts before the plan was critiqued: refused. The start is the transition's, not a
+# --- work starts before the plan was critiqued: `plan start` lets it start (refusing the start
+#     itself is the planned claim intent-refused-at-plan-start), and `intent validate` refuses
+#     the started work. The start is the transition's, not a
 #     hand-written started_at: a stamp without the seal `plan start` writes beside it moves no
 #     status (ADR 0097), so a hand-written one would leave I0001 READY and prove nothing here
 expect_exit 0 "$MJ" plan start I0001

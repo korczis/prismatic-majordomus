@@ -94,6 +94,22 @@ if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_t
 elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the unbuilt-half heading '$pt'"
 elif [ "${#pl}" -lt 200 ]; then bad promo "planned_lead is ${#pl} characters; it names the unbuilt capabilities, not a word"
 else ok promo "the homepage names the unbuilt half of the model: '$pt'"; fi
+# what of the model is built and what is not is the claims matrix's to say, not the prose's: the
+# claims whose id carries the prefix manifesto.toml names are listed under that heading, each
+# under the status docs/CLAIMS.yaml declares for it. The prose once denied an intent view the
+# Cockpit had, and called refused a start that `plan start` lets through; a list rendered from
+# the matrix cannot drift from it that way. An empty selection is a prefix that matches
+# nothing, which would render an empty box and pass, so it is refused rather than read as clean.
+cp_="$(sed -n 's/^claim_prefix = "\(.*\)"$/\1/p' "$SITE/data/manifesto.toml")"
+want_dc="$(jq -r --arg p "$cp_" '.claims[] | select($p != "" and (.id | startswith($p))) | "\(.status) \(.id)"' \
+  "$SITE/data/generated/capabilities.json" | LC_ALL=C sort)"
+got_dc="$(grep -oE 'data-direction-(status|claim)="[^"]*"' "$PUB/index.html" \
+  | awk -F'"' '/^data-direction-status=/ { st = $2; next } { print st " " $2 }' | LC_ALL=C sort)"
+if [ -z "$cp_" ]; then bad promo "manifesto.toml names no claim_prefix; what of the model is built would be prose again"
+elif ! printf '%s\n' "$want_dc" | grep -q '^guaranteed '; then bad promo "no guaranteed claim in docs/CLAIMS.yaml carries the prefix '$cp_'; the built half would render empty"
+elif [ "$want_dc" != "$got_dc" ]; then
+  bad promo "the homepage does not list the '$cp_' claims under the status docs/CLAIMS.yaml declares: $(printf '%s\n' "$want_dc" | grep -vxF -f <(printf '%s\n' "$got_dc") | head -3 | tr '\n' ';')"
+else ok promo "the homepage lists every '$cp_' claim under its declared status ($(printf '%s\n' "$want_dc" | grep -c .) claim(s))"; fi
 # 3b. the product surface: the homepage and /features/ are projections of
 # site/data/registry/product.json, so every feature has its page, every page has its feature,
 # every mark on the matrix is the dataset's, and no feature, module, command, provider or

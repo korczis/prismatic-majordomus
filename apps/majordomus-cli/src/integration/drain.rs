@@ -1432,6 +1432,18 @@ pub struct DrainReport {
     pub stopped: String,
 }
 
+impl DrainReport {
+    /// Why the drain stopped, when its last step does not say so itself. An idle step is the
+    /// reason the drain ended and a halt the reason it never began, so each states its own
+    /// stop, and a second sentence would only repeat it.
+    pub fn stop_unsaid(&self) -> Option<&str> {
+        match self.steps.last() {
+            Some(DrainStepOutcome::Idle { .. } | DrainStepOutcome::Halted { .. }) => None,
+            _ => Some(self.stopped.as_str()).filter(|s| !s.is_empty()),
+        }
+    }
+}
+
 /// Merge until `max` merges, an idle queue, or a systemic failure. A stale decision or a
 /// refused merge is candidate-specific: the next step re-plans from a new observation,
 /// bounded by `max_steps` so a flapping queue cannot spin.

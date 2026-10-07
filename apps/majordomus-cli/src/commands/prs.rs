@@ -374,10 +374,9 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                     if text {
                         // as each cycle ends, not at the end of a run that may last days
                         let _ = writeln!(out, "cycle {n}:");
-                        for s in &r.steps {
-                            let _ = writeln!(out, "  {}", describe(s));
+                        for line in drain_lines(r) {
+                            let _ = writeln!(out, "  {line}");
                         }
-                        let _ = writeln!(out, "  stopped: {}", r.stopped);
                         let _ = out.flush();
                     }
                 },
@@ -430,15 +429,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             let report =
                 drain::drain_until(&root, &mut integrator, max, dry_run, refresh, Some(stop))
                     .map_err(unusable)?;
-            if format == OutputFormat::Json {
-                json(&mut out, &report)?;
+            let printed = if format == OutputFormat::Json {
+                json(&mut out, &report)
             } else {
-                for s in &report.steps {
-                    w(&mut out, describe(s))?;
-                }
-                w(&mut out, format!("stopped: {}", report.stopped))?;
-            }
-            Ok(drain_exit(&report))
+                w(&mut out, drain_lines(&report).join("\n"))
+            };
+            printed.map(|()| drain_exit(&report))
         }
         PrsCommand::Cleanup { apply, .. } => {
             let lease = if apply {
@@ -738,6 +734,16 @@ fn waited(wait: &integration::ExecutorWait) -> String {
 
 /// One sentence per drain outcome, every outcome named: what the command line prints and the
 /// dry-run proof records.
+/// A drain as lines: one sentence per step, then why it stopped when the last step has not
+/// already said so ([`drain::DrainReport::stop_unsaid`]).
+pub(crate) fn drain_lines(r: &drain::DrainReport) -> Vec<String> {
+    r.steps
+        .iter()
+        .map(describe)
+        .chain(r.stop_unsaid().map(|why| format!("stopped: {why}")))
+        .collect()
+}
+
 pub(crate) fn describe(s: &DrainStepOutcome) -> String {
     match s {
         DrainStepOutcome::Idle { why } => format!("idle: {why}"),
@@ -1513,6 +1519,48 @@ mod tests {
             "{}",
             ago(&at(3 * 86_400))
         );
+    }
+
+    #[test]
+    fn a_drain_says_why_it_stopped_once() {
+        let report = |steps: Vec<DrainStepOutcome>, stopped: &str| drain::DrainReport {
+            dry_run: true,
+            steps,
+            merged: vec![],
+            stopped: stopped.into(),
+        };
+        let why = "nothing is ready; 7 pull request(s) need master brought in first: #1";
+        // an idle step is the reason itself: said once, not again as `stopped:`
+        let idle = drain_lines(&report(
+            vec![DrainStepOutcome::Idle { why: why.into() }],
+            why,
+        ));
+        assert_eq!(idle, [format!("idle: {why}")]);
+        assert_eq!(idle.join("; ").matches(why).count(), 1, "{idle:?}");
+        // a halt says why nothing began, once
+        let halted = drain_lines(&report(
+            vec![DrainStepOutcome::Halted {
+                pr: Some(4),
+                reason: "the merge commit is not on master".into(),
+            }],
+            "#4 could not be verified after merging (the merge commit is not on master)",
+        ));
+        assert_eq!(halted.len(), 1, "{halted:?}");
+        assert!(halted[0].starts_with("halted: #4"), "{halted:?}");
+        // a step that does not end the drain by itself is followed by why the drain ended
+        let bounded = drain_lines(&report(
+            vec![DrainStepOutcome::WouldMerge { pr: 3 }],
+            "dry run: #3 would be merged; nothing after it is planned",
+        ));
+        assert_eq!(
+            bounded,
+            [
+                "would merge #3".to_string(),
+                "stopped: dry run: #3 would be merged; nothing after it is planned".to_string()
+            ]
+        );
+        // and a drain that took no step and gave no reason says nothing at all
+        assert!(drain_lines(&report(vec![], "")).is_empty());
     }
 
     #[test]
