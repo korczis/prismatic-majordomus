@@ -2040,6 +2040,42 @@
       "note": "Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data."
     },
     {
+      "id": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "kind": "claim",
+      "label": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass/",
+      "external": false,
+      "note": "The result line of cargo test says ok for a binary that ran nothing, so the recorder reads its counts. A failed count is a failure, a binary that passed nothing or ran a filtered subset is a skip, a line with no count or a binary with no result line is an error, and escape sequences are stripped first. The unit-test binary of the crate, its doctests, binaries outside tests/ and result lines no Running line named are listed in the recording as dropped, with the reason, because no claim can name them until a runner records them one by one."
+    },
+    {
+      "id": "claim:evidence-tree-is-measured-by-the-run",
+      "kind": "claim",
+      "label": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-tree-is-measured-by-the-run/",
+      "external": false,
+      "note": "evidence stamp measures the checkout as the run left it, the evidence ledger ignored and only the run's own untracked outputs excluded; evidence record --provenance carries that measurement into the report's executions and takes the digest of a clean run from the commit. The stamp measures when it is taken, not while the run executed, and a CI job's tree file names no report until CI stamps with its report."
+    },
+    {
+      "id": "claim:evidence-a-recording-is-a-typed-run",
+      "kind": "claim",
+      "label": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-recording-is-a-typed-run/",
+      "external": false,
+      "note": "evidence record returns an EvidenceRunRecord and writes it with --run-record; --coverage binds the scripts/rust-coverage summary to its commit and measured tree with the floors the threshold files state. A run record decides no verdict; it can only withhold proven through the one monotone rule, which no surface applies yet."
+    },
+    {
+      "id": "claim:evidence-local-recording-stays-local",
+      "kind": "claim",
+      "label": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-local-recording-stays-local/",
+      "external": false,
+      "note": "The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from."
+    },
+    {
       "id": "claim:a-skipped-case-is-not-a-proof",
       "kind": "claim",
       "label": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
@@ -2269,6 +2305,20 @@
       "id": "impl:apps/majordomus-cli/src/evidence/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/record.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/run.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/run.rs",
       "route": null,
       "external": false
     },
@@ -3890,6 +3940,20 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
     },
     {
+      "id": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "kind": "test",
+      "label": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/505_a_recording_carries_what_its_run_measured.sh"
+    },
+    {
+      "id": "test:test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "kind": "test",
+      "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+    },
+    {
       "id": "test:test/cases/507_evidence_subjects_are_derived.sh",
       "kind": "test",
       "label": "test/cases/507_evidence_subjects_are_derived.sh",
@@ -5381,6 +5445,26 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-tree-is-measured-by-the-run",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-a-recording-is-a-typed-run",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-local-recording-stays-local",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "source:docs/EVIDENCE.md",
       "kind": "specified_by"
@@ -6476,6 +6560,26 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-tree-is-measured-by-the-run",
+      "target": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-a-recording-is-a-typed-run",
+      "target": "impl:apps/majordomus-cli/src/evidence/run.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-local-recording-stays-local",
+      "target": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "impl:test/run.sh",
       "kind": "implemented_by"
@@ -7568,6 +7672,26 @@
     {
       "source": "claim:commit-plan-is-refusable",
       "target": "test:test/cases/274_commit_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "test:test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-tree-is-measured-by-the-run",
+      "target": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-recording-is-a-typed-run",
+      "target": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-local-recording-stays-local",
+      "target": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
       "kind": "proved_by"
     },
     {

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.15.0 -->
+     Generator: majordomus-cli 0.16.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -175,6 +175,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
 | [`majordomus evidence proves`](#majordomus-evidence-proves) | `/docs/cli/evidence/proves/` | One test: its latest execution and every claim it proves |
 | [`majordomus evidence record`](#majordomus-evidence-record) | `/docs/cli/evidence/record/` | Record a run that happened into the ledger |
+| [`majordomus evidence stamp`](#majordomus-evidence-stamp) | `/docs/cli/evidence/stamp/` | Measure the checkout as a run left it, for `record --provenance` |
 | [`majordomus served`](#majordomus-served) | `/docs/cli/served/` | Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit |
 | [`majordomus served observe`](#majordomus-served-observe) | `/docs/cli/served/observe/` | Probe the build identity a deployment serves, judge it against a commit and record it |
 | [`majordomus served show`](#majordomus-served-show) | `/docs/cli/served/show/` | Each deployment's newest record, re-judged against a commit |
@@ -249,7 +250,7 @@ majordomus mcp [OPTIONS]
 | `--format` | `text` \| `json` | `text` | Output shape of --inspect — `text`: Lines for a person; `json`: One JSON document, deterministic |
 | `--transport` | `stdio` | `stdio` | The transport to serve on — `stdio`: One JSON-RPC frame per line on stdin and stdout |
 | `--standalone` | flag | — | Serve this client alone: no shared server, no HTTP, no Swagger UI, no peers, and nothing written anywhere. The default is the shared server (below) |
-| `--http-host` | `<HOST>` | `127.0.0.1` | Interface the shared server binds when this process is the one that starts it |
+| `--http-host` | `<HOST>` | — | Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset |
 | `--http-port` | `<PORT>` | `8741` | Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way |
 
 Examples:
@@ -295,7 +296,7 @@ majordomus serve [OPTIONS] [COMMAND]
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
-| `--host` | `<HOST>` | `127.0.0.1` | Interface to bind; loopback unless you say otherwise |
+| `--host` | `<HOST>` | — | Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset |
 | `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
 | `--fallback` | flag | — | When the port is taken, bind a free one instead and log both; without this a taken port is an error |
 | `--idle` | `<SECONDS>` | `0` | Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with |
@@ -4822,7 +4823,7 @@ Examples:
 
 What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
 
-Subcommands: [`majordomus evidence show`](#majordomus-evidence-show), [`majordomus evidence claim`](#majordomus-evidence-claim), [`majordomus evidence proves`](#majordomus-evidence-proves), [`majordomus evidence record`](#majordomus-evidence-record).
+Subcommands: [`majordomus evidence show`](#majordomus-evidence-show), [`majordomus evidence claim`](#majordomus-evidence-claim), [`majordomus evidence proves`](#majordomus-evidence-proves), [`majordomus evidence record`](#majordomus-evidence-record), [`majordomus evidence stamp`](#majordomus-evidence-stamp).
 
 ```text
 majordomus evidence [OPTIONS] <COMMAND>
@@ -4947,6 +4948,10 @@ majordomus evidence record [OPTIONS]
 | `--suite` | `<SUITE>` | — | The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`) |
 | `--crate-output` | `<CRATE_OUTPUT>` | — | A file holding `cargo test`'s output, for the crate's own integration tests |
 | `--origin` | `<ORIGIN>` | — | Where the run happened: local (the default), ci or release |
+| `--provenance` | `<[PRODUCER=]FILE>` | — | The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=` when the file names no producer and several reports are given |
+| `--coverage` | `<COVERAGE>` | — | The summary `scripts/rust-coverage --summary-json` wrote |
+| `--ledger` | `<LEDGER>` | — | repo (the default) or local |
+| `--run-record` | `<RUN_RECORD>` | — | Also write the run record to this file |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4962,6 +4967,37 @@ Examples:
   ```
 
   Verified: exits 13.
+
+<a id="majordomus-evidence-stamp"></a>
+## `majordomus evidence stamp`
+
+Measure the checkout as a run left it, for `record --provenance`
+
+```text
+majordomus evidence stamp [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--producer` | `<PRODUCER>` | — | The producer whose run this is: suite, crate or coverage |
+| `--report` | `<REPORT>` | — | The report the run wrote |
+| `--exclude` | `<EXCLUDE>` | — | One of the run's own untracked outputs (a file, or a directory with everything under it) |
+| `--out` | `<OUT>` | — | Write the measurement to this file |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a run measured, as one document** — The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report.
+
+  ```console
+  $ majordomus evidence stamp --producer suite --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /producer, /commit, /working_tree, /recorder, /host.
 
 <a id="majordomus-served"></a>
 ## `majordomus served`

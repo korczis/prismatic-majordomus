@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.15.0",
+  "generator": "majordomus-cli 0.16.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -506,6 +506,15 @@
         "label": "evidence.report",
         "summary": "Every claim against the evidence recorded for it",
         "route": "/cockpit/capabilities/evidence.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:evidence.stamp",
+        "kind": "capability",
+        "label": "evidence.stamp",
+        "summary": "Measure the tree a run left behind",
+        "route": "/cockpit/capabilities/evidence.stamp",
         "source": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
         "status": "query"
       },
@@ -2352,6 +2361,14 @@
         "label": "record.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/evidence/record.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/evidence/run.rs",
+        "kind": "file",
+        "label": "run.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/evidence/run.rs",
         "external": true
       },
       {
@@ -7627,6 +7644,21 @@
         }
       },
       {
+        "id": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "kind": "claim",
+        "label": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "kind": "claim",
         "label": "evidence-a-failure-outranks-an-absence",
@@ -7640,6 +7672,21 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "kind": "claim",
+        "label": "evidence-a-recording-is-a-typed-run",
+        "summary": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+        "route": "/cockpit/objects/claim/evidence-a-recording-is-a-typed-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/run.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -7704,6 +7751,23 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-local-recording-stays-local",
+        "kind": "claim",
+        "label": "evidence-local-recording-stays-local",
+        "summary": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+        "route": "/cockpit/objects/claim/evidence-local-recording-stays-local",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+          "note": "The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from.",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -7798,6 +7862,21 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/507_evidence_subjects_are_derived.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "kind": "claim",
+        "label": "evidence-tree-is-measured-by-the-run",
+        "summary": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+        "route": "/cockpit/objects/claim/evidence-tree-is-measured-by-the-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -10774,6 +10853,7 @@
             "2",
             "10",
             "12",
+            "13",
             "15"
           ],
           "json": true,
@@ -13587,12 +13667,28 @@
         "source": "docs/claims/event-vocabulary.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-crate-binary-that-ran-nothing-is-not-a-pass-md",
+        "source": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
         "kind": "document",
         "label": "docs/claims/evidence-a-failure-outranks-an-absence.md",
         "summary": "A rule with a failing test reads failing whatever its other tests say",
         "route": "/cockpit/objects/document/docs-claims-evidence-a-failure-outranks-an-absence-md",
         "source": "docs/claims/evidence-a-failure-outranks-an-absence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "summary": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-recording-is-a-typed-run-md",
+        "source": "docs/claims/evidence-a-recording-is-a-typed-run.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-a-skip-is-not-run.md",
@@ -13625,6 +13721,14 @@
         "summary": "A claim reads proven only when its run is contained in the presented revision, nothing but the ledger changed since, and both trees were their commits",
         "route": "/cockpit/objects/document/docs-claims-evidence-judged-at-the-presented-revision-md",
         "source": "docs/claims/evidence-judged-at-the-presented-revision.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-local-recording-stays-local.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-local-recording-stays-local.md",
+        "summary": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+        "route": "/cockpit/objects/document/docs-claims-evidence-local-recording-stays-local-md",
+        "source": "docs/claims/evidence-local-recording-stays-local.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
@@ -13673,6 +13777,14 @@
         "summary": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
         "route": "/cockpit/objects/document/docs-claims-evidence-subjects-are-derived-md",
         "source": "docs/claims/evidence-subjects-are-derived.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-tree-is-measured-by-the-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-tree-is-measured-by-the-run.md",
+        "summary": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+        "route": "/cockpit/objects/document/docs-claims-evidence-tree-is-measured-by-the-run-md",
+        "source": "docs/claims/evidence-tree-is-measured-by-the-run.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-unsupported-guarantee-is-reported.md",
@@ -15853,7 +15965,11 @@
             "evidence-unsupported-guarantee-is-reported",
             "evidence-judged-at-the-presented-revision",
             "evidence-a-skip-is-not-run",
-            "evidence-a-failure-outranks-an-absence"
+            "evidence-a-failure-outranks-an-absence",
+            "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+            "evidence-tree-is-measured-by-the-run",
+            "evidence-a-recording-is-a-typed-run",
+            "evidence-local-recording-stays-local"
           ],
           "commands": [
             "evidence"
@@ -42833,6 +42949,20 @@
         "source": "test/cases/504_public_text_is_redacted_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "kind": "test",
+        "label": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "route": "/cockpit/objects/test/test-cases-505-a-recording-carries-what-its-run-measured-sh",
+        "source": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "test",
+        "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-506-a-crate-binary-that-ran-nothing-is-not-a-pass-sh",
+        "source": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
         "kind": "test",
         "label": "test/cases/507_evidence_subjects_are_derived.sh",
@@ -43645,6 +43775,13 @@
         "source": "test/cases/86_installer_platform.sh"
       },
       {
+        "id": "majordomus://test/test/cases/870_a_flag_setting_reporter_is_a_reporter.sh",
+        "kind": "test",
+        "label": "test/cases/870_a_flag_setting_reporter_is_a_reporter.sh",
+        "route": "/cockpit/objects/test/test-cases-870-a-flag-setting-reporter-is-a-reporter-sh",
+        "source": "test/cases/870_a_flag_setting_reporter_is_a_reporter.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/87_release_pipeline.sh",
         "kind": "test",
         "label": "test/cases/87_release_pipeline.sh",
@@ -43930,6 +44067,13 @@
         "label": "test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
         "route": "/cockpit/objects/test/test-cases-991-a-command-leaves-nothing-in-tmpdir-sh",
         "source": "test/cases/991_a_command_leaves_nothing_in_tmpdir.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/992_the_local_bind_is_the_machines_to_name.sh",
+        "kind": "test",
+        "label": "test/cases/992_the_local_bind_is_the_machines_to_name.sh",
+        "route": "/cockpit/objects/test/test-cases-992-the-local-bind-is-the-machines-to-name-sh",
+        "source": "test/cases/992_the_local_bind_is_the_machines_to_name.sh"
       },
       {
         "id": "majordomus://test/test/cases/99_adr.sh",
@@ -47189,6 +47333,16 @@
       {
         "source": "capability:evidence.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:evidence.stamp",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:evidence.stamp",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -53887,6 +54041,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
         "kind": "implemented_by"
@@ -53904,6 +54078,26 @@
       {
         "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "file:apps/majordomus-cli/src/evidence/run.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -53984,6 +54178,26 @@
       {
         "source": "majordomus://claim/evidence-judged-at-the-presented-revision",
         "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "file:apps/majordomus-cli/src/evidence/ledger.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -54104,6 +54318,26 @@
       {
         "source": "majordomus://claim/evidence-subjects-are-derived",
         "target": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -58562,7 +58796,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-a-recording-is-a-typed-run.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -58583,6 +58827,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-judged-at-the-presented-revision.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-local-recording-stays-local.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -58613,6 +58862,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-subjects-are-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-tree-is-measured-by-the-run.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -67942,6 +68196,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -68522,6 +68786,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/870_a_flag_setting_reporter_is_a_reporter.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/87_release_pipeline.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -68723,6 +68992,11 @@
       },
       {
         "source": "majordomus://test/test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/992_the_local_bind_is_the_machines_to_name.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -71798,6 +72072,11 @@
       },
       {
         "source": "module:evidence",
+        "target": "capability:evidence.stamp",
+        "kind": "composes"
+      },
+      {
+        "source": "module:evidence",
         "target": "capability:evidence.test",
         "kind": "composes"
       },
@@ -72413,8 +72692,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2379,
-      "edges": 5219,
+      "nodes": 2393,
+      "edges": 5246,
       "acyclic": true,
       "truncated": false
     }

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.15.0",
+  "generator": "majordomus-cli 0.16.0",
   "modules": [
     {
       "id": "artifacts",
@@ -153,7 +153,7 @@
       "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 4
+      "capabilities": 5
     },
     {
       "id": "executions",
@@ -19672,6 +19672,20 @@
                 "url": {
                   "type": "string",
                   "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
                 }
               },
               "required": [
@@ -19682,7 +19696,7 @@
                 "job",
                 "url"
               ],
-              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
             }
           }
         }
@@ -19733,7 +19747,7 @@
       "module": "evidence",
       "kind": "command",
       "title": "Record a run that happened",
-      "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing.",
+      "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
       "input": {
         "name": "EvidenceRecordInput",
         "schema": {
@@ -19760,10 +19774,59 @@
                 "null"
               ],
               "description": "Where the run happened: `local` (the default), `ci` or `release`."
+            },
+            "provenance": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A measurement per report: the file `majordomus evidence stamp` wrote at the end of\nthat run, as `<file>` or `<producer>=<file>` (`suite`, `crate`, `coverage`). Without a\nproducer word, the producer is the file's own, else the only report given."
+            },
+            "coverage": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A coverage summary: what `scripts/rust-coverage --summary-json` wrote."
+            },
+            "ledger": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceLedgerTarget"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The ledger to merge into: `repo` (the default, the tracked ledger) or `local` (the\nignored one under `.ai/local/`, which moves no verdict)."
+            },
+            "run_record": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Also write the run record to this file."
             }
           },
-          "description": "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, stamps each result with the provenance the run did not carry, and merges it.\nBoth reports are optional and may be given together; an absent origin is `local`.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```",
-          "title": "EvidenceRecordInput"
+          "description": "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, carries into each result what that run measured about its own checkout, and\nmerges it. The reports are optional and may be given together; an absent origin is\n`local`, and an absent ledger is the tracked one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```",
+          "title": "EvidenceRecordInput",
+          "$defs": {
+            "EvidenceLedgerTarget": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "repo",
+                  "description": "The tracked ledger, `LEDGER_PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "The ignored local ledger, `LOCAL_LEDGER_PATH`."
+                }
+              ],
+              "description": "Which ledger a recording writes: the tracked one a verdict is derived from, or the local\none nothing reads to judge anything.\n\n```\nuse majordomus_cli::evidence::ledger::{LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};\n\nassert_eq!(LedgerTarget::default(), LedgerTarget::Repo);\nassert_eq!(LedgerTarget::Repo.path(), LEDGER_PATH);\nassert_eq!(LedgerTarget::Local.path(), LOCAL_LEDGER_PATH);\nassert_eq!(serde_json::to_value(LedgerTarget::Local).unwrap(), \"local\");\n```"
+            }
+          }
         }
       },
       "output": {
@@ -19798,9 +19861,20 @@
               },
               "description": "Results the run named that no runner in this repository owns."
             },
+            "dropped": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EvidenceDropped"
+              },
+              "description": "What the reports held that no claim can name yet: the crate's unit-test binary, its\ndoctests. Listed rather than ignored, and absent from the document when empty."
+            },
             "ledger": {
               "type": "string",
-              "description": "Where the ledger was written."
+              "description": "Where the ledger was written: the path of the target the recording named."
+            },
+            "run_record": {
+              "$ref": "#/$defs/EvidenceRunRecord",
+              "description": "The recording as a typed run."
             }
           },
           "required": [
@@ -19809,10 +19883,802 @@
             "commit",
             "working_tree",
             "unknown",
-            "ledger"
+            "ledger",
+            "run_record"
           ],
-          "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n```",
-          "title": "RecordReport"
+          "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
+          "title": "RecordReport",
+          "$defs": {
+            "EvidenceDropped": {
+              "type": "object",
+              "properties": {
+                "producer": {
+                  "$ref": "#/$defs/EvidenceProducer",
+                  "description": "The report the entry was read from."
+                },
+                "what": {
+                  "type": "string",
+                  "description": "What the entry was, in the report's own words: `unittests src/lib.rs`,\n`doc-tests <crate>`, the path of a binary that is not under `tests/`, or `a result\nline` when a result belonged to no binary at all."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it is listed rather than recorded. It carries no counts."
+                }
+              },
+              "required": [
+                "producer",
+                "what",
+                "reason"
+              ],
+              "description": "Something a report held that no claim can name yet, listed instead of ignored.\n\n`cargo test` runs the crate's own unit-test binary and its doctests beside the\nintegration binaries under `tests/`. They ran, and a claim names a test by its path, so\nnone of their tests is anything a claim can point at until a runner records them one by\none. A recording lists each such entry with the report it came from (`producer`), what\nit was (`what`) and why it is not recorded (`reason`), so that the part of a run\nnobody can use yet is visible rather than silently smaller.\n\n\n```\nuse majordomus_cli::evidence::{EvidenceDropped, EvidenceProducer};\n\nlet d: EvidenceDropped = serde_json::from_value(serde_json::json!({\n    \"producer\": \"crate\",\n    \"what\": \"doc-tests majordomus_cli\",\n    \"reason\": \"doctests, which no claim can name until a runner records them one by one\",\n}))\n.unwrap();\nassert_eq!(d.producer, EvidenceProducer::Crate);\nassert_eq!(serde_json::to_value(&d).unwrap()[\"producer\"], \"crate\");\n```"
+            },
+            "EvidenceProducer": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "The suite runner's TSV report (`MJ_TEST_REPORT` of `test/run.sh`)."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "`cargo test`'s output: one result line per test binary."
+                },
+                {
+                  "type": "string",
+                  "const": "coverage",
+                  "description": "A coverage summary (`scripts/rust-coverage --summary-json`)."
+                }
+              ],
+              "description": "Which report an entry of a run belongs to: the suite's TSV, `cargo test`'s output, or a\ncoverage summary.\n\nThe serde word is the word a person types and a document carries (`suite`, `crate`,\n`coverage`), and `EvidenceProducer::parse` reads exactly those three back. A word that\nnames no report is not a producer, so a misspelled one is refused where it is read\nrather than guessed at.\n\n```\nuse majordomus_cli::evidence::EvidenceProducer;\n\nassert_eq!(EvidenceProducer::parse(\"crate\"), Some(EvidenceProducer::Crate));\nassert_eq!(EvidenceProducer::Coverage.as_str(), \"coverage\");\nassert_eq!(serde_json::to_value(EvidenceProducer::Suite).unwrap(), \"suite\");\nassert_eq!(EvidenceProducer::parse(\"Suite\"), None, \"the word is exact\");\n```"
+            },
+            "EvidenceRunRecord": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "`RUN_RECORD_SCHEMA`."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "`run_id` of the recording."
+                },
+                "origin": {
+                  "$ref": "#/$defs/EvidenceOrigin",
+                  "description": "Where the run happened."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The recorder's HEAD, which every measurement given equals."
+                },
+                "working_tree": {
+                  "$ref": "#/$defs/EvidenceTreeState",
+                  "description": "The weakest tree over the reports given: `unknown` for a report with no measurement."
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "description": "RFC 3339 UTC, the `at` of every execution."
+                },
+                "ledger": {
+                  "$ref": "#/$defs/EvidenceLedgerTarget",
+                  "description": "The ledger the executions were merged into."
+                },
+                "run": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceRun"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The CI run, when there was one."
+                },
+                "provenance": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EvidenceProvenance"
+                  },
+                  "description": "Each report's measurement, ordered suite, crate, coverage, each naming its producer.",
+                  "default": []
+                },
+                "totals": {
+                  "$ref": "#/$defs/EvidenceRunTotals",
+                  "description": "Counts over the executions.",
+                  "default": {
+                    "executions": 0,
+                    "outcomes": {},
+                    "runners": {}
+                  }
+                },
+                "absent": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EvidenceAbsent"
+                  },
+                  "description": "The producers that gave nothing, and why.",
+                  "default": []
+                },
+                "dropped": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EvidenceDropped"
+                  },
+                  "description": "What the reports held that no claim can name yet.",
+                  "default": []
+                },
+                "unknown": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Tests the reports named that this repository does not have.",
+                  "default": []
+                },
+                "coverage": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceCoverage"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The coverage measurement, bound to its commit."
+                },
+                "executions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EvidenceExecution"
+                  },
+                  "description": "The executions recorded.",
+                  "default": []
+                }
+              },
+              "required": [
+                "schema",
+                "id",
+                "origin",
+                "commit",
+                "working_tree",
+                "recorded_at",
+                "ledger"
+              ],
+              "description": "One recording, as a typed run: what it recorded, against what, measured how, and what\nthe reports held that it could not record.\n\nEvery `evidence record` returns one and writes it with `--run-record <file>`. It is\nsupplementary: a verdict is derived from the tracked ledger only, and a run record can\nweaken one only through the one monotone rule (`weakened_by_records`).\n\n```\nuse majordomus_cli::evidence::{EvidenceRunRecord, LedgerTarget, TreeState};\nlet r: EvidenceRunRecord = serde_json::from_value(serde_json::json!({\n    \"schema\": 1, \"id\": \"local:0123456789ab:20260926T120000Z\", \"origin\": \"local\",\n    \"commit\": \"0123456789abcdef0123456789abcdef01234567\", \"working_tree\": \"clean\",\n    \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n})).unwrap();\nassert_eq!((r.working_tree, r.ledger), (TreeState::Clean, LedgerTarget::Repo));\nassert!(r.executions.is_empty() && r.coverage.is_none());\n```"
+            },
+            "EvidenceOrigin": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Someone ran it on their own machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "A continuous-integration run."
+                },
+                {
+                  "type": "string",
+                  "const": "release",
+                  "description": "A release run."
+                }
+              ],
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+            },
+            "EvidenceTreeState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "clean",
+                  "description": "The tree was the commit: nothing but the evidence ledger differed from it."
+                },
+                {
+                  "type": "string",
+                  "const": "dirty",
+                  "description": "Something other than the evidence ledger differed from the commit."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "Git could not be asked, or the word recorded is none of the three."
+                }
+              ],
+              "description": "Whether a tree was the commit it sits on: the three words the ledger and git already\nuse, typed.\n\n`unknown` is not a softer `clean`. It is what is recorded when git could not be asked,\nand not knowing is not proof, so every rule here treats it as not clean.\n\n```\nuse majordomus_cli::evidence::freshness::TreeState;\n\nassert_eq!(TreeState::parse(\"clean\"), TreeState::Clean);\nassert_eq!(TreeState::parse(\"dirty\"), TreeState::Dirty);\n// a word nobody wrote down is not a clean tree\nassert_eq!(TreeState::parse(\"spotless\"), TreeState::Unknown);\nassert_eq!(TreeState::Dirty.as_str(), \"dirty\");\nassert_eq!(serde_json::to_value(TreeState::Unknown).unwrap(), \"unknown\");\n```"
+            },
+            "EvidenceLedgerTarget": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "repo",
+                  "description": "The tracked ledger, `LEDGER_PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "The ignored local ledger, `LOCAL_LEDGER_PATH`."
+                }
+              ],
+              "description": "Which ledger a recording writes: the tracked one a verdict is derived from, or the local\none nothing reads to judge anything.\n\n```\nuse majordomus_cli::evidence::ledger::{LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};\n\nassert_eq!(LedgerTarget::default(), LedgerTarget::Repo);\nassert_eq!(LedgerTarget::Repo.path(), LEDGER_PATH);\nassert_eq!(LedgerTarget::Local.path(), LOCAL_LEDGER_PATH);\nassert_eq!(serde_json::to_value(LedgerTarget::Local).unwrap(), \"local\");\n```"
+            },
+            "EvidenceRun": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "description": "The provider that ran it, as the adapter that recorded it names it."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The provider's identifier of the run."
+                },
+                "attempt": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Which attempt of the run, counted from 1."
+                },
+                "workflow": {
+                  "type": "string",
+                  "description": "The workflow the run belongs to."
+                },
+                "job": {
+                  "type": "string",
+                  "description": "The job within the run that recorded the execution."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
+                }
+              },
+              "required": [
+                "provider",
+                "id",
+                "attempt",
+                "workflow",
+                "job",
+                "url"
+              ],
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+            },
+            "EvidenceProvenance": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "producer": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceProducer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Which report this measures, when named."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The full commit the checkout was at."
+                },
+                "working_tree": {
+                  "$ref": "#/$defs/EvidenceTreeState",
+                  "description": "The tree, the evidence ledger ignored and the run's own untracked outputs excluded."
+                },
+                "excluded": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The run's own untracked outputs that were excluded, the report among them when it is\ninside the checkout. The ledger is always ignored and not listed.",
+                  "default": []
+                },
+                "measured_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "When it was measured, RFC 3339 UTC."
+                },
+                "toolchain": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceToolchain"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The producer's toolchain."
+                },
+                "recorder": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The version of the executable that measured."
+                },
+                "report": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceReportArtifact"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The report measured."
+                },
+                "host": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceHost"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The machine."
+                },
+                "run": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceRun"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The CI run, when there was one."
+                }
+              },
+              "required": [
+                "commit",
+                "working_tree"
+              ],
+              "description": "What a run measured about its own checkout when it ended.\n\nOnly `commit` and `working_tree` are required: a producing job's tree file\n(`{\"commit\",\"working_tree\",\"excluded\"}`) is a valid, minimal measurement. It names no\nreport, so it is accepted only for a CI recording.\n\n```\nuse majordomus_cli::evidence::{EvidenceProvenance, TreeState};\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet p: EvidenceProvenance = serde_json::from_value(serde_json::json!({\n    \"commit\": head, \"working_tree\": \"clean\", \"excluded\": [\"suite.tsv\"]\n})).unwrap();\nassert_eq!(p.working_tree, TreeState::Clean);\nassert!(p.report.is_none());\n```"
+            },
+            "EvidenceToolchain": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The executable: `rustc`, `bash`."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Its version."
+                },
+                "source": {
+                  "$ref": "#/$defs/EvidenceToolchainSource",
+                  "description": "How the version was known."
+                }
+              },
+              "required": [
+                "name",
+                "version",
+                "source"
+              ],
+              "description": "The toolchain the run's producer used.\n\n```\nuse majordomus_cli::evidence::EvidenceToolchain;\nlet t: EvidenceToolchain =\n    serde_json::from_str(r#\"{\"name\":\"rustc\",\"version\":\"1.2.3\",\"source\":\"pinned\"}\"#).unwrap();\nassert_eq!(t.version, \"1.2.3\");\n```"
+            },
+            "EvidenceToolchainSource": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "measured",
+                  "description": "The executable answered `--version`."
+                },
+                {
+                  "type": "string",
+                  "const": "pinned",
+                  "description": "The repository pins it (`rust-toolchain.toml`), and the pin is what ran."
+                }
+              ],
+              "description": "How a toolchain's version was known: asked of the executable, or read from the pin the\nrepository declares.\n\n```\nuse majordomus_cli::evidence::EvidenceToolchainSource;\nassert_eq!(serde_json::to_value(EvidenceToolchainSource::Pinned).unwrap(), \"pinned\");\n```"
+            },
+            "EvidenceReportArtifact": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative when the report is inside the checkout, else its file name alone.\nNever a machine path."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "`sha256:<hex>` of the report's bytes."
+                },
+                "bytes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How many bytes it held."
+                }
+              },
+              "required": [
+                "path",
+                "digest",
+                "bytes"
+              ],
+              "description": "The report a measurement belongs to: where it was and what its bytes were.\n\n```\nuse majordomus_cli::evidence::EvidenceReportArtifact;\nlet r: EvidenceReportArtifact =\n    serde_json::from_str(r#\"{\"path\":\"suite.tsv\",\"digest\":\"sha256:00\",\"bytes\":3}\"#).unwrap();\nassert_eq!(r.bytes, 3);\n```"
+            },
+            "EvidenceHost": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "os": {
+                  "type": "string",
+                  "description": "`std::env::consts::OS`."
+                },
+                "arch": {
+                  "type": "string",
+                  "description": "`std::env::consts::ARCH`."
+                }
+              },
+              "required": [
+                "os",
+                "arch"
+              ],
+              "description": "The machine the run measured on.\n\n```\nuse majordomus_cli::evidence::EvidenceHost;\nlet h = EvidenceHost { os: std::env::consts::OS.into(), arch: std::env::consts::ARCH.into() };\nassert!(!h.os.is_empty());\n```"
+            },
+            "EvidenceRunTotals": {
+              "type": "object",
+              "properties": {
+                "executions": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many executions the run recorded."
+                },
+                "outcomes": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                  },
+                  "description": "By outcome word, as `crate::evidence::outcome_counts` counts them."
+                },
+                "runners": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                  },
+                  "description": "By runner prefix (`suite`, `crate`)."
+                }
+              },
+              "required": [
+                "executions",
+                "outcomes",
+                "runners"
+              ],
+              "description": "Counts over a run's executions: how many, of each outcome, of each runner. A zero is\nabsent rather than 0.\n\n```\nuse majordomus_cli::evidence::EvidenceRunTotals;\nlet t = EvidenceRunTotals::default();\nassert_eq!(serde_json::to_value(&t).unwrap()[\"executions\"], 0);\n```"
+            },
+            "EvidenceAbsent": {
+              "type": "object",
+              "properties": {
+                "producer": {
+                  "$ref": "#/$defs/EvidenceProducer",
+                  "description": "The producer."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it gave nothing."
+                }
+              },
+              "required": [
+                "producer",
+                "reason"
+              ],
+              "description": "A producer that gave the run nothing, and why.\n\n```\nuse majordomus_cli::evidence::{EvidenceAbsent, EvidenceProducer};\nlet a = EvidenceAbsent { producer: EvidenceProducer::Coverage, reason: \"no coverage report was given\".into() };\nassert_eq!(serde_json::to_value(&a).unwrap()[\"producer\"], \"coverage\");\n```"
+            },
+            "EvidenceCoverage": {
+              "type": "object",
+              "properties": {
+                "commit": {
+                  "$ref": "#/$defs/CommitId",
+                  "description": "The commit the measurement ran at."
+                },
+                "working_tree": {
+                  "$ref": "#/$defs/EvidenceTreeState",
+                  "description": "The tree the coverage run's own measurement stated, `unknown` without one."
+                },
+                "measurement": {
+                  "type": "string",
+                  "description": "The producer of the summary: `scripts/rust-coverage`."
+                },
+                "test_code": {
+                  "type": "string",
+                  "description": "Whether test code is counted: `excluded`."
+                },
+                "crate": {
+                  "$ref": "#/$defs/EvidenceCoverageDimensions",
+                  "description": "The whole crate."
+                },
+                "domain": {
+                  "$ref": "#/$defs/EvidenceCoverageDomain",
+                  "description": "The session domain."
+                },
+                "files": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/EvidenceCoverageDimensions"
+                  },
+                  "description": "Every file with executable code under test, by repository-relative path."
+                },
+                "floors": {
+                  "$ref": "#/$defs/EvidenceCoverageFloors",
+                  "description": "The floors stated when it was recorded.",
+                  "default": {}
+                }
+              },
+              "required": [
+                "commit",
+                "working_tree",
+                "measurement",
+                "test_code",
+                "crate",
+                "domain",
+                "files"
+              ],
+              "description": "One coverage measurement, bound to the commit and tree it was measured on.\n\nBuilt only by `EvidenceCoverage::from_summary` or deserialised; either way `commit` is a\n`CommitId`, so a record without a full commit cannot exist.\n\n```\nuse majordomus_cli::evidence::EvidenceCoverage;\nlet bad = serde_json::json!({\"commit\": \"abc\", \"working_tree\": \"clean\"});\nassert!(serde_json::from_value::<EvidenceCoverage>(bad).is_err());\n```"
+            },
+            "CommitId": {
+              "type": "string",
+              "description": "A full commit id: 40 or 64 lowercase hexadecimal digits."
+            },
+            "EvidenceCoverageDimensions": {
+              "type": "object",
+              "properties": {
+                "lines": {
+                  "$ref": "#/$defs/EvidenceCoverageCount",
+                  "description": "Executable lines."
+                },
+                "functions": {
+                  "$ref": "#/$defs/EvidenceCoverageCount",
+                  "description": "Functions."
+                },
+                "regions": {
+                  "$ref": "#/$defs/EvidenceCoverageCount",
+                  "description": "Code regions."
+                }
+              },
+              "required": [
+                "lines",
+                "functions",
+                "regions"
+              ],
+              "description": "The three dimensions `scripts/rust-coverage` counts, for the crate or one file.\n\n```\nuse majordomus_cli::evidence::EvidenceCoverageDimensions;\nlet one = r#\"{\"covered\":1,\"total\":2,\"percent\":50.0}\"#;\nlet d: EvidenceCoverageDimensions = serde_json::from_str(&format!(\n    r#\"{{\"lines\":{one},\"functions\":{one},\"regions\":{one}}}\"#\n)).unwrap();\nassert_eq!(d.lines.total, 2);\n```"
+            },
+            "EvidenceCoverageCount": {
+              "type": "object",
+              "properties": {
+                "covered": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Items a test reached."
+                },
+                "total": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Items there are."
+                },
+                "percent": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "`covered / total` as a percentage, 100 when there is nothing to cover."
+                }
+              },
+              "required": [
+                "covered",
+                "total",
+                "percent"
+              ],
+              "description": "Covered and total items of one dimension, and the percentage the producer computed.\n\n```\nuse majordomus_cli::evidence::EvidenceCoverageCount;\nlet c: EvidenceCoverageCount =\n    serde_json::from_str(r#\"{\"covered\":3,\"total\":4,\"percent\":75.0}\"#).unwrap();\nassert_eq!((c.covered, c.total, c.percent), (3, 4, 75.0));\n```"
+            },
+            "EvidenceCoverageDomain": {
+              "type": "object",
+              "properties": {
+                "lines": {
+                  "$ref": "#/$defs/EvidenceCoverageCount",
+                  "description": "Executable lines of the domain's files."
+                },
+                "functions": {
+                  "$ref": "#/$defs/EvidenceCoverageCount",
+                  "description": "Functions of the domain's files."
+                },
+                "regions": {
+                  "$ref": "#/$defs/EvidenceCoverageCount",
+                  "description": "Code regions of the domain's files."
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The domain's files the measurement holds."
+                },
+                "missing": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The domain's files the measurement does not hold."
+                }
+              },
+              "required": [
+                "lines",
+                "functions",
+                "regions",
+                "files",
+                "missing"
+              ],
+              "description": "The session domain's coverage: the three dimensions over the files the domain lists, and\nwhich of its files the measurement found and which it did not.\n\n```\nuse majordomus_cli::evidence::EvidenceCoverageDomain;\nlet one = r#\"{\"covered\":1,\"total\":2,\"percent\":50.0}\"#;\nlet d: EvidenceCoverageDomain = serde_json::from_str(&format!(\n    r#\"{{\"lines\":{one},\"functions\":{one},\"regions\":{one},\"files\":[\"a.rs\"],\"missing\":[]}}\"#\n)).unwrap();\nassert_eq!(d.files, vec![\"a.rs\"]);\n```"
+            },
+            "EvidenceCoverageFloors": {
+              "type": "object",
+              "properties": {
+                "crate_lines": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "format": "double",
+                  "description": "The crate's line floor, from `scripts/rust-coverage-threshold`."
+                },
+                "domain_lines": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "format": "double",
+                  "description": "The domain's line floor, from `scripts/session-coverage-threshold`."
+                }
+              },
+              "description": "The floors the threshold files stated when the coverage was recorded; a file that is\nabsent or does not hold a number gives no floor.\n\n```\nuse majordomus_cli::evidence::EvidenceCoverageFloors;\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::create_dir(dir.path().join(\"scripts\")).unwrap();\nstd::fs::write(dir.path().join(\"scripts/rust-coverage-threshold\"), \"42\\n\").unwrap();\nlet floors = EvidenceCoverageFloors::read(dir.path());\nassert_eq!((floors.crate_lines, floors.domain_lines), (Some(42.0), None));\n```"
+            },
+            "EvidenceExecution": {
+              "type": "object",
+              "properties": {
+                "test": {
+                  "type": "string",
+                  "description": "The test, in `TestId::as_string` form."
+                },
+                "runner": {
+                  "$ref": "#/$defs/EvidenceRunner",
+                  "description": "Which runner produced it."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "The test's own source, repository-relative."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/EvidenceOutcome",
+                  "description": "What it said."
+                },
+                "seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, in whole seconds."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The full commit id the run was made against."
+                },
+                "working_tree": {
+                  "type": "string",
+                  "description": "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When it was recorded, RFC 3339, UTC."
+                },
+                "origin": {
+                  "$ref": "#/$defs/EvidenceOrigin",
+                  "description": "Where the run happened."
+                },
+                "command": {
+                  "type": "string",
+                  "description": "The exact command that runs this one test again."
+                },
+                "run": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceRun"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The continuous-integration run the execution was recorded in, when it was recorded in\none that could name itself. Absent for a local run, and absent from every row recorded\nbefore runs were named, which is why the ledger's version did not change."
+                }
+              },
+              "required": [
+                "test",
+                "runner",
+                "source",
+                "outcome",
+                "seconds",
+                "commit",
+                "working_tree",
+                "digest",
+                "at",
+                "origin",
+                "command"
+              ],
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n    run: None,\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n    run: None,\n};\nassert!(e.outcome.proves());\n```"
+            },
+            "EvidenceRunner": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "A behavioural case under `test/cases/`, run by `test/run.sh`."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+                }
+              ],
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+            },
+            "EvidenceOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                },
+                {
+                  "type": "string",
+                  "const": "skip",
+                  "description": "It declined to run and said so (an unmet precondition the case reports itself)."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "The bound fired before it finished."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The harness could not run it at all."
+                }
+              ],
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+            }
+          }
         }
       },
       "provenance": {
@@ -20448,6 +21314,20 @@
                 "url": {
                   "type": "string",
                   "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
                 }
               },
               "required": [
@@ -20458,7 +21338,7 @@
                 "job",
                 "url"
               ],
-              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
             },
             "EvidenceFinding": {
               "type": "object",
@@ -20533,6 +21413,384 @@
       ],
       "benchmark": {
         "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+    },
+    {
+      "id": "evidence.stamp",
+      "module": "evidence",
+      "kind": "query",
+      "title": "Measure the tree a run left behind",
+      "description": "The one measurement a runner takes at the end of its run, for evidence record --provenance: the commit; the tree, ignoring the evidence ledger and the run's own untracked outputs, never a tracked change; the producer; its toolchain; the recorder's version; the report's digest; the host; the CI run. It writes nothing. It is offered only on the command line because it reads a path its caller names.",
+      "input": {
+        "name": "EvidenceStampInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "producer": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceProducer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The producer whose run this is: `suite`, `crate` or `coverage`."
+            },
+            "report": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The report the run wrote; a local recording needs it named."
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The run's own untracked outputs, as repository paths: a file, or a directory with\neverything under it. A pattern, the whole checkout or a path holding tracked files is\nrefused."
+            }
+          },
+          "description": "What a run asks to have measured about the checkout it leaves: its producer, its report,\nand its own untracked outputs, which are not a change to what it tested.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceStampInput;\nuse majordomus_cli::evidence::EvidenceProducer;\n\nlet input: EvidenceStampInput =\n    serde_json::from_str(r#\"{\"producer\": \"suite\", \"exclude\": [\"dist\"]}\"#).unwrap();\nassert_eq!(input.producer, Some(EvidenceProducer::Suite));\nassert_eq!(input.exclude, [\"dist\"]);\nassert_eq!(serde_json::to_string(&input).unwrap(), r#\"{\"producer\":\"suite\",\"exclude\":[\"dist\"]}\"#);\n```",
+          "title": "EvidenceStampInput",
+          "$defs": {
+            "EvidenceProducer": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "The suite runner's TSV report (`MJ_TEST_REPORT` of `test/run.sh`)."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "`cargo test`'s output: one result line per test binary."
+                },
+                {
+                  "type": "string",
+                  "const": "coverage",
+                  "description": "A coverage summary (`scripts/rust-coverage --summary-json`)."
+                }
+              ],
+              "description": "Which report an entry of a run belongs to: the suite's TSV, `cargo test`'s output, or a\ncoverage summary.\n\nThe serde word is the word a person types and a document carries (`suite`, `crate`,\n`coverage`), and `EvidenceProducer::parse` reads exactly those three back. A word that\nnames no report is not a producer, so a misspelled one is refused where it is read\nrather than guessed at.\n\n```\nuse majordomus_cli::evidence::EvidenceProducer;\n\nassert_eq!(EvidenceProducer::parse(\"crate\"), Some(EvidenceProducer::Crate));\nassert_eq!(EvidenceProducer::Coverage.as_str(), \"coverage\");\nassert_eq!(serde_json::to_value(EvidenceProducer::Suite).unwrap(), \"suite\");\nassert_eq!(EvidenceProducer::parse(\"Suite\"), None, \"the word is exact\");\n```"
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "EvidenceProvenance",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "producer": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceProducer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Which report this measures, when named."
+            },
+            "commit": {
+              "type": "string",
+              "description": "The full commit the checkout was at."
+            },
+            "working_tree": {
+              "$ref": "#/$defs/EvidenceTreeState",
+              "description": "The tree, the evidence ledger ignored and the run's own untracked outputs excluded."
+            },
+            "excluded": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The run's own untracked outputs that were excluded, the report among them when it is\ninside the checkout. The ledger is always ignored and not listed.",
+              "default": []
+            },
+            "measured_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "When it was measured, RFC 3339 UTC."
+            },
+            "toolchain": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceToolchain"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The producer's toolchain."
+            },
+            "recorder": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The version of the executable that measured."
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceReportArtifact"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The report measured."
+            },
+            "host": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceHost"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The machine."
+            },
+            "run": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceRun"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The CI run, when there was one."
+            }
+          },
+          "required": [
+            "commit",
+            "working_tree"
+          ],
+          "description": "What a run measured about its own checkout when it ended.\n\nOnly `commit` and `working_tree` are required: a producing job's tree file\n(`{\"commit\",\"working_tree\",\"excluded\"}`) is a valid, minimal measurement. It names no\nreport, so it is accepted only for a CI recording.\n\n```\nuse majordomus_cli::evidence::{EvidenceProvenance, TreeState};\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet p: EvidenceProvenance = serde_json::from_value(serde_json::json!({\n    \"commit\": head, \"working_tree\": \"clean\", \"excluded\": [\"suite.tsv\"]\n})).unwrap();\nassert_eq!(p.working_tree, TreeState::Clean);\nassert!(p.report.is_none());\n```",
+          "title": "EvidenceProvenance",
+          "$defs": {
+            "EvidenceProducer": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "The suite runner's TSV report (`MJ_TEST_REPORT` of `test/run.sh`)."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "`cargo test`'s output: one result line per test binary."
+                },
+                {
+                  "type": "string",
+                  "const": "coverage",
+                  "description": "A coverage summary (`scripts/rust-coverage --summary-json`)."
+                }
+              ],
+              "description": "Which report an entry of a run belongs to: the suite's TSV, `cargo test`'s output, or a\ncoverage summary.\n\nThe serde word is the word a person types and a document carries (`suite`, `crate`,\n`coverage`), and `EvidenceProducer::parse` reads exactly those three back. A word that\nnames no report is not a producer, so a misspelled one is refused where it is read\nrather than guessed at.\n\n```\nuse majordomus_cli::evidence::EvidenceProducer;\n\nassert_eq!(EvidenceProducer::parse(\"crate\"), Some(EvidenceProducer::Crate));\nassert_eq!(EvidenceProducer::Coverage.as_str(), \"coverage\");\nassert_eq!(serde_json::to_value(EvidenceProducer::Suite).unwrap(), \"suite\");\nassert_eq!(EvidenceProducer::parse(\"Suite\"), None, \"the word is exact\");\n```"
+            },
+            "EvidenceTreeState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "clean",
+                  "description": "The tree was the commit: nothing but the evidence ledger differed from it."
+                },
+                {
+                  "type": "string",
+                  "const": "dirty",
+                  "description": "Something other than the evidence ledger differed from the commit."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "Git could not be asked, or the word recorded is none of the three."
+                }
+              ],
+              "description": "Whether a tree was the commit it sits on: the three words the ledger and git already\nuse, typed.\n\n`unknown` is not a softer `clean`. It is what is recorded when git could not be asked,\nand not knowing is not proof, so every rule here treats it as not clean.\n\n```\nuse majordomus_cli::evidence::freshness::TreeState;\n\nassert_eq!(TreeState::parse(\"clean\"), TreeState::Clean);\nassert_eq!(TreeState::parse(\"dirty\"), TreeState::Dirty);\n// a word nobody wrote down is not a clean tree\nassert_eq!(TreeState::parse(\"spotless\"), TreeState::Unknown);\nassert_eq!(TreeState::Dirty.as_str(), \"dirty\");\nassert_eq!(serde_json::to_value(TreeState::Unknown).unwrap(), \"unknown\");\n```"
+            },
+            "EvidenceToolchain": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The executable: `rustc`, `bash`."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Its version."
+                },
+                "source": {
+                  "$ref": "#/$defs/EvidenceToolchainSource",
+                  "description": "How the version was known."
+                }
+              },
+              "required": [
+                "name",
+                "version",
+                "source"
+              ],
+              "description": "The toolchain the run's producer used.\n\n```\nuse majordomus_cli::evidence::EvidenceToolchain;\nlet t: EvidenceToolchain =\n    serde_json::from_str(r#\"{\"name\":\"rustc\",\"version\":\"1.2.3\",\"source\":\"pinned\"}\"#).unwrap();\nassert_eq!(t.version, \"1.2.3\");\n```"
+            },
+            "EvidenceToolchainSource": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "measured",
+                  "description": "The executable answered `--version`."
+                },
+                {
+                  "type": "string",
+                  "const": "pinned",
+                  "description": "The repository pins it (`rust-toolchain.toml`), and the pin is what ran."
+                }
+              ],
+              "description": "How a toolchain's version was known: asked of the executable, or read from the pin the\nrepository declares.\n\n```\nuse majordomus_cli::evidence::EvidenceToolchainSource;\nassert_eq!(serde_json::to_value(EvidenceToolchainSource::Pinned).unwrap(), \"pinned\");\n```"
+            },
+            "EvidenceReportArtifact": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative when the report is inside the checkout, else its file name alone.\nNever a machine path."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "`sha256:<hex>` of the report's bytes."
+                },
+                "bytes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How many bytes it held."
+                }
+              },
+              "required": [
+                "path",
+                "digest",
+                "bytes"
+              ],
+              "description": "The report a measurement belongs to: where it was and what its bytes were.\n\n```\nuse majordomus_cli::evidence::EvidenceReportArtifact;\nlet r: EvidenceReportArtifact =\n    serde_json::from_str(r#\"{\"path\":\"suite.tsv\",\"digest\":\"sha256:00\",\"bytes\":3}\"#).unwrap();\nassert_eq!(r.bytes, 3);\n```"
+            },
+            "EvidenceHost": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "os": {
+                  "type": "string",
+                  "description": "`std::env::consts::OS`."
+                },
+                "arch": {
+                  "type": "string",
+                  "description": "`std::env::consts::ARCH`."
+                }
+              },
+              "required": [
+                "os",
+                "arch"
+              ],
+              "description": "The machine the run measured on.\n\n```\nuse majordomus_cli::evidence::EvidenceHost;\nlet h = EvidenceHost { os: std::env::consts::OS.into(), arch: std::env::consts::ARCH.into() };\nassert!(!h.os.is_empty());\n```"
+            },
+            "EvidenceRun": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "description": "The provider that ran it, as the adapter that recorded it names it."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The provider's identifier of the run."
+                },
+                "attempt": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Which attempt of the run, counted from 1."
+                },
+                "workflow": {
+                  "type": "string",
+                  "description": "The workflow the run belongs to."
+                },
+                "job": {
+                  "type": "string",
+                  "description": "The job within the run that recorded the execution."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
+                }
+              },
+              "required": [
+                "provider",
+                "id",
+                "attempt",
+                "workflow",
+                "job",
+                "url"
+              ],
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::evidence"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "evidence",
+            "stamp"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "evidence",
+        "tests",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "external_dependency"
       },
       "cache": {
         "policy": "disabled"
@@ -20799,6 +22057,20 @@
                 "url": {
                   "type": "string",
                   "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
                 }
               },
               "required": [
@@ -20809,7 +22081,7 @@
                 "job",
                 "url"
               ],
-              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
             },
             "EvidenceClaimProof": {
               "type": "object",
@@ -59361,6 +60633,20 @@
                 "url": {
                   "type": "string",
                   "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
                 }
               },
               "required": [
@@ -59371,7 +60657,7 @@
                 "job",
                 "url"
               ],
-              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
             },
             "RuleState": {
               "oneOf": [
@@ -60238,6 +61524,20 @@
                 "url": {
                   "type": "string",
                   "description": "Where a reader finds the run, as the provider addressed it at the time."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it."
+                },
+                "event": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`."
                 }
               },
               "required": [
@@ -60248,7 +61548,7 @@
                 "job",
                 "url"
               ],
-              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
+              "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
             },
             "RuleState": {
               "oneOf": [
@@ -61022,7 +62322,7 @@
               "properties": {
                 "host": {
                   "type": "string",
-                  "description": "The interface the shared server binds by default."
+                  "description": "The interface a server started here would bind: what `MAJORDOMUS_HTTP_HOST` names\nin this process's environment, and loopback when it names nothing."
                 },
                 "port": {
                   "type": "integer",

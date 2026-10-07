@@ -1,7 +1,7 @@
 +++
 title = "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on"
 description = "majordomus evidence record returns, beside what it merged into the ledger, the recording"
-weight = 231
+weight = 242
 [extra]
 claim_id = "evidence-a-recording-is-a-typed-run"
 status = "guaranteed"

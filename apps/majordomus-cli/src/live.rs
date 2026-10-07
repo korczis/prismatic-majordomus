@@ -61,8 +61,9 @@
 //! Rebuilding is a whole [`crate::app::App::load`]: discovery, every declared file read
 //! and validated, the registry, the Why catalogue, the product model, the web topology.
 //! It is paid once per repository move, by the one request that noticed, and never
-//! concurrently — a second request arriving mid-rebuild is served the previous generation
-//! rather than queued behind it. Everything a generation carries is a projection of the
+//! concurrently — a second request arriving mid-rebuild waits for it and is answered from
+//! the generation it produced, because it has seen the move too and the previous
+//! generation is the stale answer it was asking about. Everything a generation carries is a projection of the
 //! index and is therefore rebuilt with it. What is *not* a projection of the index is
 //! carried across: the peer board, the executions this process is running and the
 //! capability executor, because a reload is not a restart and an attached peer must not
@@ -276,8 +277,8 @@ impl Generation {
 pub struct Live {
     watch: Option<Watch>,
     state: RwLock<Generation>,
-    /// Held by the one thread rebuilding. Never waited on: a request that finds it taken
-    /// is served the generation that exists rather than queued behind a rebuild.
+    /// Held by the one thread rebuilding. A request that finds it taken waits: it has
+    /// seen the repository move, so the generation that exists is not an answer to it.
     rebuilding: Mutex<()>,
 }
 
@@ -450,17 +451,14 @@ impl Live {
     }
 
     fn reload(&self, watch: &Watch, taken: String) -> View {
-        // A second request arriving mid-rebuild is answered from the generation that
-        // exists. Queueing it behind a rebuild would turn one commit into a stall for
-        // every client of the server, and the answer it would wait for is one it can have
-        // on its next call anyway.
-        let Ok(_one_at_a_time) = self.rebuilding.try_lock() else {
-            let state = read(&self.state);
-            return View {
-                generation: state.number,
-                ctx: Arc::clone(&state.ctx),
-            };
-        };
+        // A caller that arrives mid-rebuild has already seen the stamp move: the generation
+        // that exists is known to be stale, and answering from it is the frozen picture
+        // again for as long as a load takes. The server's own tick takes a view twice a
+        // second, so it is usually the one rebuilding, and a session that commits and asks
+        // at once was handed the commit before its own. It waits instead; the check below
+        // then finds the new generation, or rebuilds when the rebuilder's stamp was older
+        // than this caller's.
+        let _one_at_a_time = self.rebuilding.lock().unwrap_or_else(|e| e.into_inner());
         let previous = {
             let state = read(&self.state);
             if state.current(&taken) {
@@ -686,6 +684,80 @@ mod tests {
         git(&["add", "-A"]);
         git(&["commit", "-qm", "one"]);
         dir
+    }
+
+    /// A synthetic layer in a git work tree with one commit, and a `Live` watching it.
+    fn followed() -> (crate::synthetic::SyntheticRepository, Live) {
+        let fixture = crate::synthetic::SyntheticRepository::small().expect("a layer");
+        let git = |args: &[&str]| {
+            Command::new("git")
+                .arg("-C")
+                .arg(fixture.root())
+                .args(args)
+                .output()
+                .expect("git")
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "one"]);
+        let args = RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        };
+        let app = crate::app::App::load(&args).expect("the layer loads");
+        let live = Live::watching(args, Arc::clone(&app.context));
+        (fixture, live)
+    }
+
+    fn head_in(root: &Path) -> String {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .expect("git");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    #[test]
+    fn a_request_that_arrives_during_a_rebuild_waits_for_it() {
+        let (fixture, live) = followed();
+        let before = head_in(fixture.root());
+        assert_eq!(head_of(&live.view().ctx), before, "it starts on HEAD");
+
+        // the rebuild somebody else is running: the server's tick, in the process this
+        // was found in
+        let rebuilding = live.rebuilding.lock().expect("the rebuild");
+        Command::new("git")
+            .arg("-C")
+            .arg(fixture.root())
+            .args(["commit", "-q", "--allow-empty", "-m", "two"])
+            .output()
+            .expect("git");
+        let after = head_in(fixture.root());
+        assert_ne!(before, after, "the commit moved HEAD");
+
+        let (said, heard) = std::sync::mpsc::channel();
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                let _ = said.send(head_of(&live.view().ctx));
+            });
+            assert!(
+                heard
+                    .recv_timeout(std::time::Duration::from_millis(300))
+                    .is_err(),
+                "a caller that saw the move was answered while the rebuild was still running"
+            );
+            drop(rebuilding);
+            let answered = heard
+                .recv_timeout(std::time::Duration::from_secs(60))
+                .expect("the caller is answered once the rebuild is over");
+            assert_eq!(answered, after, "and with the commit it asked about");
+        });
     }
 
     #[test]
