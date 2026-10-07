@@ -165,26 +165,23 @@ refuses to build this page if one does not, and the check that follows the build
 the edge was lost on the way in.</p>
 </article><section class="mt-10" aria-labelledby="ci-evidence-heading">
   <h2 id="ci-evidence-heading" class="text-2xl font-semibold text-heading">Recorded by CI</h2>
-  <p class="mt-3 text-body"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
+  <p class="mt-3 text-body"><span class="mj-badge mj-badge--unknown relative" data-status="unknown"><span aria-hidden="true">○</span>unknown</span>
 
-    The newest executions CI recorded are of commit
-    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834">3ede593c0eaf</a>,
-    51 commit(s) and 505 changed file(s) before the one this site was built from.
-    They say what held there, not what holds here; the site is published again once CI has recorded this commit.
+    CI ran commit
+    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636">76a7a2340ab7</a>,
+    the commit this site was built from, but its run cannot confirm the report below.
   </p>
   <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
     <li>A job that ran tests ran them in a dirty tree.</li>
-    <li>The run recorded 1 failed, timed-out or errored execution(s).</li>
   </ul>
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">433</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">fail</dt><dd class="text-heading">1</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">431</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">439</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">438</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">skip</dt><dd class="text-heading">1</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">87.66% <span class="text-body-subtle">(76012/86717)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate functions covered</dt><dd class="text-heading">86.04% <span class="text-body-subtle">(8564/9953)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">86.09% <span class="text-body-subtle">(122957/142816)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-07T18:55:12Z</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">87.74% <span class="text-body-subtle">(76487/87175)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate functions covered</dt><dd class="text-heading">86.18% <span class="text-body-subtle">(8643/10029)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">86.19% <span class="text-body-subtle">(123750/143574)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-07T20:48:58Z</dd></div>
   </dl>
   <div class="mt-6">
     <div class="min-w-0" x-data="{ t: 0 }">
@@ -201,21 +198,21 @@ the edge was lost on the way in.</p>
 <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         3ede593c (clean)
-judged at the working tree (HEAD 3ede593c0eaf, clean)
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         76a7a234 (clean)
+judged at the working tree (HEAD 76a7a2340ab7, clean)
 ledger       .ai/repo/evidence/ledger.json — 14 execution(s), newest 2026-09-17T01:14:59Z
 
-subject      222 claim(s), whole
+subject      233 claim(s), whole
 
-no test            10
+no test            14
 not run            198
-stale              14
+stale              21
 
 stale              guaranteed   a-finding-names-how-to-see-it-again
                    pass at a04b65c9 · 6s · local · 2026-09-11T17:41:49Z
 </pre>
 <details class="border-t border-default bg-neutral-primary">
-  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 686 lines of the output</summary>
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 739 lines of the output</summary>
   <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">                   changed since: docs/DOCTRINE.md
                    changed since: scripts/ci/finding-reproduce-check
                    changed since: test/cases/138_governance_gates.sh
@@ -345,6 +342,45 @@ not_run            guaranteed   hot-path-no-rebuild
 not_run            guaranteed   init-refuses
 not_run            guaranteed   install-command-is-derived
 not_run            guaranteed   installer-verifies-before-installing
+no_test            planned      intent-closes-github-milestones
+stale              guaranteed   intent-cockpit-pages
+                   pass at c3c0c7fd · 3s · local · 2026-09-16T22:05:47Z
+                   changed since: docs/COCKPIT.md
+                   changed since: apps/majordomus-cli/src/cockpit/intents.rs
+                   changed since: apps/majordomus-cli/tests/intent_realization.rs
+no_test            planned      intent-command-deployment-evidence
+stale              guaranteed   intent-criteria-covered
+                   pass at 94ca72a0 · 32s · local · 2026-09-16T20:54:33Z
+                   changed since: docs/PLANNING.md
+                   changed since: apps/majordomus-cli/src/intent_plan.rs
+                   changed since: test/cases/386_a_plan_is_held_to_its_intent.sh
+no_test            planned      intent-in-session-context
+stale              guaranteed   intent-links-resolve
+                   pass at 94ca72a0 · 9s · local · 2026-09-16T20:54:33Z
+                   changed since: docs/PLANNING.md
+                   changed since: apps/majordomus-cli/src/intent.rs
+                   changed since: test/cases/367_an_intent_is_satisfied_only_by_evidence.sh
+stale              guaranteed   intent-plan-reviewed
+                   pass at 94ca72a0 · 32s · local · 2026-09-16T20:54:33Z
+                   changed since: docs/PLANNING.md
+                   changed since: apps/majordomus-cli/src/intent_review.rs
+                   changed since: test/cases/386_a_plan_is_held_to_its_intent.sh
+stale              guaranteed   intent-preflight-names-the-intent
+                   pass at 94ca72a0 · 4s · local · 2026-09-16T20:54:33Z
+                   changed since: docs/PLANNING.md
+                   changed since: apps/majordomus-cli/src/intent.rs
+                   changed since: apps/majordomus-cli/tests/intent.rs
+stale              guaranteed   intent-realization-held-to-evidence
+                   pass at c3c0c7fd · 30s · local · 2026-09-16T22:05:47Z
+                   changed since: docs/PLANNING.md
+                   changed since: apps/majordomus-cli/src/intent_realization.rs
+                   changed since: test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh
+no_test            planned      intent-refused-at-plan-start
+stale              guaranteed   intent-stage-derived
+                   pass at 94ca72a0 · 9s · local · 2026-09-16T20:54:33Z
+                   changed since: docs/PLANNING.md
+                   changed since: apps/majordomus-cli/src/intent.rs
+                   changed since: test/cases/367_an_intent_is_satisfied_only_by_evidence.sh
 not_run            guaranteed   interfaces-are-projections
 not_run            guaranteed   knowledge-derivation-is-idempotent
 not_run            guaranteed   knowledge-derived-at-the-boundary
@@ -489,7 +525,7 @@ not_run            guaranteed   worktree-migration-lossless
 not_run            guaranteed   worktree-ownership
 not_run            guaranteed   worktree-topology-derived
 
-206 claim(s) declare a guarantee the evidence does not support:
+213 claim(s) declare a guarantee the evidence does not support:
   a-finding-names-how-to-see-it-again      the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
                                            reproduce: bash test/run.sh 138_governance_gates
   a-skipped-case-is-not-a-proof            the claim guarantees a behaviour and names a test, and no run of that test has ever been recorded
@@ -660,6 +696,20 @@ not_run            guaranteed   worktree-topology-derived
                                            reproduce: bash test/run.sh 84_distribution_model
   installer-verifies-before-installing     the claim guarantees a behaviour and names a test, and no run of that test has ever been recorded
                                            reproduce: bash test/run.sh 85_installer
+  intent-cockpit-pages                     the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: cargo test --test intent_realization
+  intent-criteria-covered                  the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: bash test/run.sh 386_a_plan_is_held_to_its_intent
+  intent-links-resolve                     the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence
+  intent-plan-reviewed                     the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: bash test/run.sh 386_a_plan_is_held_to_its_intent
+  intent-preflight-names-the-intent        the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: cargo test --test intent
+  intent-realization-held-to-evidence      the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality
+  intent-stage-derived                     the claim guarantees a behaviour whose only recorded run is older than what it is about: the implementation or the test changed after that run, so the pass measured a subject this claim no longer names
+                                           reproduce: bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence
   interfaces-are-projections               the claim guarantees a behaviour and names a test, and no run of that test has ever been recorded
                                            reproduce: bash test/run.sh 76_capabilities_projections
   knowledge-derivation-is-idempotent       the claim guarantees a behaviour and names a test, and no run of that test has ever been recorded
@@ -906,8 +956,8 @@ not_run            guaranteed   worktree-topology-derived
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">every claim against the tracked ledger as committed at this commit, derived before this run&#39;s executions were recorded; the run&#39;s executions are counted beside it and decide no verdict</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/37659961926/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834" class="text-fg-brand hover:underline">commit 3ede593c0eaf &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/37676403656/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636" class="text-fg-brand hover:underline">commit 76a7a2340ab7 &rarr;</a>
     </div>
   </figure><figure x-show="t === 1" id="ci-evidence-panel-1" role="tabpanel" aria-labelledby="ci-evidence-tab-1"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
@@ -917,16 +967,16 @@ not_run            guaranteed   worktree-topology-derived
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
 </div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">                                                            lines  functions   regions
-the crate, test code excluded                              87.66%     86.04%    86.09%    76012/86717  lines
-the crate, test code included (the old gate&#39;s subject)     91.06%     90.17%    91.87%   111901/122887 lines
-  the same, as cargo-llvm-cov itself reports it            90.35%     89.36%    90.05%   cargo-llvm-cov&#39;s own summary
+the crate, test code excluded                              87.74%     86.18%    86.19%    76487/87175  lines
+the crate, test code included (the old gate&#39;s subject)     91.15%     90.26%    91.96%   112875/123841 lines
+  the same, as cargo-llvm-cov itself reports it            90.44%     89.47%    90.15%   cargo-llvm-cov&#39;s own summary
 the canonical session/continuity domain                    96.06%    100.00%    96.86%      415/432    lines
   apps/majordomus-cli/src/capability/builtin/continuity.rs   96.06%    100.00%    96.86%      415/432    lines
 </pre>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">line, function and region coverage of the crate, test code excluded</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/37659961926/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834" class="text-fg-brand hover:underline">commit 3ede593c0eaf &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/37676403656/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636" class="text-fg-brand hover:underline">commit 76a7a2340ab7 &rarr;</a>
     </div>
   </figure></div>
 
