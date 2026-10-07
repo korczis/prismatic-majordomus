@@ -1046,8 +1046,9 @@ mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 #
 # The call sites are not rewritten. They ask for "${TMPDIR:-/tmp}/<name>", and the function
 # below answers that request under the root instead; a template anywhere else — beside a
-# record about to be published, inside a workspace already under the root — is passed
-# through untouched, because that location is the point of it. TMPDIR itself is not moved:
+# record about to be published, inside a workspace already under the root, in any directory
+# below TMPDIR rather than in it — is passed through untouched, because that location is the
+# point of it. TMPDIR itself is not moved:
 # a verify command, an editor or a server this process starts inherits the environment and
 # may outlive the directory.
 #
@@ -1057,16 +1058,37 @@ mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 MJ_TMP_ROOT=""
 mj_tmp_root_init() {
   local base="${TMPDIR:-/tmp}"
-  MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.XXXXXX")"
+  MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.$$.XXXXXX")"
+  # A root whose process is gone is removed by the next process to start. The exit trap
+  # cannot be the only remover: a shell that dies of PIPE runs none, and
+  # `majordomus doctor | grep -q OK` — a reader that closes the pipe once it has its
+  # answer — is how half the cases ask a question, so each such command left its root
+  # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
+  # "write error: Broken pipe" line on stderr that was never there. So the root carries its
+  # process id, and here every root of this user's whose process no longer exists goes. A
+  # process id that has been reused keeps a dead root until that process ends too; nothing
+  # living is removed, since `kill -0` answers for a process this user can signal.
+  local stale pid
+  for stale in "${base%/}"/mj.[0-9]*.??????; do
+    [ -d "$stale" ] && [ -O "$stale" ] || continue
+    pid="${stale##*/mj.}"; pid="${pid%.*}"
+    case "$pid" in ''|*[!0-9]*) continue ;; esac
+    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+  done
 }
 mktemp() {
   [ -n "$MJ_TMP_ROOT" ] || { command mktemp "$@"; return; }
-  local base="${TMPDIR:-/tmp}" a; local -a args=()
+  local base="${TMPDIR:-/tmp}" a rest; local -a args=()
   base="${base%/}"
   for a in "$@"; do
+    # only a name directly in TMPDIR is moved. A path that merely lies below it is somewhere
+    # in particular: a workspace under the root, or a repository that itself lives in /tmp,
+    # as every fixture does on a machine where TMPDIR is unset, and there a template beside
+    # a record was sent to a directory that did not exist.
     case "$a" in
-      "$MJ_TMP_ROOT"/*) ;;
-      "$base"/*) a="$MJ_TMP_ROOT/${a#"$base"/}" ;;
+      "$base"/*)
+        rest="${a#"$base"/}"; rest="${rest#/}"
+        case "$rest" in */*) ;; *) a="$MJ_TMP_ROOT/$rest" ;; esac ;;
     esac
     args+=("$a")
   done

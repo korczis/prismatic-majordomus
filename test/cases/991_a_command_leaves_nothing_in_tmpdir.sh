@@ -9,7 +9,8 @@
 # before anything else may start.
 #
 # What is held here: a command that succeeds, one that is refused, one that dies of a usage
-# error and one that is terminated each leave TMPDIR as they found it; the process a command
+# error and one that is terminated each leave TMPDIR as they found it; one whose reader
+# closed the pipe or that was killed leaves a root the next command removes; the process a command
 # starts still sees the caller's TMPDIR; and a script that sources the library without asking
 # for a root gets `mktemp` as it was.
 . "$ROOT/test/lib.sh"
@@ -72,6 +73,23 @@ for after in 0.1 0.3 0.6 1; do
   clean "a doctor terminated after ${after}s (status $st)"
 done
 
+# one whose reader left, and one that was killed: neither runs an exit trap, so the root
+# stays — and the next command to start removes it, because its process is gone. What is
+# refused is a root that outlives the next command, not one that outlives its own.
+TMPDIR="$PROBE/" "$MJ" doctor 2>&1 | grep -q . || true
+probed "$MJ" context >/dev/null; clean "the command after a reader left"
+TMPDIR="$PROBE/" "$MJ" doctor >/dev/null 2>&1 & pid=$!
+sleep 0.3; kill -KILL "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+[ "$(find "$PROBE" -mindepth 1 -maxdepth 1 -name "mj.$pid.*" | wc -l | tr -d ' ')" = 1 ] \
+  || { echo "    a killed doctor left no root named for its process, so the sweep below proves nothing"; exit 1; }
+sleep 1   # what the killed shell was waiting for may still be writing; let it finish
+probed "$MJ" context >/dev/null; clean "the command after a kill"
+# a root whose process is alive is not touched: this shell's own id stands in for one
+mkdir "$PROBE/mj.$$.living"
+probed "$MJ" context >/dev/null
+[ -d "$PROBE/mj.$$.living" ] || { echo "    a root whose process is alive was removed"; exit 1; }
+rmdir "$PROBE/mj.$$.living"
+
 # a script that sources the library and never asks for a root: `mktemp` answers where it
 # was asked, and a template that is not under TMPDIR is never moved
 out="$(TMPDIR="$PROBE/" MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" MJ_VERSION=0 bash -c '
@@ -81,16 +99,21 @@ out="$(TMPDIR="$PROBE/" MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" MJ_VERSION
   b="$(mktemp "${TMPDIR:-/tmp}/rooted.XXXXXX")"; printf "%s\n" "$b"
   c="$(mktemp "$PWD/beside.XXXXXX")"; printf "%s\n" "$c"
   d="$(mktemp -d "${TMPDIR:-/tmp}/dir.XXXXXX")"; e="$(mktemp "$d/inner.XXXXXX")"; printf "%s\n" "$e"
+  mkdir -p "${TMPDIR%/}/a-repository/records"
+  f="$(mktemp "${TMPDIR%/}/a-repository/records/.tmp.XXXXXX")"; printf "%s\n" "$f"
   printf "%s\n" "$MJ_TMP_ROOT"
 ')"
 plain="$(printf '%s\n' "$out" | sed -n 1p)"; rooted="$(printf '%s\n' "$out" | sed -n 2p)"
 beside="$(printf '%s\n' "$out" | sed -n 3p)"; inner="$(printf '%s\n' "$out" | sed -n 4p)"
-root="$(printf '%s\n' "$out" | sed -n 5p)"
+below="$(printf '%s\n' "$out" | sed -n 5p)"; root="$(printf '%s\n' "$out" | sed -n 6p)"
 case "$plain" in "$PROBE"//plain.*|"$PROBE"/plain.*) ;; *) echo "    without a root, mktemp answered $plain"; exit 1 ;; esac
 case "$rooted" in "$root"/*rooted.*) ;; *) echo "    with a root, mktemp answered $rooted, outside $root"; exit 1 ;; esac
 case "$beside" in "$PWD"/beside.*) ;; *) echo "    a template outside TMPDIR was moved to $beside"; exit 1 ;; esac
 case "$inner" in "$root"/*dir.*/inner.*) ;; *) echo "    a template already under the root was moved to $inner"; exit 1 ;; esac
+# a repository that lives below TMPDIR — every fixture does, where TMPDIR is unset and the
+# fixture is made in /tmp — keeps the temporary file it asked for beside its own record
+case "$below" in "$PROBE"/a-repository/records/.tmp.*) ;; *) echo "    a template below TMPDIR, not in it, was moved to $below"; exit 1 ;; esac
 [ -f "$plain" ] || { echo "    the file made without a root is not this script's to lose: $plain"; exit 1; }
 [ ! -e "$root" ] || { echo "    the root $root outlived the process that made it"; exit 1; }
-rm -f "$plain" "$beside"
+rm -f "$plain" "$beside"; rm -rf "$PROBE/a-repository"
 clean "a sourcing script"

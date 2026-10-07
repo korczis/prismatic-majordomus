@@ -40,7 +40,7 @@ chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_(AI_DIR|AI_REPO_DIR|
 chk 'rm[[:space:]]+-rf[[:space:]]+/[^t]'                    'recursive delete of an absolute path outside tmp'
 [ "$bad" = 0 ]
 # every rm -rf that does exist targets a mktemp path
-grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b' | grep -vE '^[^:]+:[0-9]+:\s*#' && exit 1
+grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b|"\$stale"' | grep -vE '^[^:]+:[0-9]+:\s*#' && exit 1
 # ... and every variable the scan trusts by name is only ever assigned from mktemp
 for v in MJ_CTX_TMP MJ_PJ MJ_BENCH_ARGV MJ_ARCHIVE_TMPD MJ_REC_TMP MJ_TMP_ROOT; do
   if grep -nE "(^|[;{][[:space:]]*)(local )?$v=" $files | grep -vE 'mktemp|'"$v"'=""'; then
