@@ -1,6 +1,6 @@
 +++
 title = "Prismatic Majordomus"
-description = "the v0.1 specification: problem, thesis, models, boundaries, what is intentionally absent"
+description = "the founding specification: problem, thesis, models, boundaries, what is intentionally absent"
 weight = 9
 [extra]
 source = "docs/DESIGN.md"
