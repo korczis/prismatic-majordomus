@@ -192,13 +192,13 @@ mj_render() { # template, fragment dir, policy sha
 # renderer. For a reader that must know what update would write without writing it.
 # mj_render_current PROVIDER -> stdout; 1 when the provider has no template
 mj_render_current() {
-  local tpl d psha
+  local tpl tmp psha
   tpl="$(mj_provider_template "$1")" || return 1
-  d="$(mktemp -d "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
-  mj_policy_cat > "$d/policy.cat"; psha="$(mj_sha256 "$d/policy.cat")"
-  mj_build_fragments "$d"
-  mj_render "$tpl" "$d" "$psha"
-  rm -rf "$d"
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
+  mj_policy_cat > "$tmp/policy.cat"; psha="$(mj_sha256 "$tmp/policy.cat")"
+  mj_build_fragments "$tmp"
+  mj_render "$tpl" "$tmp" "$psha"
+  rm -rf "$tmp"
 }
 
 # Bring an installation created by an older version up to the current layout: create the

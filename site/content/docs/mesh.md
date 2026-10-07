@@ -430,12 +430,12 @@ starts from ships no declaration, and nothing opens there until its own operator
 | rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`) and lundra (`192.168.100.10`, tailnet `100.65.22.118`), port 8791, every 30 s |
 | seeds | none |
 | cooperation | the defaults: heartbeat 5 s, expiry 30 s |
-| trust | `deny_unknown` with three keys: `641bdb94` (the owner's MacBook Pro), `9d652b2c` (jetson), `25c9758f` (lundra) |
+| trust | `deny_unknown` with five keys: `641bdb94` (the owner's MacBook Pro), `5d81b5c9` (the owner's second MacBook Pro), `aaba18ea` (the owner's iMac), `9d652b2c` (jetson), `25c9758f` (lundra) |
 
 </div>
 
 
-**Who is trusted.** The owner's three machines and nothing else. The worktrees of one machine
+**Who is trusted.** The owner's five machines and nothing else. The worktrees of one machine
 share that machine's key and link as itself; two machines link only when both keys are listed,
 which is why the MacBook's own key is on the list. Any other key on the segment is observed,
 trusted for nothing, and refused `untrusted` if it dials.
