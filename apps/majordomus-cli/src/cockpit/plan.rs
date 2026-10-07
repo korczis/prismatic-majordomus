@@ -107,6 +107,27 @@ fn attested_text(value: &AttestedText) -> Node {
     })
 }
 
+/// A status word `devtask` answered, in the colour the design system gives it.
+fn attested_word(value: &AttestedText) -> El {
+    match &value.value {
+        Some(word) => word_badge(word),
+        None => unknown(value.reason.as_deref()),
+    }
+}
+
+/// The record a value was read from, or unknown when the answer names none.
+fn record_path(record: Option<&str>) -> El {
+    match record {
+        Some(path) => mono(path),
+        None => unknown(None),
+    }
+}
+
+/// One value of a list shown as it is spelled: a path, a command, a branch.
+fn mono_value(value: &str) -> El {
+    mono(value)
+}
+
 /// A count `devtask` answered.
 fn attested_count(value: &AttestedCount) -> Node {
     Node::Element(match value.value {
@@ -269,8 +290,8 @@ pub fn plan(ctx: &Context, query: &[(String, String)]) -> Page {
             ]),
             None => nothing(
                 next.reason
-                    .clone()
-                    .unwrap_or_else(|| "The plan has no issue to hand out.".to_string()),
+                    .as_deref()
+                    .unwrap_or("The plan has no issue to hand out."),
             ),
         },
     );
@@ -456,6 +477,13 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
         Ok(g) => g,
         Err(e) => return failed(Area::Plan, id, e),
     };
+    milestone_page(id, &graph)
+}
+
+/// The milestone page over what `devtask.milestone` answered. Separate from [`milestone`]
+/// so that an answer built without the milestone's record — no title, no record path — is
+/// rendered by the same code a reader reaches.
+fn milestone_page(id: &str, graph: &MilestoneGraph) -> Page {
     if !graph.declared {
         return undeclared("milestone", id);
     }
@@ -497,13 +525,7 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
         facts(vec![
             ("Title", attested_text(&graph.title)),
             ("Outcome", attested_text(&graph.outcome)),
-            (
-                "Status",
-                Node::Element(match &graph.status.value {
-                    Some(status) => word_badge(status),
-                    None => unknown(graph.status.reason.as_deref()),
-                }),
-            ),
+            ("Status", Node::Element(attested_word(&graph.status))),
             ("Rank", attested_count(&graph.rank)),
             (
                 "Depends on",
@@ -519,10 +541,7 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
             ),
             (
                 "Record",
-                Node::Element(match &graph.record {
-                    Some(path) => mono(path.clone()),
-                    None => unknown(None),
-                }),
+                Node::Element(record_path(graph.record.as_deref())),
             ),
             (
                 "Its issues",
@@ -882,17 +901,14 @@ fn issue_page(ctx: &Context, id: &str, task: &DevTask) -> Page {
         el("div")
             .child(attested_sentences(&d.acceptance_criteria))
             .child(facts(vec![
-                (
-                    "Validation",
-                    attested_list(&d.validation, |v| mono(v.to_string())),
-                ),
+                ("Validation", attested_list(&d.validation, mono_value)),
                 (
                     "Evidence required",
-                    attested_list(&d.evidence_required, |v| mono(v.to_string())),
+                    attested_list(&d.evidence_required, mono_value),
                 ),
                 (
                     "Evidence present",
-                    attested_list(&d.evidence_present, |v| mono(v.to_string())),
+                    attested_list(&d.evidence_present, mono_value),
                 ),
             ])),
     );
@@ -900,8 +916,8 @@ fn issue_page(ctx: &Context, id: &str, task: &DevTask) -> Page {
     let scope = card(
         "Scope",
         facts(vec![
-            ("Touches", attested_list(&d.scope, |v| mono(v.to_string()))),
-            ("Not", attested_list(&d.non_scope, |v| mono(v.to_string()))),
+            ("Touches", attested_list(&d.scope, mono_value)),
+            ("Not", attested_list(&d.non_scope, mono_value)),
             ("Depends on", attested_list(&d.depends_on, plan_ref)),
             ("Priority", attested_text(&d.priority)),
             ("Profile", attested_text(&d.profile)),
@@ -920,20 +936,11 @@ fn issue_page(ctx: &Context, id: &str, task: &DevTask) -> Page {
                 ))
             })
             .child(facts(vec![
-                (
-                    "Branches",
-                    attested_list(&x.branches, |v| mono(v.to_string())),
-                ),
-                (
-                    "Merged",
-                    attested_list(&x.merged_branches, |v| mono(v.to_string())),
-                ),
+                ("Branches", attested_list(&x.branches, mono_value)),
+                ("Merged", attested_list(&x.merged_branches, mono_value)),
                 ("Commits", attested_count(&x.commits)),
                 ("Trunk", attested_text(&x.trunk)),
-                (
-                    "Sessions",
-                    attested_list(&x.sessions, |v| mono(v.to_string())),
-                ),
+                ("Sessions", attested_list(&x.sessions, mono_value)),
                 ("Created", attested_text(&d.created_at)),
                 ("Updated", attested_text(&d.updated_at)),
                 ("Started", attested_text(&d.started_at)),
@@ -1074,6 +1081,32 @@ mod tests {
         assert!(html(attested_list_one(&milestone)).contains("unknown: no milestone key"));
     }
 
+    /// A status word wears its badge, and a status `devtask` could not derive — the answer
+    /// for a milestone the plan does not declare — is unknown with the reason. A record path
+    /// is shown as spelled, and an answer naming no record says unknown.
+    #[test]
+    fn a_status_and_a_record_say_unknown_when_the_answer_has_none() {
+        let status = AttestedText::derived("ACTIVE", "plan.roadmap");
+        let shown = attested_word(&status).render();
+        assert!(
+            shown.contains(">ACTIVE<") && shown.contains("mj-badge"),
+            "{shown}"
+        );
+        let status = AttestedText::unknown("plan.roadmap", "the plan declares no milestone");
+        assert!(attested_word(&status)
+            .render()
+            .contains("unknown: the plan declares no milestone"));
+
+        let path = ".ai/repo/project/milestones/m-first.yaml";
+        assert!(record_path(Some(path))
+            .render()
+            .contains(&format!(">{path}<")));
+        assert!(record_path(None).render().contains(">unknown<"));
+        assert!(mono_value("feature/I0001")
+            .render()
+            .contains(">feature/I0001<"));
+    }
+
     /// Every finding is a row with the command that reproduces it.
     #[test]
     fn a_finding_is_a_row_with_its_reproduction() {
@@ -1181,6 +1214,16 @@ mod tests {
                 &issue_record(id, milestone, scope, &deps),
             );
         }
+        // an issue that declares what it does not touch and carries the evidence it requires
+        write(
+            ".ai/repo/project/issues/I0021.yaml",
+            "id: I0021\nmilestone: m-loop\ntitle: The evidenced work\nslug: work-I0021\n\
+             priority: p2\nprofile: implementation\nobjective: \"Prove it.\"\n\
+             scope:\n  - share\nnon_scope:\n  - share/elsewhere\n\
+             acceptance_criteria:\n  - It is proven\nvalidation:\n  - \"true\"\n\
+             evidence_required:\n  - proof\nevidence:\n  - covers: proof\n    type: manual\n\
+             \x20   command: \"true\"\n    result: \"it held\"\n",
+        );
         repo
     }
 
@@ -1316,6 +1359,65 @@ mod tests {
         assert_eq!(page.scripts, vec!["plan.js"]);
 
         assert_eq!(issue(&ctx, "I9999").status, 404);
+    }
+
+    /// An answer with no title — a milestone answered without its record, an issue whose
+    /// record declares no `title` — is headed by its id, and the page says the record is
+    /// unknown where none was read, rather than a blank heading.
+    #[test]
+    fn an_answer_without_its_record_is_headed_by_the_id() {
+        let repo = planned();
+        let ctx = context(&repo, &[]);
+        let plan = crate::plan::Plan::build(&ctx.index);
+
+        let graph = MilestoneGraph::build(&plan, "m-first", None);
+        assert!(graph.declared && graph.record.is_none() && graph.title.value.is_none());
+        let page = milestone_page("m-first", &graph);
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert_eq!(page.subtitle.as_deref(), Some("m-first"));
+        let record = body.split(">Record<").nth(1).expect("a record fact");
+        assert!(record.contains(">unknown<"), "{record}");
+
+        // the record I0001's index object carries, less its title
+        let object = ctx
+            .index
+            .objects
+            .iter()
+            .find(|o| o.kind == "issue" && o.identity == "I0001")
+            .expect("I0001 is indexed");
+        let mut metadata = object.metadata.clone();
+        metadata.as_object_mut().expect("a mapping").remove("title");
+        let model = crate::devtask::task::DevTaskModel {
+            plan: &plan,
+            record: Some(crate::devtask::task::RecordRef {
+                path: &object.provenance.path,
+                metadata: &metadata,
+            }),
+            trace: None,
+            sessions: vec![],
+            repository: None,
+        };
+        let task = DevTask::build(&model, "I0001");
+        assert!(task.declared && task.declaration.title.value.is_none());
+        let page = issue_page(&ctx, "I0001", &task);
+        assert_eq!(page.status, 200, "{}", page.main.render());
+        assert_eq!(page.subtitle.as_deref(), Some("I0001"));
+    }
+
+    /// What an issue does not touch and the evidence it carries are listed as spelled.
+    #[test]
+    fn the_issue_page_lists_what_it_leaves_alone_and_the_evidence_present() {
+        let repo = planned();
+        let page = issue(&context(&repo, &[]), "I0021");
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains(">share/elsewhere<"), "{body}");
+        let present = body
+            .split("Evidence present")
+            .nth(1)
+            .expect("an evidence-present fact");
+        assert!(present.contains(">proof<"), "{present}");
     }
 
     /// An answer given without git — `devtask.issue` asked with `git: false` — renders the
