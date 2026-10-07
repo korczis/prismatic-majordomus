@@ -604,6 +604,49 @@ fn union_reviews(a: ReviewPolicy, b: ReviewPolicy) -> ReviewPolicy {
     }
 }
 
+/// The app a required check is bound to, as the forge spelled it: `Some(None)` for a check
+/// bound to none (the field absent, `null`, or `-1`, the forge's word for any app),
+/// `Some(Some(id))` for a bound one, and `None` for a spelling that is neither — a string, a
+/// fraction, another negative number.
+///
+/// Unreadable is not unbound. Read as unbound, a binding the forge spelled another way would
+/// let any app's run of that name stand for the bound app's, which is the hole the binding
+/// exists to close; so a document that carries one is a requirement that was not read.
+fn bound_app(v: Option<&Value>) -> Option<Option<u64>> {
+    match v {
+        None | Some(Value::Null) => Some(None),
+        Some(Value::Number(n)) if n.as_i64() == Some(-1) => Some(None),
+        Some(Value::Number(n)) => n.as_u64().map(Some),
+        Some(_) => None,
+    }
+}
+
+/// Whether every check a branch-protection document binds names its app readably. A
+/// document that does not is a requirement that was not read ([`bound_app`]).
+pub fn protection_binds_readably(v: &Value) -> bool {
+    v.pointer("/required_status_checks/checks")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .all(|c| bound_app(c.get("app_id")).is_some())
+}
+
+/// Whether every check the rulesets that apply bind names its app readably, as
+/// [`protection_binds_readably`] asks of a protection.
+pub fn rules_bind_readably(v: &Value) -> bool {
+    v.as_array()
+        .into_iter()
+        .flatten()
+        .filter(|rule| rule.get("type").and_then(Value::as_str) == Some("required_status_checks"))
+        .flat_map(|rule| {
+            rule.pointer("/parameters/required_status_checks")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+        })
+        .all(|c| bound_app(c.get("integration_id")).is_some())
+}
+
 /// The required checks and review requirement the rulesets that apply to a branch add,
 /// from `repos/{r}/rules/branches/{base}`: its `required_status_checks` rules (a context and
 /// the `integration_id` bound to it) and its `pull_request` rules.
@@ -623,7 +666,7 @@ pub fn rules_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
                     if let Some(context) = c.get("context").and_then(Value::as_str) {
                         checks.push(RequiredCheck {
                             context: context.to_string(),
-                            app_id: c.get("integration_id").and_then(Value::as_u64),
+                            app_id: bound_app(c.get("integration_id")).flatten(),
                         });
                     }
                 }
@@ -690,7 +733,7 @@ pub fn protection_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
                 .filter_map(|c| {
                     Some(RequiredCheck {
                         context: c.get("context")?.as_str()?.to_string(),
-                        app_id: c.get("app_id").and_then(Value::as_u64),
+                        app_id: bound_app(c.get("app_id")).flatten(),
                     })
                 })
                 .collect()
@@ -1453,10 +1496,15 @@ impl Forge for GhForge<'_> {
             ],
         )?;
         let protection: Option<(Vec<RequiredCheck>, ReviewPolicy, bool)> = if ok {
-            serde_json::from_str::<Value>(&out).ok().map(|v| {
-                let (checks, reviews) = protection_of(&v);
-                (checks, reviews, protection_requires_up_to_date(&v))
-            })
+            // a binding the forge spelled unreadably leaves the requirement unread, as a
+            // document that is not JSON does
+            serde_json::from_str::<Value>(&out)
+                .ok()
+                .filter(protection_binds_readably)
+                .map(|v| {
+                    let (checks, reviews) = protection_of(&v);
+                    (checks, reviews, protection_requires_up_to_date(&v))
+                })
         } else if err.contains("Branch not protected") || out.contains("Branch not protected") {
             Some((Vec::new(), ReviewPolicy::default(), false))
         } else {
@@ -1469,10 +1517,13 @@ impl Forge for GhForge<'_> {
             &["api", &format!("repos/{repository}/rules/branches/{base}")],
         )?;
         let rules: Option<(Vec<RequiredCheck>, ReviewPolicy, bool)> = if ok {
-            serde_json::from_str::<Value>(&out).ok().map(|v| {
-                let (checks, reviews) = rules_of(&v);
-                (checks, reviews, rules_require_up_to_date(&v))
-            })
+            serde_json::from_str::<Value>(&out)
+                .ok()
+                .filter(rules_bind_readably)
+                .map(|v| {
+                    let (checks, reviews) = rules_of(&v);
+                    (checks, reviews, rules_require_up_to_date(&v))
+                })
         } else {
             None
         };
@@ -1852,6 +1903,49 @@ mod tests {
             "a null auto-merge request is not armed"
         );
         assert!(pull_request_of(&json!({"title": "no number"})).is_none());
+    }
+
+    /// A binding is read or it is not: absent, `null` and `-1` are "any app", an integer is
+    /// that app, and every other spelling is a requirement that was not read. Read as
+    /// unbound, it would let any app's run of the name stand for the bound app's.
+    #[test]
+    fn a_binding_spelled_unreadably_is_not_an_unbound_check() {
+        assert_eq!(bound_app(None), Some(None));
+        assert_eq!(bound_app(Some(&json!(null))), Some(None));
+        assert_eq!(bound_app(Some(&json!(-1))), Some(None));
+        assert_eq!(bound_app(Some(&json!(15368))), Some(Some(15368)));
+        for unreadable in [
+            json!("15368"),
+            json!(15368.5),
+            json!(-2),
+            json!(true),
+            json!([15368]),
+        ] {
+            assert_eq!(bound_app(Some(&unreadable)), None, "{unreadable}");
+            let protection = json!({"required_status_checks": {
+                "contexts": ["ci"], "checks": [{"context": "ci", "app_id": unreadable}]}});
+            assert!(!protection_binds_readably(&protection), "{unreadable}");
+            let rules = json!([{"type": "required_status_checks", "parameters": {
+                "required_status_checks": [{"context": "ci", "integration_id": unreadable}]}}]);
+            assert!(!rules_bind_readably(&rules), "{unreadable}");
+        }
+        // what a forge does send is read: bound, any app, and no binding at all
+        let protection = json!({"required_status_checks": {"contexts": ["ci", "lint"], "checks": [
+            {"context": "ci", "app_id": 15368}, {"context": "lint", "app_id": -1},
+            {"context": "docs", "app_id": null}, {"context": "site"}]}});
+        assert!(protection_binds_readably(&protection));
+        let (checks, _) = protection_of(&protection);
+        let app = |name: &str| checks.iter().find(|c| c.context == name).unwrap().app_id;
+        assert_eq!(
+            (app("ci"), app("lint"), app("docs"), app("site")),
+            (Some(15368), None, None, None)
+        );
+        let rules = json!([
+            {"type": "pull_request", "parameters": {}},
+            {"type": "required_status_checks", "parameters": {"required_status_checks": [
+                {"context": "ci", "integration_id": 15368}, {"context": "lint"}]}}]);
+        assert!(rules_bind_readably(&rules));
+        assert!(protection_binds_readably(&json!({})) && rules_bind_readably(&json!([])));
     }
 
     #[test]
