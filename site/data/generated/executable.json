@@ -1248,6 +1248,23 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-cleanup",
+      "claims": [],
+      "cli": null,
+      "id": "integration.cleanup",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-cleanup/",
+      "slug": "integration-cleanup",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "What cleanup would do",
+      "tool": "majordomus_pull_requests_cleanup"
+    },
+    {
       "api_anchor": "/docs/api/integration/#op-integration-events",
       "claims": [],
       "cli": "majordomus prs events",
@@ -1280,6 +1297,23 @@
       "tests": [],
       "title": "Why one pull request is where it is",
       "tool": "majordomus_pull_request_explain"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-prove_dry_run",
+      "claims": [],
+      "cli": "majordomus prs prove-dry-run",
+      "id": "integration.prove_dry_run",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-prove-dry-run/",
+      "slug": "integration-prove-dry-run",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "Proof that a dry run moves nothing",
+      "tool": "majordomus_pull_requests_prove_dry_run"
     },
     {
       "api_anchor": "/docs/api/integration/#op-integration-queue",
@@ -2371,6 +2405,23 @@
       "tool": "majordomus_plan_waves"
     },
     {
+      "api_anchor": "/docs/api/product/#op-product-domains",
+      "claims": [],
+      "cli": "majordomus product domains",
+      "id": "product.domains",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": "majordomus://product/domains",
+      "route": "/registry/capabilities/product-domains/",
+      "slug": "product-domains",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "The domains",
+      "tool": "majordomus_product_domains"
+    },
+    {
       "api_anchor": "/docs/api/product/#op-product-feature",
       "claims": [],
       "cli": "majordomus product show",
@@ -3377,6 +3428,13 @@
         "test": "test/cases/97_product_features.sh"
       },
       {
+        "id": "product-domains-derived",
+        "implementation": "apps/majordomus-cli/src/product.rs",
+        "route": "/guarantees/product-domains-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/800_product_domains.sh"
+      },
+      {
         "id": "product-surfaces-derived",
         "implementation": "apps/majordomus-cli/src/product.rs",
         "route": "/guarantees/product-surfaces-derived/",
@@ -3670,11 +3728,11 @@
     ]
   },
   "counts": {
-    "capabilities": 176,
-    "claims": 76,
+    "capabilities": 179,
+    "claims": 77,
     "modules": 51
   },
-  "generator": "majordomus-cli 0.12.0",
+  "generator": "majordomus-cli 0.14.0",
   "modules": [
     {
       "capabilities": [
@@ -4295,6 +4353,11 @@
     {
       "capabilities": [
         {
+          "id": "integration.cleanup",
+          "route": "/registry/capabilities/integration-cleanup/",
+          "slug": "integration-cleanup"
+        },
+        {
           "id": "integration.events",
           "route": "/registry/capabilities/integration-events/",
           "slug": "integration-events"
@@ -4303,6 +4366,11 @@
           "id": "integration.explain",
           "route": "/registry/capabilities/integration-explain/",
           "slug": "integration-explain"
+        },
+        {
+          "id": "integration.prove_dry_run",
+          "route": "/registry/capabilities/integration-prove-dry-run/",
+          "slug": "integration-prove-dry-run"
         },
         {
           "id": "integration.queue",
@@ -4745,6 +4813,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "product.domains",
+          "route": "/registry/capabilities/product-domains/",
+          "slug": "product-domains"
+        },
         {
           "id": "product.feature",
           "route": "/registry/capabilities/product-feature/",

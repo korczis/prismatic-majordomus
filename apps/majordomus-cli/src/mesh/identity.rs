@@ -314,15 +314,21 @@ pub fn relabel(path: &Path, label: &str) -> Result<NodeIdentity, MeshError> {
             "`{label}` is not a device label: 1 to 64 letters, digits, `.`, `_` or `-`"
         )));
     }
-    NodeIdentity::load_or_create(path)?;
-    let text = std::fs::read_to_string(path)
-        .map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))?;
-    let mut file: IdentityFile = serde_json::from_str(&text).map_err(|e| {
-        MeshError::Identity(format!("{}: not an identity file: {e}", path.display()))
-    })?;
-    file.display_name = Some(label.to_string());
-    let text =
-        serde_json::to_string_pretty(&file).map_err(|e| MeshError::Identity(e.to_string()))?;
+    // a file that is not an identity is refused here, before anything is written
+    let identity = NodeIdentity::load_or_create(path)?;
+    // the moment the key was made stays what the file says it was
+    let created_at = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|text| serde_json::from_str::<IdentityFile>(&text).ok())
+        .map(|file| file.created_at)
+        .unwrap_or_default();
+    let file = IdentityFile {
+        schema: SCHEMA.into(),
+        secret_key: hex(&identity.signing.to_bytes()),
+        display_name: Some(label.to_string()),
+        created_at,
+    };
+    let text = serde_json::to_string_pretty(&file).expect("an identity file is plain data");
     write_private(path, &text)?;
     NodeIdentity::load(path)
 }
@@ -344,6 +350,47 @@ fn write_private(path: &Path, text: &str) -> Result<(), MeshError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_label_is_a_short_name_and_changes_nothing_but_itself() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let before = NodeIdentity::load_or_create(&path).unwrap();
+        let created = |p: &Path| {
+            let text = std::fs::read_to_string(p).unwrap();
+            serde_json::from_str::<IdentityFile>(&text)
+                .unwrap()
+                .created_at
+        };
+        let made = created(&path);
+        let after = relabel(&path, "mac-mini_2.local").unwrap();
+        assert_eq!(after.public.display_name, "mac-mini_2.local");
+        assert_eq!(after.public.public_key, before.public.public_key);
+        assert_eq!(created(&path), made, "the key is as old as it was");
+
+        for label in ["", "two words", "semi;colon", &"x".repeat(65)] {
+            let err = relabel(&path, label).unwrap_err().to_string();
+            assert!(err.contains("is not a device label"), "{label}: {err}");
+        }
+        // an absent identity is made, already labelled
+        let fresh = dir.path().join("deeper/node.json");
+        assert_eq!(relabel(&fresh, "new").unwrap().public.display_name, "new");
+    }
+
+    #[test]
+    fn a_file_that_is_not_an_identity_is_never_relabelled_into_one() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        std::fs::write(&path, "not an identity").unwrap();
+        assert!(relabel(&path, "mac").is_err());
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "not an identity");
+
+        // the label cannot be written: the temporary file's place is taken
+        let path = dir.path().join("other.json");
+        NodeIdentity::load_or_create(&path).unwrap();
+        std::fs::create_dir(path.with_extension("tmp")).unwrap();
+        assert!(relabel(&path, "mac").is_err());
+    }
 
     #[test]
     fn an_identity_is_created_once_and_loaded_stable() {

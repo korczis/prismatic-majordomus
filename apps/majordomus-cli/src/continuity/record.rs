@@ -191,13 +191,6 @@ impl Record {
     }
 
     /// The record's id: the first 32 hex of the SHA-256 of its canonical bytes.
-    ///
-    /// ```
-    /// use majordomus_cli::continuity::record::tests_support::sample;
-    /// let r = sample();
-    /// assert_eq!(r.id().len(), 32);
-    /// assert_eq!(r.id(), r.clone().id(), "the same record is the same id");
-    /// ```
     pub fn id(&self) -> String {
         hex32(&self.canonical())
     }
@@ -428,15 +421,6 @@ impl Leak {
 /// Refusing rather than redacting is deliberate: a redacted handover is a different
 /// handover from the one its author wrote, and the author is the one who should decide
 /// what it says instead.
-///
-/// ```
-/// use majordomus_cli::continuity::record::{portability, tests_support::sample};
-/// let mut r = sample();
-/// assert!(portability(&r, &[]).is_empty(), "the sample travels");
-/// r.source.changed = vec!["/srv/checkout/apps/x.rs".into()];
-/// let leaks = portability(&r, &[]);
-/// assert_eq!(leaks[0].field, "/source/changed/0");
-/// ```
 pub fn portability(record: &Record, secret_values: &[String]) -> Vec<Leak> {
     let value = serde_json::to_value(record).unwrap_or(Value::Null);
     let mut leaks = Vec::new();
@@ -580,13 +564,14 @@ pub fn shape(record: &Record) -> Result<(), String> {
     Ok(())
 }
 
-/// A sample record for doc examples and tests: well-formed, portable, unsigned.
-#[doc(hidden)]
-pub mod tests_support {
+/// A sample record for the tests of this module and of the ones that read records:
+/// well-formed, portable, unsigned.
+#[cfg(test)]
+pub(crate) mod tests_support {
     use super::*;
 
     /// A record that passes every check but the signature.
-    pub fn sample() -> Record {
+    pub(crate) fn sample() -> Record {
         let body =
             "# Objective\nship\n\n# Current State\nhalf\n\n# Next Action\nrest\n".to_string();
         Record {
@@ -642,6 +627,22 @@ mod tests {
     fn signed_by(identity: &NodeIdentity, mut record: Record) -> SignedRecord {
         record.device.node = identity.public.node_id.as_str().to_string();
         SignedRecord::sign(record, identity)
+    }
+
+    #[test]
+    fn the_same_record_is_the_same_id() {
+        let r = sample();
+        assert_eq!(r.id().len(), 32);
+        assert_eq!(r.id(), r.clone().id(), "the same record is the same id");
+    }
+
+    #[test]
+    fn a_machine_path_in_the_changed_files_does_not_travel() {
+        let mut r = sample();
+        assert!(portability(&r, &[]).is_empty(), "the sample travels");
+        r.source.changed = vec!["/srv/checkout/apps/x.rs".into()];
+        let leaks = portability(&r, &[]);
+        assert_eq!(leaks[0].field, "/source/changed/0");
     }
 
     #[test]
@@ -764,5 +765,85 @@ mod tests {
         r.handover.body = " ".into();
         r.handover.id = HandoverBody::digest_of(&r.handover.body);
         assert!(shape(&r).is_err());
+    }
+
+    #[test]
+    fn a_file_larger_than_any_record_is_refused_unread() {
+        let (why, d) = admit("records/x.json", &vec![b' '; MAX_RECORD_BYTES + 1], "a").unwrap_err();
+        assert_eq!(why, Refusal::Malformed);
+        assert_eq!(d.code, "continuity.record_too_large");
+    }
+
+    /// A record that was signed while carrying what must not travel is refused on arrival
+    /// too: admission does not trust that the publisher checked.
+    #[test]
+    fn a_signed_record_that_leaks_is_refused_on_arrival_by_what_it_leaks() {
+        let identity = NodeIdentity::ephemeral().unwrap();
+        let refused = |change: &dyn Fn(&mut Record)| {
+            let mut r = sample();
+            change(&mut r);
+            let signed = signed_by(&identity, r);
+            let (why, d) =
+                admit(&path_of(&signed.id), &signed.to_bytes(), &"a".repeat(32)).unwrap_err();
+            assert_eq!(why, Refusal::Nonportable);
+            assert_eq!(d.path.as_deref(), Some(path_of(&signed.id).as_str()));
+            (d.code, d.message)
+        };
+        let (code, message) = refused(&|r| r.source.changed = vec!["/srv/checkout/x.rs".into()]);
+        assert_eq!(code, "continuity.nonportable_field");
+        assert!(
+            message.starts_with("field /source/changed/0: "),
+            "{message}"
+        );
+        let token = format!("{}{}", "ghp_", "a".repeat(36));
+        let (code, _) = refused(&|r| r.handover.body.push_str(&format!("token {token}\n")));
+        assert_eq!(code, "continuity.secret");
+        // a marker that is not a path is a secret, whatever shape the value has
+        let header = format!("{}: none of your business\n", "Authorization");
+        let mut r = sample();
+        r.handover.body.push_str(&header);
+        let leaks = portability(&r, &[]);
+        assert_eq!(leaks[0].code, "continuity.secret", "{leaks:?}");
+    }
+
+    #[test]
+    fn shape_refuses_every_field_that_is_not_what_it_says() {
+        let refused = |change: &dyn Fn(&mut Record)| {
+            let mut r = sample();
+            change(&mut r);
+            shape(&r).unwrap_err()
+        };
+        assert!(refused(&|r| r.handover.id = "0".repeat(64)).starts_with("the handover: "));
+        assert!(refused(&|r| r.repository = "short".into()).starts_with("repository is not 32"));
+        assert!(refused(&|r| r.device.node = "z".repeat(32)).starts_with("device.node is not"));
+        let on_a_line = |r: &mut Record, line: &str, parent: &str| {
+            r.line = Some(line.into());
+            r.parent = Some(parent.into());
+        };
+        let good = "d".repeat(32);
+        assert!(refused(&|r| on_a_line(r, "nope", &good)).starts_with("line is not"));
+        assert!(refused(&|r| on_a_line(r, &good, "nope")).starts_with("parent is not"));
+        assert!(refused(&|r| r.device.label = "two\nlines".into()).starts_with("device.label"));
+        assert!(refused(&|r| r.published_at = "x".repeat(257)).starts_with("published_at"));
+        let many = |n: usize| (0..n).map(|i| format!("lib/{i}")).collect::<Vec<_>>();
+        assert!(refused(&|r| r.source.changed = many(MAX_CHANGED + 1)).contains("changed paths"));
+        let decision = |title: &str, text: String| CarriedDecision {
+            title: title.into(),
+            text,
+        };
+        assert!(refused(&|r| {
+            r.decisions = (0..=MAX_DECISIONS)
+                .map(|i| decision(&format!("d{i}"), String::new()))
+                .collect()
+        })
+        .contains("decisions are carried"));
+        assert!(refused(&|r| {
+            r.decisions = vec![decision("big", "x".repeat(MAX_DECISION_BYTES + 1))]
+        })
+        .contains("a carried decision"));
+        assert!(
+            refused(&|r| r.decisions = vec![decision("two\nlines", String::new())])
+                .contains("a carried decision")
+        );
     }
 }

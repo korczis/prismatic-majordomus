@@ -35,7 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
-pub mod continuity_transfer;
+pub(crate) mod continuity_transfer;
 pub(crate) mod convergence;
 pub mod dashboard;
 pub(crate) mod delivery;

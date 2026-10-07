@@ -156,11 +156,12 @@ pub fn save(root: &Path, state: &LocalState) -> Result<(), String> {
     let path = local_path(root);
     let dir = root.join(STATE_DIR);
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", relative(root, &dir)))?;
-    let mut text = serde_json::to_string_pretty(state).map_err(|e| e.to_string())?;
+    let mut text = serde_json::to_string_pretty(state).expect("a local state is plain data");
     text.push('\n');
     let tmp = dir.join(format!(".{LOCAL_FILE}.tmp"));
-    std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", relative(root, &tmp)))?;
-    std::fs::rename(&tmp, &path).map_err(|e| format!("{}: {e}", relative(root, &path)))
+    std::fs::write(&tmp, text)
+        .and_then(|()| std::fs::rename(&tmp, &path))
+        .map_err(|e| format!("{}: {e}", relative(root, &path)))
 }
 
 /// `path` relative to `root`, for a message: a message names the repository's paths, not
@@ -184,9 +185,8 @@ fn git_out(root: &Path, args: &[&str]) -> Option<Vec<u8>> {
         .arg(root)
         .args(args)
         .stdin(Stdio::null())
-        .output()
-        .ok()?;
-    out.status.success().then_some(out.stdout)
+        .output();
+    out.ok().filter(|o| o.status.success()).map(|o| o.stdout)
 }
 
 /// The branch and HEAD of `root`.
@@ -213,24 +213,7 @@ pub fn source_state(root: &Path) -> SourceState {
         &["status", "--porcelain=v1", "-z", "--untracked-files=all"],
     )
     .unwrap_or_default();
-    let mut changed = Vec::new();
-    let mut untracked = Vec::new();
-    let mut entries = status.split(|b| *b == 0).filter(|e| !e.is_empty());
-    while let Some(entry) = entries.next() {
-        if entry.len() < 4 {
-            continue;
-        }
-        let code = &entry[..2];
-        let path = String::from_utf8_lossy(&entry[3..]).to_string();
-        // a rename or copy is followed by its source path, which is not a second change
-        if code[0] == b'R' || code[0] == b'C' {
-            entries.next();
-        }
-        if code == b"??" {
-            untracked.push(path.clone());
-        }
-        changed.push(path);
-    }
+    let (mut changed, mut untracked) = changed_paths(&status);
     crate::order::canonical_strings(&mut changed);
     changed.dedup();
     let total = changed.len();
@@ -266,6 +249,30 @@ pub fn source_state(root: &Path) -> SourceState {
         changed_total: total,
         fingerprint,
     }
+}
+
+/// The paths `git status --porcelain=v1 -z` names, and those of them that are untracked. An
+/// entry is `XY <path>`; a rename or a copy is followed by the path it came from, which is
+/// not a second change. Anything shorter than an entry can be is passed over.
+fn changed_paths(status: &[u8]) -> (Vec<String>, Vec<String>) {
+    let mut changed = Vec::new();
+    let mut untracked = Vec::new();
+    let mut entries = status.split(|b| *b == 0).filter(|e| !e.is_empty());
+    while let Some(entry) = entries.next() {
+        if entry.len() < 4 {
+            continue;
+        }
+        let code = &entry[..2];
+        let path = String::from_utf8_lossy(&entry[3..]).to_string();
+        if code[0] == b'R' || code[0] == b'C' {
+            entries.next();
+        }
+        if code == b"??" {
+            untracked.push(path.clone());
+        }
+        changed.push(path);
+    }
+    (changed, untracked)
 }
 
 /// The episode open in this checkout, when its record is this checkout's.
@@ -329,15 +336,6 @@ pub fn decisions(root: &Path, id: &str) -> Vec<CarriedDecision> {
 
 /// Every entry of a decision log: `## <heading>` and the lines below it. The template's
 /// commented example is not an entry.
-///
-/// ```
-/// use majordomus_cli::continuity::local::parse_decisions;
-/// let log = "# Decisions\n<!--\n## YYYY — example\n-->\n\n## 2026-10-03 — Use a ref\nTask: t-1\nWhy: x\n";
-/// let d = parse_decisions(log);
-/// assert_eq!(d.len(), 1);
-/// assert_eq!(d[0].title, "2026-10-03 — Use a ref");
-/// assert!(d[0].text.contains("Task: t-1"));
-/// ```
 pub fn parse_decisions(text: &str) -> Vec<CarriedDecision> {
     let mut out: Vec<CarriedDecision> = Vec::new();
     let mut comment = false;
@@ -416,12 +414,12 @@ pub fn carry_decisions(
         appended += 1;
     }
     if appended > 0 {
-        if let Some(dir) = path.parent() {
-            std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", relative(root, dir)))?;
-        }
+        let dir = root.join(STATE_DIR);
+        std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", relative(root, &dir)))?;
         let tmp = path.with_extension("md.tmp");
-        std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", relative(root, &tmp)))?;
-        std::fs::rename(&tmp, &path).map_err(|e| format!("{}: {e}", relative(root, &path)))?;
+        std::fs::write(&tmp, text)
+            .and_then(|()| std::fs::rename(&tmp, &path))
+            .map_err(|e| format!("{}: {e}", relative(root, &path)))?;
     }
     Ok(appended)
 }
@@ -454,6 +452,15 @@ pub fn secret_environment() -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_templates_commented_example_is_not_a_decision() {
+        let log = "# Decisions\n<!--\n## YYYY — example\n-->\n\n## 2026-10-03 — Use a ref\nTask: t-1\nWhy: x\n";
+        let d = parse_decisions(log);
+        assert_eq!(d.len(), 1);
+        assert_eq!(d[0].title, "2026-10-03 — Use a ref");
+        assert!(d[0].text.contains("Task: t-1"));
+    }
 
     fn repo() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
@@ -540,5 +547,184 @@ mod tests {
         assert_eq!(load(dir.path()).unwrap(), s);
         std::fs::write(local_path(dir.path()), "{").unwrap();
         assert!(load(dir.path()).is_err());
+    }
+
+    fn state(dir: &tempfile::TempDir) -> PathBuf {
+        let state = dir.path().join(STATE_DIR);
+        std::fs::create_dir_all(&state).unwrap();
+        state
+    }
+
+    #[test]
+    fn a_local_file_of_another_schema_or_that_cannot_be_read_is_an_error() {
+        let dir = repo();
+        let state = state(&dir);
+        std::fs::write(local_path(dir.path()), r#"{"schema":"other/v9"}"#).unwrap();
+        let err = load(dir.path()).unwrap_err();
+        assert!(err.contains("schema other/v9 is not"), "{err}");
+        assert!(
+            err.starts_with(STATE_DIR),
+            "a message names the repository's path: {err}"
+        );
+        // a directory where the file belongs is unreadable, and not the same as absent
+        std::fs::remove_file(local_path(dir.path())).unwrap();
+        std::fs::create_dir(local_path(dir.path())).unwrap();
+        assert!(load(dir.path()).is_err());
+        assert!(save(dir.path(), &LocalState::default()).is_err());
+        std::fs::remove_dir(local_path(dir.path())).unwrap();
+        // the temporary file cannot be written
+        let tmp = state.join(format!(".{LOCAL_FILE}.tmp"));
+        std::fs::remove_file(&tmp).unwrap();
+        std::fs::create_dir(&tmp).unwrap();
+        let err = save(dir.path(), &LocalState::default()).unwrap_err();
+        assert!(err.starts_with(STATE_DIR), "{err}");
+    }
+
+    #[test]
+    fn a_state_directory_that_cannot_be_made_refuses_the_save() {
+        let dir = repo();
+        std::fs::create_dir_all(dir.path().join(".ai")).unwrap();
+        std::fs::write(
+            dir.path().join(".ai/local"),
+            "a file where a directory belongs",
+        )
+        .unwrap();
+        let err = save(dir.path(), &LocalState::default()).unwrap_err();
+        assert!(err.starts_with(STATE_DIR), "{err}");
+    }
+
+    #[test]
+    fn a_message_names_a_path_inside_the_repository_or_only_its_file_name() {
+        let root = Path::new("/srv/checkout");
+        assert_eq!(relative(root, &root.join("lib/a.rs")), "lib/a.rs");
+        assert_eq!(relative(root, Path::new("/elsewhere/secret/b.rs")), "b.rs");
+        assert_eq!(relative(root, Path::new("/")), "");
+    }
+
+    #[test]
+    fn a_rename_is_one_change_and_an_unborn_branch_has_a_fingerprint_without_a_head() {
+        let dir = repo();
+        let git = |args: &[&str]| git_out(dir.path(), args).unwrap();
+        git(&["mv", "a.txt", "b.txt"]);
+        let renamed = source_state(dir.path());
+        assert_eq!(
+            renamed.changed,
+            ["b.txt"],
+            "the old name is not a second change"
+        );
+        assert_eq!(renamed.changed_total, 1);
+
+        // an entry too short to be one is passed over; the rest are read
+        let (changed, untracked) = changed_paths(b"??\0?? new.txt\0R  b.txt\0a.txt\0 M c.txt\0");
+        assert_eq!(changed, ["new.txt", "b.txt", "c.txt"]);
+        assert_eq!(untracked, ["new.txt"]);
+
+        let fresh = tempfile::tempdir().unwrap();
+        assert!(git_out(fresh.path(), &["init", "-q", "-b", "main"]).is_some());
+        std::fs::write(fresh.path().join("x"), "x\n").unwrap();
+        let unborn = source_state(fresh.path());
+        assert_eq!(unborn.head, None);
+        assert_eq!(unborn.branch.as_deref(), Some("main"));
+        assert_eq!(unborn.working_tree, WorkingTree::Dirty);
+        assert_eq!(unborn.fingerprint.map(|f| f.len()), Some(32));
+        // not a repository at all: nothing is known, and nothing is invented
+        let nowhere = source_state(&fresh.path().join("gone"));
+        assert_eq!((nowhere.branch, nowhere.head), (None, None));
+    }
+
+    #[test]
+    fn an_episode_is_open_here_only_when_its_record_is_this_checkouts() {
+        let dir = repo();
+        let root = dir.path();
+        let state = state(&dir);
+        assert_eq!(episode_at_publish(root), (None, EpisodeAtPublish::None));
+        let write = |worktree: &str, id: &str| {
+            std::fs::write(
+                state.join("session-current.yaml"),
+                format!("session_id: {id}\nworktree: {worktree}\n"),
+            )
+            .unwrap()
+        };
+        write(&root.display().to_string(), "s-1");
+        assert_eq!(
+            episode_at_publish(root),
+            (Some("s-1".into()), EpisodeAtPublish::Open)
+        );
+        // the same directory under another spelling is still this checkout
+        write(&format!("{}/lib/..", root.display()), "s-2");
+        std::fs::create_dir_all(root.join("lib")).unwrap();
+        assert_eq!(open_episode(root).as_deref(), Some("s-2"));
+        // another checkout's episode is not open here, and an empty id is no episode
+        write("/srv/elsewhere", "s-3");
+        assert_eq!(open_episode(root), None);
+        write(&root.display().to_string(), "");
+        assert_eq!(open_episode(root), None);
+    }
+
+    #[test]
+    fn a_task_is_the_active_one_or_its_archived_record_and_an_id_is_never_a_path() {
+        let dir = repo();
+        let root = dir.path();
+        let state = state(&dir);
+        assert_eq!(task(root, "t-1"), None);
+        assert!(decisions(root, "t-1").is_empty(), "no log is no decisions");
+        std::fs::write(
+            state.join("current.yaml"),
+            "id: t-2\ntask: \"Now\"\nprofile: none\nscope:\n  - lib\n",
+        )
+        .unwrap();
+        let active = task(root, "t-2").unwrap();
+        assert_eq!((active.title.as_str(), active.profile), ("Now", None));
+        assert_eq!(active.scope, ["lib"]);
+
+        std::fs::create_dir_all(state.join("archive")).unwrap();
+        std::fs::write(
+            state.join("archive/t-1.yaml"),
+            "id: t-1\ntask: \"Before\"\nprofile: implementation\noutcome: completed\n",
+        )
+        .unwrap();
+        let archived = task(root, "t-1").unwrap();
+        assert_eq!(archived.title, "Before");
+        assert_eq!(archived.outcome.as_deref(), Some("completed"));
+        assert_eq!(task(root, "../archive/t-1"), None);
+    }
+
+    #[test]
+    fn a_decision_longer_than_a_record_carries_is_cut_at_the_bound() {
+        let long = format!("## big\n{}\n{}\n", "a".repeat(3000), "b".repeat(3000));
+        let d = parse_decisions(&long);
+        assert_eq!(d.len(), 1);
+        assert!(d[0].text.len() <= MAX_DECISION_BYTES);
+        assert!(d[0].text.starts_with("aaa") && !d[0].text.contains('b'));
+    }
+
+    #[test]
+    fn a_decision_log_that_cannot_be_read_or_written_carries_nothing() {
+        let carried = parse_decisions("## one\nTask: t-1\n");
+        let id = "a".repeat(32);
+        // a directory where the log belongs
+        let dir = repo();
+        let log = state(&dir).join("decisions.md");
+        std::fs::create_dir(&log).unwrap();
+        assert!(carry_decisions(dir.path(), &carried, &id, "mac").is_err());
+        // the temporary file cannot be written
+        std::fs::remove_dir(&log).unwrap();
+        std::fs::create_dir(log.with_extension("md.tmp")).unwrap();
+        let err = carry_decisions(dir.path(), &carried, &id, "mac").unwrap_err();
+        assert!(err.starts_with(STATE_DIR), "{err}");
+        assert_eq!(carry_decisions(dir.path(), &[], &id, "mac").unwrap(), 0);
+    }
+
+    /// The state directory is a link to nowhere: there is no log to read, and no directory
+    /// to write one into.
+    #[cfg(unix)]
+    #[test]
+    fn a_state_directory_that_cannot_be_made_carries_no_decision() {
+        let dir = repo();
+        std::fs::create_dir_all(dir.path().join(".ai/local")).unwrap();
+        std::os::unix::fs::symlink(dir.path().join("gone"), dir.path().join(STATE_DIR)).unwrap();
+        let carried = parse_decisions("## one\nTask: t-1\n");
+        let err = carry_decisions(dir.path(), &carried, &"a".repeat(32), "mac").unwrap_err();
+        assert!(err.starts_with(STATE_DIR), "{err}");
     }
 }

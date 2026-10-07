@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.12.0
+# Generator: majordomus-cli 0.14.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.12.0
-version: "0.12.0"
+generator: majordomus-cli 0.14.0
+version: "0.14.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -9187,7 +9187,7 @@ cli:
             - name: continuous
               long: continuous
               positional: false
-              help: "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`"
+              help: "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`, and refused (exit 10) until the audit trail holds five verified merges since the last one that could not be verified: the last stage of the rollout (ADR 0101 §13)"
               value_name: CONTINUOUS
               takes_value: false
               required: false
@@ -9206,6 +9206,17 @@ cli:
               possible_values: []
               defaults:
                 - "300"
+            - name: resume_after_failure
+              long: resume-after-failure
+              positional: false
+              help: "A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`"
+              value_name: RESUME_AFTER_FAILURE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
             - name: repo
               long: repo
               positional: false
@@ -9291,8 +9302,19 @@ cli:
             - name: apply
               long: apply
               positional: false
-              help: Close them
+              help: "Close them: each one observed again first and closed only if it is still superseded at the head that was decided on"
               value_name: APPLY
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: dry_run
+              long: dry-run
+              positional: false
+              help: "List them and close nothing: the default, spelled out"
+              value_name: DRY_RUN
               takes_value: false
               required: false
               global: false
@@ -9370,6 +9392,119 @@ cli:
               command: majordomus prs cleanup
               setup: []
               expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - prs
+            - repair
+          route: /docs/cli/prs/repair/
+          executable: true
+          usage: "majordomus prs repair [OPTIONS] <TARGET>"
+          about: "Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act"
+          args:
+            - name: target
+              positional: true
+              help: "The pull request: its number, or its head branch"
+              value_name: TARGET
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: apply
+              long: apply
+              positional: false
+              help: "Act: take the lease, observe the forge again, record the act, merge, derive, commit and push. Without it nothing is changed, fetched or recorded"
+              value_name: APPLY
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: dry_run
+              long: dry-run
+              positional: false
+              help: "Decide and change nothing: the default, spelled out"
+              value_name: DRY_RUN
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: prs-repair-unobserved
+              title: "A repair is decided on the recorded observation, or not at all"
+              description: "The dry run, which is the default, is a read: it decides whether the named pull request may have master brought in from the queue the last recorded observation built, as `prs status` does, and reaches no network. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded."
+              argv:
+                - prs
+                - repair
+                - "1"
+              command: majordomus prs repair 1
+              setup: []
+              expectation: exits 10
           subcommands: []
         - path:
             - majordomus
@@ -9459,7 +9594,7 @@ cli:
           route: /docs/cli/prs/brief/
           executable: true
           usage: "majordomus prs brief [OPTIONS]"
-          about: "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed"
+          about: "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed"
           args:
             - name: repo
               long: repo
@@ -9532,6 +9667,87 @@ cli:
               command: majordomus prs brief
               setup: []
               expectation: exits 0
+          subcommands: []
+        - path:
+            - majordomus
+            - prs
+            - prove-dry-run
+          route: /docs/cli/prs/prove-dry-run/
+          executable: true
+          usage: "majordomus prs prove-dry-run [OPTIONS]"
+          about: "Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: prs-prove-dry-run-no-forge
+              title: The proof needs a forge to prove anything about
+              description: "The proof snapshots origin's refs and the forge's open pull requests around refresh, plan, drain --dry-run and cleanup, and compares them. A repository with no GitHub remote has nothing to snapshot, so it exits 12 before any step runs: a proof that could not look is not a proof that nothing moved."
+              argv:
+                - prs
+                - prove-dry-run
+              command: majordomus prs prove-dry-run
+              setup: []
+              expectation: exits 12
           subcommands: []
     - path:
         - majordomus
@@ -10180,6 +10396,16 @@ cli:
           global: true
           possible_values: []
           defaults: []
+        - name: domain
+          long: domain
+          positional: false
+          help: Only features filed under this product domain
+          value_name: DOMAIN
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
         - name: module
           long: module
           positional: false
@@ -10328,6 +10554,16 @@ cli:
               positional: false
               help: Only features serving this operational area of the why catalogue
               value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: domain
+              long: domain
+              positional: false
+              help: Only features filed under this product domain
+              value_name: DOMAIN
               takes_value: true
               required: false
               global: true
@@ -10507,6 +10743,16 @@ cli:
               global: true
               possible_values: []
               defaults: []
+            - name: domain
+              long: domain
+              positional: false
+              help: Only features filed under this product domain
+              value_name: DOMAIN
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
             - name: module
               long: module
               positional: false
@@ -10559,6 +10805,170 @@ cli:
               command: majordomus product show fixture-feature
               setup: []
               expectation: "exits 0; prints fixture-feature, surfaces, derived"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - domains
+          route: /docs/cli/product/domains/
+          executable: true
+          usage: "majordomus product domains [OPTIONS]"
+          about: "The domains of the product, each with the stable features that name it and what they add up to"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: domain
+              long: domain
+              positional: false
+              help: Only features filed under this product domain
+              value_name: DOMAIN
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-domains
+              title: "The few things the product controls, and the features under each"
+              description: "One block per domain in presentation order: its promise, the failure it answers, and the stable features that name it, with the interfaces, claims and use cases they add up to. A domain lists nothing itself; every member and count is derived from the features."
+              argv:
+                - product
+                - domains
+              command: majordomus product domains
+              setup: []
+              expectation: exits 0; prints domain(s)
           subcommands: []
         - path:
             - majordomus
@@ -10657,6 +11067,16 @@ cli:
               positional: false
               help: Only features serving this operational area of the why catalogue
               value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: domain
+              long: domain
+              positional: false
+              help: Only features filed under this product domain
+              value_name: DOMAIN
               takes_value: true
               required: false
               global: true
@@ -10816,6 +11236,16 @@ cli:
               global: true
               possible_values: []
               defaults: []
+            - name: domain
+              long: domain
+              positional: false
+              help: Only features filed under this product domain
+              value_name: DOMAIN
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
             - name: module
               long: module
               positional: false
@@ -10965,6 +11395,16 @@ cli:
               positional: false
               help: Only features serving this operational area of the why catalogue
               value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: domain
+              long: domain
+              positional: false
+              help: Only features filed under this product domain
+              value_name: DOMAIN
               takes_value: true
               required: false
               global: true

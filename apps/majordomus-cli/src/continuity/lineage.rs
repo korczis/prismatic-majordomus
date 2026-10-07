@@ -108,12 +108,6 @@ impl Graph {
     }
 
     /// What `b` is to `a`.
-    ///
-    /// ```
-    /// use majordomus_cli::continuity::lineage::{Graph, Relation};
-    /// let g = Graph::new([]);
-    /// assert_eq!(g.relation("x", "x"), Relation::Equal);
-    /// ```
     pub fn relation(&self, a: &str, b: &str) -> Relation {
         if a == b {
             return Relation::Equal;
@@ -147,23 +141,19 @@ impl Graph {
     /// Every line, by id.
     pub fn lines(&self) -> BTreeMap<String, Line> {
         let mut lines: BTreeMap<String, Line> = BTreeMap::new();
+        let heads = self.heads();
+        // records are visited in id order, so a line's heads are listed in id order
         for (id, r) in &self.records {
             let line = r.record.line_of(id);
-            lines
-                .entry(line.clone())
-                .or_insert_with(|| Line {
-                    id: line,
-                    state: LineState::Linear,
-                    heads: Vec::new(),
-                    records: 0,
-                })
-                .records += 1;
-        }
-        for head in self.heads() {
-            if let Some(line) = self.line_of(&head) {
-                if let Some(l) = lines.get_mut(&line) {
-                    l.heads.push(head);
-                }
+            let l = lines.entry(line.clone()).or_insert_with(|| Line {
+                id: line,
+                state: LineState::Linear,
+                heads: Vec::new(),
+                records: 0,
+            });
+            l.records += 1;
+            if heads.contains(id) {
+                l.heads.push(id.clone());
             }
         }
         for l in lines.values_mut() {
@@ -296,6 +286,29 @@ pub(crate) mod tests {
             r.line = Some(p.record.line_of(&p.id));
         }
         SignedRecord::sign(r, identity)
+    }
+
+    /// A parent chain that never ends cannot be built from honest records — an id is the
+    /// digest of a record that already names its parent — so only a store somebody wrote by
+    /// hand could hold one. It is followed to the bound and no further, and answers "no".
+    #[test]
+    fn a_parent_chain_that_loops_is_followed_to_the_bound_and_no_further() {
+        let identity = NodeIdentity::ephemeral().unwrap();
+        let mut x = rec(&identity, None, "x");
+        let mut y = rec(&identity, None, "y");
+        x.record.parent = Some(y.id.clone());
+        y.record.parent = Some(x.id.clone());
+        let (x_id, y_id) = (x.id.clone(), y.id.clone());
+        let g = Graph::new([x, y]);
+        assert!(g.descends(&x_id, &y_id));
+        assert!(!g.descends(&x_id, "nowhere"));
+        assert!(g.heads().is_empty(), "every record of a loop is continued");
+    }
+
+    #[test]
+    fn a_record_is_equal_to_itself_even_in_an_empty_graph() {
+        let g = Graph::new([]);
+        assert_eq!(g.relation("x", "x"), Relation::Equal);
     }
 
     #[test]

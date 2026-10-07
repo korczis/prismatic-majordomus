@@ -48,13 +48,6 @@ pub fn records(ctx: &Context, _: super::Empty) -> Result<continuity::Records, Ca
 /// The input of `continuity.plan` and `continuity.resume`: which record, by id or a prefix
 /// of one. Absent, the one handover another device published that this checkout has not
 /// resumed — on this branch when there is one there.
-///
-/// ```
-/// use majordomus_cli::capability::builtin::continuity_transfer::RecordInput;
-/// let i: RecordInput = serde_json::from_str(r#"{"record":"a1b2c3"}"#).unwrap();
-/// assert_eq!(i.record.as_deref(), Some("a1b2c3"));
-/// assert!(serde_json::from_str::<RecordInput>(r#"{"force":true}"#).is_err());
-/// ```
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct RecordInput {
@@ -92,13 +85,6 @@ pub fn resume(ctx: &Context, input: RecordInput) -> Result<continuity::Resumed, 
 }
 
 /// The input of `continuity.publish`.
-///
-/// ```
-/// use majordomus_cli::capability::builtin::continuity_transfer::PublishInput;
-/// let i: PublishInput = serde_json::from_str(r##"{"issue":"#184"}"##).unwrap();
-/// assert_eq!(i.issue.as_deref(), Some("#184"));
-/// assert!(i.handover.is_none(), "the newest handover by default");
-/// ```
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PublishInput {
@@ -140,12 +126,6 @@ pub fn publish(
 }
 
 /// The input of `continuity.sync`.
-///
-/// ```
-/// use majordomus_cli::capability::builtin::continuity_transfer::SyncInput;
-/// let i: SyncInput = serde_json::from_str(r#"{"remote":"origin"}"#).unwrap();
-/// assert_eq!(i.remote.as_deref(), Some("origin"));
-/// ```
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct SyncInput {
@@ -168,12 +148,6 @@ pub fn sync(ctx: &Context, input: SyncInput) -> Result<continuity::Synced, Capab
 }
 
 /// The input of `continuity.device`.
-///
-/// ```
-/// use majordomus_cli::capability::builtin::continuity_transfer::DeviceInput;
-/// let i: DeviceInput = serde_json::from_str(r#"{"label":"mac-mini"}"#).unwrap();
-/// assert_eq!(i.label.as_deref(), Some("mac-mini"));
-/// ```
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct DeviceInput {
@@ -192,4 +166,35 @@ impl BenchmarkCases for DeviceInput {
 /// `continuity.device`.
 pub fn device(_: &Context, input: DeviceInput) -> Result<continuity::DeviceView, CapabilityError> {
     continuity::device(input.label.as_deref()).map_err(CapabilityError::Refused)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_record_input_names_a_record_and_nothing_else() {
+        let i: RecordInput = serde_json::from_str(r#"{"record":"a1b2c3"}"#).unwrap();
+        assert_eq!(i.record.as_deref(), Some("a1b2c3"));
+        assert!(serde_json::from_str::<RecordInput>(r#"{"force":true}"#).is_err());
+    }
+
+    #[test]
+    fn a_publish_input_defaults_to_the_newest_handover() {
+        let i: PublishInput = serde_json::from_str(r##"{"issue":"#184"}"##).unwrap();
+        assert_eq!(i.issue.as_deref(), Some("#184"));
+        assert!(i.handover.is_none(), "the newest handover by default");
+    }
+
+    #[test]
+    fn a_sync_input_names_its_remote() {
+        let i: SyncInput = serde_json::from_str(r#"{"remote":"origin"}"#).unwrap();
+        assert_eq!(i.remote.as_deref(), Some("origin"));
+    }
+
+    #[test]
+    fn a_device_input_carries_a_label() {
+        let i: DeviceInput = serde_json::from_str(r#"{"label":"mac-mini"}"#).unwrap();
+        assert_eq!(i.label.as_deref(), Some("mac-mini"));
+    }
 }

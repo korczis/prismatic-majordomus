@@ -332,7 +332,7 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
 /// two transports that bring one; both write through [`write_record`], so a handover that
 /// arrived from another machine has one shape whichever way it travelled.
 #[derive(Debug, Clone)]
-pub struct Provenance {
+pub(crate) struct Provenance {
     /// `mesh` or `continuity`: the file-name segment and the prefix of owner and worktree.
     pub transport: &'static str,
     /// The front-matter key whose value identifies the handover on its transport; a record
@@ -355,7 +355,11 @@ pub struct Provenance {
 /// Write a handover that arrived from elsewhere into `root`'s handovers directory, or
 /// return the record that already holds it. See [`materialize`] for why every value is
 /// written defensively.
-pub fn write_record(root: &Path, h: &HandoverBody, from: &Provenance) -> Result<PathBuf, String> {
+pub(crate) fn write_record(
+    root: &Path,
+    h: &HandoverBody,
+    from: &Provenance,
+) -> Result<PathBuf, String> {
     let dir = directory(root);
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
     let hexish = |v: &str| {
@@ -635,5 +639,57 @@ mod tests {
         assert!(front["repository_id"].ends_with(".git"));
         assert!(text.contains("# Next Action"));
         assert_eq!(latest(&root).unwrap(), first);
+    }
+
+    /// A handover that arrived from elsewhere is written with what its transport says about
+    /// the source it was written against — and with nothing of it that names a place outside
+    /// the repository.
+    #[test]
+    fn a_record_from_elsewhere_carries_its_source_state_and_only_repository_paths() {
+        let w = crate::continuity::tests_support::World::new();
+        let root = w.root("a");
+        let body = "# Objective\nship\n\n# Next Action\nrest\n".to_string();
+        let h = HandoverBody {
+            id: HandoverBody::digest_of(&body),
+            task: None,
+            issue: None,
+            milestone: None,
+            branch: Some("feature/x".into()),
+            head: Some("abcdef1234".into()),
+            created_at: Some("2026-10-03T12:00:00Z".into()),
+            name: None,
+            body,
+        };
+        let from = |marker: &str| Provenance {
+            transport: "continuity",
+            marker_key: "continuity_record",
+            marker: marker.into(),
+            origin_key: "continuity_device",
+            origin: "b".repeat(32),
+            working_tree: Some("dirty"),
+            changed_files: vec![
+                "lib/a.rs".into(),
+                "/etc/passwd".into(),
+                "../outside".into(),
+                String::new(),
+            ],
+        };
+        let err = write_record(&root, &h, &from("abc")).unwrap_err();
+        assert!(err.contains("at least 16 hex"), "{err}");
+
+        let written = write_record(&root, &h, &from(&"a".repeat(32))).unwrap();
+        let (front, text) = read(&written).unwrap();
+        assert_eq!(front.get("working_tree").map(String::as_str), Some("dirty"));
+        assert!(text.starts_with("# Objective"));
+        let whole = std::fs::read_to_string(&written).unwrap();
+        assert!(
+            whole.contains("changed_files:\n  - lib/a.rs\ncontinuity_record: "),
+            "{whole}"
+        );
+        // writing it twice writes one file
+        assert_eq!(
+            write_record(&root, &h, &from(&"a".repeat(32))).unwrap(),
+            written
+        );
     }
 }

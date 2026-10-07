@@ -1,27 +1,27 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.12.0
+# Generator: majordomus-cli 0.14.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.12.0
+generator: majordomus-cli 0.14.0
 coverage:
   - scope: direct
-    required: 176
-    covered: 154
+    required: 179
+    covered: 156
     missing: 0
-    waived: 22
+    waived: 23
     inapplicable: 0
   - scope: http
-    required: 174
-    covered: 154
+    required: 177
+    covered: 156
     missing: 0
-    waived: 20
+    waived: 21
     inapplicable: 0
   - scope: mcp
-    required: 170
-    covered: 150
+    required: 173
+    covered: 152
     missing: 0
-    waived: 20
+    waived: 21
     inapplicable: 0
   - scope: system
     required: 13
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 533
-    covered: 471
+    required: 542
+    covered: 477
     missing: 0
-    waived: 62
+    waived: 65
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -697,6 +697,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: integration.cleanup
+    module: integration
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: integration.events
     module: integration
     kind: query
@@ -715,6 +724,14 @@ capabilities:
     http: covered
     cases:
       - a-number
+  - id: integration.prove_dry_run
+    module: integration
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: integration.queue
     module: integration
     kind: query
@@ -1230,6 +1247,16 @@ capabilities:
     cases:
       - whole-plan
       - one-milestone
+  - id: product.domains
+    module: product
+    kind: query
+    cache: "process, 4 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - stable
+      - any
   - id: product.feature
     module: product
     kind: query
@@ -1250,6 +1277,7 @@ capabilities:
       - all
       - featured
       - by-area
+      - by-domain
   - id: product.matrix
     module: product
     kind: query

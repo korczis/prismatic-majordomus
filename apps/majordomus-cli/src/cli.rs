@@ -2379,15 +2379,17 @@ pub enum KnowledgeCommand {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus continuity`.
+/// `majordomus continuity`. The output shape is global, so it reads where a person writes
+/// it, and the group runs nothing of its own.
 ///
 /// # Example
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, ContinuityCommand};
+/// use majordomus_cli::cli::{Cli, Command, ContinuityArgs, ContinuityCommand};
 /// use clap::Parser;
 /// let cli = Cli::try_parse_from(["majordomus", "continuity", "resume", "--record", "a1b2"]).unwrap();
 /// let Command::Continuity(args) = cli.command else { panic!("not the continuity command") };
+/// let args: ContinuityArgs = args;
 /// assert!(matches!(args.command, ContinuityCommand::Resume { record: Some(r) } if r == "a1b2"));
 /// assert!(Cli::try_parse_from(["majordomus", "continuity"]).is_err(), "a subcommand is required");
 /// ```
@@ -2407,7 +2409,19 @@ pub struct ContinuityArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus continuity`.
+/// The subcommands of `majordomus continuity`: the command line of `continuity.status`,
+/// `continuity.records`, `continuity.device`, `continuity.plan`, `continuity.publish`,
+/// `continuity.sync` and `continuity.resume`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "continuity", "publish", "--issue", "#184"]);
+/// let Command::Continuity(args) = cli.command else { panic!("continuity") };
+/// let ContinuityCommand::Publish { issue, handover, .. } = args.command else { panic!("publish") };
+/// assert_eq!(issue.as_deref(), Some("#184"));
+/// assert!(handover.is_none(), "the newest handover by default");
+/// ```
 pub enum ContinuityCommand {
     /// This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here
     Status,

@@ -85,10 +85,11 @@ impl<'a> Machine<'a> {
             .ok_or("no HOME and no XDG_STATE_HOME: nowhere to keep this device's identity")?;
         let identity_known = create || path.is_file();
         let identity = if identity_known {
-            NodeIdentity::load_or_create(&path).map_err(|e| e.to_string())?
+            NodeIdentity::load_or_create(&path)
         } else {
-            NodeIdentity::ephemeral().map_err(|e| e.to_string())?
-        };
+            NodeIdentity::ephemeral()
+        }
+        .map_err(|e| e.to_string())?;
         let declared = mesh.as_ref().and_then(|m| m.cooperation.repository.clone());
         let repository = crate::mesh::repository::resolve(root, declared.as_deref())
             .map_err(|e| e.to_string())?
@@ -206,13 +207,6 @@ fn now_rfc3339() -> String {
 }
 
 /// One `# <name>` section of a handover body, trimmed.
-///
-/// ```
-/// use majordomus_cli::continuity::section;
-/// let body = "# Objective\nship it\n\n# Next Action\nrun the tests\n";
-/// assert_eq!(section(body, "Next Action"), "run the tests");
-/// assert_eq!(section(body, "Current State"), "");
-/// ```
 pub fn section(body: &str, name: &str) -> String {
     let mut out = String::new();
     let mut inside = false;
@@ -660,22 +654,19 @@ pub fn publish(machine: &Machine<'_>, request: &PublishRequest) -> Result<Publis
     .map_err(|e| e.replace(&root.display().to_string(), "<repo>"))?;
 
     // the same handover at the same source, already stood on: nothing new to say
-    if let Some(p) = &position {
-        if let Some(existing) = loaded.graph.records.get(&p.record) {
-            let same_device =
-                existing.record.device.node == machine.identity.public.node_id.as_str();
-            if same_device
-                && existing.record.handover.id == handover.id
-                && existing.record.source == source
-            {
-                return Ok(Published {
-                    record: RecordView::of(machine, existing),
-                    written: false,
-                    tip: store::tip(root, store::REF).unwrap_or_default(),
-                    handover: local::relative(root, &path),
-                    next: vec!["majordomus-cli continuity sync".into()],
-                });
-            }
+    if let Some(existing) = parent {
+        let same_device = existing.record.device.node == machine.identity.public.node_id.as_str();
+        if same_device
+            && existing.record.handover.id == handover.id
+            && existing.record.source == source
+        {
+            return Ok(Published {
+                record: RecordView::of(machine, existing),
+                written: false,
+                tip: store::tip(root, store::REF).unwrap_or_default(),
+                handover: local::relative(root, &path),
+                next: vec!["majordomus-cli continuity sync".into()],
+            });
         }
     }
 
@@ -924,12 +915,12 @@ pub fn sync(machine: &Machine<'_>, remote: Option<&str>) -> Result<Synced, Strin
     // publish what the remote lacks; a remote that moved since the fetch refuses the push,
     // so fetch and merge once more and try again
     let mut pushed = true;
-    if published_n > 0 || matches!(fetched, store::Fetched::Empty) && !local_ids.is_empty() {
+    if published_n > 0 {
         if let Err(first) = store::push(root, &remote) {
             pushed = match store::fetch(root, &remote) {
+                // whatever stops the second attempt, the records stay pending
                 Ok(store::Fetched::Store(commit)) => {
-                    store::merge(root, &commit, &keep)?;
-                    store::push(root, &remote).is_ok()
+                    store::merge(root, &commit, &keep).is_ok() && store::push(root, &remote).is_ok()
                 }
                 _ => false,
             };
@@ -943,15 +934,9 @@ pub fn sync(machine: &Machine<'_>, remote: Option<&str>) -> Result<Synced, Strin
                 ));
             }
         }
-    } else if let Some(tip) = store::tip(root, store::REF) {
-        // nothing to publish: the remote holds everything the local store does
-        if store::tip(root, &store::remote_ref(&remote)).as_deref() != Some(tip.as_str())
-            && published_n == 0
-            && fetched_n == 0
-        {
-            // equal content under different commits: leave the refs as git left them
-        }
     }
+    // otherwise nothing to publish: the remote holds everything the local store does, and
+    // equal content under different commits leaves the refs as git left them
 
     let after = load(machine, store::REF)?;
     let mut lines_ids: BTreeSet<String> = before.graph.lines().into_keys().collect();
@@ -1253,15 +1238,17 @@ fn short(id: &str) -> &str {
 pub fn plan(machine: &Machine<'_>, record: Option<&str>) -> Result<ResumePlan, String> {
     let loaded = load(machine, store::REF)?;
     let state = local::load(machine.root)?;
-    plan_with(machine, &loaded, &state, record)
+    Ok(plan_with(machine, &loaded, &state, record).0)
 }
 
+/// The plan, and the record it chose when it chose one — so that a resume acts on the very
+/// record the plan judged, not on one looked up again by its id.
 fn plan_with(
     machine: &Machine<'_>,
     loaded: &Loaded,
     state: &LocalState,
     record: Option<&str>,
-) -> Result<ResumePlan, String> {
+) -> (ResumePlan, Option<SignedRecord>) {
     let graph = &loaded.graph;
     let here = local::source_state(machine.root);
     let branch = branch_key(here.branch.as_deref());
@@ -1290,12 +1277,12 @@ fn plan_with(
                         ),
                     });
                     p.actions.push("majordomus-cli continuity sync".into());
-                    return Ok(p);
+                    return (p, None);
                 }
                 many => {
                     let mut p = ResumePlan::empty(PlanStatus::ChooseRecord);
                     p.candidates = many.iter().map(|r| RecordView::of(machine, r)).collect();
-                    return Ok(p);
+                    return (p, None);
                 }
             }
         }
@@ -1325,7 +1312,7 @@ fn plan_with(
                     } else {
                         p.actions.push("majordomus-cli continuity sync".into());
                     }
-                    return Ok(p);
+                    return (p, None);
                 }
                 [one] => (*one).clone(),
                 many => {
@@ -1339,7 +1326,7 @@ fn plan_with(
                             many.len()
                         ),
                     ));
-                    return Ok(p);
+                    return (p, None);
                 }
             }
         }
@@ -1399,36 +1386,35 @@ fn plan_with(
 
     // --- the lineage
     let line = r.line_of(&chosen.id);
-    if let Some(l) = graph.lines().get(&line) {
-        if l.state == LineState::Diverged {
-            let others: Vec<&str> = l
-                .heads
-                .iter()
-                .filter(|h| **h != chosen.id)
-                .map(|h| short(h))
-                .collect();
-            if explicit {
-                p.warnings.push(item(
-                    "line_diverged",
-                    format!(
-                        "this line was continued in more than one place; resuming {} continues \
-                         it and leaves {} as heads nobody continues",
-                        short(&chosen.id),
-                        others.join(", ")
-                    ),
-                ));
-            } else {
-                conflict = true;
-                p.blockers.push(item(
-                    "line_diverged",
-                    format!(
-                        "the same work was continued twice: {} and {} both continue one record. \
-                         Choose one with --record <id>; nothing picks a winner by time",
-                        short(&chosen.id),
-                        others.join(", ")
-                    ),
-                ));
-            }
+    let lines = graph.lines();
+    if let Some(l) = lines.get(&line).filter(|l| l.state == LineState::Diverged) {
+        let others: Vec<&str> = l
+            .heads
+            .iter()
+            .filter(|h| **h != chosen.id)
+            .map(|h| short(h))
+            .collect();
+        if explicit {
+            p.warnings.push(item(
+                "line_diverged",
+                format!(
+                    "this line was continued in more than one place; resuming {} continues \
+                     it and leaves {} as heads nobody continues",
+                    short(&chosen.id),
+                    others.join(", ")
+                ),
+            ));
+        } else {
+            conflict = true;
+            p.blockers.push(item(
+                "line_diverged",
+                format!(
+                    "the same work was continued twice: {} and {} both continue one record. \
+                     Choose one with --record <id>; nothing picks a winner by time",
+                    short(&chosen.id),
+                    others.join(", ")
+                ),
+            ));
         }
     }
     if let Some(parent) = &r.parent {
@@ -1630,7 +1616,7 @@ fn plan_with(
             ),
         );
     }
-    Ok(p)
+    (p, Some(chosen))
 }
 
 /// A string as one single-quoted shell word, so that a recommended command shows the title
@@ -1664,8 +1650,8 @@ pub fn resume(machine: &Machine<'_>, record: Option<&str>) -> Result<Resumed, St
     let root = machine.root;
     let loaded = load(machine, store::REF)?;
     let mut state = local::load(root)?;
-    let plan = plan_with(machine, &loaded, &state, record)?;
-    let Some(view) = plan.record.clone().filter(|_| plan.status.resumable()) else {
+    let (plan, chosen) = plan_with(machine, &loaded, &state, record);
+    let Some(chosen) = chosen.filter(|_| plan.status.resumable()) else {
         return Ok(Resumed {
             resumed: false,
             plan,
@@ -1674,11 +1660,6 @@ pub fn resume(machine: &Machine<'_>, record: Option<&str>) -> Result<Resumed, St
             position: None,
         });
     };
-    let chosen = loaded
-        .graph
-        .records
-        .get(&view.id)
-        .ok_or("the planned record left the store")?;
     let r = &chosen.record;
     let written = crate::mesh::handover::write_record(
         root,
@@ -1798,8 +1779,726 @@ pub fn records(machine: &Machine<'_>) -> Result<Records, String> {
     })
 }
 
-/// The cached offers of `root`, for a surface that must not read the store — the entry
-/// banner. Empty when the file is absent or unreadable.
-pub fn cached_offers(root: &Path) -> Vec<Offer> {
-    local::load(root).map(|s| s.offers).unwrap_or_default()
+/// Two machines and the remote between them, for the tests of this module and of the
+/// command that renders it: real clones of one bare repository, each with its own device
+/// key, so that every operation runs against git exactly as it does on a disk.
+#[cfg(test)]
+pub(crate) mod tests_support {
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+
+    use super::Machine;
+    use crate::mesh::config::MeshConfig;
+    use crate::mesh::identity::NodeIdentity;
+
+    /// Run git in `root` with a neutral identity, and answer its trimmed stdout.
+    pub(crate) fn git(root: &Path, args: &[&str]) -> String {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@t")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@t")
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {}: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A temporary directory holding `remote.git` and machine `a`'s clone on `feature/x`,
+    /// pushed. The layer's local half is ignored, as `majordomus init` arranges.
+    pub(crate) struct World {
+        pub(crate) dir: tempfile::TempDir,
+    }
+
+    impl World {
+        pub(crate) fn new() -> World {
+            let dir = tempfile::tempdir().unwrap();
+            let remote = dir.path().join("remote.git");
+            git(
+                dir.path(),
+                &["init", "-q", "--bare", remote.to_str().unwrap()],
+            );
+            let a = dir.path().join("a");
+            std::fs::create_dir_all(a.join("lib")).unwrap();
+            git(&a, &["init", "-q", "-b", "main"]);
+            std::fs::write(a.join(".gitignore"), ".ai/local/\n").unwrap();
+            std::fs::write(a.join("lib/a"), "a\n").unwrap();
+            git(&a, &["add", "-A"]);
+            git(&a, &["commit", "-qm", "base"]);
+            git(&a, &["remote", "add", "origin", remote.to_str().unwrap()]);
+            git(&a, &["push", "-q", "origin", "main"]);
+            git(&a, &["checkout", "-qb", "feature/x"]);
+            git(&a, &["push", "-q", "-u", "origin", "feature/x"]);
+            World { dir }
+        }
+
+        /// The checkout of machine `name`.
+        pub(crate) fn root(&self, name: &str) -> PathBuf {
+            self.dir.path().join(name)
+        }
+
+        /// Machine `name`'s clone of the remote, on `feature/x`.
+        pub(crate) fn clone_as(&self, name: &str) -> PathBuf {
+            let to = self.root(name);
+            git(
+                self.dir.path(),
+                &[
+                    "clone",
+                    "-q",
+                    self.dir.path().join("remote.git").to_str().unwrap(),
+                    to.to_str().unwrap(),
+                ],
+            );
+            git(&to, &["checkout", "-q", "feature/x"]);
+            to
+        }
+
+        /// Machine `name`'s device key, the same on every call, labelled `label`.
+        pub(crate) fn identity(&self, name: &str, label: &str) -> NodeIdentity {
+            let path = self.dir.path().join("keys").join(format!("{name}.json"));
+            crate::mesh::identity::relabel(&path, label)
+                .or_else(|_| {
+                    NodeIdentity::load_or_create(&path)?;
+                    crate::mesh::identity::relabel(&path, label)
+                })
+                .unwrap()
+        }
+    }
+
+    /// A mesh declaration whose trust list admits exactly `keys`.
+    pub(crate) fn trusting(keys: &[&str]) -> MeshConfig {
+        serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1",
+            "kind": "mesh",
+            "id": "fixture",
+            "trust": { "policy": "deny_unknown", "allow": keys },
+        }))
+        .unwrap()
+    }
+
+    /// The machine for `root`, signing as `identity`.
+    pub(crate) fn machine(
+        root: &Path,
+        identity: NodeIdentity,
+        mesh: Option<MeshConfig>,
+    ) -> Machine<'_> {
+        let repository = crate::mesh::repository::resolve(root, None).unwrap().id;
+        Machine {
+            root,
+            identity,
+            repository,
+            mesh,
+            identity_known: true,
+        }
+    }
+
+    /// Write a handover record named `stamp` (a compact UTC timestamp, which orders them)
+    /// with `body`, for task `task` when given.
+    pub(crate) fn handover(root: &Path, stamp: &str, body: &str, task: Option<&str>) -> String {
+        let dir = crate::mesh::handover::directory(root);
+        std::fs::create_dir_all(&dir).unwrap();
+        let name = format!("{stamp}--feature-x--0000000--00.md");
+        std::fs::write(
+            dir.join(&name),
+            format!(
+                "---\nschema_version: 1\ncreated_at: 2026-10-03T12:00:00Z\ntask_id: {}\n\
+                 branch: feature/x\nworking_tree: clean\n---\n\n{body}",
+                task.unwrap_or("none")
+            ),
+        )
+        .unwrap();
+        name
+    }
+
+    /// A handover body with the three sections.
+    pub(crate) fn body(objective: &str, state: &str, next: &str) -> String {
+        format!("# Objective\n{objective}\n\n# Current State\n{state}\n\n# Next Action\n{next}\n")
+    }
+
+    /// An active task `id` titled `title`, scoped to `lib`, with one decision recorded for it.
+    pub(crate) fn task_with_decision(root: &Path, id: &str, title: &str) {
+        let state = root.join(super::local::STATE_DIR);
+        std::fs::create_dir_all(&state).unwrap();
+        std::fs::write(
+            state.join("current.yaml"),
+            format!(
+                "id: {id}\ntask: \"{title}\"\nprofile: implementation\nscope:\n  - lib\n\
+                 started_at: 2026-10-03T11:00:00Z\n"
+            ),
+        )
+        .unwrap();
+        std::fs::write(
+            state.join("decisions.md"),
+            format!(
+                "# Decisions\n\n## 2026-10-03 — Records travel in a ref of their own\n\
+                 Task: {id}\nWhy: no branch carries them\n"
+            ),
+        )
+        .unwrap();
+    }
+
+    /// Commit a change to `lib/a` on the current branch of `root`.
+    pub(crate) fn commit(root: &Path, line: &str) {
+        let path = root.join("lib/a");
+        let mut text = std::fs::read_to_string(&path).unwrap();
+        text.push_str(line);
+        text.push('\n');
+        std::fs::write(&path, text).unwrap();
+        git(root, &["commit", "-qam", line]);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::tests_support::{
+        body, commit, git, handover, machine, task_with_decision, trusting, World,
+    };
+    use super::*;
+
+    fn codes(items: &[PlanItem]) -> Vec<&str> {
+        items.iter().map(|i| i.code.as_str()).collect()
+    }
+
+    #[test]
+    fn a_section_is_read_by_its_heading_and_absent_is_empty() {
+        let body = "# Objective\nship it\n\n# Next Action\nrun the tests\n";
+        assert_eq!(section(body, "Next Action"), "run the tests");
+        assert_eq!(section(body, "Current State"), "");
+    }
+
+    /// The whole journey of ADR 0105 on two clones: publish, sync, plan, resume, continue,
+    /// and the lineage and the store states each step leaves behind.
+    #[test]
+    fn a_handover_moves_between_machines_and_continues_its_line() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let ia = w.identity("a", "macbook-pro");
+        let ib = w.identity("b", "mac-mini");
+        let keys = [ia.public.public_key.clone(), ib.public.public_key.clone()];
+        let keys: Vec<&str> = keys.iter().map(String::as_str).collect();
+        let a = machine(&a_root, ia, Some(trusting(&keys)));
+
+        // nothing to publish yet
+        let err = publish(&a, &PublishRequest::default()).unwrap_err();
+        assert!(err.contains("no handover record"), "{err}");
+
+        task_with_decision(&a_root, "t-1", "Ship the 'fixture'");
+        handover(
+            &a_root,
+            "20261003T120000Z",
+            &body("Ship x", "parser done", "write the test"),
+            Some("t-1"),
+        );
+        let published = publish(
+            &a,
+            &PublishRequest {
+                issue: Some("#184".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(published.written);
+        assert_eq!(published.record.issue.as_deref(), Some("#184"));
+        assert_eq!(published.record.task.as_deref(), Some("Ship the 'fixture'"));
+        assert_eq!(published.record.objective, "Ship x");
+        assert!(published.record.this_device);
+        assert_eq!(published.record.trust, Trust::ThisDevice);
+        let rec_a = published.record.id.clone();
+
+        // publishing the same handover at the same source writes nothing
+        let again = publish(&a, &PublishRequest::default()).unwrap();
+        assert!(!again.written);
+        assert_eq!(again.record.id, rec_a);
+
+        // a remote exists and has never been asked
+        let s = status(&a).unwrap();
+        assert_eq!(s.store.sync, SyncState::NeverSynced);
+        assert_eq!(s.next, ["majordomus-cli continuity sync"]);
+        assert_eq!(s.position.as_ref().unwrap().record, rec_a);
+        assert_eq!(s.branch, "feature/x");
+
+        let synced = sync(&a, None).unwrap();
+        assert_eq!(synced.action, SyncAction::Published);
+        assert_eq!(synced.published, 1);
+        assert_eq!(synced.lines[0].relation, LineSync::LocalOnly);
+        assert_eq!(status(&a).unwrap().store.sync, SyncState::InSync);
+
+        // machine B: a clone that has asked nothing yet
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), Some(trusting(&keys)));
+        let s = status(&b).unwrap();
+        assert_eq!(s.store.sync, SyncState::Empty);
+        assert!(s.resumable.is_empty(), "status must not use the network");
+        let p = plan(&b, None).unwrap();
+        assert_eq!(p.status, PlanStatus::NothingToResume);
+        assert_eq!(p.actions, ["majordomus-cli continuity sync"]);
+
+        let synced = sync(&b, None).unwrap();
+        assert_eq!(synced.action, SyncAction::Fetched);
+        assert_eq!(synced.fetched, 1);
+        assert_eq!(synced.resumable[0].id, rec_a);
+        assert_eq!(synced.resumable[0].trust, Trust::Trusted);
+        assert_eq!(status(&b).unwrap().next, ["majordomus-cli continuity plan"]);
+
+        let p = plan(&b, None).unwrap();
+        assert_eq!(p.status, PlanStatus::Ready, "{:?}", p.warnings);
+        assert_eq!(p.source.as_ref().unwrap().relation, SourceRelation::Exact);
+        assert_eq!(p.next_action, "write the test");
+        assert_eq!(p.current_state, "parser done");
+        assert_eq!(
+            p.decisions,
+            ["2026-10-03 — Records travel in a ref of their own"]
+        );
+        assert!(p.actions[0].starts_with("majordomus-cli continuity resume --record "));
+        assert_eq!(
+            p.actions[1],
+            "majordomus start 'Ship the '\\''fixture'\\''' --scope lib --profile implementation"
+        );
+
+        let r = resume(&b, None).unwrap();
+        assert!(r.resumed);
+        assert_eq!(r.decisions_carried, 1);
+        assert_eq!(r.position.as_ref().unwrap().via, Via::Resumed);
+        let written = b_root.join(r.handover.as_ref().unwrap());
+        let text = std::fs::read_to_string(&written).unwrap();
+        assert!(
+            text.contains(&format!("continuity_record: {rec_a}")),
+            "{text}"
+        );
+        assert!(!r
+            .plan
+            .actions
+            .iter()
+            .any(|a| a.contains("continuity resume")));
+
+        // resuming again rewrites nothing and says so
+        let again = resume(&b, Some(&rec_a[..8])).unwrap();
+        assert!(again.resumed);
+        assert_eq!(again.decisions_carried, 0);
+        assert_eq!(again.handover, r.handover);
+        assert!(codes(&again.plan.warnings).contains(&"already_resumed"));
+        assert_eq!(again.plan.lineage, Some(Relation::Equal));
+        // and a resumed handover is not this machine's to publish
+        let err = publish(&b, &PublishRequest::default()).unwrap_err();
+        assert!(err.contains("arrived from another machine"), "{err}");
+
+        // B continues the work; its record continues A's line
+        commit(&b_root, "b");
+        handover(
+            &b_root,
+            "20261003T130000Z",
+            &body("Ship x", "test written", "open the PR"),
+            None,
+        );
+        let pb = publish(&b, &PublishRequest::default()).unwrap();
+        assert_eq!(pb.record.parent.as_deref(), Some(rec_a.as_str()));
+        assert_eq!(pb.record.line, rec_a);
+        assert_eq!(
+            pb.record.issue.as_deref(),
+            Some("#184"),
+            "the issue carries along the line"
+        );
+        assert_eq!(status(&b).unwrap().store.sync, SyncState::Pending);
+        let rec_b = pb.record.id.clone();
+        git(&b_root, &["push", "-q", "origin", "feature/x"]);
+        assert_eq!(sync(&b, None).unwrap().action, SyncAction::Published);
+
+        // A fetched B's continuation; its source is behind until it pulls
+        let synced = sync(&a, None).unwrap();
+        assert_eq!(synced.action, SyncAction::Fetched);
+        assert_eq!(synced.lines[0].relation, LineSync::RemoteNewer);
+        let all = records(&a).unwrap();
+        assert_eq!(all.records.len(), 2);
+        assert_eq!(all.lines.len(), 1);
+        assert_eq!(all.lines[0].heads[0].id, rec_b);
+        assert_eq!(
+            plan(&a, None).unwrap().source.unwrap().relation,
+            SourceRelation::HeadMissing
+        );
+        git(&a_root, &["fetch", "-q", "origin"]);
+        let p = plan(&a, None).unwrap();
+        assert_eq!(p.status, PlanStatus::RequiresSourceUpdate);
+        assert_eq!(
+            p.source.as_ref().unwrap().relation,
+            SourceRelation::LocalBehind
+        );
+        assert!(codes(&p.blockers).contains(&"local_behind"));
+        assert_eq!(p.actions, ["git pull --ff-only origin feature/x"]);
+        git(&a_root, &["pull", "-q", "--ff-only", "origin", "feature/x"]);
+        let p = plan(&a, None).unwrap();
+        assert_eq!(p.status, PlanStatus::Ready, "{:?}", p.warnings);
+        assert_eq!(p.lineage, Some(Relation::Newer));
+        assert_eq!(p.record.as_ref().unwrap().device.label, "mac-mini");
+
+        // idempotent: nothing new moves nothing
+        let quiet = sync(&a, None).unwrap();
+        assert_eq!(quiet.action, SyncAction::None);
+        assert_eq!((quiet.fetched, quiet.published), (0, 0));
+        assert_eq!(quiet.lines[0].relation, LineSync::Equal);
+
+        // A publishes on top of B's while B's store has not seen it: pending here
+        commit(&a_root, "a2");
+        handover(
+            &a_root,
+            "20261003T140000Z",
+            &body("Ship x", "reviewed", "merge"),
+            None,
+        );
+        resume(&a, None).unwrap();
+        let pa = publish(&a, &PublishRequest::default()).unwrap();
+        assert_eq!(pa.record.parent.as_deref(), Some(rec_b.as_str()));
+        assert_eq!(status(&a).unwrap().store.sync, SyncState::Pending);
+    }
+
+    /// The same line continued on two machines is a conflict a person resolves, and naming
+    /// one of the heads resolves it with a warning instead.
+    #[test]
+    fn the_same_work_continued_twice_is_a_conflict_until_a_record_is_named() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(
+            &a_root,
+            "20261003T120000Z",
+            &body("Ship x", "one", "two"),
+            None,
+        );
+        let first = publish(&a, &PublishRequest::default()).unwrap().record.id;
+        sync(&a, None).unwrap();
+
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        let p = plan(&b, None).unwrap();
+        // no mesh: the key is checked for integrity only
+        assert_eq!(p.status, PlanStatus::ReadyWithWarnings);
+        assert_eq!(codes(&p.warnings), ["origin_undeclared"]);
+        assert!(resume(&b, None).unwrap().resumed);
+
+        // both continue the same record
+        handover(
+            &a_root,
+            "20261003T130000Z",
+            &body("Ship x", "a went on", "a"),
+            None,
+        );
+        let ra = publish(&a, &PublishRequest::default()).unwrap().record.id;
+        handover(
+            &b_root,
+            "20261003T130001Z",
+            &body("Ship x", "b went on", "b"),
+            None,
+        );
+        let rb = publish(&b, &PublishRequest::default()).unwrap().record.id;
+        sync(&a, None).unwrap();
+        let synced = sync(&b, None).unwrap();
+        assert_eq!(synced.action, SyncAction::Exchanged);
+        assert_eq!(synced.lines[0].relation, LineSync::Diverged);
+        assert_eq!(synced.lines[0].heads.len(), 2);
+        let s = status(&b).unwrap();
+        assert_eq!(s.lines[0].state, LineState::Diverged);
+        assert!(
+            s.diagnostics.iter().any(|d| d.code.contains("diverged")),
+            "{:?}",
+            s.diagnostics
+        );
+
+        let p = plan(&b, None).unwrap();
+        assert_eq!(p.status, PlanStatus::Conflict);
+        assert_eq!(p.record.as_ref().unwrap().id, ra);
+        assert!(codes(&p.blockers).contains(&"line_diverged"));
+        assert!(codes(&p.blockers).contains(&"would_diverge"));
+        assert!(!resume(&b, None).unwrap().resumed);
+
+        let named = plan(&b, Some(&ra)).unwrap();
+        assert!(named.status.resumable(), "{:?}", named.blockers);
+        assert!(codes(&named.warnings).contains(&"line_diverged"));
+        assert!(codes(&named.warnings).contains(&"would_diverge"));
+
+        // a prefix every record shares names none of them
+        let p = plan(&b, Some("")).unwrap();
+        assert_eq!(p.status, PlanStatus::ChooseRecord);
+        assert_eq!(p.candidates.len(), 3);
+        let p = plan(&b, Some("zz")).unwrap();
+        assert_eq!(p.status, PlanStatus::NothingToResume);
+        assert_eq!(codes(&p.blockers), ["record_unknown"]);
+        assert_ne!(first, rb);
+    }
+
+    /// Independent lines are not a conflict, and an untrusted signer is never resumed.
+    #[test]
+    fn separate_lines_are_a_choice_and_an_untrusted_signer_is_refused() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("one", "x", "y"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+        let c_root = w.clone_as("c");
+        let c = machine(&c_root, w.identity("c", "mac-studio"), None);
+        handover(&c_root, "20261003T120500Z", &body("two", "x", "y"), None);
+        publish(&c, &PublishRequest::default()).unwrap();
+        sync(&c, None).unwrap();
+
+        let b_root = w.clone_as("b");
+        // B's trust list admits nobody
+        let b = machine(&b_root, w.identity("b", "mac-mini"), Some(trusting(&[])));
+        sync(&b, None).unwrap();
+        let p = plan(&b, None).unwrap();
+        assert_eq!(p.status, PlanStatus::ChooseRecord);
+        assert_eq!(codes(&p.blockers), ["several_resumable"]);
+        assert_eq!(p.candidates.len(), 2);
+
+        let id = p.candidates[0].id.clone();
+        let p = plan(&b, Some(&id)).unwrap();
+        assert_eq!(p.status, PlanStatus::Refused);
+        assert!(codes(&p.blockers).contains(&"origin_untrusted"));
+        let r = resume(&b, Some(&id)).unwrap();
+        assert!(!r.resumed);
+        assert!(r.handover.is_none());
+    }
+
+    /// Every way the local source can stand towards a record's is its own verdict.
+    #[test]
+    fn the_source_check_names_how_this_checkout_stands() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+
+        // a commit A never pushed: B does not have it
+        commit(&a_root, "unpushed");
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let rec = publish(&a, &PublishRequest::default()).unwrap().record.id;
+        sync(&a, None).unwrap();
+        sync(&b, None).unwrap();
+        let p = plan(&b, Some(&rec)).unwrap();
+        assert_eq!(p.status, PlanStatus::RequiresSourceUpdate);
+        assert_eq!(
+            p.source.as_ref().unwrap().relation,
+            SourceRelation::HeadMissing
+        );
+        assert_eq!(p.actions, ["git fetch origin"]);
+
+        // the commit arrives, but B is on another branch
+        git(&a_root, &["push", "-q", "origin", "feature/x"]);
+        git(&b_root, &["fetch", "-q", "origin"]);
+        git(&b_root, &["checkout", "-q", "main"]);
+        let p = plan(&b, Some(&rec)).unwrap();
+        assert_eq!(
+            p.source.as_ref().unwrap().relation,
+            SourceRelation::BranchDiffers
+        );
+        assert_eq!(p.actions, ["git switch feature/x"]);
+
+        // on the branch, with commits of its own after the record's
+        git(&b_root, &["checkout", "-q", "feature/x"]);
+        git(&b_root, &["merge", "-q", "--ff-only", "origin/feature/x"]);
+        commit(&b_root, "later");
+        let p = plan(&b, Some(&rec)).unwrap();
+        assert_eq!(
+            p.source.as_ref().unwrap().relation,
+            SourceRelation::LocalAhead
+        );
+        assert!(codes(&p.warnings).contains(&"local_ahead"));
+
+        // A moves on separately: the histories diverge
+        commit(&a_root, "elsewhere");
+        handover(&a_root, "20261003T130000Z", &body("o", "s2", "n2"), None);
+        let rec2 = publish(&a, &PublishRequest::default()).unwrap().record.id;
+        git(&a_root, &["push", "-q", "origin", "feature/x"]);
+        sync(&a, None).unwrap();
+        sync(&b, None).unwrap();
+        git(&b_root, &["fetch", "-q", "origin"]);
+        let p = plan(&b, Some(&rec2)).unwrap();
+        assert_eq!(
+            p.source.as_ref().unwrap().relation,
+            SourceRelation::Diverged
+        );
+        assert_eq!(p.status, PlanStatus::Conflict);
+        assert!(codes(&p.blockers).contains(&"source_diverged"));
+    }
+
+    /// A handover written in a dirty tree restores the context and says the source is not
+    /// restored, unless the very same uncommitted work is here.
+    #[test]
+    fn a_dirty_origin_restores_context_and_names_what_it_cannot() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        std::fs::write(a_root.join("lib/a"), "a\nuncommitted\n").unwrap();
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let published = publish(&a, &PublishRequest::default()).unwrap();
+        assert_eq!(published.record.working_tree, WorkingTree::Dirty);
+        assert_eq!(published.record.changed_total, 1);
+        sync(&a, None).unwrap();
+
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        let p = plan(&b, None).unwrap();
+        assert!(codes(&p.warnings).contains(&"source_incomplete"));
+        assert!(!codes(&p.warnings).contains(&"local_dirty"));
+        assert_eq!(p.source.as_ref().unwrap().origin_changed, ["lib/a"]);
+
+        // the same uncommitted work, here too
+        std::fs::write(b_root.join("lib/a"), "a\nuncommitted\n").unwrap();
+        let p = plan(&b, None).unwrap();
+        assert_eq!(p.source.as_ref().unwrap().same_uncommitted_work, Some(true));
+        assert!(!codes(&p.warnings).contains(&"source_incomplete"));
+        assert!(!codes(&p.warnings).contains(&"local_dirty"));
+
+        // different uncommitted work here
+        std::fs::write(b_root.join("lib/a"), "a\nmine\n").unwrap();
+        let p = plan(&b, None).unwrap();
+        assert_eq!(
+            p.source.as_ref().unwrap().same_uncommitted_work,
+            Some(false)
+        );
+        assert!(codes(&p.warnings).contains(&"local_dirty"));
+    }
+
+    /// What a publication refuses, it refuses before it writes anything.
+    #[test]
+    fn a_publication_refuses_what_must_not_leave_the_machine() {
+        let w = World::new();
+        let root = w.root("a");
+        let a = machine(&root, w.identity("a", "macbook-pro"), None);
+        handover(
+            &root,
+            "20261003T120000Z",
+            &body("o", "token ghp_0123456789abcdefghijklmnopqrstuvwxyzAB", "n"),
+            None,
+        );
+        let err = publish(&a, &PublishRequest::default()).unwrap_err();
+        assert!(err.contains("is not published"), "{err}");
+        assert!(
+            store::tip(&root, store::REF).is_none(),
+            "nothing reached the store"
+        );
+
+        for name in ["../x.md", "a/b.md", "x.txt"] {
+            let err = locate_handover(&root, Some(name)).unwrap_err();
+            assert!(err.contains("is not the file name"), "{name}: {err}");
+        }
+        let err = locate_handover(&root, Some("20990101T000000Z--absent.md")).unwrap_err();
+        assert!(err.contains("no handover record"), "{err}");
+        let named = handover(&root, "20261003T110000Z", &body("o", "s", "n"), None);
+        assert!(locate_handover(&root, Some(&named)).unwrap().is_file());
+        let published = publish(
+            &a,
+            &PublishRequest {
+                handover: Some(named.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(published.handover.ends_with(&named));
+    }
+
+    /// Without a remote the store is local, an unreachable remote changes nothing local,
+    /// and a remote name that is not one is refused.
+    #[test]
+    fn a_sync_without_a_reachable_remote_moves_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("solo");
+        std::fs::create_dir_all(&root).unwrap();
+        git(&root, &["init", "-q", "-b", "main"]);
+        std::fs::write(root.join(".gitignore"), ".ai/local/\n").unwrap();
+        git(&root, &["add", "-A"]);
+        git(&root, &["commit", "-qm", "base"]);
+        let id = crate::mesh::identity::relabel(&dir.path().join("k.json"), "solo")
+            .or_else(|_| {
+                NodeIdentity::load_or_create(&dir.path().join("k.json"))?;
+                crate::mesh::identity::relabel(&dir.path().join("k.json"), "solo")
+            })
+            .unwrap();
+        let m = machine(&root, id, None);
+        let synced = sync(&m, None).unwrap();
+        assert_eq!(synced.action, SyncAction::NoRemote);
+        assert_eq!(synced.diagnostics[0].code, "continuity.no_remote");
+        assert_eq!(status(&m).unwrap().store.sync, SyncState::NoRemote);
+        assert_eq!(status(&m).unwrap().branch, "main");
+
+        assert!(sync(&m, Some("a:b"))
+            .unwrap_err()
+            .contains("is not a remote name"));
+        let gone = dir.path().join("gone.git");
+        git(&root, &["remote", "add", "gone", gone.to_str().unwrap()]);
+        let synced = sync(&m, Some("gone")).unwrap();
+        assert_eq!(synced.action, SyncAction::Unreachable);
+        assert_eq!(synced.diagnostics[0].code, "continuity.remote_unreachable");
+        let note = local::load(&root).unwrap().last_sync.unwrap();
+        assert_eq!(note.outcome, "unreachable");
+        // the next plan says nothing was ever published, rather than to sync
+        let p = plan(&m, None).unwrap();
+        assert_eq!(codes(&p.warnings), ["nothing_published"]);
+        assert!(p.actions.is_empty());
+    }
+
+    /// What admission refuses is reported, never read: a stray file, bytes that are not a
+    /// record, a record from a newer schema.
+    #[test]
+    fn a_store_reports_every_file_it_refused() {
+        let w = World::new();
+        let root = w.root("a");
+        let m = machine(&root, w.identity("a", "macbook-pro"), None);
+        let newer = serde_json::json!({ "record": { "schema": "majordomus-continuity/v9" } });
+        store::add(
+            &root,
+            &[
+                ("not-a-record".into(), b"{}".to_vec()),
+                ("a".repeat(32), b"not json".to_vec()),
+                ("b".repeat(32), newer.to_string().into_bytes()),
+            ],
+            "fixture\n",
+        )
+        .unwrap();
+        let loaded = load(&m, store::REF).unwrap();
+        assert_eq!(loaded.refused.len(), 3);
+        assert_eq!(loaded.too_new, 1);
+        let s = status(&m).unwrap();
+        let codes: Vec<&str> = s.diagnostics.iter().map(|d| d.code.as_str()).collect();
+        assert!(codes.contains(&"continuity.stray_file"), "{codes:?}");
+        assert!(codes.contains(&"continuity.upgrade_required"), "{codes:?}");
+        assert_eq!(s.store.refused, 3);
+        assert_eq!(records(&m).unwrap().diagnostics.len(), 3);
+        // a refused file is named when a plan is asked for it
+        let p = plan(&m, Some(&"a".repeat(8))).unwrap();
+        assert_eq!(codes_of(&p.blockers), ["continuity.record_malformed"]);
+    }
+
+    fn codes_of(items: &[PlanItem]) -> Vec<String> {
+        items.iter().map(|i| i.code.clone()).collect()
+    }
+
+    /// A read never creates a key: the status says this device has none yet.
+    #[test]
+    fn a_status_without_a_device_identity_says_so() {
+        let w = World::new();
+        let root = w.root("a");
+        let mut m = machine(&root, NodeIdentity::ephemeral().unwrap(), None);
+        m.identity_known = false;
+        let s = status(&m).unwrap();
+        assert!(s
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "continuity.no_device_identity"));
+        assert_eq!(m.trust("00"), Trust::Undeclared);
+        let m = machine(
+            &root,
+            NodeIdentity::ephemeral().unwrap(),
+            Some(trusting(&[])),
+        );
+        assert_eq!(m.trust("00"), Trust::Untrusted);
+    }
 }

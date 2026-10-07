@@ -518,19 +518,15 @@ pub struct HandoverObservation {
 /// them, and how that sync went. Read from that one file — never from the store, never from
 /// a remote — so that entering a directory costs no git call and no network.
 ///
+/// A checkout that publishes and has never synced is told to sync:
+///
 /// ```
-/// use majordomus_cli::continuity::local::Offer;
 /// use majordomus_cli::environment::preflight::{derive, ContinuityObservation, Observations, Verdict};
 /// let mut o = Observations::empty("demo", 0);
-/// o.continuity = Some(ContinuityObservation {
-///     offers: vec![Offer { record: "a".repeat(32), device: "macbook-pro".into(),
-///         branch: Some("feature/x".into()), published_at: "2026-10-03T12:00:00Z".into(),
-///         task: None, issue: Some("#184".into()) }],
-///     last_sync: None,
-/// });
+/// o.continuity = Some(ContinuityObservation { offers: Vec::new(), last_sync: None });
 /// let c = derive(&o).check("session.continuity").unwrap().clone();
-/// assert_eq!(c.verdict, Verdict::Active);
-/// assert!(c.summary.contains("macbook-pro"));
+/// assert_eq!(c.verdict, Verdict::Unknown);
+/// assert!(c.summary.contains("never synced"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContinuityObservation {
@@ -2998,6 +2994,147 @@ mod tests {
             ..Default::default()
         });
         assert_eq!(compact_episode(&derive(&o)), "no episode");
+    }
+
+    fn offer(
+        device: &str,
+        branch: Option<&str>,
+        issue: Option<&str>,
+    ) -> crate::continuity::local::Offer {
+        crate::continuity::local::Offer {
+            record: "a".repeat(32),
+            device: device.into(),
+            branch: branch.map(str::to_string),
+            published_at: "2026-10-03T12:00:00Z".into(),
+            task: None,
+            issue: issue.map(str::to_string),
+        }
+    }
+
+    fn sync_note(outcome: &str) -> crate::continuity::local::SyncNote {
+        crate::continuity::local::SyncNote {
+            remote: "origin".into(),
+            at: "2026-10-03T12:00:00Z".into(),
+            outcome: outcome.into(),
+            detail: None,
+        }
+    }
+
+    fn continuity_of(c: Option<ContinuityObservation>) -> Check {
+        let mut o = at_head();
+        o.continuity = c;
+        derive(&o).check("session.continuity").unwrap().clone()
+    }
+
+    /// Every state `continuity.json` can be in reads as its own verdict, and only a handover
+    /// waiting from another device asks for attention on the entry line.
+    #[test]
+    fn the_continuity_check_reads_every_state_of_the_local_file() {
+        let c = continuity_of(None);
+        assert_eq!(c.verdict, Verdict::NotApplicable);
+
+        let one = continuity_of(Some(ContinuityObservation {
+            offers: vec![offer("macbook-pro", Some("feature/x"), Some("#184"))],
+            last_sync: None,
+        }));
+        assert_eq!(one.verdict, Verdict::Active);
+        assert!(one.summary.contains("macbook-pro"), "{}", one.summary);
+        assert!(one.summary.contains("feature/x, #184"), "{}", one.summary);
+        assert!(!one.summary.contains("more"), "{}", one.summary);
+        assert_eq!(
+            one.evidence[0].observed,
+            "record aaaaaaaaaaaa published 2026-10-03T12:00:00Z"
+        );
+
+        let two = continuity_of(Some(ContinuityObservation {
+            offers: vec![
+                offer("macbook-pro", None, None),
+                offer("mac-mini", None, None),
+            ],
+            last_sync: Some(sync_note("ok")),
+        }));
+        assert_eq!(two.verdict, Verdict::Active);
+        assert!(two.summary.ends_with("() (+1 more)"), "{}", two.summary);
+
+        let partial = continuity_of(Some(ContinuityObservation {
+            offers: Vec::new(),
+            last_sync: Some(sync_note("unreachable")),
+        }));
+        assert_eq!(partial.verdict, Verdict::Degraded);
+        assert!(
+            partial.summary.contains("origin was unreachable"),
+            "{}",
+            partial.summary
+        );
+
+        let fresh = continuity_of(Some(ContinuityObservation {
+            offers: Vec::new(),
+            last_sync: Some(sync_note("ok")),
+        }));
+        assert_eq!(fresh.verdict, Verdict::Fresh);
+        assert!(
+            fresh.summary.contains("2026-10-03T12:00:00Z"),
+            "{}",
+            fresh.summary
+        );
+
+        let never = continuity_of(Some(ContinuityObservation {
+            offers: Vec::new(),
+            last_sync: None,
+        }));
+        assert_eq!(never.verdict, Verdict::Unknown);
+
+        // the entry line points at the plan only when something waits
+        let mut o = at_head();
+        o.continuity = Some(ContinuityObservation {
+            offers: vec![offer("macbook-pro", Some("feature/x"), None)],
+            last_sync: None,
+        });
+        let p = derive(&o);
+        let line = compact_checks(&p, true);
+        assert!(
+            line.contains("↻ resumable handover from macbook-pro"),
+            "{line}"
+        );
+        assert!(
+            compact_checks(&p, false).contains("\n  * resumable handover"),
+            "{line}"
+        );
+        o.continuity = None;
+        assert!(!compact_checks(&derive(&o), true).contains("continuity plan"));
+    }
+
+    /// `observe` reads `continuity.json` when it exists and only then: a checkout the
+    /// continuity commands never ran in has no continuity observation at all.
+    #[test]
+    fn observe_reads_the_continuity_file_only_where_one_was_written() {
+        use crate::environment::{resolve, EnvironmentQuery, Inputs};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let repository = crate::Repository::open(repo.root()).unwrap();
+        let env = resolve(
+            &Inputs {
+                repository: &repository,
+                share: None,
+                index: None,
+                registry: None,
+                policy: None,
+            },
+            &EnvironmentQuery::fast().sealed(),
+        );
+        let observed = |root: &Path| {
+            observe(root, &env, Err("not read".into()), None, Probe::sealed()).continuity
+        };
+        assert_eq!(observed(repo.root()), None);
+
+        let state = crate::continuity::local::LocalState {
+            offers: vec![offer("macbook-pro", Some("feature/x"), None)],
+            last_sync: Some(sync_note("ok")),
+            ..Default::default()
+        };
+        crate::continuity::local::save(repo.root(), &state).unwrap();
+        let seen = observed(repo.root()).expect("the file is read");
+        assert_eq!(seen.offers, state.offers);
+        assert_eq!(seen.last_sync, state.last_sync);
     }
 
     #[test]

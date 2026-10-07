@@ -4,7 +4,7 @@ description = "Continue work on another machine: publish this checkout's newest 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 200
+weight = 203
 [extra]
 route = "/docs/cli/continuity/"
 command = "majordomus continuity"

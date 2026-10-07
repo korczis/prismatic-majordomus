@@ -44,13 +44,6 @@ pub fn remote_ref(remote: &str) -> String {
 pub const MAX_RECORDS: usize = 10_000;
 
 /// Is `name` a remote name this module will put into a refspec?
-///
-/// ```
-/// use majordomus_cli::continuity::store::valid_remote;
-/// assert!(valid_remote("origin"));
-/// assert!(!valid_remote("../x"));
-/// assert!(!valid_remote("a:b"));
-/// ```
 pub fn valid_remote(name: &str) -> bool {
     !name.is_empty()
         && name.len() <= 64
@@ -68,42 +61,35 @@ fn git(root: &Path) -> Command {
     cmd.env_remove("GIT_INDEX_FILE");
     // a push or fetch never waits for a password prompt nobody is there to answer
     cmd.env("GIT_TERMINAL_PROMPT", "0");
-    cmd.arg("-C").arg(root);
+    // the checkout is the working directory rather than `-C`: the same repository, and a
+    // checkout that does not exist is refused by the spawn itself
+    cmd.current_dir(root);
     cmd
 }
 
-fn run(root: &Path, args: &[&str]) -> Result<String, String> {
-    let out = git(root)
-        .args(args)
-        .stdin(Stdio::null())
-        .output()
-        .map_err(|e| format!("cannot run git: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "git {}: {}",
-            args.join(" "),
-            String::from_utf8_lossy(&out.stderr).trim()
-        ));
-    }
-    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
-}
-
-fn run_with_input(root: &Path, args: &[&str], input: &[u8]) -> Result<String, String> {
+/// Run git in `root` with `env` added and `input` on its stdin, and answer its stdout.
+///
+/// Every git call of the store goes through here, so a failure has one shape: git could not
+/// be started, its stdin could not be written (it exited without reading what it was
+/// given), or it refused, with what it said on stderr. Stdin is written on a thread of its
+/// own, because git may start answering before it has read everything (`cat-file --batch`
+/// does) and a full stdout pipe would otherwise stall both sides.
+fn exec(root: &Path, args: &[&str], env: &[(&str, &str)], input: &[u8]) -> Result<Vec<u8>, String> {
     let mut child = git(root)
         .args(args)
+        .envs(env.iter().copied())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("cannot run git: {e}"))?;
-    child
-        .stdin
-        .take()
-        .ok_or("git: no stdin")?
-        .write_all(input)
-        .map_err(|e| format!("git {}: {e}", args.join(" ")))?;
-    let out = child
-        .wait_with_output()
+    let mut stdin = child.stdin.take().expect("stdin is piped");
+    let input = input.to_vec();
+    let writer = std::thread::spawn(move || stdin.write_all(&input));
+    let out = child.wait_with_output();
+    let written = writer.join().expect("writing a pipe does not panic");
+    let out = written
+        .and(out)
         .map_err(|e| format!("git {}: {e}", args.join(" ")))?;
     if !out.status.success() {
         return Err(format!(
@@ -112,7 +98,15 @@ fn run_with_input(root: &Path, args: &[&str], input: &[u8]) -> Result<String, St
             String::from_utf8_lossy(&out.stderr).trim()
         ));
     }
-    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    Ok(out.stdout)
+}
+
+fn run(root: &Path, args: &[&str]) -> Result<String, String> {
+    run_with_input(root, args, &[])
+}
+
+fn run_with_input(root: &Path, args: &[&str], input: &[u8]) -> Result<String, String> {
+    exec(root, args, &[], input).map(|out| String::from_utf8_lossy(&out).trim().to_string())
 }
 
 /// The commit a ref points at, or `None` when the ref does not exist.
@@ -137,15 +131,11 @@ pub fn entries(root: &Path, commit: &str) -> Result<BTreeMap<String, String>, St
     let mut out = BTreeMap::new();
     for entry in listing.split('\0').filter(|e| !e.is_empty()) {
         // <mode> SP <type> SP <object> TAB <path>
-        let Some((meta, path)) = entry.split_once('\t') else {
-            continue;
-        };
+        let (meta, path) = entry.split_once('\t').unwrap_or((entry, ""));
         let mut parts = meta.split(' ');
-        let (_, kind, object) = (parts.next(), parts.next(), parts.next());
-        if kind == Some("blob") {
-            if let Some(object) = object {
-                out.insert(path.to_string(), object.to_string());
-            }
+        // a blob is a file of the store; anything else in its tree (a gitlink) is not
+        if let (_, Some("blob"), Some(object)) = (parts.next(), parts.next(), parts.next()) {
+            out.insert(path.to_string(), object.to_string());
             if out.len() > MAX_RECORDS {
                 return Err(format!(
                     "the store holds more than {MAX_RECORDS} files; it is read no further"
@@ -161,36 +151,28 @@ pub fn blobs(root: &Path, ids: &[&str]) -> Result<BTreeMap<String, Vec<u8>>, Str
     if ids.is_empty() {
         return Ok(BTreeMap::new());
     }
-    let mut child = git(root)
-        .args(["cat-file", "--batch"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("cannot run git: {e}"))?;
     let mut request = String::new();
     for id in ids {
         request.push_str(id);
         request.push('\n');
     }
-    let mut stdin = child.stdin.take().ok_or("git: no stdin")?;
-    let writer = std::thread::spawn(move || stdin.write_all(request.as_bytes()));
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("git cat-file: {e}"))?;
-    let _ = writer.join();
-    if !out.status.success() {
-        return Err(format!(
-            "git cat-file: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        ));
-    }
-    let data = out.stdout;
+    parse_batch(&exec(
+        root,
+        &["cat-file", "--batch"],
+        &[],
+        request.as_bytes(),
+    )?)
+}
+
+/// The answer of `cat-file --batch`: `<id> <type> <size>\n<bytes>\n` per object, or
+/// `<id> missing\n` for one the repository lacks, which is left out. A blob larger than
+/// any record could be is answered empty, so admission refuses it without it being held.
+fn parse_batch(data: &[u8]) -> Result<BTreeMap<String, Vec<u8>>, String> {
     let mut result = BTreeMap::new();
     let mut at = 0usize;
     while at < data.len() {
         let Some(nl) = data[at..].iter().position(|b| *b == b'\n') else {
-            break;
+            return Err("git cat-file: a truncated answer".into());
         };
         let header = String::from_utf8_lossy(&data[at..at + nl]).to_string();
         at += nl + 1;
@@ -203,11 +185,12 @@ pub fn blobs(root: &Path, ids: &[&str]) -> Result<BTreeMap<String, Vec<u8>>, Str
         if at + size > data.len() {
             return Err("git cat-file: a truncated answer".into());
         }
-        if size <= MAX_RECORD_BYTES * 2 {
-            result.insert(id.to_string(), data[at..at + size].to_vec());
+        let bytes = if size <= MAX_RECORD_BYTES * 2 {
+            data[at..at + size].to_vec()
         } else {
-            result.insert(id.to_string(), Vec::new());
-        }
+            Vec::new()
+        };
+        result.insert(id.to_string(), bytes);
         at += size + 1;
     }
     Ok(result)
@@ -277,34 +260,18 @@ fn commit(root: &Path, tree: &str, parents: &[&str], message: &str) -> Result<St
     }
     // The committer is whoever git says it is on this machine; a fixture with no identity
     // gets a neutral one rather than a refusal, since this commit carries no authored work.
-    let mut cmd = git(root);
-    cmd.args(&args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    if run(root, &["config", "user.email"]).is_err() {
-        cmd.env("GIT_AUTHOR_NAME", "majordomus")
-            .env("GIT_AUTHOR_EMAIL", "majordomus@localhost")
-            .env("GIT_COMMITTER_NAME", "majordomus")
-            .env("GIT_COMMITTER_EMAIL", "majordomus@localhost");
-    }
-    let mut child = cmd.spawn().map_err(|e| format!("cannot run git: {e}"))?;
-    child
-        .stdin
-        .take()
-        .ok_or("git: no stdin")?
-        .write_all(message.as_bytes())
-        .map_err(|e| format!("git commit-tree: {e}"))?;
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("git commit-tree: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "git commit-tree: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        ));
-    }
-    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+    let neutral: &[(&str, &str)] = if run(root, &["config", "user.email"]).is_err() {
+        &[
+            ("GIT_AUTHOR_NAME", "majordomus"),
+            ("GIT_AUTHOR_EMAIL", "majordomus@localhost"),
+            ("GIT_COMMITTER_NAME", "majordomus"),
+            ("GIT_COMMITTER_EMAIL", "majordomus@localhost"),
+        ]
+    } else {
+        &[]
+    };
+    exec(root, &args, neutral, message.as_bytes())
+        .map(|out| String::from_utf8_lossy(&out).trim().to_string())
 }
 
 /// Move `reference` from `old` to `new`, or fail if another writer moved it first.
@@ -326,6 +293,21 @@ fn update(root: &Path, reference: &str, new: &str, old: Option<&str>) -> Result<
     .map(|_| ())
 }
 
+/// Write `files` as the store's tree, commit it on `parents`, and move the local ref from
+/// `old` to that commit — or fail, if another writer moved the ref first.
+fn write_tip(
+    root: &Path,
+    files: &BTreeMap<String, String>,
+    parents: &[&str],
+    message: &str,
+    old: Option<&str>,
+) -> Result<String, String> {
+    let tree = tree_of(root, files)?;
+    let new = commit(root, &tree, parents, message)?;
+    update(root, REF, &new, old)?;
+    Ok(new)
+}
+
 /// Add records to the local store: `records` is id → stored bytes. Records already present
 /// are left as they are. Returns the new tip, or the old one when nothing was added.
 pub fn add(root: &Path, records: &[(String, Vec<u8>)], message: &str) -> Result<String, String> {
@@ -334,26 +316,19 @@ pub fn add(root: &Path, records: &[(String, Vec<u8>)], message: &str) -> Result<
         Some(c) => entries(root, c)?,
         None => BTreeMap::new(),
     };
-    let mut added = 0usize;
-    for (id, bytes) in records {
-        let path = path_of(id);
-        if files.contains_key(&path) {
-            continue;
-        }
+    let fresh: Vec<&(String, Vec<u8>)> = records
+        .iter()
+        .filter(|(id, _)| !files.contains_key(&path_of(id)))
+        .collect();
+    if let (Some(old), true) = (&old, fresh.is_empty()) {
+        return Ok(old.clone());
+    }
+    for (id, bytes) in fresh {
         let blob = run_with_input(root, &["hash-object", "-w", "--stdin"], bytes)?;
-        files.insert(path, blob);
-        added += 1;
+        files.insert(path_of(id), blob);
     }
-    if added == 0 {
-        if let Some(old) = old {
-            return Ok(old);
-        }
-    }
-    let tree = tree_of(root, &files)?;
     let parents: Vec<&str> = old.iter().map(String::as_str).collect();
-    let new = commit(root, &tree, &parents, message)?;
-    update(root, REF, &new, old.as_deref())?;
-    Ok(new)
+    write_tip(root, &files, &parents, message, old.as_deref())
 }
 
 /// Merge the store at `other` (a commit) into the local ref: the local files and those of
@@ -372,31 +347,24 @@ pub fn merge(
 ) -> Result<(String, Vec<Collision>), String> {
     let old = tip(root, REF);
     let theirs = entries(root, other)?;
-    let filtered = theirs.keys().any(|p| !keep(p));
-    let Some(local) = old.clone() else {
-        if !filtered {
-            update(root, REF, other, None)?;
-            return Ok((other.to_string(), Vec::new()));
-        }
-        let files: BTreeMap<String, String> = theirs.into_iter().filter(|(p, _)| keep(p)).collect();
-        let tree = tree_of(root, &files)?;
-        let new = commit(root, &tree, &[other], "majordomus continuity: merge\n")?;
-        update(root, REF, &new, None)?;
-        return Ok((new, Vec::new()));
-    };
-    if local == other || is_ancestor(root, other, &local) {
-        return Ok((local, Vec::new()));
+    if let Some(local) = old
+        .as_deref()
+        .filter(|l| *l == other || is_ancestor(root, other, l))
+    {
+        return Ok((local.to_string(), Vec::new()));
     }
-    if !filtered && is_ancestor(root, &local, other) {
-        update(root, REF, other, Some(&local))?;
+    let filtered = theirs.keys().any(|p| !keep(p));
+    let fast_forward = old.as_deref().is_none_or(|l| is_ancestor(root, l, other));
+    if fast_forward && !filtered {
+        update(root, REF, other, old.as_deref())?;
         return Ok((other.to_string(), Vec::new()));
     }
-    let mut files = entries(root, &local)?;
+    let mut files = match &old {
+        Some(local) => entries(root, local)?,
+        None => BTreeMap::new(),
+    };
     let mut collisions = Vec::new();
-    for (path, blob) in theirs {
-        if !keep(&path) {
-            continue;
-        }
+    for (path, blob) in theirs.into_iter().filter(|(p, _)| keep(p)) {
         match files.get(&path) {
             Some(mine) if *mine != blob => collisions.push(Collision { path }),
             Some(_) => {}
@@ -405,14 +373,14 @@ pub fn merge(
             }
         }
     }
-    let tree = tree_of(root, &files)?;
-    let new = commit(
+    let parents: Vec<&str> = old.iter().map(String::as_str).chain([other]).collect();
+    let new = write_tip(
         root,
-        &tree,
-        &[&local, other],
+        &files,
+        &parents,
         "majordomus continuity: merge\n",
+        old.as_deref(),
     )?;
-    update(root, REF, &new, Some(&local))?;
     Ok((new, collisions))
 }
 
@@ -471,9 +439,7 @@ pub fn push(root: &Path, remote: &str) -> Result<(), String> {
     }
     run(root, &["push", "--quiet", remote, &format!("{REF}:{REF}")])?;
     // what the remote now holds, recorded so that the next status needs no network
-    if let Some(local) = tip(root, REF) {
-        let _ = run(root, &["update-ref", &remote_ref(remote), &local]);
-    }
+    let _ = run(root, &["update-ref", &remote_ref(remote), REF]);
     Ok(())
 }
 
@@ -497,9 +463,70 @@ pub fn default_remote(root: &Path) -> Option<String> {
         .filter(|r| valid_remote(r))
 }
 
+/// Stores as another writer — or a hand — could have left them, for the tests of this
+/// module and of the operations that read a store.
+#[cfg(test)]
+pub(crate) mod tests_support {
+    use super::*;
+
+    /// A commit holding the tree `mktree -z` builds from `lines`, each `<mode> <type>
+    /// <object>\t<name>`.
+    pub(crate) fn planted(root: &Path, lines: &[String]) -> String {
+        let listing: String = lines.iter().map(|l| format!("{l}\0")).collect();
+        let tree = run_with_input(root, &["mktree", "-z"], listing.as_bytes()).unwrap();
+        commit(root, &tree, &[], "planted\n").unwrap()
+    }
+
+    pub(crate) fn blob(root: &Path, bytes: &[u8]) -> String {
+        run_with_input(root, &["hash-object", "-w", "--stdin"], bytes).unwrap()
+    }
+
+    /// A store of `count` files that are no records: that many names for one blob.
+    pub(crate) fn filled(root: &Path, count: usize) -> String {
+        let one = blob(root, b"x\n");
+        let listing: String = (0..count)
+            .map(|i| format!("100644 blob {one}\t{i:032x}.json\0"))
+            .collect();
+        let tree = run_with_input(root, &["mktree", "-z"], listing.as_bytes()).unwrap();
+        planted(root, &[format!("040000 tree {tree}\trecords")])
+    }
+
+    /// A store one file over the bound.
+    pub(crate) fn oversized(root: &Path) -> String {
+        filled(root, MAX_RECORDS + 1)
+    }
+
+    /// A store whose tree is deeper than a store is: `a/b/c`.
+    pub(crate) fn deep(root: &Path) -> String {
+        let one = blob(root, b"x\n");
+        let tree = |line: String| {
+            run_with_input(root, &["mktree", "-z"], format!("{line}\0").as_bytes()).unwrap()
+        };
+        let sub = tree(format!("100644 blob {one}\tc"));
+        let mid = tree(format!("040000 tree {sub}\tb"));
+        planted(root, &[format!("040000 tree {mid}\ta")])
+    }
+
+    /// Hold the lock git takes on `reference`, as a writer in the middle of moving it does.
+    pub(crate) fn locked(root: &Path, reference: &str) -> std::path::PathBuf {
+        let lock = root.join(".git").join(format!("{reference}.lock"));
+        std::fs::create_dir_all(lock.parent().unwrap()).unwrap();
+        std::fs::write(&lock, "").unwrap();
+        lock
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::tests_support::{blob, deep, locked, oversized, planted};
     use super::*;
+
+    #[test]
+    fn only_a_plain_remote_name_reaches_a_refspec() {
+        assert!(valid_remote("origin"));
+        assert!(!valid_remote("../x"));
+        assert!(!valid_remote("a:b"));
+    }
 
     fn repo() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
@@ -587,5 +614,243 @@ mod tests {
             is_ancestor(root, &theirs, &merged),
             "the remote's commit is still a parent"
         );
+    }
+
+    #[test]
+    fn a_git_that_cannot_start_refuses_or_stops_reading_is_an_error_of_its_own() {
+        let dir = repo();
+        let root = dir.path();
+        let err = run(&root.join("gone"), &["status"]).unwrap_err();
+        assert!(err.starts_with("cannot run git: "), "{err}");
+        let err = run(root, &["rev-parse", "--verify", "nope"]).unwrap_err();
+        assert!(err.starts_with("git rev-parse --verify nope: "), "{err}");
+        // a git that exits without reading what it was given: the write is what fails
+        let err = run_with_input(root, &["--version"], &vec![b'x'; 8 << 20]).unwrap_err();
+        assert!(err.starts_with("git --version: "), "{err}");
+    }
+
+    #[test]
+    fn blobs_are_read_in_one_batch_and_an_answer_cut_short_is_refused() {
+        let dir = repo();
+        let root = dir.path();
+        assert!(blobs(root, &[]).unwrap().is_empty());
+        let small = blob(root, b"small\n");
+        let huge = blob(root, &vec![b'x'; MAX_RECORD_BYTES * 2 + 1]);
+        let absent = "0".repeat(40);
+        let got = blobs(root, &[&small, &absent, &huge]).unwrap();
+        assert_eq!(got.get(&small).unwrap(), b"small\n");
+        assert!(!got.contains_key(&absent), "a missing object is left out");
+        assert!(
+            got.get(&huge).unwrap().is_empty(),
+            "a blob no record could be is not held"
+        );
+        // a header with no end, and a header promising more bytes than arrived
+        assert!(parse_batch(b"abc blob 3").is_err());
+        assert!(parse_batch(b"abc blob 30\nxyz\n").is_err());
+        assert_eq!(
+            parse_batch(b"abc blob 3\nxyz\n")
+                .unwrap()
+                .get("abc")
+                .unwrap(),
+            b"xyz"
+        );
+    }
+
+    #[test]
+    fn only_blobs_are_files_of_a_store_and_the_bound_is_enforced() {
+        let dir = repo();
+        let root = dir.path();
+        let one = blob(root, b"x\n");
+        let other = planted(root, &[format!("100644 blob {one}\tnote")]);
+        // a gitlink in the tree is not a file, and is passed over
+        let store = planted(
+            root,
+            &[
+                format!("100644 blob {one}\tnote"),
+                format!("160000 commit {other}\tsubmodule"),
+            ],
+        );
+        let files = entries(root, &store).unwrap();
+        assert_eq!(files.keys().collect::<Vec<_>>(), ["note"]);
+        assert!(entries(root, "nope").is_err());
+
+        let big = oversized(root);
+        let err = entries(root, &big).unwrap_err();
+        assert!(err.contains("more than 10000 files"), "{err}");
+        // every writer reads the store first, so none writes into one it cannot read
+        update(root, REF, &big, None).unwrap();
+        assert!(read(root, REF).is_err());
+        assert!(add(root, &[("a".repeat(32), b"A\n".to_vec())], "a\n").is_err());
+        let unrelated = planted(root, &[format!("100644 blob {one}\tnote")]);
+        assert!(merge(root, &unrelated, &|_| true).is_err());
+    }
+
+    #[test]
+    fn a_tree_is_one_level_deep_and_names_only_objects_the_repository_has() {
+        let dir = repo();
+        let root = dir.path();
+        let one = blob(root, b"x\n");
+        let mut files = BTreeMap::new();
+        files.insert("README".to_string(), one.clone());
+        files.insert(path_of(&"a".repeat(32)), one.clone());
+        let tree = tree_of(root, &files).unwrap();
+        let listed = run(root, &["ls-tree", "-r", "--name-only", &tree]).unwrap();
+        assert_eq!(
+            listed.lines().collect::<Vec<_>>(),
+            ["README", &path_of(&"a".repeat(32))]
+        );
+
+        files.insert("a/b/c".to_string(), one.clone());
+        let err = tree_of(root, &files).unwrap_err();
+        assert!(err.contains("one level of directories"), "{err}");
+
+        let mut absent = BTreeMap::new();
+        absent.insert(path_of(&"b".repeat(32)), "0".repeat(40));
+        assert!(tree_of(root, &absent).is_err());
+        assert!(commit(root, &tree, &["nope"], "x\n").is_err());
+    }
+
+    /// Each step of a write can be refused by git, and each refusal leaves the ref where
+    /// it was.
+    #[test]
+    fn a_write_git_refuses_leaves_the_store_where_it_was() {
+        let dir = repo();
+        let root = dir.path();
+        let record = |c: &str| (c.repeat(32), format!("{c}\n").into_bytes());
+        let first = add(root, &[record("a")], "a\n").unwrap();
+
+        // another writer holds the ref
+        let lock = locked(root, REF);
+        assert!(add(root, &[record("b")], "b\n").is_err());
+        std::fs::remove_file(&lock).unwrap();
+        assert_eq!(tip(root, REF), Some(first.clone()));
+
+        // an identity git will not commit as
+        run(root, &["config", "user.email", "t@t"]).unwrap();
+        run(root, &["config", "user.name", ""]).unwrap();
+        let err = add(root, &[record("c")], "c\n").unwrap_err();
+        assert!(err.starts_with("git commit-tree"), "{err}");
+        run(root, &["config", "--unset", "user.name"]).unwrap();
+        run(root, &["config", "--unset", "user.email"]).unwrap();
+        assert_eq!(tip(root, REF), Some(first.clone()));
+    }
+
+    /// An object database that cannot be written refuses the record itself.
+    #[cfg(unix)]
+    #[test]
+    fn a_record_that_cannot_be_stored_is_not_added() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = repo();
+        let root = dir.path();
+        let objects = root.join(".git/objects");
+        let mode = |m: u32| {
+            std::fs::set_permissions(&objects, std::fs::Permissions::from_mode(m)).unwrap()
+        };
+        mode(0o555);
+        let refused = add(root, &[("a".repeat(32), b"A\n".to_vec())], "a\n");
+        mode(0o755);
+        // whoever may write anywhere (root, in a container) is not refused, and that is
+        // not this module's to change
+        if let Err(err) = refused {
+            assert!(err.starts_with("git hash-object"), "{err}");
+            assert!(tip(root, REF).is_none());
+        }
+    }
+
+    #[test]
+    fn a_merge_fast_forwards_takes_loose_files_and_refuses_what_it_cannot_write() {
+        let dir = repo();
+        let root = dir.path();
+        let one = blob(root, b"x\n");
+        assert!(merge(root, "nope", &|_| true).is_err());
+
+        // an empty local store takes the other side as it is — unless the ref is held
+        let theirs = planted(root, &[format!("100644 blob {one}\tREADME")]);
+        let lock = locked(root, REF);
+        assert!(merge(root, &theirs, &|_| true).is_err());
+        std::fs::remove_file(&lock).unwrap();
+        assert_eq!(merge(root, &theirs, &|_| true).unwrap().0, theirs);
+        assert_eq!(tip(root, REF), Some(theirs.clone()));
+
+        // unrelated histories: the union, a file at the top level included
+        let mine = add(root, &[("a".repeat(32), b"A\n".to_vec())], "a\n").unwrap();
+        let unrelated = planted(root, &[format!("100644 blob {one}\tNOTES")]);
+        let (merged, collisions) = merge(root, &unrelated, &|_| true).unwrap();
+        assert!(collisions.is_empty());
+        assert!(is_ancestor(root, &mine, &merged) && is_ancestor(root, &unrelated, &merged));
+        let files = read(root, REF).unwrap();
+        assert_eq!(
+            files.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["NOTES", "README", &path_of(&"a".repeat(32))]
+        );
+
+        // a tree deeper than a store is cannot be merged, and the ref stays
+        let err = merge(root, &deep(root), &|_| true).unwrap_err();
+        assert!(err.contains("one level of directories"), "{err}");
+        assert_eq!(tip(root, REF), Some(merged));
+    }
+
+    #[test]
+    fn a_remote_is_asked_by_name_and_answers_with_a_store_or_none() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("here");
+        let remote = dir.path().join("remote.git");
+        std::fs::create_dir_all(&root).unwrap();
+        run(
+            dir.path(),
+            &["init", "-q", "--bare", remote.to_str().unwrap()],
+        )
+        .unwrap();
+        run(&root, &["init", "-q", "-b", "main"]).unwrap();
+
+        // no remote at all, then one that is not `origin`, then both
+        assert_eq!(default_remote(&root), None);
+        assert!(fetch(&root, "a:b")
+            .unwrap_err()
+            .contains("is not a remote name"));
+        assert!(push(&root, "a:b")
+            .unwrap_err()
+            .contains("is not a remote name"));
+        run(
+            &root,
+            &["remote", "add", "upstream", remote.to_str().unwrap()],
+        )
+        .unwrap();
+        assert_eq!(default_remote(&root).as_deref(), Some("upstream"));
+        run(
+            &root,
+            &["remote", "add", "origin", remote.to_str().unwrap()],
+        )
+        .unwrap();
+        assert_eq!(default_remote(&root).as_deref(), Some("origin"));
+        // the branch's own remote wins; `.` (a local upstream) is not a remote
+        run(&root, &["config", "branch.main.remote", "upstream"]).unwrap();
+        assert_eq!(default_remote(&root).as_deref(), Some("upstream"));
+        run(&root, &["config", "branch.main.remote", "."]).unwrap();
+        assert_eq!(default_remote(&root).as_deref(), Some("origin"));
+
+        assert_eq!(fetch(&root, "origin").unwrap(), Fetched::Empty);
+        let first = add(&root, &[("a".repeat(32), b"A\n".to_vec())], "a\n").unwrap();
+        push(&root, "origin").unwrap();
+        assert_eq!(tip(&root, &remote_ref("origin")), Some(first.clone()));
+        assert_eq!(fetch(&root, "origin").unwrap(), Fetched::Store(first));
+
+        // the tracking ref is held by another writer: the fetch is refused, not half done
+        run(&root, &["update-ref", "-d", &remote_ref("origin")]).unwrap();
+        let lock = locked(&root, &remote_ref("origin"));
+        assert!(fetch(&root, "origin").is_err());
+        std::fs::remove_file(&lock).unwrap();
+
+        // a remote whose ref is not a commit holds no store this one can read
+        let stray = run_with_input(&remote, &["hash-object", "-w", "--stdin"], b"x\n").unwrap();
+        run(&remote, &["update-ref", REF, &stray]).unwrap();
+        let err = fetch(&root, "origin").unwrap_err();
+        assert!(err.contains("left no"), "{err}");
+
+        // detached: no branch to ask, so the remotes decide
+        let tree = tree_of(&root, &BTreeMap::new()).unwrap();
+        let head = commit(&root, &tree, &[], "base\n").unwrap();
+        run(&root, &["checkout", "-q", "--detach", &head]).unwrap();
+        assert_eq!(default_remote(&root).as_deref(), Some("origin"));
     }
 }
