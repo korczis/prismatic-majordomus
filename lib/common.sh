@@ -1033,9 +1033,51 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
+# ---------------------------------------------------------------- temporary files
+# Every temporary file a command makes lives under one directory of the process's own, and
+# the exit trap removes that directory. Before this, the trap removed the four files it knew
+# by name while some hundred and fifty `mktemp` call sites made others: the manifest and
+# event flattenings, the session and context-document workspaces, the project model's
+# directory of two hundred and sixty files, and everything made inside a command
+# substitution, whose subshell has no exit trap to run. One session start left 25 entries
+# and 1335 files in TMPDIR; a provider hook runs the tool on every prompt, so the pile grew
+# for as long as the machine stayed up, and on 2026-10-07 macOS spent 7 min 38 s of a login
+# deleting it, because it empties TMPDIR at boot before anything else may start.
+#
+# The call sites are not rewritten. They ask for "${TMPDIR:-/tmp}/<name>", and the function
+# below answers that request under the root instead; a template anywhere else — beside a
+# record about to be published, inside a workspace already under the root — is passed
+# through untouched, because that location is the point of it. TMPDIR itself is not moved:
+# a verify command, an editor or a server this process starts inherits the environment and
+# may outlive the directory.
+#
+# The root is made by the entry point, once, before a command runs, and not on first use: a
+# first use inside a command substitution would name a root only that subshell knows. A
+# script that sources this library without asking for a root gets `mktemp` unchanged.
+MJ_TMP_ROOT=""
+mj_tmp_root_init() {
+  local base="${TMPDIR:-/tmp}"
+  MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.XXXXXX")"
+}
+mktemp() {
+  [ -n "$MJ_TMP_ROOT" ] || { command mktemp "$@"; return; }
+  local base="${TMPDIR:-/tmp}" a; local -a args=()
+  base="${base%/}"
+  for a in "$@"; do
+    case "$a" in
+      "$MJ_TMP_ROOT"/*) ;;
+      "$base"/*) a="$MJ_TMP_ROOT/${a#"$base"/}" ;;
+    esac
+    args+=("$a")
+  done
+  command mktemp "${args[@]+"${args[@]}"}"
+}
+
 mj_cleanup() {
   mj_timing_report
   rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
+  # MJ_REC_TMP above is not under the root: it is made beside the record it becomes.
+  [ -n "${MJ_TMP_ROOT:-}" ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
   # A lock this process is holding goes with it. Releasing here and not only at the end of
   # the critical section is what makes the lock crash-safe for every exit a command has:
   # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.

@@ -157,6 +157,9 @@ case "$cmd" in
     echo "majordomus $MJ_VERSION"; exit 0 ;;
   init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|recover|rules|bench|usecase|adr|evidence|archive)
     mj_parse_global_opts "$@"
+    # after the dispatch and not before it: a command handed to the other program is an
+    # exec, and an exec runs no exit trap to remove the root
+    mj_tmp_root_init
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
