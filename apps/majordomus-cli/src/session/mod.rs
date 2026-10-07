@@ -544,4 +544,98 @@ mod tests {
         assert!(open_episodes(dir.path()).is_empty());
         assert!(Ledger::of(dir.path()).read().events.is_empty());
     }
+
+    // The examples on `public_url` and `public_text` state the rule and run as doc tests,
+    // which the coverage measurement does not count. These hold the same rule where it
+    // does: each branch is reached by a test that would fail if the branch answered
+    // differently.
+
+    #[test]
+    fn over_http_the_whole_userinfo_goes() {
+        for dirty in [
+            "https://x-access-token:ghs_secret@github.com/o/r.git",
+            "https://ghp_secret@github.com/o/r.git",
+        ] {
+            assert_eq!(public_url(dirty), "https://github.com/o/r.git");
+        }
+        assert_eq!(
+            public_url("http://u:p@host:8080/o/r"),
+            "http://host:8080/o/r"
+        );
+    }
+
+    #[test]
+    fn over_any_other_scheme_the_login_stays_and_the_password_goes() {
+        assert_eq!(
+            public_url("ssh://git:hunter2@host:22/o/r.git"),
+            "ssh://git@host:22/o/r.git"
+        );
+        // a URL that stops at its authority has no path to carry over
+        assert_eq!(public_url("ssh://git:hunter2@host"), "ssh://git@host");
+        assert_eq!(public_url("https://token@host"), "https://host");
+    }
+
+    #[test]
+    fn a_url_with_nothing_to_remove_is_returned_as_it_was() {
+        for same in [
+            // no scheme: the scp form, which carries no password
+            "git@github.com:o/r.git",
+            // no userinfo
+            "https://github.com/o/r.git",
+            "ssh://git@github.com/o/r.git",
+            // an at sign in the path is not userinfo
+            "https://host/o/r@v1.git",
+        ] {
+            assert_eq!(public_url(same), same);
+        }
+    }
+
+    #[test]
+    fn every_url_in_a_text_loses_its_credential_and_nothing_else_changes() {
+        assert_eq!(
+            public_text("fatal: unable to access 'https://user:secret@host/x/': timeout"),
+            "fatal: unable to access 'https://host/x/': timeout"
+        );
+        assert_eq!(
+            public_text("a https://t0ken@h/a and ssh://git:pw@h:22/b, then c"),
+            "a https://h/a and ssh://git@h:22/b, then c"
+        );
+        for same in [
+            "no url here",
+            "see https://host/o/r@v1 now",
+            "mail me@example.org",
+            "a://",
+            // `://` with no scheme before it is not a URL, and what follows is left alone
+            "://x@y",
+            "see ://user:secret@host and go on",
+        ] {
+            assert_eq!(public_text(same), same);
+        }
+    }
+
+    #[test]
+    fn the_remote_a_repository_names_is_read_without_its_credential() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let git = |args: &[&str]| {
+            let status = std::process::Command::new("git")
+                .args(args)
+                .current_dir(dir.path())
+                .status()
+                .expect("git");
+            assert!(status.success(), "git {args:?}");
+        };
+        git(&["init", "-q", "."]);
+        // no remote at all is no URL, not an empty one
+        assert_eq!(remote_url(dir.path()), None);
+        git(&[
+            "remote",
+            "add",
+            "origin",
+            "https://x-access-token:ghs_secret@github.com/o/r.git",
+        ]);
+        assert_eq!(
+            remote_url(dir.path()).as_deref(),
+            Some("https://github.com/o/r.git")
+        );
+    }
 }
