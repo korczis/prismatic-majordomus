@@ -41,6 +41,16 @@ expect_grep '^enforcement\.1\.name=second$' flat.txt
 expect_grep '^enforcement\.1\.args=\[\]$' flat.txt
 expect_grep '^empty_list=\[\]$' flat.txt
 [ "$(mj_yget flat.txt context.budget)" = 150 ]
+# inside single quotes a doubled quote is one quote, as every YAML parser reads it; a
+# double-quoted scalar has no such escape and keeps the pair. The Rust engine reads the
+# same (metadata::yaml, a_doubled_quote_inside_single_quotes_is_one_quote).
+printf '%s\n' "a: 'the repository''s test'" 'b: "it'"''"'s"' "c: ''''" "d: ['x''y', z]" > q.yaml
+mj_yaml_flatten q.yaml > qf.txt
+expect_grep "^a=the repository's test$" qf.txt
+expect_grep "^b=it''s$" qf.txt
+expect_grep "^c='$" qf.txt
+expect_grep "^d\.0=x'y$" qf.txt
+expect_grep '^d\.1=z$' qf.txt
 [ "$(mj_ylist flat.txt scope | wc -l | tr -d ' ')" = 2 ]
 # failures
 printf 'a:\n\tb: 1\n' > tab.yaml

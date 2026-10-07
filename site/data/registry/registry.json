@@ -6,23 +6,23 @@
     "version": "0.14.0"
   },
   "registry": {
-    "fingerprint": "7883b7e4a69365c1779ca689f489ede9244195b1a65fa83a3a0448169d110012",
+    "fingerprint": "cba9eaabc90c076d086ddeaaeb5e25edcfbf9a3baa2c785951df5e9f6c4a8a7b",
     "summary": {
-      "total": 1915,
+      "total": 1984,
       "builtin": 173,
-      "declarative": 1742,
+      "declarative": 1811,
       "by_kind": {
         "command": 22,
         "query": 151,
-        "resource": 1742
+        "resource": 1811
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 37,
-        "implemented": 1750
+        "implemented": 1819
       },
       "mcp_tools": 167,
-      "mcp_resources": 1796,
+      "mcp_resources": 1865,
       "http_routes": 171,
       "cli_commands": 90,
       "modules": 85,
@@ -68775,7 +68775,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 159,
+        "capabilities": 160,
         "capability_ids": []
       },
       {
@@ -68845,7 +68845,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 22,
+        "capabilities": 84,
         "capability_ids": []
       },
       {
@@ -68918,7 +68918,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 361,
+        "capabilities": 367,
         "capability_ids": []
       },
       {
@@ -69008,7 +69008,7 @@
     ]
   },
   "index": {
-    "fingerprint": "cd9ba260015ec1a2cc4cf2449166f9073db56f902eb03e8179ea81dbb35314d3",
+    "fingerprint": "fa1ca46f6cfb53f75cedb09b8b57bfa0984601a9fe185b364d88ea686c91c494",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -69056,12 +69056,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 13,
-      "rule": 159,
+      "rule": 160,
       "scope": 1,
-      "session": 22,
+      "session": 84,
       "skill": 6,
       "taxonomy": 10,
-      "test": 361,
+      "test": 367,
       "use-case": 48,
       "workspace": 1
     },
@@ -70732,7 +70732,7 @@
         "kind": "claim",
         "identity": "a-finding-names-how-to-see-it-again",
         "title": "Every finding a command reports names the command that reproduces it",
-        "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
+        "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller's business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -71367,7 +71367,7 @@
         "kind": "claim",
         "identity": "evidence-currency-is-not-collapsed",
         "title": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
-        "description": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
+        "description": "`proven` means the diff between the execution's own commit and the working tree is empty, excluding the ledger's own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -71437,7 +71437,7 @@
         "kind": "claim",
         "identity": "evidence-subject-commands-agree-with-the-command-pages",
         "title": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
-        "description": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
+        "description": "The case headers had several readers before the index: the site generator's command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module's file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -72297,7 +72297,7 @@
         "kind": "claim",
         "identity": "published-translation-is-declared",
         "title": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
-        "description": "project.english-only v2 (ADR 0077) keeps the repository''s own artifacts English with no exceptions and names one population apart: content published for a reader in that reader''s language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding.",
+        "description": "project.english-only v2 (ADR 0077) keeps the repository's own artifacts English with no exceptions and names one population apart: content published for a reader in that reader's language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -72465,7 +72465,7 @@
         "kind": "claim",
         "identity": "rule-state-is-derived-from-what-ran",
         "title": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
-        "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
+        "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule's state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -73856,7 +73856,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 36604
+        "bytes": 37476
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -73865,7 +73865,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 8082
+        "bytes": 8081
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -73937,7 +73937,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 129047
+        "bytes": 129039
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -74234,7 +74234,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 41570
+        "bytes": 41859
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -74279,7 +74279,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 101283
+        "bytes": 95979
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -74297,7 +74297,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 16944
+        "bytes": 18587
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -74315,7 +74315,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22515
+        "bytes": 22490
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -74333,7 +74333,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 39635
+        "bytes": 40181
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -74360,7 +74360,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 76812
+        "bytes": 76776
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -75008,7 +75008,7 @@
         "title": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
         "path": "docs/claims/effort-escalation.md",
         "source_class": "claim_page",
-        "bytes": 1201
+        "bytes": 1205
       },
       {
         "uri": "majordomus://document/docs/claims/event-vocabulary.md",
@@ -75593,7 +75593,7 @@
         "title": "A profile declares which context a worker should load and no more",
         "path": "docs/claims/minimum-context.md",
         "source_class": "claim_page",
-        "bytes": 1414
+        "bytes": 1406
       },
       {
         "uri": "majordomus://document/docs/claims/models-no-secret-fields.md",
@@ -75827,7 +75827,7 @@
         "title": "Provider instruction files are generated from the one policy, deterministically",
         "path": "docs/claims/projection-generation.md",
         "source_class": "claim_page",
-        "bytes": 1957
+        "bytes": 1972
       },
       {
         "uri": "majordomus://document/docs/claims/prompt-asset.md",
@@ -76340,7 +76340,7 @@
         "title": "An outcome is a value from a closed vocabulary, not free text",
         "path": "docs/claims/typed-outcome.md",
         "source_class": "claim_page",
-        "bytes": 1710
+        "bytes": 1702
       },
       {
         "uri": "majordomus://document/docs/claims/use-case-coverage.md",
@@ -76767,7 +76767,7 @@
         "path": ".ai/repo/features/finish-contract.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3361,
+        "bytes": 3406,
         "tags": [
           "verification",
           "contract"
@@ -76898,7 +76898,7 @@
         "path": ".ai/repo/features/provenance.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2510,
+        "bytes": 2552,
         "tags": [
           "audit",
           "ledger",
@@ -76997,7 +76997,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 8803
+        "bytes": 8973
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -77029,7 +77029,7 @@
         "identity": "lib/adr.sh",
         "path": "lib/adr.sh",
         "source_class": "library",
-        "bytes": 68744
+        "bytes": 68765
       },
       {
         "uri": "majordomus://implementation/lib/archive.sh",
@@ -77037,7 +77037,7 @@
         "identity": "lib/archive.sh",
         "path": "lib/archive.sh",
         "source_class": "library",
-        "bytes": 27216
+        "bytes": 27235
       },
       {
         "uri": "majordomus://implementation/lib/bench.sh",
@@ -77093,7 +77093,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 81364
+        "bytes": 86637
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -77221,7 +77221,7 @@
         "identity": "lib/knowledge.awk",
         "path": "lib/knowledge.awk",
         "source_class": "engine",
-        "bytes": 27384
+        "bytes": 30021
       },
       {
         "uri": "majordomus://implementation/lib/knowledge.sh",
@@ -77229,7 +77229,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 87608
+        "bytes": 87974
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -77333,7 +77333,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 63178
+        "bytes": 63294
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -78918,7 +78918,7 @@
         "path": ".ai/repo/project/issues/I1015.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2627
+        "bytes": 3625
       },
       {
         "uri": "majordomus://issue/I1016",
@@ -79787,7 +79787,7 @@
         "path": ".ai/repo/project/issues/I1516.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3136
+        "bytes": 4159
       },
       {
         "uri": "majordomus://issue/I1520",
@@ -79798,7 +79798,7 @@
         "path": ".ai/repo/project/issues/I1520.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3609
+        "bytes": 4493
       },
       {
         "uri": "majordomus://issue/I1600",
@@ -79864,7 +79864,7 @@
         "path": ".ai/repo/project/issues/I1945.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2519
+        "bytes": 3382
       },
       {
         "uri": "majordomus://issue/I1946",
@@ -80261,7 +80261,7 @@
         "identity": "majordomus",
         "path": ".ai/repo/mesh/majordomus.yaml",
         "source_class": "mesh-declaration",
-        "bytes": 2681
+        "bytes": 3153
       },
       {
         "uri": "majordomus://milestone/M000",
@@ -80673,7 +80673,7 @@
         "path": ".ai/repo/why/moments/done-because-the-model-said-so.md",
         "section": "why",
         "source_class": "moment",
-        "bytes": 5591,
+        "bytes": 5621,
         "tags": [
           "verification",
           "evidence",
@@ -83368,6 +83368,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.prose-states-no-version@1",
+        "kind": "rule",
+        "identity": "project.prose-states-no-version@1",
+        "title": "Prose describes the tool as it stands, without a version label",
+        "description": "Hand-written prose that describes what the tool does or does not do names no version label such as v0.1; the label stays where it was typed while the version moves on, so the sentence beside it goes stale without anything that derives the version being able to reach it. A document about a past version is declared, with its reason.",
+        "path": ".ai/repo/rules/project/prose-states-no-version.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4084,
+        "tags": [
+          "release",
+          "version",
+          "documentation",
+          "claims"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.provider-support-is-declared@1",
         "kind": "rule",
         "identity": "project.provider-support-is-declared@1",
@@ -84047,6 +84064,28 @@
         "bytes": 10673
       },
       {
+        "uri": "majordomus://session/s-20260910194205-72ea",
+        "kind": "session",
+        "identity": "s-20260910194205-72ea",
+        "title": "Recovered episode s-20260910194205-72ea",
+        "description": "Recovered episode s-20260910194205-72ea",
+        "path": ".ai/repo/sessions/20261007T132839Z--s-20260910194205-72ea--master--b4a781c--f07b958acf1de32e.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260910200453-afbb",
+        "kind": "session",
+        "identity": "s-20260910200453-afbb",
+        "title": "Recovered episode s-20260910200453-afbb",
+        "description": "Recovered episode s-20260910200453-afbb",
+        "path": ".ai/repo/sessions/20261007T132840Z--s-20260910200453-afbb--master--b4a781c--57c01150ce645c9c.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
         "uri": "majordomus://session/s-20260910205542-e2a6",
         "kind": "session",
         "identity": "s-20260910205542-e2a6",
@@ -84155,6 +84194,666 @@
         "section": "sessions",
         "source_class": "session",
         "bytes": 1260
+      },
+      {
+        "uri": "majordomus://session/s-20260911063532-b41b",
+        "kind": "session",
+        "identity": "s-20260911063532-b41b",
+        "title": "Recovered episode s-20260911063532-b41b",
+        "description": "Recovered episode s-20260911063532-b41b",
+        "path": ".ai/repo/sessions/20261007T132848Z--s-20260911063532-b41b--master--b4a781c--bfd61cce70f60944.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911071522-1779",
+        "kind": "session",
+        "identity": "s-20260911071522-1779",
+        "title": "Recovered episode s-20260911071522-1779",
+        "description": "Recovered episode s-20260911071522-1779",
+        "path": ".ai/repo/sessions/20261007T132839Z--s-20260911071522-1779--master--b4a781c--21e02a467d68aa6d.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911080815-8fa4",
+        "kind": "session",
+        "identity": "s-20260911080815-8fa4",
+        "title": "Recovered episode s-20260911080815-8fa4",
+        "description": "Recovered episode s-20260911080815-8fa4",
+        "path": ".ai/repo/sessions/20261007T132849Z--s-20260911080815-8fa4--master--b4a781c--4b601de4b12566c6.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911084942-cc41",
+        "kind": "session",
+        "identity": "s-20260911084942-cc41",
+        "title": "Recovered episode s-20260911084942-cc41",
+        "description": "Recovered episode s-20260911084942-cc41",
+        "path": ".ai/repo/sessions/20261007T132841Z--s-20260911084942-cc41--master--b4a781c--8b0209e72612ee3d.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911091724-cb7c",
+        "kind": "session",
+        "identity": "s-20260911091724-cb7c",
+        "title": "Recovered episode s-20260911091724-cb7c",
+        "description": "Recovered episode s-20260911091724-cb7c",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260911091724-cb7c--master--b4a781c--624832469e19ece2.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911111124-edd8",
+        "kind": "session",
+        "identity": "s-20260911111124-edd8",
+        "title": "Recovered episode s-20260911111124-edd8",
+        "description": "Recovered episode s-20260911111124-edd8",
+        "path": ".ai/repo/sessions/20261007T132842Z--s-20260911111124-edd8--master--b4a781c--0e6fd12692c0f649.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911111626-a947",
+        "kind": "session",
+        "identity": "s-20260911111626-a947",
+        "title": "Recovered episode s-20260911111626-a947",
+        "description": "Recovered episode s-20260911111626-a947",
+        "path": ".ai/repo/sessions/20261007T132841Z--s-20260911111626-a947--master--b4a781c--79ecf30c55bd73ef.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911120135-c46f",
+        "kind": "session",
+        "identity": "s-20260911120135-c46f",
+        "title": "Recovered episode s-20260911120135-c46f",
+        "description": "Recovered episode s-20260911120135-c46f",
+        "path": ".ai/repo/sessions/20261007T132849Z--s-20260911120135-c46f--master--b4a781c--ba19f270623b4cd3.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911121108-4457",
+        "kind": "session",
+        "identity": "s-20260911121108-4457",
+        "title": "Recovered episode s-20260911121108-4457",
+        "description": "Recovered episode s-20260911121108-4457",
+        "path": ".ai/repo/sessions/20261007T132839Z--s-20260911121108-4457--master--b4a781c--4f4d705f21505296.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911121531-e471",
+        "kind": "session",
+        "identity": "s-20260911121531-e471",
+        "title": "Recovered episode s-20260911121531-e471",
+        "description": "Recovered episode s-20260911121531-e471",
+        "path": ".ai/repo/sessions/20261007T132842Z--s-20260911121531-e471--master--b4a781c--de707513544c4d89.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911122020-b01d",
+        "kind": "session",
+        "identity": "s-20260911122020-b01d",
+        "title": "Recovered episode s-20260911122020-b01d",
+        "description": "Recovered episode s-20260911122020-b01d",
+        "path": ".ai/repo/sessions/20261007T132843Z--s-20260911122020-b01d--master--b4a781c--c8d2baddf2e17622.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260911220934-09c7",
+        "kind": "session",
+        "identity": "s-20260911220934-09c7",
+        "title": "Recovered episode s-20260911220934-09c7",
+        "description": "Recovered episode s-20260911220934-09c7",
+        "path": ".ai/repo/sessions/20261007T132844Z--s-20260911220934-09c7--master--b4a781c--7cd3659171baf297.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260911222939-5814",
+        "kind": "session",
+        "identity": "s-20260911222939-5814",
+        "title": "Recovered episode s-20260911222939-5814",
+        "description": "Recovered episode s-20260911222939-5814",
+        "path": ".ai/repo/sessions/20261007T132849Z--s-20260911222939-5814--master--b4a781c--efcaa1d1c93e6ca6.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 2133
+      },
+      {
+        "uri": "majordomus://session/s-20260912063801-209b",
+        "kind": "session",
+        "identity": "s-20260912063801-209b",
+        "title": "Recovered episode s-20260912063801-209b",
+        "description": "Recovered episode s-20260912063801-209b",
+        "path": ".ai/repo/sessions/20261007T132848Z--s-20260912063801-209b--master--b4a781c--8b78a9e4196887d5.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260912075636-c542",
+        "kind": "session",
+        "identity": "s-20260912075636-c542",
+        "title": "Recovered episode s-20260912075636-c542",
+        "description": "Recovered episode s-20260912075636-c542",
+        "path": ".ai/repo/sessions/20261007T132843Z--s-20260912075636-c542--master--b4a781c--9902ce79a17edb93.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260912184450-bec7",
+        "kind": "session",
+        "identity": "s-20260912184450-bec7",
+        "title": "Recovered episode s-20260912184450-bec7",
+        "description": "Recovered episode s-20260912184450-bec7",
+        "path": ".ai/repo/sessions/20261007T132842Z--s-20260912184450-bec7--master--b4a781c--4035a989ad5159ae.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260912185145-bc8c",
+        "kind": "session",
+        "identity": "s-20260912185145-bc8c",
+        "title": "Recovered episode s-20260912185145-bc8c",
+        "description": "Recovered episode s-20260912185145-bc8c",
+        "path": ".ai/repo/sessions/20261007T132842Z--s-20260912185145-bc8c--master--b4a781c--1e0e2641cb2ff331.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260913055646-d956",
+        "kind": "session",
+        "identity": "s-20260913055646-d956",
+        "title": "Recovered episode s-20260913055646-d956",
+        "description": "Recovered episode s-20260913055646-d956",
+        "path": ".ai/repo/sessions/20261007T132846Z--s-20260913055646-d956--master--b4a781c--59ff3c059ff2cec8.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260915152859-4c3d",
+        "kind": "session",
+        "identity": "s-20260915152859-4c3d",
+        "title": "Recovered episode s-20260915152859-4c3d",
+        "description": "Recovered episode s-20260915152859-4c3d",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260915152859-4c3d--master--b4a781c--4ac302b4f0a969fe.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915171454-b161",
+        "kind": "session",
+        "identity": "s-20260915171454-b161",
+        "title": "Recovered episode s-20260915171454-b161",
+        "description": "Recovered episode s-20260915171454-b161",
+        "path": ".ai/repo/sessions/20261007T132843Z--s-20260915171454-b161--master--b4a781c--426166267290d2ac.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915175504-3486",
+        "kind": "session",
+        "identity": "s-20260915175504-3486",
+        "title": "Recovered episode s-20260915175504-3486",
+        "description": "Recovered episode s-20260915175504-3486",
+        "path": ".ai/repo/sessions/20261007T132843Z--s-20260915175504-3486--master--b4a781c--65bf9a7d136dd8f4.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915180057-1a99",
+        "kind": "session",
+        "identity": "s-20260915180057-1a99",
+        "title": "Recovered episode s-20260915180057-1a99",
+        "description": "Recovered episode s-20260915180057-1a99",
+        "path": ".ai/repo/sessions/20261007T132847Z--s-20260915180057-1a99--master--b4a781c--9fe18d4cabd77e12.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915191627-2136",
+        "kind": "session",
+        "identity": "s-20260915191627-2136",
+        "title": "Recovered episode s-20260915191627-2136",
+        "description": "Recovered episode s-20260915191627-2136",
+        "path": ".ai/repo/sessions/20261007T132840Z--s-20260915191627-2136--master--b4a781c--79c5180095088f8f.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915200727-30d3",
+        "kind": "session",
+        "identity": "s-20260915200727-30d3",
+        "title": "Recovered episode s-20260915200727-30d3",
+        "description": "Recovered episode s-20260915200727-30d3",
+        "path": ".ai/repo/sessions/20261007T132839Z--s-20260915200727-30d3--master--b4a781c--fa62e561a08dc612.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915202711-27f1",
+        "kind": "session",
+        "identity": "s-20260915202711-27f1",
+        "title": "Recovered episode s-20260915202711-27f1",
+        "description": "Recovered episode s-20260915202711-27f1",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260915202711-27f1--master--b4a781c--6a54dcbe1e6d9a7c.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260915214421-d1ad",
+        "kind": "session",
+        "identity": "s-20260915214421-d1ad",
+        "title": "Recovered episode s-20260915214421-d1ad",
+        "description": "Recovered episode s-20260915214421-d1ad",
+        "path": ".ai/repo/sessions/20261007T132844Z--s-20260915214421-d1ad--master--b4a781c--024c0e659706c6ed.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260916090000-6d58",
+        "kind": "session",
+        "identity": "s-20260916090000-6d58",
+        "title": "Recovered episode s-20260916090000-6d58",
+        "description": "Recovered episode s-20260916090000-6d58",
+        "path": ".ai/repo/sessions/20261007T132840Z--s-20260916090000-6d58--master--b4a781c--6dd888f6da15ff43.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916195820-cee6",
+        "kind": "session",
+        "identity": "s-20260916195820-cee6",
+        "title": "Recovered episode s-20260916195820-cee6",
+        "description": "Recovered episode s-20260916195820-cee6",
+        "path": ".ai/repo/sessions/20261007T132840Z--s-20260916195820-cee6--master--b4a781c--bd907581969122d3.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916200058-9170",
+        "kind": "session",
+        "identity": "s-20260916200058-9170",
+        "title": "Recovered episode s-20260916200058-9170",
+        "description": "Recovered episode s-20260916200058-9170",
+        "path": ".ai/repo/sessions/20261007T132849Z--s-20260916200058-9170--master--b4a781c--6f87e8737fe98371.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260916202947-fc7f",
+        "kind": "session",
+        "identity": "s-20260916202947-fc7f",
+        "title": "Recovered episode s-20260916202947-fc7f",
+        "description": "Recovered episode s-20260916202947-fc7f",
+        "path": ".ai/repo/sessions/20261007T132847Z--s-20260916202947-fc7f--master--b4a781c--2323c6dc9403abe6.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260916203829-9000",
+        "kind": "session",
+        "identity": "s-20260916203829-9000",
+        "title": "Recovered episode s-20260916203829-9000",
+        "description": "Recovered episode s-20260916203829-9000",
+        "path": ".ai/repo/sessions/20261007T132843Z--s-20260916203829-9000--master--b4a781c--a3123b28212a4681.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916211754-94e5",
+        "kind": "session",
+        "identity": "s-20260916211754-94e5",
+        "title": "Recovered episode s-20260916211754-94e5",
+        "description": "Recovered episode s-20260916211754-94e5",
+        "path": ".ai/repo/sessions/20261007T132848Z--s-20260916211754-94e5--master--b4a781c--6cd30e4030f4ed8a.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916221803-e4d0",
+        "kind": "session",
+        "identity": "s-20260916221803-e4d0",
+        "title": "Recovered episode s-20260916221803-e4d0",
+        "description": "Recovered episode s-20260916221803-e4d0",
+        "path": ".ai/repo/sessions/20261007T132841Z--s-20260916221803-e4d0--master--b4a781c--a7b57f4728e95374.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916231308-07c9",
+        "kind": "session",
+        "identity": "s-20260916231308-07c9",
+        "title": "Recovered episode s-20260916231308-07c9",
+        "description": "Recovered episode s-20260916231308-07c9",
+        "path": ".ai/repo/sessions/20261007T132848Z--s-20260916231308-07c9--master--b4a781c--37c003f3db3237cd.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916231308-892a",
+        "kind": "session",
+        "identity": "s-20260916231308-892a",
+        "title": "Recovered episode s-20260916231308-892a",
+        "description": "Recovered episode s-20260916231308-892a",
+        "path": ".ai/repo/sessions/20261007T132850Z--s-20260916231308-892a--master--b4a781c--e0d5818c15fe3c47.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916231405-69f3",
+        "kind": "session",
+        "identity": "s-20260916231405-69f3",
+        "title": "Recovered episode s-20260916231405-69f3",
+        "description": "Recovered episode s-20260916231405-69f3",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260916231405-69f3--master--b4a781c--c96d916a3cb976b1.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916231448-3ff7",
+        "kind": "session",
+        "identity": "s-20260916231448-3ff7",
+        "title": "Recovered episode s-20260916231448-3ff7",
+        "description": "Recovered episode s-20260916231448-3ff7",
+        "path": ".ai/repo/sessions/20261007T132846Z--s-20260916231448-3ff7--master--b4a781c--42e2c73a52b41c26.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916231519-1549",
+        "kind": "session",
+        "identity": "s-20260916231519-1549",
+        "title": "Recovered episode s-20260916231519-1549",
+        "description": "Recovered episode s-20260916231519-1549",
+        "path": ".ai/repo/sessions/20261007T132847Z--s-20260916231519-1549--master--b4a781c--a88c8d8cb3691f09.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916231712-c4a4",
+        "kind": "session",
+        "identity": "s-20260916231712-c4a4",
+        "title": "Recovered episode s-20260916231712-c4a4",
+        "description": "Recovered episode s-20260916231712-c4a4",
+        "path": ".ai/repo/sessions/20261007T132844Z--s-20260916231712-c4a4--master--b4a781c--4360c3b5fc1a053a.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916232208-856f",
+        "kind": "session",
+        "identity": "s-20260916232208-856f",
+        "title": "Recovered episode s-20260916232208-856f",
+        "description": "Recovered episode s-20260916232208-856f",
+        "path": ".ai/repo/sessions/20261007T132842Z--s-20260916232208-856f--master--b4a781c--3e0bd7bd87be3efc.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916232227-ce9f",
+        "kind": "session",
+        "identity": "s-20260916232227-ce9f",
+        "title": "Recovered episode s-20260916232227-ce9f",
+        "description": "Recovered episode s-20260916232227-ce9f",
+        "path": ".ai/repo/sessions/20261007T132839Z--s-20260916232227-ce9f--master--b4a781c--c8cfba456ad11b1f.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916232659-7ce6",
+        "kind": "session",
+        "identity": "s-20260916232659-7ce6",
+        "title": "Recovered episode s-20260916232659-7ce6",
+        "description": "Recovered episode s-20260916232659-7ce6",
+        "path": ".ai/repo/sessions/20261007T132844Z--s-20260916232659-7ce6--master--b4a781c--ab3fcf49dc6063c1.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916233109-d69e",
+        "kind": "session",
+        "identity": "s-20260916233109-d69e",
+        "title": "Recovered episode s-20260916233109-d69e",
+        "description": "Recovered episode s-20260916233109-d69e",
+        "path": ".ai/repo/sessions/20261007T132847Z--s-20260916233109-d69e--master--b4a781c--6669b608ed0b8c11.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260916233157-4418",
+        "kind": "session",
+        "identity": "s-20260916233157-4418",
+        "title": "Recovered episode s-20260916233157-4418",
+        "description": "Recovered episode s-20260916233157-4418",
+        "path": ".ai/repo/sessions/20261007T132846Z--s-20260916233157-4418--master--b4a781c--3f1633c8b2dc4784.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1352
+      },
+      {
+        "uri": "majordomus://session/s-20260923083805-2e37",
+        "kind": "session",
+        "identity": "s-20260923083805-2e37",
+        "title": "Recovered episode s-20260923083805-2e37",
+        "description": "Recovered episode s-20260923083805-2e37",
+        "path": ".ai/repo/sessions/20261007T132841Z--s-20260923083805-2e37--master--b4a781c--4286e2eadf670c48.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260924102525-7640",
+        "kind": "session",
+        "identity": "s-20260924102525-7640",
+        "title": "Recovered episode s-20260924102525-7640",
+        "description": "Recovered episode s-20260924102525-7640",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260924102525-7640--master--b4a781c--658e75c00d35b731.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260924131409-94a9",
+        "kind": "session",
+        "identity": "s-20260924131409-94a9",
+        "title": "Recovered episode s-20260924131409-94a9",
+        "description": "Recovered episode s-20260924131409-94a9",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260924131409-94a9--master--b4a781c--9184c764c5256a9a.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1262
+      },
+      {
+        "uri": "majordomus://session/s-20260924172337-a434",
+        "kind": "session",
+        "identity": "s-20260924172337-a434",
+        "title": "Recovered episode s-20260924172337-a434",
+        "description": "Recovered episode s-20260924172337-a434",
+        "path": ".ai/repo/sessions/20261007T132840Z--s-20260924172337-a434--master--b4a781c--b0a731b18978d7d5.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1262
+      },
+      {
+        "uri": "majordomus://session/s-20260924174955-5df1",
+        "kind": "session",
+        "identity": "s-20260924174955-5df1",
+        "title": "Recovered episode s-20260924174955-5df1",
+        "description": "Recovered episode s-20260924174955-5df1",
+        "path": ".ai/repo/sessions/20261007T132841Z--s-20260924174955-5df1--master--b4a781c--1e7bff10fc375f9c.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20260929175851-de4c",
+        "kind": "session",
+        "identity": "s-20260929175851-de4c",
+        "title": "Recovered episode s-20260929175851-de4c",
+        "description": "Recovered episode s-20260929175851-de4c",
+        "path": ".ai/repo/sessions/20261007T132843Z--s-20260929175851-de4c--master--b4a781c--428ba02390e1ff30.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 2152
+      },
+      {
+        "uri": "majordomus://session/s-20260930135207-a642",
+        "kind": "session",
+        "identity": "s-20260930135207-a642",
+        "title": "Recovered episode s-20260930135207-a642",
+        "description": "Recovered episode s-20260930135207-a642",
+        "path": ".ai/repo/sessions/20261007T132839Z--s-20260930135207-a642--master--b4a781c--840eb479b80269d3.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20260930220421-5917",
+        "kind": "session",
+        "identity": "s-20260930220421-5917",
+        "title": "Recovered episode s-20260930220421-5917",
+        "description": "Recovered episode s-20260930220421-5917",
+        "path": ".ai/repo/sessions/20261007T132845Z--s-20260930220421-5917--master--b4a781c--8288566b814e5d03.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20260930225014-060c",
+        "kind": "session",
+        "identity": "s-20260930225014-060c",
+        "title": "Recovered episode s-20260930225014-060c",
+        "description": "Recovered episode s-20260930225014-060c",
+        "path": ".ai/repo/sessions/20261007T132842Z--s-20260930225014-060c--master--b4a781c--0048a92d9455e9a1.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20260930225436-b03a",
+        "kind": "session",
+        "identity": "s-20260930225436-b03a",
+        "title": "Recovered episode s-20260930225436-b03a",
+        "description": "Recovered episode s-20260930225436-b03a",
+        "path": ".ai/repo/sessions/20261007T132844Z--s-20260930225436-b03a--master--b4a781c--9bd0d8d62d816d68.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20261003114003-b2ec",
+        "kind": "session",
+        "identity": "s-20261003114003-b2ec",
+        "title": "Recovered episode s-20261003114003-b2ec",
+        "description": "Recovered episode s-20261003114003-b2ec",
+        "path": ".ai/repo/sessions/20261007T132850Z--s-20261003114003-b2ec--master--b4a781c--79397f79d4eb7abe.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1262
+      },
+      {
+        "uri": "majordomus://session/s-20261003194255-3541",
+        "kind": "session",
+        "identity": "s-20261003194255-3541",
+        "title": "Recovered episode s-20261003194255-3541",
+        "description": "Recovered episode s-20261003194255-3541",
+        "path": ".ai/repo/sessions/20261007T132846Z--s-20261003194255-3541--master--b4a781c--089a8bcdd55df6a0.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20261003212917-9079",
+        "kind": "session",
+        "identity": "s-20261003212917-9079",
+        "title": "Recovered episode s-20261003212917-9079",
+        "description": "Recovered episode s-20261003212917-9079",
+        "path": ".ai/repo/sessions/20261007T132841Z--s-20261003212917-9079--master--b4a781c--1e19dee417c6ea2a.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1176
+      },
+      {
+        "uri": "majordomus://session/s-20261003222101-0ddc",
+        "kind": "session",
+        "identity": "s-20261003222101-0ddc",
+        "title": "Recovered episode s-20261003222101-0ddc",
+        "description": "Recovered episode s-20261003222101-0ddc",
+        "path": ".ai/repo/sessions/20261007T132850Z--s-20261003222101-0ddc--master--b4a781c--54c0cf630e000bfe.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20261003234111-d01d",
+        "kind": "session",
+        "identity": "s-20261003234111-d01d",
+        "title": "Recovered episode s-20261003234111-d01d",
+        "description": "Recovered episode s-20261003234111-d01d",
+        "path": ".ai/repo/sessions/20261007T132846Z--s-20261003234111-d01d--master--b4a781c--2ae7079b5a188cb7.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
+      },
+      {
+        "uri": "majordomus://session/s-20261004104409-31ef",
+        "kind": "session",
+        "identity": "s-20261004104409-31ef",
+        "title": "Recovered episode s-20261004104409-31ef",
+        "description": "Recovered episode s-20261004104409-31ef",
+        "path": ".ai/repo/sessions/20261007T132840Z--s-20261004104409-31ef--master--b4a781c--645baec699097a57.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1151
       },
       {
         "uri": "majordomus://skill/assess-before-deleting",
@@ -84371,7 +85070,7 @@
         "identity": "test/cases/00_yaml_flatten.sh",
         "path": "test/cases/00_yaml_flatten.sh",
         "source_class": "case",
-        "bytes": 2162
+        "bytes": 2708
       },
       {
         "uri": "majordomus://test/test/cases/01_init.sh",
@@ -84435,7 +85134,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 8857
+        "bytes": 8895
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -84571,7 +85270,7 @@
         "identity": "test/cases/10_site_data.sh",
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
-        "bytes": 6615
+        "bytes": 7119
       },
       {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -84723,7 +85422,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 11479
+        "bytes": 11884
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -86163,7 +86862,7 @@
         "identity": "test/cases/545_every_answer_says_when_it_was_observed.sh",
         "path": "test/cases/545_every_answer_says_when_it_was_observed.sh",
         "source_class": "case",
-        "bytes": 6133
+        "bytes": 6868
       },
       {
         "uri": "majordomus://test/test/cases/546_a_statistic_names_the_capability_it_asked.sh",
@@ -86782,12 +87481,28 @@
         "bytes": 5289
       },
       {
+        "uri": "majordomus://test/test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "kind": "test",
+        "identity": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "path": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "source_class": "case",
+        "bytes": 8063
+      },
+      {
         "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "identity": "test/cases/80_bench_persistence.sh",
         "path": "test/cases/80_bench_persistence.sh",
         "source_class": "case",
         "bytes": 3106
+      },
+      {
+        "uri": "majordomus://test/test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "kind": "test",
+        "identity": "test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "path": "test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "source_class": "case",
+        "bytes": 9470
       },
       {
         "uri": "majordomus://test/test/cases/81_bench_baseline.sh",
@@ -86974,6 +87689,14 @@
         "bytes": 4987
       },
       {
+        "uri": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
+        "kind": "test",
+        "identity": "test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
+        "path": "test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
+        "source_class": "case",
+        "bytes": 3580
+      },
+      {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
         "kind": "test",
         "identity": "test/cases/88_rust_command_tested.sh",
@@ -86988,6 +87711,14 @@
         "path": "test/cases/89_web_surface.sh",
         "source_class": "case",
         "bytes": 11344
+      },
+      {
+        "uri": "majordomus://test/test/cases/900_prose_states_no_version.sh",
+        "kind": "test",
+        "identity": "test/cases/900_prose_states_no_version.sh",
+        "path": "test/cases/900_prose_states_no_version.sh",
+        "source_class": "case",
+        "bytes": 5078
       },
       {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
@@ -87084,6 +87815,14 @@
         "path": "test/cases/940_mcp_says_nothing_its_capability_does_not.sh",
         "source_class": "case",
         "bytes": 9343
+      },
+      {
+        "uri": "majordomus://test/test/cases/941_a_remote_url_is_published_without_its_credential.sh",
+        "kind": "test",
+        "identity": "test/cases/941_a_remote_url_is_published_without_its_credential.sh",
+        "path": "test/cases/941_a_remote_url_is_published_without_its_credential.sh",
+        "source_class": "case",
+        "bytes": 4564
       },
       {
         "uri": "majordomus://test/test/cases/94_ci_plan.sh",
@@ -87222,6 +87961,14 @@
         "bytes": 9893
       },
       {
+        "uri": "majordomus://test/test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
+        "kind": "test",
+        "identity": "test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
+        "path": "test/cases/991_a_command_leaves_nothing_in_tmpdir.sh",
+        "source_class": "case",
+        "bytes": 7369
+      },
+      {
         "uri": "majordomus://test/test/cases/99_adr.sh",
         "kind": "test",
         "identity": "test/cases/99_adr.sh",
@@ -87324,7 +88071,7 @@
         "kind": "use-case",
         "identity": "catch-an-agent-that-says-it-is-done",
         "title": "Catch an agent that says it is done when it is not",
-        "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+        "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository's own verification passes.",
         "path": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -87423,7 +88170,7 @@
         "kind": "use-case",
         "identity": "follow-a-skill-the-repository-defines",
         "title": "Follow a procedure the repository defines, and add another one",
-        "description": "Read the repository''s skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
+        "description": "Read the repository's skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
         "path": ".ai/repo/use-cases/follow-a-skill-the-repository-defines.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -87533,7 +88280,7 @@
         "kind": "use-case",
         "identity": "let-the-provider-draw-the-episode-boundary",
         "title": "Have the session opened and closed without anybody remembering to",
-        "description": "Wire the provider''s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.",
+        "description": "Wire the provider's own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.",
         "path": ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -88052,7 +88799,7 @@
         "id",
         "version"
       ],
-      "objects": 159
+      "objects": 160
     },
     {
       "name": "scope",
@@ -88070,7 +88817,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 22
+      "objects": 84
     },
     {
       "name": "session-context",
@@ -88107,7 +88854,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 361
+      "objects": 367
     },
     {
       "name": "use-case",

@@ -15398,6 +15398,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:900_prose_states_no_version",
+          "path": "test/cases/900_prose_states_no_version.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:15_command_surface",
           "path": "test/cases/15_command_surface.sh",
@@ -21832,6 +21838,27 @@
       ],
       "findings": []
     },
+    "rule:project.prose-states-no-version": {
+      "kind": "rule",
+      "id": "project.prose-states-no-version",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:900_prose_states_no_version",
+          "path": "test/cases/900_prose_states_no_version.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/900_prose_states_no_version.sh",
+            ".ai/repo/rules/project/prose-states-no-version.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.provider-support-is-declared": {
       "kind": "rule",
       "id": "project.provider-support-is-declared",
@@ -24219,20 +24246,25 @@
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
+    "suite:805_a_status_speaks_the_vocabulary_of_its_kind",
+    "suite:810_a_feature_is_explored_under_its_domain",
     "suite:820_a_prose_heading_reads_as_a_heading",
     "suite:828_a_server_holding_its_lease_is_not_reaped",
     "suite:829_ci_fails_on_a_skip",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
+    "suite:884_a_declared_kind_is_a_kind_the_graph_knows",
     "suite:910_nothing_merges_around_the_integrator",
     "suite:924_one_executor_across_machines",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
     "suite:940_mcp_says_nothing_its_capability_does_not",
+    "suite:941_a_remote_url_is_published_without_its_credential",
     "suite:97_development_semantics_gate",
     "suite:97_site_probe_attribution",
     "suite:97_vendor_evidence",
     "suite:98_cli_reference",
-    "suite:98_traceability"
+    "suite:98_traceability",
+    "suite:991_a_command_leaves_nothing_in_tmpdir"
   ]
 }

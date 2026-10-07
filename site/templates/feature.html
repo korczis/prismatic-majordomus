@@ -1,201 +1,388 @@
 {% extends "page.html" %}
-{% block body %}
-{#- One product feature. The prose is the feature's own file, read from the `source` the
-    dataset names; everything below it is derived. The feature file holds references and
-    editorial words only — it has no surfaces, no counts and no route of its own — so a
-    name here that the repository does not have would have failed `majordomus product
-    validate` and the site generation before this page existed (ADR 23). -#}
+{% block content %}
+{#- One product feature, told in a fixed order: its promise, why it exists, how it works, what
+    it is related to, the interfaces it reaches, the evidence behind it, how to use it, where
+    the page came from and the features next to it. A section is drawn only when the dataset
+    gives it something to say; the evidence section says so in words when nothing is linked.
+
+    The prose is the feature's own file, read from the `source` the dataset names; everything
+    else is derived. The feature file holds references and editorial words only — it has no
+    surfaces, no counts and no route of its own — so a name here that the repository does not
+    have would have failed `majordomus product validate` and the site generation before this
+    page existed (ADR 23). The trail above the title is the feature's domain (ADR 0104), not
+    its URL: a feature that names no domain is placed under the feature index instead. -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set f = [x for x in model.features if x.id == page.extra.id][0] -%}
 {%- set docs = load_data(path="data/generated/docs.json") -%}
 {#- module and capability pages live at the slugs the executable reference gives them; a route rebuilt from an id is the defect scripts/ci/link-check found on every feature page -#}
 {%- set exe = load_data(path="data/generated/executable.json") -%}
 {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
+{%- set cli = load_data(path="data/generated/cli.json") -%}
+{%- set ents = load_data(path="data/generated/entities.json") -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
+{%- set dom = [d for d in model.domains if f.domain_ref and d.id == f.domain_ref.id] -%}
+{%- set name = f.short_title or f.title -%}
 
-<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
-  <div class="min-w-0">
-    <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">{{ f.headline }}</p>
+{#- ------------------------------------------------------------------ the trail -#}
+{%- set crumb_title = name -%}
+{%- if f.domain_ref -%}
+{%- set crumb_trail = [{"title": "Product", "href": base ~ model.domain_route}, {"title": f.domain_ref.title, "href": base ~ f.domain_ref.route}] -%}
+{%- else -%}
+{%- set fsec = get_section(path="features/_index.md", metadata_only=true) -%}
+{%- set crumb_trail = [{"title": "Product", "href": base ~ model.domain_route}, {"title": fsec.title, "href": base ~ model.route}] -%}
+{%- endif -%}
 
-    <dl class="mb-6 flex flex-wrap items-baseline gap-x-6 gap-y-3 border-y border-default py-3 text-xs">
-      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">status</dt><dd>{{ <badge status={f.status} /> }}</dd></div>
-      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">exposed through</dt>
-        <dd>{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</dd></div>
-      {%- if f.areas | length %}
-      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt>
-        {%- for a in f.areas %}<dd><a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand underline">{{ a }}</a></dd>{% endfor %}</div>
+{#- which sections have something to say, so the outline below lists only those -#}
+{%- set has_why = f.moments | length > 0 or f.audiences | length > 0 -%}
+{%- set has_how = f.module_refs | length > 0 or f.kind_refs | length > 0 -%}
+{%- set has_ifaces = f.module_refs | length > 0 or f.cockpit_refs | length > 0 or f.web_refs | length > 0 -%}
+{#- Tera has no list append, so a set of names is a string with every name fenced by `|` -#}
+{%- set cli_caps = "|" -%}
+{%- for mod in f.module_refs %}{% for c in mod.capabilities %}{% if c.cli %}{% set_global cli_caps = cli_caps ~ c.cli ~ "|" %}{% endif %}{% endfor %}{% endfor -%}
+{%- set usage = [x for x in cli.commands if x.executable and ("|" ~ x.command ~ "|") in cli_caps] -%}
+{%- set has_usage = f.command_refs | length > 0 or usage | length > 0 -%}
+
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    {% include "partials/breadcrumb.html" %}
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ f.title }}</h1>
+    {#- the promise: the feature's one sentence, as its file declares it -#}
+    <p class="mt-3 max-w-3xl break-words text-lg leading-relaxed text-body" data-feature-promise>{{ f.headline }}</p>
+    <dl class="mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2 text-xs">
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">status</dt><dd>{{ <badge status={f.status} kind="feature" /> }}</dd></div>
+      {%- if f.domain_ref %}
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">domain</dt><dd><a href="{{ base }}{{ f.domain_ref.route }}" class="text-sm font-medium text-fg-brand hover:underline">{{ f.domain_ref.title }}</a></dd></div>
       {%- endif %}
-      {%- if f.audiences | length %}
-      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">for</dt>
-        {%- for a in f.audiences %}<dd><a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand underline">{{ a }}</a></dd>{% endfor %}</div>
+      {%- if f.featured %}
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">on the homepage</dt><dd class="text-sm text-heading">featured</dd></div>
       {%- endif %}
     </dl>
+  </div>
+</div>
 
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+  <div class="min-w-0">
+    {#- ------------------------------------------------------------- what it is -#}
+    {#- Zola wraps each heading's text in its own anchor link (insert_anchor_links = "heading"),
+        which the prose styles as a body-coloured underlined link: the heading keeps its id and
+        its link for deep links, and reads as a heading -#}
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
-    {#- ------------------------------------------------------- what it is made of -#}
-    {%- if f.module_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The capabilities behind it</h2>
-    <p class="mt-2 text-body">The capability modules of the executable this feature names, each with the capabilities it composes. The command line, the HTTP route, the MCP tool and the reference beside every row are projections of one declaration, not four registrations.</p>
-    <div class="mt-4 space-y-4">
-      {%- for mod in f.module_refs %}{%- set mref = [x for x in exe.modules if x.id == mod.id] %}
-      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="flex flex-wrap items-baseline gap-2">
-          <a href="{{ get_url(path='/registry/modules/' ~ mref[0].slug ~ '/', trailing_slash=true) }}" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ mod.title }}</a>
-          <code class="font-mono text-xs text-body-subtle">{{ mod.id }}</code>
-          <span class="ms-auto font-mono text-xs text-body-subtle">{{ mod.stability | replace(from="_", to=" ") }}</span>
-        </p>
-        <p class="mt-2 text-sm text-body">{{ mod.description }}</p>
-        <ul class="mt-3 divide-y divide-default border-t border-default">
-          {%- for c in mod.capabilities %}{%- set cref = [x for x in exe.capabilities if x.id == c.id] %}
-          <li class="py-2">
-            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    {#- -------------------------------------------------------------------- why -#}
+    {%- if has_why %}
+    <section id="why" class="mt-12 scroll-mt-24" aria-labelledby="why-h">
+      <h2 id="why-h" class="text-xl font-semibold tracking-tight text-heading">Why it exists</h2>
+      {%- if f.moments | length %}
+      <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {%- for mo in f.moments %}{% if loop.index <= 6 %}
+        <li><a href="{{ base }}{{ mo.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>{{ mo.hook }}</span></a></li>
+        {%- endif %}{% endfor %}
+      </ul>
+      {%- if f.moments | length > 6 %}
+      <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">Every moment it answers ({{ f.moments | length }})</summary>
+        <ul class="grid gap-2 border-t border-default p-4 sm:grid-cols-2">
+          {%- for mo in f.moments %}{% if loop.index > 6 %}
+          <li><a href="{{ base }}{{ mo.route }}" class="text-sm text-fg-brand hover:underline">{{ mo.title }}</a></li>
+          {%- endif %}{% endfor %}
+        </ul>
+      </details>
+      {%- endif %}
+      {%- endif %}
+      {%- if f.audiences | length %}
+      <p class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">for</span>
+        {%- for a in f.audiences %}<a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand underline">{{ a }}</a>{% endfor %}</p>
+      {%- endif %}
+    </section>
+    {%- endif %}
+
+    {#- -------------------------------------------------------------------- how -#}
+    {%- if has_how %}
+    <section id="how" class="mt-12 scroll-mt-24" aria-labelledby="how-h">
+      <h2 id="how-h" class="text-xl font-semibold tracking-tight text-heading">How it works</h2>
+      {%- if f.module_refs | length %}
+      <p class="mt-2 text-body">The capability modules of the executable this feature names, each with the capabilities it composes. The interfaces each one reaches are listed under Interfaces below: they are projections of one declaration, not separate registrations.</p>
+      <div class="mt-4 space-y-3">
+        {%- for mod in f.module_refs %}{%- set mref = [x for x in exe.modules if x.id == mod.id] %}
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="{{ mod.title }}">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="{{ get_url(path='/registry/modules/' ~ mref[0].slug ~ '/', trailing_slash=true) }}" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ mod.title }}</a>
+            <code class="font-mono text-xs text-body-subtle">{{ mod.id }}</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">{{ mod.stability | replace(from="_", to=" ") }}</span>
+          </p>
+          <p class="mt-2 text-sm text-body">{{ mod.description }}</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            {%- for c in mod.capabilities %}{%- set cref = [x for x in exe.capabilities if x.id == c.id] %}
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
               <a href="{{ get_url(path='/registry/capabilities/' ~ cref[0].slug ~ '/', trailing_slash=true) }}" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.title }}</a>
               <span class="font-mono text-xs text-body-subtle">{{ c.kind }}</span>
-            </p>
-            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 wrap-anywhere font-mono text-xs text-body">
-              {%- if c.cli %}<span class="text-heading">$ {{ c.cli }}</span>{% endif -%}
-              {%- if c.route %}<span>{{ c.route }}</span>{% endif -%}
-              {%- if c.tool %}<span>{{ c.tool }}</span>{% endif -%}
-            </p>
-          </li>
-          {%- endfor %}
-        </ul>
-        {#- `break-all`: a source path has no spaces to break at, so at 320px it paints past
-            the viewport and the page scrolls sideways. -#}
-        <p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ mod.source_path }}</p>
-      </section>
-      {%- endfor %}
-    </div>
+            </li>
+            {%- endfor %}
+          </ul>
+        </section>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+      {%- if f.kind_refs | length %}
+      <h3 class="mt-6 text-base font-semibold text-heading">The objects it is made of</h3>
+      <p class="mt-1 text-sm text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
+      <ul class="mt-3 flex flex-wrap gap-2">
+        {%- for k in f.kind_refs %}
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ k.name }}</code><span class="font-mono text-xs text-body-subtle">{{ k.objects }}</span></li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+    </section>
     {%- endif %}
 
-    {%- if f.command_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
-    <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      {%- for c in f.command_refs %}
-      <li class="p-4">
-        <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <a href="{{ get_url(path='/commands/' ~ c.id ~ '/', trailing_slash=true) }}" class="font-mono text-sm font-semibold text-heading hover:text-fg-brand hover:underline">majordomus {{ c.id }}</a>
-          <span class="font-mono text-xs text-body-subtle">{{ c.stage }}{% if c.read_only %} · read-only{% endif %}</span>
-        </p>
-        <p class="mt-1 text-sm text-body">{{ c.summary }}</p>
-      </li>
-      {%- endfor %}
-    </ul>
-    {%- endif %}
-
-    {%- if f.kind_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The objects it is made of</h2>
-    <p class="mt-2 text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
-    <ul class="mt-4 flex flex-wrap gap-2">
-      {%- for k in f.kind_refs %}
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ k.name }}</code><span class="font-mono text-xs text-body-subtle">{{ k.objects }}</span></li>
-      {%- endfor %}
-    </ul>
-    {%- endif %}
-
-    {#- --------------------------------------------------------------- the moments -#}
-    {%- if f.moments | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it answers</h2>
-    <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-      {%- for mo in f.moments %}
-      <li><a href="{{ base }}{{ mo.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>{{ mo.hook }}</span></a></li>
-      {%- endfor %}
-    </ul>
-    {%- endif %}
-
-    {#- ------------------------------------------------------- rules and guarantees -#}
-    {%- if f.rule_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The rules that hold it</h2>
-    <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      {%- for r in f.rule_refs %}
-      {%- set d = [x for x in doctrines.doctrines if x.id == r.id] -%}
-      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
-        {{ <doctrine_class class={r.class} /> }}
-        {%- if d | length %}<a href="{{ get_url(path='/doctrines/' ~ d[0].slug ~ '/', trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ r.title }}</a>
-        {%- else %}<span class="min-w-0 text-sm text-heading">{{ r.title }}</span>{% endif -%}
-        <code class="ms-auto font-mono text-xs text-body-subtle">{{ r.id }}</code>
-      </li>
-      {%- endfor %}
-    </ul>
-    {%- endif %}
-
-    {%- if f.claim_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
-    <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      {%- for c in f.claim_refs %}
-      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
-        {{ <badge status={c.status} /> }}
-        <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a>
-        {%- if c.test %}
-        <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">{{ c.test }}</span>
+    {#- ---------------------------------------------------------- relationships -#}
+    <section id="relationships" class="mt-12 scroll-mt-24" aria-labelledby="relationships-h">
+      <h2 id="relationships-h" class="text-xl font-semibold tracking-tight text-heading">Where it sits</h2>
+      <dl class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft text-sm">
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">domain</dt>
+          {%- if dom | length %}
+          <dd class="min-w-0"><a href="{{ base }}{{ dom[0].route }}" class="font-medium text-fg-brand hover:underline">{{ dom[0].title }}</a><span class="text-body"> — {{ dom[0].headline }}</span></dd>
+          {%- else %}
+          <dd class="min-w-0 text-body">filed under no domain (<code class="font-mono text-xs">majordomus product validate</code> says why)</dd>
+          {%- endif %}
+        </div>
+        {%- if f.areas | length %}
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">areas of work</dt>
+          <dd class="flex min-w-0 flex-wrap gap-x-3 gap-y-1">{% for a in f.areas %}<a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand underline">{{ a }}</a>{% endfor %}</dd>
+        </div>
         {%- endif %}
-      </li>
-      {%- endfor %}
-    </ul>
+        {%- set named = [x for x in model.features if x.id in f.related and x.status != "draft"] -%}
+        {%- if named | length %}
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">names</dt>
+          <dd class="flex min-w-0 flex-wrap gap-x-3 gap-y-1">{% for x in named %}<a href="{{ base }}{{ x.route }}" class="text-fg-brand underline">{{ x.short_title or x.title }}</a>{% endfor %}</dd>
+        </div>
+        {%- endif %}
+        {%- set naming = [x for x in model.features if x.id in f.backlinks and x.status != "draft"] -%}
+        {%- if naming | length %}
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">named by</dt>
+          <dd class="flex min-w-0 flex-wrap gap-x-3 gap-y-1">{% for x in naming %}<a href="{{ base }}{{ x.route }}" class="text-fg-brand underline">{{ x.short_title or x.title }}</a>{% endfor %}</dd>
+        </div>
+        {%- endif %}
+      </dl>
+    </section>
+
+    {#- ------------------------------------------------------------- interfaces -#}
+    {%- if has_ifaces %}
+    <section id="interfaces" class="mt-12 scroll-mt-24" aria-labelledby="interfaces-h">
+      <h2 id="interfaces-h" class="text-xl font-semibold tracking-tight text-heading">Interfaces</h2>
+      <div class="mt-3">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
+      {%- if f.module_refs | length %}
+      <p class="mt-4 text-sm text-body">Each capability behind it, on every interface it is projected onto. A link goes to this site's reference for that interface; an HTTP route and an MCP tool are answered by a running <code class="font-mono text-xs">majordomus serve</code>, not by this site.</p>
+      <div class="relative mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+        <table class="w-full min-w-[36rem] text-left text-sm">
+          <caption class="sr-only">The capabilities behind this feature, by interface</caption>
+          <thead class="border-b border-default bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle">
+            <tr><th scope="col" class="px-3 py-2 font-medium">capability</th><th scope="col" class="px-3 py-2 font-medium">command line</th><th scope="col" class="px-3 py-2 font-medium">HTTP</th><th scope="col" class="px-3 py-2 font-medium">MCP tool</th></tr>
+          </thead>
+          <tbody class="divide-y divide-default">
+            {%- for mod in f.module_refs %}{% for c in mod.capabilities %}{%- set cref = [x for x in exe.capabilities if x.id == c.id] %}{%- set cc = [x for x in cli.commands if c.cli and x.command == c.cli] %}
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="{{ get_url(path='/registry/capabilities/' ~ cref[0].slug ~ '/', trailing_slash=true) }}" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">{{ c.id }}</a></th>
+              <td class="px-3 py-2 font-mono text-xs">{% if cc | length %}<a href="{{ base }}{{ cc[0].route }}" class="text-fg-brand hover:underline">{{ c.cli }}</a>{% elif c.cli %}<span class="text-body">{{ c.cli }}</span>{% else %}<span class="text-body-subtle">—<span class="sr-only">none</span></span>{% endif %}</td>
+              <td class="px-3 py-2 font-mono text-xs">{% if c.route and cref[0].api_anchor %}<a href="{{ base }}{{ cref[0].api_anchor }}" class="text-fg-brand hover:underline">{{ c.route }}</a>{% elif c.route %}<span class="text-body">{{ c.route }}</span>{% else %}<span class="text-body-subtle">—<span class="sr-only">none</span></span>{% endif %}</td>
+              <td class="px-3 py-2 font-mono text-xs">{% if c.tool %}<span class="text-body">{{ c.tool }}</span>{% else %}<span class="text-body-subtle">—<span class="sr-only">none</span></span>{% endif %}</td>
+            </tr>
+            {%- endfor %}{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {%- endif %}
+      {%- if f.cockpit_refs | length or f.web_refs | length %}
+      <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+        {%- if f.cockpit_refs | length %}
+        <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">in the Cockpit, of a running server</dt>
+          {%- for c in f.cockpit_refs %}<dd class="mt-1"><code class="font-mono text-xs text-body">{{ c.route }}</code> <span class="text-heading">{{ c.title }}</span></dd>{% endfor %}</div>
+        {%- endif %}
+        {%- if f.web_refs | length %}
+        <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">served by the executable</dt>
+          {%- for w in f.web_refs %}<dd class="mt-1"><code class="font-mono text-xs text-body">{{ w.mount }}</code> <span class="text-heading">{{ w.title }}</span></dd>{% endfor %}</div>
+        {%- endif %}
+      </dl>
+      {%- endif %}
+    </section>
     {%- endif %}
 
-    {%- if f.use_case_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable use cases</h2>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-      {%- for u in f.use_case_refs %}
-      <li><a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ u.category }}</span><span class="mt-1 text-sm font-medium text-heading">{{ u.title }}</span></a></li>
-      {%- endfor %}
-    </ul>
+    {#- --------------------------------------------------------------- evidence -#}
+    <section id="evidence" class="mt-12 scroll-mt-24" aria-labelledby="evidence-h">
+      <h2 id="evidence-h" class="text-xl font-semibold tracking-tight text-heading">Evidence</h2>
+      {%- if f.claim_refs | length == 0 and f.use_case_refs | length == 0 %}
+      <p class="mt-3 rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-body" data-feature-no-evidence>No executable evidence is linked: this feature names no claim and no use case.</p>
+      {%- endif %}
+      {%- if f.claim_refs | length %}
+      <h3 class="mt-4 text-base font-semibold text-heading">What is guaranteed</h3>
+      <p class="mt-1 text-sm text-body">Each claim this feature names, with the status its row declares, the verdict the recorded runs support, and the test that settles it.</p>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        {%- for c in f.claim_refs %}
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1">{{ <badge status={c.status} kind="claim" /> }}{{ <badge status="" kind="proof" claim={c.id} /> }}</span>
+          <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a>
+          {%- if c.test %}
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">{{ c.test }}</span>
+          {%- endif %}
+        </li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+      {%- if f.use_case_refs | length %}
+      <h3 class="mt-6 text-base font-semibold text-heading">Executable use cases</h3>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-2">
+        {%- for u in f.use_case_refs %}
+        <li><a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ u.category }}</span><span class="mt-1 text-sm font-medium text-heading">{{ u.title }}</span></a></li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+      {%- if f.rule_refs | length %}
+      <h3 class="mt-6 text-base font-semibold text-heading">The rules that hold it</h3>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        {%- for r in f.rule_refs %}
+        {%- set d = [x for x in doctrines.doctrines if x.id == r.id] -%}
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          {{ <doctrine_class class={r.class} /> }}
+          {%- if d | length %}<a href="{{ get_url(path='/doctrines/' ~ d[0].slug ~ '/', trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ r.title }}</a>
+          {%- else %}<span class="min-w-0 text-sm text-heading">{{ r.title }}</span>{% endif -%}
+          <code class="ms-auto font-mono text-xs text-body-subtle">{{ r.id }}</code>
+        </li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+      {%- if f.adr_refs | length %}
+      <h3 class="mt-6 text-base font-semibold text-heading">The decisions behind it</h3>
+      <ul class="mt-3 space-y-1 text-sm">
+        {%- set adr_kind = [k for k in ents.kinds if k.kind == "adr"] -%}
+        {%- for a in f.adr_refs %}{%- set e = [x for x in ents.entities if x.kind == "adr" and x.identity == a.id] %}
+        <li class="flex flex-wrap items-baseline gap-x-2"><span class="font-mono text-xs text-body-subtle">{{ a.id }}</span>
+          {%- if e | length and adr_kind | length %}<a href="{{ base }}{{ adr_kind[0].route }}{{ e[0].slug }}/" class="text-fg-brand hover:underline">{{ a.title }}</a>{% else %}<span class="text-heading">{{ a.title }}</span>{% endif %}
+          <span class="font-mono text-xs text-body-subtle">{{ a.status }}</span></li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+    </section>
+
+    {#- ------------------------------------------------------------------ usage -#}
+    {%- if has_usage %}
+    <section id="usage" class="mt-12 scroll-mt-24" aria-labelledby="usage-h">
+      <h2 id="usage-h" class="text-xl font-semibold tracking-tight text-heading">Using it</h2>
+      {%- if f.command_refs | length %}
+      <h3 class="mt-4 text-base font-semibold text-heading">The commands that run it</h3>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        {%- for c in f.command_refs %}
+        <li class="p-3">
+          <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <a href="{{ get_url(path='/commands/' ~ c.id ~ '/', trailing_slash=true) }}" class="font-mono text-sm font-semibold text-heading hover:text-fg-brand hover:underline">majordomus {{ c.id }}</a>
+            <span class="font-mono text-xs text-body-subtle">{{ c.stage }}{% if c.read_only %} · read-only{% endif %}</span>
+          </p>
+          <p class="mt-1 text-sm text-body">{{ c.summary }}</p>
+        </li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+      {%- if usage | length %}
+      <h3 class="mt-6 text-base font-semibold text-heading">From the executable's command line</h3>
+      <p class="mt-1 text-sm text-body">The synopsis of each, as the executable's own help prints it.</p>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        {%- for u in usage %}
+        <li class="p-3">
+          <a href="{{ base }}{{ u.route }}" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">{{ u.usage }}</a>
+          {%- if u.about %}<p class="mt-1 text-sm text-body">{{ u.about }}</p>{% endif %}
+        </li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+    </section>
+    {%- endif %}
+
+    {#- ------------------------------------------------------------- provenance -#}
+    <section id="provenance" class="mt-12 scroll-mt-24" aria-labelledby="provenance-h">
+      <h2 id="provenance-h" class="text-xl font-semibold tracking-tight text-heading">Where this page comes from</h2>
+      <dl class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft text-sm">
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">the file</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">{{ f.source }}</dd></div>
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">the same answer</dt><dd class="min-w-0 font-mono text-xs text-heading">majordomus product show {{ f.id }}</dd></div>
+        {%- if f.doc_refs | length %}
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">read further</dt>
+          <dd class="min-w-0 space-y-1">
+            {#- the route of a canonical document is the docs dataset's, joined by path: this page
+                does not know how a document becomes a slug, and there is one such rule on the site -#}
+            {%- for d in f.doc_refs %}
+            {%- set hit = [x for x in docs.docs if "docs/" ~ x.path == d.path] -%}
+            {%- if hit | length %}<p><a href="{{ base }}{{ hit[0].route }}" class="text-fg-brand hover:underline">{{ d.title }}</a></p>
+            {%- else %}<p class="break-all font-mono text-xs text-body-subtle">{{ d.path }}</p>{% endif -%}
+            {%- endfor %}
+          </dd></div>
+        {%- endif %}
+      </dl>
+    </section>
+
+    {#- ---------------------------------------------------------------- related -#}
+    {#- The features next to this one, from canonical relationships only: the ones it names
+        and the ones that name it, its domain's other members, and the ones that share a use
+        case or a claim with it. In the dataset's order; each says why it is here. -#}
+    {%- set shared_ids = "|" -%}
+    {%- for x in model.features %}{% if x.id != f.id and x.status != "draft" %}
+      {%- set su = [u for u in x.use_cases if u in f.use_cases] -%}{%- set sc = [c for c in x.claims if c in f.claims] -%}
+      {%- if su | length > 0 or sc | length > 0 %}{% set_global shared_ids = shared_ids ~ x.id ~ "|" %}{% endif -%}
+    {%- endif %}{% endfor -%}
+    {%- set related = [x for x in model.features if x.id != f.id and x.status != "draft" and (x.id in f.related or x.id in f.backlinks or (f.domain and x.domain == f.domain and x.status == "stable") or ("|" ~ x.id ~ "|") in shared_ids)] -%}
+    {%- if related | length %}
+    <section id="related" class="mt-12 scroll-mt-24" aria-labelledby="related-h">
+      <h2 id="related-h" class="text-xl font-semibold tracking-tight text-heading">Related features</h2>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {%- for x in related %}
+        {%- set su = [u for u in x.use_cases if u in f.use_cases] -%}{%- set sc = [c for c in x.claims if c in f.claims] -%}
+        <li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>
+            {%- set_global why = "" -%}
+            {%- if x.id in f.related %}{% set_global why = why ~ " · named by this feature" %}{% endif -%}
+            {%- if x.id in f.backlinks %}{% set_global why = why ~ " · names this feature" %}{% endif -%}
+            {%- if f.domain and x.domain == f.domain %}{% set_global why = why ~ " · same domain" %}{% endif -%}
+            {%- if su | length %}{% set_global why = why ~ " · shares " ~ su | length ~ " use case" ~ ("s" if su | length != 1 else "") %}{% endif -%}
+            {%- if sc | length %}{% set_global why = why ~ " · shares " ~ sc | length ~ " claim" ~ ("s" if sc | length != 1 else "") %}{% endif -%}
+            {{ why | trim_start(pat=" · ") }}</p>
+          {% set f_here = f %}{% set f = x %}{% set card_level = "h3" %}{% set card_compact = true %}{% include "partials/feature-card.html" %}{% set f = f_here %}
+        </li>
+        {%- endfor %}
+      </ul>
+    </section>
     {%- endif %}
   </div>
 
   {#- ------------------------------------------------------------------- the aside -#}
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
+    <nav aria-label="On this page" class="hidden lg:block">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">On this page</h2>
+      <ul class="mt-3 space-y-1 border-s border-default text-sm">
+        {#- one outline in document order: the feature file's own headings first, as Zola
+            collected them, then the sections this template draws -#}
+        {%- for h in page.toc %}<li><a href="#{{ h.id }}" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">{{ h.title }}</a></li>{% endfor %}
+        {%- if has_why %}<li><a href="#why" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Why it exists</a></li>{% endif %}
+        {%- if has_how %}<li><a href="#how" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">How it works</a></li>{% endif %}
+        <li><a href="#relationships" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Where it sits</a></li>
+        {%- if has_ifaces %}<li><a href="#interfaces" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Interfaces</a></li>{% endif %}
+        <li><a href="#evidence" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Evidence</a></li>
+        {%- if has_usage %}<li><a href="#usage" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Using it</a></li>{% endif %}
+        <li><a href="#provenance" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Where this page comes from</a></li>
+        {%- if related | length %}<li><a href="#related" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Related features</a></li>{% endif %}
+      </ul>
+    </nav>
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle lg:mt-8">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      {%- for label, key in {"capabilities": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "command-line paths": "cli_paths", "objects of its kinds": "objects", "rules": "rules", "claims": "claims", "moments answered": "moments"} %}
+      {%- for label, key in {"capabilities": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "command-line paths": "cli_paths", "objects of its kinds": "objects", "rules": "rules", "claims": "claims", "use cases": "use_cases", "moments answered": "moments"} %}
       {%- if f.counts[key] > 0 %}
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">{{ label }}</dt><dd class="font-mono text-sm text-heading">{{ f.counts[key] }}</dd></div>
       {%- endif %}
       {%- endfor %}
     </dl>
-
-    {%- if f.cockpit_refs | length %}
-    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">In the Cockpit</h2>
-    <ul class="mt-3 space-y-1">
-      {%- for c in f.cockpit_refs %}<li><code class="font-mono text-xs text-body">{{ c.route }}</code> <span class="text-sm text-heading">{{ c.title }}</span></li>{% endfor -%}
-    </ul>
-    {%- endif %}
-
-    {%- if f.web_refs | length %}
-    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Served by the executable</h2>
-    <ul class="mt-3 space-y-1">
-      {%- for w in f.web_refs %}<li><code class="font-mono text-xs text-body">{{ w.mount }}</code> <span class="text-sm text-heading">{{ w.title }}</span></li>{% endfor -%}
-    </ul>
-    {%- endif %}
-
-    {%- if f.doc_refs | length or f.adr_refs | length %}
-    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Read further</h2>
-    <ul class="mt-3 space-y-2 text-sm">
-      {#- the route of a canonical document is the docs dataset's, joined by path: this page
-          does not know how a document becomes a slug, and there is one such rule on the site -#}
-      {%- for d in f.doc_refs %}
-      {%- set hit = [x for x in docs.docs if "docs/" ~ x.path == d.path] -%}
-      {%- if hit | length %}<li><a href="{{ base }}{{ hit[0].route }}" class="text-fg-brand hover:underline">{{ d.title }}</a></li>
-      {%- else %}<li class="break-all font-mono text-xs text-body-subtle">{{ d.path }}</li>{% endif -%}
-      {%- endfor %}
-      {%- for a in f.adr_refs %}<li class="text-body"><span class="font-mono text-xs text-body-subtle">{{ a.id }}</span> {{ a.title }}</li>{% endfor -%}
-    </ul>
-    {%- endif %}
-
-    {#- the features this one names and the features that name it, in the dataset's order -#}
-    {%- set neighbours = [x for x in model.features if x.id in f.related or x.id in f.backlinks] -%}
-    {%- if neighbours | length %}
-    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Next to it</h2>
-    <ul class="mt-3 flex flex-wrap gap-2">
-      {%- for n in neighbours %}<li><a href="{{ base }}{{ n.route }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-2.5 py-1 text-xs font-medium text-heading hover:bg-neutral-secondary-medium">{{ n.short_title or n.title }}</a></li>{% endfor -%}
-    </ul>
-    {%- endif %}
-
-    <p class="mt-6 break-all font-mono text-xs text-body-subtle">{{ f.source }}</p>
-    <p class="mt-2 text-xs text-body-subtle">The same answer on the command line: <code class="font-mono text-heading">majordomus product show {{ f.id }}</code>.</p>
   </aside>
 </div>
-{% endblock body %}
+</div>
+{% endblock content %}
