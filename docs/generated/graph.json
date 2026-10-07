@@ -39194,6 +39194,13 @@
         "source": "test/cases/915_init_and_migrate_stamp_the_layer.sh"
       },
       {
+        "id": "majordomus://test/test/cases/916_the_release_that_reads_written_for_is_one_that_does.sh",
+        "kind": "test",
+        "label": "test/cases/916_the_release_that_reads_written_for_is_one_that_does.sh",
+        "route": "/cockpit/objects/test/test-cases-916-the-release-that-reads-written-for-is-one-that-does-sh",
+        "source": "test/cases/916_the_release_that_reads_written_for_is_one_that_does.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "kind": "test",
         "label": "test/cases/91_canonical_architecture.sh",
@@ -41172,54 +41179,6 @@
           "summary": "Record an operational failure mode as one file and have the command line, the API, MCP and the website answer it without registering it anywhere.",
           "target": "guaranteed",
           "weight": 10
-        }
-      },
-      {
-        "id": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "kind": "use-case",
-        "label": "see-what-the-repository-holds-without-reading-it",
-        "summary": "See what the repository holds, and run one of its capabilities, without reading a file",
-        "route": "/cockpit/objects/use-case/see-what-the-repository-holds-without-reading-it",
-        "source": ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "reviewer",
-            "maintainer"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "repository-with-authored-governance"
-          ],
-          "category": "mcp",
-          "claims": [
-            "interfaces-are-projections",
-            "capability-registry",
-            "mcp-shared-server"
-          ],
-          "commands": [
-            "doctor",
-            "knowledge"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.projection-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_health",
-            "majordomus_graph",
-            "majordomus_graphs",
-            "majordomus_perf"
-          ],
-          "responsibilities": [
-            "projection",
-            "doctor"
-          ],
-          "summary": "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.",
-          "target": "guaranteed",
-          "weight": 6
         }
       },
       {
@@ -60819,6 +60778,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/916_the_release_that_reads_written_for_is_one_that_does.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62829,66 +62793,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:graph.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:graph.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:health.report",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:perf.counters",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/capability-registry",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/interfaces-are-projections",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63751,7 +63655,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4449,
+      "edges": 4438,
       "acyclic": true,
       "truncated": true
     }

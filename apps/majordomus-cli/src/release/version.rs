@@ -71,7 +71,11 @@ pub const LAYER_MANIFEST: &str = ".ai/manifest.yaml";
 /// The first release that reads `written_for` in a layer manifest. A release before it refuses
 /// the key, so this repository's layer is stamped only once its last release is at least this
 /// one: by then the tool installed to work on it reads what it is given.
-pub const WRITTEN_FOR_READ_SINCE: &str = "0.15.0";
+///
+/// Typed by hand, so `scripts/ci/release-check` (4b) holds it to what was released: a tag of
+/// this version must carry this reader, and until that tag exists the version must still be
+/// ahead of every release, and be the one a bump is making.
+pub const WRITTEN_FOR_READ_SINCE: &str = "0.15.1";
 
 /// Whether a bump stamps this repository's layer: when the last release, which is the tool
 /// installed to work here, reads `written_for` ([`WRITTEN_FOR_READ_SINCE`]). Nothing released,

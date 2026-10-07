@@ -11,7 +11,7 @@ depends_on: [project.interfaces-are-projections@1, project.generated-artifacts-a
 tags: [release, changelog, version, projections]
 
 x-majordomus:
-  tests: [scripts/ci/release-check, test/cases/103_release_projection.sh, test/cases/484_the_version_is_authored_once.sh]
+  tests: [scripts/ci/release-check, test/cases/103_release_projection.sh, test/cases/484_the_version_is_authored_once.sh, test/cases/916_the_release_that_reads_written_for_is_one_that_does.sh]
 ---
 
 # Rationale
@@ -122,6 +122,9 @@ The gate `release-check` (`scripts/ci/release-check`) fails, exit 10, when:
 - (3) a changelog is authored at the repository root or under `docs/` outside
   `docs/generated/`;
 - (4) the version the tree declares is behind the newest release the layer records;
+- (4b) `WRITTEN_FOR_READ_SINCE` names a release that cannot read a layer's `written_for`: its
+  tag exists and carries no reader, or no such tag exists and the constant is not ahead of
+  every release, or is not the version a bump is making;
 - (5) a published tag has no release record in the layer.
 
 `majordomus generate --check` is what proves the written changelog and `share/version.txt`

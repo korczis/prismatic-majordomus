@@ -171,6 +171,37 @@ else
   fi
 fi
 
+# ----------------------------- 4b. the first release that reads written_for is one that does
+#
+# WRITTEN_FOR_READ_SINCE (release/version.rs) says from which release a layer's written_for
+# is read, and `release bump` stamps this repository's layer only once the last release is at
+# least that one (2c). It is typed by hand, and the version a release gets is measured at the
+# bump, not chosen: a constant naming a release that shipped without the reader would stamp a
+# layer the installed tool refuses. So it is held to what git and the tree say:
+#   the tag v<constant> exists  -> that tag's tree carries the reader (the constant itself);
+#   it does not                 -> the constant is ahead of every release, and when a bump has
+#                                  raised the declared version above the newest release, it
+#                                  is that version: the release being made is the reader's.
+READ_SINCE="$(rust_const WRITTEN_FOR_READ_SINCE)"
+vnewer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" = "$1" ]; }
+if [ -z "$READ_SINCE" ]; then
+  fail "$MODULE declares no WRITTEN_FOR_READ_SINCE, so nothing says from which release a layer's written_for is read"
+elif ! command -v git >/dev/null 2>&1 || ! git rev-parse --git-dir >/dev/null 2>&1; then
+  fail "the tags could not be read here, so whether v$READ_SINCE carries the reader of written_for was not measured"
+elif git rev-parse -q --verify "refs/tags/v$READ_SINCE" >/dev/null 2>&1; then
+  if git grep -q 'WRITTEN_FOR_READ_SINCE' "v$READ_SINCE" -- "$MODULE" 2>/dev/null; then
+    ok "v$READ_SINCE, the first release said to read written_for, carries the reader"
+  else
+    fail "WRITTEN_FOR_READ_SINCE is $READ_SINCE and the tag v$READ_SINCE carries no reader of written_for: the constant names a release that cannot read the key — set it to the first release that does"
+  fi
+elif [ -n "$newest" ] && ! vnewer "$READ_SINCE" "$newest"; then
+  fail "WRITTEN_FOR_READ_SINCE is $READ_SINCE, which is not ahead of the newest release $newest, and no tag v$READ_SINCE exists: the constant names a release that cannot read the key"
+elif [ -n "$newest" ] && [ -n "$crate" ] && vnewer "$crate" "$newest" && [ "$crate" != "$READ_SINCE" ]; then
+  fail "the tree declares $crate, the release being made, and WRITTEN_FOR_READ_SINCE is $READ_SINCE: this release is the first that reads written_for, so the constant must be $crate"
+else
+  ok "WRITTEN_FOR_READ_SINCE is $READ_SINCE: not released yet, and ahead of the newest release ${newest:-(none)}"
+fi
+
 # ------------------------------------------ 5. every published tag has a record in the layer
 #
 # The failure this exists for: v0.7.0 published six archives and a GitHub Release, and the
