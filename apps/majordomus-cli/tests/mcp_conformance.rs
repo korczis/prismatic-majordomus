@@ -402,7 +402,7 @@ fn a_request_id_comes_back_exactly_as_it_was_sent() {
     let ids = [
         json!("a-string-id"),
         json!("7"),
-        json!("Žluťoučký kůň — 🐎"),
+        json!("id — ✓ ∞ 🐎"),
         json!(0),
         json!(-1),
         json!(9_007_199_254_740_991_u64),
