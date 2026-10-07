@@ -228,6 +228,14 @@
       "capabilities": 5
     },
     {
+      "id": "mcp",
+      "title": "MCP projection",
+      "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers.",
+      "stability": "experimental",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "mesh",
       "title": "Mesh",
       "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
@@ -2237,6 +2245,10 @@
                   "type": "string",
                   "description": "Where it stands."
                 },
+                "effect": {
+                  "$ref": "#/$defs/ExecutionEffect",
+                  "description": "What a call changes: nothing, this process's memory, or the repository. The same\nclassification every projection reads, so the matrix answers \"where is it reachable\"\nand \"what does reaching it risk\" in one row."
+                },
                 "cli": {
                   "type": [
                     "string",
@@ -2279,10 +2291,31 @@
                 "module",
                 "kind",
                 "stability",
+                "effect",
                 "closed",
                 "source"
               ],
               "description": "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing."
+            },
+            "ExecutionEffect": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "read",
+                  "description": "Nothing changes. Every query and every resource of this executable."
+                },
+                {
+                  "type": "string",
+                  "const": "process_state",
+                  "description": "This process's own memory changes, and nothing outside it."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mutation",
+                  "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                }
+              ],
+              "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
             }
           }
         }
@@ -34379,6 +34412,479 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+    },
+    {
+      "id": "mcp.projection",
+      "module": "mcp",
+      "kind": "query",
+      "title": "The MCP projection of this registry",
+      "description": "Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository's server. Reads the registry and one file per declared client; writes nothing.",
+      "input": {
+        "name": "McpProjectionInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "effect": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ExecutionEffect"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool."
+            }
+          },
+          "description": "The input of `mcp.projection`: which tools to list. Everything else in the answer is\nabout the projection as a whole and is always given.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjectionInput;\nuse majordomus_cli::capability::Effect;\nlet all: McpProjectionInput = serde_json::from_str(\"{}\").unwrap();\nassert!(all.effect.is_none());\nlet writers: McpProjectionInput =\n    serde_json::from_str(r#\"{\"effect\":\"repository_mutation\"}\"#).unwrap();\nassert_eq!(writers.effect, Some(Effect::RepositoryMutation));\n```",
+          "title": "McpProjectionInput",
+          "$defs": {
+            "ExecutionEffect": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "read",
+                  "description": "Nothing changes. Every query and every resource of this executable."
+                },
+                {
+                  "type": "string",
+                  "const": "process_state",
+                  "description": "This process's own memory changes, and nothing outside it."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mutation",
+                  "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                }
+              ],
+              "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "McpProjection",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "server": {
+              "$ref": "#/$defs/McpServerIdentity",
+              "description": "Who answers `initialize`."
+            },
+            "protocol_versions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The protocol versions accepted, newest first."
+            },
+            "transports": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/McpTransportEntry"
+              },
+              "description": "How a client reaches the server."
+            },
+            "serving": {
+              "$ref": "#/$defs/McpServing",
+              "description": "What of the protocol is served."
+            },
+            "tool_count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many tools the registry projects, whatever the filter asked for."
+            },
+            "tools": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/McpToolEntry"
+              },
+              "description": "The tools asked for, in registry order."
+            },
+            "effects": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/McpEffectCount"
+              },
+              "description": "The tools counted by effect, every effect present."
+            },
+            "writers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The tools that write the repository, by name. The `initialize` instructions name the\nsame ones."
+            },
+            "resources": {
+              "$ref": "#/$defs/McpResourceSummary",
+              "description": "The resources."
+            },
+            "launcher_in_repository": {
+              "type": "boolean",
+              "description": "Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names."
+            },
+            "clients": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/McpClient"
+              },
+              "description": "The clients the distribution declares a configuration for, and where each stands."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/McpFinding"
+              },
+              "description": "What a person should act on. Empty is nothing to do."
+            }
+          },
+          "required": [
+            "server",
+            "protocol_versions",
+            "transports",
+            "serving",
+            "tool_count",
+            "tools",
+            "effects",
+            "writers",
+            "resources",
+            "launcher_in_repository",
+            "clients",
+            "findings"
+          ],
+          "description": "The MCP projection of this registry in this repository.",
+          "title": "McpProjection",
+          "$defs": {
+            "McpServerIdentity": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The server name."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name a person reads."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "The version: this executable's, never one of the protocol adapter's own."
+                }
+              },
+              "required": [
+                "name",
+                "title",
+                "version"
+              ],
+              "description": "Who answers `initialize`, as it answers."
+            },
+            "McpTransportEntry": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "`stdio` or `http`."
+                },
+                "reached_by": {
+                  "type": "string",
+                  "description": "How it is reached: the command a client starts, or the path on the shared server."
+                },
+                "attached": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Sessions attached to this process over it right now."
+                }
+              },
+              "required": [
+                "id",
+                "reached_by",
+                "attached"
+              ],
+              "description": "One way a client reaches the server."
+            },
+            "McpServing": {
+              "type": "object",
+              "properties": {
+                "methods": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The methods a request may name. Anything else is answered `-32601`."
+                },
+                "tools": {
+                  "type": "boolean",
+                  "description": "Tools: every capability that declares one."
+                },
+                "resources": {
+                  "type": "boolean",
+                  "description": "Resources: every capability that declares one, and every object of the layer."
+                },
+                "prompts": {
+                  "type": "boolean",
+                  "description": "Prompts. Not served: the repository's prompt assets are resources, because a prompt\nserved unrendered would read as finished."
+                },
+                "notifications": {
+                  "type": "boolean",
+                  "description": "Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked."
+                }
+              },
+              "required": [
+                "methods",
+                "tools",
+                "resources",
+                "prompts",
+                "notifications"
+              ],
+              "description": "What the server serves of the protocol, and what it does not."
+            },
+            "McpToolEntry": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name a client calls."
+                },
+                "capability": {
+                  "type": "string",
+                  "description": "The capability it projects; `capabilities.describe` answers its schemas."
+                },
+                "module": {
+                  "type": "string",
+                  "description": "The module that composes the capability."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "effect": {
+                  "$ref": "#/$defs/ExecutionEffect",
+                  "description": "What a call changes."
+                },
+                "hints": {
+                  "$ref": "#/$defs/ExecutionHints",
+                  "description": "What a caller may assume before calling; the tool's annotations are this value."
+                }
+              },
+              "required": [
+                "name",
+                "capability",
+                "module",
+                "title",
+                "effect",
+                "hints"
+              ],
+              "description": "One tool, as the registry projects it."
+            },
+            "ExecutionEffect": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "read",
+                  "description": "Nothing changes. Every query and every resource of this executable."
+                },
+                {
+                  "type": "string",
+                  "const": "process_state",
+                  "description": "This process's own memory changes, and nothing outside it."
+                },
+                {
+                  "type": "string",
+                  "const": "repository_mutation",
+                  "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                }
+              ],
+              "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
+            },
+            "ExecutionHints": {
+              "type": "object",
+              "properties": {
+                "read_only": {
+                  "type": "boolean",
+                  "description": "The call changes nothing, anywhere."
+                },
+                "destructive": {
+                  "type": "boolean",
+                  "description": "The call may overwrite or remove something that outlives this process."
+                },
+                "idempotent": {
+                  "type": "boolean",
+                  "description": "A second identical call changes nothing the first did not."
+                },
+                "open_world": {
+                  "type": "boolean",
+                  "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities."
+                }
+              },
+              "required": [
+                "read_only",
+                "destructive",
+                "idempotent",
+                "open_world"
+              ],
+              "description": "What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared."
+            },
+            "McpEffectCount": {
+              "type": "object",
+              "properties": {
+                "effect": {
+                  "$ref": "#/$defs/ExecutionEffect",
+                  "description": "The effect."
+                },
+                "tools": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many tools have it."
+                }
+              },
+              "required": [
+                "effect",
+                "tools"
+              ],
+              "description": "How many tools have one effect."
+            },
+            "McpResourceSummary": {
+              "type": "object",
+              "properties": {
+                "builtin": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Resources a builtin capability answers."
+                },
+                "objects": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Objects of this repository's layer, each one more resource."
+                },
+                "template": {
+                  "type": "string",
+                  "description": "The URI shape of an object's resource."
+                }
+              },
+              "required": [
+                "builtin",
+                "objects",
+                "template"
+              ],
+              "description": "The resources a client can read."
+            },
+            "McpClient": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The provider id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name a person knows it by."
+                },
+                "config": {
+                  "type": "string",
+                  "description": "The file it reads, repository-relative."
+                },
+                "standing": {
+                  "$ref": "#/$defs/McpClientStanding",
+                  "description": "Where that file stands here."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "config",
+                "standing"
+              ],
+              "description": "One client the distribution declares a project-scoped configuration for."
+            },
+            "McpClientStanding": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "wired",
+                  "description": "The file exists and names the launcher: this client starts this repository's server."
+                },
+                {
+                  "type": "string",
+                  "const": "foreign",
+                  "description": "The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing."
+                },
+                {
+                  "type": "string",
+                  "const": "absent",
+                  "description": "The file does not exist: this client starts no server here until it is written."
+                }
+              ],
+              "description": "Where a client's project-scoped configuration stands in this repository."
+            },
+            "McpFinding": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "The stable code."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong."
+                },
+                "remedy": {
+                  "type": "string",
+                  "description": "What to do about it."
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "remedy"
+              ],
+              "description": "Something about the projection a person should act on."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mcp"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mcp",
+          "resource": {
+            "uri": "majordomus://mcp",
+            "name": "mcp"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/mcp"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mcp",
+        "introspection",
+        "projections"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs"
     },
     {
       "id": "mesh.claim",

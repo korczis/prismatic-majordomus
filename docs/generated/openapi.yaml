@@ -77,6 +77,8 @@ tags:
     description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
   - name: lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
+  - name: mcp
+    description: "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers."
   - name: mesh
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
   - name: models
@@ -5172,6 +5174,72 @@ paths:
       x-majordomus-cache:
         policy: disabled
       x-majordomus-effect: read
+  "/api/v1/mcp":
+    get:
+      operationId: mcp.projection
+      summary: The MCP projection of this registry
+      description: "Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository's server. Reads the registry and one file per declared client; writes nothing."
+      tags:
+        - mcp
+      parameters:
+        - name: effect
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/ExecutionEffect"
+              - type: "null"
+          description: "List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool."
+          examples:
+            writers:
+              value: repository_mutation
+      responses:
+        "200":
+          description: "The MCP projection of this registry: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/McpProjection"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mcp.projection
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mcp
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_mcp
+        resource:
+          uri: majordomus://mcp
+          name: mcp
   "/api/v1/mesh":
     get:
       operationId: mesh.status
@@ -20048,6 +20116,27 @@ components:
             - data
           description: "It finished, and it did not."
       description: "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
+    ExecutionHints:
+      type: object
+      properties:
+        read_only:
+          type: boolean
+          description: "The call changes nothing, anywhere."
+        destructive:
+          type: boolean
+          description: The call may overwrite or remove something that outlives this process.
+        idempotent:
+          type: boolean
+          description: A second identical call changes nothing the first did not.
+        open_world:
+          type: boolean
+          description: "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities."
+      required:
+        - read_only
+        - destructive
+        - idempotent
+        - open_world
+      description: "What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared."
     ExecutionId:
       type: string
       description: "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
@@ -24457,6 +24546,54 @@ components:
         - proven
         - claims
       description: "One row of the matrix: a feature and the surfaces it is exposed through."
+    McpClient:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The provider id.
+        title:
+          type: string
+          description: The name a person knows it by.
+        config:
+          type: string
+          description: "The file it reads, repository-relative."
+        standing:
+          "$ref": "#/components/schemas/McpClientStanding"
+          description: Where that file stands here.
+      required:
+        - id
+        - title
+        - config
+        - standing
+      description: One client the distribution declares a project-scoped configuration for.
+    McpClientStanding:
+      oneOf:
+        - type: string
+          const: wired
+          description: "The file exists and names the launcher: this client starts this repository's server."
+        - type: string
+          const: foreign
+          description: "The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing."
+        - type: string
+          const: absent
+          description: "The file does not exist: this client starts no server here until it is written."
+      description: "Where a client's project-scoped configuration stands in this repository."
+    McpEffectCount:
+      type: object
+      properties:
+        effect:
+          "$ref": "#/components/schemas/ExecutionEffect"
+          description: The effect.
+        tools:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many tools have it.
+      required:
+        - effect
+        - tools
+      description: How many tools have one effect.
     McpExposure:
       type: object
       properties:
@@ -24471,6 +24608,92 @@ components:
             - type: "null"
           description: As a readable resource.
       description: "How, if at all, a capability appears to an MCP client."
+    McpFinding:
+      type: object
+      properties:
+        code:
+          type: string
+          description: The stable code.
+        message:
+          type: string
+          description: What is wrong.
+        remedy:
+          type: string
+          description: What to do about it.
+      required:
+        - code
+        - message
+        - remedy
+      description: Something about the projection a person should act on.
+    McpProjection:
+      type: object
+      properties:
+        server:
+          "$ref": "#/components/schemas/McpServerIdentity"
+          description: "Who answers `initialize`."
+        protocol_versions:
+          type: array
+          items:
+            type: string
+          description: "The protocol versions accepted, newest first."
+        transports:
+          type: array
+          items:
+            "$ref": "#/components/schemas/McpTransportEntry"
+          description: How a client reaches the server.
+        serving:
+          "$ref": "#/components/schemas/McpServing"
+          description: What of the protocol is served.
+        tool_count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many tools the registry projects, whatever the filter asked for."
+        tools:
+          type: array
+          items:
+            "$ref": "#/components/schemas/McpToolEntry"
+          description: "The tools asked for, in registry order."
+        effects:
+          type: array
+          items:
+            "$ref": "#/components/schemas/McpEffectCount"
+          description: "The tools counted by effect, every effect present."
+        writers:
+          type: array
+          items:
+            type: string
+          description: "The tools that write the repository, by name. The `initialize` instructions name the\nsame ones."
+        resources:
+          "$ref": "#/components/schemas/McpResourceSummary"
+          description: The resources.
+        launcher_in_repository:
+          type: boolean
+          description: "Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names."
+        clients:
+          type: array
+          items:
+            "$ref": "#/components/schemas/McpClient"
+          description: "The clients the distribution declares a configuration for, and where each stands."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/McpFinding"
+          description: What a person should act on. Empty is nothing to do.
+      required:
+        - server
+        - protocol_versions
+        - transports
+        - serving
+        - tool_count
+        - tools
+        - effects
+        - writers
+        - resources
+        - launcher_in_repository
+        - clients
+        - findings
+      description: The MCP projection of this registry in this repository.
     McpResource:
       type: object
       properties:
@@ -24484,6 +24707,119 @@ components:
         - uri
         - name
       description: "An MCP resource: its URI and the short name a client lists."
+    McpResourceSummary:
+      type: object
+      properties:
+        builtin:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Resources a builtin capability answers.
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Objects of this repository's layer, each one more resource."
+        template:
+          type: string
+          description: "The URI shape of an object's resource."
+      required:
+        - builtin
+        - objects
+        - template
+      description: The resources a client can read.
+    McpServerIdentity:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The server name.
+        title:
+          type: string
+          description: The name a person reads.
+        version:
+          type: string
+          description: "The version: this executable's, never one of the protocol adapter's own."
+      required:
+        - name
+        - title
+        - version
+      description: "Who answers `initialize`, as it answers."
+    McpServing:
+      type: object
+      properties:
+        methods:
+          type: array
+          items:
+            type: string
+          description: "The methods a request may name. Anything else is answered `-32601`."
+        tools:
+          type: boolean
+          description: "Tools: every capability that declares one."
+        resources:
+          type: boolean
+          description: "Resources: every capability that declares one, and every object of the layer."
+        prompts:
+          type: boolean
+          description: "Prompts. Not served: the repository's prompt assets are resources, because a prompt\nserved unrendered would read as finished."
+        notifications:
+          type: boolean
+          description: "Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked."
+      required:
+        - methods
+        - tools
+        - resources
+        - prompts
+        - notifications
+      description: "What the server serves of the protocol, and what it does not."
+    McpToolEntry:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name a client calls.
+        capability:
+          type: string
+          description: "The capability it projects; `capabilities.describe` answers its schemas."
+        module:
+          type: string
+          description: The module that composes the capability.
+        title:
+          type: string
+          description: The title.
+        effect:
+          "$ref": "#/components/schemas/ExecutionEffect"
+          description: What a call changes.
+        hints:
+          "$ref": "#/components/schemas/ExecutionHints"
+          description: "What a caller may assume before calling; the tool's annotations are this value."
+      required:
+        - name
+        - capability
+        - module
+        - title
+        - effect
+        - hints
+      description: "One tool, as the registry projects it."
+    McpTransportEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "`stdio` or `http`."
+        reached_by:
+          type: string
+          description: "How it is reached: the command a client starts, or the path on the shared server."
+        attached:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Sessions attached to this process over it right now.
+      required:
+        - id
+        - reached_by
+        - attached
+      description: One way a client reaches the server.
     Measured:
       type: object
       properties:
@@ -32172,6 +32508,9 @@ components:
         stability:
           type: string
           description: Where it stands.
+        effect:
+          "$ref": "#/components/schemas/ExecutionEffect"
+          description: "What a call changes: nothing, this process's memory, or the repository. The same\nclassification every projection reads, so the matrix answers \"where is it reachable\"\nand \"what does reaching it risk\" in one row."
         cli:
           type:
             - string
@@ -32203,6 +32542,7 @@ components:
         - module
         - kind
         - stability
+        - effect
         - closed
         - source
       description: "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing."

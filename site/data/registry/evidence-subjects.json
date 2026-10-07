@@ -464,6 +464,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mcp.projection",
+      "path": "/evidence/capabilities/mcp-projection/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.claim",
       "path": "/evidence/capabilities/mesh-claim/"
     },
@@ -4379,6 +4384,16 @@
       "members": [
         "claim:session-observability"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mcp.projection": {
+      "kind": "capability",
+      "id": "mcp.projection",
+      "page": "/evidence/capabilities/mcp-projection/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -17740,6 +17755,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_mcp": {
+      "kind": "mcp",
+      "id": "majordomus_mcp",
+      "alias_of": "capability:mcp.projection",
+      "programs": [],
+      "members": [
+        "capability:mcp.projection"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_mesh": {
       "kind": "mcp",
       "id": "majordomus_mesh",
@@ -24066,6 +24093,7 @@
     "crate:live_own_writes",
     "crate:mcp_conformance",
     "crate:mcp_conformance_http",
+    "crate:mcp_prose",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
     "crate:metadata_contract",
@@ -24199,6 +24227,7 @@
     "suite:924_one_executor_across_machines",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
+    "suite:940_mcp_says_nothing_its_capability_does_not",
     "suite:97_development_semantics_gate",
     "suite:97_site_probe_attribution",
     "suite:97_vendor_evidence",

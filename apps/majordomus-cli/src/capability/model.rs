@@ -585,6 +585,72 @@ impl ExecutionPolicy {
     pub fn needs_confirmation(self) -> bool {
         !matches!(self.effect, Effect::Read)
     }
+
+    /// What a caller may assume about a call before making it, classified from the effect.
+    ///
+    /// A projection that tells a client how careful to be — MCP's tool annotations, the
+    /// site's table of tools, the Cockpit's — renders this value and states none of its
+    /// own. Until it existed the MCP projection wrote `destructiveHint: false` and
+    /// `idempotentHint: true` as constants, which was true of every tool on the day they
+    /// were written and false of the first one that wrote the repository: a sweep that
+    /// unlinks files was announced as safe to repeat and unable to destroy anything.
+    ///
+    /// The classification is conservative in the one direction a caller can survive.
+    /// Anything that changes something is not assumed repeatable, because whether a second
+    /// call is a no-op is a fact about the handler and no handler has declared it; and
+    /// anything that writes the repository may overwrite or remove what was there.
+    /// A change to this process's own memory destroys nothing outside it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// let read = ExecutionPolicy::classify(CapabilityKind::Query).hints();
+    /// assert!(read.read_only && read.idempotent && !read.destructive);
+    /// let memory = ExecutionPolicy::classify(CapabilityKind::Command).hints();
+    /// assert!(!memory.read_only && !memory.idempotent && !memory.destructive);
+    /// let writer = ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().hints();
+    /// assert!(!writer.read_only && !writer.idempotent && writer.destructive);
+    /// assert!(!writer.open_world, "no handler of this executable reaches beyond the machine");
+    /// ```
+    pub fn hints(self) -> Hints {
+        match self.effect {
+            Effect::Read => Hints {
+                read_only: true,
+                destructive: false,
+                idempotent: true,
+                open_world: false,
+            },
+            Effect::ProcessState => Hints {
+                read_only: false,
+                destructive: false,
+                idempotent: false,
+                open_world: false,
+            },
+            Effect::RepositoryMutation => Hints {
+                read_only: false,
+                destructive: true,
+                idempotent: false,
+                open_world: false,
+            },
+        }
+    }
+}
+
+/// What a caller may assume about a call before making it: the four facts MCP names tool
+/// annotations, held once on the model so that no projection states its own.
+///
+/// Classified by [`ExecutionPolicy::hints`], never declared.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "ExecutionHints")]
+pub struct Hints {
+    /// The call changes nothing, anywhere.
+    pub read_only: bool,
+    /// The call may overwrite or remove something that outlives this process.
+    pub destructive: bool,
+    /// A second identical call changes nothing the first did not.
+    pub idempotent: bool,
+    /// The call reaches beyond this machine. No handler of this executable does: observing
+    /// the forge and talking to an advisor are commands a person runs, not capabilities.
+    pub open_world: bool,
 }
 
 /// Where a capability stands, in the repository's own vocabulary for claims. A capability

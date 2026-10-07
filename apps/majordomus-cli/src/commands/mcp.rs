@@ -390,10 +390,19 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     let index = surface.index();
+    // the projection described by the capability every other surface asks, so that what
+    // this prints about the protocol, the effects and the clients is not a second account
+    let described = surface
+        .context()
+        .execute("mcp.projection", json!({}))
+        .map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })?;
     match format {
         OutputFormat::Json => {
             let v = json!({
                 "repository": surface.repository_info().map_err(|e| Error::Protocol { reason: e.to_string() })?,
+                "mcp": described,
                 "resources": &*surface.resources(),
                 "tools": &*surface.tools(),
             });
@@ -436,6 +445,41 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
                     summary.total, summary.builtin, summary.declarative
                 ),
             )?;
+            let p: crate::capability::builtin::mcp::McpProjection =
+                serde_json::from_value(described).map_err(|e| Error::Protocol {
+                    reason: e.to_string(),
+                })?;
+            w(
+                &mut out,
+                format!("server      {} {}", p.server.name, p.server.version),
+            )?;
+            w(
+                &mut out,
+                format!("protocol    {}", p.protocol_versions.join(", ")),
+            )?;
+            for e in &p.effects {
+                let word = serde_json::to_value(e.effect)
+                    .ok()
+                    .and_then(|v| v.as_str().map(String::from))
+                    .unwrap_or_default();
+                w(&mut out, format!("effect      {word:<20} {} tool(s)", e.tools))?;
+            }
+            for name in &p.writers {
+                w(&mut out, format!("writes      {name}"))?;
+            }
+            for c in &p.clients {
+                let standing = serde_json::to_value(c.standing)
+                    .ok()
+                    .and_then(|v| v.as_str().map(String::from))
+                    .unwrap_or_default();
+                w(&mut out, format!("client      {:<24} {standing}", c.config))?;
+            }
+            for f in &p.findings {
+                w(
+                    &mut out,
+                    format!("WARN {:<22} - — {} ({})", f.code, f.message, f.remedy),
+                )?;
+            }
             for r in surface.resources().iter() {
                 w(&mut out, format!("resource    {}", r.uri))?;
             }

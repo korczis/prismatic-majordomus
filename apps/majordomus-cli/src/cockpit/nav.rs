@@ -77,8 +77,10 @@ pub enum Area {
     Release,
     /// The design system: what every surface of this tool is rendered with.
     Design,
-    /// The HTTP and MCP surfaces.
+    /// The HTTP surface.
     Api,
+    /// The MCP projection: the tools, what each may change, and how a client connects.
+    Mcp,
     /// A page that belongs to no area (search results, an error).
     None,
 }
@@ -245,6 +247,12 @@ pub fn areas() -> &'static [AreaInfo] {
             href: "/cockpit/api",
             area: Area::Api,
         },
+        AreaInfo {
+            id: "mcp",
+            label: "MCP",
+            href: "/cockpit/mcp",
+            area: Area::Mcp,
+        },
     ]
 }
 
@@ -351,6 +359,7 @@ fn build_with(
             Area::Objects => Some(held.map_or(Count::Unknown, |h| Count::Known(h.objects))),
             Area::Graphs => Some(Count::Known(graph::ids().len())),
             Area::Api => Some(Count::Known(summary.http_routes)),
+            Area::Mcp => Some(Count::Known(summary.mcp_tools)),
             _ => None,
         }
     };
