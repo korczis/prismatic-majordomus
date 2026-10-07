@@ -7587,6 +7587,7 @@ mod tests {
                 cross_repository: false,
                 base_ref: "master".into(),
                 changed_files: 1,
+                whole: true,
             };
             store_observation(
                 &root,

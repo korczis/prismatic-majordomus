@@ -64,11 +64,11 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `obsolete` | cleanup | carries a label that marks it obsolete (owner decision D3; see the label policy below); checked before the hold labels, after `draft` | a person closes it, or removes the label |
 | `blocked` | held | carries a label that holds it (see the label policy below) | remove it |
 | `unsafe` | held | the forge has auto-merge armed on it, so the forge would merge it on its own | disarm it: `gh pr merge <n> --disable-auto` |
-| `unknown` | held | the pull requests that mention it were not all read (`declarations_unread`), so one of them may declare that it supersedes it | `prs refresh` |
+| `unknown` | held | the pull requests that mention it were not all read (`declarations_unread`), so one of them may declare that it supersedes it; or an open one that says it supersedes it is not among the open pull requests the forge listed (the list was cut at its limit, or it was opened between the two reads) | `prs refresh` |
 | `superseded` | cleanup | an authorised declared successor landed: git finds its head or its merge commit in master (see supersession markers below); `superseded_by` names it | `prs cleanup --apply` closes it |
 | `waiting_for_dependency` | waiting | an authorised declared successor is still open | land the successor; this one is then closed, never merged |
 | `possibly_redundant` | cleanup | a declared successor is merged, but master contains neither its head nor its merge commit | a person decides |
-| `unknown` | held | a declared successor is not open and could not be read | `prs refresh` |
+| `unknown` | held | a declared successor is not open and could not be read, or was read without where its head lives or how many files it changes | `prs refresh` |
 | `redundant` | cleanup | its head is an ancestor of master, merging it changes no file, or every one of its commits is on master as an equal patch | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
 | `unknown` | held | its head is not fetched, git failed, the branch protection could not be read, or a check run of an app-bound context names no app | `prs refresh` |

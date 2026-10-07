@@ -222,6 +222,13 @@ pub struct ResolvedPullRequest {
     /// points, so it is never a successor that landed.
     #[serde(default)]
     pub changed_files: u64,
+    /// Whether the reading said both where its head lives and how many files it changes.
+    /// The two defaults above are vetoes: read as facts, "a fork's" and "no file" each say a
+    /// successor closed unmerged brought nothing and release what it held. So a reading
+    /// that left either out is not one to decide by, and a record that does not say is not
+    /// whole.
+    #[serde(default)]
+    pub whole: bool,
 }
 
 /// What a resolved pull request that does not say where its head lives is read as: a fork,
@@ -254,7 +261,8 @@ pub const RESOLVED_FIELDS: &str =
 /// ([`DECLARATIONS_QUERY`]) or from `gh pr view --json` output: `None` for an open one, or one
 /// without a head. What a reading does not say fails closed: no merge commit, no author, no
 /// association, a head read as a fork's and no changed file, so it declares nothing and
-/// never landed.
+/// never landed. A reading that does not say where the head lives, or how many files it
+/// changes, is not `whole`, and a successor read so is unread: it releases nothing.
 ///
 /// The module is private, so the example is text; the unit tests run the same assertions.
 ///
@@ -266,6 +274,7 @@ pub const RESOLVED_FIELDS: &str =
 /// assert_eq!((number, read.merged, read.merge_commit.as_str()), (7, true, "m7"));
 /// assert!(read.cross_repository && read.author_association.is_empty(), "unread declares nothing");
 /// assert_eq!(read.changed_files, 0, "and changed nothing");
+/// assert!(!read.whole, "which is a default, not a reading: as a successor it is unread");
 /// assert!(resolved_of(&serde_json::json!({"number": 7, "state": "OPEN", "headRefOid": "h7"})).is_none());
 /// ```
 pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
@@ -285,6 +294,8 @@ pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
             .unwrap_or("")
             .to_string()
     };
+    let placed = v.get("isCrossRepository").and_then(Value::as_bool);
+    let files = v.get("changedFiles").and_then(Value::as_u64);
     Some((
         number,
         ResolvedPullRequest {
@@ -294,12 +305,10 @@ pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
             merge_commit: text("/mergeCommit/oid"),
             author: text("/author/login"),
             author_association: text("/authorAssociation"),
-            cross_repository: v
-                .get("isCrossRepository")
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
+            cross_repository: placed.unwrap_or(true),
             base_ref: text("/baseRefName"),
-            changed_files: v.get("changedFiles").and_then(Value::as_u64).unwrap_or(0),
+            changed_files: files.unwrap_or(0),
+            whole: placed.is_some() && files.is_some(),
         },
     ))
 }
@@ -1329,6 +1338,10 @@ pub fn declarations(
 /// fork the list did not see, no association is recorded, and it authorises nothing. The
 /// list's own flag is left as it was read.
 ///
+/// A source that is open, says it supersedes the pull request, and is not among the listed
+/// ones makes that pull request's references `unread`, whatever the read said: an open
+/// successor the list did not carry is one nothing else would hold it for.
+///
 /// The module is private, so the example is text; the unit tests run the same assertions.
 ///
 /// ```text
@@ -1345,6 +1358,8 @@ pub fn declarations(
 /// assert_eq!(prs[1].cross_references, CrossReferenceRead::Unread, "not named: held");
 /// ```
 pub fn declare(prs: &mut [PullRequestObservation], read: &Declarations) -> Value {
+    use super::classify::declared_supersessions;
+    let listed: BTreeSet<u64> = prs.iter().map(|p| p.number).collect();
     let mut sources: BTreeMap<u64, &[Value]> = BTreeMap::new();
     for pr in prs.iter_mut() {
         if let Some(said) = read.get(&pr.number) {
@@ -1354,7 +1369,30 @@ pub fn declare(prs: &mut [PullRequestObservation], read: &Declarations) -> Value
             } else {
                 String::new()
             };
-            pr.cross_references = said.read;
+            // An open pull request that says it supersedes this one, and that the list of
+            // open ones does not carry: the list was cut at its limit, or it was opened
+            // between the two reads. Nothing else reads an open one's body, so its
+            // declaration would hold nothing and this one could merge beside its successor.
+            // What is known is that the list is not all that is open: unread, and held.
+            let number = pr.number;
+            let unlisted = said.sources.iter().any(|source| {
+                source.get("state").and_then(Value::as_str) == Some("OPEN")
+                    && source
+                        .get("number")
+                        .and_then(Value::as_u64)
+                        .is_some_and(|m| m != number && !listed.contains(&m))
+                    && source
+                        .get("body")
+                        .and_then(Value::as_str)
+                        .is_none_or(|body| {
+                            declared_supersessions(body).supersedes.contains(&number)
+                        })
+            });
+            pr.cross_references = if unlisted {
+                CrossReferenceRead::Unread
+            } else {
+                said.read
+            };
             sources.insert(pr.number, &said.sources);
         }
     }
@@ -2524,6 +2562,7 @@ mod tests {
                 cross_repository: false,
                 base_ref: "master".into(),
                 changed_files: 3,
+                whole: true,
             }
         );
         // what a reading does not say fails closed
@@ -2537,6 +2576,7 @@ mod tests {
             cross_repository: true,
             base_ref: String::new(),
             changed_files: 0,
+            whole: false,
         };
         let (_, read) =
             resolved_of(&json!({"number": 7, "state": "MERGED", "headRefOid": "h"})).unwrap();
@@ -3048,6 +3088,56 @@ mod tests {
             (false, "CONTRIBUTOR", true, "m5"),
             "who declared is kept, for the classifier to weigh"
         );
+    }
+
+    /// An open pull request that says it supersedes #1 and is not among the listed ones —
+    /// the list was cut at its limit, or #9 was opened between the two reads — is read by
+    /// nothing else, so #1 is unread and held. One that is listed speaks for itself, one
+    /// that only mentions #1 changes nothing, and neither does a closed one.
+    #[test]
+    fn an_open_successor_the_list_did_not_carry_leaves_its_target_unread() {
+        let listed = |number: u64| pull_request_of(&json!({"number": number})).unwrap();
+        let references_of = |sources: Vec<Value>| {
+            let mut open = vec![listed(1), listed(2)];
+            let mut read = Declarations::new();
+            for number in [1, 2] {
+                read.insert(
+                    number,
+                    DeclarationRead {
+                        association: "OWNER".into(),
+                        cross_repository: Some(false),
+                        sources: if number == 1 {
+                            sources.clone()
+                        } else {
+                            Vec::new()
+                        },
+                        read: CrossReferenceRead::Whole,
+                    },
+                );
+            }
+            declare(&mut open, &read);
+            (open[0].cross_references, open[1].cross_references)
+        };
+        use CrossReferenceRead::{Unread, Whole};
+        // not listed, open, and it supersedes #1: nothing else would hold #1 for it
+        let unlisted = source(9, "OPEN", "Supersedes #1", "OWNER", false);
+        assert_eq!(references_of(vec![unlisted]), (Unread, Whole));
+        // whoever wrote it: who may declare is decided once the declarer is read
+        let fork = source(9, "OPEN", "Supersedes #1", "NONE", true);
+        assert_eq!(references_of(vec![fork]), (Unread, Whole));
+        // a body the read did not carry may say so
+        let mut silent = source(9, "OPEN", "", "OWNER", false);
+        silent.as_object_mut().unwrap().remove("body");
+        assert_eq!(references_of(vec![silent]), (Unread, Whole));
+        // listed: it is among the open ones and speaks for itself
+        let among = source(2, "OPEN", "Supersedes #1", "OWNER", false);
+        assert_eq!(references_of(vec![among]), (Whole, Whole));
+        // not listed, but it only mentions #1, or supersedes another
+        let mentions = source(9, "OPEN", "See #1.\nSupersedes #40", "OWNER", false);
+        assert_eq!(references_of(vec![mentions]), (Whole, Whole));
+        // no longer open: resolved_for reads it, as before
+        let closed = source(9, "CLOSED", "Supersedes #1", "OWNER", false);
+        assert_eq!(references_of(vec![closed]), (Whole, Whole));
     }
 
     #[test]

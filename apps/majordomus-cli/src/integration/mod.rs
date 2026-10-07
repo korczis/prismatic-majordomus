@@ -547,7 +547,7 @@ pub fn build_queue_shaped(
     queue.cycles = dependency_cycles(obs, &queue.heads);
     if obs.pull_requests.len() >= forge::OPEN_LIMIT {
         diagnostics.push(format!(
-            "the forge listed {} open pull requests, its limit: more may be open, and a dependency on one of those reads as unread",
+            "the forge listed {} open pull requests, its limit: more may be open; a dependency on one of those reads as unread, and a listed one that one of those says it supersedes is held as unread",
             obs.pull_requests.len()
         ));
     }
@@ -939,6 +939,11 @@ fn successors<'a>(
         let Some(r) = obs.resolved.get(&m) else {
             return SuccessorState::Unread;
         };
+        // the two vetoes below read "a fork's" and "no file" as facts, and each releases what
+        // a successor closed unmerged held. A reading that left either out said neither.
+        if !r.whole {
+            return SuccessorState::Unread;
+        }
         // what cannot be a landing is decided before git is asked where its head is
         if r.changed_files == 0 {
             return SuccessorState::Empty { merged: r.merged };
@@ -1328,6 +1333,7 @@ mod queue_branches {
                 cross_repository: false,
                 base_ref: "master".into(),
                 changed_files: 1,
+                whole: true,
             },
         )]);
         let q = build_queue(&observation("Superseded by #2", resolved), "m", unknown);
@@ -1378,6 +1384,7 @@ mod declared_successors {
             cross_repository: false,
             base_ref: "master".into(),
             changed_files: 1,
+            whole: true,
         }
     }
 
@@ -1599,6 +1606,49 @@ mod declared_successors {
             "{}",
             said[0].1
         );
+    }
+
+    /// A successor closed unmerged releases what it held when the forge said it is a fork's
+    /// or changes no file. When the reading left those out, they are defaults and not facts:
+    /// the successor is unread, the hold stands, and git is not asked about it.
+    #[test]
+    fn a_successor_read_without_its_place_or_its_files_releases_nothing() {
+        let decided = |whole: bool, fork: bool, files: u64| {
+            let mut two = gone(false, 2, "", "CONTRIBUTOR");
+            two.cross_repository = fork;
+            two.changed_files = files;
+            two.whole = whole;
+            let o = obs(
+                vec![open(1, "Superseded by #2", "OWNER", false)],
+                vec![(2, two)],
+            );
+            let (q, asked) = queue(&o, &[], &[]);
+            (q.get(1).unwrap().clone(), asked.len())
+        };
+        // read whole: a fork closed unmerged, and one that changes nothing, release the hold
+        for (fork, files) in [(true, 1), (false, 0)] {
+            let (a, _) = decided(true, fork, files);
+            assert!(
+                !a.reasons
+                    .contains(&ReasonCode::SuccessorUnread { number: 2 }),
+                "{:?}",
+                a.reasons
+            );
+        }
+        // the same values as defaults of a reading that did not say: unread, held, by refresh
+        for (fork, files) in [(true, 0), (true, 1), (false, 0)] {
+            let (a, asked) = decided(false, fork, files);
+            assert!(
+                a.reasons
+                    .contains(&ReasonCode::SuccessorUnread { number: 2 }),
+                "fork {fork}, files {files}: {:?}",
+                a.reasons
+            );
+            assert_eq!(
+                asked, 1,
+                "git is asked about #1 alone, never about the unread one"
+            );
+        }
     }
 
     #[test]
@@ -2027,6 +2077,7 @@ mod dependency_queue {
                     cross_repository: false,
                     base_ref: "master".into(),
                     changed_files: 1,
+                    whole: true,
                 },
             );
         }

@@ -13,7 +13,8 @@
 #      majordomus prs refresh
 #   3. every offline reader refuses it the same way — `prs plan` and `prs explain 1` too — and
 #      none names a successor or a closure from it; the forge is not asked, and the record is
-#      left as it was
+#      left as it was. The cleanup plan (`integration.cleanup`, the offline reader whose
+#      answer is a list of what to close) says it observed nothing and lists nothing
 #   4. the same for a record of schema 5, which carries a field this version cannot parse:
 #      it is refused by its number, not by the field
 #   5. the forge now shows no declaration about #1, and `prs refresh` heals it: schema 4 again,
@@ -272,6 +273,18 @@ other() {   # <schema> <jq filter that makes the record one of that schema>
   refuses "$schema" "plan" plan
   refuses "$schema" "plan --format json" plan --format json
   refuses "$schema" "explain" explain 1
+  # the one offline reader whose answer is a list of what to close: the cleanup plan, as the
+  # capability decides it from the record (`prs cleanup` itself observes the forge first, so
+  # it never reads this record). The record says #1's successor landed, and a plan that took
+  # it for this schema would list #1 to close.
+  out="$("$RB" run integration.cleanup --repo "$W" --format json 2>/dev/null)" \
+    || { echo "    the cleanup plan could not be asked on a schema-$schema observation"; exit 1; }
+  [ "$(printf '%s' "$out" | jq -r '.output.observed')" = false ] \
+    || { echo "    the cleanup plan took a schema-$schema observation for one it reads: $(printf '%s' "$out" | jq -c .output)"; exit 1; }
+  [ "$(printf '%s' "$out" | jq -r '.output.items | length')" = 0 ] \
+    || { echo "    the cleanup plan listed a closure from a schema-$schema observation: $(printf '%s' "$out" | jq -c .output.items)"; exit 1; }
+  says "$(printf '%s' "$out" | jq -r '.output.reason')" "schema $schema, this reads 4" "the cleanup plan on a schema-$schema observation"
+  says "$(printf '%s' "$out" | jq -r '.output.reason')" "majordomus prs refresh" "the cleanup plan on a schema-$schema observation"
   cmp -s "$OBS" "$STATE/observation.$schema" || { echo "    an offline reader rewrote the schema-$schema observation"; exit 1; }
   [ "$(grep -c . "$STATE/log")" = "$asked" ] || { echo "    an offline reader asked the forge:"; tail -3 "$STATE/log" | cut -c1-120; exit 1; }
   if grep -q '^CLOSE' "$STATE/log"; then echo "    something was closed on a schema-$schema observation:"; grep '^CLOSE' "$STATE/log"; exit 1; fi
