@@ -1579,6 +1579,33 @@ reviewed like any other change. `bench --check` compares a fresh run's p50, p95 
 target and mode against it under the policy's `benchmark.regression` fractions; a baseline
 with another schema is reported as not comparable, never as a number.
 
+## The timing report
+
+With `MJ_TIMING=1` set, a command reports on stderr where its time went: each phase it
+declares, with the milliseconds it took and how often it ran, then each work counter (a
+YAML parse, a git call) summed. stdout stays the command's own. The text form is for a person:
+
+```text
+TIMING clock=epochrealtime total=2640 ms
+phase      2178 ms     1 x  ctxd:cross_check
+count         9     git
+```
+
+Under `--json` the same data is one line of JSON, so a check can compare one run's
+breakdown with another's:
+
+```json
+{"timing":{"clock":"epochrealtime","total_ms":2640,
+ "phases":[{"name":"ctxd:cross_check","ms":2178,"calls":1}],
+ "counters":[{"name":"git","count":9}]}}
+```
+
+Both forms are read from one aggregation in one order (phases by time, counters by count, a
+tie broken by name), so neither carries a phase or a counter the other lacks; case 886 holds
+that. `clock` names the source of the milliseconds (`epochrealtime`, or `seconds` where the
+shell has no `EPOCHREALTIME`), and `total_ms` runs from the first line of the command to
+the report.
+
 ## Projection stamp
 
 Every generated target describes itself; there is no provenance file beside it, so a

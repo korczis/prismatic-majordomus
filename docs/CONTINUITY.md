@@ -542,6 +542,7 @@ flowchart TD
 
 ### From a MacBook to a Mac mini
 
+<!-- majordomus:unrun a walkthrough across two machines: it creates a device key, publishes a record and pushes a ref to a shared remote, which no single checkout can do; case 821 runs the same sequence between two fixture repositories -->
 ```sh
 # MacBook, once: name the device (the key is the mesh's node key, created on first use)
 majordomus-cli continuity device --label macbook-pro
