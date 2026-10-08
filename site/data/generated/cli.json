@@ -2176,6 +2176,27 @@
           "id": "generate-one-target",
           "setup": [],
           "title": "One target only"
+        },
+        {
+          "argv": [
+            "generate",
+            "site",
+            "--check"
+          ],
+          "command": "majordomus generate site --check",
+          "description": "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+          "expectation": "exits 0",
+          "id": "generate-site-check",
+          "setup": [
+            {
+              "argv": [
+                "generate",
+                "site"
+              ],
+              "command": "majordomus generate site"
+            }
+          ],
+          "title": "Check one target without writing it"
         }
       ],
       "executable": true,
@@ -24481,6 +24502,20 @@
           "id": "reasoning-advisors",
           "setup": [],
           "title": "The advisors, and what they can do now"
+        },
+        {
+          "argv": [
+            "reasoning",
+            "advisors",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus reasoning advisors --format json",
+          "description": "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+          "expectation": "exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity",
+          "id": "reasoning-advisors-json",
+          "setup": [],
+          "title": "The same answer as one document"
         }
       ],
       "executable": true,
@@ -24652,6 +24687,22 @@
           "id": "reasoning-plan",
           "setup": [],
           "title": "What a material uncertainty calls for"
+        },
+        {
+          "argv": [
+            "reasoning",
+            "plan",
+            "--materiality",
+            "high",
+            "--capabilities",
+            "independent_reasoning,code_review"
+          ],
+          "command": "majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review",
+          "description": "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+          "expectation": "exits 0; prints outcome, budget",
+          "id": "reasoning-plan-capabilities",
+          "setup": [],
+          "title": "A high uncertainty that asks for named capabilities"
         }
       ],
       "executable": true,
@@ -33872,7 +33923,7 @@
   "counts": {
     "arguments": 1460,
     "commands": 215,
-    "examples": 215,
+    "examples": 218,
     "runnable": 189
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",

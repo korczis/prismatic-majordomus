@@ -6,23 +6,23 @@
     "version": "0.17.0"
   },
   "registry": {
-    "fingerprint": "a28e25afa21af39c7b92f4c16ac0a63b75d868f25c5ecf0ea60e92e0f1271868",
+    "fingerprint": "99f125cfe4de2f39927367a01702699f2205a04e58a28944d681d44dc17ebda9",
     "summary": {
-      "total": 2056,
+      "total": 2060,
       "builtin": 183,
-      "declarative": 1873,
+      "declarative": 1877,
       "by_kind": {
         "command": 26,
         "query": 157,
-        "resource": 1873
+        "resource": 1877
       },
       "by_stability": {
         "behaviorally_verified": 131,
         "experimental": 44,
-        "implemented": 1881
+        "implemented": 1885
       },
       "mcp_tools": 176,
-      "mcp_resources": 1927,
+      "mcp_resources": 1931,
       "http_routes": 180,
       "cli_commands": 100,
       "modules": 86,
@@ -74950,7 +74950,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 84,
+        "capabilities": 88,
         "capability_ids": []
       },
       {
@@ -75113,7 +75113,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e8b7a304953ffcfad5950ee0be190214675e9b46e43584684853cb3f6fb3e339",
+    "fingerprint": "0fdc29b2c4fb2550287e6d5fbe4ada7c8b1207fb60d2af330852297e6c13a2e5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -75163,7 +75163,7 @@
       "release-record": 16,
       "rule": 163,
       "scope": 1,
-      "session": 84,
+      "session": 88,
       "skill": 7,
       "taxonomy": 10,
       "test": 388,
@@ -80426,7 +80426,7 @@
         "title": "Evidence — what ran, against which commit, and whether it still proves anything",
         "path": "docs/EVIDENCE.md",
         "source_class": "document",
-        "bytes": 59937
+        "bytes": 60132
       },
       {
         "uri": "majordomus://document/docs/EXECUTIONS.md",
@@ -80633,7 +80633,7 @@
         "title": "Reasoning",
         "path": "docs/REASONING.md",
         "source_class": "document",
-        "bytes": 13556
+        "bytes": 13784
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -80768,7 +80768,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 27660
+        "bytes": 27857
       },
       {
         "uri": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -90776,6 +90776,17 @@
         "bytes": 1152
       },
       {
+        "uri": "majordomus://session/s-20260911101024-420a",
+        "kind": "session",
+        "identity": "s-20260911101024-420a",
+        "title": "Session s-20260911101024-420a on master",
+        "description": "Session s-20260911101024-420a on master",
+        "path": ".ai/repo/sessions/20261008T201707Z--s-20260911101024-420a--master--dba5422--7db7bd00ad419a31.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 26916
+      },
+      {
         "uri": "majordomus://session/s-20260911111124-edd8",
         "kind": "session",
         "identity": "s-20260911111124-edd8",
@@ -90884,6 +90895,39 @@
         "section": "sessions",
         "source_class": "session",
         "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260912100926-89ec",
+        "kind": "session",
+        "identity": "s-20260912100926-89ec",
+        "title": "Recovered episode s-20260912100926-89ec",
+        "description": "Recovered episode s-20260912100926-89ec",
+        "path": ".ai/repo/sessions/20260914T044725Z--s-20260912100926-89ec--master--b3791fc--7ca5b976a3574fd5.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1263
+      },
+      {
+        "uri": "majordomus://session/s-20260912110906-d10e",
+        "kind": "session",
+        "identity": "s-20260912110906-d10e",
+        "title": "Recovered episode s-20260912110906-d10e",
+        "description": "Recovered episode s-20260912110906-d10e",
+        "path": ".ai/repo/sessions/20260914T044725Z--s-20260912110906-d10e--master--b3791fc--5ec09e977a4bd7f5.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
+      },
+      {
+        "uri": "majordomus://session/s-20260912111802-54ac",
+        "kind": "session",
+        "identity": "s-20260912111802-54ac",
+        "title": "Recovered episode s-20260912111802-54ac",
+        "description": "Recovered episode s-20260912111802-54ac",
+        "path": ".ai/repo/sessions/20260914T044725Z--s-20260912111802-54ac--master--b3791fc--08fbf9c1c197ab11.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1152
       },
       {
         "uri": "majordomus://session/s-20260912184450-bec7",
@@ -95527,7 +95571,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 84
+      "objects": 88
     },
     {
       "name": "session-context",
@@ -97318,6 +97362,27 @@
             ],
             "command": "majordomus generate openapi",
             "setup": [],
+            "expectation": "exits 0"
+          },
+          {
+            "id": "generate-site-check",
+            "title": "Check one target without writing it",
+            "description": "`--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.",
+            "argv": [
+              "generate",
+              "site",
+              "--check"
+            ],
+            "command": "majordomus generate site --check",
+            "setup": [
+              {
+                "argv": [
+                  "generate",
+                  "site"
+                ],
+                "command": "majordomus generate site"
+              }
+            ],
             "expectation": "exits 0"
           }
         ],
@@ -116617,6 +116682,20 @@
                 "command": "majordomus reasoning advisors",
                 "setup": [],
                 "expectation": "exits 0; prints reasoning   operational"
+              },
+              {
+                "id": "reasoning-advisors-json",
+                "title": "The same answer as one document",
+                "description": "The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.",
+                "argv": [
+                  "reasoning",
+                  "advisors",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus reasoning advisors --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity"
               }
             ],
             "subcommands": []
@@ -116769,6 +116848,22 @@
                   "material"
                 ],
                 "command": "majordomus reasoning plan --materiality material",
+                "setup": [],
+                "expectation": "exits 0; prints outcome, budget"
+              },
+              {
+                "id": "reasoning-plan-capabilities",
+                "title": "A high uncertainty that asks for named capabilities",
+                "description": "The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.",
+                "argv": [
+                  "reasoning",
+                  "plan",
+                  "--materiality",
+                  "high",
+                  "--capabilities",
+                  "independent_reasoning,code_review"
+                ],
+                "command": "majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review",
                 "setup": [],
                 "expectation": "exits 0; prints outcome, budget"
               }

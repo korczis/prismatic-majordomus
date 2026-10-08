@@ -629,6 +629,15 @@ Examples:
 
   Verified: exits 0.
 
+- **Check one target without writing it** — `--check` composes with a target: here only the registry dataset the site renders is compared with what the sources produce, exit 10 naming it when it is stale.
+
+  ```console
+  $ majordomus generate site
+  $ majordomus generate site --check
+  ```
+
+  Verified: exits 0.
+
 <a id="majordomus-bench"></a>
 ## `majordomus bench`
 
@@ -4688,6 +4697,14 @@ Examples:
 
   Verified: exits 0; prints reasoning   operational.
 
+- **The same answer as one document** — The report the API and the MCP tool return: `operational`, the mode and what decided it, every advisor with its status and reason, and the capacity per capability. A script reads this rather than the text form.
+
+  ```console
+  $ majordomus reasoning advisors --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /operational, /mode, /advisors, /capacity.
+
 <a id="majordomus-reasoning-plan"></a>
 ## `majordomus reasoning plan`
 
@@ -4714,6 +4731,14 @@ Examples:
 
   ```console
   $ majordomus reasoning plan --materiality material
+  ```
+
+  Verified: exits 0; prints outcome, budget.
+
+- **A high uncertainty that asks for named capabilities** — The selection covers the requested capabilities first, then prefers an advisor reached through a different adapter, then declaration order; every advisor not selected carries its reason. With none available the outcome is the structured local review.
+
+  ```console
+  $ majordomus reasoning plan --materiality high --capabilities independent_reasoning,code_review
   ```
 
   Verified: exits 0; prints outcome, budget.

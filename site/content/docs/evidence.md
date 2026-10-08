@@ -861,6 +861,7 @@ dispatches `pages.yml`, and that publication says current when the run confirms 
 When master has moved on, the newer publication already carries the evidence as stale and the
 newer run will refresh it.
 
+<!-- majordomus:unrun it fetches the workflow's retained artifacts with gh, which needs the network and a token; case 357 runs scripts/pages evidence --from over gathered fixture directories -->
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline

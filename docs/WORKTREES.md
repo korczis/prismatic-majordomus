@@ -161,6 +161,10 @@ majordomus worktree doctor                     # every diagnostic with its code 
 majordomus worktree migrate --plan             # what would move; changes nothing
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
+```
+
+<!-- majordomus:unrun it removes worktrees, which a documentation check must never do to the checkout it reads; case 611 runs it in a disposable repository and holds every refusal -->
+```bash
 majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
 ```
 
