@@ -3034,12 +3034,12 @@ mod tests {
         assert_eq!(c.verdict, Verdict::NotApplicable);
 
         let one = continuity_of(Some(ContinuityObservation {
-            offers: vec![offer("macbook-pro", Some("feature/x"), Some("#184"))],
+            offers: vec![offer("macbook-pro", Some("feature/x"), Some("#1842"))],
             last_sync: None,
         }));
         assert_eq!(one.verdict, Verdict::Active);
         assert!(one.summary.contains("macbook-pro"), "{}", one.summary);
-        assert!(one.summary.contains("feature/x, #184"), "{}", one.summary);
+        assert!(one.summary.contains("feature/x, #1842"), "{}", one.summary);
         assert!(!one.summary.contains("more"), "{}", one.summary);
         assert_eq!(
             one.evidence[0].observed,

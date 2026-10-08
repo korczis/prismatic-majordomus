@@ -39426,6 +39426,13 @@
         "source": "test/cases/98_why_catalogue.sh"
       },
       {
+        "id": "majordomus://test/test/cases/993_the_continuity_tools_answer_over_mcp.sh",
+        "kind": "test",
+        "label": "test/cases/993_the_continuity_tools_answer_over_mcp.sh",
+        "route": "/cockpit/objects/test/test-cases-993-the-continuity-tools-answer-over-mcp-sh",
+        "source": "test/cases/993_the_continuity_tools_answer_over_mcp.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/99_adr.sh",
         "kind": "test",
         "label": "test/cases/99_adr.sh",
@@ -40784,42 +40791,6 @@
           "summary": "Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later.",
           "target": "guaranteed",
           "weight": 8
-        }
-      },
-      {
-        "id": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "kind": "use-case",
-        "label": "prove-what-a-task-owed-before-calling-it-done",
-        "summary": "Prove what a task owed before calling it done",
-        "route": "/cockpit/objects/use-case/prove-what-a-task-owed-before-calling-it-done",
-        "source": ".ai/repo/use-cases/prove-what-a-task-owed-before-calling-it-done.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [],
-          "category": "completion",
-          "claims": [
-            "obligation-closure"
-          ],
-          "commands": [
-            "start",
-            "evidence",
-            "check",
-            "finish"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.obligation-closure"
-          ],
-          "responsibilities": [
-            "finish"
-          ],
-          "summary": "A task declares what it owes, records evidence against each obligation, and is refused when that evidence no longer describes the tree it was taken over.",
-          "target": "guaranteed",
-          "weight": 40
         }
       },
       {
@@ -60709,6 +60680,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/993_the_continuity_tools_answer_over_mcp.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/99_adr.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62149,21 +62125,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "majordomus://claim/obligation-closure",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "majordomus://rule/majordomus.obligation-closure@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63061,7 +63022,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4391,
+      "edges": 4389,
       "acyclic": true,
       "truncated": true
     }
