@@ -113,6 +113,8 @@ pub enum Command {
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
     Knowledge(KnowledgeArgs),
+    /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
+    Continuity(ContinuityArgs),
 }
 
 #[derive(Debug, Args)]
@@ -2486,6 +2488,93 @@ pub enum KnowledgeCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus continuity`. The output shape is global, so it reads where a person writes
+/// it, and the group runs nothing of its own.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityArgs, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "continuity", "resume", "--record", "a1b2"]).unwrap();
+/// let Command::Continuity(args) = cli.command else { panic!("not the continuity command") };
+/// let args: ContinuityArgs = args;
+/// assert!(matches!(args.command, ContinuityCommand::Resume { record: Some(r) } if r == "a1b2"));
+/// assert!(Cli::try_parse_from(["majordomus", "continuity"]).is_err(), "a subcommand is required");
+/// ```
+pub struct ContinuityArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `records`, `plan`, `publish`, `sync` or `resume`. Required, so that every
+    /// runnable path is a capability's.
+    pub command: ContinuityCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus continuity`: the command line of `continuity.status`,
+/// `continuity.records`, `continuity.device`, `continuity.plan`, `continuity.publish`,
+/// `continuity.sync` and `continuity.resume`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "continuity", "publish", "--issue", "#184"]);
+/// let Command::Continuity(args) = cli.command else { panic!("continuity") };
+/// let ContinuityCommand::Publish { issue, handover, .. } = args.command else { panic!("publish") };
+/// assert_eq!(issue.as_deref(), Some("#184"));
+/// assert!(handover.is_none(), "the newest handover by default");
+/// ```
+pub enum ContinuityCommand {
+    /// This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here
+    Status,
+    /// Every published handover the local store admits, by line, and every file it refused
+    Records,
+    /// This device's identity — the mesh node key, created when absent — and its label; with --label, rename it
+    Device {
+        /// A label for this device (macbook-pro, mac-mini)
+        #[arg(long)]
+        label: Option<String>,
+    },
+    /// Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin
+    Plan {
+        /// A record id or a unique prefix; the one resumable handover when absent
+        #[arg(long)]
+        record: Option<String>,
+    },
+    /// Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path
+    Publish {
+        /// A handover record's file name under .ai/local/state/handovers/; the newest when absent
+        #[arg(long)]
+        handover: Option<String>,
+        /// The issue the work belongs to
+        #[arg(long)]
+        issue: Option<String>,
+        /// The milestone it belongs to
+        #[arg(long)]
+        milestone: Option<String>,
+    },
+    /// Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending
+    Sync {
+        /// The git remote; the current branch's, else origin, when absent
+        #[arg(long)]
+        remote: Option<String>,
+    },
+    /// Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line
+    Resume {
+        /// A record id or a unique prefix; the one resumable handover when absent
+        #[arg(long)]
+        record: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus why`. The facets and the output shape are global, so they read the way a
 /// person writes them — `why list --audience solo-builder` — and are declared once.
 pub struct WhyArgs {
@@ -4490,6 +4579,83 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity status",
+        examples: &[ExampleDoc {
+            id: "continuity-status-json",
+            title: "Where this device stands in the work published from every device",
+            description: "The same value `GET /api/v1/continuity/status` and the MCP tool `majordomus_continuity_status` return: this repository's identity (a digest of its root commits, the same in every clone), this device, the record this checkout continues on its branch, how the local store stands towards the remote's — read from refs, with no network — and what other devices published that could be resumed here. A repository that has published nothing answers with an empty store, which is an answer and not an error.",
+            argv: &["continuity", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/repository", "/device/node", "/store/sync", "/resumable"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity device",
+        examples: &[ExampleDoc {
+            id: "continuity-device-json",
+            title: "This device, as a published handover names it",
+            description: "The node id and public key of this device's mesh key — created on first use in the user's state directory, never in a repository — and its label. `--label mac-mini` renames it without changing the key.",
+            argv: &["continuity", "device", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/device/node", "/device/label", "/public_key"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity records",
+        examples: &[ExampleDoc {
+            id: "continuity-records-json",
+            title: "Every published handover, by line",
+            description: "Every record of refs/majordomus/continuity that passed admission, every line of work with its heads, and a diagnostic for each refused file. Empty in a repository that has published nothing.",
+            argv: &["continuity", "records", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/records", "/lines", "/diagnostics"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity plan",
+        examples: &[ExampleDoc {
+            id: "continuity-plan-nothing",
+            title: "A plan with nothing to resume",
+            description: "With no handover published from another device, the plan says so — `nothing_to_resume` — and exits 0: absence is an answer. With one, the same command decides trust, lineage and source compatibility and lists the commands that resolve each blocker without running any of them.",
+            argv: &["continuity", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/status", "/blockers", "/warnings", "/actions"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity publish",
+        examples: &[ExampleDoc {
+            id: "continuity-publish-nothing",
+            title: "Nothing to publish without a handover",
+            description: "A publication reads the newest handover record; a checkout that has written none is told to write one with `majordomus handover` and exits 10, before any device key is created.",
+            argv: &["continuity", "publish"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "continuity sync",
+        examples: &[ExampleDoc {
+            id: "continuity-sync-no-remote",
+            title: "A repository with no remote keeps its records",
+            description: "Sync moves records only through a git remote. A repository with none answers `no_remote` and exits 0: the records stay in this clone, and that is a valid state rather than a failure.",
+            argv: &["continuity", "sync", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/action", "/store/sync"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity resume",
+        examples: &[ExampleDoc {
+            id: "continuity-resume-nothing",
+            title: "A resume with nothing to resume writes nothing",
+            description: "Resume acts only on a ready plan. With no published handover it writes nothing and exits 10, printing the plan that declined.",
+            argv: &["continuity", "resume"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

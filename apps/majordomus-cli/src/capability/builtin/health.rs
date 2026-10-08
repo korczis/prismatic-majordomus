@@ -511,6 +511,32 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         },
     );
 
+    // --- handovers published from other machines
+    //
+    // `continuity.status` decides it: every record of the local continuity store admitted
+    // or refused, and the lineage read from what was admitted. A refused record (forged,
+    // foreign, leaking) or a broken line fails; a diverged line, a dangling parent or a
+    // record too new to read warns. A repository that never published is not a fault.
+    let continuity = crate::continuity::Machine::open_read(
+        root,
+        super::mesh::declaration(ctx).and_then(Result::ok),
+    )
+    .and_then(|m| crate::continuity::status(&m));
+    let (status, detail, findings) = continuity_health(continuity);
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "continuity".into(),
+            title: "Handovers published across machines".into(),
+            status,
+            detail,
+            decided_by: "the admission and lineage checks of `continuity.status`".into(),
+            evidence: vec!["majordomus-cli continuity status".into()],
+            findings,
+        },
+    );
+
     // --- the shared server of this checkout
     //
     // Not a second opinion and not a second reading: `server::standing_at` is what answers
@@ -687,6 +713,57 @@ pub fn module() -> ModuleDescriptor {
     }
 }
 
+/// What the continuity store says about the repository's health: the worst severity among
+/// the status's diagnostics, how many records were admitted, refused and are resumable, and
+/// every diagnostic that is more than information. A store that could not be read is
+/// unknown, never ok.
+fn continuity_health(
+    status: Result<crate::continuity::Status, String>,
+) -> (HealthStatus, String, Vec<String>) {
+    match status {
+        Ok(st) => {
+            let worst = st
+                .diagnostics
+                .iter()
+                .map(|d| match d.severity {
+                    Severity::Error => HealthStatus::Fail,
+                    Severity::Warning => HealthStatus::Warn,
+                    _ => HealthStatus::Ok,
+                })
+                .fold(HealthStatus::Ok, HealthStatus::worse);
+            (
+                worst,
+                format!(
+                    "{} record(s) admitted, {} refused, {} resumable from another device",
+                    st.store.records,
+                    st.store.refused,
+                    st.resumable.len()
+                ),
+                st.diagnostics
+                    .iter()
+                    .filter(|d| d.severity != Severity::Info)
+                    .map(|d| {
+                        format!(
+                            "{} {}{}",
+                            d.code,
+                            d.path
+                                .as_deref()
+                                .map(|p| format!("{p}: "))
+                                .unwrap_or_default(),
+                            d.message
+                        )
+                    })
+                    .collect(),
+            )
+        }
+        Err(e) => (
+            HealthStatus::Unknown,
+            format!("the continuity store could not be read: {e}"),
+            Vec::new(),
+        ),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -785,5 +862,67 @@ mod tests {
             .collect();
         assert!(routes.contains(&"/api/v1/live".to_string()), "{routes:?}");
         assert!(routes.contains(&"/api/v1/ready".to_string()), "{routes:?}");
+    }
+    /// The continuity check reads its verdict from the status: nothing published is ok, a
+    /// file the store refused fails or warns by its severity and is named with its path, a
+    /// note that is only information is not a finding, and a store that could not be read
+    /// is unknown.
+    #[test]
+    fn the_continuity_check_is_the_worst_of_what_the_store_reports() {
+        use crate::continuity::tests_support::{body, handover, machine, World};
+        use crate::continuity::{self as domain, PublishRequest};
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+
+        let (status, detail, findings) = continuity_health(domain::status(&a));
+        assert_eq!(status, HealthStatus::Ok);
+        assert!(
+            detail.starts_with("0 record(s) admitted, 0 refused, 0 resumable"),
+            "{detail}"
+        );
+        assert!(findings.is_empty(), "{findings:?}");
+
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        domain::publish(&a, &PublishRequest::default()).unwrap();
+        crate::continuity::store::add(&a_root, &[("stray".into(), b"{}".to_vec())], "x\n").unwrap();
+        let st = domain::status(&a).unwrap();
+        let severities: Vec<Severity> = st.diagnostics.iter().map(|d| d.severity).collect();
+        let (status, detail, findings) = continuity_health(Ok(st.clone()));
+        assert_ne!(status, HealthStatus::Ok, "{severities:?}");
+        assert!(
+            detail.starts_with("1 record(s) admitted, 1 refused"),
+            "{detail}"
+        );
+        assert!(
+            findings.iter().any(|f| f.contains("records/stray.json: ")),
+            "{findings:?}"
+        );
+
+        // each severity is its own verdict, and information is not a finding
+        let with = |severity: Severity, path: Option<&str>| {
+            let mut st = st.clone();
+            st.diagnostics = vec![crate::model::Diagnostic {
+                severity,
+                code: "continuity.sample".into(),
+                path: path.map(String::from),
+                message: "said".into(),
+            }];
+            continuity_health(Ok(st))
+        };
+        let (status, _, findings) = with(Severity::Error, Some("records/x.json"));
+        assert_eq!(status, HealthStatus::Fail);
+        assert_eq!(findings, ["continuity.sample records/x.json: said"]);
+        let (status, _, findings) = with(Severity::Warning, None);
+        assert_eq!(status, HealthStatus::Warn);
+        assert_eq!(findings, ["continuity.sample said"]);
+        let (status, _, findings) = with(Severity::Info, None);
+        assert_eq!(status, HealthStatus::Ok);
+        assert!(findings.is_empty());
+
+        let (status, detail, findings) = continuity_health(Err("no device".into()));
+        assert_eq!(status, HealthStatus::Unknown);
+        assert_eq!(detail, "the continuity store could not be read: no device");
+        assert!(findings.is_empty());
     }
 }

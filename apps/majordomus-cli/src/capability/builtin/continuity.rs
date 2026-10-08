@@ -32,7 +32,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CapabilityKind, CliExposure, Exposure, McpExposure, McpResource, Stability,
+    WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
 use crate::git::{self, GitState};
@@ -40,7 +43,14 @@ use crate::metadata::frontmatter;
 use crate::metadata::yaml;
 use crate::{capability, module};
 
-use super::{get, Empty};
+use super::continuity_transfer as transfer;
+use super::{get, mcp, post, Empty};
+
+fn cli(words: &[&str]) -> Option<CliExposure> {
+    Some(CliExposure {
+        path: words.iter().map(|w| w.to_string()).collect(),
+    })
+}
 
 /// The URI under which `continuity.state` is read as an MCP resource.
 pub const CONTINUITY_URI: &str = "majordomus://continuity";
@@ -1015,6 +1025,129 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(2) },
                 handler: state,
             },
+            capability! {
+                id: "continuity.status",
+                title: "Where this device stands in the work published from every device",
+                description: "This device and repository identity, the record this checkout continues on its branch, how the local continuity store stands towards the remote's (from the refs alone, no network), every line of work with its heads, the handovers other devices published that this checkout could resume, and every refused record or broken lineage as a diagnostic. A diverged line — the same work continued twice — is reported; separate lines of work on separate devices are not a conflict.",
+                input: Empty,
+                output: crate::continuity::Status,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_status"),
+                    http: get("/api/v1/continuity/status"),
+                    cli: cli(&["continuity", "status"]),
+                },
+                tags: ["continuity", "handover", "devices"],
+                cache: CachePolicy::Disabled,
+                handler: transfer::status,
+            },
+            capability! {
+                id: "continuity.device",
+                kind: CapabilityKind::Command,
+                title: "This device's identity, and its label",
+                description: "The device a published handover names: the mesh node key (created when this device has none, in the user's state directory and never in a repository), its node id, its public key — what a trust list admits — and the label a person reads. With a label, renames the device; the key and every signature it made are unchanged.",
+                input: transfer::DeviceInput,
+                output: crate::continuity::DeviceView,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_device"),
+                    http: post("/api/v1/continuity/device"),
+                    cli: cli(&["continuity", "device"]),
+                },
+                tags: ["continuity", "devices"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: transfer::device,
+            },
+            capability! {
+                id: "continuity.records",
+                title: "Every published handover the local store admits",
+                description: "Every record of refs/majordomus/continuity that passed admission — schema, id, signature, repository identity, portability — by line, with each line's heads, and a diagnostic for every file refused and every lineage defect.",
+                input: Empty,
+                output: crate::continuity::Records,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_records"),
+                    http: get("/api/v1/continuity/records"),
+                    cli: cli(&["continuity", "records"]),
+                },
+                tags: ["continuity", "handover", "devices"],
+                cache: CachePolicy::Disabled,
+                handler: transfer::records,
+            },
+            capability! {
+                id: "continuity.plan",
+                title: "Whether and how a published handover can be resumed here",
+                description: "Writes nothing. Chooses the record (named, or the one other device's handover this checkout has not resumed, on this branch first) and decides: is its signer trusted, does it diverge from the record this checkout stands on, does the local source hold the commit and branch it was written against, was it written in a dirty tree whose uncommitted files never reached a commit, may the other device still be working. The verdict is ready, ready_with_warnings, requires_source_update, conflict, choose_record, nothing_to_resume or refused, with blockers, warnings, the commands that resolve them (recommended, never run), what a resume restores and what this checkout recomputes for itself.",
+                input: transfer::RecordInput,
+                output: crate::continuity::ResumePlan,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_plan"),
+                    http: get("/api/v1/continuity/plan"),
+                    cli: cli(&["continuity", "plan"]),
+                },
+                tags: ["continuity", "handover", "devices"],
+                cache: CachePolicy::Disabled,
+                handler: transfer::plan,
+            },
+            capability! {
+                id: "continuity.publish",
+                kind: CapabilityKind::Command,
+                title: "Publish this checkout's newest handover for another machine",
+                description: "Projects the newest handover record into a portable record — the handover body, the repository and device identity, the episode, the source state (branch, commit, and for a dirty tree the changed paths and a fingerprint, never their content), the task and its decisions, and the record it continues — refuses it when any value carries a credential, a secret environment value or a path of this machine's disk, signs it with the device's mesh key and adds it to refs/majordomus/continuity. Touches no branch, index or working tree, and no network: a sync publishes it.",
+                input: transfer::PublishInput,
+                output: crate::continuity::Published,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_publish"),
+                    http: post("/api/v1/continuity/publish"),
+                    cli: cli(&["continuity", "publish"]),
+                },
+                tags: ["continuity", "handover", "devices"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: transfer::publish,
+            }
+            .writes_repository(),
+            capability! {
+                id: "continuity.sync",
+                kind: CapabilityKind::Command,
+                title: "Exchange published handovers with a git remote",
+                description: "Fetches the remote's refs/majordomus/continuity, merges it into the local store as the union of both (records are content-addressed, so a name holding different bytes is reported and the local copy kept), and pushes the result, never forced. Reports each line as equal, remote_newer, local_newer, diverged, local_only or remote_only. An unreachable remote changes nothing and leaves what is pending pending.",
+                input: transfer::SyncInput,
+                output: crate::continuity::Synced,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_sync"),
+                    http: post("/api/v1/continuity/sync"),
+                    cli: cli(&["continuity", "sync"]),
+                },
+                tags: ["continuity", "handover", "devices"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: transfer::sync,
+            }
+            .writes_repository(),
+            capability! {
+                id: "continuity.resume",
+                kind: CapabilityKind::Command,
+                title: "Resume a handover another machine published",
+                description: "Plans exactly as continuity.plan does and acts only on a ready or ready_with_warnings plan: writes the handover into this checkout's handovers (where handover --resolve and the session briefing find it), appends the task's decisions to the decision log once each, and records the record as the one this checkout continues, so that its next publication extends the same line. Runs nothing the record says; the start command for the task is returned as a recommendation.",
+                input: transfer::RecordInput,
+                output: crate::continuity::Resumed,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_continuity_resume"),
+                    http: post("/api/v1/continuity/resume"),
+                    cli: cli(&["continuity", "resume"]),
+                },
+                tags: ["continuity", "handover", "devices"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: transfer::resume,
+            }
+            .writes_repository(),
         ],
     }
 }
@@ -1616,7 +1749,41 @@ mod tests {
             .iter()
             .map(|e| e.capability.id.as_str())
             .collect();
-        assert_eq!(ids, ["continuity.state"]);
+        assert_eq!(
+            ids,
+            [
+                "continuity.state",
+                "continuity.status",
+                "continuity.device",
+                "continuity.records",
+                "continuity.plan",
+                "continuity.publish",
+                "continuity.sync",
+                "continuity.resume",
+            ]
+        );
+        // the cross-machine half: three reads, and the commands that write — over POST only,
+        // with the effect that makes every surface ask before running them
+        for e in &m.capabilities[1..] {
+            let c = &e.capability;
+            let cli = c.exposure.cli.as_ref().expect("a command-line projection");
+            assert_eq!(cli.path[0], "continuity");
+            assert_eq!(c.id.as_str(), format!("continuity.{}", cli.path[1]));
+            let writes = c.execution.effect == crate::capability::model::Effect::RepositoryMutation;
+            assert_eq!(
+                writes,
+                matches!(cli.path[1].as_str(), "publish" | "sync" | "resume"),
+                "{} writes the repository exactly when it publishes, syncs or resumes",
+                c.id
+            );
+            let method = c.exposure.http.as_ref().map(|h| h.method);
+            assert_eq!(
+                method == Some(crate::capability::model::HttpMethod::Post),
+                !c.kind.is_read_only(),
+                "{}: a command is a POST and a read is a GET",
+                c.id
+            );
+        }
 
         let c = &m.capabilities[0].capability;
         let mcp = c.exposure.mcp.as_ref().expect("an MCP projection");

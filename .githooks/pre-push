@@ -1,2 +1,13 @@
 #!/bin/sh
+# A push that moves nothing but refs/majordomus/* carries no source: it is the continuity
+# store (`majordomus-cli continuity sync`), whose records are handovers, never work. The
+# finish contract asks whether the task's work may be published, which is not this
+# question, and asking it would refuse a handover for exactly the task it hands over.
+# Any other ref in the same push and the contract applies to the whole push, as before.
+only_layer=1 any=0
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  any=1
+  case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0 ;; esac
+done
+[ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
 bin/majordomus finish --check || exit $?
