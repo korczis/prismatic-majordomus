@@ -208,7 +208,8 @@ impl ServerStanding {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Desired {
-    /// The interface the shared server binds by default.
+    /// The interface a server started here would bind: what `MAJORDOMUS_HTTP_HOST` names
+    /// in this process's environment, and loopback when it names nothing.
     pub host: String,
     /// The port it asks for first.
     pub port: u16,
@@ -577,7 +578,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         checkout_id: repository::identity(&root),
         git,
         desired: Desired {
-            host: "127.0.0.1".into(),
+            host: desired_host(),
             port: crate::cli::DEFAULT_PORT,
             version: crate::VERSION.into(),
             executable: lease::executable_identity(),
@@ -586,6 +587,13 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         standing,
         servers,
     })
+}
+
+/// The interface a server started from this environment would bind — the same resolution
+/// `serve` and `mcp` make, without a flag, so that `desired` and a bind cannot disagree.
+fn desired_host() -> String {
+    let environment = std::env::var(crate::cli::HTTP_HOST_ENV).ok();
+    crate::cli::resolve_http_host(None, environment.as_deref()).0
 }
 
 /// The module: one capability, `server.status`, composed into the application by

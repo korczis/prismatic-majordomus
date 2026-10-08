@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.15.0"
+    "version": "0.16.0"
   },
-  "fingerprint": "10b2ca8282c2af84558482c1351998ea96b56b0a15630af01f2ed80f0671341e",
+  "fingerprint": "633f5aced8778b50240471222042bb01c15512dabebe444fc60669f28396a054",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1769,8 +1769,8 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 8,
-          "tested": 8,
+          "claims": 12,
+          "tested": 12,
           "use_cases": 0
         },
         {
@@ -1952,10 +1952,22 @@
           "test": "test/cases/33_event_registry.sh"
         },
         {
+          "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+          "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+          "status": "guaranteed",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        },
+        {
           "id": "evidence-a-failure-outranks-an-absence",
           "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
           "status": "guaranteed",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-a-recording-is-a-typed-run",
+          "claim": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         },
         {
           "id": "evidence-a-skip-is-not-run",
@@ -1976,6 +1988,12 @@
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
         },
         {
+          "id": "evidence-local-recording-stays-local",
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        },
+        {
           "id": "evidence-navigates-both-ways",
           "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
           "status": "guaranteed",
@@ -1992,6 +2010,12 @@
           "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
           "status": "guaranteed",
           "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "evidence-tree-is-measured-by-the-run",
+          "claim": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         },
         {
           "id": "evidence-unsupported-guarantee-is-reported",
@@ -2117,17 +2141,17 @@
       ],
       "counts": {
         "features": 5,
-        "claims": 30,
-        "tested": 26,
+        "claims": 34,
+        "tested": 30,
         "use_cases": 4,
         "rules": 13,
         "enforced_rules": 10,
-        "capabilities": 9,
+        "capabilities": 10,
         "moments": 19
       },
       "evidence": {
         "claims": {
-          "guaranteed": 26,
+          "guaranteed": 30,
           "planned": 4
         },
         "modules": {}
@@ -3426,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 233
+          "objects": 237
         }
       ],
       "rule_refs": [
@@ -3699,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 304,
+        "mcp_resources": 308,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 297,
+        "objects": 301,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -7061,7 +7085,7 @@
         },
         {
           "name": "document",
-          "objects": 322
+          "objects": 326
         }
       ],
       "rule_refs": [
@@ -7334,11 +7358,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 407,
+        "mcp_resources": 411,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 404,
+        "objects": 408,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -11772,7 +11796,11 @@
         "evidence-unsupported-guarantee-is-reported",
         "evidence-judged-at-the-presented-revision",
         "evidence-a-skip-is-not-run",
-        "evidence-a-failure-outranks-an-absence"
+        "evidence-a-failure-outranks-an-absence",
+        "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "evidence-tree-is-measured-by-the-run",
+        "evidence-a-recording-is-a-typed-run",
+        "evidence-local-recording-stays-local"
       ],
       "use_cases": [],
       "cockpit": [],
@@ -11831,6 +11859,13 @@
               "resource": "majordomus://evidence",
               "route": "GET /api/v1/evidence",
               "cli": "majordomus evidence show"
+            },
+            {
+              "id": "evidence.stamp",
+              "title": "Measure the tree a run left behind",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus evidence stamp"
             },
             {
               "id": "evidence.test",
@@ -11916,6 +11951,30 @@
           "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
           "status": "guaranteed",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+          "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+          "status": "guaranteed",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        },
+        {
+          "id": "evidence-tree-is-measured-by-the-run",
+          "claim": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        },
+        {
+          "id": "evidence-a-recording-is-a-typed-run",
+          "claim": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        },
+        {
+          "id": "evidence-local-recording-stays-local",
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       ],
       "use_case_refs": [],
@@ -11926,24 +11985,24 @@
         "economics"
       ],
       "counts": {
-        "capabilities": 4,
+        "capabilities": 5,
         "mcp_tools": 3,
         "mcp_resources": 1,
         "http_routes": 3,
-        "cli_paths": 4,
+        "cli_paths": 5,
         "commands": 1,
         "objects": 0,
         "rules": 0,
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 8,
+        "claims": 12,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 8
+          "guaranteed": 12
         },
         "modules": {
           "behaviorally_verified": 1
@@ -13484,8 +13543,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 8,
-        "claims": 8
+        "proven": 12,
+        "claims": 12
       },
       {
         "id": "benchmarks",
@@ -14176,7 +14235,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (233)",
+        "title": "claim (237)",
         "features": [
           "declare-once"
         ]
@@ -15222,29 +15281,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2012,
-    "builtin": 172,
-    "declarative": 1840,
+    "capabilities": 2025,
+    "builtin": 173,
+    "declarative": 1852,
     "modules": 51,
     "mcp_tools": 166,
-    "mcp_resources": 1893,
+    "mcp_resources": 1905,
     "http_routes": 170,
-    "cli_commands": 178,
+    "cli_commands": 179,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1840,
+    "objects": 1852,
     "by_kind": {
       "adr": 81,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 233,
+      "claim": 237,
       "command": 31,
       "context": 36,
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 322,
+      "document": 326,
       "domain": 6,
       "feature": 27,
       "gap": 1,
@@ -15264,7 +15323,7 @@
       "session": 84,
       "skill": 6,
       "taxonomy": 10,
-      "test": 371,
+      "test": 375,
       "use-case": 48,
       "workspace": 1
     },
@@ -15282,7 +15341,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 213,
+    "declared": 217,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -15657,7 +15716,19 @@
         "label": "not run",
         "supported": false
       },
+      "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "evidence-a-failure-outranks-an-absence": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-a-recording-is-a-typed-run": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -15682,6 +15753,12 @@
         "supported": false
       },
       "evidence-judged-at-the-presented-revision": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-local-recording-stays-local": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -15718,6 +15795,12 @@
         "supported": false
       },
       "evidence-subjects-are-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-tree-is-measured-by-the-run": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

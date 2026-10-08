@@ -1931,7 +1931,7 @@ pub struct EvidenceArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `show`, `claim`, `proves` or `record`. Required: the group runs nothing of its own,
+    /// `show`, `claim`, `proves`, `record` or `stamp`. Required: the group runs nothing of its own,
     /// so that every runnable path here is one a capability declares
     /// rather than one classified command-line-only in `cli::local`.
     pub command: EvidenceCommand,
@@ -1948,7 +1948,9 @@ pub struct EvidenceArgs {
 /// `show`, `claim` and `proves` are the command line of `evidence.report`,
 /// `evidence.claim` and `evidence.test`; `record` is the command line of
 /// `evidence.record`, which is a command line and nothing else because it writes a tracked
-/// file and this server is read-only. The capability is `evidence.test` and the command is
+/// file and this server is read-only; `stamp` is the command line of `evidence.stamp`, a
+/// read offered only here because it reads a path its caller names. The capability is
+/// `evidence.test` and the command is
 /// `proves` — `test` is a word the fish completion adapter refuses, so the command line
 /// spells the relation with the verb rather than renaming the identity.
 ///
@@ -1980,6 +1982,21 @@ pub struct EvidenceArgs {
 /// assert!(matches!(
 ///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
 ///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+/// ));
+///
+/// // a run measures the checkout it left; the recording carries that measurement
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "stamp", "--report", "suite.tsv", "--exclude", "dist"]),
+///     EvidenceCommand::Stamp { report: Some(r), exclude, .. }
+///         if r.ends_with("suite.tsv") && exclude == ["dist"]
+/// ));
+/// assert!(matches!(
+///     parse(&[
+///         "majordomus", "evidence", "record", "--suite", "s.tsv", "--provenance", "p.json",
+///         "--provenance", "crate=c.json", "--ledger", "local",
+///     ]),
+///     EvidenceCommand::Record { provenance, ledger: Some(l), .. }
+///         if provenance == ["p.json", "crate=c.json"] && l == "local"
 /// ));
 /// ```
 pub enum EvidenceCommand {
@@ -2036,6 +2053,34 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+        /// The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=`
+        /// when the file names no producer and several reports are given
+        #[arg(long, value_name = "[PRODUCER=]FILE")]
+        provenance: Vec<String>,
+        /// The summary `scripts/rust-coverage --summary-json` wrote
+        #[arg(long)]
+        coverage: Option<PathBuf>,
+        /// repo (the default) or local
+        #[arg(long)]
+        ledger: Option<String>,
+        /// Also write the run record to this file
+        #[arg(long)]
+        run_record: Option<PathBuf>,
+    },
+    /// Measure the checkout as a run left it, for `record --provenance`
+    Stamp {
+        /// The producer whose run this is: suite, crate or coverage
+        #[arg(long)]
+        producer: Option<String>,
+        /// The report the run wrote
+        #[arg(long)]
+        report: Option<PathBuf>,
+        /// One of the run's own untracked outputs (a file, or a directory with everything under it)
+        #[arg(long)]
+        exclude: Vec<String>,
+        /// Write the measurement to this file
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
 }
 
@@ -3068,9 +3113,11 @@ pub struct McpArgs {
     #[arg(long)]
     pub standalone: bool,
 
-    /// Interface the shared server binds when this process is the one that starts it
-    #[arg(long, default_value = "127.0.0.1", value_name = "HOST")]
-    pub http_host: String,
+    /// Interface the shared server binds when this process is the one that starts it;
+    /// without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback
+    /// (`127.0.0.1`) when that is unset
+    #[arg(long, value_name = "HOST")]
+    pub http_host: Option<String>,
 
     /// Port the shared server binds when this process starts it; when it is taken, a free
     /// port is used instead and the URL is logged on stderr either way
@@ -3080,6 +3127,92 @@ pub struct McpArgs {
 
 /// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
 pub const DEFAULT_PORT: u16 = 8741;
+
+/// The interface a local server binds when nothing says otherwise.
+pub const LOOPBACK_HOST: &str = "127.0.0.1";
+
+/// The variable that names, for one machine, the interface a local server binds.
+///
+/// It is the machine's fact and not the repository's: a tracked setting would make every
+/// clone of a public repository listen on its network, and a flag would have to be repeated
+/// by every caller that starts a server — the session-start hook, `serve ensure`, each
+/// client's `majordomus mcp`. A variable is inherited by all of them, and an environment
+/// that does not set it keeps loopback.
+pub const HTTP_HOST_ENV: &str = "MAJORDOMUS_HTTP_HOST";
+
+/// Where the interface a local server binds came from.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_http_host, HostOrigin};
+/// // only an address the environment supplied is announced in the log as the variable's
+/// assert_eq!(resolve_http_host(None, Some("0.0.0.0")).1, HostOrigin::Environment);
+/// assert_ne!(HostOrigin::Flag, HostOrigin::Default);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HostOrigin {
+    /// `--host` or `--http-host` on this command line.
+    Flag,
+    /// [`HTTP_HOST_ENV`] in this process's environment.
+    Environment,
+    /// Neither: [`LOOPBACK_HOST`].
+    Default,
+}
+
+/// The interface a local server binds: the flag when one was given, else what
+/// [`HTTP_HOST_ENV`] names, else loopback. A variable that is set and blank is unset.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_http_host, HostOrigin};
+/// assert_eq!(
+///     resolve_http_host(Some("10.0.0.1"), Some("0.0.0.0")),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, Some(" 0.0.0.0 ")),
+///     ("0.0.0.0".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, Some("  ")),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, None),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// ```
+pub fn resolve_http_host(flag: Option<&str>, environment: Option<&str>) -> (String, HostOrigin) {
+    if let Some(host) = flag {
+        return (host.to_string(), HostOrigin::Flag);
+    }
+    match environment.map(str::trim).filter(|h| !h.is_empty()) {
+        Some(host) => (host.to_string(), HostOrigin::Environment),
+        None => (LOOPBACK_HOST.to_string(), HostOrigin::Default),
+    }
+}
+
+/// [`resolve_http_host`] against this process's environment: what `serve`, `mcp` and
+/// `server.status` all read, so that the address a server binds and the address the status
+/// calls desired cannot disagree.
+///
+/// ```
+/// use majordomus_cli::cli::{local_http_host, HostOrigin};
+/// // a flag is the answer whatever the environment holds
+/// assert_eq!(
+///     local_http_host(Some("127.0.0.1")),
+///     ("127.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let (host, origin) = resolve_http_host(flag, environment.as_deref());
+    if origin == HostOrigin::Environment {
+        tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        );
+    }
+    (host, origin)
+}
 
 #[derive(Debug, Args)]
 /// `majordomus serve`.
@@ -3092,9 +3225,10 @@ pub struct ServeArgs {
     /// `status`, `ensure` or `stop`; none serves.
     pub command: Option<ServeCommand>,
 
-    /// Interface to bind; loopback unless you say otherwise
-    #[arg(long, default_value = "127.0.0.1")]
-    pub host: String,
+    /// Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine,
+    /// and loopback (`127.0.0.1`) when that is unset
+    #[arg(long, value_name = "HOST")]
+    pub host: Option<String>,
 
     /// Port to bind; 0 picks a free one and the address is logged on stderr
     #[arg(long, default_value_t = DEFAULT_PORT)]
@@ -4304,6 +4438,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence stamp",
+        examples: &[ExampleDoc {
+            id: "evidence-stamp-json",
+            title: "What a run measured, as one document",
+            description: "The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report.",
+            argv: &["evidence", "stamp", "--producer", "suite", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/producer", "/commit", "/working_tree", "/recorder", "/host"]),
         }],
     },
     CommandExamples {

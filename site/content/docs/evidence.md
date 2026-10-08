@@ -196,7 +196,7 @@ ledger's own row.
 | 8 | a pass whose test no longer hashes to its recorded digest, and no input changed | `stale` | `changed`: the test |
 | 9 | a pass, and an input changed | `stale` | `changed`: those inputs |
 | 10 | a pass, changed' empty, the run's recorded tree clean, the presented tree clean | **`proven`** | |
-| 11 | as 10, but the run's recorded tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the run measured a tree that was not its commit |
+| 11 | as 10, but the run's recorded tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the run measured a tree that was not its commit (`dirty`), or the run's tree was not measured, so it cannot be shown to be its commit (`unknown`) |
 | 12 | as 10, but the presented tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the presented revision was built from a tree that was not its commit |
 | 13 | a pass, changed' not empty, and none of it an input | `inputs_unchanged` | |
 | 14 | as 13, but the route names no inputs at all | `stale` | detail: a change since the run cannot be ruled out |
@@ -392,15 +392,19 @@ The runs already write their results down. `test/run.sh` writes one TSV row per 
 `Running tests/<name>.rs` line and a `test result:` line per integration binary. Neither is
 durable, neither carries a commit, and neither is joined to anything.
 
-`evidence record` reads what those runs wrote, stamps each result with the provenance the
-run itself did not have, and merges it into the ledger.
+A run measures the checkout it left with `evidence stamp`, and `evidence record` reads what
+the run wrote, carries that measurement into each result with the digest, the time and the
+origin, and merges it into the ledger.
 
+<!-- majordomus:unrun each pair follows a whole suite run and a whole crate run, which no documentation check repeats; case 505 runs `evidence stamp` and `evidence record --provenance` for both producers over a fixture report -->
 ```sh
 MJ_TEST_REPORT=suite.tsv bash test/run.sh
-majordomus evidence record --suite suite.tsv --origin local
+majordomus evidence stamp --producer suite --report suite.tsv --out suite.provenance.json
+majordomus evidence record --suite suite.tsv --provenance suite.provenance.json
 
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml 2>&1 | tee crate.log
-majordomus evidence record --crate-output crate.log --origin local
+majordomus evidence stamp --producer crate --report crate.log --out crate.provenance.json
+majordomus evidence record --crate-output crate.log --provenance crate.provenance.json
 ```
 
 Then commit the ledger. A recording that is not committed is a local opinion.
@@ -409,16 +413,25 @@ It records; it decides nothing. A case that failed is a case the runner said fai
 test that appears in no report is left exactly as it was — the report will say `not_run`
 for it, which is true.
 
-**Why the commit is taken at record time rather than by the runner.** The runner is a shell
-script that executes each case in a disposable temporary repository and genuinely does not
-know which checkout it was invoked from. Taking the commit when the result is recorded
-takes it from the tree the run was made against — the same thing, provided the recording
-happens in that tree. A dirty tree is recorded as `dirty` for exactly this reason: it is
-the one case where the commit does not describe what ran.
+**The run measures; the recorder carries.** A recorder that stamped each result with the tree
+it sees would vouch for a tree it did not see: CI records in a fresh checkout, and a local
+run may be recorded after its checkout changed. So `evidence stamp` measures the checkout
+as the run left it: the commit; the tree, with the evidence ledger ignored and the run's own
+untracked outputs excluded (`--exclude` names a file or a directory, never a pattern, the
+whole checkout or a path holding tracked files, so an exclude never hides a tracked change;
+a report inside the checkout is one of those outputs); the producer, its toolchain, the
+recorder's version, the report's digest, the host and the CI run. `evidence record
+--provenance [<producer>=]<file>` carries that measurement into the report's executions.
+When the measured tree was clean, the test's digest is taken from the commit, which holds
+the bytes the run executed. A report recorded without a measurement carries the tree
+`unknown`, which never reads `proven`. A local or release measurement must name its report
+(`--report`), or it cannot say which run it measured. A stamp measures the checkout when it
+is taken, after the report was written, and not the tree while the run executed: a run on a
+dirty tree that is cleaned before the stamp reads clean.
 
 Refusals, all of them deliberate:
 
-- **nothing to record** — neither `--suite` nor `--crate-output` was given;
+- **nothing to record** — no `--suite`, `--crate-output` or `--coverage` was given;
 - **not a git work tree with a commit** — a run recorded there would carry no provenance
   and prove nothing;
 - **a malformed report line** — refused rather than skipped, because a silently dropped
@@ -426,12 +439,40 @@ Refusals, all of them deliberate:
   the safe direction and still a lie;
 - **a result for a test this checkout does not have** — named in the recording's `unknown`
   list rather than recorded or dropped, because it means the runner and the matrix have
-  diverged.
+  diverged;
+- **a measurement of another commit** — the report ran somewhere else: record it in a
+  checkout of the commit it ran;
+- **a measurement of another report** — its digest is not the report's;
+- **a measurement for a report not given, or keyed to another producer**;
+- **a local or release measurement that names no report**;
+- **a CI report without a measurement** — a CI recording carries the measurement its own
+  job made. A job's tree file, which names no report, is accepted for a CI recording until
+  CI stamps with its report.
 
-Two shapes in `cargo test`'s output are handled specifically: `Running unittests
-src/lib.rs` is the crate's own unit-test binary and is not an integration test a claim can
-name, so it is not recorded as one; and a `test result:` line with no `Running` line before
-it belongs to no binary and is dropped rather than credited to the previous one.
+Every recording is also a typed run. `evidence record` returns an `EvidenceRunRecord` (its
+id, origin, commit, the weakest tree over the reports given, the measurement of each report,
+totals by outcome and runner, what was absent, dropped or unknown, the executions) and
+writes it with `--run-record <file>`. `--coverage <summary>` joins the summary
+`scripts/rust-coverage --summary-json` wrote, bound to the commit and the tree its run
+measured, with the floors the threshold files state; it is current only for its own commit,
+and only on clean trees. `--ledger local` merges into `.ai/local/evidence/ledger.json`,
+which the repository ignores: it changes no tracked file and moves no verdict. A run record
+never decides a verdict; a later surface lets one weaken a verdict only through the one
+monotone rule (`freshness::weakened_by`, which run records reach through
+`evidence::weakened_by_records`), which can withhold `proven` and never grant it.
+
+A crate binary states only what ran. `cargo test` prints `ok` on the result line of a
+binary that ran nothing at all, so the recorder reads the counts, not only the word: a
+binary with a failed test is a failure whatever its word says; one that passed nothing
+(every test ignored, or none there) or ran only a subset a name filter chose is a skip, the
+absence of a proof rather than a proof; one whose result line carries no count, or that
+printed no result line before the next binary, is an error, because the harness could not
+say what ran. Colour codes are stripped from every line before it is matched, so a coloured
+run reads as a plain one. What the output held that no claim can name yet is listed, with
+the reason, in the recording's `dropped` list (a `dropped` line in the text output) rather
+than ignored: the crate's own unit-test binary (`Running unittests src/lib.rs`), its
+doctests (`Doc-tests <crate>`), a binary outside `tests/`, and a `test result:` line with no
+`Running` line before it, which is never credited to the previous binary.
 
 ### In CI
 
@@ -443,7 +484,7 @@ after the suite step:
 
 ```yaml
 - if: always()
-  run: majordomus evidence record --suite suite.tsv --origin ci
+  run: majordomus evidence record --suite suite.tsv --provenance suite=suite-tree.json --origin ci
 ```
 
 What is **not** wired, and is a target rather than a description: nothing runs that step
@@ -454,7 +495,7 @@ commit, the way the benchmark baseline is written. Until that exists, the ledger
 by whoever runs the suite locally and commits it, and the states are honest about the
 result either way.
 
-## The four capabilities
+## The capabilities
 
 One declaration in
 [`src/capability/builtin/evidence.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/capability/builtin/evidence.rs);
@@ -468,6 +509,7 @@ every surface is derived from it ([`CAPABILITIES.md`](@/docs/capabilities.md)).
 | `evidence.claim` | `majordomus evidence claim <id>` | `GET /api/v1/evidence/claim` | tool `majordomus_evidence_claim` |
 | `evidence.test` | `majordomus evidence proves <id>` | `GET /api/v1/evidence/test` | tool `majordomus_evidence_test` |
 | `evidence.record` | `majordomus evidence record` | — | — |
+| `evidence.stamp` | `majordomus evidence stamp` | — | — |
 
 </div>
 
@@ -477,7 +519,7 @@ which exits `10` when any claim declares a guarantee the evidence does not suppo
 tallies are computed **before** the filter: a filtered answer says how much of the matrix
 it examined, never how much it returned.
 
-None of the four caches. The ledger is a file that changes outside the process, and a
+None of them caches. The ledger is a file that changes outside the process, and a
 cached answer would be exactly the stale evidence this subsystem exists to name.
 
 **`evidence.record` is the only one that writes, and it is not reachable over the network.**
@@ -488,6 +530,9 @@ over a socket. It is declared as a capability rather than hand-written as a comm
 it stays inside the registry, the command graph and the generated reference. It is also
 waived from the benchmark, with the reason recorded: timing it in a loop would rewrite the
 repository's evidence.
+
+`evidence.stamp` writes nothing, and it is command-line only too: it reads a report whose
+path its caller names, and a network client must not choose a file this executable reads.
 
 ## Navigating in both directions
 
@@ -751,12 +796,14 @@ checkout right after its run and hands the measurement over beside its report:
 the outputs its own run names, at the paths where that run writes them, and nothing else: the
 suite its report, at the root; the rust job its timings and its artifact directory, which
 `scripts/rust-check` writes in the crate's directory, where it runs. The measurement lists what
-it excluded. The manifest's `working_tree` is derived from those measurements
-alone: clean when every recorded job measured a clean tree, dirty when any measured a dirty one,
-unknown otherwise. It is never read from the recorder's checkout, which is clean by
-construction. The recorded rows still carry the recorder's own stamp, which the manifest keeps
-apart as `rows_working_tree`. A report whose job measured a commit other than the one the
-collector runs on is refused: it is not recorded, and it is named.
+it excluded. The recorder refuses a CI report without the measurement its own job made, so
+the collector passes each job's tree file as that report's provenance, and each runner's rows
+carry its own job's measurement (the manifest keeps the rows' trees as `rows_working_tree`).
+The manifest's `totals`, its `working_tree` (the weakest tree over the recorded reports) and
+the suite and crate words of `absent` are read from the recording's run record rather than
+computed a second time; it is never read from the recorder's checkout, which is clean by
+construction. A report whose job measured a commit other than the one the collector runs on,
+or whose job left no measurement, is refused: it is not recorded, and it is named.
 
 The collector writes `manifest.json`, naming:
 
@@ -764,7 +811,7 @@ The collector writes `manifest.json`, naming:
   was built from, carried beside it and never in its place;
 - the event and the run;
 - the outcomes of that run's executions;
-- the producers' measurements, the `working_tree` derived from them, and the `report_tree`;
+- the producers' measurements, the run record's `working_tree`, and the `report_tree`;
 - which reports were absent, a report that yielded no execution included, and which were
   refused, with the reason.
 

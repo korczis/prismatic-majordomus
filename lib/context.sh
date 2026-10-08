@@ -399,7 +399,7 @@ mj_ctx_render() {
 # widen a promise three documents make; one function called twice does not.
 #
 # Silence is the only failure mode. No executable, no server, no jq, no curl, a lease
-# outside loopback, a server that does not answer within two seconds: nothing is printed and
+# naming a host other than this one, a server that does not answer within two seconds: nothing is printed and
 # the status is non-zero, because every caller here is offering a coordination hint and a
 # hint that can break the command carrying it is worse than no hint.
 mj_peer_board() {
@@ -437,6 +437,15 @@ mj_peer_board() {
   # and this request is it, so the exception is only as wide as its guard: a lease naming
   # anything but loopback is not the shared server of this repository, and the section is
   # not written rather than the promise being quietly widened.
+  #
+  # A server bound to every interface (`MAJORDOMUS_HTTP_HOST=0.0.0.0`, or a deployment
+  # object) publishes the unspecified address, which names no host at all. Such a server
+  # listens on loopback among the rest, so it is asked there: the request still cannot
+  # leave this machine, and a checkout whose server a second machine may reach does not
+  # lose the board for it. Any other address stays refused.
+  case "$url" in
+    http://0.0.0.0:*) url="http://127.0.0.1:${url#http://0.0.0.0:}" ;;
+  esac
   case "$url" in
     http://127.0.0.1:*|http://localhost:*|"http://[::1]:"*) ;;
     *) return 1 ;;
