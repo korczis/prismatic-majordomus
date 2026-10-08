@@ -9,13 +9,20 @@
 //! probe and one announcement per interval, and roughly a second in which the instance is
 //! not registered.
 //!
+//! `avahi-browse` resolves an instance when it appears and never again, and an instance
+//! that left and returned within a second does not always appear to have left: measured
+//! on avahi 0.8, a browser that stayed saw the republished TXT record in one run of
+//! three. So the browser is replaced too, every [`REBROWSE_AFTER`]: a new one resolves
+//! every instance from what the daemon holds now.
+//!
 //! Every child is owned here and reaped here: replacing the publisher, an end of
 //! browsing, and dropping the value each kill and wait.
 //!
-//! The parser is written from avahi's documented parseable format and its source
-//! (`avahi-browse.c`, `avahi_string_list_to_string`), not from output captured on a live
-//! daemon: this repository's development machines are Macs. A line it cannot read yields
-//! no instance, and an envelope it reassembled wrongly is refused by its signature.
+//! The parser reads what avahi-browse 0.8 printed on a live daemon (Debian bookworm, in a
+//! container; the test's recorded line is that output): a record's strings come last
+//! first, and a `"` or `\\` inside one is written with a `\\` before it. A line it cannot
+//! read yields no instance, and an envelope it reassembled wrongly is refused by its
+//! signature.
 
 use std::ffi::{OsStr, OsString};
 use std::io::{BufRead, BufReader};
@@ -23,9 +30,14 @@ use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use super::bonjour::{Advertised, DnsSd, Found};
+
+/// How long one `avahi-browse` is kept before a new one takes its place. Well inside the
+/// minute an advertised presence lasts, and long enough that the browser has printed
+/// what the daemon knows.
+const REBROWSE_AFTER: Duration = Duration::from_secs(10);
 
 /// avahi's tools, and the children this value runs.
 pub(crate) struct Avahi {
@@ -34,6 +46,9 @@ pub(crate) struct Avahi {
     publisher: Option<Child>,
     browser: Option<Child>,
     lines: Option<Receiver<Vec<u8>>>,
+    /// The service type being browsed, and since when by the browser that runs now.
+    browsing: Option<(String, Instant)>,
+    rebrowse_after: Duration,
 }
 
 impl Avahi {
@@ -45,6 +60,8 @@ impl Avahi {
             publisher: None,
             browser: None,
             lines: None,
+            browsing: None,
+            rebrowse_after: REBROWSE_AFTER,
         }
     }
 
@@ -132,10 +149,17 @@ impl DnsSd for Avahi {
             });
         self.browser = Some(child);
         self.lines = Some(rx);
+        self.browsing = Some((service.to_string(), Instant::now()));
         Ok(())
     }
 
     fn poll(&mut self, wait: Duration) -> Result<Vec<Found>, String> {
+        if let Some((service, _)) = self
+            .browsing
+            .take_if(|(_, since)| since.elapsed() >= self.rebrowse_after)
+        {
+            self.browse(&service)?;
+        }
         let Some(lines) = &self.lines else {
             return Err("not browsing".into());
         };
@@ -147,6 +171,7 @@ impl DnsSd for Avahi {
                 reap(&mut self.browser);
                 reap(&mut self.publisher);
                 self.lines = None;
+                self.browsing = None;
                 return Err("avahi-browse ended (is avahi-daemon running?)".into());
             }
         }
@@ -165,10 +190,11 @@ impl Drop for Avahi {
 
 /// One line of `avahi-browse -rp`, when it is a resolved instance:
 /// `=;<interface>;<protocol>;<name>;<type>;<domain>;<host>;<address>;<port>;<txt>`. The
-/// name has `\DDD` for every byte avahi escapes; the TXT field is the strings in order,
-/// each between double quotes with one space between two, their bytes printed as they
-/// are. A string that itself contains `" "` therefore reads as two, and the envelope it
-/// belonged to is refused above — by the part count, or by its signature.
+/// name has `\DDD` for every byte avahi escapes. The TXT field is the record's strings,
+/// each between double quotes with one space between two, a `"` or a `\` inside a string
+/// written with a `\` before it — and last first: avahi keeps a record's strings in a
+/// list it prepends to. They are handed on in the order printed; the envelope is put
+/// together by index. A field that is not quoted strings to its end is no instance.
 pub(crate) fn resolved(line: &[u8]) -> Option<Found> {
     let line = line.strip_suffix(b"\n").unwrap_or(line);
     let fields: Vec<&[u8]> = line.splitn(10, |b| *b == b';').collect();
@@ -178,20 +204,58 @@ pub(crate) fn resolved(line: &[u8]) -> Option<Found> {
     let text = |field: &[u8]| String::from_utf8_lossy(&unescaped(field)).into_owned();
     let (interface, protocol) = (text(fields[1]), text(fields[2]));
     let (name, service, domain) = (text(fields[3]), text(fields[4]), text(fields[5]));
-    let txt = fields[9]
-        .strip_prefix(b"\"")
-        .and_then(|txt| txt.strip_suffix(b"\""))?;
-    let mut strings = Vec::new();
-    let mut rest = txt;
-    while let Some(at) = rest.windows(3).position(|w| w == b"\" \"") {
-        strings.push(rest[..at].to_vec());
-        rest = &rest[at + 3..];
-    }
-    strings.push(rest.to_vec());
     Some(Found {
         name: format!("{name}.{service}.{domain} ({interface} {protocol})"),
-        txt: strings,
+        txt: quoted_strings(fields[9])?,
     })
+}
+
+/// The strings of a TXT field as `avahi_string_list_to_string` prints them: `"…" "…"`,
+/// with `\"` for a quote and `\\` for a backslash inside one, and `\DDD` for a byte it
+/// would not print. `None` when the field is empty or is not that from end to end.
+fn quoted_strings(field: &[u8]) -> Option<Vec<Vec<u8>>> {
+    let mut strings = Vec::new();
+    let mut i = 0;
+    loop {
+        if field.get(i) != Some(&b'"') {
+            return None;
+        }
+        i += 1;
+        let mut string = Vec::new();
+        loop {
+            match *field.get(i)? {
+                b'"' => break,
+                b'\\' => {
+                    let digits = field
+                        .get(i + 1..i + 4)
+                        .filter(|d| d.iter().all(u8::is_ascii_digit))
+                        .map(|d| d.iter().fold(0u16, |n, d| n * 10 + u16::from(d - b'0')))
+                        .and_then(|value| u8::try_from(value).ok());
+                    match digits {
+                        Some(byte) => {
+                            string.push(byte);
+                            i += 4;
+                        }
+                        None => {
+                            string.push(*field.get(i + 1)?);
+                            i += 2;
+                        }
+                    }
+                }
+                byte => {
+                    string.push(byte);
+                    i += 1;
+                }
+            }
+        }
+        strings.push(string);
+        i += 1;
+        match field.get(i..) {
+            Some([]) => return Some(strings),
+            Some([b' ', ..]) => i += 1,
+            _ => return None,
+        }
+    }
 }
 
 /// avahi's `\DDD` escapes (three decimal digits for one byte) taken back out of a field.
@@ -224,36 +288,44 @@ mod tests {
     use crate::mesh::bonjour::{envelope_of, txt_of};
     use std::os::unix::fs::PermissionsExt;
 
-    /// Lines in avahi-browse's documented parseable format. NOT captured from a live
-    /// daemon: written from the format `avahi-browse -rp` documents and its source prints.
-    const RECORDED: &[u8] = b"+;eth0;IPv4;majordomus-641bdb94-01234567;_majordomus._tcp;local\n\
-+;eth0;IPv4;Office\\032Printer;_majordomus._tcp;local\n\
-=;eth0;IPv4;majordomus-641bdb94-01234567;_majordomus._tcp;local;mac.local;192.168.1.20;8741;\"txtvers=1\" \"n=2\" \"e0={\"v\":2,\"name\":\"a;b\",\" \"e1=\"sig\":\"00\"}\"\n\
-=;eth0;IPv4;Office\\032Printer;_majordomus._tcp;local;printer.local;192.168.1.9;631;\"rp=ipp/print\"\n\
--;eth0;IPv4;Office\\032Printer;_majordomus._tcp;local\n\
-=;eth0;IPv6;bare;_majordomus._tcp;local;bare.local;fe80::1;9;\n";
+    /// What `avahi-browse -rpk _mjt._tcp` 0.8 printed for an instance published with
+    /// `avahi-publish -s mjprobe _mjt._tcp 4242 txtvers=1 n=2 e0=… e1=…` on a live daemon,
+    /// the run of `q` in `e1` shortened from 240. The `+`, `-` and stranger lines beside it
+    /// are in the same format and were not captured.
+    const RECORDED: &[u8] = br#"+;eth0;IPv4;mjprobe;_mjt._tcp;local
++;eth0;IPv4;Office\032Printer;_mjt._tcp;local
+=;eth0;IPv4;mjprobe;_mjt._tcp;local;611d6621594c.local;172.17.0.3;4242;"e1=qqqq\"tail" "e0={\"v\":1,\"k\":\"a\\\\b\",\"s\":\"x y;z\"}" "n=2" "txtvers=1"
+=;eth0;IPv4;Office\032Printer;_mjt._tcp;local;printer.local;192.168.1.9;631;"rp=ipp/print"
+-;eth0;IPv4;Office\032Printer;_mjt._tcp;local
+=;eth0;IPv6;bare;_mjt._tcp;local;bare.local;fe80::1;9;
+"#;
 
     #[test]
-    fn a_resolved_line_gives_the_instance_and_its_txt_strings_in_order() {
+    fn a_resolved_line_gives_the_instance_and_its_txt_strings_as_they_were_published() {
         let found: Vec<Found> = RECORDED
             .split_inclusive(|b| *b == b'\n')
             .filter_map(resolved)
             .collect();
         assert_eq!(found.len(), 2, "two resolved lines carry a TXT field");
+        assert_eq!(found[0].name, "mjprobe._mjt._tcp.local (eth0 IPv4)");
+        // last first, as avahi prints them, each with its escapes taken out
         assert_eq!(
-            found[0].name,
-            "majordomus-641bdb94-01234567._majordomus._tcp.local (eth0 IPv4)"
+            found[0].txt,
+            [
+                &br#"e1=qqqq"tail"#[..],
+                br#"e0={"v":1,"k":"a\\b","s":"x y;z"}"#,
+                b"n=2",
+                b"txtvers=1",
+            ]
         );
-        // semicolons and quotes inside the envelope's bytes survive: the field is the rest
+        // and the envelope is the published one: quotes, backslashes, a space and a
+        // semicolon inside it survive, and the order they arrived in does not matter
         assert_eq!(
             envelope_of(&found[0].txt).unwrap(),
-            br#"{"v":2,"name":"a;b","sig":"00"}"#
+            br#"{"v":1,"k":"a\\b","s":"x y;z"}qqqq"tail"#
         );
         // the name's escapes are taken out; a stranger's TXT record is simply no envelope
-        assert_eq!(
-            found[1].name,
-            "Office Printer._majordomus._tcp.local (eth0 IPv4)"
-        );
+        assert_eq!(found[1].name, "Office Printer._mjt._tcp.local (eth0 IPv4)");
         assert!(envelope_of(&found[1].txt).is_err());
     }
 
@@ -267,6 +339,11 @@ mod tests {
             b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;",
             b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;\"",
             b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;no quotes",
+            // a string that never closes, a lone escape at the end, and text after a string
+            b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;\"a=1\" \"b",
+            b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;\"a=1\\",
+            b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;\"a=1\"x",
+            b"=;eth0;IPv4;name;_majordomus._tcp;local;host;addr;1;\"a=1\" ",
             b"-;eth0;IPv4;name;_majordomus._tcp;local",
             b"Failed to create client object: Daemon not running",
         ] {
@@ -278,6 +355,11 @@ mod tests {
         }
         // an escape is three digits that name a byte; anything else is itself
         assert_eq!(unescaped(br"a\032b\\999\03"), br"a b\\999\03");
+        // inside a TXT string a `\DDD` is a byte too, and any other escaped byte is itself
+        assert_eq!(
+            quoted_strings(br#""a\032b" "c\\\"d""#).unwrap(),
+            [&b"a b"[..], br#"c\"d"#]
+        );
     }
 
     /// A stand-in for one of avahi's tools: a script that records what it was given or
@@ -402,6 +484,36 @@ mod tests {
         assert_eq!(children.len(), 2);
         drop(avahi);
         assert!(children.into_iter().all(gone), "the drop reaps every child");
+    }
+
+    #[test]
+    fn a_browser_is_replaced_when_it_has_run_its_time_and_the_instances_are_read_again() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut avahi = tools(dir.path(), RECORDED);
+        avahi.rebrowse_after = Duration::from_millis(200);
+        avahi.browse("_mjt._tcp").unwrap();
+        let first = avahi.children()[0];
+        let read = |avahi: &mut Avahi| {
+            let mut found = Vec::new();
+            for _ in 0..200 {
+                found.extend(avahi.poll(Duration::from_millis(25)).unwrap());
+                if found.len() >= 2 {
+                    break;
+                }
+            }
+            found.len()
+        };
+        assert_eq!(read(&mut avahi), 2, "the first browser's two instances");
+        assert_eq!(avahi.children(), [first], "inside its time it stays");
+        std::thread::sleep(Duration::from_millis(250));
+        // the next poll replaces it: the old child is ended and reaped, and what the new
+        // one prints is read as if for the first time
+        assert_eq!(read(&mut avahi), 2, "the second browser's two instances");
+        let second = avahi.children()[0];
+        assert_ne!(first, second);
+        assert!(gone(first), "the replaced browser is left running");
+        drop(avahi);
+        assert!(gone(second));
     }
 
     #[test]

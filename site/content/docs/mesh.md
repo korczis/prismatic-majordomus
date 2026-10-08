@@ -134,7 +134,7 @@ envelope a multicast datagram does, its bytes split unencoded across ordered str
 `txtvers=1`, `n=<count>`, then `e0=…` to `e<n-1>=…`, at most 252 bytes each — 1234 bytes for
 the largest envelope, inside the 1300 DNS-SD recommends. The server browses the same type,
 joins each instance's strings back into bytes and hands them to the manager unread. An
-instance whose parts are missing, repeated, out of order or too large is counted in the
+instance whose parts are missing, repeated or too large is counted in the
 provider's status line and dropped; an envelope that does not verify is a counted refusal like
 any other.
 

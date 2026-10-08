@@ -173,8 +173,10 @@ fn txt_without_envelope() -> Vec<Vec<u8>> {
 }
 
 /// Join an instance's TXT strings back into the envelope's bytes, or say why they do not
-/// hold one. The parts must be all there, once each and in order, and add up to no more
-/// than a datagram; keys this layout does not define are passed over. The bytes are not
+/// hold one. The parts must be all there, once each, and add up to no more than a
+/// datagram; they are put together by their index, in whatever order the record carries
+/// them, because a publisher's service may hand them over in another one (avahi prints
+/// and sends a record's strings last first); keys this layout does not define are passed over. The bytes are not
 /// read: whether they are an envelope at all is the manager's question.
 ///
 /// ```
@@ -182,7 +184,8 @@ fn txt_without_envelope() -> Vec<Vec<u8>> {
 ///
 /// let txt = |strings: &[&str]| strings.iter().map(|s| s.as_bytes().to_vec()).collect::<Vec<_>>();
 /// assert_eq!(envelope_of(&txt(&["txtvers=1", "n=2", "e0=ab", "e1=c"])).unwrap(), b"abc");
-/// assert!(envelope_of(&txt(&["txtvers=1", "n=2", "e1=c", "e0=ab"])).is_err());
+/// assert_eq!(envelope_of(&txt(&["e1=c", "e0=ab", "n=2", "txtvers=1"])).unwrap(), b"abc");
+/// assert!(envelope_of(&txt(&["txtvers=1", "n=2", "e0=ab", "e0=ab"])).is_err());
 /// assert!(envelope_of(&txt(&["txtvers=1", "n=2", "e0=ab"])).is_err());
 /// ```
 pub fn envelope_of(txt: &[Vec<u8>]) -> Result<Vec<u8>, &'static str> {
@@ -190,8 +193,8 @@ pub fn envelope_of(txt: &[Vec<u8>]) -> Result<Vec<u8>, &'static str> {
         return Err("no txtvers=1");
     }
     let mut declared: Option<usize> = None;
-    let mut envelope = Vec::new();
-    let mut parts = 0usize;
+    let mut parts: std::collections::BTreeMap<usize, &[u8]> = std::collections::BTreeMap::new();
+    let mut size = 0usize;
     for string in txt {
         if let Some(count) = string.strip_prefix(b"n=") {
             let count = std::str::from_utf8(count)
@@ -206,20 +209,23 @@ pub fn envelope_of(txt: &[Vec<u8>]) -> Result<Vec<u8>, &'static str> {
         let Some((index, payload)) = part_of(string) else {
             continue;
         };
-        if index != parts {
-            return Err("a part is out of order or repeated");
+        if parts.insert(index, payload).is_some() {
+            return Err("a part is repeated");
         }
-        parts += 1;
-        envelope.extend_from_slice(payload);
-        if envelope.len() > MAX_DATAGRAM {
+        size += payload.len();
+        if size > MAX_DATAGRAM {
             return Err("the parts exceed a datagram");
         }
     }
     match declared {
         None => Err("no n"),
         Some(0) => Err("the instance advertises no envelope"),
-        Some(count) if count != parts => Err("a part is missing or one too many"),
-        Some(_) => Ok(envelope),
+        // every index below the count, once: the keys are distinct, so as many parts as
+        // the count with the last one being count - 1 is exactly that
+        Some(count) if parts.len() != count || parts.keys().next_back() != Some(&(count - 1)) => {
+            Err("a part is missing or one too many")
+        }
+        Some(_) => Ok(parts.into_values().flatten().copied().collect()),
     }
 }
 
@@ -827,8 +833,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn an_instance_with_missing_out_of_order_duplicated_or_oversized_parts_forwards_nothing_and_is_counted(
-    ) {
+    fn an_instance_with_missing_duplicated_or_oversized_parts_forwards_nothing_and_is_counted() {
         let big = format!("e0={}", "x".repeat(252));
         let oversized: Vec<String> = std::iter::once("txtvers=1".to_string())
             .chain(std::iter::once("n=5".to_string()))
@@ -838,7 +843,6 @@ pub(crate) mod tests {
         let refused: Vec<(&str, Vec<&str>)> = vec![
             ("missing", vec!["txtvers=1", "n=2", "e0=ab"]),
             ("one too many", vec!["txtvers=1", "n=1", "e0=ab", "e1=c"]),
-            ("out of order", vec!["txtvers=1", "n=2", "e1=c", "e0=ab"]),
             ("duplicated", vec!["txtvers=1", "n=2", "e0=ab", "e0=ab"]),
             ("skipped", vec!["txtvers=1", "n=2", "e0=ab", "e2=c"]),
             ("oversized", oversized),
@@ -853,6 +857,12 @@ pub(crate) mod tests {
         for (why, txt) in &refused {
             assert!(envelope_of(&strings(txt)).is_err(), "{why}");
         }
+        // the parts are put together by index: a record that carries them last first, as
+        // avahi does, is the same envelope
+        assert_eq!(
+            envelope_of(&strings(&["e1=c", "e0=ab", "n=2", "txtvers=1"])).unwrap(),
+            b"abc"
+        );
         // keys the layout does not define are passed over, wherever they stand
         assert_eq!(
             envelope_of(&strings(&[
