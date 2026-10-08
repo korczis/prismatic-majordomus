@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.17.0"
+    "version": "0.18.0"
   },
-  "fingerprint": "789241c47e7809fcf47e326bf7137d761d080f209e3e28a0261c6df50c1719c6",
+  "fingerprint": "9a6a91d57895479b71b825771443a0b9f81e02f7aa3284e3a9d388902842b092",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 62,
+        "capabilities": 63,
         "moments": 17
       },
       "evidence": {
@@ -7140,7 +7140,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 83
+          "objects": 84
         },
         {
           "name": "knowledge",
@@ -7421,11 +7421,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 414,
+        "mcp_resources": 415,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 411,
+        "objects": 412,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -10402,6 +10402,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
           "capabilities": [
             {
+              "id": "intents.binding",
+              "title": "What a piece of work is bound to before it starts",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_binding",
+              "route": "GET /api/v1/intents/binding",
+              "cli": "majordomus intent binding"
+            },
+            {
               "id": "intents.coverage",
               "title": "Which work carries which criterion, and why each issue exists",
               "kind": "query",
@@ -10488,15 +10497,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 24
+          "objects": 25
         },
         {
           "name": "issue",
-          "objects": 257
+          "objects": 262
         },
         {
           "name": "intent",
-          "objects": 2
+          "objects": 3
         }
       ],
       "rule_refs": [
@@ -10692,13 +10701,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 21,
-        "mcp_tools": 21,
-        "mcp_resources": 286,
-        "http_routes": 21,
-        "cli_paths": 9,
+        "capabilities": 22,
+        "mcp_tools": 22,
+        "mcp_resources": 293,
+        "http_routes": 22,
+        "cli_paths": 10,
         "commands": 1,
-        "objects": 283,
+        "objects": 290,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14280,7 +14289,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (83)",
+        "title": "adr (84)",
         "features": [
           "knowledge"
         ]
@@ -14329,7 +14338,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (1)",
+        "title": "critique (2)",
         "features": []
       },
       {
@@ -14360,19 +14369,19 @@
       },
       {
         "id": "gap",
-        "title": "gap (1)",
+        "title": "gap (2)",
         "features": []
       },
       {
         "id": "intent",
-        "title": "intent (2)",
+        "title": "intent (3)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (257)",
+        "title": "issue (262)",
         "features": [
           "planning"
         ]
@@ -14393,7 +14402,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (24)",
+        "title": "milestone (25)",
         "features": [
           "planning"
         ]
@@ -15364,38 +15373,38 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2055,
-    "builtin": 183,
-    "declarative": 1872,
+    "capabilities": 2086,
+    "builtin": 184,
+    "declarative": 1902,
     "modules": 53,
-    "mcp_tools": 176,
-    "mcp_resources": 1926,
-    "http_routes": 180,
-    "cli_commands": 189,
+    "mcp_tools": 177,
+    "mcp_resources": 1956,
+    "http_routes": 181,
+    "cli_commands": 190,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1872,
+    "objects": 1902,
     "by_kind": {
-      "adr": 83,
+      "adr": 84,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 237,
       "command": 31,
       "context": 36,
-      "critique": 1,
+      "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
       "document": 327,
       "domain": 6,
       "feature": 27,
-      "gap": 1,
-      "implementation": 50,
-      "intent": 2,
-      "issue": 257,
+      "gap": 2,
+      "implementation": 51,
+      "intent": 3,
+      "issue": 262,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 24,
+      "milestone": 25,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -15406,7 +15415,7 @@
       "session": 84,
       "skill": 7,
       "taxonomy": 10,
-      "test": 388,
+      "test": 407,
       "use-case": 48,
       "workspace": 1
     },
@@ -15424,7 +15433,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 217,
+    "declared": 219,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -16022,9 +16031,9 @@
         "supported": false
       },
       "intent-in-session-context": {
-        "status": "planned",
-        "state": "no-test",
-        "label": "no test",
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "intent-links-resolve": {
@@ -16052,9 +16061,9 @@
         "supported": false
       },
       "intent-refused-at-plan-start": {
-        "status": "planned",
-        "state": "no-test",
-        "label": "no test",
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "intent-stage-derived": {

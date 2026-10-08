@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.17.0"
+    "version": "0.18.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -436,6 +436,11 @@
       "kind": "capability",
       "subject": "capability:intent_realization.work",
       "path": "/evidence/capabilities/intent-realization-work/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.binding",
+      "path": "/evidence/capabilities/intents-binding/"
     },
     {
       "kind": "capability",
@@ -2599,6 +2604,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent binding",
+      "path": "/evidence/commands/intent-binding/"
+    },
+    {
+      "kind": "command",
       "subject": "command:intent coverage",
       "path": "/evidence/commands/intent-coverage/"
     },
@@ -4501,6 +4511,18 @@
       "programs": [],
       "members": [
         "command:intent realization"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.binding": {
+      "kind": "capability",
+      "id": "intents.binding",
+      "page": "/evidence/capabilities/intents-binding/",
+      "programs": [],
+      "members": [
+        "command:intent binding"
       ],
       "routes": [],
       "mechanisms": [],
@@ -7951,15 +7973,20 @@
     "claim:intent-in-session-context": {
       "kind": "claim",
       "id": "intent-in-session-context",
-      "status": "planned",
+      "status": "guaranteed",
       "page": "/evidence/claims/intent-in-session-context/",
       "programs": [],
       "members": [],
       "routes": [
         {
           "via": "claim",
+          "test": "suite:960_a_task_starts_bound_to_what_it_serves",
+          "path": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+          "category": "e2e",
           "inputs": [
-            "docs/PLANNING.md"
+            "docs/PLANNING.md",
+            "lib/intent_binding.sh",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
           ]
         }
       ],
@@ -8061,15 +8088,20 @@
     "claim:intent-refused-at-plan-start": {
       "kind": "claim",
       "id": "intent-refused-at-plan-start",
-      "status": "planned",
+      "status": "guaranteed",
       "page": "/evidence/claims/intent-refused-at-plan-start/",
       "programs": [],
       "members": [],
       "routes": [
         {
           "via": "claim",
+          "test": "suite:962_plan_start_asks_the_binding_in_both_engines",
+          "path": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+          "category": "e2e",
           "inputs": [
-            "docs/PLANNING.md"
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
           ]
         }
       ],
@@ -13919,6 +13951,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent binding": {
+      "kind": "command",
+      "id": "intent binding",
+      "page": "/evidence/commands/intent-binding/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:intent coverage": {
       "kind": "command",
       "id": "intent coverage",
@@ -18609,6 +18660,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_intent_binding": {
+      "kind": "mcp",
+      "id": "majordomus_intent_binding",
+      "alias_of": "capability:intents.binding",
+      "programs": [],
+      "members": [
+        "capability:intents.binding"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_intent_coverage": {
       "kind": "mcp",
       "id": "majordomus_intent_coverage",
@@ -21394,7 +21457,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/intent_realization.rs",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         },
         {
@@ -21404,7 +21467,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         },
         {
@@ -21414,7 +21477,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         },
         {
@@ -21424,7 +21487,27 @@
           "category": "e2e",
           "inputs": [
             "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:960_a_task_starts_bound_to_what_it_serves",
+          "path": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:961_a_resumed_task_is_told_its_intent_moved",
+          "path": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
           ]
         }
       ],
@@ -22319,7 +22402,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/integration_rollout.rs",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22329,7 +22412,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/integration_trail.rs",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22339,7 +22422,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/720_integration_follows_the_current_master.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22349,7 +22432,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/740_integration_is_visible_where_a_person_looks.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22359,7 +22442,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22369,7 +22452,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/742_only_an_outage_is_asked_again.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22379,7 +22462,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/850_integration_drains_cycle_by_cycle.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22389,7 +22472,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/852_a_dry_run_moves_nothing.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22399,7 +22482,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/855_racing_executors_merge_once.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22409,7 +22492,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/856_racing_worktrees_share_one_lease.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22419,7 +22502,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/857_required_checks_are_authoritative.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22429,7 +22512,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/858_reviews_are_authoritative.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         },
         {
@@ -22439,7 +22522,157 @@
           "category": "e2e",
           "inputs": [
             "test/cases/861_a_successor_that_landed_supersedes.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:925_a_bound_check_is_only_its_apps_run",
+          "path": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:926_an_unread_writer_is_never_a_pass",
+          "path": "test/cases/926_an_unread_writer_is_never_a_pass.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/926_an_unread_writer_is_never_a_pass.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:927_an_unbound_base_asks_for_no_writer",
+          "path": "test/cases/927_an_unbound_base_asks_for_no_writer.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/927_an_unbound_base_asks_for_no_writer.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:928_an_authorised_supersedes_holds_then_closes",
+          "path": "test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:929_a_forks_declaration_decides_nothing",
+          "path": "test/cases/929_a_forks_declaration_decides_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/929_a_forks_declaration_decides_nothing.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:930_an_own_body_is_tested_on_its_author",
+          "path": "test/cases/930_an_own_body_is_tested_on_its_author.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/930_an_own_body_is_tested_on_its_author.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:931_a_closed_successor_releases_the_hold",
+          "path": "test/cases/931_a_closed_successor_releases_the_hold.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/931_a_closed_successor_releases_the_hold.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:932_a_squashed_successor_lands_by_its_merge_commit",
+          "path": "test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:933_every_page_of_cross_references_is_read",
+          "path": "test/cases/933_every_page_of_cross_references_is_read.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/933_every_page_of_cross_references_is_read.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:934_a_failed_declarations_read_decides_nothing",
+          "path": "test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:935_an_older_observation_is_refused",
+          "path": "test/cases/935_an_older_observation_is_refused.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/935_an_older_observation_is_refused.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:936_the_rule_names_every_closure_ground",
+          "path": "test/cases/936_the_rule_names_every_closure_ground.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/936_the_rule_names_every_closure_ground.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:937_an_unauthorised_declaration_neither_holds_nor_closes",
+          "path": "test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:938_a_truncated_cross_reference_read_holds",
+          "path": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/938_a_truncated_cross_reference_read_holds.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:939_a_batch_landed_successor_supersedes",
+          "path": "test/cases/939_a_batch_landed_successor_supersedes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/939_a_batch_landed_successor_supersedes.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
           ]
         }
       ],
@@ -25367,6 +25600,7 @@
     "crate:integration_merged_branches",
     "crate:integration_refresh_trail",
     "crate:integration_repair",
+    "crate:intent_binding",
     "crate:lease_busy",
     "crate:lease_declared",
     "crate:live_own_writes",
@@ -25526,6 +25760,7 @@
     "suite:98_traceability",
     "suite:991_a_command_leaves_nothing_in_tmpdir",
     "suite:992_the_local_bind_is_the_machines_to_name",
-    "suite:993_the_continuity_tools_answer_over_mcp"
+    "suite:993_the_continuity_tools_answer_over_mcp",
+    "suite:994_a_panel_that_did_not_appear_is_not_a_hidden_region"
   ]
 }
