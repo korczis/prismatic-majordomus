@@ -1,0 +1,27 @@
+id: I1998
+milestone: adopter-upgrades
+title: "A health command in an unsupervised repository does not exit 0"
+slug: a-health-command-in-an-unsupervised-repository-does-not-exit-0
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make `majordomus doctor`, `session list` and the other read-only commands exit with the missing-artifact code when the repository has no .ai/manifest.yaml, so a caller can tell a healthy repository from one the tool is not installed in."
+why: "Run by majordomus 0.14.0 on prismatic-platform's main branch on 2026-10-08, which has no layer, `majordomus doctor` and `majordomus session list` each printed only 'no .ai/manifest.yaml ... (run: majordomus init)' and exited 0. A script or an agent that runs doctor as its health check reads that as healthy. The Rust executable already answers the same state with exit 12 and the start directory named; the shell tool disagrees with it."
+current_state: "The shell tool's read-only commands print the missing-manifest line and exit 0 outside a supervised repository."
+desired_state: "Outside a supervised repository every command that reports on the layer exits 12 with the line it prints today. Commands whose purpose is to work there — init, version, help — are unchanged."
+scope:
+  - "bin/majordomus"
+  - "lib"
+  - "docs/CLI.md"
+  - "test/cases"
+acceptance_criteria:
+  - "doctor and session list in a git repository with no .ai/manifest.yaml exit 12 and name the missing file"
+  - "init, version and help in the same repository exit 0"
+  - "The shell tool and the Rust executable exit with the same code for the same missing layer"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "unsupervised_exit_code_case"
+created_at: 2026-10-08
+updated_at: 2026-10-08

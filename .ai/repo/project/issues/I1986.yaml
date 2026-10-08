@@ -6,7 +6,7 @@ priority: p2
 profile: implementation
 parallel_safe: true
 objective: "Rewrite the baseline rules that describe Majordomus's own history as rules about any adopter. Mark their x-majordomus.tests as upstream proofs so an adopter is not pointed at test/cases it does not have, and give the package manifest a real source revision."
-why: "In share/standard/majordomus/rules/{adr-integrity,lifecycle-observed,completion-gates,record-changed-files,publication-currency,schema-integrity}.v1.md, 'this repository' means Majordomus. Their tests name test/cases paths absent in OSCILLA. The vendored manifest says source_revision 0.6.0 although OSCILLA vendored it from 0.12."
+why: "In share/standard/majordomus/rules/{adr-integrity,lifecycle-observed,completion-gates,record-changed-files,publication-currency,schema-integrity}.v1.md, 'this repository' means Majordomus. Their tests name test/cases paths absent in OSCILLA. The vendored manifest says source_revision 0.6.0 although OSCILLA vendored it from 0.12. A second adopter saw the same on 2026-10-08: in prismatic-platform, `rules vendor update` moved a 0.6.0 baseline to the 0.14.0 package (3 rules added, 4 changed) and `rules vendor status` still printed 'distribution: 1 (0.6.0)', so the label cannot tell the two packages apart."
 current_state: "As above at e08aec8651."
 desired_state: "Adopter-neutral rule text; tests resolvable or explicitly upstream; source_revision equals the release that produced the package."
 scope:
@@ -23,4 +23,4 @@ evidence_required:
   - "neutral_rule_text"
   - "source_revision_stamped"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-08
