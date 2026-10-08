@@ -337,6 +337,12 @@
   .mj-clear {
     @apply self-end pb-1.5 text-small;
   }
+  /* A link among marks is one of several targets a few pixels apart: the plan lists the
+     issues a milestone waits on side by side. Each is a 24px target of its own, so that a
+     finger reaches the one it meant. */
+  .mj-marks > a.mj-link {
+    @apply inline-flex min-h-6 min-w-6 items-center;
+  }
 
   /* --------------------------------------------------------------------- forms */
 

@@ -87,7 +87,7 @@ impl Page {
             .collect();
         self
     }
-    fn script(mut self, name: &'static str) -> Self {
+    pub(crate) fn script(mut self, name: &'static str) -> Self {
         self.scripts.push(name);
         self
     }
@@ -100,7 +100,7 @@ impl Page {
 /// The word a serde enum serialises to (`behaviorally_verified`, `repository`), for a
 /// page that shows a variant. `{:?}` would show the Rust spelling, which is not the
 /// vocabulary anything else in this repository uses.
-fn word<T: serde::Serialize>(value: &T) -> String {
+pub(crate) fn word<T: serde::Serialize>(value: &T) -> String {
     serde_json::to_value(value)
         .ok()
         .and_then(|v| v.as_str().map(str::to_string))
@@ -832,7 +832,12 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     ])
 }
 
-fn select(name: &str, label: &str, current: Option<&str>, options: Vec<(String, String)>) -> El {
+pub(crate) fn select(
+    name: &str,
+    label: &str,
+    current: Option<&str>,
+    options: Vec<(String, String)>,
+) -> El {
     let mut field = el("select").class("mj-select").attr("name", name).child(
         el("option")
             .attr("value", "")
@@ -6073,7 +6078,7 @@ fn effect_status(effect: &str) -> &'static str {
 }
 
 /// One query parameter, when it carries something.
-fn param(query: &[(String, String)], key: &str) -> Option<String> {
+pub(crate) fn param(query: &[(String, String)], key: &str) -> Option<String> {
     query
         .iter()
         .find(|(k, _)| k == key)
