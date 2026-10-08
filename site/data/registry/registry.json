@@ -6,23 +6,23 @@
     "version": "0.17.0"
   },
   "registry": {
-    "fingerprint": "0db7bf2d7aad5778131a72e100c82815e06a43a992d9f257a5563a0e99f70d2e",
+    "fingerprint": "0945c66f2c2052aadeb739631e2bd422f4ec2091e0f100c998be88ecef2ed133",
     "summary": {
-      "total": 2057,
+      "total": 2061,
       "builtin": 183,
-      "declarative": 1874,
+      "declarative": 1878,
       "by_kind": {
         "command": 26,
         "query": 157,
-        "resource": 1874
+        "resource": 1878
       },
       "by_stability": {
         "behaviorally_verified": 131,
         "experimental": 44,
-        "implemented": 1882
+        "implemented": 1886
       },
       "mcp_tools": 176,
-      "mcp_resources": 1928,
+      "mcp_resources": 1932,
       "http_routes": 180,
       "cli_commands": 100,
       "modules": 86,
@@ -74488,7 +74488,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 259,
+        "capabilities": 263,
         "capability_ids": []
       },
       {
@@ -75113,7 +75113,7 @@
     ]
   },
   "index": {
-    "fingerprint": "03c3c35caaf8b23828bce7956fbd132f398ddd094beec3691db3e3456946a844",
+    "fingerprint": "621d0748525d1f760757c57ef0c002025fbbeb39cc681ee5c8becea708f41311",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -75152,7 +75152,7 @@
       "gap": 1,
       "implementation": 50,
       "intent": 2,
-      "issue": 259,
+      "issue": 263,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 24,
@@ -80588,7 +80588,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 102538
+        "bytes": 117335
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -86627,7 +86627,7 @@
         "path": ".ai/repo/project/issues/I1986.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1521
+        "bytes": 1799
       },
       {
         "uri": "majordomus://issue/I1987",
@@ -86694,6 +86694,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2621
+      },
+      {
+        "uri": "majordomus://issue/I1996",
+        "kind": "issue",
+        "identity": "I1996",
+        "title": "doctor does not fail an adopter on a check written for this repository",
+        "description": "Stop `majordomus doctor` from failing an adopter's repository on the reasoning design's own coupling rules, and stop its reproduce hints from naming paths only this repository has.",
+        "path": ".ai/repo/project/issues/I1996.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2950
+      },
+      {
+        "uri": "majordomus://issue/I1997",
+        "kind": "issue",
+        "identity": "I1997",
+        "title": "The peer board can be read from the command line",
+        "description": "Project the peers capability onto the command line, so that a worker with no MCP tools can still ask who else is working in this repository and on which paths.",
+        "path": ".ai/repo/project/issues/I1997.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2517
+      },
+      {
+        "uri": "majordomus://issue/I1998",
+        "kind": "issue",
+        "identity": "I1998",
+        "title": "A health command in an unsupervised repository does not exit 0",
+        "description": "Make `majordomus doctor`, `session list` and the other read-only commands exit with the missing-artifact code when the repository has no .ai/manifest.yaml, so a caller can tell a healthy repository from one the tool is not installed in.",
+        "path": ".ai/repo/project/issues/I1998.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1842
+      },
+      {
+        "uri": "majordomus://issue/I1999",
+        "kind": "issue",
+        "identity": "I1999",
+        "title": "A tracked file a hook regenerates does not refuse a task that never touched it",
+        "description": "Let a repository declare the tracked paths its own tooling rewrites, have `check` and `finish` judge them as the machine's and not the worker's, and make the scope finding and the note finding say what settles them before `finish` refuses.",
+        "path": ".ai/repo/project/issues/I1999.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3136
       },
       {
         "uri": "majordomus://issue/I2059",
@@ -95424,7 +95468,7 @@
       "identity": [
         "id"
       ],
-      "objects": 259
+      "objects": 263
     },
     {
       "name": "knowledge",
