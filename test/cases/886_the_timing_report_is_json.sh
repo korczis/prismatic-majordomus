@@ -13,7 +13,8 @@
 #      The command is doctor, which records some forty phases in a fresh repository: two empty
 #      lists would agree and prove nothing;
 #   2. the command's own stdout is the same with and without the report (context, whose
-#      output does not carry timings of its own the way doctor's budget lines do);
+#      output does not carry timings of its own the way doctor's budget lines do), both
+#      runs given one clock;
 #   3. a name that needs escaping (a quote, a backslash) still yields JSON that parses.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
@@ -40,9 +41,17 @@ json_counts="$(printf '%s\n' "$line" | jq -r '.timing.counters[] | "\(.name)\t\(
   || { echo "    the two forms carry different counters:"; diff <(printf '%s\n' "$text_counts") <(printf '%s\n' "$json_counts") | sed 's/^/      /'; exit 1; }
 
 # 2. stdout is the command's alone
-MJ_TIMING=1 "$MJ" context > "$T/ctx.timed" 2>/dev/null
-"$MJ" context > "$T/out.plain" 2>/dev/null
-cmp -s "$T/out.plain" "$T/ctx.timed" || { echo "    the timing report changed what the command printed on stdout"; exit 1; }
+# The briefing's first line carries the second it was written in, and two runs do not share a
+# second on a machine slow enough: the runner's shard took the two for different outputs. Both
+# are given one clock (MAJORDOMUS_NOW, which mj_now reads), so the comparison stays byte for
+# byte; that the line carries that clock is checked, so that it is the clock that was held.
+NOW=2026-01-02T03:04:05Z
+MAJORDOMUS_NOW="$NOW" MJ_TIMING=1 "$MJ" context > "$T/ctx.timed" 2>/dev/null
+MAJORDOMUS_NOW="$NOW" "$MJ" context > "$T/out.plain" 2>/dev/null
+sed -n 1p "$T/out.plain" | grep -q "$NOW" \
+  || { echo "    the first line of context does not carry the clock it was given: $(sed -n 1p "$T/out.plain")"; exit 1; }
+cmp -s "$T/out.plain" "$T/ctx.timed" \
+  || { echo "    the timing report changed what the command printed on stdout:"; diff "$T/out.plain" "$T/ctx.timed" | sed 's/^/      /' | head -10; exit 1; }
 
 # 3. a name that must be escaped
 # MJ_JSON is set after the library loads, the way the argument parser sets it for --json
