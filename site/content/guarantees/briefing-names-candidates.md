@@ -1,7 +1,7 @@
 +++
 title = "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it"
 description = "The briefing a new episode is handed (ADR 0017) gains one bounded section. It names the candidate records whose episode was on this branch, the count on one line and the ids beneath it, bounded the way the open-questions block is and within session.briefing_budget_lines. A candidate whose episode this checkout cannot place is named on its own line as unattributed rather than hidden. When there is nothing, the section says so in one sentence, because absence printed is an answer and absence omitted is a gap."
-weight = 233
+weight = 235
 [extra]
 claim_id = "briefing-names-candidates"
 status = "guaranteed"

@@ -3030,6 +3030,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/intent_satisfaction.rs",
+        "kind": "file",
+        "label": "intent_satisfaction.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/intent_satisfaction.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/knowledge_base.rs",
         "kind": "file",
         "label": "knowledge_base.rs",
@@ -6182,6 +6190,34 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0113",
+        "kind": "adr",
+        "label": "adr-0113",
+        "summary": "Satisfaction is explained by the run that was judged, an optional criterion holds nothing back, and a failing guard keeps an intent unsatisfied",
+        "route": "/cockpit/objects/adr/adr-0113",
+        "source": ".ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-08",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+            "file:.ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+            "rule:project.derived-once",
+            "rule:project.completion-never-decides-satisfaction",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:.ai/repo/project/intents/intent-satisfaction.yaml",
+            "test:test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
+          ],
+          "tags": [
+            "intent",
+            "evidence",
+            "satisfaction",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -8269,6 +8305,38 @@
           "responsibility": "plan",
           "source": "docs/PLANNING.md",
           "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-evaluation-explained",
+        "kind": "claim",
+        "label": "intent-evaluation-explained",
+        "summary": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+        "route": "/cockpit/objects/claim/intent-evaluation-explained",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "apps/majordomus-cli/tests/intent_satisfaction.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-guard-is-judged",
+        "kind": "claim",
+        "label": "intent-guard-is-judged",
+        "summary": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+        "route": "/cockpit/objects/claim/intent-guard-is-judged",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
         }
       },
       {
@@ -12493,8 +12561,22 @@
         "source": ".ai/repo/project/critiques/intent-planning.yaml",
         "facts": {
           "intent": "intent-planning",
-          "reviewed_at": "4f4136ea60",
-          "reviewed_revision": "b1c748ad8c7ae443be5ee5c93d01eebad52cc6686b8f0d41415490aa02bd8f4a",
+          "reviewed_at": "503146f66b",
+          "reviewed_revision": "94c79e9134373c82795bbfe5f77c0a3696528db827276ae57e7142484c0efc2b",
+          "reviewed_with": "majordomus-cli 0.15.0"
+        }
+      },
+      {
+        "id": "majordomus://critique/intent-satisfaction",
+        "kind": "critique",
+        "label": "intent-satisfaction",
+        "summary": "intent-satisfaction",
+        "route": "/cockpit/objects/critique/intent-satisfaction",
+        "source": ".ai/repo/project/critiques/intent-satisfaction.yaml",
+        "facts": {
+          "intent": "intent-satisfaction",
+          "reviewed_at": "503146f66b",
+          "reviewed_revision": "cfbc9c5bd03330fe8428d521976a453e7132e39bbdc4ae0d3423f054e3775646",
           "reviewed_with": "majordomus-cli 0.15.0"
         }
       },
@@ -13991,6 +14073,22 @@
         "summary": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
         "route": "/cockpit/objects/document/docs-claims-intent-criteria-covered-md",
         "source": "docs/claims/intent-criteria-covered.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-evaluation-explained.md",
+        "kind": "document",
+        "label": "docs/claims/intent-evaluation-explained.md",
+        "summary": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+        "route": "/cockpit/objects/document/docs-claims-intent-evaluation-explained-md",
+        "source": "docs/claims/intent-evaluation-explained.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-guard-is-judged.md",
+        "kind": "document",
+        "label": "docs/claims/intent-guard-is-judged.md",
+        "summary": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+        "route": "/cockpit/objects/document/docs-claims-intent-guard-is-judged-md",
+        "source": "docs/claims/intent-guard-is-judged.md"
       },
       {
         "id": "majordomus://document/docs/claims/intent-in-session-context.md",
@@ -16973,6 +17071,25 @@
         }
       },
       {
+        "id": "majordomus://gap/intent-satisfaction",
+        "kind": "gap",
+        "label": "intent-satisfaction",
+        "summary": "intent-satisfaction",
+        "route": "/cockpit/objects/gap/intent-satisfaction",
+        "source": ".ai/repo/project/gaps/intent-satisfaction.yaml",
+        "facts": {
+          "intent": "intent-satisfaction",
+          "observed_at": "503146f66b",
+          "recorded_at": "2026-10-08",
+          "recorded_by": "claude-code (session fcbeae95; a read-only audit agent over int/batch-intent and first-hand reads of intent.rs and evidence/freshness.rs)",
+          "risks": [
+            "IntentView.invariants is read as a list of strings by the binding, the opposition, the briefing and the Cockpit; its shape must not change under them",
+            "The shell flattener and the awk plan engine read intent records only as far as their milestones, but the allowlist and the schema must admit both invariant forms",
+            "A stored reason would be a second copy of the evidence; the evaluation must be derived with the state it explains"
+          ]
+        }
+      },
+      {
         "id": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "label": "bin/majordomus",
@@ -17431,6 +17548,7 @@
             "adr:adr-0073",
             "adr:adr-0070",
             "adr:adr-0112",
+            "adr:adr-0113",
             "rule:project.work-serves-a-declared-intent"
           ],
           "invariants": [
@@ -17447,6 +17565,43 @@
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
           "updated_at": "2026-10-07"
+        }
+      },
+      {
+        "id": "majordomus://intent/intent-satisfaction",
+        "kind": "intent",
+        "label": "intent-satisfaction",
+        "summary": "Whether an intent is satisfied is explained by the evidence that was judged, and held to what must stay true",
+        "route": "/cockpit/objects/intent/intent-satisfaction",
+        "source": ".ai/repo/project/intents/intent-satisfaction.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "governance": [
+            "rule:project.derived-once",
+            "rule:project.completion-never-decides-satisfaction",
+            "adr:adr-0070",
+            "adr:adr-0107",
+            "adr:adr-0113"
+          ],
+          "invariants": [
+            "One engine decides a criterion's state, an invariant's state and the verdict; every surface reads its answer and none recomputes it",
+            "Nothing about satisfaction is stored; an evaluation is derived on every read from the evidence ledger and the tree",
+            "The freshness judgement stays the evidence module's; the intent engine reports it and adds no second table",
+            "A plain-text invariant and a criterion without the new keys mean exactly what they meant, and an intent record written before this intent reads exactly as it did",
+            "The stage takes whether the evidence is satisfied from the one verdict; nothing derives it a second time",
+            "A review stamped before a criterion became optional or a guard changed does not stand: both are part of the plan a review judges"
+          ],
+          "milestones": [
+            "intent-satisfaction"
+          ],
+          "non_goals": [
+            "Settling a command or deployment criterion; the ledger records runs of tests and claims, and that claim stays planned",
+            "Deciding at finish whether a task may be called completed; that is the completion milestone",
+            "Evaluating a plain-text invariant; prose names no evidence, and is judged only once it is written as a guard",
+            "Showing evaluations and guards in the Cockpit; the capabilities carry them, and the page is the Cockpit milestone's",
+            "Letting an issue serve a guard, or declaring a guard's inputs; a guard is violated by a failing run and by nothing else"
+          ],
+          "updated_at": "2026-10-08"
         }
       },
       {
@@ -29988,6 +30143,167 @@
         }
       },
       {
+        "id": "majordomus://issue/I2020",
+        "kind": "issue",
+        "label": "I2020",
+        "summary": "A judged criterion carries the evaluation that decided it",
+        "route": "/cockpit/objects/issue/i2020",
+        "source": ".ai/repo/project/issues/I2020.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0113 states what violates a guard, why guards are a key of their own, what optional means for coverage, the gap and the counts, and that the stage reads the verdict",
+            "Unit tests in intent.rs over the in-memory table cover a current, a stale, a failing and a never-run test criterion and a claim criterion, and repeated evaluation of one state is identical",
+            "A stale criterion names the inputs that changed since the run it was judged by, and becomes current again when the test is run and recorded",
+            "The command line, HTTP and MCP answer the same evaluation, and intent show and intent explain print it"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "TestStanding and ClaimStanding keep state and proof and drop the run, the changed inputs and the detail the evidence module already computed.",
+          "depends_on": [],
+          "desired_state": "A stale criterion names what changed, a failing one the failing run, and a criterion nothing ran for carries no evaluation; the same on every surface.",
+          "evidence_required": [
+            "an_evaluation_names_the_run_and_the_inputs"
+          ],
+          "milestone": "intent-satisfaction",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests/intent_satisfaction.rs",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-satisfaction#evaluation-is-explained"
+          ],
+          "slug": "a-criterion-carries-its-evaluation",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib intent",
+            "cargo test --test intent_satisfaction"
+          ],
+          "why": "The engine knows which run it judged and which inputs changed and reports one word, so a reader told a criterion is stale re-derives why by hand."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2021",
+        "kind": "issue",
+        "label": "I2021",
+        "summary": "A criterion may be optional, and an optional one holds nothing back",
+        "route": "/cockpit/objects/issue/i2021",
+        "source": ".ai/repo/project/issues/I2021.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An intent whose required criteria are met and whose optional one is not reads satisfied at stage satisfied, with met counted over the required ones",
+            "An intent with only optional criteria fails intent validate as intent_without_required_criterion and reads unknown",
+            "An uncovered optional criterion is a warning, an uncovered required one still a failure, and a gap that leaves an optional criterion unanswered is still refused",
+            "Marking a criterion optional moves the review revision and the plan revision, and a record that never says optional keeps the revisions it had",
+            "Unit tests in intent.rs, intent_plan.rs and intent_opposition.rs cover each of these in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "Every criterion is required. The stage computes whether all are met separately from the verdict. Coverage fails any uncovered criterion.",
+          "depends_on": [
+            "I2020"
+          ],
+          "desired_state": "The verdict's reasons name only required criteria; flipping a criterion to optional makes a stamped review stale; a record without the key reads as before.",
+          "evidence_required": [
+            "an_optional_criterion_blocks_nothing"
+          ],
+          "milestone": "intent-satisfaction",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "share/schemas/majordomus/intent",
+            "share/allow",
+            "apps/majordomus-cli/tests/intent_satisfaction.rs",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-satisfaction#optional-criterion-does-not-block"
+          ],
+          "slug": "a-criterion-may-be-optional",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib intent",
+            "cargo test --test intent_satisfaction",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+          ],
+          "why": "An intent that wants to record a nice-to-have has to leave it out or let it block the verdict forever."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2022",
+        "kind": "issue",
+        "label": "I2022",
+        "summary": "A guard is judged, and a failing one keeps the intent unsatisfied",
+        "route": "/cockpit/objects/issue/i2022",
+        "source": ".ai/repo/project/issues/I2022.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With every criterion met and every milestone DONE, an intent whose guard's test fails reads unsatisfied naming the guard, and satisfied again once the test passes and is recorded",
+            "A guard whose evidence is stale, never run or unresolved is listed as not judged and changes no verdict, so an unrelated commit never turns a satisfied intent unsatisfied",
+            "A guard id that repeats a criterion's, and an issue serving a guard, are each refused by intent validate",
+            "Adding or changing a guard moves the review revision; a record with no guards keeps the revision it had; the evidence standing moves when a guard starts or stops failing",
+            "docs/CLAIMS.yaml carries the claims this makes true, the prose case 892 pins agrees, and intent-planning guards that the plan engines stay identical with the case that proves it",
+            "Unit tests in intent.rs, intent_realization.rs and commands/intent.rs cover each branch in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "IntentRecord.invariants is a list of strings copied to every view. The verdict's reasons are criteria, and their JSON shape is pinned by tests.",
+          "depends_on": [
+            "I2021"
+          ],
+          "desired_state": "A failing guard is named in verdict.guards with its evidence and state; every reader of the invariant statements still gets the statements; a resumed task is told when a guard's standing moved.",
+          "evidence_required": [
+            "a_failing_guard_keeps_the_intent_unsatisfied"
+          ],
+          "milestone": "intent-satisfaction",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "share/schemas/majordomus/intent",
+            "share/allow",
+            "lib/intent_binding.sh",
+            ".ai/repo/project/intents",
+            ".ai/repo/project/critiques",
+            "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-satisfaction#guard-is-judged"
+          ],
+          "slug": "a-guard-is-judged",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 965_a_failing_guard_keeps_an_intent_unsatisfied",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says",
+            "bash test/run.sh 99_plan_capabilities"
+          ],
+          "why": "The invariants are printed to the worker and judged by nothing, so what an intent said must stay true can stop being true while the intent reads satisfied."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30963,6 +31279,62 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-satisfaction",
+        "kind": "milestone",
+        "label": "intent-satisfaction",
+        "summary": "Satisfaction is explained, and held to the invariants",
+        "route": "/cockpit/objects/milestone/intent-satisfaction",
+        "source": ".ai/repo/project/milestones/intent-satisfaction.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every criterion carries its evaluation on every surface",
+            "An optional criterion does not hold the verdict back",
+            "A failing guard makes the verdict unsatisfied, and one not judged violates nothing"
+          ],
+          "created_at": "2026-10-08",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Command and deployment evidence",
+            "The finish contract"
+          ],
+          "order": 130,
+          "priority": "p1",
+          "risks": [
+            "IntentView is read by the binding, the opposition, the Cockpit and the realization; a changed field shape breaks every reader at once, so new facts are added beside what exists.",
+            "The records, the ADR and the tests they name land in one pull request and one commit to the trunk.",
+            "Every changed line owes an in-process test (project.new-code-is-covered)."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "site",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/intent",
+            "share/allow",
+            "lib",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-satisfaction",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_satisfaction",
+            "bash test/run.sh 965_a_failing_guard_keeps_an_intent_unsatisfied"
           ]
         }
       },
@@ -44670,6 +45042,13 @@
         "source": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh"
       },
       {
+        "id": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "kind": "test",
+        "label": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "route": "/cockpit/objects/test/test-cases-965-a-failing-guard-keeps-an-intent-unsatisfied-sh",
+        "source": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "kind": "test",
         "label": "test/cases/96_rust_public_api_quality.sh",
@@ -53508,6 +53887,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0113",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://adr/adr-0107",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://adr/adr-0112",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://intent/intent-satisfaction",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -55550,6 +55974,46 @@
       {
         "source": "majordomus://claim/intent-criteria-covered",
         "target": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "file:apps/majordomus-cli/tests/intent_satisfaction.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
         "kind": "tested_by"
       },
       {
@@ -58853,6 +59317,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-satisfaction",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
         "kind": "is_a"
@@ -59783,6 +60252,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/intent-evaluation-explained.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-guard-is-judged.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/intent-in-session-context.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -60653,6 +61132,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/intent-satisfaction",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/bin/majordomus",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -60924,6 +61408,11 @@
       },
       {
         "source": "majordomus://intent/intent-planning",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-satisfaction",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -65218,6 +65707,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2020",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2020",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2021",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2021",
+        "target": "majordomus://issue/I2020",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2021",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2022",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2022",
+        "target": "majordomus://issue/I2021",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2022",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -65346,6 +65875,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/intent-satisfaction",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -69908,6 +70442,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -73679,8 +74218,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2412,
-      "edges": 5304,
+      "nodes": 2426,
+      "edges": 5336,
       "acyclic": true,
       "truncated": false
     }

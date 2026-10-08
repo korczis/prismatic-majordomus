@@ -687,10 +687,10 @@ fn state_words(state: IntentEvidenceState) -> &'static str {
 /// let satisfaction = vec![IntentCriterion {
 ///     id: "c".into(), criterion: "c".into(), evidence: "test".into(),
 ///     reference: "t".into(), state: IntentEvidenceState::Failing, met: false,
-///     proof: None, reproduce: None }];
+///     proof: None, reproduce: None, optional: false, evaluation: None }];
 /// let view = IntentView {
 ///     id: "x".into(), title: "X".into(), statement: String::new(), invariants: vec![],
-///     stage: IntentStage::Verifying, milestones: vec![], met: 0,
+///     stage: IntentStage::Verifying, milestones: vec![], met: 0, optional: 0, guards: vec![],
 ///     verdict: verdict(&satisfaction), satisfaction,
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
@@ -915,7 +915,7 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
             intent: view.id.clone(),
             title: view.title.clone(),
             stage: view.stage,
-            criteria: view.satisfaction.len(),
+            criteria: view.satisfaction.len() - view.optional,
             met: view.met,
             unmet,
             work: refs,
@@ -988,6 +988,22 @@ fn strength_words(s: CoverageStrength) -> &'static str {
     }
 }
 
+/// The run an evaluation names, in words: its outcome, where and when it was recorded, the
+/// inputs that changed since, and the evidence module's own sentence.
+fn judged_words(e: &crate::intent::IntentEvaluation) -> String {
+    let mut s = format!(
+        "judged by the run recorded at {} ({} tree, {}, {})",
+        e.commit, e.working_tree, e.outcome, e.at
+    );
+    if !e.changed.is_empty() {
+        s.push_str(&format!("; changed since: {}", e.changed.join(", ")));
+    }
+    if let Some(detail) = &e.detail {
+        s.push_str(&format!("; {detail}"));
+    }
+    s
+}
+
 /// Explain one intent out of the derivations already made.
 ///
 /// ```
@@ -1003,7 +1019,7 @@ fn strength_words(s: CoverageStrength) -> &'static str {
 /// let view = IntentView {
 ///     id: "x".into(), title: "X".into(), statement: String::new(), invariants: vec![],
 ///     stage: IntentStage::Declared, milestones: vec![], met: 0, satisfaction: vec![],
-///     verdict: verdict(&[]),
+///     optional: 0, guards: vec![], verdict: verdict(&[]),
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
 /// let intents = Intents { intents: vec![view.clone()], findings: vec![] };
@@ -1026,7 +1042,8 @@ pub fn explain(
             None => format!("{} does not resolve", m.id),
         })
         .collect();
-    let total = view.satisfaction.len();
+    // met is counted over the required criteria, so the total it is of is theirs
+    let total = view.satisfaction.len() - view.optional;
     because.push(match view.stage {
         IntentStage::Declared if view.milestones.is_empty() => {
             "declared: it names no milestone, so no work realises it".to_string()
@@ -1080,10 +1097,42 @@ pub fn explain(
                 s.push_str(&format!(" ({})", ids.join(", ")));
             }
         }
+        if c.optional {
+            s.push_str("; optional, so it holds nothing back");
+        }
+        if let Some(e) = &c.evaluation {
+            s.push_str(&format!("; {}", judged_words(e)));
+        }
         if !c.met {
             if let Some(r) = &c.reproduce {
                 s.push_str(&format!("; reproduce: {r}"));
             }
+        }
+        because.push(s);
+    }
+    // the guards: what must stay true, judged — violated only by a failing run
+    for g in &view.guards {
+        let mut s = if g.violated {
+            format!(
+                "guard `{}` is violated: its {} `{}` is failing, so the intent is not satisfied whatever its criteria say",
+                g.id, g.evidence, g.reference
+            )
+        } else if g.state == IntentEvidenceState::Current {
+            format!(
+                "guard `{}` holds: its {} `{}` has current evidence",
+                g.id, g.evidence, g.reference
+            )
+        } else {
+            format!(
+                "guard `{}` is not judged: its {} `{}` has {}, and only a failing run violates a guard",
+                g.id,
+                g.evidence,
+                g.reference,
+                state_words(g.state)
+            )
+        };
+        if let Some(e) = &g.evaluation {
+            s.push_str(&format!("; {}", judged_words(e)));
         }
         because.push(s);
     }
@@ -1486,6 +1535,8 @@ mod tests {
             met: state == IntentEvidenceState::Current,
             proof: None,
             reproduce: None,
+            optional: false,
+            evaluation: None,
         }
     }
 
@@ -1506,6 +1557,8 @@ mod tests {
                 .collect(),
             satisfaction: vec![],
             met: 0,
+            optional: 0,
+            guards: vec![],
             verdict: crate::intent::verdict(&[]),
             governance: vec![],
             non_goals: vec![],
@@ -1899,6 +1952,84 @@ mod tests {
             ]
         );
         assert_eq!(x.providers, ["claude-code", "codex"]);
+    }
+
+    /// ADR 0113: explain says of each criterion what judged it and whether it is optional,
+    /// and of each guard whether it is violated, holds or is not judged.
+    #[test]
+    fn explain_names_the_run_the_optional_criteria_and_every_guard() {
+        use crate::intent::{IntentEvaluation, IntentGuard};
+        let judged = IntentEvaluation {
+            commit: "c0ffee".into(),
+            working_tree: "clean".into(),
+            outcome: "pass".into(),
+            at: "2026-10-08T00:00:00Z".into(),
+            changed: vec!["lib/a.sh".into()],
+            detail: Some("an input changed since the run".into()),
+        };
+        let guard = |id: &str, state: IntentEvidenceState| IntentGuard {
+            id: id.into(),
+            invariant: format!("{id} stays true"),
+            evidence: "test".into(),
+            reference: format!("suite:{id}"),
+            state,
+            violated: state == IntentEvidenceState::Failing,
+            reproduce: None,
+            evaluation: (id == "broken").then(|| IntentEvaluation {
+                outcome: "fail".into(),
+                changed: vec![],
+                detail: None,
+                ..judged.clone()
+            }),
+        };
+        let mut v = view("x", IntentStage::Verifying, &[]);
+        v.satisfaction = vec![
+            IntentCriterion {
+                optional: true,
+                evaluation: Some(judged.clone()),
+                ..criterion("nice", IntentEvidenceState::Stale)
+            },
+            criterion("must", IntentEvidenceState::Current),
+        ];
+        v.optional = 1;
+        v.met = 1;
+        v.guards = vec![
+            guard("broken", IntentEvidenceState::Failing),
+            guard("fine", IntentEvidenceState::Current),
+            guard("idle", IntentEvidenceState::Stale),
+        ];
+        let r = IntentRealization {
+            intents: vec![],
+            work: vec![],
+            orphans: 0,
+            findings: vec![],
+        };
+        let none = IntentCoverage {
+            criteria: vec![],
+            issues: vec![],
+            findings: vec![],
+        };
+        let e = explain(&v, &none, &r);
+        let said = |needle: &str| {
+            assert!(
+                e.because.iter().any(|l| l.contains(needle)),
+                "{needle:?} missing from {:#?}",
+                e.because
+            )
+        };
+        said("`nice` is not met");
+        said("optional, so it holds nothing back");
+        said("judged by the run recorded at c0ffee (clean tree, pass, 2026-10-08T00:00:00Z); changed since: lib/a.sh; an input changed since the run");
+        said("guard `broken` is violated: its test `suite:broken` is failing");
+        said("judged by the run recorded at c0ffee (clean tree, fail, 2026-10-08T00:00:00Z)");
+        said("guard `fine` holds: its test `suite:fine` has current evidence");
+        said("guard `idle` is not judged");
+        // met is counted over what is required
+        assert!(
+            e.because.iter().any(|l| l.contains("1 of 1")),
+            "{:#?}",
+            e.because
+        );
     }
 
     #[test]

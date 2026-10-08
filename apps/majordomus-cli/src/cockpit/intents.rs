@@ -245,7 +245,7 @@ pub fn intent(ctx: &Context, id: &str) -> Page {
         }
     };
     let i = &e.intent;
-    let total = i.satisfaction.len();
+    let total = i.satisfaction.len() - i.optional;
 
     let summary = card(
         "How far reality is from it",

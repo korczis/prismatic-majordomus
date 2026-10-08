@@ -1,7 +1,7 @@
 +++
 title = "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session"
 description = "A failing advisor costs the session one bounded wait, then the work continues on local"
-weight = 244
+weight = 246
 [extra]
 claim_id = "advisor-failure-is-recorded-and-recovers"
 status = "guaranteed"

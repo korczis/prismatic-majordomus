@@ -933,6 +933,24 @@
       "note": "Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404."
     },
     {
+      "id": "claim:intent-guard-is-judged",
+      "kind": "claim",
+      "label": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-guard-is-judged/",
+      "external": false,
+      "note": "`guards:` on an intent record lists invariants with an evidence kind and a reference. A guard whose evidence is failing is violated: the verdict is `unsatisfied` and names it in `verdict.guards`, and the stage is not `satisfied`, although every criterion is met and every milestone is DONE. A guard whose evidence is stale, was never run or does not resolve is not judged and violates nothing, so an unrelated commit never turns a satisfied intent unsatisfied. A plain-text invariant is still judged by nothing. A violated guard does not refuse work from starting (ADR 0113)."
+    },
+    {
+      "id": "claim:intent-evaluation-explained",
+      "kind": "claim",
+      "label": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-evaluation-explained/",
+      "external": false,
+      "note": "`intent show`, `intent explain`, `GET /api/v1/intents/record` and `majordomus_intent_record` answer, for a criterion whose test or claim ran, the latest recorded run — commit, working tree, outcome, time — the inputs that changed since, and the evidence module's sentence. A criterion nothing ran for carries none. `optional: true` on a criterion keeps it out of the verdict, of `met` and of the satisfied stage, and makes it a warning rather than a refusal when no work covers it; an intent with no required criterion is refused (`intent_without_required_criterion`). `command` and `deployment` criteria are still not derivable (ADR 0113)."
+    },
+    {
       "id": "claim:intent-in-session-context",
       "kind": "claim",
       "label": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
@@ -3386,6 +3404,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent_realization.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/intent_satisfaction.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/intent_satisfaction.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent_satisfaction.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/knowledge_base.rs",
@@ -4233,6 +4258,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
     },
     {
+      "id": "test:test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+      "kind": "test",
+      "label": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
+    },
+    {
       "id": "test:test/cases/96_site_deploy.sh",
       "kind": "test",
       "label": "test/cases/96_site_deploy.sh",
@@ -4791,6 +4823,16 @@
     {
       "source": "claim:intent-cockpit-pages",
       "target": "source:docs/COCKPIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-guard-is-judged",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-evaluation-explained",
+      "target": "source:docs/PLANNING.md",
       "kind": "specified_by"
     },
     {
@@ -5914,6 +5956,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:intent-guard-is-judged",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-evaluation-explained",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:intent-in-session-context",
       "target": "impl:lib/intent_binding.sh",
       "kind": "implemented_by"
@@ -7016,6 +7068,16 @@
     {
       "source": "claim:intent-cockpit-pages",
       "target": "test:apps/majordomus-cli/tests/intent_realization.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-guard-is-judged",
+      "target": "test:test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-evaluation-explained",
+      "target": "test:apps/majordomus-cli/tests/intent_satisfaction.rs",
       "kind": "proved_by"
     },
     {

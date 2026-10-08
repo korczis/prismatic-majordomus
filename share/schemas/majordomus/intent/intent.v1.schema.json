@@ -39,6 +39,45 @@
         "minLength": 1
       }
     },
+    "guards": {
+      "type": "array",
+      "description": "Invariants that name their evidence, so that what must stay true is judged and not only said (ADR 0113). A guard is judged by the same engine as a criterion and is violated when its evidence is failing; a violated guard makes the verdict unsatisfied whatever the criteria say. Stale, never run and unresolved are not judged and violate nothing. No issue serves a guard.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "invariant",
+          "evidence",
+          "ref"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "Unique within the intent, and never a criterion's id."
+          },
+          "invariant": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What must stay true."
+          },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "test",
+              "claim"
+            ],
+            "description": "The kind of evidence that would fail if it stopped being true."
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The test or the claim."
+          }
+        }
+      }
+    },
     "satisfaction": {
       "description": "The criteria that settle the statement, each with the evidence that decides it.",
       "type": "array",
@@ -117,6 +156,10 @@
         "ref": {
           "description": "For `test`, the path of a case or integration test or its `suite:`/`crate:` identity; for `claim`, a claim id of docs/CLAIMS.yaml; for `command`, the command; for `deployment`, a deployment id.",
           "type": "string"
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "true when the intent does not require this criterion: it is evaluated and shown like any other, holds neither the verdict nor the satisfied stage back, and is a warning rather than a refusal when no work covers it (ADR 0113). An intent needs at least one criterion that is not optional."
         }
       }
     }

@@ -48,8 +48,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::evidence::{
-    self, compare, freshness, Comparison, EvidenceReport, Ledger, Presented, ProofState, Recorded,
-    TestId, TreeState,
+    self, compare, freshness, Comparison, EvidenceReport, Execution, Ledger, Presented, ProofState,
+    Recorded, TestId, TreeState,
 };
 use crate::index::Index;
 use crate::intent_plan::{coverage, IntentCoverage, IntentOutline};
@@ -294,11 +294,40 @@ pub struct IntentVerdictReason {
 pub struct IntentVerdict {
     /// Derived: what the evidence says.
     pub state: IntentVerdictState,
-    /// Every criterion that is not met, with the state of its evidence.
+    /// Every required criterion that is not met, with the state of its evidence.
     pub reasons: Vec<IntentVerdictReason>,
+    /// Every guard that is violated: its evidence is failing (ADR 0113). Absent when none
+    /// is, so a verdict over an intent with no guards reads as it always did.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub guards: Vec<IntentVerdictGuard>,
+}
+
+/// One violated guard in a verdict: which, the kind of its evidence, and its state.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentEvidenceState, IntentVerdictGuard};
+/// let g = IntentVerdictGuard {
+///     guard: "engines-agree".into(),
+///     evidence: "test".into(),
+///     state: IntentEvidenceState::Failing,
+/// };
+/// assert_eq!(serde_json::to_value(&g).unwrap()["state"], "failing");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntentVerdictGuard {
+    /// The guard's id.
+    pub guard: String,
+    /// `test` or `claim`.
+    pub evidence: String,
+    /// The state of its evidence: `failing`, or it would not be here.
+    pub state: IntentEvidenceState,
 }
 
 /// Whether the ledger or the claim join can settle a criterion of this evidence kind.
+fn is_zero(n: &usize) -> bool {
+    *n == 0
+}
+
 fn ledger_settles(evidence: &str) -> bool {
     matches!(evidence, "test" | "claim")
 }
@@ -311,7 +340,7 @@ fn ledger_settles(evidence: &str) -> bool {
 /// let c = |evidence: &str, state: IntentEvidenceState| IntentCriterion {
 ///     id: evidence.into(), criterion: "c".into(), evidence: evidence.into(),
 ///     reference: "r".into(), met: state == IntentEvidenceState::Current, state,
-///     proof: None, reproduce: None,
+///     proof: None, reproduce: None, optional: false, evaluation: None,
 /// };
 /// let met = c("test", IntentEvidenceState::Current);
 /// assert_eq!(verdict(&[met.clone()]).state, IntentVerdictState::Satisfied);
@@ -325,16 +354,65 @@ fn ledger_settles(evidence: &str) -> bool {
 /// assert_eq!(v.reasons.len(), 2);
 /// ```
 pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
+    verdict_with(criteria, &[])
+}
+
+/// The verdict over the criteria and the guards (ADR 0113). The required criteria decide it
+/// as [`verdict`] says; an optional criterion decides nothing; and a guard whose evidence is
+/// failing makes it `unsatisfied` whatever the criteria say, because an intent is not
+/// satisfied while what it said must stay true has stopped being true. A guard that is
+/// stale, was never run or does not resolve is not judged, and violates nothing: only a
+/// recorded failing run is a violation.
+///
+/// ```
+/// use majordomus_cli::intent::{
+///     verdict_with, IntentCriterion, IntentEvidenceState, IntentGuard, IntentVerdictState,
+/// };
+/// let met = IntentCriterion {
+///     id: "a".into(), criterion: "c".into(), evidence: "test".into(),
+///     reference: "test/cases/1_x.sh".into(), state: IntentEvidenceState::Current, met: true,
+///     proof: None, reproduce: None, optional: false, evaluation: None,
+/// };
+/// let guard = |state| IntentGuard {
+///     id: "g".into(), invariant: "stays true".into(), evidence: "test".into(),
+///     reference: "test/cases/2_y.sh".into(), state, violated: state == IntentEvidenceState::Failing,
+///     reproduce: None, evaluation: None,
+/// };
+/// // a failing guard outranks met criteria; a stale one is not judged
+/// let violated = verdict_with(&[met.clone()], &[guard(IntentEvidenceState::Failing)]);
+/// assert_eq!(violated.state, IntentVerdictState::Unsatisfied);
+/// assert_eq!(violated.guards[0].guard, "g");
+/// let stale = verdict_with(&[met.clone()], &[guard(IntentEvidenceState::Stale)]);
+/// assert_eq!(stale.state, IntentVerdictState::Satisfied);
+/// // an optional criterion that is not met holds nothing back
+/// let optional = IntentCriterion { id: "b".into(), optional: true, met: false,
+///     state: IntentEvidenceState::NotRun, ..met.clone() };
+/// assert_eq!(verdict_with(&[met, optional.clone()], &[]).state, IntentVerdictState::Satisfied);
+/// // and with no required criterion there is no verdict to claim
+/// assert_eq!(verdict_with(&[optional], &[]).state, IntentVerdictState::Unknown);
+/// ```
+pub fn verdict_with(criteria: &[IntentCriterion], guards: &[IntentGuard]) -> IntentVerdict {
     let reasons: Vec<IntentVerdictReason> = criteria
         .iter()
-        .filter(|c| !c.met)
+        .filter(|c| !c.optional && !c.met)
         .map(|c| IntentVerdictReason {
             criterion: c.id.clone(),
             evidence: c.evidence.clone(),
             state: c.state,
         })
         .collect();
-    let state = if criteria.is_empty() {
+    let violated: Vec<IntentVerdictGuard> = guards
+        .iter()
+        .filter(|g| g.violated)
+        .map(|g| IntentVerdictGuard {
+            guard: g.id.clone(),
+            evidence: g.evidence.clone(),
+            state: g.state,
+        })
+        .collect();
+    let state = if !violated.is_empty() {
+        IntentVerdictState::Unsatisfied
+    } else if !criteria.iter().any(|c| !c.optional) {
         IntentVerdictState::Unknown
     } else if reasons.is_empty() {
         IntentVerdictState::Satisfied
@@ -343,7 +421,11 @@ pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
     } else {
         IntentVerdictState::Unknown
     };
-    IntentVerdict { state, reasons }
+    IntentVerdict {
+        state,
+        reasons,
+        guards: violated,
+    }
 }
 
 // ---------------------------------------------------------------- the record as authored
@@ -358,6 +440,7 @@ pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
 ///     criterion: "the command line, HTTP and MCP answer the same intents".into(),
 ///     evidence: "test".into(),
 ///     reference: "apps/majordomus-cli/tests/intent.rs".into(),
+///     optional: false,
 /// };
 /// assert_eq!(c.evidence, "test");
 /// ```
@@ -370,6 +453,35 @@ pub struct CriterionRecord {
     /// `test`, `claim`, `command` or `deployment`.
     pub evidence: String,
     /// What the evidence names.
+    pub reference: String,
+    /// Whether the intent declares it optional: evaluated and shown like any other, and
+    /// holding neither the verdict nor the satisfied stage back (ADR 0113).
+    pub optional: bool,
+}
+
+/// A guard as authored: an invariant that names its evidence, so that what must stay true
+/// is judged and not only said (ADR 0113). A key of its own beside `invariants`, which
+/// stays a list of plain statements.
+///
+/// ```
+/// use majordomus_cli::intent::GuardRecord;
+/// let g = GuardRecord {
+///     id: "engines-agree".into(),
+///     invariant: "The two plan engines stay identical".into(),
+///     evidence: "test".into(),
+///     reference: "test/cases/99_plan_capabilities.sh".into(),
+/// };
+/// assert_eq!(g.evidence, "test");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct GuardRecord {
+    /// Unique within the intent, and never a criterion's id.
+    pub id: String,
+    /// What must stay true.
+    pub invariant: String,
+    /// `test` or `claim`.
+    pub evidence: String,
+    /// The test or the claim that would fail if it stopped being true.
     pub reference: String,
 }
 
@@ -400,6 +512,8 @@ pub struct IntentRecord {
     pub invariants: Vec<String>,
     /// The criteria.
     pub satisfaction: Vec<CriterionRecord>,
+    /// The guards: invariants that name their evidence, judged like a criterion (ADR 0113).
+    pub guards: Vec<GuardRecord>,
     /// Milestone ids.
     pub milestones: Vec<String>,
     /// Governance references.
@@ -458,6 +572,21 @@ impl IntentRecord {
                         criterion: text(c, "criterion"),
                         evidence: text(c, "evidence"),
                         reference: text(c, "ref"),
+                        optional: c.get("optional").and_then(Value::as_bool).unwrap_or(false),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let guards = meta
+            .get("guards")
+            .and_then(Value::as_array)
+            .map(|a| {
+                a.iter()
+                    .map(|g| GuardRecord {
+                        id: text(g, "id"),
+                        invariant: text(g, "invariant"),
+                        evidence: text(g, "evidence"),
+                        reference: text(g, "ref"),
                     })
                     .collect()
             })
@@ -468,6 +597,7 @@ impl IntentRecord {
             title: text(meta, "title"),
             statement: text(meta, "statement"),
             invariants: texts(meta, "invariants"),
+            guards,
             satisfaction,
             milestones: texts(meta, "milestones"),
             governance: texts(meta, "governance"),
@@ -509,6 +639,56 @@ impl IntentRecord {
 
 // ---------------------------------------------------------------- where evidence comes from
 
+/// What a criterion's or a guard's evidence was judged by: the latest recorded run, and what
+/// the evidence module said of it. Derived with the state it explains and stored nowhere
+/// (ADR 0113). "Considered" is one run — the latest — because that is the only one the
+/// judgement reads.
+///
+/// ```
+/// use majordomus_cli::intent::IntentEvaluation;
+/// let e = IntentEvaluation {
+///     commit: "abc1234".into(), working_tree: "clean".into(), outcome: "pass".into(),
+///     at: "2026-10-08T00:00:00Z".into(), changed: vec!["lib/a.sh".into()],
+///     detail: Some("an input changed since the run".into()),
+/// };
+/// assert_eq!(serde_json::to_value(&e).unwrap()["changed"][0], "lib/a.sh");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+pub struct IntentEvaluation {
+    /// The commit the run was recorded at.
+    pub commit: String,
+    /// The state of the working tree it ran over: `clean`, `dirty` or `unknown`.
+    pub working_tree: String,
+    /// What the run reported: `pass`, `fail`, `skip`, `timeout` or `error`.
+    pub outcome: String,
+    /// When it was recorded.
+    pub at: String,
+    /// The inputs of the evidence that changed since the run; empty when none did or the
+    /// comparison could not be made.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub changed: Vec<String>,
+    /// The evidence module's own sentence for its judgement, when it gave one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+impl IntentEvaluation {
+    /// The evaluation of a recorded run under the judgement the evidence module made of it.
+    fn of(e: &Execution, changed: &[String], detail: Option<&str>) -> Self {
+        IntentEvaluation {
+            commit: e.commit.clone(),
+            working_tree: e.working_tree.clone(),
+            outcome: serde_json::to_value(e.outcome)
+                .ok()
+                .and_then(|v| v.as_str().map(str::to_string))
+                .unwrap_or_default(),
+            at: e.at.clone(),
+            changed: changed.to_vec(),
+            detail: detail.map(str::to_string),
+        }
+    }
+}
+
 /// What one test's recorded evidence says: whether its source is in the tree at all, and what
 /// its latest recorded run came to. A test that is not there cannot settle anything.
 ///
@@ -518,6 +698,7 @@ impl IntentRecord {
 ///     present: false,
 ///     state: IntentEvidenceState::Unresolved,
 ///     proof: None,
+///     evaluation: None,
 /// };
 /// assert!(!standing.present);
 /// ```
@@ -529,6 +710,8 @@ pub struct TestStanding {
     pub state: IntentEvidenceState,
     /// The evidence module's own verdict behind `state`, when the run was judged by it.
     pub proof: Option<ProofState>,
+    /// The run that was judged and what the judgement said of it; `None` when nothing ran.
+    pub evaluation: Option<IntentEvaluation>,
 }
 
 /// What a declared claim's evidence says: the criterion's state, and the claim report's own
@@ -541,15 +724,19 @@ pub struct TestStanding {
 /// let standing = ClaimStanding {
 ///     state: IntentEvidenceState::Current,
 ///     proof: ProofState::InputsUnchanged,
+///     evaluation: None,
 /// };
 /// assert_ne!(standing.proof, ProofState::Proven);
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClaimStanding {
     /// What the claim's evidence means for a criterion.
     pub state: IntentEvidenceState,
     /// The claim report's verdict.
     pub proof: ProofState,
+    /// The run the claim's proof rests on and what its judgement said; `None` when the
+    /// claim's test never ran.
+    pub evaluation: Option<IntentEvaluation>,
 }
 
 /// The facts the derivation reads beyond the plan. The repository answers them from the
@@ -561,7 +748,7 @@ pub struct ClaimStanding {
 /// struct NothingRecorded;
 /// impl EvidenceLookup for NothingRecorded {
 ///     fn test(&self, _: &TestId, _: &[String]) -> TestStanding {
-///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None }
+///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None, evaluation: None }
 ///     }
 ///     fn claim(&self, _: &str) -> Option<ClaimStanding> { None }
 ///     fn deployment(&self, _: &str) -> bool { false }
@@ -757,6 +944,7 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
                 present,
                 state: IntentEvidenceState::NotRun,
                 proof: Some(ProofState::NotRun),
+                evaluation: None,
             };
         };
         // the claim report's own reading of a run: a test that no longer hashes to what ran
@@ -784,6 +972,11 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
             present,
             state: IntentEvidenceState::judged(judgement.state, TreeState::parse(&e.working_tree)),
             proof: Some(judgement.state),
+            evaluation: Some(IntentEvaluation::of(
+                e,
+                &judgement.changed,
+                judgement.detail.as_deref(),
+            )),
         }
     }
 
@@ -796,6 +989,10 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
         Some(ClaimStanding {
             state: IntentEvidenceState::judged(c.state, recorded),
             proof: c.state,
+            evaluation: c
+                .execution
+                .as_ref()
+                .map(|e| IntentEvaluation::of(e, &c.changed, c.detail.as_deref())),
         })
     }
 
@@ -857,6 +1054,8 @@ pub struct IntentMilestone {
 ///     met: false,
 ///     proof: Some(ProofState::NotRun),
 ///     reproduce: None,
+///     optional: false,
+///     evaluation: None,
 /// };
 /// // nothing recorded is not a pass
 /// assert!(!c.met);
@@ -886,6 +1085,50 @@ pub struct IntentCriterion {
     /// The command that produces the evidence again, when one is known.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reproduce: Option<String>,
+    /// Whether the intent declares it optional: shown and evaluated like any other, and
+    /// holding neither the verdict nor the satisfied stage back. Absent when it is required.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optional: bool,
+    /// The run its evidence was judged by, and what the judgement said; absent when nothing
+    /// was judged — the evidence never ran, or is of a kind the ledger does not record.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evaluation: Option<IntentEvaluation>,
+}
+
+/// A guard, judged: an invariant with the state of the evidence that would fail if it
+/// stopped being true (ADR 0113). `violated` is true for a failing run and for nothing
+/// else: a guard that is stale, was never run or does not resolve is not judged.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentEvidenceState, IntentGuard};
+/// let g = IntentGuard {
+///     id: "engines-agree".into(), invariant: "The plan engines stay identical".into(),
+///     evidence: "test".into(), reference: "test/cases/99_plan_capabilities.sh".into(),
+///     state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,
+/// };
+/// assert!(!g.violated, "stale is not judged, and violates nothing");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntentGuard {
+    /// Unique within the intent, and never a criterion's id.
+    pub id: String,
+    /// What must stay true.
+    pub invariant: String,
+    /// `test` or `claim`.
+    pub evidence: String,
+    /// The test or the claim.
+    #[serde(rename = "ref")]
+    pub reference: String,
+    /// The state of its evidence now.
+    pub state: IntentEvidenceState,
+    /// Whether it is violated: its evidence is failing.
+    pub violated: bool,
+    /// The command that runs its evidence, when there is one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reproduce: Option<String>,
+    /// The run it was judged by; absent when nothing was judged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evaluation: Option<IntentEvaluation>,
 }
 
 /// One intent, as its record declares it and as the plan and the ledger derive it: the
@@ -904,6 +1147,8 @@ pub struct IntentCriterion {
 ///     milestones: vec![],
 ///     satisfaction: vec![],
 ///     met: 0,
+///     optional: 0,
+///     guards: vec![],
 ///     verdict: verdict(&[]),
 ///     governance: vec!["adr:adr-0070".into()],
 ///     non_goals: vec![],
@@ -933,6 +1178,13 @@ pub struct IntentView {
     pub satisfaction: Vec<IntentCriterion>,
     /// Derived: how many criteria are met.
     pub met: usize,
+    /// How many criteria are optional; `met` and the verdict are over the others. Absent
+    /// when none is.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub optional: usize,
+    /// The guards, each judged. Absent when the intent declares none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub guards: Vec<IntentGuard>,
     /// Derived from the criteria alone, never from the plan: whether the evidence settles the
     /// intent, and which criteria hold it back.
     pub verdict: IntentVerdict,
@@ -1066,6 +1318,7 @@ fn criterion_of(
     let r = c.reference.trim();
     let mut reproduce = None;
     let mut proof = None;
+    let mut evaluation = None;
     let unresolved = |findings: &mut Vec<IntentFinding>, why: String| {
         finding(
             findings,
@@ -1103,6 +1356,7 @@ fn criterion_of(
                     if standing.present {
                         reproduce = Some(id.reproduce());
                         proof = standing.proof;
+                        evaluation = standing.evaluation;
                         standing.state
                     } else {
                         unresolved(
@@ -1119,6 +1373,7 @@ fn criterion_of(
                 ),
                 Some(standing) => {
                     proof = Some(standing.proof);
+                    evaluation = standing.evaluation;
                     standing.state
                 }
             },
@@ -1148,6 +1403,8 @@ fn criterion_of(
         state,
         proof,
         reproduce,
+        optional: c.optional,
+        evaluation,
     }
 }
 
@@ -1228,6 +1485,12 @@ pub fn outlines(records: &[IntentRecord], gaps: &[GapRecord]) -> Vec<IntentOutli
             milestones: r.milestones.clone(),
             retired: r.cancelled || !r.superseded_by.is_empty(),
             observed_satisfied: observed.get(&r.id).cloned().unwrap_or_default(),
+            optional: r
+                .satisfaction
+                .iter()
+                .filter(|c| c.optional)
+                .map(|c| c.id.clone())
+                .collect(),
         })
         .collect()
 }
@@ -1372,7 +1635,7 @@ impl Intents {
     /// struct NothingRecorded;
     /// impl EvidenceLookup for NothingRecorded {
     ///     fn test(&self, _: &TestId, _: &[String]) -> TestStanding {
-    ///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None }
+    ///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None, evaluation: None }
     ///     }
     ///     fn claim(&self, _: &str) -> Option<ClaimStanding> { None }
     ///     fn deployment(&self, _: &str) -> bool { false }
@@ -1496,8 +1759,65 @@ impl Intents {
                 );
             }
 
-            let met = satisfaction.iter().filter(|c| c.met).count();
-            let all_met = !satisfaction.is_empty() && met == satisfaction.len();
+            // a guard is judged by the function that judges a criterion, over no scope: nothing
+            // serves a guard, so its evidence has no declared inputs of the plan's
+            let guards: Vec<IntentGuard> = r
+                .guards
+                .iter()
+                .map(|g| {
+                    if !seen.insert(g.id.as_str()) {
+                        finding(
+                            &mut findings,
+                            FAIL,
+                            "duplicate_guard",
+                            &r.id,
+                            format!(
+                                "guard `{}` repeats the id of a criterion or of another guard",
+                                g.id
+                            ),
+                        );
+                    }
+                    let judged = criterion_of(
+                        &r.id,
+                        &CriterionRecord {
+                            id: g.id.clone(),
+                            criterion: g.invariant.clone(),
+                            evidence: g.evidence.clone(),
+                            reference: g.reference.clone(),
+                            optional: false,
+                        },
+                        &[],
+                        ev,
+                        &mut findings,
+                    );
+                    IntentGuard {
+                        id: judged.id,
+                        invariant: judged.criterion,
+                        evidence: judged.evidence,
+                        reference: judged.reference,
+                        violated: judged.state == IntentEvidenceState::Failing,
+                        state: judged.state,
+                        reproduce: judged.reproduce,
+                        evaluation: judged.evaluation,
+                    }
+                })
+                .collect();
+            let optional = satisfaction.iter().filter(|c| c.optional).count();
+            if !satisfaction.is_empty() && optional == satisfaction.len() {
+                finding(
+                    &mut findings,
+                    FAIL,
+                    "intent_without_required_criterion",
+                    &r.id,
+                    "every criterion is optional, so nothing the intent requires could ever be met"
+                        .into(),
+                );
+            }
+            let met = satisfaction.iter().filter(|c| !c.optional && c.met).count();
+            // one verdict, and the stage reads it: whether the evidence is satisfied is
+            // decided in one place (ADR 0113)
+            let verdict = verdict_with(&satisfaction, &guards);
+            let all_met = verdict.state == IntentVerdictState::Satisfied;
             let statuses: Vec<Option<String>> =
                 milestones.iter().map(|m| m.status.clone()).collect();
             intents.push(IntentView {
@@ -1507,9 +1827,11 @@ impl Intents {
                 invariants: r.invariants.clone(),
                 stage: stage(r.cancelled, !r.superseded_by.is_empty(), &statuses, all_met),
                 milestones,
-                verdict: verdict(&satisfaction),
+                verdict,
                 satisfaction,
                 met,
+                optional,
+                guards,
                 governance: r.governance.clone(),
                 non_goals: r.non_goals.clone(),
                 superseded_by: (!r.superseded_by.is_empty()).then(|| r.superseded_by.clone()),
@@ -1804,6 +2126,7 @@ pub struct IntentPreflightGap {
 ///     statement: "It becomes true.".into(),
 ///     criteria: vec![],
 ///     invariants: vec![],
+///     guards: vec![],
 ///     non_goals: vec![],
 ///     governance: vec![],
 ///     critique: None,
@@ -1827,6 +2150,10 @@ pub struct IntentPreflightIntent {
     pub criteria: Vec<IntentCriterion>,
     /// What must stay true.
     pub invariants: Vec<String>,
+    /// The guards of the intent, each judged: the invariants that name their evidence
+    /// (ADR 0113). Absent when the intent declares none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub guards: Vec<IntentGuard>,
     /// What is deliberately not required.
     pub non_goals: Vec<String>,
     /// The governance a worker on this intent loads.
@@ -2026,6 +2353,12 @@ impl Intents {
                 milestones: i.milestones.iter().map(|m| m.id.clone()).collect(),
                 retired: matches!(i.stage, IntentStage::Cancelled | IntentStage::Superseded),
                 observed_satisfied: observed.get(&i.id).cloned().unwrap_or_default(),
+                optional: i
+                    .satisfaction
+                    .iter()
+                    .filter(|c| c.optional)
+                    .map(|c| c.id.clone())
+                    .collect(),
             })
             .collect();
         let cov = coverage(&outlines, plan);
@@ -2230,6 +2563,7 @@ impl Intents {
                 .cloned()
                 .collect(),
             invariants: view.invariants.clone(),
+            guards: view.guards.clone(),
             non_goals: view.non_goals.clone(),
             governance: view.governance.clone(),
             critique: critiques.iter().find(|c| c.intent == view.id).map(|c| {
@@ -2289,6 +2623,7 @@ mod tests {
                     present: true,
                     state,
                     proof: None,
+                    evaluation: None,
                 },
             );
             self
@@ -2300,8 +2635,14 @@ mod tests {
                 IntentEvidenceState::Failing => ProofState::Failing,
                 _ => ProofState::NotRun,
             };
-            self.claims
-                .insert(id.into(), ClaimStanding { state, proof });
+            self.claims.insert(
+                id.into(),
+                ClaimStanding {
+                    state,
+                    proof,
+                    evaluation: None,
+                },
+            );
             self
         }
     }
@@ -2315,10 +2656,11 @@ mod tests {
                     present: false,
                     state: IntentEvidenceState::NotRun,
                     proof: None,
+                    evaluation: None,
                 })
         }
         fn claim(&self, id: &str) -> Option<ClaimStanding> {
-            self.claims.get(id).copied()
+            self.claims.get(id).cloned()
         }
         fn deployment(&self, id: &str) -> bool {
             id == "fly"
@@ -2416,6 +2758,7 @@ mod tests {
                     criterion: "observable".into(),
                     evidence: (*kind).into(),
                     reference: (*r).into(),
+                    optional: false,
                 })
                 .collect(),
             milestones: milestones.iter().map(|m| m.to_string()).collect(),
@@ -3514,5 +3857,300 @@ mod tests {
         );
         // the gap's conditions are part of what a review judges
         assert_ne!(revision_of(&i, &p, &[], "x"), Some(o.reviewed_plan));
+    }
+    const OTHER: (&str, &str, &str) = ("other", "test", "test/cases/2_y.sh");
+
+    fn guard(id: &str, reference: &str) -> GuardRecord {
+        GuardRecord {
+            id: id.into(),
+            invariant: format!("{id} stays true"),
+            evidence: "test".into(),
+            reference: reference.into(),
+        }
+    }
+
+    fn judged_by(outcome: &str, changed: &[&str]) -> IntentEvaluation {
+        IntentEvaluation {
+            commit: "c0ffee".into(),
+            working_tree: "clean".into(),
+            outcome: outcome.into(),
+            at: "2026-10-08T00:00:00Z".into(),
+            changed: changed.iter().map(|c| c.to_string()).collect(),
+            detail: (!changed.is_empty()).then(|| "an input changed since the run".into()),
+        }
+    }
+
+    /// ADR 0113: a judged criterion carries the run that decided it, an optional criterion
+    /// holds neither the verdict nor the stage back, and the stage reads the one verdict.
+    #[test]
+    fn an_evaluation_travels_and_an_optional_criterion_blocks_nothing() {
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        let mut r = record("x", &["m"], &[CASE, OTHER]);
+        r.satisfaction[1].optional = true;
+        let mut ev = Table::new()
+            .with_test("suite:1_x", IntentEvidenceState::Current)
+            .with_test("suite:2_y", IntentEvidenceState::Stale);
+        ev.tests.get_mut("suite:1_x").unwrap().evaluation = Some(judged_by("pass", &[]));
+        ev.tests.get_mut("suite:2_y").unwrap().evaluation = Some(judged_by("pass", &["lib/a.sh"]));
+        let derive = || Intents::derive(vec![r.clone()], &p, &ev);
+        let i = derive();
+        let x = i.intent("x").unwrap();
+
+        // the required criterion is met, the optional one is stale: satisfied all the same
+        assert_eq!(x.verdict.state, IntentVerdictState::Satisfied);
+        assert!(
+            x.verdict.reasons.is_empty(),
+            "an optional criterion is no reason"
+        );
+        assert_eq!(x.stage, IntentStage::Satisfied);
+        assert_eq!((x.met, x.optional, x.satisfaction.len()), (1, 1, 2));
+        assert!(x.satisfaction[1].optional && !x.satisfaction[1].met);
+        // each carries the run it was judged by, and the stale one what changed
+        let judged = x.satisfaction[0]
+            .evaluation
+            .as_ref()
+            .expect("a judged criterion");
+        assert_eq!(
+            (judged.commit.as_str(), judged.outcome.as_str()),
+            ("c0ffee", "pass")
+        );
+        assert!(judged.changed.is_empty() && judged.detail.is_none());
+        let stale = x.satisfaction[1].evaluation.as_ref().unwrap();
+        assert_eq!(stale.changed, ["lib/a.sh"]);
+        assert_eq!(
+            stale.detail.as_deref(),
+            Some("an input changed since the run")
+        );
+        // the same state evaluates to the same answer, every time
+        assert_eq!(
+            serde_json::to_value(&i.intents).unwrap(),
+            serde_json::to_value(&derive().intents).unwrap()
+        );
+        // on the wire an optional criterion says so, and a required one says nothing
+        let wire = serde_json::to_value(x).unwrap();
+        assert_eq!(wire["satisfaction"][1]["optional"], true);
+        assert!(wire["satisfaction"][0].get("optional").is_none());
+        assert_eq!(wire["optional"], 1);
+        assert!(wire.get("guards").is_none(), "no guard, no key");
+        assert!(wire["verdict"].get("guards").is_none());
+
+        // the required one stops being met: unsatisfied, and the optional one is still no reason
+        let failing = Table::new()
+            .with_test("suite:1_x", IntentEvidenceState::Failing)
+            .with_test("suite:2_y", IntentEvidenceState::Current);
+        let i = Intents::derive(vec![r.clone()], &p, &failing);
+        let x = i.intent("x").unwrap();
+        assert_eq!(x.verdict.state, IntentVerdictState::Unsatisfied);
+        assert_eq!(x.verdict.reasons.len(), 1);
+        assert_eq!(x.verdict.reasons[0].criterion, "case");
+        assert_eq!(x.stage, IntentStage::Verifying);
+        assert_eq!(x.met, 0);
+        // nothing was judged for a criterion nothing ran for
+        let never = Intents::derive(
+            vec![r.clone()],
+            &p,
+            &Table::new()
+                .with_test("suite:1_x", IntentEvidenceState::NotRun)
+                .with_test("suite:2_y", IntentEvidenceState::NotRun),
+        );
+        assert!(never.intent("x").unwrap().satisfaction[0]
+            .evaluation
+            .is_none());
+
+        // every criterion optional: nothing is required, which is refused and unknown
+        r.satisfaction[0].optional = true;
+        let i = Intents::derive(vec![r], &p, &ev);
+        assert!(codes(&i).contains(&"intent_without_required_criterion"));
+        let x = i.intent("x").unwrap();
+        assert_eq!(x.verdict.state, IntentVerdictState::Unknown);
+        assert_eq!(x.stage, IntentStage::Verifying, "unknown is not satisfied");
+        assert_eq!((x.met, x.optional), (0, 2));
+    }
+
+    /// ADR 0113: a guard is judged like a criterion, only a failing run violates it, and a
+    /// violated guard keeps the intent unsatisfied although every criterion is met and every
+    /// milestone is DONE.
+    #[test]
+    fn a_failing_guard_keeps_the_intent_unsatisfied_and_a_stale_one_is_not_judged() {
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        let mut r = record("x", &["m"], &[CASE]);
+        r.guards = vec![guard("stays", "test/cases/2_y.sh")];
+        let with = |state| {
+            let mut ev = Table::new()
+                .with_test("suite:1_x", IntentEvidenceState::Current)
+                .with_test("suite:2_y", state);
+            ev.tests.get_mut("suite:2_y").unwrap().evaluation = Some(judged_by("fail", &[]));
+            Intents::derive(vec![r.clone()], &p, &ev)
+        };
+
+        let i = with(IntentEvidenceState::Failing);
+        let x = i.intent("x").unwrap();
+        assert!(x.satisfaction[0].met, "every criterion is met");
+        assert_eq!(x.verdict.state, IntentVerdictState::Unsatisfied);
+        assert!(x.verdict.reasons.is_empty(), "no criterion holds it back");
+        assert_eq!(x.verdict.guards.len(), 1);
+        assert_eq!(x.verdict.guards[0].guard, "stays");
+        assert_eq!(x.verdict.guards[0].state, IntentEvidenceState::Failing);
+        assert_eq!(
+            x.stage,
+            IntentStage::Verifying,
+            "DONE and met, and still not satisfied"
+        );
+        assert!(x.guards[0].violated);
+        assert_eq!(x.guards[0].invariant, "stays stays true");
+        assert_eq!(x.guards[0].evaluation.as_ref().unwrap().outcome, "fail");
+        let wire = serde_json::to_value(x).unwrap();
+        assert_eq!(wire["verdict"]["guards"][0]["guard"], "stays");
+        assert_eq!(wire["guards"][0]["ref"], "test/cases/2_y.sh");
+
+        // it passes again: the guard holds and the intent is satisfied
+        let i = with(IntentEvidenceState::Current);
+        let x = i.intent("x").unwrap();
+        assert_eq!(x.verdict.state, IntentVerdictState::Satisfied);
+        assert_eq!(x.stage, IntentStage::Satisfied);
+        assert!(!x.guards[0].violated && x.verdict.guards.is_empty());
+
+        // stale and never run are not judged: an unrelated commit violates nothing
+        for state in [IntentEvidenceState::Stale, IntentEvidenceState::NotRun] {
+            let i = with(state);
+            let x = i.intent("x").unwrap();
+            assert!(!x.guards[0].violated, "{state:?}");
+            assert_eq!(x.verdict.state, IntentVerdictState::Satisfied, "{state:?}");
+        }
+
+        // a guard may not take a criterion's id, nor another guard's, and its evidence must resolve
+        let mut clash = record("x", &["m"], &[CASE]);
+        clash.guards = vec![
+            guard("case", "test/cases/2_y.sh"),
+            guard("twice", "test/cases/2_y.sh"),
+            guard("twice", "test/cases/2_y.sh"),
+            guard("nowhere", "not a test"),
+        ];
+        let i = Intents::derive(
+            vec![clash],
+            &p,
+            &Table::new()
+                .with_test("suite:1_x", IntentEvidenceState::Current)
+                .with_test("suite:2_y", IntentEvidenceState::Current),
+        );
+        let found = codes(&i);
+        assert_eq!(
+            found.iter().filter(|c| **c == "duplicate_guard").count(),
+            2,
+            "{found:?}"
+        );
+        assert!(found.contains(&"unresolved_evidence_ref"), "{found:?}");
+        let x = i.intent("x").unwrap();
+        assert!(!x.guards[3].violated, "an unresolved guard is not judged");
+    }
+
+    /// The record's reader: `optional` on a criterion and the `guards` key, and a record
+    /// with neither reading as it always did.
+    #[test]
+    fn a_record_reads_its_optional_criteria_and_its_guards() {
+        let r = IntentRecord::from_metadata(
+            ".ai/repo/project/intents/x.yaml",
+            &serde_json::json!({
+                "id": "x", "title": "X", "statement": "s",
+                "invariants": ["plain text stays plain"],
+                "guards": [{"id": "stays", "invariant": "It stays true", "evidence": "test",
+                            "ref": "test/cases/2_y.sh"}],
+                "milestones": ["m"],
+                "satisfaction": [
+                    {"id": "a", "criterion": "A", "evidence": "test", "ref": "test/cases/1_x.sh"},
+                    {"id": "b", "criterion": "B", "evidence": "test", "ref": "test/cases/1_x.sh",
+                     "optional": true}
+                ]
+            }),
+        );
+        assert_eq!(r.invariants, ["plain text stays plain"]);
+        assert_eq!(
+            r.guards,
+            [guard_of("stays", "It stays true", "test/cases/2_y.sh")]
+        );
+        assert!(!r.satisfaction[0].optional && r.satisfaction[1].optional);
+        let plain = IntentRecord::from_metadata(
+            ".ai/repo/project/intents/y.yaml",
+            &serde_json::json!({"id": "y", "satisfaction": [{"id": "a"}]}),
+        );
+        assert!(plain.guards.is_empty() && !plain.satisfaction[0].optional);
+    }
+
+    fn guard_of(id: &str, invariant: &str, reference: &str) -> GuardRecord {
+        GuardRecord {
+            id: id.into(),
+            invariant: invariant.into(),
+            evidence: "test".into(),
+            reference: reference.into(),
+        }
+    }
+    /// ADR 0113: making a criterion optional, and adding or changing a guard, change the
+    /// plan a review judged and a task was pinned to; a record that declares neither keeps
+    /// the revisions it had; and a guard is in the evidence standing only while violated.
+    #[test]
+    fn a_review_and_a_pin_cover_optional_criteria_and_guards() {
+        use crate::intent_binding::{bind, BindingRequest};
+        use crate::intent_opposition::revision_of;
+        use crate::policy::IntentPolicy;
+
+        let p = plan(
+            vec![milestone("m", "ACTIVE")],
+            vec![serving("I1", "m", &["lib"], &["x#case"])],
+        );
+        let reviewed = [critique("x", &[])];
+        let ask = |r: IntentRecord, guard_state: IntentEvidenceState| {
+            let ev = Table::new()
+                .with_test("suite:1_x", IntentEvidenceState::NotRun)
+                .with_test("suite:2_y", guard_state);
+            let i = Intents::derive(vec![r], &p, &ev);
+            let binding = bind(
+                &i,
+                &p,
+                &[],
+                &reviewed,
+                &IntentPolicy::default(),
+                BindingRequest {
+                    issue: Some("I1".into()),
+                    ..Default::default()
+                },
+            );
+            (revision_of(&i, &p, &[], "x").unwrap(), binding)
+        };
+        let plain = record("x", &["m"], &[CASE, OTHER]);
+        let (review, pinned) = ask(plain.clone(), IntentEvidenceState::NotRun);
+        // derived twice, the same
+        assert_eq!(ask(plain.clone(), IntentEvidenceState::NotRun).0, review);
+
+        let mut optional = plain.clone();
+        optional.satisfaction[0].optional = true;
+        let (review_optional, pinned_optional) = ask(optional, IntentEvidenceState::NotRun);
+        assert_ne!(
+            review_optional, review,
+            "optional is part of what a review judges"
+        );
+        assert_ne!(pinned_optional.plan_revision, pinned.plan_revision);
+
+        let mut guarded = plain.clone();
+        guarded.guards = vec![guard("stays", "test/cases/2_y.sh")];
+        let (review_guarded, held) = ask(guarded.clone(), IntentEvidenceState::Current);
+        assert_ne!(
+            review_guarded, review,
+            "a guard is part of what a review judges"
+        );
+        assert_ne!(held.plan_revision, pinned.plan_revision);
+        assert_eq!(held.intents[0].guards[0].id, "stays");
+        // a guard that holds leaves the evidence standing where it was without one
+        assert_eq!(held.evidence_standing, pinned.evidence_standing);
+        // and one that starts failing moves it: a resumed worker is told
+        let (_, violated) = ask(guarded.clone(), IntentEvidenceState::Failing);
+        assert_ne!(violated.evidence_standing, held.evidence_standing);
+        assert_eq!(
+            violated.plan_revision, held.plan_revision,
+            "the plan did not change"
+        );
+        assert!(violated.intents[0].guards[0].violated);
+        // changing what the guard names is a change of the plan
+        guarded.guards[0].invariant = "something else stays true".into();
+        assert_ne!(ask(guarded, IntentEvidenceState::Current).0, review_guarded);
     }
 }

@@ -1394,6 +1394,16 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:intent-evaluation-explained",
+      "path": "/evidence/claims/intent-evaluation-explained/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-guard-is-judged",
+      "path": "/evidence/claims/intent-guard-is-judged/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:intent-in-session-context",
       "path": "/evidence/claims/intent-in-session-context/"
     },
@@ -7629,6 +7639,52 @@
             "docs/PLANNING.md",
             "apps/majordomus-cli/src/intent_plan.rs",
             "test/cases/386_a_plan_is_held_to_its_intent.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-evaluation-explained": {
+      "kind": "claim",
+      "id": "intent-evaluation-explained",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-evaluation-explained/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "crate:intent_satisfaction",
+          "path": "apps/majordomus-cli/tests/intent_satisfaction.rs",
+          "category": "integration",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/tests/intent_satisfaction.rs"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-guard-is-judged": {
+      "kind": "claim",
+      "id": "intent-guard-is-judged",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-guard-is-judged/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:965_a_failing_guard_keeps_an_intent_unsatisfied",
+          "path": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
           ]
         }
       ],

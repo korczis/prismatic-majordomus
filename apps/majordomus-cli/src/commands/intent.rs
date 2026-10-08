@@ -282,7 +282,9 @@ fn list_text(v: &Value) -> String {
         "ID", "STAGE", "VERDICT", "MET"
     )];
     for i in &intents {
-        let total = i["satisfaction"].as_array().map_or(0, Vec::len);
+        // met is counted over the required criteria, so the total it is of is theirs
+        let total = i["satisfaction"].as_array().map_or(0, Vec::len)
+            - i["optional"].as_u64().unwrap_or(0) as usize;
         out.push(format!(
             "{:<width$}  {:<10}  {:<11}  {:<7}  {}",
             s(i, "id"),
@@ -354,6 +356,10 @@ fn show_text(v: &Value) -> String {
     for inv in v["invariants"].as_array().into_iter().flatten() {
         out.push(format!("  invariant   {}", inv.as_str().unwrap_or("")));
     }
+    for g in v["guards"].as_array().into_iter().flatten() {
+        out.push(guard_line("  ", g));
+        evaluation_line(&mut out, "  ", &g["evaluation"]);
+    }
     for m in v["milestones"].as_array().into_iter().flatten() {
         out.push(format!(
             "  milestone   {}  {}",
@@ -379,6 +385,10 @@ fn show_text(v: &Value) -> String {
                 .map(|r| format!("  [reproduce: {r}]"))
                 .unwrap_or_default()
         ));
+        if c["optional"] == true {
+            out.push("              optional: holds neither the verdict nor the stage back".into());
+        }
+        evaluation_line(&mut out, "  ", &c["evaluation"]);
     }
     for r in v["verdict"]["reasons"].as_array().into_iter().flatten() {
         out.push(format!(
@@ -388,10 +398,61 @@ fn show_text(v: &Value) -> String {
             s(r, "state"),
         ));
     }
+    for g in v["verdict"]["guards"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "  violated    {}  {} {}",
+            s(g, "guard"),
+            s(g, "evidence"),
+            s(g, "state"),
+        ));
+    }
     for g in v["governance"].as_array().into_iter().flatten() {
         out.push(format!("  governance  {}", g.as_str().unwrap_or("")));
     }
     out.join("\n")
+}
+
+/// One guard: what must stay true, the state of its evidence, and whether it is violated,
+/// holds, or is not judged.
+fn guard_line(indent: &str, g: &Value) -> String {
+    format!(
+        "{indent}guard       {}  {}  {} {}  — {}",
+        s(g, "id"),
+        if g["violated"] == true {
+            "violated"
+        } else if s(g, "state") == "current" {
+            "holds"
+        } else {
+            "not judged"
+        },
+        s(g, "evidence"),
+        s(g, "state"),
+        s(g, "invariant"),
+    )
+}
+
+/// The run a criterion or a guard was judged by, when one was: nothing for evidence that
+/// never ran.
+fn evaluation_line(out: &mut Vec<String>, indent: &str, e: &Value) {
+    if e.is_object() {
+        let changed = words(&e["changed"]);
+        out.push(format!(
+            "{indent}            judged by the run at {} ({} tree, {}, {}){}{}",
+            s(e, "commit"),
+            s(e, "working_tree"),
+            s(e, "outcome"),
+            s(e, "at"),
+            if changed.is_empty() {
+                String::new()
+            } else {
+                format!("; changed since: {}", changed.join(", "))
+            },
+            e["detail"]
+                .as_str()
+                .map(|d| format!("; {d}"))
+                .unwrap_or_default(),
+        ));
+    }
 }
 
 fn findings_text(out: &mut Vec<String>, findings: &Value) {
@@ -589,6 +650,9 @@ fn held_text(v: &Value, out: &mut Vec<String>) {
         }
         for inv in words(&i["invariants"]) {
             out.push(format!("  invariant   {inv}"));
+        }
+        for g in i["guards"].as_array().into_iter().flatten() {
+            out.push(guard_line("  ", g));
         }
         for n in words(&i["non_goals"]) {
             out.push(format!("  non-goal    {n}"));
@@ -966,6 +1030,68 @@ mod tests {
         assert!(
             show.contains("  held back   b  command not_derivable"),
             "{show}"
+        );
+    }
+
+    /// ADR 0113: show prints the run a criterion was judged by, says which are optional,
+    /// lists every guard as violated, holding or not judged, and names the violated ones
+    /// under the verdict; the list counts met over the required criteria.
+    #[test]
+    fn show_prints_evaluations_optional_criteria_and_guards() {
+        let run = json!({"commit": "c0ffee", "working_tree": "clean", "outcome": "pass",
+                         "at": "2026-10-08T00:00:00Z", "changed": ["lib/a.sh"],
+                         "detail": "an input changed since the run"});
+        let intent = json!({
+            "id": "probe", "title": "Probe", "statement": "True.", "stage": "verifying",
+            "source": "s.yaml", "met": 1, "optional": 1,
+            "invariants": ["plain text"],
+            "guards": [
+                {"id": "broken", "invariant": "It stays true", "evidence": "test",
+                 "ref": "t", "state": "failing", "violated": true,
+                 "evaluation": {"commit": "c0ffee", "working_tree": "dirty",
+                                "outcome": "fail", "at": "2026-10-08T00:00:00Z"}},
+                {"id": "fine", "invariant": "It holds", "evidence": "test", "ref": "t",
+                 "state": "current", "violated": false},
+                {"id": "idle", "invariant": "Nobody ran it", "evidence": "claim", "ref": "c",
+                 "state": "not_run", "violated": false}
+            ],
+            "satisfaction": [
+                {"id": "a", "state": "current", "met": true, "evidence": "test", "ref": "t"},
+                {"id": "b", "state": "stale", "met": false, "evidence": "test", "ref": "u",
+                 "optional": true, "evaluation": run}
+            ],
+            "verdict": {"state": "unsatisfied", "reasons": [],
+                        "guards": [{"guard": "broken", "evidence": "test",
+                                    "state": "failing"}]},
+        });
+        let show = show_text(&intent);
+        for line in [
+            "  guard       broken  violated  test failing  — It stays true",
+            "              judged by the run at c0ffee (dirty tree, fail, 2026-10-08T00:00:00Z)",
+            "  guard       fine  holds  test current  — It holds",
+            "  guard       idle  not judged  claim not_run  — Nobody ran it",
+            "              optional: holds neither the verdict nor the stage back",
+            "              judged by the run at c0ffee (clean tree, pass, 2026-10-08T00:00:00Z); changed since: lib/a.sh; an input changed since the run",
+            "  violated    broken  test failing",
+        ] {
+            assert!(show.lines().any(|l| l == line), "{line:?} missing from\n{show}");
+        }
+        // one required criterion, met: 1/1, whatever the optional one says
+        let list = list_text(&json!({ "count": 1, "intents": [intent.clone()] }));
+        assert!(list.lines().nth(1).unwrap().contains("1/1"), "{list}");
+        // the binding and the preflight print a served intent's guards under its invariants
+        let held = preflight_text(&json!({
+            "verdict": "serves", "issues": [],
+            "intents": [{"id": "probe", "stage": "verifying", "title": "Probe",
+                         "statement": "True.", "criteria": [], "invariants": ["plain text"],
+                         "guards": intent["guards"].clone(), "non_goals": [],
+                         "critique": null, "gap": null}],
+            "governance": [], "refusals": []
+        }));
+        assert!(
+            held.lines()
+                .any(|l| l == "  guard       broken  violated  test failing  — It stays true"),
+            "{held}"
         );
     }
 

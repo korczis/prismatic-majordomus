@@ -1,0 +1,46 @@
+id: I2022
+milestone: intent-satisfaction
+title: A guard is judged, and a failing one keeps the intent unsatisfied
+slug: a-guard-is-judged
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-satisfaction#guard-is-judged
+objective: "Add guards to the intent record as a key of its own: a list of records with an id, the invariant it guards as a statement, an evidence kind and a reference; invariants stay a list of strings. Judge a guard with the function that judges a criterion. A guard is violated when its evidence is failing and only then; stale, never run and unresolved are named as not judged. A violated guard makes the verdict unsatisfied in a field of its own beside the reasons, and the stage not satisfied. A guard id may not repeat a criterion's, and an issue may not serve one. The review revision, the plan revision and the evidence standing take guards in where a record declares them. Show guards in intent show, intent explain, the binding, the opposition and the briefing; write the claims; make one invariant of this repository's own intents a guard."
+why: "The invariants are printed to the worker and judged by nothing, so what an intent said must stay true can stop being true while the intent reads satisfied."
+current_state: "IntentRecord.invariants is a list of strings copied to every view. The verdict's reasons are criteria, and their JSON shape is pinned by tests."
+desired_state: "A failing guard is named in verdict.guards with its evidence and state; every reader of the invariant statements still gets the statements; a resumed task is told when a guard's standing moved."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/intent_opposition.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/commands/intent.rs
+  - share/schemas/majordomus/intent
+  - share/allow
+  - lib/intent_binding.sh
+  - .ai/repo/project/intents
+  - .ai/repo/project/critiques
+  - test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh
+  - docs
+  - site
+depends_on:
+  - I2021
+acceptance_criteria:
+  - With every criterion met and every milestone DONE, an intent whose guard's test fails reads unsatisfied naming the guard, and satisfied again once the test passes and is recorded
+  - A guard whose evidence is stale, never run or unresolved is listed as not judged and changes no verdict, so an unrelated commit never turns a satisfied intent unsatisfied
+  - A guard id that repeats a criterion's, and an issue serving a guard, are each refused by intent validate
+  - Adding or changing a guard moves the review revision; a record with no guards keeps the revision it had; the evidence standing moves when a guard starts or stops failing
+  - docs/CLAIMS.yaml carries the claims this makes true, the prose case 892 pins agrees, and intent-planning guards that the plan engines stay identical with the case that proves it
+  - Unit tests in intent.rs, intent_realization.rs and commands/intent.rs cover each branch in process
+validation:
+  - bash test/run.sh 965_a_failing_guard_keeps_an_intent_unsatisfied
+  - bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence
+  - bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says
+  - bash test/run.sh 99_plan_capabilities
+evidence_required:
+  - a_failing_guard_keeps_the_intent_unsatisfied
+created_at: 2026-10-08
+updated_at: 2026-10-08

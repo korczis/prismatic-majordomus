@@ -1,0 +1,42 @@
+id: I2021
+milestone: intent-satisfaction
+title: A criterion may be optional, and an optional one holds nothing back
+slug: a-criterion-may-be-optional
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-satisfaction#optional-criterion-does-not-block
+objective: "Add optional to the criterion schema and record. An optional criterion is evaluated and shown like any other. The verdict, the satisfied stage and the met count are over required criteria; the count of optional ones is carried apart; the stage reads whether the evidence is satisfied from the verdict and derives nothing itself. An intent with no required criterion is the failure intent_without_required_criterion and its verdict is unknown. An optional criterion no work covers is a warning, and a recorded gap still answers it. The review revision and the binding's plan revision hash optional only where a record says it, so no review stamped before this change goes stale."
+why: "An intent that wants to record a nice-to-have has to leave it out or let it block the verdict forever."
+current_state: "Every criterion is required. The stage computes whether all are met separately from the verdict. Coverage fails any uncovered criterion."
+desired_state: "The verdict's reasons name only required criteria; flipping a criterion to optional makes a stamped review stale; a record without the key reads as before."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/intent_review.rs
+  - apps/majordomus-cli/src/intent_opposition.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - share/schemas/majordomus/intent
+  - share/allow
+  - apps/majordomus-cli/tests/intent_satisfaction.rs
+  - docs
+  - site
+depends_on:
+  - I2020
+acceptance_criteria:
+  - An intent whose required criteria are met and whose optional one is not reads satisfied at stage satisfied, with met counted over the required ones
+  - An intent with only optional criteria fails intent validate as intent_without_required_criterion and reads unknown
+  - An uncovered optional criterion is a warning, an uncovered required one still a failure, and a gap that leaves an optional criterion unanswered is still refused
+  - Marking a criterion optional moves the review revision and the plan revision, and a record that never says optional keeps the revisions it had
+  - Unit tests in intent.rs, intent_plan.rs and intent_opposition.rs cover each of these in process
+validation:
+  - cargo test --lib intent
+  - cargo test --test intent_satisfaction
+  - bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence
+evidence_required:
+  - an_optional_criterion_blocks_nothing
+created_at: 2026-10-08
+updated_at: 2026-10-08

@@ -1,0 +1,47 @@
+intent: intent-satisfaction
+observed_at: 503146f66b
+recorded_by: claude-code (session fcbeae95; a read-only audit agent over int/batch-intent and first-hand reads of intent.rs and evidence/freshness.rs)
+recorded_at: 2026-10-08
+observations:
+  - id: judgement-detail-is-dropped
+    statement: The freshness judgement carries the inputs that changed and a detail sentence, and the criterion keeps only its state and the proof word
+    source: file:apps/majordomus-cli/src/intent.rs
+  - id: every-criterion-is-required
+    statement: The criterion schema has id, criterion, evidence and ref and no key that makes one optional; the verdict is satisfied only when every criterion is met
+    source: file:share/schemas/majordomus/intent/intent.v1.schema.json
+  - id: invariants-are-prose
+    statement: An invariant is a string copied to the view, the preflight and the briefing; nothing evaluates one and no record links one to evidence
+    source: file:apps/majordomus-cli/src/intent.rs
+  - id: explain-is-prose
+    statement: intent explain prints because-lines per criterion with its state words and names neither the run judged nor what was rejected
+    source: file:apps/majordomus-cli/src/intent_realization.rs
+conditions:
+  - criterion: evaluation-is-explained
+    state: missing
+    because: the reasons exist inside the engine and are discarded before any surface is answered
+    observations: [judgement-detail-is-dropped, explain-is-prose]
+  - criterion: optional-criterion-does-not-block
+    state: missing
+    because: the record cannot say a criterion is optional
+    observations: [every-criterion-is-required]
+  - criterion: guard-is-judged
+    state: missing
+    because: an invariant names no evidence and nothing reads it as more than text
+    observations: [invariants-are-prose]
+risks:
+  - IntentView.invariants is read as a list of strings by the binding, the opposition, the briefing and the Cockpit; its shape must not change under them
+  - The shell flattener and the awk plan engine read intent records only as far as their milestones, but the allowlist and the schema must admit both invariant forms
+  - A stored reason would be a second copy of the evidence; the evaluation must be derived with the state it explains
+work:
+  - id: evaluation
+    title: A criterion carries the evaluation that decided it
+    serves: [evaluation-is-explained]
+    issue: I2020
+  - id: optional
+    title: A criterion may be optional, and an optional one holds nothing back
+    serves: [optional-criterion-does-not-block]
+    issue: I2021
+  - id: invariants
+    title: A guard is judged, and a failing one keeps the intent unsatisfied
+    serves: [guard-is-judged]
+    issue: I2022
