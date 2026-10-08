@@ -461,7 +461,10 @@ pub fn build_queue_shaped(
              to it, so no pull request can be ready (owner decision D5)",
             policy.base
         )),
-        Some(_) => {}
+        // a context bound to an app whose check runs were not read with their writer
+        Some(required) => {
+            diagnostics.extend(classify::unread_writers(&obs.pull_requests, required))
+        }
     }
     if policy.merge_method.is_none() {
         diagnostics.push(format!(

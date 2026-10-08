@@ -132,7 +132,9 @@ pub struct CheckObservation {
     /// What reported it.
     #[serde(default)]
     pub kind: CheckKind,
-    /// The app that wrote it, when the forge said.
+    /// The app that wrote it: `None` for a status context, and for a check run whose writer
+    /// the forge was not asked for or did not name. A context bound to an app never reads
+    /// `None` as its app: such a run makes the check `unknown`, never passed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub app_id: Option<u64>,
     /// When it completed (or, for a status context, was set), RFC 3339; empty while it runs

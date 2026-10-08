@@ -24,7 +24,9 @@ what keeps it from drifting back.
 - A pull request is `ready` only when it targets the base, is not a draft, carries no blocking
   label, contains the current master, has its declared dependencies landed, satisfies the
   review policy, and has every required check passed on its current head. Pending, missing,
-  skipped and unreadable are not passed.
+  skipped and unreadable are not passed, and a check the base binds to an app is passed only
+  by that app's own run: another writer's run of the name is not it, and a run whose writer
+  was not read is unknown.
 - The executor observes the forge before deciding and again before acting, and merges only
   when both decisions name the same master and head. It holds no plan across a merge.
 - No integration code passes `--admin`, force-pushes, or rewrites a branch. Bringing master

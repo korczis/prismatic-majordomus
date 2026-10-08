@@ -140,13 +140,85 @@ const CODE: &[&str] = &["apps/", "bin/", "lib/", "scripts/"];
 /// More authored paths than this is a large change.
 const LARGE: usize = 40;
 
+/// What to do about a check run of a context bound to an app that names no app. A refresh
+/// clears only one of the ways it comes about, and the text says which.
+pub const UNREAD_WRITER_REMEDY: &str = "majordomus prs refresh: a check run of a context \
+bound to an app names no app. A refresh clears a head that moved during the read; a check \
+suite whose app the forge does not name, or a head carrying more than 1000 checks, stays \
+unknown until a person looks";
+
+/// The queue's word on check runs whose writer was not read: one line for each requirement
+/// bound to an app that some open pull request carries an unattributed check run of, naming
+/// the pull requests, in the order the base requires them. Nothing when every writer was
+/// read. Without it a queue holding only such pull requests would say nothing is ready and
+/// not why: an observation recorded before writers were read turns every one of them
+/// `unknown`.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::classify::unread_writers;
+/// use majordomus_cli::integration::forge::pull_request_of;
+/// use majordomus_cli::integration::RequiredCheck;
+/// let listed = serde_json::json!({"number": 7, "statusCheckRollup": [
+///     {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"}]});
+/// let bound = [RequiredCheck { context: "ci".into(), app_id: Some(15368) }];
+/// let said = unread_writers(&[pull_request_of(&listed).unwrap()], &bound);
+/// assert!(said[0].starts_with("1 pull request(s) carry a check run of ci (app 15368)"));
+/// assert!(said[0].contains("(#7)"));
+/// ```
+pub fn unread_writers(prs: &[PullRequestObservation], required: &[RequiredCheck]) -> Vec<String> {
+    required
+        .iter()
+        .filter(|req| req.app_id.is_some())
+        .filter_map(|req| {
+            let unread = |c: &super::model::CheckObservation| {
+                c.name == req.context && c.kind == CheckKind::CheckRun && c.app_id.is_none()
+            };
+            let carrying: Vec<String> = prs
+                .iter()
+                .filter(|p| p.checks.iter().any(&unread))
+                .map(|p| format!("#{}", p.number))
+                .collect();
+            (!carrying.is_empty()).then(|| {
+                format!(
+                    "{} pull request(s) carry a check run of {req} whose app was not read ({}): \
+                     that check is unknown on them, never passed. {UNREAD_WRITER_REMEDY}",
+                    carrying.len(),
+                    carrying.join(" ")
+                )
+            })
+        })
+        .collect()
+}
+
 /// The state of each required check on one head, in the order the base requires them.
 ///
-/// For each context, only the reports that may stand for it are read: when the base binds
-/// the context to an app, a status context or another app's check run of that name is not
-/// it. Of those, a report still running makes the check pending; otherwise the newest
-/// completed report is the verdict, so a failure followed by a passing re-run has passed.
-/// A skip is a pass only for a context in `skipped_permitted`; otherwise it is `missing`.
+/// For each requirement, only the reports that may stand for it are read. When the base binds
+/// the context to an app, those are that app's check runs and nothing else: a status context
+/// of the name, or another app's check run of it, neither passes the check nor fails it nor
+/// holds it pending. Of the reports that stand, one still running makes the check pending;
+/// otherwise the newest completed report is the verdict, so a failure followed by a passing
+/// re-run has passed. A skip is a pass only for a context in `skipped_permitted`; otherwise
+/// it is `missing`.
+///
+/// A check run of a bound context that names no app is one whose writer was not read. It is
+/// never taken for the bound app's, and never ignored either: the check is then `unknown`,
+/// unless the bound app's own verdict is a failure, which stands. A context two apps are
+/// bound to is two requirements, each answered by its own app.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::{CheckObservation, CheckRunState, RequiredCheck, RequiredCheckState};
+/// use majordomus_cli::integration::classify::required_check_states;
+/// let run = |app_id| CheckObservation { name: "ci".into(), state: CheckRunState::Passed, app_id, ..Default::default() };
+/// let bound = [RequiredCheck { context: "ci".into(), app_id: Some(15368) }];
+/// let state = |checks: &[CheckObservation]| required_check_states(checks, &bound, &[])[0].1;
+/// assert_eq!(state(&[run(Some(15368))]), RequiredCheckState::Passed);
+/// assert_eq!(state(&[run(Some(99))]), RequiredCheckState::Missing, "another app's run is not it");
+/// assert_eq!(state(&[run(None)]), RequiredCheckState::Unknown, "an unread writer is never a pass");
+/// ```
 pub fn required_check_states(
     checks: &[super::model::CheckObservation],
     required: &[RequiredCheck],
@@ -155,15 +227,22 @@ pub fn required_check_states(
     required
         .iter()
         .map(|req| {
-            let reports: Vec<&super::model::CheckObservation> = checks
-                .iter()
-                .filter(|c| c.name == req.context)
-                .filter(|c| match req.app_id {
-                    None => true,
-                    // bound to an app: a check run from it, or one whose app is unreported
-                    Some(app) => c.kind == CheckKind::CheckRun && c.app_id.is_none_or(|a| a == app),
-                })
-                .collect();
+            let named: Vec<&super::model::CheckObservation> =
+                checks.iter().filter(|c| c.name == req.context).collect();
+            // bound to an app: only that app's check runs stand for the context, and a check
+            // run of the name whose writer was not read leaves the verdict unproved
+            let (reports, unattributed) = match req.app_id {
+                None => (named, false),
+                Some(app) => {
+                    let runs: Vec<&super::model::CheckObservation> = named
+                        .into_iter()
+                        .filter(|c| c.kind == CheckKind::CheckRun)
+                        .collect();
+                    let unattributed = runs.iter().any(|c| c.app_id.is_none());
+                    let its: Vec<_> = runs.into_iter().filter(|c| c.app_id == Some(app)).collect();
+                    (its, unattributed)
+                }
+            };
             let state = if reports.is_empty() {
                 RequiredCheckState::Missing
             } else if reports.iter().any(|c| c.state == CheckRunState::Pending) {
@@ -188,6 +267,11 @@ pub fn required_check_states(
                     // skipped or neutral is not a pass of a required check
                     RequiredCheckState::Missing
                 }
+            };
+            let state = if unattributed {
+                worse(state, RequiredCheckState::Unknown)
+            } else {
+                state
             };
             (req.context.clone(), state)
         })
@@ -1252,6 +1336,14 @@ pub fn classify(
                         )),
                     )
                 }
+                // the requirement was read, and a check run of a context bound to an app was
+                // not read with its writer: unknown, never waiting, since waiting attributes
+                // nothing
+                RequiredCheckState::Unknown if policy.required_checks.is_some() => fails(
+                    PullRequestDisposition::Unknown,
+                    vec![ReasonCode::RequiredChecks { state: checks }],
+                    Some(UNREAD_WRITER_REMEDY.into()),
+                ),
                 RequiredCheckState::Unknown => fails(
                     PullRequestDisposition::Unknown,
                     vec![ReasonCode::RequiredChecksUnread],

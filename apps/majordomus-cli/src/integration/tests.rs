@@ -3452,12 +3452,279 @@ fn a_status_context_from_the_wrong_writer_is_missing() {
         required_checks(&its_app, Some(&bound), &[]),
         RequiredCheckState::Passed
     );
+    // what `gh pr list` alone reports: a check run of the name that names no app. Nobody
+    // read who wrote it, so it is not the bound app's run, and it has not passed.
+    let unread = vec![CheckObservation {
+        name: "ci".into(),
+        state: CheckRunState::Passed,
+        ..Default::default()
+    }];
+    assert_eq!(
+        required_checks(&unread, Some(&bound), &[]),
+        RequiredCheckState::Unknown
+    );
     // unbound, a status context of the name is the check
     let unbound: Vec<super::RequiredCheck> = vec!["ci".into()];
     assert_eq!(
         required_checks(&status, Some(&unbound), &[]),
         RequiredCheckState::Passed
     );
+}
+
+/// A check run of `ci` written by `app` (`None`: the writer was not read), in `state`,
+/// completed at `at`.
+fn run_by(app: Option<u64>, state: CheckRunState, at: &str) -> CheckObservation {
+    CheckObservation {
+        app_id: app,
+        ..run("ci", state, at)
+    }
+}
+
+fn bound_to(context: &str, app: u64) -> super::RequiredCheck {
+    super::RequiredCheck {
+        context: context.into(),
+        app_id: Some(app),
+    }
+}
+
+/// Another app's check run of a bound context neither passes it, nor fails it, nor holds it
+/// pending, whenever it reported: only the bound app's runs are read.
+#[test]
+fn a_foreign_run_never_stands_for_a_bound_check() {
+    use crate::integration::classify::required_checks;
+    let bound = vec![bound_to("ci", 15368)];
+    let (t1, t2) = ("2026-09-01T00:01:00Z", "2026-09-01T00:09:00Z");
+    let verdict = |checks: &[CheckObservation]| required_checks(checks, Some(&bound), &[]);
+    // the override: the bound app failed, and a newer run of another app passed
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Failed, t1),
+            run_by(Some(1), CheckRunState::Passed, t2),
+        ]),
+        RequiredCheckState::Failed
+    );
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Passed, t1),
+            run_by(Some(1), CheckRunState::Pending, ""),
+        ]),
+        RequiredCheckState::Passed,
+        "a foreign run cannot hold it pending"
+    );
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Passed, t1),
+            run_by(Some(1), CheckRunState::Failed, t2),
+        ]),
+        RequiredCheckState::Passed,
+        "a foreign run cannot fail it"
+    );
+    assert_eq!(
+        verdict(&[run_by(Some(1), CheckRunState::Passed, t1)]),
+        RequiredCheckState::Missing,
+        "the bound app has not reported"
+    );
+}
+
+/// A check run of a bound context whose writer was not read is never the bound app's run and
+/// never nobody's: the check is unknown, unless the bound app's own verdict is a failure.
+#[test]
+fn an_unattributed_run_makes_a_bound_check_unknown() {
+    use crate::integration::classify::{required_check_states, required_checks};
+    let bound = vec![bound_to("ci", 15368)];
+    let (t1, t2) = ("2026-09-01T00:01:00Z", "2026-09-01T00:09:00Z");
+    let verdict = |checks: &[CheckObservation]| required_checks(checks, Some(&bound), &[]);
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Passed, t1),
+            run_by(None, CheckRunState::Passed, t2),
+        ]),
+        RequiredCheckState::Unknown
+    );
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Failed, t1),
+            run_by(None, CheckRunState::Passed, t2),
+        ]),
+        RequiredCheckState::Failed,
+        "the bound app's failure stands whatever else is unread"
+    );
+    assert_eq!(
+        verdict(&[run_by(None, CheckRunState::Pending, "")]),
+        RequiredCheckState::Unknown,
+        "an unread writer's run does not make the check wait"
+    );
+    // a status context of the name is not a check run: it is not it, and not an unread writer
+    let status = CheckObservation {
+        kind: crate::integration::CheckKind::StatusContext,
+        ..run_by(None, CheckRunState::Passed, t2)
+    };
+    assert_eq!(
+        verdict(&[run_by(Some(15368), CheckRunState::Passed, t1), status]),
+        RequiredCheckState::Passed
+    );
+    // unbound, any report of the name is the check, as before
+    let unbound: Vec<super::RequiredCheck> = vec!["ci".into()];
+    assert_eq!(
+        required_checks(
+            &[run_by(None, CheckRunState::Passed, t1)],
+            Some(&unbound),
+            &[]
+        ),
+        RequiredCheckState::Passed
+    );
+    // each requirement is answered on its own
+    let mixed = vec![bound_to("ci", 15368), "lint".into()];
+    let checks = vec![
+        run_by(None, CheckRunState::Passed, t1),
+        run("lint", CheckRunState::Passed, t1),
+    ];
+    assert_eq!(
+        required_check_states(&checks, &mixed, &[]),
+        vec![
+            ("ci".to_string(), RequiredCheckState::Unknown),
+            ("lint".to_string(), RequiredCheckState::Passed),
+        ]
+    );
+}
+
+/// A context two sources bind to two apps is required of both: one app's pass does not
+/// stand for the other's failure.
+#[test]
+fn a_context_bound_to_two_apps_needs_both() {
+    use crate::integration::classify::{required_check_states, required_checks};
+    let both = vec![bound_to("ci", 7), bound_to("ci", 15368)];
+    let at = "2026-09-01T00:01:00Z";
+    let split = vec![
+        run_by(Some(7), CheckRunState::Passed, at),
+        run_by(Some(15368), CheckRunState::Failed, at),
+    ];
+    assert_eq!(
+        required_check_states(&split, &both, &[]),
+        vec![
+            ("ci".to_string(), RequiredCheckState::Passed),
+            ("ci".to_string(), RequiredCheckState::Failed),
+        ]
+    );
+    assert_eq!(
+        required_checks(&split, Some(&both), &[]),
+        RequiredCheckState::Failed
+    );
+    let one = vec![run_by(Some(7), CheckRunState::Passed, at)];
+    assert_eq!(
+        required_checks(&one, Some(&both), &[]),
+        RequiredCheckState::Missing
+    );
+    let passed = vec![
+        run_by(Some(7), CheckRunState::Passed, at),
+        run_by(Some(15368), CheckRunState::Passed, at),
+    ];
+    assert_eq!(
+        required_checks(&passed, Some(&both), &[]),
+        RequiredCheckState::Passed
+    );
+}
+
+/// The whole verdict on a pull request whose bound check was reported by a writer nobody
+/// read: unknown, with its own reason, never waiting and never next; the queue says so and
+/// why. The two older meanings of an unknown requirement still answer as they did.
+#[test]
+fn a_bound_check_with_an_unread_writer_is_unknown_not_waiting() {
+    use crate::integration::classify::{unread_writers, UNREAD_WRITER_REMEDY};
+    use crate::integration::{EvidenceKind, IntegrationGate};
+    let w = World {
+        open: vec![sim(1), sim(2)],
+        ..Default::default()
+    };
+    let mut obs = w.observation();
+    obs.required_checks = Some(vec![bound_to("ci", 15368), "lint".into()]);
+    // #1 as `gh pr list` alone reports it; #2 read with its writers
+    obs.pull_requests[0].checks = vec![
+        run_by(None, CheckRunState::Passed, ""),
+        run("lint", CheckRunState::Passed, ""),
+    ];
+    obs.pull_requests[1].checks = vec![
+        run_by(Some(15368), CheckRunState::Passed, ""),
+        run("lint", CheckRunState::Passed, ""),
+    ];
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+    assert_eq!(a.required_checks, RequiredCheckState::Unknown);
+    assert_eq!(
+        a.reasons.iter().map(|r| r.to_string()).collect::<Vec<_>>(),
+        ["required_checks:unknown"]
+    );
+    assert_eq!(a.next_action.as_deref(), Some(UNREAD_WRITER_REMEDY));
+    assert!(
+        a.gates.iter().map(|g| g.gate).eq(IntegrationGate::ALL),
+        "every gate answered, in policy order"
+    );
+    let failed: Vec<IntegrationGate> = a
+        .gates
+        .iter()
+        .filter(|g| !g.passed)
+        .map(|g| g.gate)
+        .collect();
+    assert_eq!(failed, [IntegrationGate::RequiredChecks]);
+    let lines: Vec<(&str, &str)> = a
+        .evidence
+        .iter()
+        .filter(|e| e.kind == EvidenceKind::RequiredCheck)
+        .map(|e| (e.detail.as_str(), e.status.as_str()))
+        .collect();
+    assert_eq!(lines, [("ci (app 15368)", "unknown"), ("lint", "passed")]);
+    // the one read with its writers is ready, and it alone is next
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::Ready);
+    assert_eq!(q.next_merge, Some(2));
+    assert_eq!(q.diagnostics.len(), 1, "{:?}", q.diagnostics);
+    let said = &q.diagnostics[0];
+    assert!(
+        said.starts_with("1 pull request(s) carry a check run of ci (app 15368)"),
+        "{said}"
+    );
+    assert!(
+        said.contains("(#1)") && said.contains("majordomus prs refresh"),
+        "{said}"
+    );
+    // the remedy names the bound the forge adapter reads to
+    let bound = (super::forge::CONTEXT_PAGES * 100).to_string();
+    assert!(
+        UNREAD_WRITER_REMEDY.contains(&bound),
+        "{UNREAD_WRITER_REMEDY}"
+    );
+
+    // alone, it leaves nothing next
+    obs.pull_requests.truncate(1);
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    assert_eq!(q.next_merge, None);
+    assert_eq!(q.diagnostics.len(), 1, "{:?}", q.diagnostics);
+
+    // every writer read, or nothing bound: the queue has nothing to say about writers
+    let unbound: Vec<super::RequiredCheck> = vec!["ci".into(), "lint".into()];
+    assert!(unread_writers(&obs.pull_requests, &unbound).is_empty());
+    obs.pull_requests[0].checks[0].app_id = Some(99);
+    assert!(unread_writers(&obs.pull_requests, &[bound_to("ci", 15368)]).is_empty());
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::WaitingForChecks);
+    assert_eq!(
+        q.get(1).unwrap().required_checks,
+        RequiredCheckState::Missing
+    );
+    assert!(q.diagnostics.is_empty(), "{:?}", q.diagnostics);
+
+    // the two older meanings of unknown keep their own reasons
+    obs.required_checks = Some(Vec::new());
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let reasons = |q: &IntegrationQueue| -> Vec<String> {
+        let a = q.get(1).unwrap();
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        a.reasons.iter().map(|r| r.to_string()).collect()
+    };
+    assert_eq!(reasons(&q), ["no_required_checks"]);
+    obs.required_checks = None;
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    assert_eq!(reasons(&q), ["required_checks_unread"]);
 }
 
 /// A skipped required check has not passed, unless the policy permits that context's skip.
