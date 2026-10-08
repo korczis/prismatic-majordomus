@@ -6,6 +6,286 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release
 generator: majordomus-cli 0.17.0
 current: "0.17.0"
 sections:
+  - version: "0.17.0"
+    tag: v0.17.0
+    date: "2026-10-08T11:35:19Z"
+    commit: 4090b2b8aebab8604c8da0fbda2d994a7db747e6
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v0.17.0
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v0.16.0...v0.17.0
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v0.17.0
+    decisions:
+      - id: adr-0110
+        title: MCP says nothing its capability does not
+        status: proposed
+        date: "2026-10-07"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0110-mcp-says-nothing-its-capability-does-not.md
+        added: 24f88e9cc62d14b6b5459556f08af61b98c29bf6
+      - id: adr-0105
+        title: "A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan"
+        status: proposed
+        date: "2026-10-03"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md
+        added: d385ed52bd0d9d3ce6259f26f55379f633364bf0
+    groups:
+      - kind: feat
+        heading: Added
+        rank: 0
+        changes:
+          - kind: feat
+            scope: mcp
+            subject: a tool says nothing its capability does not
+            breaking: false
+            commit: 24f88e9cc
+            url: https://github.com/korczis/prismatic-majordomus/commit/24f88e9cc
+          - kind: feat
+            scope: timing
+            subject: the timing report is one line of JSON under --json
+            breaking: false
+            commit: 3142d2762
+            url: https://github.com/korczis/prismatic-majordomus/commit/3142d2762
+          - kind: feat
+            scope: pack
+            subject: "a source pack for ChatGPT, verified to carry only committed sources"
+            breaking: false
+            commit: 748b4cd22
+            url: https://github.com/korczis/prismatic-majordomus/commit/748b4cd22
+          - kind: feat
+            scope: cockpit
+            subject: "the plan, one milestone and one issue, with moves run as executions"
+            breaking: false
+            commit: 54cf109dc
+            url: https://github.com/korczis/prismatic-majordomus/commit/54cf109dc
+          - kind: feat
+            scope: continuity
+            subject: a handover moves between machines as a signed record and is resumed on a plan
+            breaking: false
+            commit: d385ed52b
+            url: https://github.com/korczis/prismatic-majordomus/commit/d385ed52b
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: test
+            subject: case 886 gives both runs of context one clock
+            breaking: false
+            commit: acb1ebb45
+            url: https://github.com/korczis/prismatic-majordomus/commit/acb1ebb45
+          - kind: fix
+            scope: mcp
+            subject: "every tool's input schema is an object at its root"
+            breaking: false
+            commit: 88a03d1fc
+            url: https://github.com/korczis/prismatic-majordomus/commit/88a03d1fc
+          - kind: fix
+            scope: pack
+            subject: every changed line of the source pack is reached by a test
+            breaking: false
+            commit: "7573e2682"
+            url: https://github.com/korczis/prismatic-majordomus/commit/7573e2682
+          - kind: fix
+            scope: cockpit
+            subject: the plan pages spell no layer path and their links are 24px targets
+            breaking: false
+            commit: 98f386a02
+            url: https://github.com/korczis/prismatic-majordomus/commit/98f386a02
+          - kind: fix
+            scope: mcp
+            subject: "the clients are ordered by the canonical order, and the case's requests are bounded"
+            breaking: false
+            commit: e90368b7f
+            url: https://github.com/korczis/prismatic-majordomus/commit/e90368b7f
+          - kind: fix
+            scope: security
+            subject: "a remote's URL is published without its credential"
+            breaking: false
+            commit: 8fdb8ed2e
+            url: https://github.com/korczis/prismatic-majordomus/commit/8fdb8ed2e
+          - kind: fix
+            scope: pack
+            subject: "every exported item shows itself, and the pack tools are called"
+            breaking: false
+            commit: 8592877a0
+            url: https://github.com/korczis/prismatic-majordomus/commit/8592877a0
+          - kind: fix
+            scope: server
+            subject: the staleness judgement is unit-tested and case 885 is bounded
+            breaking: false
+            commit: dc1119870
+            url: https://github.com/korczis/prismatic-majordomus/commit/dc1119870
+          - kind: fix
+            scope: cockpit
+            subject: "the issue page's moves ask capabilities.describe, not the registry"
+            breaking: false
+            commit: a23e632a3
+            url: https://github.com/korczis/prismatic-majordomus/commit/a23e632a3
+          - kind: fix
+            scope: server
+            subject: a server serving code that no longer exists stops calling itself ready
+            breaking: false
+            commit: 8c29f1f3a
+            url: https://github.com/korczis/prismatic-majordomus/commit/8c29f1f3a
+            references:
+              - kind: issue
+                id: I1502
+                title: A server serving code that no longer exists stops calling itself ready
+                route: /plan/i1502/
+          - kind: fix
+            scope: handover
+            subject: "two records of one second resolve to the later write, not the larger suffix"
+            breaking: false
+            commit: fd36929ae
+            url: https://github.com/korczis/prismatic-majordomus/commit/fd36929ae
+          - kind: fix
+            scope: continuity
+            subject: the offered handovers and the changed paths take the canonical order
+            breaking: false
+            commit: aa46dceac
+            url: https://github.com/korczis/prismatic-majordomus/commit/aa46dceac
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: continuity
+            subject: the continuity code carries its examples and its tests
+            breaking: false
+            commit: 9b4d3f1b4
+            url: https://github.com/korczis/prismatic-majordomus/commit/9b4d3f1b4
+          - kind: docs
+            scope: mcp
+            subject: "every exported type of the projection carries an example, as rustfmt formats it"
+            breaking: false
+            commit: fe6d177c5
+            url: https://github.com/korczis/prismatic-majordomus/commit/fe6d177c5
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: continuity
+            subject: every changed path of the continuity code is driven
+            breaking: false
+            commit: fbea8da0b
+            url: https://github.com/korczis/prismatic-majordomus/commit/fbea8da0b
+          - kind: test
+            scope: continuity
+            subject: "the command writes its report once, and the cases name their remote branch"
+            breaking: false
+            commit: c123ccd97
+            url: https://github.com/korczis/prismatic-majordomus/commit/c123ccd97
+          - kind: test
+            scope: continuity
+            subject: the seven continuity tools are asked as a client asks them
+            breaking: false
+            commit: 1aad152bd
+            url: https://github.com/korczis/prismatic-majordomus/commit/1aad152bd
+          - kind: test
+            scope: mcp
+            subject: every changed path of the projection is driven; unreachable arms are folded
+            breaking: false
+            commit: f1fe41d8c
+            url: https://github.com/korczis/prismatic-majordomus/commit/f1fe41d8c
+          - kind: test
+            scope: session
+            subject: every branch of the public URL rule is reached by a unit test
+            breaking: false
+            commit: 28ada7aa6
+            url: https://github.com/korczis/prismatic-majordomus/commit/28ada7aa6
+          - kind: test
+            scope: mcp
+            subject: "a remote keeps its login, and no shared record holds its password"
+            breaking: false
+            commit: ba47d6651
+            url: https://github.com/korczis/prismatic-majordomus/commit/ba47d6651
+          - kind: test
+            scope: mcp
+            subject: "the projection's account of itself is held against the server"
+            breaking: false
+            commit: a79fcdf9b
+            url: https://github.com/korczis/prismatic-majordomus/commit/a79fcdf9b
+          - kind: test
+            scope: mcp
+            subject: "the stdio round trip asserts a tool's hints, not the constant they replaced"
+            breaking: false
+            commit: 82a7ab31d
+            url: https://github.com/korczis/prismatic-majordomus/commit/82a7ab31d
+          - kind: test
+            scope: mcp
+            subject: the server is held to the protocol and its boundaries from outside
+            breaking: false
+            commit: 032c54ee0
+            url: https://github.com/korczis/prismatic-majordomus/commit/032c54ee0
+          - kind: test
+            scope: cockpit
+            subject: the last unreached arms of the plan pages are reached
+            breaking: false
+            commit: 88c1edacb
+            url: https://github.com/korczis/prismatic-majordomus/commit/88c1edacb
+          - kind: test
+            scope: cockpit
+            subject: every arm of the plan pages is reached by a test
+            breaking: false
+            commit: f4401610e
+            url: https://github.com/korczis/prismatic-majordomus/commit/f4401610e
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: batch
+            subject: "batch 2 is composed, raised to 0.17.0 and derived"
+            breaking: false
+            commit: 3b9f93790
+            url: https://github.com/korczis/prismatic-majordomus/commit/3b9f93790
+          - kind: chore
+            scope: release
+            subject: record v0.16.0 and the metadata it publishes
+            breaking: false
+            commit: 52e9738c6
+            url: https://github.com/korczis/prismatic-majordomus/commit/52e9738c6
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: a993a21d4
+            url: https://github.com/korczis/prismatic-majordomus/commit/a993a21d4
+          - kind: chore
+            scope: derive
+            subject: the projections follow the conformance suite
+            breaking: false
+            commit: 6bd507c91
+            url: https://github.com/korczis/prismatic-majordomus/commit/6bd507c91
+      - kind: style
+        heading: Formatting
+        rank: 7
+        changes:
+          - kind: style
+            scope: integration
+            subject: the trail test is formatted as rustfmt formats it
+            breaking: false
+            commit: 9f00e62c6
+            url: https://github.com/korczis/prismatic-majordomus/commit/9f00e62c6
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v0.17.0-aarch64-apple-darwin.tar.gz
+        sha256: db80bb29dcc5a708c68a2de10451f353f3a03f74ba1b0e9d49cd988ed6de593d
+      - target: macos-x86_64
+        name: majordomus-v0.17.0-x86_64-apple-darwin.tar.gz
+        sha256: 2293e5867027162b62c759ca87bade6cda10d154d7f344bae42628992cf5588f
+      - target: linux-x86_64-gnu
+        name: majordomus-v0.17.0-x86_64-unknown-linux-gnu.tar.gz
+        sha256: d18f937c74936dff76eb383a5647e9e92f88e991e492e992072fe00c9e576867
+      - target: linux-x86_64-musl
+        name: majordomus-v0.17.0-x86_64-unknown-linux-musl.tar.gz
+        sha256: 7597dcf38b2bea144ddb0d54178ec57d9f22fcea908a29a27d5169b9ea0944ee
+      - target: linux-aarch64-gnu
+        name: majordomus-v0.17.0-aarch64-unknown-linux-gnu.tar.gz
+        sha256: fd4ca7f47470e83d44986078ffa76d0a4208aa7a89710a7bbaf16ccb9908d1dd
+      - target: linux-aarch64-musl
+        name: majordomus-v0.17.0-aarch64-unknown-linux-musl.tar.gz
+        sha256: a5fc3dd0a1d2be2bf31fb41fb9e4689b29ead66ad3b037ba107c5e32507f4f2c
   - version: "0.16.0"
     tag: v0.16.0
     date: "2026-10-08T05:32:07Z"

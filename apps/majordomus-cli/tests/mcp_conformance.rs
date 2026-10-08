@@ -513,6 +513,70 @@ fn malformed_traffic_is_answered_and_the_session_survives() {
     assert_eq!(last["result"], json!({}));
 }
 
+/// A client does not take a listing tool by tool. It validates the whole `tools/list` answer
+/// against the protocol's schema, and one tool whose `inputSchema` is not an object at its
+/// root costs it every tool: for a month two tools rendered a bare `$ref` there and no
+/// client of this repository was offered a single one. `tests/tool_input_schemas.rs` holds
+/// the registry's own rendering to that; this holds the frames a client actually receives,
+/// over stdio, so nothing between the registry and the wire can put it back.
+#[test]
+fn every_listed_tool_is_one_a_client_accepts() {
+    let f = Fixture::new();
+    let mut requests = opening();
+    requests.push(request(2, "tools/list", json!({})));
+    let listing = standalone(&f, &requests);
+    assert_eq!(listing.code, Some(0), "{}", listing.stderr);
+    let tools = listing.by_id()[&2]["result"]["tools"]
+        .as_array()
+        .expect("tools")
+        .clone();
+    assert!(
+        tools.len() >= 20,
+        "the listing holds {} tool(s): it is not the registry's",
+        tools.len()
+    );
+    let mut refused = Vec::new();
+    for (at, t) in tools.iter().enumerate() {
+        let name = t["name"].as_str().unwrap_or("");
+        let mut why = Vec::new();
+        if name.is_empty() {
+            why.push("it has no name".to_string());
+        }
+        match t["inputSchema"].as_object() {
+            None => why.push("its inputSchema is not a JSON object".into()),
+            Some(schema) => {
+                match schema.get("type") {
+                    Some(Value::String(kind)) if kind == "object" => {}
+                    Some(other) => why.push(format!("its inputSchema's root type is {other}")),
+                    None => why.push(format!(
+                        "its inputSchema declares no root type; it carries {:?}",
+                        schema.keys().collect::<Vec<_>>()
+                    )),
+                }
+                if schema.get("properties").is_some_and(|p| !p.is_object()) {
+                    why.push("its inputSchema's properties are not an object".into());
+                }
+                if schema.get("required").is_some_and(|r| {
+                    r.as_array()
+                        .is_none_or(|names| names.iter().any(|n| !n.is_string()))
+                }) {
+                    why.push("its inputSchema's required is not a list of names".into());
+                }
+            }
+        }
+        if !why.is_empty() {
+            refused.push(format!("tools.{at} {name}: {}", why.join("; ")));
+        }
+    }
+    assert!(
+        refused.is_empty(),
+        "a client that validates the listing refuses all {} tool(s) because of {}:\n{}",
+        tools.len(),
+        refused.len(),
+        refused.join("\n")
+    );
+}
+
 /// A tool's `inputSchema` is what a client builds its arguments from, so it is also what
 /// the tool must refuse: a call without a property the schema requires, or with one of the
 /// wrong type, is a refusal the client can read (`isError` and a reason) — never a
