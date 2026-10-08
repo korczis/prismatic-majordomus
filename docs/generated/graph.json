@@ -29660,6 +29660,80 @@
         }
       },
       {
+        "id": "majordomus://issue/I1995",
+        "kind": "issue",
+        "label": "I1995",
+        "summary": "Work a session left uncommitted in a worktree is named, not found by luck",
+        "route": "/cockpit/objects/issue/i1995",
+        "source": ".ai/repo/project/issues/I1995.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worktree with staged files and no active session is named by doctor with its path, the number of paths and the age of the oldest",
+            "A worktree with uncommitted work and an active task or attached session is listed and not warned about",
+            "The reading writes nothing: `git status` of every worktree is the same before and after it"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "abandoned_index_named_case",
+            "reading_is_read_only_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "uncommitted-work-in-a-worktree-is-named",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2059",
+        "kind": "issue",
+        "label": "I2059",
+        "summary": "A rebuild never replaces the executable a live lease names",
+        "route": "/cockpit/objects/issue/i2059",
+        "source": ".ai/repo/project/issues/I2059.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build run in a checkout whose server is ready leaves `serve status` reporting that server ready on the address it had before the build",
+            "A successor started after a supersession binds the host and port the superseded lease published, or `serve status` names both addresses and why they differ",
+            "A server bound through MAJORDOMUS_HTTP_HOST or --host is not replaced by a loopback server without a line in server.log saying so"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "rebuild_keeps_server_ready_case",
+            "successor_address_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus-cli",
+            "lib/rust_bin.sh",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "a-rebuild-never-replaces-a-leased-executable",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -65014,6 +65088,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1995",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1995",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2059",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2059",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -73610,8 +73704,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2434,
-      "edges": 5341,
+      "nodes": 2436,
+      "edges": 5345,
       "acyclic": false,
       "truncated": false
     }
