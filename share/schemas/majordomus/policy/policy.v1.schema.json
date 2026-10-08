@@ -335,6 +335,25 @@
         }
       }
     },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The pull-request integrator (ADR 0101, ADR 0114): what this repository decides about how its pull requests are landed, beyond what the forge's branch protection states.",
+      "properties": {
+        "batch": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Batches: one pull request composed of several, each proved on its own head (`majordomus prs compose`).",
+          "properties": {
+            "max_members": {
+              "type": "integer",
+              "minimum": 2,
+              "description": "The most members one batch may carry. No default in code: with the key absent and no `--max`, `prs compose` refuses and names this key. `--max` may lower it for one composition and never raise it. A batch has at least two members, so a smaller value is refused by this schema."
+            }
+          }
+        }
+      }
+    },
     "projections": {
       "type": "array",
       "items": {

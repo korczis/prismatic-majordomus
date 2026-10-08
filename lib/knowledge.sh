@@ -312,7 +312,7 @@ mj_knowledge_rows() {
       # identity in front matter, exactly as an ADR does; a feature also names what it is
       # made of there, and those references are its edges. A domain is the same shape.
       session|handover|checkpoint|prompt|rule|adr|skill|use-case|application|knowledge|feature|moment|area|audience|domain) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
-      policy|scope|profile|milestone|issue|claim|doctrine|deployment|intent|mesh-declaration|workspace|release-record) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
+      policy|scope|profile|milestone|issue|claim|doctrine|deployment|intent|mesh-declaration|workspace|release-record|integration-batch) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
       *) ;;   # a kind this reader has no rule for gets no content rows; the extractor says so once
     esac
   done < "$src"

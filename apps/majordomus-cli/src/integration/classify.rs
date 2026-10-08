@@ -1640,6 +1640,10 @@ pub fn classify(
         author: pr.author.clone(),
         head_ref: pr.head_ref.clone(),
         base_ref: pr.base_ref.clone(),
+        fork_head: pr.cross_repository,
+        // said by the queue once every assessment exists (compose::carry)
+        batch: None,
+        carried_by: None,
         evaluated_against: EvaluatedAgainst {
             master_sha: master_sha.to_string(),
             head_sha: pr.head_sha.clone(),

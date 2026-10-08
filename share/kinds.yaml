@@ -389,6 +389,20 @@ kinds:
       field: schema
       supported: [release/v1]
 
+  # The manifest of one batch the integrator composed (ADR 0114): the master it was composed
+  # on and its members in order, each with the head that was merged and the merge commit that
+  # carries it. Written by `prs compose --apply`; compared with git by `prs batch-check`.
+  integration-batch:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/integration-batch/integration-batch.v1.schema.json
+    schema: majordomus.integration-batch/v1
+    identity: [id]
+    title: id
+    description: composed_at
+    schema_version:
+      field: schema
+      supported: [integration-batch/v1]
+
   implementation:
     format: text
     identity: []

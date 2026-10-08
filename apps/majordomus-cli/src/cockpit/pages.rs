@@ -5173,6 +5173,104 @@ fn disposition_label(a: &crate::integration::PullRequestAssessment) -> String {
     }
 }
 
+/// The open batches (ADR 0114) and their members, from the queue `integration.queue` answers:
+/// a batch is an assessment that carries its manifest, and a member's row says what the same
+/// queue says of that pull request now. Nothing is read here — not the index, not git: the
+/// manifest was read where the queue was built.
+fn batches_card(q: &crate::integration::IntegrationQueue) -> El {
+    const TITLE: &str = "Batches";
+    let open: Vec<_> = q
+        .assessments
+        .iter()
+        .filter_map(|a| a.batch.as_ref().map(|m| (a, m)))
+        .collect();
+    if open.is_empty() {
+        return card(
+            TITLE,
+            nothing(
+                "No open pull request is a batch. majordomus prs compose plans one from the \
+                 pull requests that are each proved on their own head.",
+            ),
+        );
+    }
+    let explain = |n: u64| {
+        link(
+            format!("/cockpit/capabilities/integration.explain?number={n}"),
+            format!("#{n}"),
+        )
+    };
+    let mut body = el("div");
+    for (a, m) in &open {
+        let version = match (&m.version_before, &m.version_after) {
+            (Some(before), Some(after)) if before != after => {
+                format!(", version raised {before} → {after}")
+            }
+            (Some(before), Some(_)) => format!(", version stays {before}"),
+            _ => String::new(),
+        };
+        let rows: Vec<El> = m
+            .members
+            .iter()
+            .enumerate()
+            .map(|(i, c)| {
+                // what the queue says of the member now: its manifest head is what was
+                // merged, and a head that moved since is said, not hidden
+                let now = q.get(c.number);
+                let state = match now {
+                    None => "not open".to_string(),
+                    Some(p) if p.evaluated_against.head_sha != c.head => format!(
+                        "{} — its head moved to {} since it was merged",
+                        disposition_label(p),
+                        compose_short(&p.evaluated_against.head_sha)
+                    ),
+                    Some(p) => disposition_label(p),
+                };
+                row(vec![
+                    text_cell((i + 1).to_string()),
+                    cell(explain(c.number)),
+                    cell(mono(compose_short(&c.head))),
+                    cell(mono(compose_short(&c.merge_commit))),
+                    text_cell(state),
+                    text_cell(c.title.clone()),
+                ])
+            })
+            .collect();
+        body = body
+            .child(
+                el("p")
+                    .child(explain(a.number))
+                    .text(format!(
+                        " — batch {} on {} {}, composed {}{version}: ",
+                        m.id,
+                        m.base,
+                        compose_short(&m.base_master),
+                        m.composed_at
+                    ))
+                    .child(badge(
+                        disposition_status(a.disposition),
+                        disposition_label(a),
+                    )),
+            )
+            .child(table(
+                &["Order", "Member", "Head", "Merged as", "Now", "Title"],
+                rows,
+            ));
+    }
+    card_with(
+        TITLE,
+        link(
+            "/cockpit/capabilities/integration.queue",
+            "integration.queue",
+        ),
+        body,
+    )
+}
+
+/// A commit id as a batch's lines carry it.
+fn compose_short(sha: &str) -> &str {
+    crate::integration::compose::short(sha)
+}
+
 /// The pull-request integration queue (ADR 0101): the lanes, the master every decision was
 /// taken against, the lease, the starving, and the executor's recent actions — all of it
 /// `integration.queue` and `integration.events`, the answers the command line and MCP give.
@@ -5536,6 +5634,8 @@ pub fn integration(ctx: &Context) -> Page {
         });
     }
 
+    let batches = batches_card(&q);
+
     let events: Vec<crate::integration::drain::IntegrationEvent> =
         ask::<IntegrationEvents>(ctx, "integration.events", json!({}))
             .map(|e| e.events)
@@ -5575,7 +5675,8 @@ pub fn integration(ctx: &Context) -> Page {
         .child(statistics)
         .child(throughput)
         .child(identity)
-        .child(diagnostics);
+        .child(diagnostics)
+        .child(batches);
     for c in lane_cards {
         grid = grid.child(c);
     }
@@ -7560,6 +7661,8 @@ mod tests {
             !html.contains("prs refresh records one"),
             "an observed queue says nothing is observed"
         );
+        // no open pull request is a batch, and the page says so rather than showing nothing
+        assert!(html.contains("No open pull request is a batch"), "{html}");
         // the throughput card counts the merge the trail recorded, inside its window
         assert!(html.contains("Throughput — last 7 days"), "{html}");
         // a lease without a mesh claim says it guards this clone only
@@ -7590,6 +7693,156 @@ mod tests {
             "{html}"
         );
         drop(lease);
+    }
+
+    /// An open batch is on the page with its members in composition order, each with the head
+    /// that was merged and what the queue says of it now — read from the manifest the batch's
+    /// head carries in git, through `integration.queue`, and from nowhere else.
+    #[test]
+    fn the_integration_page_shows_an_open_batch_with_its_members() {
+        use crate::integration::compose::{self, BatchManifest, ComposedMember, VersionStep};
+        use crate::integration::{
+            store_observation, CheckRunState, ForgeObservation, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str], index: Option<&std::path::Path>| {
+            let mut command = std::process::Command::new("git");
+            command
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com");
+            if let Some(index) = index {
+                command.env("GIT_INDEX_FILE", index);
+            }
+            let out = command.output().expect("git");
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        // two members' heads, and a batch head that carries the manifest naming them: built
+        // with git's plumbing, so the fixture's working tree is never switched
+        let commit = |message: &str| {
+            git(
+                &[
+                    "commit-tree",
+                    &format!("{sha}^{{tree}}"),
+                    "-p",
+                    &sha,
+                    "-m",
+                    message,
+                ],
+                None,
+            )
+        };
+        let (one, two) = (commit("change 1"), commit("change 2"));
+        let carried = |n: u64, head: &str| ComposedMember {
+            number: n,
+            head: head.to_string(),
+            title: format!("change {n}"),
+            merge_commit: commit(&format!("merge of #{n}")),
+        };
+        let manifest = BatchManifest::of(
+            "master",
+            &sha,
+            "2026-10-08T10:00:00Z",
+            vec![carried(2, &two), carried(1, &one)],
+        )
+        .versioned(&VersionStep {
+            before: "0.18.0".into(),
+            after: "0.19.0".into(),
+        });
+        let scratch = tempfile::tempdir().expect("a scratch directory");
+        let file = scratch.path().join("manifest.yaml");
+        std::fs::write(&file, manifest.to_yaml()).unwrap();
+        let blob = git(&["hash-object", "-w", &file.display().to_string()], None);
+        let index = scratch.path().join("index");
+        git(&["read-tree", &sha], Some(&index));
+        git(
+            &[
+                "update-index",
+                "--add",
+                "--cacheinfo",
+                &format!("100644,{blob},{}", compose::manifest_path(&manifest.id)),
+            ],
+            Some(&index),
+        );
+        let tree = git(&["write-tree"], Some(&index));
+        let batch_head = git(
+            &["commit-tree", &tree, "-p", &sha, "-m", "the composition"],
+            None,
+        );
+
+        let mut batch = observed_pr(7, &batch_head, CheckRunState::Passed);
+        batch.head_ref = compose::branch_of(&manifest.id);
+        batch.body = compose::pull_request_body(&manifest);
+        // #1 was pushed to since it was merged: the page says so
+        let moved = commit("change 1, again");
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: sha.clone(),
+                observed_at: "2026-10-08T11:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    observed_pr(1, &moved, CheckRunState::Passed),
+                    observed_pr(2, &two, CheckRunState::Passed),
+                    observed_pr(3, &sha, CheckRunState::Passed),
+                    batch,
+                ],
+                resolved: Default::default(),
+                delete_branch_on_merge: None,
+            },
+        )
+        .expect("an observation");
+
+        let html = integration(&repo.context().expect("a context"))
+            .main
+            .render();
+        assert!(!html.contains("No open pull request is a batch"), "{html}");
+        let at = |needle: &str| {
+            html.find(needle)
+                .unwrap_or_else(|| panic!("{needle} is not on the page: {html}"))
+        };
+        at(&format!("batch {} on master {}", manifest.id, &sha[..10]));
+        at("version raised 0.18.0 → 0.19.0");
+        at("integration.explain?number=7");
+        // the members in composition order — #2 before #1 — each with the head that was merged
+        let (second, first) = (at(&two[..10]), at(&one[..10]));
+        assert!(second < first, "composition order, not number order");
+        for m in &manifest.members {
+            at(&m.merge_commit[..10]);
+        }
+        at(&format!(
+            "its head moved to {} since it was merged",
+            &moved[..10]
+        ));
+        // the card cites the capability its facts came from
+        let card = &html[at("Batches")..];
+        assert!(
+            card.contains("/cockpit/capabilities/integration.queue"),
+            "{card}"
+        );
+        // and the facts are the queue's: the same assessment names the members and the batch
+        let status: crate::capability::builtin::integration::IntegrationStatus = ask(
+            &repo.context().expect("a context"),
+            "integration.queue",
+            json!({}),
+        )
+        .expect("the queue");
+        let q = status.queue.expect("an observed queue");
+        assert_eq!(q.get(7).and_then(|a| a.batch.clone()), Some(manifest));
+        assert_eq!(q.get(2).and_then(|a| a.carried_by), Some(7));
+        assert_eq!(q.get(3).and_then(|a| a.carried_by), None);
     }
 
     /// The throughput card renders every figure the fold measured, and a median nobody could

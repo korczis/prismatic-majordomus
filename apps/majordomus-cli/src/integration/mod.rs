@@ -41,7 +41,9 @@
 //! run, so the forge calls nearly every pull request conflicting. The relation to master is
 //! decided here, by git, with the drivers ([`relation`]).
 
+pub mod batch;
 pub mod classify;
+pub mod compose;
 pub mod drain;
 pub mod exclusive;
 pub mod forge;
@@ -1160,6 +1162,7 @@ fn computed(
     let cache = cell.into_inner();
     infer_dependencies(&mut queue, |head| relation::containing(root, head));
     link_issues(&mut queue, &issue_milestones(root));
+    compose::carry(&mut queue, |a| compose::manifest_on(root, &master, a));
     let now_secs = now
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| i64::try_from(d.as_secs()).unwrap_or(i64::MAX));

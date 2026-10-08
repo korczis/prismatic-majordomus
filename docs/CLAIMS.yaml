@@ -2144,3 +2144,12 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor.
+
+  - id: a-batch-names-its-members
+    claim: A batch names its members: a branch that merges the heads of two or more open pull requests, or that touches a batch manifest, is refused by a gate of every plan unless it carries exactly one manifest naming those members in that order, each at the head that was merged and the merge commit that carries it, and no commit of its own changes anything a member's branch could
+    source: docs/INTEGRATION.md
+    implementation: apps/majordomus-cli/src/integration/batch.rs
+    test: test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The case builds a batch by hand in a fixture repository with a scripted forge and sees it refused naming both members, sees the same branch pass with its manifest, and sees a fix on the batch branch, a reordered manifest and a member that moved each refused by name; a forge that cannot be read is exit 12, never clean. Case 1001 holds the other half through the command line (the executor composes the branch, the manifest and the Supersedes lines, and is refused while ADR 0114 is not accepted) and tests/integration_compose.rs the act's rarer endings. Members are open pull requests of this repository as the forge lists them at the time of the check; a batch merged before the gate existed is not judged, and naming the member behind a red batch from its logs is not built.

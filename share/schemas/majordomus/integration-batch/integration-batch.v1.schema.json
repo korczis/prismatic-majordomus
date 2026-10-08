@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/integration-batch/integration-batch.v1.schema.json",
+  "x-majordomus-schema": "majordomus.integration-batch/v1",
+  "title": "Integration batch",
+  "description": "The manifest of one batch (ADR 0114), under .ai/repo/integration/batches/: the master it was composed on and, in composition order, each member pull request with the head that was merged and the merge commit on the batch's first-parent line that carries it. Written by `majordomus prs compose --apply` in the batch's one composition commit and by nothing else; it lands with the batch. The `batch-check` gate compares it with the branch that carries it, and `prs explain` and the Cockpit read it.",
+  "x-majordomus-allow": "integration-batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "base", "base_master", "composed_at", "members"],
+  "properties": {
+    "schema": {
+      "const": "integration-batch/v1",
+      "description": "The contract this file follows."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,10}(-[1-9][0-9]*){2,}$",
+      "description": "The batch's identity, derived and never chosen: the first ten characters of the master it was composed on, then each member's number in composition order. The file is named after it, and the batch's branch is int/batch-<id>."
+    },
+    "base": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The integration base the batch targets."
+    },
+    "base_master": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+      "description": "The commit of the base the batch was composed on: the first parent of the first member's merge commit."
+    },
+    "composed_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$",
+      "description": "When it was composed, UTC."
+    },
+    "version_before": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$",
+      "description": "The version the composed tree declared after the member merges and before the one `release bump` of the composition (ADR 0114 D6). Absent when the tree declares no version."
+    },
+    "version_after": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$",
+      "description": "The version the composition commit declares. Equal to version_before when the public contract of the composed tree required nothing above it and no bump was written."
+    },
+    "members": {
+      "type": "array",
+      "minItems": 2,
+      "description": "The members, in composition order: the order of their merge commits on the batch's first-parent line.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["number", "head", "title", "merge_commit"],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The member pull request."
+          },
+          "head": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+            "description": "The head that was merged: the second parent of the member's merge commit."
+          },
+          "title": {
+            "type": "string",
+            "description": "The member's title, as the forge reported it when the batch was composed."
+          },
+          "merge_commit": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+            "description": "The merge commit on the batch's first-parent line that carries the member."
+          }
+        }
+      }
+    }
+  }
+}

@@ -407,6 +407,57 @@ fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), For
     .map_err(ForgeError)
 }
 
+impl GhForge<'_> {
+    /// The open pull requests whose head lives in this repository, each with its current
+    /// head, in number order: the one question `prs batch-check` asks of the forge, asked
+    /// alone. A whole observation ([`Forge::observe`]) also reads the branch protection, the
+    /// rulesets, every check's writer and every cross-reference, none of which the gate
+    /// judges and each of which a CI token may be refused; this needs `pull-requests: read`
+    /// and nothing else. A pull request the forge does not call cross-repository counts as
+    /// this repository's: an unread fork flag must not hide a member from the gate. A list
+    /// as long as [`OPEN_LIMIT`] may be cut short, and a list that may be cut short is not
+    /// read. A read: nothing is fetched, stored or recorded.
+    pub fn open_heads(&self) -> Result<Vec<(u64, String)>, ForgeError> {
+        let list = gh_json(
+            self.root,
+            &[
+                "pr",
+                "list",
+                "--state",
+                "open",
+                "--limit",
+                &OPEN_LIMIT.to_string(),
+                "--json",
+                "number,headRefOid,isCrossRepository",
+            ],
+        )?;
+        let rows = list
+            .as_array()
+            .ok_or_else(|| ForgeError("gh pr list did not answer with a list".into()))?;
+        if rows.len() >= OPEN_LIMIT {
+            return Err(ForgeError(format!(
+                "gh pr list answered {} open pull requests, which is all it was asked for: \
+                 there may be more, and a list that may be cut short is not read",
+                rows.len()
+            )));
+        }
+        let mut heads = std::collections::BTreeMap::new();
+        for row in rows {
+            let number = row.get("number").and_then(Value::as_u64);
+            let head = row.get("headRefOid").and_then(Value::as_str);
+            let (Some(number), Some(head)) = (number, head) else {
+                return Err(ForgeError(format!(
+                    "gh pr list answered a pull request with no number or no head: {row}"
+                )));
+            };
+            if row.get("isCrossRepository").and_then(Value::as_bool) != Some(true) {
+                heads.insert(number, head.to_string());
+            }
+        }
+        Ok(heads.into_iter().collect())
+    }
+}
+
 fn gh_json(root: &Path, args: &[&str]) -> Result<Value, ForgeError> {
     let (ok, out, err) = gh_retrying(root, args)?;
     if !ok {

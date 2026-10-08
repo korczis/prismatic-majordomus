@@ -168,6 +168,45 @@ pub struct Policy {
     /// policy predates the block starts work exactly as it did (ADR 0111).
     #[serde(default)]
     pub intent: IntentPolicy,
+    /// `integration:` — what this repository decides about how its pull requests are landed
+    /// (ADR 0114). Absent decides nothing: the one value read from it has no default in code.
+    #[serde(default)]
+    pub integration: IntegrationBlock,
+}
+
+/// `integration:` — the pull-request integrator's part of the policy.
+///
+/// ```
+/// use majordomus_cli::policy::IntegrationBlock;
+/// // a policy that says nothing declares no cap, and nothing invents one
+/// assert_eq!(IntegrationBlock::default().batch.max_members, None);
+/// let p: IntegrationBlock =
+///     serde_json::from_str(r#"{"batch": {"max_members": 8}}"#).expect("an integration block");
+/// assert_eq!(p.batch.max_members, Some(8));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct IntegrationBlock {
+    /// `integration.batch:`.
+    #[serde(default)]
+    pub batch: BatchPolicy,
+}
+
+/// `integration.batch:` — what a batch (`majordomus prs compose`) is held to.
+///
+/// ```
+/// use majordomus_cli::policy::BatchPolicy;
+/// // absent is absent: there is no size a batch has when the policy names none
+/// assert_eq!(BatchPolicy::default().max_members, None);
+/// let p: BatchPolicy = serde_json::from_str(r#"{"max_members": 8}"#).expect("a batch block");
+/// assert_eq!(p.max_members, Some(8));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct BatchPolicy {
+    /// `integration.batch.max_members:` — the most members one batch may carry. `None` when
+    /// the key is absent: `prs compose` then needs `--max`, and refuses naming the key
+    /// without it.
+    #[serde(default)]
+    pub max_members: Option<usize>,
 }
 
 /// How strictly a start is held to its binding.

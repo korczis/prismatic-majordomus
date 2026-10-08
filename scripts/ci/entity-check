@@ -24,6 +24,14 @@
 # finding in itself: a kind the index holds and the declaration does not mention is a
 # finding, and so is a kind the declaration names and the index does not hold.
 #
+# One kind of entry may name a kind the index holds no object of: one that says so, with
+# `empty = "<why>"`, for a kind `share/kinds.yaml` declares. Some objects are written by an
+# act and not by a person — a batch manifest is committed by `prs compose --apply` on a
+# branch that may carry no authored line (ADR 0114 D4) — so the decision where the kind is
+# published cannot arrive with the first object and has to stand before it. The entry holds
+# in both states, with no object and with many; what it may not do is name a kind nothing
+# declares, and an entry without `empty` is held to the index exactly as before.
+#
 # It also refuses the thing the whole subsystem exists to prevent: a *second* inventory. A
 # kind published as entity pages must not also carry an editorial section under the same
 # route, and no template that renders entity pages may name a kind — if it does, adding a
@@ -96,9 +104,23 @@ for k in $(jq -r '.kinds[].kind' "$KINDS"); do
   jq -e --arg k "$k" 'any(.[]; .kind == $k)' "$PUB" >/dev/null \
     || fail "the index holds kind '$k' and $DECL does not declare it; add a [[kinds]] entry saying whether it is published, and how"
 done
+# the kinds the distribution declares: the two-space keys under `kinds:` of share/kinds.yaml
+DECLARED="$(awk '/^kinds:[[:space:]]*$/ { on = 1; next } /^[^[:space:]#]/ { on = 0 }
+                 on && /^  [a-z][a-z0-9-]*:[[:space:]]*$/ { k = $1; sub(/:$/, "", k); print k }' share/kinds.yaml 2>/dev/null || true)"
+declared() { printf '%s\n' "$DECLARED" | grep -qx -- "$1"; }
 for k in $(jq -r '.[].kind' "$PUB"); do
-  jq -e --arg k "$k" 'any(.kinds[]; .kind == $k)' "$KINDS" >/dev/null \
-    || fail "$DECL declares kind '$k' and the index holds no object of it; remove the entry or add the source class that discovers it"
+  may_be_empty="$(jq -r --arg k "$k" 'first(.[] | select(.kind == $k)) | .empty // "" | tostring' "$PUB")"
+  # saying a kind may be empty is a claim about a kind that exists
+  if [ -n "$may_be_empty" ] && ! declared "$k"; then
+    fail "$DECL says kind '$k' may hold no object yet, and share/kinds.yaml declares no kind '$k'; \`empty\` is for a declared kind whose objects an act writes"
+    continue
+  fi
+  jq -e --arg k "$k" 'any(.kinds[]; .kind == $k)' "$KINDS" >/dev/null && continue
+  [ -n "$may_be_empty" ] \
+    || fail "$DECL declares kind '$k' and the index holds no object of it; remove the entry, add the source class that discovers it, or, when share/kinds.yaml declares the kind and its objects are written by an act, say so with empty = \"<why>\""
+done
+for bad in $(jq -r '.[] | select(has("empty") and ((.empty | type) != "string" or (.empty | length) == 0)) | .kind' "$PUB"); do
+  fail "$DECL gives kind '$bad' an \`empty\` that says nothing; it is the reason the index may hold no object of the kind"
 done
 
 # a projection is one of three words, and each carries what it needs
