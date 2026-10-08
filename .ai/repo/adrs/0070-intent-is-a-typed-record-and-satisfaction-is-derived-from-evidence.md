@@ -86,9 +86,9 @@ whether it is current. A second one would be a second truth about the same execu
 ## Consequences
 
 - Satisfaction is currently decided by the intent engine over the ledger. Completion policy
-  (pull request 292, ADR 0057, not yet on master) makes whether work is done a policy question;
-  once it lands, whether an intent is satisfied becomes a completion-policy question over the
-  same evidence, and this engine answers the stage only. That is slice 2 of the
+  (ADR 0057, `share/completion.yaml`) makes whether work is done a policy question; whether an
+  intent is satisfied becomes a completion-policy question over the same evidence, and this
+  engine answers the stage only. That is slice 2 of the
   `intent-lifecycle` milestone.
 - `milestone_serves_no_intent` is a warning, so existing milestones stay valid while intents are
   written for them.
