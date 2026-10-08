@@ -1230,6 +1230,13 @@ pub fn tasks_from_ledger(
                     for p in payload_str(e, "scope").split_whitespace() {
                         push_once(&mut unit.scope, p);
                     }
+                    // the issue the worker named at start (ADR 0111) is a declared link,
+                    // exactly as an issue cited in the title is: the binding and this join
+                    // must not disagree about what one task said it executes
+                    let named = payload_str(e, "issue");
+                    if !named.is_empty() {
+                        push_once(&mut unit.named_issues, &named);
+                    }
                 }
                 "task.checkpoint" => unit.outcome = "active".into(),
                 "task.handed_over" => {
@@ -1321,6 +1328,9 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
             u.title = r.task.clone();
             for p in &r.scope {
                 push_once(&mut u.scope, p);
+            }
+            if !r.issue.is_empty() {
+                push_once(&mut u.named_issues, &r.issue);
             }
         }
         for i in issue_tokens(&u.title, &ids) {
@@ -2194,7 +2204,18 @@ mod tests {
                 r#"{"ts":"2","event":"task.started","head":"abc","branch":"master","#,
                 r#""by":"majordomus/0.7.0","session":"s-anon","task_id":"t-2"}"#,
                 "\n",
+                // a task that named the issue it executes at start (ADR 0111)
+                r#"{"ts":"3","event":"task.started","head":"abc","branch":"master","#,
+                r#""by":"majordomus/0.15.0","session":"s-x","task_id":"t-3","scope":"docs","#,
+                r#""issue":"I0007","binding":"bound"}"#,
+                "\n",
             ),
+        )
+        .unwrap();
+        // and whose record says the same of another issue: both are what it declared
+        std::fs::write(
+            state.join("current.yaml"),
+            "id: t-3\ntask: \"tidy the documents\"\nprofile: implementation\nscope:\n  - docs\nissue: I0008\noutcome: active\n",
         )
         .unwrap();
         let peer = |id: &str, checkout: serde_json::Value| -> Peer {
@@ -2239,6 +2260,9 @@ mod tests {
         assert_eq!(unit("t-1").providers(), ["gemini"]);
         assert_eq!(unit("t-1").episodes[0].provider_session, "g-1");
         assert!(unit("t-2").providers().is_empty());
+        // the title cites no issue; the names come from what the task declared at start
+        assert_eq!(unit("t-3").named_issues, ["I0007", "I0008"]);
+        assert!(unit("t-1").named_issues.is_empty());
 
         let claim = unit("p1/work");
         assert_eq!(claim.kind, IntentWorkKind::PeerClaim);

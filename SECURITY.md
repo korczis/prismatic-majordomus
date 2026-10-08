@@ -63,6 +63,13 @@ it is described as real.
   (`test/cases/912_repair_acts_under_the_lease_and_the_trail.sh`).
   It never closes a pull request without `--apply` and proof that its work is on master, or
   that a declared successor landed (`test/cases/720_integration_follows_the_current_master.sh`).
+  A declaration counts only from an owner, member or collaborator in a pull request of this
+  repository, and nobody else's holds or closes anything
+  (`test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh`). Two residuals
+  are known and accepted (ADR 0101 §6): anyone who can mention a pull request more often
+  than its cross-references are read holds it, and never closes it
+  (`test/cases/938_a_truncated_cross_reference_read_holds.sh`); and the forge's `MEMBER`
+  covers every member of an organisation, whatever their access to this repository.
   Nothing outside it merges: `scripts/ci/backlog-check` refuses a `gh pr merge`, a REST or
   GraphQL merge, an auto-merge action and the retired `scripts/unblock` anywhere in the
   scripts, recipes, workflows, libraries and shared assets

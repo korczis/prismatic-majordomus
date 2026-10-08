@@ -1,0 +1,33 @@
+id: I2003
+milestone: intent-bound-work
+title: A handover pins the binding it was written under, and resolving it reports drift
+slug: a-handover-pins-the-binding
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#resume-detects-drift
+objective: "Write issue, intent and binding_revision into a handover's front matter when the task is bound, and have handover --resolve ask intents.binding again and say whether the plan revision or the evidence standing changed since."
+why: "A resumed worker is told how far the commit moved and nothing about whether the criteria it was working to were rewritten, or the critique reopened, in between."
+current_state: "A handover's front matter carries the task, the branch and the head. --resolve prints Match, Git state, Freshness and Divergence."
+desired_state: "--resolve prints an Intent line: unchanged, or which of the two revisions moved, or unknown when the binding cannot be read."
+scope:
+  - lib/handover.sh
+  - lib/common.sh
+  - lib/intent_binding.sh
+  - test/cases/961_a_resumed_task_is_told_its_intent_moved.sh
+depends_on:
+  - I2001
+acceptance_criteria:
+  - A handover of a bound task carries the binding revision
+  - After a criterion of the intent is edited, --resolve reports the plan revision changed
+  - A handover of an unbound task carries no pin and --resolve prints no Intent line
+  - The front matter carries plan_revision and evidence_standing as two keys, a body that forges either is refused like every other computed key, and a checkpoint carries neither
+  - An ordinary commit that changes no intent, link or critique leaves plan_revision unchanged
+validation:
+  - bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved
+  - bash test/run.sh 05_handover
+evidence_required:
+  - resolve_reports_intent_drift
+created_at: 2026-10-07
+updated_at: 2026-10-07

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.17.0 -->
+     Generator: majordomus-cli 0.18.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -189,6 +189,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus intent validate`](#majordomus-intent-validate) | `/docs/cli/intent/validate/` | Every finding over the intents; exit 10 when any is a failure |
 | [`majordomus intent coverage`](#majordomus-intent-coverage) | `/docs/cli/intent/coverage/` | Which work carries which criterion, and the reason every issue exists |
 | [`majordomus intent preflight`](#majordomus-intent-preflight) | `/docs/cli/intent/preflight/` | Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused |
+| [`majordomus intent binding`](#majordomus-intent-binding) | `/docs/cli/intent/binding/` | What a piece of work is bound to before it starts: the issue, the intent or the paths it names resolved to the criteria it serves, or an exemption the policy declares, with the two pins a resumed worker compares; exit 10 when refused |
 | [`majordomus intent realization`](#majordomus-intent-realization) | `/docs/cli/intent/realization/` | Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence |
 | [`majordomus intent explain`](#majordomus-intent-explain) | `/docs/cli/intent/explain/` | Why an intent stands where it stands: its stage, each criterion, the work realising it |
 | [`majordomus delivery`](#majordomus-delivery) | `/docs/cli/delivery/` | Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass |
@@ -5204,7 +5205,7 @@ Examples:
 
 What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
 
-Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain).
+Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent binding`](#majordomus-intent-binding), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain).
 
 ```text
 majordomus intent [OPTIONS] <COMMAND>
@@ -5368,6 +5369,38 @@ Examples:
 
   ```console
   $ majordomus intent preflight --issue I0001
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-intent-binding"></a>
+## `majordomus intent binding`
+
+What a piece of work is bound to before it starts: the issue, the intent or the paths it names resolved to the criteria it serves, or an exemption the policy declares, with the two pins a resumed worker compares; exit 10 when refused
+
+```text
+majordomus intent binding [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--issue` | `<ISSUE>` | — | The issue the work executes |
+| `--intent` | `<INTENT>` | — | The intent the work serves, named directly |
+| `--path` | `<PATHS>` | — | A path the work will touch; repeat for each |
+| `--exempt` | `<EXEMPT>` | — | An exemption class the policy declares under intent.exemptions |
+| `--because` | `<BECAUSE>` | — | Why the exemption applies |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a task is bound to before it starts** — What `majordomus start --issue` asks: the issue resolved to the intent and the criteria it serves, with what the intent asks of the worker and the two pins a handover carries. The example fixture's intent has no critique, so the binding is refused naming that cause, and exits 10; a bound issue answers `bound`, an issue under a milestone no intent names `maintenance`, and `--exempt <class> --because <reason>` answers `exempt` when the policy declares the class.
+
+  ```console
+  $ majordomus intent binding --issue I0001
   ```
 
   Verified: exits 10.

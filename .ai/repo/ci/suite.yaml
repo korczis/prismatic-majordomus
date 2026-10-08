@@ -171,9 +171,23 @@ case_bound_seconds: 3600
 #
 # The same tree cost 22% more on the second run: runner load, not growth. 50000 is about a
 # tenth above the worst total measured, 45524.
+#
+# Re-measured on 2026-10-08, when batch int/batch-handovers-3 (#816) was refused at 51011 s
+# with all four shards green and every case passing:
+#
+#   run 37760481991   51011 s over 407 cases   slowest 3305 s (95_executable_reference)  int/batch-handovers-3
+#   run 37755491985   39334 s over 388 cases   slowest 3352 s (95_executable_reference)  master 4090b2b8ae
+#   run 37718699384   43359 s over 375 cases   slowest 3057 s (77_rust_evidence)         master f70c522d73
+#
+# The batch adds 19 cases (925-939, 960-962, 994) and they cost 216 s of the 51011 between
+# them. The other 388 are the cases master ran an hour earlier for 39334 s, and here they
+# cost 50795 s: 1.29 times as much on the same tree, with eight sessions' runs queued on the
+# same runner pool. That is the spread the paragraph above measured at 1.22, larger; it is
+# runner load, not growth, and no case came near its own bound. 56000 is about a tenth above
+# the worst total measured, 51011. The slowest-case budget stands: 3352 is under 3450.
 budget:
-  # every case, summed; run 37214316674 (45524 s) and the ones above
-  cases_seconds: 50000
+  # every case, summed; run 37760481991 (51011 s) and the ones above
+  cases_seconds: 56000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
   # Re-derived from the uncensored 3168 s of run 37207794591: see above.
