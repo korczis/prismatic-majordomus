@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="What a run is made of, beyond the executions it recorded."><title>majordomus_cli::evidence::run - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module run</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.16.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module run</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#what-a-run-is-made-of" title="What a run is made of">What a run is made of</a></li><li><a href="#a-recording-as-a-typed-run" title="A recording, as a typed run">A recording, as a typed run</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>evidence</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">evidence</a></div><h1>Module <span>run</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/evidence/run.rs.html#1-999">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>What a run is made of, beyond the executions it recorded.</p>
+<p>A recording reads the reports a run wrote: the suite’s TSV, <code>cargo test</code>’s output, a
+coverage summary. Every entry of a run belongs to exactly one of those reports, and
+<a href="enum.EvidenceProducer.html" title="enum majordomus_cli::evidence::run::EvidenceProducer"><code>EvidenceProducer</code></a> is the word that names which. Not everything a report holds is
+something a claim can name: the crate’s own unit-test binary and its doctests ran, and no
+claim of <code>docs/CLAIMS.yaml</code> can point at one of their tests yet. Such an entry is listed as
+an <a href="struct.EvidenceDropped.html" title="struct majordomus_cli::evidence::run::EvidenceDropped"><code>EvidenceDropped</code></a>, with the report it came from and the reason, rather than ignored,
+because a recording that silently threw part of a run away reads as a run that was
+smaller than it was.</p>
+<h2 id="what-a-run-is-made-of"><a class="doc-anchor" href="#what-a-run-is-made-of">§</a>What a run is made of</h2>
+<p>A producer word reads back as the producer it names and nothing else reads at all; a
+<code>cargo test</code> output with the crate’s unit tests and one integration binary yields one
+binary a claim can name and one dropped entry that says why the other is not one:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::{read_crate_output, EvidenceProducer, Outcome};
+
+<span class="kw">for </span>p <span class="kw">in </span>[EvidenceProducer::Suite, EvidenceProducer::Crate, EvidenceProducer::Coverage] {
+    <span class="macro">assert_eq!</span>(EvidenceProducer::parse(p.as_str()), <span class="prelude-val">Some</span>(p));
+}
+<span class="macro">assert_eq!</span>(EvidenceProducer::parse(<span class="string">"cargo"</span>), <span class="prelude-val">None</span>, <span class="string">"a word no report is named by"</span>);
+
+<span class="kw">let </span>out = <span class="string">"     Running unittests src/lib.rs (target/debug/deps/majordomus_cli-1)\n\
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+           finished in 0.50s\n\
+                Running tests/alpha.rs (target/debug/deps/alpha-1)\n\
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+           finished in 1.40s\n"</span>;
+<span class="kw">let </span>read = read_crate_output(out);
+<span class="macro">assert_eq!</span>(read.binaries.len(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(read.binaries[<span class="number">0</span>].name, <span class="string">"alpha"</span>);
+<span class="macro">assert_eq!</span>(read.binaries[<span class="number">0</span>].outcome, Outcome::Pass);
+
+<span class="macro">assert_eq!</span>(read.dropped.len(), <span class="number">1</span>, <span class="string">"the unit tests ran, and are listed rather than ignored"</span>);
+<span class="kw">let </span>dropped = <span class="kw-2">&amp;</span>read.dropped[<span class="number">0</span>];
+<span class="macro">assert_eq!</span>(dropped.producer, EvidenceProducer::Crate);
+<span class="macro">assert_eq!</span>(dropped.what, <span class="string">"unittests src/lib.rs"</span>);
+<span class="macro">assert!</span>(dropped.reason.contains(<span class="string">"no claim can name"</span>), <span class="string">"{}"</span>, dropped.reason);</code></pre></div><h2 id="a-recording-as-a-typed-run"><a class="doc-anchor" href="#a-recording-as-a-typed-run">§</a>A recording, as a typed run</h2>
+<p>Every recording returns an <a href="struct.EvidenceRunRecord.html" title="struct majordomus_cli::evidence::run::EvidenceRunRecord"><code>EvidenceRunRecord</code></a>: its commit, the tree each report’s run
+measured, its totals, what was absent, dropped or unknown, and the executions, each of
+which maps back to the record’s id:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::{record, EvidenceProducer, EvidenceRunRecord, Origin, RecordRequest, TreeState};
+<span class="kw">use </span>std::process::Command;
+
+<span class="kw">let </span>root = tempfile::tempdir().unwrap();
+<span class="kw">let </span>git = |args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    Command::new(<span class="string">"git"</span>).arg(<span class="string">"-C"</span>).arg(root.path()).args(args).output().unwrap()
+};
+git(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.email"</span>, <span class="string">"t@example.com"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.name"</span>, <span class="string">"t"</span>]);
+std::fs::create_dir_all(root.path().join(<span class="string">"test/cases"</span>)).unwrap();
+std::fs::write(root.path().join(<span class="string">"test/cases/01_a.sh"</span>), <span class="string">"echo a\n"</span>).unwrap();
+git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"init"</span>]);
+
+<span class="kw">let </span>reports = tempfile::tempdir().unwrap();
+<span class="kw">let </span>tsv = reports.path().join(<span class="string">"run.tsv"</span>);
+std::fs::write(<span class="kw-2">&amp;</span>tsv, <span class="string">"01_a\tok\t1\tparallel\n"</span>).unwrap();
+<span class="kw">let </span>out = reports.path().join(<span class="string">"run.json"</span>);
+<span class="kw">let </span>req = RecordRequest {
+    suite: <span class="prelude-val">Some</span>(tsv),
+    run_record: <span class="prelude-val">Some</span>(out.clone()),
+    ..RecordRequest::new(Origin::Local)
+};
+<span class="kw">let </span>run = record(root.path(), <span class="kw-2">&amp;</span>req).unwrap().run_record;
+
+<span class="comment">// no measurement came with the report, so the run's tree is not vouched for
+</span><span class="macro">assert_eq!</span>(run.working_tree, TreeState::Unknown);
+<span class="macro">assert_eq!</span>(run.totals.executions, <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(run.absent[<span class="number">0</span>].producer, EvidenceProducer::Crate);
+<span class="kw">let </span>written: EvidenceRunRecord =
+    serde_json::from_str(<span class="kw-2">&amp;</span>std::fs::read_to_string(<span class="kw-2">&amp;</span>out).unwrap()).unwrap();
+<span class="macro">assert_eq!</span>(written, run);
+<span class="macro">assert_eq!</span>(EvidenceRunRecord::id_of(<span class="kw-2">&amp;</span>run.executions[<span class="number">0</span>]), run.id);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.EvidenceAbsent.html" title="struct majordomus_cli::evidence::run::EvidenceAbsent">Evidence<wbr>Absent</a></dt><dd>A producer that gave the run nothing, and why.</dd><dt><a class="struct" href="struct.EvidenceDropped.html" title="struct majordomus_cli::evidence::run::EvidenceDropped">Evidence<wbr>Dropped</a></dt><dd>Something a report held that no claim can name yet, listed instead of ignored.</dd><dt><a class="struct" href="struct.EvidenceRunRecord.html" title="struct majordomus_cli::evidence::run::EvidenceRunRecord">Evidence<wbr>RunRecord</a></dt><dd>One recording, as a typed run: what it recorded, against what, measured how, and what
+the reports held that it could not record.</dd><dt><a class="struct" href="struct.EvidenceRunTotals.html" title="struct majordomus_cli::evidence::run::EvidenceRunTotals">Evidence<wbr>RunTotals</a></dt><dd>Counts over a run’s executions: how many, of each outcome, of each runner. A zero is
+absent rather than 0.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.EvidenceProducer.html" title="enum majordomus_cli::evidence::run::EvidenceProducer">Evidence<wbr>Producer</a></dt><dd>Which report an entry of a run belongs to: the suite’s TSV, <code>cargo test</code>’s output, or a
+coverage summary.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.RUN_RECORD_SCHEMA.html" title="constant majordomus_cli::evidence::run::RUN_RECORD_SCHEMA">RUN_<wbr>RECORD_<wbr>SCHEMA</a></dt><dd>The version of the <a href="struct.EvidenceRunRecord.html" title="struct majordomus_cli::evidence::run::EvidenceRunRecord"><code>EvidenceRunRecord</code></a> document.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.run_id.html" title="fn majordomus_cli::evidence::run::run_id">run_id</a></dt><dd>The id of a recording: <code>&lt;origin&gt;:&lt;provider&gt;:&lt;run id&gt;:&lt;attempt&gt;</code> for a CI run, else
+<code>&lt;origin&gt;:&lt;commit[..12]&gt;:&lt;at without '-' and ':'&gt;</code>.</dd><dt><a class="fn" href="fn.weaken_by_records.html" title="fn majordomus_cli::evidence::run::weaken_by_records">weaken_<wbr>by_<wbr>records</a></dt><dd>A judgement, weakened by the run records that ran the same test: the second source of
+the one monotone rule, <a href="../freshness/fn.weakened_by.html" title="fn majordomus_cli::evidence::freshness::weakened_by"><code>crate::evidence::freshness::weakened_by</code></a>.</dd><dt><a class="fn" href="fn.weakened_by_records.html" title="fn majordomus_cli::evidence::run::weakened_by_records">weakened_<wbr>by_<wbr>records</a></dt><dd><a href="fn.weaken_by_records.html" title="fn majordomus_cli::evidence::run::weaken_by_records"><code>weaken_by_records</code></a> against a checkout: the presented commit is the one <code>presented</code>
+names, or HEAD for the working tree (none when HEAD is unborn), and containment is
+<a href="../../git/fn.contains.html" title="fn majordomus_cli::git::contains"><code>crate::git::contains</code></a> in <code>root</code>.</dd></dl></section></div></main></body></html>

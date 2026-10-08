@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.15.0 -->
+     Generator: majordomus-cli 0.16.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -488,13 +488,27 @@ that read a bare object would break when it did.</td>
       ]
     },
     &quot;EvidenceRun&quot;: {
-      &quot;description&quot;: &quot;The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template&#39;s idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider&#39;s name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &amp;str| {\n    let v = match k {\n        \&quot;GITHUB_ACTIONS\&quot; =&gt; \&quot;true\&quot;,\n        \&quot;GITHUB_SERVER_URL\&quot; =&gt; \&quot;https://github.com\&quot;,\n        \&quot;GITHUB_REPOSITORY\&quot; =&gt; \&quot;owner/repo\&quot;,\n        \&quot;GITHUB_RUN_ID\&quot; =&gt; \&quot;42\&quot;,\n        \&quot;GITHUB_RUN_ATTEMPT\&quot; =&gt; \&quot;2\&quot;,\n        \&quot;GITHUB_WORKFLOW\&quot; =&gt; \&quot;validate\&quot;,\n        \&quot;GITHUB_JOB\&quot; =&gt; \&quot;evidence\&quot;,\n        _ =&gt; return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \&quot;42\&quot;);\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \&quot;https://github.com/owner/repo/actions/runs/42/attempts/2\&quot;);\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \&quot;GITHUB_ACTIONS\&quot;).then(|| \&quot;true\&quot;.to_string())).is_none());\n```&quot;,
+      &quot;description&quot;: &quot;The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template&#39;s idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider&#39;s name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &amp;str| {\n    let v = match k {\n        \&quot;GITHUB_ACTIONS\&quot; =&gt; \&quot;true\&quot;,\n        \&quot;GITHUB_SERVER_URL\&quot; =&gt; \&quot;https://github.com\&quot;,\n        \&quot;GITHUB_REPOSITORY\&quot; =&gt; \&quot;owner/repo\&quot;,\n        \&quot;GITHUB_RUN_ID\&quot; =&gt; \&quot;42\&quot;,\n        \&quot;GITHUB_RUN_ATTEMPT\&quot; =&gt; \&quot;2\&quot;,\n        \&quot;GITHUB_WORKFLOW\&quot; =&gt; \&quot;validate\&quot;,\n        \&quot;GITHUB_JOB\&quot; =&gt; \&quot;evidence\&quot;,\n        _ =&gt; return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \&quot;42\&quot;);\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \&quot;https://github.com/owner/repo/actions/runs/42/attempts/2\&quot;);\n// a run that names neither its pull request&#39;s head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \&quot;0123456789abcdef0123456789abcdef01234567\&quot;;\nlet pull = |k: &amp;str| match k {\n    \&quot;MJ_RUN_HEAD_SHA\&quot; =&gt; Some(head.to_string()),\n    \&quot;GITHUB_EVENT_NAME\&quot; =&gt; Some(\&quot;pull_request\&quot;.to_string()),\n    _ =&gt; actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\&quot;pull_request\&quot;));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \&quot;GITHUB_ACTIONS\&quot;).then(|| \&quot;true\&quot;.to_string())).is_none());\n```&quot;,
       &quot;properties&quot;: {
         &quot;attempt&quot;: {
           &quot;description&quot;: &quot;Which attempt of the run, counted from 1.&quot;,
           &quot;format&quot;: &quot;uint32&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;event&quot;: {
+          &quot;description&quot;: &quot;The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;head_sha&quot;: {
+          &quot;description&quot;: &quot;The pull request&#39;s head commit when the run was a pull-request run (its `commit` is\nGitHub&#39;s merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The provider&#39;s identifier of the run.&quot;,
@@ -725,8 +739,8 @@ that read a bare object would break when it did.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceClaimInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ClaimEvidence</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/77a81b743158c2a0f32268f34aec028cacb52e3e/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/77a81b743158c2a0f32268f34aec028cacb52e3e/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">f205638909c7310ca80ae5f27d4fa65e5bed9c7155c0eecd9b3319f6fc44953d</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.15.0</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/f70c522d737cb1ede39f87ee0171cbc3721ead8b/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/f70c522d737cb1ede39f87ee0171cbc3721ead8b/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">08cb115b54768e26cf0e0a1a7448b43314a6d4c4b635f329806f80e4c33a4ff4</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.16.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -791,7 +805,7 @@ that read a bare object would break when it did.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.15.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/77a81b743158c2a0f32268f34aec028cacb52e3e" class="font-mono underline">77a81b7</a> · inputs <span class="font-mono">ddbe2b43d5f8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.16.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/f70c522d737cb1ede39f87ee0171cbc3721ead8b" class="font-mono underline">f70c522</a> · inputs <span class="font-mono">3acdfff21778</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

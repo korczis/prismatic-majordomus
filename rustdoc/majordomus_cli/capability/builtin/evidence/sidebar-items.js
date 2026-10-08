@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["EVIDENCE_URI"],"fn":["module"],"struct":["ClaimEvidence","EvidenceClaimInput","EvidenceRecordInput","EvidenceReportInput","EvidenceTestInput","RecordReport","TestEvidence"]};
+window.SIDEBAR_ITEMS = {"constant":["EVIDENCE_URI"],"fn":["module"],"struct":["ClaimEvidence","EvidenceClaimInput","EvidenceRecordInput","EvidenceReportInput","EvidenceStampInput","EvidenceTestInput","RecordReport","TestEvidence"]};

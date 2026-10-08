@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Containment","GitState"],"fn":["contains","inspect","is_ancestor","ls_files","ls_files_all","ls_files_any","read_only","resolves","working_tree_ignoring"],"struct":["GitInfo"]};
+window.SIDEBAR_ITEMS = {"enum":["Containment","GitState"],"fn":["contains","inspect","is_ancestor","ls_files","ls_files_all","ls_files_any","read_only","resolves","working_tree_excluding","working_tree_ignoring"],"struct":["GitInfo"]};

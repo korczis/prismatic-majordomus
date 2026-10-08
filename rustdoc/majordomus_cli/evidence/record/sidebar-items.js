@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["parse_crate_binaries","record"],"struct":["RecordOutcome","RecordRequest"]};
+window.SIDEBAR_ITEMS = {"fn":["parse_crate_binaries","read_crate_output","record"],"struct":["CrateBinary","CrateRead","RecordOutcome","RecordRequest"]};

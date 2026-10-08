@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RUN_RECORD_SCHEMA"],"enum":["EvidenceProducer"],"fn":["run_id","weaken_by_records","weakened_by_records"],"struct":["EvidenceAbsent","EvidenceDropped","EvidenceRunRecord","EvidenceRunTotals"]};

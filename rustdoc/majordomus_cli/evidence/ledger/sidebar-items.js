@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["LEDGER_PATH","LEDGER_VERSION"],"struct":["Ledger"]};
+window.SIDEBAR_ITEMS = {"constant":["LEDGER_PATH","LEDGER_VERSION","LOCAL_LEDGER_PATH"],"enum":["LedgerTarget"],"fn":["outcome_counts"],"struct":["Ledger"]};

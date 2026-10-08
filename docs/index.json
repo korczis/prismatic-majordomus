@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "77a81b743158c2a0f32268f34aec028cacb52e3e",
-  "source_version": "0.15.0",
-  "registry_fingerprint": "f205638909c7310ca80ae5f27d4fa65e5bed9c7155c0eecd9b3319f6fc44953d"
+  "commit": "f70c522d737cb1ede39f87ee0171cbc3721ead8b",
+  "source_version": "0.16.0",
+  "registry_fingerprint": "08cb115b54768e26cf0e0a1a7448b43314a6d4c4b635f329806f80e4c33a4ff4"
  },
  "counts": {
-  "pages": 1926,
-  "capabilities": 2012,
-  "cli_commands": 90,
+  "pages": 1935,
+  "capabilities": 2025,
+  "cli_commands": 91,
   "http_routes": 170,
   "mcp_tools": 166,
-  "mcp_resources": 1893,
+  "mcp_resources": 1905,
   "modules": 84
  },
  "kinds": [
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 233
+   "count": 237
   },
   {
    "kind": "command",
@@ -102,7 +102,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 322
+   "count": 326
   },
   {
    "kind": "domain",
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 371
+   "count": 375
   },
   {
    "kind": "use-case",
@@ -1819,6 +1819,11 @@
    "route": "/docs/cli/evidence/show/",
    "title": "majordomus evidence show",
    "description": "Every claim against the evidence recorded for it"
+  },
+  {
+   "route": "/docs/cli/evidence/stamp/",
+   "title": "majordomus evidence stamp",
+   "description": "Measure the checkout as a run left it, for `record --provenance`"
   },
   {
    "route": "/docs/cli/executions/",
@@ -3521,9 +3526,19 @@
    "description": "share/events.yaml declares every event name the ledger accepts, the command that writes"
   },
   {
+   "route": "/guarantees/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass/",
+   "title": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+   "description": "majordomus evidence record --crate-output <file> reads what cargo test printed and"
+  },
+  {
    "route": "/guarantees/evidence-a-failure-outranks-an-absence/",
    "title": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
    "description": "A rule that names several tests takes one state from all of them. When any of those tests"
+  },
+  {
+   "route": "/guarantees/evidence-a-recording-is-a-typed-run/",
+   "title": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+   "description": "majordomus evidence record returns, beside what it merged into the ledger, the recording"
   },
   {
    "route": "/guarantees/evidence-a-skip-is-not-run/",
@@ -3544,6 +3559,11 @@
    "route": "/guarantees/evidence-judged-at-the-presented-revision/",
    "title": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
    "description": "Every verdict is a verdict at something. majordomus evidence show judges the working"
+  },
+  {
+   "route": "/guarantees/evidence-local-recording-stays-local/",
+   "title": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+   "description": "majordomus evidence record --ledger local merges its executions into"
   },
   {
    "route": "/guarantees/evidence-navigates-both-ways/",
@@ -3574,6 +3594,11 @@
    "route": "/guarantees/evidence-subjects-are-derived/",
    "title": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
    "description": "A verdict is always a verdict about something. A reader asks \"is the feature evidence"
+  },
+  {
+   "route": "/guarantees/evidence-tree-is-measured-by-the-run/",
+   "title": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+   "description": "The recorder does not measure its own checkout. The run does, when it ends, with"
   },
   {
    "route": "/guarantees/evidence-unsupported-guarantee-is-reported/",
@@ -6168,12 +6193,17 @@
   {
    "route": "/registry/capabilities/evidence-record/",
    "title": "evidence.record",
-   "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing."
+   "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped."
   },
   {
    "route": "/registry/capabilities/evidence-report/",
    "title": "evidence.report",
    "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+  },
+  {
+   "route": "/registry/capabilities/evidence-stamp/",
+   "title": "evidence.stamp",
+   "description": "The one measurement a runner takes at the end of its run, for evidence record --provenance: the commit; the tree, ignoring the evidence ledger and the run's own untracked outputs, never a tracked change; the producer; its toolchain; the recorder's version; the report's digest; the host; the CI run. It writes nothing. It is offered only on the command line because it reads a path its caller names."
   },
   {
    "route": "/registry/capabilities/evidence-test/",
@@ -8370,8 +8400,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.15.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.15.0, built from commit 77a81b743158c2a0f32268f34aec028cacb52e3e: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.16.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.16.0, built from commit f70c522d737cb1ede39f87ee0171cbc3721ead8b: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -8929,6 +8959,11 @@
    "description": "Evidence: what actually ran, against which commit, and whether it still proves anything."
   },
   {
+   "route": "/rustdoc/majordomus_cli/evidence/coverage/",
+   "title": "majordomus_cli::evidence::coverage - Rust",
+   "description": "A coverage summary bound to the commit and tree it was measured on."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/evidence/freshness/",
    "title": "majordomus_cli::evidence::freshness - Rust",
    "description": "Freshness: whether a recorded run still proves anything at the revision a reader is shown."
@@ -8939,9 +8974,19 @@
    "description": "The ledger: the latest execution of every test, as a tracked file."
   },
   {
+   "route": "/rustdoc/majordomus_cli/evidence/provenance/",
+   "title": "majordomus_cli::evidence::provenance - Rust",
+   "description": "What a run measured about its own checkout when it ended."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/evidence/record/",
    "title": "majordomus_cli::evidence::record - Rust",
    "description": "The recorder: turning a run that happened into evidence that lasts."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/evidence/run/",
+   "title": "majordomus_cli::evidence::run - Rust",
+   "description": "What a run is made of, beyond the executions it recorded."
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/subject/",
