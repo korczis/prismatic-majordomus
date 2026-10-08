@@ -1238,6 +1238,10 @@ SCHEMAS
     mj_doctrine_fail schema "share/schemas" \
       "$(printf '%s' "$orphan" | wc -w | tr -d ' ') schema(s) are applied by nothing — no kind names them and no allow-list the tool reads is derived from them:$orphan" \
       "grep -n 'schema:' share/kinds.yaml   # wire it to a kind, or delete the file"
+  elif [ "$MJ_JSON_PARSER" = none ]; then
+    # nothing here could parse a file, so "valid JSON" is not a thing this run established:
+    # it says what it did check and that the parse was not asked
+    mj_info schema "share/schemas" "$m schema(s), each applied; none was parsed, because neither python3 nor jq can run here — that every one is valid JSON was not established" "python3 -c 'import json'; jq -n 1"
   else
     mj_doctrine_ok schema "share/schemas" "$m schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract ($gen)"
   fi
@@ -1278,20 +1282,38 @@ mj_schema_named_in_source() {
   grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
 }
 
-# One top-level string field of a JSON file, or nothing. A parser being absent is not a
-# reason to invent an answer: with neither python3 nor jq the field is unknown, and an
-# unknown identifier falls back to the path.
+# The JSON parser this process can actually run: python3, jq, or none. Found once.
+#
+# "Is python3 on PATH" is not that question. A version manager's shim is on PATH whether or
+# not it can start anything: asdf answers "No version is set for command python3" and exits
+# non-zero in any directory with no pinned Python, and pyenv does the same. Asked only
+# whether the command existed, the two readers below took the shim, read its failure as the
+# file's — every schema the tool ships "does not parse as JSON" — and never reached the jq
+# that was there. So each candidate is started on nothing first, and the one that runs is
+# used.
+MJ_JSON_PARSER=""
+mj_json_parser_find() {
+  [ -z "$MJ_JSON_PARSER" ] || return 0
+  if python3 -c 'import json' >/dev/null 2>&1; then MJ_JSON_PARSER=python3
+  elif jq -n 1 >/dev/null 2>&1; then MJ_JSON_PARSER=jq
+  else MJ_JSON_PARSER=none; fi
+}
+
+# One top-level string field of a JSON file, or nothing. A parser that cannot run is not a
+# reason to invent an answer: with neither python3 nor jq able to start, the field is
+# unknown, and an unknown identifier falls back to the path.
 mj_json_string() {
-  if command -v python3 >/dev/null 2>&1; then
-    python3 -c 'import json,sys
+  mj_json_parser_find
+  case "$MJ_JSON_PARSER" in
+    python3)
+      python3 -c 'import json,sys
 try:
     v = json.load(open(sys.argv[1])).get(sys.argv[2], "")
 except Exception:
     v = ""
-sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null
-  elif command -v jq >/dev/null 2>&1; then
-    jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null
-  fi
+sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null ;;
+    jq) jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null ;;
+  esac
 }
 
 # Is this schema applied through its generated allow-list? True when something in the tool
@@ -1306,10 +1328,14 @@ mj_allow_applied() {
   grep -rqE "(ALLOW_DIR|share/allow)/$1\.txt" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
 }
 
-# Does this file parse as JSON? The schemas are the tool's own data, so a parser being
-# absent is not a reason to pass them.
+# Does this file parse as JSON? Asked of a parser that runs (mj_json_parser_find): what a
+# parser that could not start says about a file is nothing about the file. With no parser
+# able to run the question cannot be put, and the file is not called broken on that account.
 mj_json_ok() {
-  if command -v python3 >/dev/null 2>&1; then python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1
-  elif command -v jq >/dev/null 2>&1; then jq -e . "$1" >/dev/null 2>&1
-  else return 0; fi
+  mj_json_parser_find
+  case "$MJ_JSON_PARSER" in
+    python3) python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$1" >/dev/null 2>&1 ;;
+    jq) jq -e . "$1" >/dev/null 2>&1 ;;
+    *) return 0 ;;
+  esac
 }
