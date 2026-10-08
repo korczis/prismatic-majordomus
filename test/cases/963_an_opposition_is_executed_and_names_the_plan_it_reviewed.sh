@@ -161,7 +161,8 @@ jq -e '.written == true and .event == "opposition.recorded" and .disposition == 
   || { echo "    the stamp answered:"; cat "$T/stamp.json"; exit 1; }
 expect_grep "^reviewed_revision: $rev\$" "$C"
 expect_grep '^reviewed_with: "majordomus-cli ' "$C"
-expect_grep "^reviewed_at: $(git rev-parse HEAD | cut -c1-10)\$" "$C"
+# quoted: a commit's first ten characters can be all digits, and must still read as text
+expect_grep "^reviewed_at: \"$(git rev-parse HEAD | cut -c1-10)\"\$" "$C"
 same "the findings after the stamp" "$before" "$(sed -n '/^findings:/,$p' "$C")"
 # nothing derived was stored
 expect_no_grep '^(disposition|structural|state):' "$C"

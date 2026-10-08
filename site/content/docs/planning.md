@@ -239,7 +239,7 @@ policy's choice (`intent.binding`, under [Binding](#binding-what-a-task-serves-a
 below): where it is `required`, the issue never becomes `ACTIVE`.
 
 **A reviewer writes the findings; Majordomus runs the structural half and stamps the review.**
-A person or a worker — Claude, Codex, Gemini — does the observing and the criticising, and the
+A person or a worker does the observing and the criticising, and the
 repository refuses the result when it does not hold together. Nothing here derives a plan from
 an intent automatically.
 
