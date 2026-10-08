@@ -34,11 +34,27 @@ fn git(dir: &Path, args: &[&str]) -> String {
 
 /// The scripted forge. `@STATE@`, `@ORIGIN@` and `@WORK@` are replaced with the test's paths.
 /// A file under the state directory changes an answer: `down` refuses every call,
-/// `protection.json` holding `FAIL` or `TRANSIENT` refuses the protection read, `closed-fails`
-/// the list of closed pull requests, `view-fails` every `pr view`, `view-transient` the view
-/// of a successor; `view-<n>.json` is the successor `n` as the forge shows it; `forget` and
-/// `unfetchable` lose the observation or the origin as a merge is looked at; `act` pushes a
-/// branch to origin, as somebody else would, while the closed pull requests are listed.
+/// `protection.json` holding `FAIL` or `TRANSIENT` refuses the protection read, `view-fails`
+/// every `pr view`, `view-transient` the view of a successor; `view-<n>.json` is the successor
+/// `n` as the forge shows it; `forget` and `unfetchable` lose the observation or the origin as
+/// a merge is looked at; `act` pushes a branch to origin, as somebody else would, while the
+/// declarations are read.
+///
+/// Who may declare a successor, and what was declared, is an `api graphql` read too (the one
+/// that asks for `timelineItems`), asked whenever a pull request is open: `declarations.json`
+/// is its answer, and without one every listed pull request is its owner's and nothing
+/// mentions it. `declarations-<n>.json` is the answer about pull request `n` alone, asked when
+/// its cross-references did not fit a page or no page listed it; `declarations-fails`
+/// refuses every such read, `declarations-page-fails` only the one of every open pull request,
+/// `declarations-one-fails` only the one of a pull request alone, and
+/// `declarations-transient` fails each as an outage would. Nothing lists closed pull
+/// requests.
+///
+/// Who wrote each check is the `api graphql` read, asked only when the base binds a context
+/// to an app: `writers.json` is its answer, and without one every listed pull request is
+/// answered at its listed head with each check run written by app 15368. `writers-<n>.json`
+/// is the answer about pull request `n` alone, asked when its contexts did not fit a page;
+/// `writers-fails` refuses the read and `writers-transient` fails it as an outage would.
 const GH: &str = r#"#!/bin/sh
 S="@STATE@"; O="@ORIGIN@"; W="@WORK@"
 echo "$*" >> "$S/log"
@@ -56,12 +72,42 @@ case "$1 $2" in
     if grep -q TRANSIENT "$S/rules.json" 2>/dev/null; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1; fi
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
+  "api graphql")
+    case "$*" in *timelineItems*)
+      if [ -f "$S/declarations-transient" ]; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1; fi
+      if [ -f "$S/declarations-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
+      if [ -f "$S/act" ]; then git -C "$O" update-ref refs/heads/intruder refs/heads/master; fi
+      one=""
+      for a in "$@"; do case "$a" in number=*) one="${a#number=}" ;; esac; done
+      if [ -z "$one" ] && [ -f "$S/declarations-page-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
+      if [ -n "$one" ] && [ -f "$S/declarations-one-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
+      if [ -n "$one" ]; then cat "$S/declarations-$one.json"
+      elif [ -f "$S/declarations.json" ]; then cat "$S/declarations.json"
+      else jq -c --slurpfile gone "$S/gone.json" '{data: {repository: {pullRequests: {
+          pageInfo: {hasNextPage: false, endCursor: null},
+          nodes: [.[] | select(.number as $n | ($gone[0] | index($n)) | not) | {
+            number, authorAssociation: "OWNER", isCrossRepository: false, timelineItems: {
+              pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}]}}}}' "$S/prs.json"
+      fi
+      exit $? ;;
+    esac
+    if [ -f "$S/writers-transient" ]; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1; fi
+    if [ -f "$S/writers-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
+    one=""
+    for a in "$@"; do case "$a" in number=*) one="${a#number=}" ;; esac; done
+    if [ -n "$one" ]; then cat "$S/writers-$one.json"
+    elif [ -f "$S/writers.json" ]; then cat "$S/writers.json"
+    else jq -c --slurpfile gone "$S/gone.json" '{data: {repository: {pullRequests: {
+        pageInfo: {hasNextPage: false, endCursor: null},
+        nodes: [.[] | select(.number as $n | ($gone[0] | index($n)) | not) | {
+          number, headRefOid, statusCheckRollup: {contexts: {
+            pageInfo: {hasNextPage: false, endCursor: null},
+            nodes: [(.statusCheckRollup // [])[] | if .__typename == "CheckRun"
+              then . + {checkSuite: {app: {databaseId: 15368}}} else . end]}}}]}}}}' "$S/prs.json"
+    fi ;;
   "pr list")
     case " $* " in
-      *" --state closed "*)
-        if [ -f "$S/closed-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
-        if [ -f "$S/act" ]; then git -C "$O" update-ref refs/heads/intruder refs/heads/master; fi
-        echo '[]' ;;
+      *" --state closed "*) echo UNEXPECTED >> "$S/log"; exit 1 ;;
       *) jq -c --slurpfile gone "$S/gone.json" '[.[] | select(.number as $n | ($gone[0] | index($n)) | not)]' "$S/prs.json" ;;
     esac ;;
   "pr merge")
@@ -83,7 +129,7 @@ case "$1 $2" in
   "pr view")
     if [ -f "$S/view-fails" ]; then echo 'HTTP 403: Resource not accessible by integration' >&2; exit 1; fi
     case " $* " in
-      *" --json number,state,headRefOid,body "*)
+      *" --json number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles "*)
         if [ -f "$S/view-transient" ]; then echo 'HTTP 502: Bad Gateway' >&2; exit 1
         elif [ -f "$S/view-$3.json" ]; then cat "$S/view-$3.json"
         else echo "no pull requests found for #$3" >&2; exit 1; fi ;;
@@ -439,15 +485,25 @@ fn what_the_base_requires_is_read_from_protection_and_rulesets() {
     let head = f.branch(1);
     f.open(&[(1, &head)]);
 
-    // a ruleset binds a second check to an app; the run reports it, so it passes
+    // a ruleset binds the check to an app: the refresh reads who wrote each check run, and
+    // that app's run reports it, so it passes
     f.set(
         "rules.json",
         r#"[{"type":"required_status_checks","parameters":{"strict_required_status_checks_policy":true,"required_status_checks":[{"context":"ci","integration_id":15368}]}}]"#,
     );
-    f.prs(&["refresh"]);
-    let (_, out, _) = f.prs(&["status", "--format", "json"]);
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let (code, out, _) = f.prs(&["status", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
     let q: Value = serde_json::from_str(&out).unwrap();
     assert_eq!(q["policy"]["up_to_date_required"], true, "{out}");
+    assert_eq!(
+        q["policy"]["required_checks"],
+        serde_json::json!([{"context": "ci", "app_id": 15368}]),
+        "{out}"
+    );
+    assert_eq!(q["assessments"][0]["disposition"], "ready", "{out}");
+    assert_eq!(q["next_merge"], 1, "{out}");
 
     // an unprotected base requires nothing, and so nothing is ready (D5)
     std::fs::remove_file(f.state.join("protection.json")).unwrap();
@@ -478,6 +534,141 @@ fn what_the_base_requires_is_read_from_protection_and_rulesets() {
     let (code, out, _) = f.prs(&["status", "--format", "json"]);
     assert_eq!(code, 10, "{out}");
     assert!(out.contains("unread"), "{out}");
+    assert!(!f.log().contains("UNEXPECTED"), "{}", f.log());
+}
+
+/// A check the base binds to an app is read with its writer, through the command line: the
+/// bound app's run passes it, another app's does not, a writer nobody read is unknown, and a
+/// writer read that fails is a failed observation that leaves the recorded one as it was.
+#[test]
+fn a_bound_check_is_read_with_its_writer() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    let observation = f.work.join(".ai/local/state/integration/observation.json");
+    let status = |f: &Forge| -> (i32, Value) {
+        let (code, out, err) = f.prs(&["refresh"]);
+        assert_eq!(code, 0, "refresh: {out}{err}");
+        let (code, out, _) = f.prs(&["status", "--format", "json"]);
+        (code, serde_json::from_str(&out).expect("status is JSON"))
+    };
+    let asked = |f: &Forge| {
+        f.log()
+            .lines()
+            .filter(|l| l.starts_with("api graphql ") && l.contains("statusCheckRollup"))
+            .count()
+    };
+    let writers = |head: &str, more: bool, app: Value| {
+        serde_json::json!({"data": {"repository": {"pullRequests": {
+            "pageInfo": {"hasNextPage": false, "endCursor": null},
+            "nodes": [{"number": 1, "headRefOid": head, "statusCheckRollup": {"contexts": {
+                "pageInfo": {"hasNextPage": more, "endCursor": "x1"},
+                "nodes": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED",
+                    "conclusion": "SUCCESS", "completedAt": "2026-09-01T00:05:00Z",
+                    "checkSuite": {"app": app}}]}}}]}}}})
+        .to_string()
+    };
+
+    // nothing bound: no writer is asked for, and the check run of the name is the check
+    let (code, q) = status(&f);
+    assert_eq!(
+        (code, &q["assessments"][0]["disposition"]),
+        (0, &Value::from("ready"))
+    );
+    assert_eq!(asked(&f), 0, "{}", f.log());
+
+    // bound: one read, with the names as strings and only the page size typed
+    f.set(
+        "protection.json",
+        r#"{"required_status_checks":{"strict":true,"contexts":["ci"],"checks":[{"context":"ci","app_id":15368}]}}"#,
+    );
+    let (code, q) = status(&f);
+    assert_eq!(code, 0, "{q}");
+    assert_eq!(q["assessments"][0]["disposition"], "ready", "{q}");
+    assert_eq!(asked(&f), 1, "{}", f.log());
+    let log = f.log();
+    let call = log
+        .lines()
+        .find(|l| l.starts_with("api graphql ") && l.contains("statusCheckRollup"))
+        .unwrap();
+    assert!(call.contains(" -f owner=o -f name=r -F n=50"), "{call}");
+    assert!(
+        !call.contains("after="),
+        "the first page has no cursor: {call}"
+    );
+    let recorded: Value =
+        serde_json::from_str(&std::fs::read_to_string(&observation).unwrap()).unwrap();
+    assert_eq!(recorded["pull_requests"][0]["checks"][0]["app_id"], 15368);
+
+    // another app's run of the name is not the check
+    f.set(
+        "writers.json",
+        &writers(&head, false, serde_json::json!({"databaseId": 1})),
+    );
+    let (_, q) = status(&f);
+    assert_eq!(
+        q["assessments"][0]["disposition"], "waiting_for_checks",
+        "{q}"
+    );
+    assert_eq!(q["assessments"][0]["required_checks"], "missing", "{q}");
+
+    // the head moved between the list and the writer read: nobody read who wrote this head's
+    // run, so it is unknown, the queue says so, and nothing is next
+    let moved = "0123456789012345678901234567890123456789";
+    f.set(
+        "writers.json",
+        &writers(moved, false, serde_json::json!({"databaseId": 15368})),
+    );
+    let (code, q) = status(&f);
+    assert_eq!(code, 10, "{q}");
+    assert_eq!(q["assessments"][0]["disposition"], "unknown", "{q}");
+    assert_eq!(
+        q["assessments"][0]["reasons"][0], "required_checks:unknown",
+        "{q}"
+    );
+    assert_eq!(q["next_merge"], Value::Null, "{q}");
+    let said = q["diagnostics"].to_string();
+    assert!(said.contains("whose app was not read (#1)"), "{said}");
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert!(!f.log().contains("pr merge"), "{code}: {out}{err}");
+
+    // contexts that did not fit a page are read again for that pull request alone, whole
+    f.set(
+        "writers.json",
+        &writers(&head, true, serde_json::json!({"databaseId": 15368})),
+    );
+    f.set(
+        "writers-1.json",
+        &serde_json::json!({"data": {"repository": {"pullRequest": {
+            "number": 1, "headRefOid": head, "statusCheckRollup": {"contexts": {
+                "pageInfo": {"hasNextPage": false, "endCursor": null},
+                "nodes": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED",
+                    "conclusion": "SUCCESS", "completedAt": "2026-09-01T00:05:00Z",
+                    "checkSuite": {"app": {"databaseId": 15368}}}]}}}}}})
+        .to_string(),
+    );
+    let (code, q) = status(&f);
+    assert_eq!(code, 0, "{q}");
+    assert_eq!(q["assessments"][0]["disposition"], "ready", "{q}");
+    assert!(
+        f.log().contains(" -f owner=o -f name=r -F number=1"),
+        "{}",
+        f.log()
+    );
+
+    // a writer read the forge refuses fails the refresh and leaves the observation as it was
+    let before = std::fs::read(&observation).unwrap();
+    f.set("writers-fails", "");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 12, "{out}{err}");
+    assert!(err.contains("Resource not accessible"), "{err}");
+    assert_eq!(std::fs::read(&observation).unwrap(), before);
+    std::fs::remove_file(f.state.join("writers-fails")).unwrap();
+    // and so does one that keeps failing as an outage does
+    f.set("writers-transient", "");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 12, "{out}{err}");
+    assert_eq!(std::fs::read(&observation).unwrap(), before);
     assert!(!f.log().contains("UNEXPECTED"), "{}", f.log());
 }
 
@@ -680,15 +871,17 @@ fn a_base_whose_requirements_cannot_be_read_is_unread_or_unobserved() {
     let (_, out, _) = f.prs(&["status", "--format", "json"]);
     let q: Value = serde_json::from_str(&out).unwrap();
     assert_eq!(q["policy"]["required_checks"], Value::Null, "{out}");
-    // the closed pull requests that declare a supersession cannot be listed
+    // who may declare a successor, and what was declared, cannot be read
     f.set(
         "protection.json",
         r#"{"required_status_checks":{"contexts":["ci"]}}"#,
     );
-    f.set("closed-fails", "");
+    // fails the observation, as a failed list does
+    f.set("declarations-fails", "");
     let (code, out, err) = f.prs(&["refresh"]);
     assert_eq!(code, 12, "{out}{err}");
-    std::fs::remove_file(f.state.join("closed-fails")).unwrap();
+    assert!(err.contains("Resource not accessible"), "{err}");
+    std::fs::remove_file(f.state.join("declarations-fails")).unwrap();
     // a protection or a ruleset read the forge keeps failing fails the observation
     f.set("protection.json", "TRANSIENT");
     let (code, out, err) = f.prs(&["refresh"]);
@@ -745,4 +938,287 @@ fn the_dry_run_proof_says_what_it_compared() {
     let (code, out, err) = f.prs(&["prove-dry-run"]);
     assert_eq!(code, 10, "{out}{err}");
     assert!(out.contains("moved something"), "{out}");
+}
+
+/// One open pull request node of a declarations answer: its author's association and the
+/// cross-references to it, with whether more of them follow.
+fn declared(number: u64, association: &str, more: bool, events: Vec<Value>) -> Value {
+    serde_json::json!({"number": number, "authorAssociation": association,
+        "isCrossRepository": false, "timelineItems": {
+        "pageInfo": {"hasNextPage": more, "endCursor": if more { Value::from("t1") } else { Value::Null }},
+        "nodes": events}})
+}
+
+/// A declarations answer listing `nodes`, with no page of pull requests after it.
+fn declarations_page(nodes: Vec<Value>) -> String {
+    serde_json::json!({"data": {"repository": {"pullRequests": {
+        "pageInfo": {"hasNextPage": false, "endCursor": null}, "nodes": nodes}}}})
+    .to_string()
+}
+
+/// The answer about one pull request's cross-references alone.
+fn references_page(node: Value) -> String {
+    serde_json::json!({"data": {"repository": {"pullRequest": node}}}).to_string()
+}
+
+/// How many declarations reads the log holds, of every open one or of one alone.
+fn declarations_asked(f: &Forge, of_one: bool) -> usize {
+    f.log()
+        .lines()
+        .filter(|l| l.starts_with("api graphql ") && l.contains("timelineItems"))
+        .filter(|l| l.contains(" -F number=") == of_one)
+        .count()
+}
+
+fn status_of(f: &Forge) -> Value {
+    let (_, out, err) = f.prs(&["status", "--format", "json"]);
+    serde_json::from_str(&out).unwrap_or_else(|e| panic!("status is JSON ({e}): {out}{err}"))
+}
+
+#[test]
+fn the_declarations_are_read_with_every_open_pull_request() {
+    let f = Forge::new();
+    // nothing open: nothing is asked about declarations
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(!f.log().contains("api graphql"), "{}", f.log());
+
+    // #7 said it supersedes #1, and was merged with a merge commit; #1 is still open
+    let seven = f.branch(7);
+    git(&f.work, &["checkout", "-q", "--detach", "origin/master"]);
+    git(
+        &f.work,
+        &[
+            "merge",
+            "-q",
+            "--no-ff",
+            &seven,
+            "-m",
+            "Merge pull request #7",
+        ],
+    );
+    git(&f.work, &["push", "-q", "origin", "HEAD:master"]);
+    let merge_commit = git(&f.work, &["rev-parse", "HEAD"]);
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert_eq!(declarations_asked(&f, false), 1, "{}", f.log());
+    assert_eq!(declarations_asked(&f, true), 0, "{}", f.log());
+    let log = f.log();
+    let call = log.lines().find(|l| l.contains("timelineItems")).unwrap();
+    assert!(call.contains(" -f owner=o -f name=r -F n=50"), "{call}");
+    assert!(
+        !call.contains("after="),
+        "the first page has no cursor: {call}"
+    );
+    assert!(
+        !log.contains("pr list --state closed"),
+        "no search of closed pull requests decides: {log}"
+    );
+    let q = status_of(&f);
+    assert_eq!(q["assessments"][0]["disposition"], "ready", "{q}");
+    let observation = f.work.join(".ai/local/state/integration/observation.json");
+    let recorded: Value =
+        serde_json::from_str(&std::fs::read_to_string(&observation).unwrap()).unwrap();
+    assert_eq!(recorded["schema"], 4);
+    assert_eq!(recorded["pull_requests"][0]["author_association"], "OWNER");
+    assert_eq!(recorded["pull_requests"][0]["cross_references"], "whole");
+
+    // its cross-references name #7, an owner's pull request of this repository: it counts
+    let source = |association: &str| {
+        serde_json::json!({"isCrossRepository": false, "source": {
+            "__typename": "PullRequest", "number": 7, "state": "MERGED", "body": "Supersedes #1",
+            "headRefOid": seven, "mergeCommit": {"oid": merge_commit}, "isCrossRepository": false,
+            "authorAssociation": association, "author": {"login": "ana"}, "baseRefName": "master",
+            "changedFiles": 1}})
+    };
+    f.set(
+        "declarations.json",
+        &declarations_page(vec![declared(1, "OWNER", false, vec![source("OWNER")])]),
+    );
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let q = status_of(&f);
+    assert_eq!(q["assessments"][0]["disposition"], "superseded", "{q}");
+    assert_eq!(q["assessments"][0]["superseded_by"], 7, "{q}");
+    assert_eq!(
+        git(&f.work, &["rev-parse", "refs/majordomus/prs/7"]),
+        seven,
+        "the declarer's head was fetched, for git to say whether it landed"
+    );
+    // the same declaration by somebody who may not make one decides nothing
+    f.set(
+        "declarations.json",
+        &declarations_page(vec![declared(
+            1,
+            "OWNER",
+            false,
+            vec![source("CONTRIBUTOR")],
+        )]),
+    );
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let q = status_of(&f);
+    assert_eq!(q["assessments"][0]["disposition"], "ready", "{q}");
+    assert!(
+        q["assessments"][0]["evidence"]
+            .to_string()
+            .contains("#7 by ana (CONTRIBUTOR) says it supersedes #1"),
+        "{q}"
+    );
+    let (code, out, err) = f.prs(&["cleanup", "--apply"]);
+    assert!(!f.log().contains("pr close"), "{code}: {out}{err}");
+    assert!(!f.log().contains("UNEXPECTED"), "{}", f.log());
+}
+
+#[test]
+fn a_timeline_that_does_not_fit_is_read_again_and_a_truncated_one_holds() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    // more pull requests mention #1 than its page holds
+    f.set(
+        "declarations.json",
+        &declarations_page(vec![declared(1, "OWNER", true, vec![])]),
+    );
+    f.set(
+        "declarations-1.json",
+        &references_page(declared(1, "OWNER", false, vec![])),
+    );
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert_eq!(declarations_asked(&f, true), 1, "{}", f.log());
+    assert!(
+        f.log().contains(" -f owner=o -f name=r -F number=1"),
+        "{}",
+        f.log()
+    );
+    let q = status_of(&f);
+    assert_eq!(q["assessments"][0]["disposition"], "ready", "{q}");
+
+    // and more than are read at all: it is held, and the queue says so
+    f.set(
+        "declarations-1.json",
+        &references_page(declared(1, "OWNER", true, vec![])),
+    );
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert_eq!(
+        declarations_asked(&f, true),
+        1 + 50,
+        "fifty pages of its references, and no more: {}",
+        f.log()
+    );
+    assert!(f.log().contains(" -F number=1 -f after=t1"), "{}", f.log());
+    let q = status_of(&f);
+    assert_eq!(q["assessments"][0]["disposition"], "unknown", "{q}");
+    assert_eq!(
+        q["assessments"][0]["reasons"][0], "declarations_unread",
+        "{q}"
+    );
+    assert_eq!(q["next_merge"], Value::Null, "{q}");
+    assert!(
+        q["diagnostics"]
+            .to_string()
+            .contains("the pull requests that mention #1 were not all read (truncated: #1)"),
+        "{q}"
+    );
+    let recorded: Value = serde_json::from_str(
+        &std::fs::read_to_string(f.work.join(".ai/local/state/integration/observation.json"))
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        recorded["pull_requests"][0]["cross_references"],
+        "truncated"
+    );
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert!(!f.log().contains("pr merge"), "{code}: {out}{err}");
+    let (code, out, err) = f.prs(&["cleanup", "--apply"]);
+    assert!(!f.log().contains("pr close"), "{code}: {out}{err}");
+
+    // a pull request no page lists, and the forge no longer shows alone, was not read either
+    f.set("declarations.json", &declarations_page(vec![]));
+    f.set(
+        "declarations-1.json",
+        r#"{"data": {"repository": {"pullRequest": null}}}"#,
+    );
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let q = status_of(&f);
+    assert_eq!(
+        q["assessments"][0]["reasons"][0], "declarations_unread",
+        "{q}"
+    );
+    assert!(
+        q["assessments"][0]["evidence"]
+            .to_string()
+            .contains("references_unread"),
+        "{q}"
+    );
+    assert!(!f.log().contains("UNEXPECTED"), "{}", f.log());
+}
+
+#[test]
+fn a_declarations_read_that_fails_fails_the_refresh_and_replaces_no_observation() {
+    let f = Forge::new();
+    let (one, two) = (f.branch(1), f.branch(2));
+    f.open(&[(1, &one), (2, &two)]);
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let observation = f.work.join(".ai/local/state/integration/observation.json");
+    let before = std::fs::read(&observation).unwrap();
+    // a refresh that fails: exit 12, saying what the forge said, and the observation recorded
+    // before it is byte for byte what it was — never one with a part missing
+    let fails = |f: &Forge, said: &str, when: &str| {
+        let (code, out, err) = f.prs(&["refresh"]);
+        assert_eq!(code, 12, "{when}: {out}{err}");
+        assert!(err.contains(said), "{when}: {err}");
+        assert_eq!(std::fs::read(&observation).unwrap(), before, "{when}");
+    };
+
+    // the page of every open one is refused: asked once, and no pull request is asked for
+    // alone to stand in for it
+    let (pages, alone) = (declarations_asked(&f, false), declarations_asked(&f, true));
+    f.set("declarations-page-fails", "");
+    fails(&f, "Resource not accessible", "the page refused");
+    assert_eq!(declarations_asked(&f, false), pages + 1, "{}", f.log());
+    assert_eq!(declarations_asked(&f, true), alone, "{}", f.log());
+    std::fs::remove_file(f.state.join("declarations-page-fails")).unwrap();
+
+    // a page said more mention #2 than it holds, and the forge refuses the rest: #1 was read
+    // whole, and the refresh fails all the same
+    f.set(
+        "declarations.json",
+        &declarations_page(vec![
+            declared(1, "OWNER", false, vec![]),
+            declared(2, "OWNER", true, vec![]),
+        ]),
+    );
+    f.set("declarations-one-fails", "");
+    fails(&f, "Resource not accessible", "#2's own read refused");
+    assert_eq!(declarations_asked(&f, true), alone + 1, "{}", f.log());
+    std::fs::remove_file(f.state.join("declarations-one-fails")).unwrap();
+    std::fs::remove_file(f.state.join("declarations.json")).unwrap();
+
+    // an outage that outlasts the retries fails it too
+    f.set("declarations-transient", "");
+    fails(&f, "503", "an outage");
+    // and nothing is decided or done by an executor that cannot observe
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 12, "{out}{err}");
+    assert!(!f.log().contains("pr merge"), "{code}: {out}{err}");
+    let (code, out, err) = f.prs(&["cleanup", "--apply"]);
+    assert_eq!(code, 12, "{out}{err}");
+    assert!(!f.log().contains("pr close"), "{code}: {out}{err}");
+    assert_eq!(std::fs::read(&observation).unwrap(), before);
+    std::fs::remove_file(f.state.join("declarations-transient")).unwrap();
+
+    // answered again, the refresh is made
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let q = status_of(&f);
+    assert_eq!(q["next_merge"], 1, "{q}");
+    assert!(!f.log().contains("UNEXPECTED"), "{}", f.log());
 }

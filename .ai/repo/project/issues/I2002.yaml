@@ -1,0 +1,31 @@
+id: I2002
+milestone: intent-bound-work
+title: The context of a bound task says what the intent asks of this work
+slug: context-briefs-from-the-binding
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#worker-is-briefed
+objective: "Add an INTENT section to majordomus context for a task that named an issue or an intent: statement, invariants, the criteria served with the state of their evidence, the critique's open blocking findings and the gap's conditions, each read from intents.binding and bounded by the context budget."
+why: "A worker is handed the scope of the task and nothing of what the work is for; the criteria live in a record the briefing never opens."
+current_state: "majordomus context has no intent section; intent preflight renders the same facts for a reader who asks."
+desired_state: "The section is present for a bound task, absent with a named reason for an unbound one, and says so when the binding cannot be read."
+scope:
+  - lib/context.sh
+  - lib/intent_binding.sh
+  - test/cases/960_a_task_starts_bound_to_what_it_serves.sh
+depends_on:
+  - I2001
+acceptance_criteria:
+  - The context of a bound task names the intent, its statement, its invariants and each served criterion with its evidence state
+  - The context of an exempt task names the class and the reason
+  - An unreadable binding is reported as unknown, never as no intent
+  - The section follows PROFILE, has the JSON section id intent, and under budget loses its gap conditions before anything else and is never dropped whole
+validation:
+  - bash test/run.sh 960_a_task_starts_bound_to_what_it_serves
+  - bash test/run.sh 23_context
+evidence_required:
+  - context_carries_the_intent_section
+created_at: 2026-10-07
+updated_at: 2026-10-07

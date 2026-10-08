@@ -31,6 +31,32 @@ mj_case_in_its_fixture || {
   exit 1
 }
 
+# No git housekeeping outlives a case.
+#
+# After a commit, a fetch or a merge, git may start `maintenance run --auto` detached: a
+# process of its own that goes on writing into .git after the command that started it has
+# returned. A case that made a repository removes it in its EXIT trap, and a `rm -rf` that
+# meets a directory still being written to fails with "Directory not empty"; under `set -e`
+# that failure is the case's status. Case 489, which clones this whole repository, commits
+# and pushes in the clone, failed exactly so on 2026-10-08, with every assertion it makes
+# already passed.
+#
+# So every git a case runs, and every git the tool under test runs for it, is told to start
+# none: gc.auto=0 and maintenance.auto=false, through the environment, because a fixture's
+# repositories are made by the case and by the tool alike and no one config file reaches
+# them all. The two entries are appended to whatever the environment already carries (a
+# runner that names an identity this way keeps it), and appended once: a harness that
+# sources this library again adds nothing. Case 995 holds all three.
+if [ -z "${MJ_CASE_GIT_IS_QUIET:-}" ]; then
+  mj_case_git_n="${GIT_CONFIG_COUNT:-0}"
+  case "$mj_case_git_n" in ''|*[!0-9]*) mj_case_git_n=0 ;; esac
+  export "GIT_CONFIG_KEY_${mj_case_git_n}=gc.auto" "GIT_CONFIG_VALUE_${mj_case_git_n}=0"
+  export "GIT_CONFIG_KEY_$((mj_case_git_n + 1))=maintenance.auto" "GIT_CONFIG_VALUE_$((mj_case_git_n + 1))=false"
+  GIT_CONFIG_COUNT=$((mj_case_git_n + 2)); export GIT_CONFIG_COUNT
+  MJ_CASE_GIT_IS_QUIET=1; export MJ_CASE_GIT_IS_QUIET
+  unset mj_case_git_n
+fi
+
 LAST_OUT=""
 
 # The exit status a case uses to say it declined to run. It is not 0 and it is not 1: the

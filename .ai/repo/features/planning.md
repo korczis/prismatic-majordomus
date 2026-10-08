@@ -46,6 +46,6 @@ work realising it across sessions and providers; the Cockpit shows the same answ
 
 It does not talk to GitHub on its own: the projection of issues and milestones is rendered
 offline and applied only when a person runs the sync with a token. Nothing here estimates
-effort or schedules dates. An intent is judged after the fact, not enforced when work
-starts: `plan start` does not refuse an issue whose intent has no critique, a session does not
-load intents, and the GitHub projection closes a milestone without reading them.
+effort or schedules dates. An intent is enforced when work starts only where the
+policy requires binding (`intent.binding: required`); elsewhere it is judged after the fact.
+The GitHub projection closes a milestone without reading the intents it realises.

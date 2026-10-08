@@ -1,0 +1,34 @@
+id: I2004
+milestone: intent-bound-work
+title: plan start refuses an issue whose binding is refused, in both engines
+slug: plan-start-asks-the-binding
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#start-is-gated
+objective: "Where the policy requires binding, have the start transition ask the binding of the issue before it stamps: plan::check in the Rust engine through the intent engine, and the shell engine through the built executable, with the same refusal text; where the policy does not require it, neither engine changes."
+why: "A task is one way work begins and a plan transition is the other; plan start moves an issue to ACTIVE on its status alone, so work on an intent whose plan was never critiqued begins through it unrefused and is found by intent validate afterwards."
+current_state: "plan::check refuses a start only when the issue is not READY; the shell engine does the same, and cases 133 and 582 hold the two equal."
+desired_state: "Under required, plan start on an issue whose binding is refused is refused in both engines with the binding's refusal, over the command line, HTTP and MCP; a maintenance issue and a bound issue start as before."
+scope:
+  - apps/majordomus-cli/src/plan.rs
+  - apps/majordomus-cli/src/capability/builtin/plan.rs
+  - lib/plan.sh
+  - lib/intent_binding.sh
+  - test/cases/962_plan_start_asks_the_binding_in_both_engines.sh
+  - test/cases/133_plan_transition.sh
+depends_on:
+  - I2000
+acceptance_criteria:
+  - Under required, plan start on an issue serving an uncritiqued intent is refused by the Rust engine and by the shell engine with the same message
+  - The plan.transition capability refuses the same start over HTTP and MCP
+  - With the policy key absent, cases 133 and 582 pass unchanged
+validation:
+  - bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines
+  - bash test/run.sh 133_plan_transition
+  - bash test/run.sh 582_the_done_guard_holds_in_both_engines
+evidence_required:
+  - plan_start_refuses_a_refused_binding_in_both_engines
+created_at: 2026-10-07
+updated_at: 2026-10-07
