@@ -1,0 +1,44 @@
+id: intent-bound-work
+title: Work starts bound to the intent it serves, and a worker resumes knowing whether that intent moved
+statement: "A task that starts names the work it executes — an issue, an intent, or an exemption the policy declares — and the repository resolves from that, once, which intent and which criteria the task serves; where the policy requires it, a task whose binding is refused does not start. The worker is briefed with what the intent asks of this work, and a handover carries the revision of the intent it was written under, so the next worker is told when the intent, its criteria, its critique or the standing of its evidence changed in between."
+invariants:
+  - A task stores what it names — an issue id, an intent id, an exemption with its reason — and a revision pin; the intent, its stage, its verdict and its criteria are derived on every read and stored in no task, session or handover
+  - The binding is one derivation in the intent engine, answered by one capability; start, context and handover ask it and decide nothing themselves
+  - An exemption is a class the policy declares, given with a reason and recorded in the ledger; the absence of an intent is never an exemption by itself
+  - A repository whose policy does not ask for binding starts tasks exactly as before
+milestones:
+  - intent-bound-work
+satisfaction:
+  - id: binding-is-resolved
+    criterion: Work named by an issue, by an intent or by its paths resolves to the intents and criteria it serves with the revision it was resolved at, and paths that reach more than one intent without naming an issue are refused as ambiguous
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_binding.rs
+  - id: exemption-is-typed
+    criterion: Work under no intent proceeds only as derived maintenance or under an exemption class the policy declares, given with a reason; an undeclared class or a missing reason is refused
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_binding.rs
+  - id: start-is-gated
+    criterion: Where the policy requires binding, start refuses a task whose binding is refused and records what an accepted one named, and plan start refuses an issue whose binding is refused in both plan engines, through the built executable; where it does not, both behave as before
+    evidence: test
+    ref: test/cases/960_a_task_starts_bound_to_what_it_serves.sh
+  - id: worker-is-briefed
+    criterion: The context of a bound task carries the statement, the invariants, the criteria served with the state of their evidence, and the critique and gap of each intent the task serves, read from the binding
+    evidence: test
+    ref: test/cases/960_a_task_starts_bound_to_what_it_serves.sh
+  - id: resume-detects-drift
+    criterion: A handover written under a bound task carries the binding's revision, and resolving it says whether the intent, its criteria, its critique or its evidence standing changed since
+    evidence: test
+    ref: test/cases/961_a_resumed_task_is_told_its_intent_moved.sh
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.an-intent-outlives-its-sessions
+  - rule:project.derived-once
+  - adr:adr-0070
+  - adr:adr-0073
+  - adr:adr-0111
+non_goals:
+  - Deciding whether a criterion is met, or refusing a finish on it; that is the completion milestone
+  - Running the critique or judging it stale; a task is refused on the critique's absence or an open blocking finding, and a critique carries no revision of the plan it reviewed until the opposition milestone gives it one
+  - Binding a provider episode; an episode is a boundary a task is optional to (ADR 0052)
+created_at: 2026-10-07
+updated_at: 2026-10-07

@@ -32,7 +32,7 @@ echo base > a.txt; gitq add a.txt; gitq commit -qm base; gitq push -q origin HEA
 # commit pushed to the origin, so a second merge of the same change would be a second commit
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
-echo "\$*" >> "$STATE/log"
+[ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
 case "\$1 \$2" in
   "repo view") echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
   "api repos/o/r") echo '{"allow_merge_commit":true}' ;;
@@ -47,6 +47,11 @@ case "\$1 \$2" in
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$3" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$3" ;;
   "pr view") if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
+  # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
+  # this repository, and no pull request mentions it. The list is this forge's own, unlogged
+  "api graphql")
+    nodes="\$(DECLARATIONS=1 "\$0" pr list --state open | grep -o '"number":[0-9]*' | sed 's/.*/{&,"authorAssociation":"OWNER","isCrossRepository":false,"timelineItems":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[]}}/' | paste -sd, -)"
+    printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[%s]}}}}\n' "\$nodes" ;;
   *) echo "UNEXPECTED" >> "$STATE/log"; exit 1 ;;
 esac
 EOF

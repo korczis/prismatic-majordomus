@@ -53,13 +53,14 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `obsolete` | cleanup | carries a label that marks it obsolete (owner decision D3; see the label policy below); checked before the hold labels, after `draft` | a person closes it, or removes the label |
 | `blocked` | held | carries a label that holds it (see the label policy below) | remove it |
 | `unsafe` | held | the forge has auto-merge armed on it, so the forge would merge it on its own | disarm it: `gh pr merge <n> --disable-auto` |
-| `superseded` | cleanup | a declared successor landed: it is not open, and master contains its head (see supersession markers below); `superseded_by` names it | `prs cleanup --apply` closes it |
-| `waiting_for_dependency` | waiting | a declared successor is still open | land the successor; this one is then closed, never merged |
-| `possibly_redundant` | cleanup | a declared successor was closed without its head landing | a person decides |
-| `unknown` | held | a declared successor is not open and could not be read | `prs refresh` |
+| `unknown` | held | the pull requests that mention it were not all read (`declarations_unread`), so one of them may declare that it supersedes it; or an open one that says it supersedes it is not among the open pull requests the forge listed (the list was cut at its limit, or it was opened between the two reads) | `prs refresh` |
+| `superseded` | cleanup | an authorised declared successor landed: git finds its head or its merge commit in master (see supersession markers below); `superseded_by` names it | `prs cleanup --apply` closes it |
+| `waiting_for_dependency` | waiting | an authorised declared successor is still open | land the successor; this one is then closed, never merged |
+| `possibly_redundant` | cleanup | a declared successor is merged, but master contains neither its head nor its merge commit | a person decides |
+| `unknown` | held | a declared successor is not open and could not be read, or was read without where its head lives or how many files it changes | `prs refresh` |
 | `redundant` | cleanup | its head is an ancestor of master, merging it changes no file, or every one of its commits is on master as an equal patch | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
-| `unknown` | held | its head is not fetched, git failed, or the branch protection could not be read | `prs refresh` |
+| `unknown` | held | its head is not fetched, git failed, the branch protection could not be read or binds a check to an app id that is not an integer, or a check run of an app-bound context names no app | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
@@ -69,8 +70,30 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `ready` | ready | contains master, and every required check passed on this head | `prs drain` |
 
 A required check that is pending, missing, skipped or unreadable is not passed. The required
-checks are read from the base's branch protection, never listed here. A green check that is
-not required proves nothing.
+checks are read from the base's branch protection and rulesets, each with the app bound to
+it, never listed here. A green check that is not required proves nothing.
+
+A check bound to an app is only that app's check run. A commit status of the same name is
+not it, and neither is another app's check run of that name: it cannot pass the check, fail
+it or hold it pending. A context two sources bind to two apps is required of both. `gh pr
+list` does not say which app wrote a check run, so when a context is bound the refresh asks
+the forge who wrote each one: one GraphQL read (`gh api graphql`, a query, never a mutation)
+for every 50 open pull requests, and one more for each page of a head that carries more
+than 100 checks. A base that binds nothing asks nothing more. A writer read that fails
+fails the refresh, as a failed list does.
+
+A check run of a bound context whose app was not read is never taken for the bound app's:
+the check is `unknown` (`required_checks:unknown`), never passed, and the queue says which
+pull requests carry one. This happens when the head moved between the list and the writer
+read, which the next refresh clears, and when a check suite names no app or a head carries
+more than 1000 checks, which no refresh clears: a person looks. An observation recorded
+before writers were read has none, so every bound check reads `unknown` until one `prs
+refresh`.
+
+The binding names the app, not the workflow. Every workflow of a repository writes as the
+same app (GitHub Actions is one app), a workflow a pull request's own head defines or
+rewrites included: a head that changes `.github/workflows/` decides what its own check
+named `ci` runs. The binding keeps another app out. It does not prove which workflow ran.
 
 ### Gates, reasons and evidence
 
@@ -82,14 +105,14 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `draft` | it is not a draft | `draft` |
 | `label` | no label that holds it | `label:NAME`, one per label |
 | `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
-| `supersession` | no successor is declared | `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
+| `supersession` | its cross-references were read whole, and no authorised successor is open, landed, merged elsewhere or unread | `declarations_unread`, then `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
 | `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
 | `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
 | `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
-| `required_checks` | every required check passed | `required_checks:STATE`, `no_required_checks`, `required_checks_unread` |
+| `required_checks` | every required check passed | `required_checks:STATE` (`pending`, `missing`, or `unknown` when a check run of an app-bound context names no app), `no_required_checks`, `required_checks_unread` |
 
 The assessment's `gates` lists every gate with whether it passed. Its `reasons` hold every
 failing gate's reasons in this order, and the first is the decisive one: the disposition is
@@ -107,8 +130,11 @@ forge observation at its moment, or git on the named master and head. Evidence f
 base requires, and `review` and `relation_to_master`. `dependency` appears per declared
 dependency, `label` per label that holds it, `auto_merge` whenever the forge has auto-merge
 armed, `repository_settings` when the settings allow no merge commit, and `supersession` per
-declared successor (`open`, `landed`, `not_landed` or `unread`; that one `landed` is git's, on
-master and the successor's head). `freshness` is a reserved kind. `evaluated_against` names the master, the head and the moment of the
+authorised declared successor (`open`, `landed`, `not_landed` or `unread`; `landed` is git's,
+on master and the successor's head or merge commit), per declaration nobody entitled made
+(`possible_supersession`, naming who made it), and once when the pull request's
+cross-references were not read whole (`references_truncated` or `references_unread`).
+`freshness` is a reserved kind. `evaluated_against` names the master, the head and the moment of the
 observation; two decisions are the same when the master and head are.
 
 ### Label policy
@@ -218,25 +244,103 @@ line-anchored parser as a dependency:
 - `Superseded by #N` in its own body names N as its successor;
 - `Supersedes #M` in N's body names N as the successor of M, from the other side.
 
+**Who may declare.** A declaration counts only when the pull request whose body carries it
+is a branch of this repository, not a fork, and the forge calls its author an `OWNER`,
+`MEMBER` or `COLLABORATOR` of the repository. That holds in both directions and is tested on
+the author of the body that speaks: `Superseded by #N` on the replaced pull request's own
+author, `Supersedes #M` on the successor's. Any other association (`CONTRIBUTOR`,
+`FIRST_TIME_CONTRIBUTOR`, `NONE`), a fork, or an association that was not read is not
+authorised. A pull request a bot opened carries whatever association the forge gives the
+bot, which is authorised only if it is one of the three. A declaration that is not authorised
+changes no disposition: it neither holds nor closes, and it is reported as `supersession`
+evidence with the status `possible_supersession`, naming who declared it, their association,
+whether the branch is a fork's, and the remedy: an owner, member or collaborator says
+`Supersedes #M` in a pull request of this repository.
+
+Only what the body's author states is a declaration. A marker on a quoted line (one that
+opens with `>`), inside a fenced code block (three backticks or three tildes) or inside an
+HTML comment is someone else's words, an example or a template's hint, and declares
+nothing. A body pasted or prefilled from a commit message is still its author's: what they
+submit under their name is what they state. A dependency keeps the lenient reading, quoted
+or not, because it can only make a pull request wait.
+
+Two limits of this test are known and accepted (ADR 0101 §6, residuals). `MEMBER` is the
+forge's word for any member of the organisation, whatever their access to this repository,
+and it is read when the observation is made: a former collaborator who is still a member
+can edit the body of an old pull request of theirs here and have it count. A personal
+repository has no members. And an open pull request whose repository flag the declarations
+read did not state is treated as a fork's: it declares nothing.
+
 The `supersession` gate is asked before `relation_to_master`, because a pull request whose
 successor landed usually conflicts with what the successor brought, and it is superseded, not
-conflicting. What became of the successor decides:
+conflicting. For an authorised declaration, what became of the successor decides:
 
-| The successor | Disposition | Reason |
-|---|---|---|
-| is no longer open, and master contains its head: it landed | `superseded`, with `superseded_by: N` | `superseded_by:#N` |
-| is still open | `waiting_for_dependency` | `successor_open:#N` |
-| is no longer open, and master does not contain its head (closed unmerged, or merged by a squash or a rebase) | `possibly_redundant` | `successor_not_landed:#N` |
-| is not open and could not be read | `unknown` | `successor_unread:#N` |
+| The successor | Disposition | Reason | Evidence | Closed by cleanup |
+|---|---|---|---|---|
+| is still open | `waiting_for_dependency` | `successor_open:#N` | `open` | no |
+| landed: the forge calls it merged, and master contains its head or its merge commit | `superseded`, with `superseded_by: N` | `superseded_by:#N` | `landed` ("is merged") | yes |
+| landed inside a batch: the forge calls it closed, its head lives in this repository, and master contains that head | `superseded`, with `superseded_by: N` | `superseded_by:#N` | `landed` ("is closed") | yes |
+| was closed unmerged and its head lives in a fork, wherever that head points | its own relation's: the hold is released | none from this gate | `not_landed` | only if its own relation makes it `redundant` |
+| changes no file, as the forge reports it, wherever its head points | closed: its own relation's; merged: `possibly_redundant` | none, or `successor_not_landed:#N` | `not_landed` | no |
+| was closed unmerged, and master contains neither its head nor a merge commit of it | its own relation's: the hold is released | none from this gate | `not_landed` | only if its own relation makes it `redundant` |
+| is merged, but master contains neither its head nor its merge commit (merged into another branch, or this clone's master is behind) | `possibly_redundant` | `successor_not_landed:#N` | `not_landed` | no: a person decides |
+| is not open and could not be read | `unknown` | `successor_unread:#N` | `unread` | no |
+| any, when the replaced one's cross-references were not read whole | `unknown`, whatever else is known | `declarations_unread` | `references_truncated` or `references_unread` | no |
+| any, declared by anyone else or from a fork | no change: its own | none | `possible_supersession` | no |
 
-Of several successors, one that landed decides, then one still open, then one that did not
-land. On the wire the disposition stays one word, and `superseded_by` (present only with
-`superseded`) is its successor. A successor that is no longer open is not among the open pull
-requests, so the observation also reads the closed pull requests whose body declares a
-supersession (one search, newest 200) and each named successor that is not open (`gh pr view`),
-and fetches their heads; git, not the forge's `merged`, says whether a head landed. The search
-index can lag a merge by a moment: until it catches up, the replaced pull request is decided by
-its relation alone, which after its successor's merge is no longer `ready`.
+Landed is git's fact. The successor's head, or the merge commit the forge names for it, is an
+ancestor of master; the forge's `merged` only words the evidence ("is merged" or "is closed").
+So a successor merged by a squash lands by its merge commit, and one closed after a batch
+carried its head into master landed too.
+
+Git's fact is trusted only about a head nobody could move to manufacture it (ADR 0101 §6,
+the amendment to D3; the owner may reverse it). A successor the forge does not call merged
+lands only when its head lives in this repository: a fork's author can force-push their
+branch to any old commit of master and close the pull request, and that head would then be
+an ancestor of master with none of the work there. So a cross-repository successor closed
+unmerged never lands and releases the hold, like any successor closed without landing. One
+the forge calls merged lands by its head or its merge commit, fork or not. A successor the
+forge says changes no file brought nothing, and never lands either: that is the same trick
+played with a branch of this repository reset onto master.
+
+A partial read of the cross-references decides before anything else. Then, of several
+authorised successors, one that landed decides, then one still open, then one merged
+elsewhere, then one unread; one closed unmerged holds nothing and is only evidence. When both
+bodies declare the same pair, the replaced one's own body is the declaration if its author
+may declare, and the successor's otherwise. On the wire the disposition stays one word, and
+`superseded_by` (present only with `superseded`) is its successor.
+
+**Where declarations are read.** A successor that is no longer open is not among the open
+pull requests, so the refresh asks the forge, with every open pull request, for its author's
+association and for the pull requests that mention it: its cross-references (one GraphQL
+read, `gh api graphql`, a query and never a mutation, for every 50 open pull requests). A
+mention is a declaration only if that pull request's body says `Supersedes` and names it; a
+mention from another repository is dropped, because a `#N` there is not this repository's.
+There is no search of closed pull requests. Each successor or dependency an open body names
+that is not open is read with `gh pr view`, and every such head is fetched so that git can
+say whether it landed. With no pull request open, nothing is asked.
+
+One page holds a hundred cross-references. A pull request with more is read again on its
+own, up to fifty pages, five thousand references. Beyond that, or when the forge says more
+follow and names no cursor, the read is truncated and the pull request is held: `unknown`,
+`declarations_unread`, evidence `references_truncated`, never merged and never closed, and
+the queue's diagnostics name it. The hold is that pull request's alone: the rest of the
+queue is decided and keeps moving. A pull request the forge left out of the answer is held
+the same way (`references_unread`), and the next refresh reads it again. Truncation never
+releases a hold and never closes.
+
+**Held by its mentions.** The limit counts every cross-reference, and a mention by an issue
+or from another repository is dropped only after it was paged through. So anyone who can
+write `owner/repo#N` more than five thousand times, anywhere, holds #N: every refresh reads
+fifty pages and finds it truncated, and no command releases it. This is a known residual
+(ADR 0101 §6, R2): it blocks one pull request and never closes one, and a person decides
+it. No release marker exists.
+
+A declarations read that fails is a different outcome. When the forge will not answer a
+page, or one pull request's references (a refusal, or an outage that outlasts the retries),
+the whole refresh fails with exit 12, as a failed list does, and records no observation:
+the one recorded before stays byte for byte what it was, and nothing is decided from a
+part of an answer.
 
 A pull request that targets another branch is stacked on the open pull request whose head is
 that branch. Only branches of this repository count. A fork's branch says nothing about a
@@ -398,20 +502,25 @@ repair did not happen.
 Closing a pull request requires more evidence than merging one. `prs cleanup` lists the
 `redundant` and `superseded` ones and closes them only with `--apply` (`--dry-run` spells
 out the default), with a comment that names the reason that decided it, the base, and the
-master and head that proved it; a superseded one's comment opens with its successor
-(`Superseded by #N, which landed.`). A closure is taken the way a merge is: the forge is
+master and head that proved it. The comment has two forms. A redundant one's says its work
+is already on the base. A superseded one's opens with its successor (`Superseded by #N,
+which landed.`), says that #N was declared its replacement by someone this repository lets
+declare one and that the base contains it, and does not claim the closed work is on master.
+A closure is taken the way a merge is: the forge is
 observed again first, and the pull request is closed only if the second decision still says
 the same thing against the same master and head, or the trail records a `stale_decision` and
 nothing is closed. The forge is asked for the pull request's state and head just before, and
 a head that moved is never closed. `possibly_redundant` is listed and left for a person,
-whether its evidence is derived output or a successor that did not land. Age, shared paths
+whether its evidence is derived output or a successor merged somewhere master does not
+contain. Age, shared paths
 and similar titles are not evidence of anything.
 
 Before 0.13 (owner decision D2) the word `superseded` meant what `redundant` means now, and its
 closure was recorded as `closed_superseded`. The strong case is `redundant` now, closed as
-`closed_redundant`; `superseded` and `closed_superseded` mean only a declared successor that
-landed. Older trail lines still read: a `closed_superseded` line written before carries
-`head_reachable_from_master` or `merge_changes_nothing`, never `superseded_by:#N`.
+`closed_redundant`; `superseded` and `closed_superseded` mean only an authorised declared
+successor that landed. Older trail lines still read: a `closed_superseded` line written
+before carries `head_reachable_from_master` or `merge_changes_nothing`, never
+`superseded_by:#N`.
 
 ### Branches merged pull requests leave behind
 
@@ -474,7 +583,12 @@ json` stays the list of pull requests to close.
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
   `integration.*` capabilities and the Cockpit read it from any of them. The last queue's
   summary (`summary.json`) sits beside it. The observation and the relation cache stay in
-  the checkout, under `.ai/local/state/integration/`.
+  the checkout, under `.ai/local/state/integration/`. The recorded observation is schema 4:
+  it carries each author's association and whether each pull request's cross-references
+  were read whole. A record of another schema is refused, older or newer, naming both
+  schemas and `majordomus prs refresh`, which records one this executable reads; it is never
+  read as empty or as current. An executable of 0.14.0 refuses a schema 4 record the same
+  way, by its number.
 - A read writes nothing. `prs status`, `plan`, `explain`, the `integration.*` capabilities
   and the Cockpit build the queue from the recorded observation and leave the checkout as
   they found it; only `prs refresh` and the executor, which have just observed the forge,
@@ -576,7 +690,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --resume-after-failure` | yes | record that a person looked at an unverified merge, then drain |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
-| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
+| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by an authorised successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 | `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
 | `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
 
