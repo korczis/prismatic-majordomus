@@ -723,6 +723,44 @@ mod tests {
     }
 
     #[test]
+    fn every_disposition_and_state_is_the_word_it_serialises_to() {
+        for d in [
+            OppositionDisposition::Accept,
+            OppositionDisposition::AcceptWithRequiredChanges,
+            OppositionDisposition::Reject,
+        ] {
+            assert_eq!(serde_json::to_value(d).unwrap(), d.as_str());
+            assert_eq!(d.permits_execution(), d != OppositionDisposition::Reject);
+        }
+        for state in [
+            OppositionReviewState::None,
+            OppositionReviewState::NotStamped,
+            OppositionReviewState::Current,
+            OppositionReviewState::Stale,
+        ] {
+            assert_eq!(serde_json::to_value(state).unwrap(), state.as_str());
+        }
+    }
+
+    #[test]
+    fn an_intent_nobody_declared_has_no_opposition_and_no_revision() {
+        let plan: Plan = serde_json::from_value(json!({
+            "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+                        "active_milestone": ""},
+            "statuses": {"issue": [], "milestone": []},
+            "milestones": [], "issues": [], "waves": [], "edges": [],
+            "milestone_edges": [], "findings": []
+        }))
+        .unwrap();
+        let intents = Intents {
+            intents: vec![],
+            findings: vec![],
+        };
+        assert!(oppose(&intents, &plan, &[], &[], "absent").is_none());
+        assert!(revision_of(&intents, &plan, &[], "absent").is_none());
+    }
+
+    #[test]
     fn a_review_is_stale_exactly_when_its_stamp_is_not_the_plans() {
         assert_eq!(
             OppositionReviewState::judge(Some("a"), "a"),

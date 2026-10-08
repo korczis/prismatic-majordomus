@@ -1276,7 +1276,10 @@ impl Intents {
                 })
             })
             .filter_map(|c| {
-                let now = crate::intent_opposition::revision_of(&out, plan, &gaps, &c.intent)?;
+                crate::intent_opposition::revision_of(&out, plan, &gaps, &c.intent)
+                    .map(|now| (c, now))
+            })
+            .filter_map(|(c, now)| {
                 let (code, message) = if c.reviewed_revision.is_empty() {
                     (
                         "critique_not_stamped",
@@ -3233,5 +3236,283 @@ mod tests {
         );
         assert!(i.findings[0].message.contains("`no-kind-at-all`"));
         assert!(i.findings[1].message.contains("`ticket:42`"));
+    }
+    /// The binding (ADR 0111) over the same plan the preflight is judged over: every way
+    /// work is named resolves or says which link is missing, and every preflight cause
+    /// reaches the binding under its own word.
+    #[test]
+    fn the_binding_resolves_every_way_work_is_named() {
+        use crate::intent_binding::{bind, BindingCause, BindingRequest, BindingStanding};
+        use crate::policy::IntentPolicy;
+
+        let mut finished = serving("I4", "zm", &["zed"], &["z#case"]);
+        finished.status = "DONE".into();
+        let p = plan(
+            vec![
+                milestone("m", "ACTIVE"),
+                milestone("n", "ACTIVE"),
+                milestone("zm", "ACTIVE"),
+                milestone("rm", "ACTIVE"),
+                milestone("ops", "ACTIVE"),
+            ],
+            vec![
+                serving("I1", "m", &["lib"], &["x#case"]),
+                serving("I2", "ops", &["ops"], &[]),
+                serving("I3", "n", &["lib"], &["y#case"]),
+                finished,
+                serving("I5", "m", &["five"], &[]),
+                serving("I6", "m", &["six"], &["y#case"]),
+                serving("I7", "m", &["seven"], &["ghost#case"]),
+            ],
+        );
+        let mut retired = record("r", &["rm"], &[CASE]);
+        retired.cancelled = true;
+        let i = Intents::derive(
+            vec![
+                record("x", &["m"], &[CASE]),
+                record("y", &["n"], &[CASE]),
+                record("z", &["zm"], &[CASE]),
+                retired,
+            ],
+            &p,
+            // the criteria's test is known and has not run: nothing structural stands in the
+            // way of the plan, so what refuses below is what each request names
+            &Table::new().with_test("suite:1_x", IntentEvidenceState::NotRun),
+        );
+        let reviewed = [critique("x", &[]), critique("y", &[]), critique("z", &[])];
+        let policy = IntentPolicy::default();
+        let ask = |critiques: &[CritiqueRecord], r: BindingRequest| {
+            bind(&i, &p, &[], critiques, &policy, r)
+        };
+        let by_issue = |id: &str| BindingRequest {
+            issue: Some(id.into()),
+            ..Default::default()
+        };
+        let by_intent = |id: &str| BindingRequest {
+            intent: Some(id.into()),
+            ..Default::default()
+        };
+        let by_path = |path: &str| BindingRequest {
+            paths: vec![path.into()],
+            ..Default::default()
+        };
+        let first = |b: &crate::intent_binding::IntentBinding| b.refusals[0].cause;
+
+        // an issue, the intent it serves, and both together are one binding
+        let bound = ask(&reviewed, by_issue("I1"));
+        assert_eq!(bound.standing, BindingStanding::Bound);
+        assert_eq!(bound.standing.as_str(), "bound");
+        assert!(!bound.standing.refuses());
+        assert_eq!(bound.plan_revision.len(), 64);
+        assert_eq!(bound.evidence_standing.len(), 64);
+        let named = ask(&reviewed, by_intent("x"));
+        assert_eq!(named.standing, BindingStanding::Bound);
+        assert_eq!(named.plan_revision, bound.plan_revision);
+        let both = ask(
+            &reviewed,
+            BindingRequest {
+                intent: Some("x".into()),
+                ..by_issue("I1")
+            },
+        );
+        assert_eq!(both.standing, BindingStanding::Bound);
+        // an issue beside an intent it does not serve is a contradiction
+        let contradiction = ask(
+            &reviewed,
+            BindingRequest {
+                intent: Some("y".into()),
+                ..by_issue("I1")
+            },
+        );
+        assert_eq!(first(&contradiction), BindingCause::IssueOutsideIntent);
+        assert!(contradiction.standing.refuses());
+        assert_eq!(contradiction.standing.as_str(), "refused");
+
+        // paths that reach two intents are ambiguous; paths under no intent are maintenance
+        let ambiguous = ask(&reviewed, by_path("lib/a.rs"));
+        assert_eq!(first(&ambiguous), BindingCause::AmbiguousIntent);
+        assert!(ambiguous.refusal.unwrap().contains("x, y"));
+        let maintenance = ask(&reviewed, by_path("ops/run.sh"));
+        assert_eq!(maintenance.standing, BindingStanding::Maintenance);
+        assert_eq!(maintenance.standing.as_str(), "maintenance");
+        assert!(maintenance.plan_revision.is_empty() && maintenance.evidence_standing.is_empty());
+        assert_eq!(BindingStanding::Exempt.as_str(), "exempt");
+
+        // an intent with nothing open to do, and one that was retired
+        assert_eq!(
+            first(&ask(&reviewed, by_intent("z"))),
+            BindingCause::IntentHasNoOpenWork
+        );
+        let gone = ask(&reviewed, by_intent("r"));
+        assert_eq!(first(&gone), BindingCause::IntentRetired);
+        assert!(gone.refusal.unwrap().contains("cancelled"));
+
+        // a path the named issue's scope does not cover is said, and refuses nothing
+        let noted = ask(
+            &reviewed,
+            BindingRequest {
+                paths: vec!["docs/x.md".into(), "lib/a.rs".into()],
+                ..by_issue("I1")
+            },
+        );
+        assert_eq!(noted.standing, BindingStanding::Bound);
+        assert_eq!(noted.notes, ["docs/x.md lie outside the scope of I1"]);
+
+        // each of the preflight's causes is the binding's cause, under the same word
+        assert_eq!(
+            first(&ask(&[], by_issue("I1"))),
+            BindingCause::IntentNotCritiqued
+        );
+        let blocked = [critique("x", &[("F1", true, "open")])];
+        assert_eq!(
+            first(&ask(&blocked, by_issue("I1"))),
+            BindingCause::OpenBlockingFinding
+        );
+        for (id, cause) in [
+            ("I5", BindingCause::IssueServesNothing),
+            ("I6", BindingCause::ServesAnotherIntent),
+            ("I7", BindingCause::ServesUnknownCriterion),
+        ] {
+            assert_eq!(first(&ask(&reviewed, by_issue(id))), cause, "{id}");
+        }
+        for (from, to) in [
+            (
+                IntentPreflightCause::UnknownIssue,
+                BindingCause::UnknownIssue,
+            ),
+            (
+                IntentPreflightCause::NoIssueCoversPaths,
+                BindingCause::NoIssueCoversPaths,
+            ),
+            (
+                IntentPreflightCause::IssueServesNothing,
+                BindingCause::IssueServesNothing,
+            ),
+            (
+                IntentPreflightCause::ServesAnotherIntent,
+                BindingCause::ServesAnotherIntent,
+            ),
+            (
+                IntentPreflightCause::ServesUnknownCriterion,
+                BindingCause::ServesUnknownCriterion,
+            ),
+            (
+                IntentPreflightCause::IntentNotCritiqued,
+                BindingCause::IntentNotCritiqued,
+            ),
+            (
+                IntentPreflightCause::OpenBlockingFinding,
+                BindingCause::OpenBlockingFinding,
+            ),
+        ] {
+            assert_eq!(BindingCause::from(from), to);
+            assert_eq!(
+                serde_json::to_value(from).unwrap(),
+                serde_json::to_value(to).unwrap(),
+                "the word changed on the way"
+            );
+        }
+    }
+    /// The opposition (ADR 0112) over an in-memory plan: what the engine already found about
+    /// one intent is its structural half, once; what a reviewer recorded keeps its
+    /// resolution, whatever it is; and the gap's conditions are in the brief and the revision.
+    #[test]
+    fn the_opposition_selects_what_was_found_and_derives_nothing() {
+        use crate::intent_opposition::{
+            oppose, revision_of, OppositionDisposition, OppositionReviewState,
+        };
+
+        let p = plan(
+            vec![milestone("m", "ACTIVE"), milestone("n", "ACTIVE")],
+            vec![
+                serving("I1", "m", &["lib"], &["x#case"]),
+                serving("I3", "n", &["docs"], &["y#case"]),
+            ],
+        );
+        let mut i = Intents::derive(
+            vec![record("x", &["m"], &[CASE]), record("y", &["n"], &[CASE])],
+            &p,
+            &Table::new().with_test("suite:1_x", IntentEvidenceState::NotRun),
+        );
+        // the same finding said twice — by the engine and by the plan — is one finding;
+        // one about another intent is not this intent's; one about the review is not its own
+        for (level, code, subject) in [
+            (FAIL, "criterion_uncovered", "x#other"),
+            (FAIL, "criterion_uncovered", "x#other"),
+            (WARN, "criterion_weakly_covered", "x#case"),
+            (FAIL, "criterion_uncovered", "y#other"),
+            (WARN, "plan_not_critiqued", "x"),
+            (FAIL, "scope_conflict", "I1"),
+        ] {
+            i.findings.push(IntentFinding {
+                level: level.into(),
+                code: code.into(),
+                subject: subject.into(),
+                message: "said".into(),
+                reproduce: REPRODUCE.into(),
+            });
+        }
+        let gap = GapRecord::from_metadata(
+            ".ai/repo/project/gaps/x.yaml",
+            &serde_json::json!({"intent": "x", "observed_at": "abc",
+                "conditions": [{"criterion": "case", "state": "missing"}]}),
+        );
+        let reviewed = CritiqueRecord::from_metadata(
+            ".ai/repo/project/critiques/x.yaml",
+            &serde_json::json!({"intent": "x", "reviewed_at": "c0ffee", "reviewed_by": "r",
+            "reviewed_revision": "0000",
+            "findings": [
+                {"id": "a", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": true, "resolution": {"state": "rejected", "because": "b"}},
+                {"id": "b", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": false, "resolution": {"state": "someday"}},
+                {"id": "c", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": false, "resolution": {"state": "open"}},
+                {"id": "d", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": true, "resolution": {"state": "planned", "issue": "I1"}}
+            ]}),
+        );
+        let gaps = [gap];
+        let critiques = [reviewed];
+        let o = oppose(&i, &p, &gaps, &critiques, "x").expect("x is declared");
+
+        let structural: Vec<(&str, &str, bool)> = o
+            .structural
+            .iter()
+            .map(|f| (f.id.as_str(), f.subject.as_str(), f.blocking))
+            .collect();
+        assert_eq!(
+            structural,
+            [
+                ("criterion_uncovered", "x#other", true),
+                ("criterion_weakly_covered", "x#case", false),
+                ("scope_conflict", "I1", true),
+            ]
+        );
+        let resolutions: Vec<&str> = o.recorded.iter().map(|f| f.resolution.as_str()).collect();
+        assert_eq!(resolutions, ["rejected", "someday", "open", "planned"]);
+        assert_eq!(o.gap, ["case missing"]);
+        assert_eq!(
+            o.issues.len(),
+            1,
+            "only the issues serving x: {:?}",
+            o.issues
+        );
+        assert_eq!(o.disposition, OppositionDisposition::Reject);
+        assert_eq!(
+            o.rejecting,
+            [
+                "structural criterion_uncovered x#other",
+                "structural scope_conflict I1"
+            ]
+        );
+        // stamped against something that is not this plan
+        assert_eq!(o.review.state, OppositionReviewState::Stale);
+        assert_eq!(
+            revision_of(&i, &p, &gaps, "x").as_deref(),
+            Some(o.reviewed_plan.as_str())
+        );
+        // the gap's conditions are part of what a review judges
+        assert_ne!(revision_of(&i, &p, &[], "x"), Some(o.reviewed_plan));
     }
 }

@@ -480,6 +480,32 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_intent_block_is_read_from_the_policy_file_and_absent_means_off() {
+        let absent: Policy = yaml::parse_into("version: 1\n").expect("a policy");
+        assert_eq!(absent.intent.binding, BindingMode::Off);
+        assert!(absent.intent.exemptions.is_empty());
+        let p: Policy = yaml::parse_into(
+            "version: 1\nintent:\n  binding: required\n  exemptions:\n    - id: emergency\n      description: Restoring a broken trunk\n    - id: maintenance\n",
+        )
+        .expect("a policy with an intent block");
+        assert_eq!(p.intent.binding, BindingMode::Required);
+        let class = p.intent.exemption("emergency").expect("the declared class");
+        assert_eq!(class.description, "Restoring a broken trunk");
+        assert_eq!(p.intent.exemption("maintenance").unwrap().description, "");
+        assert!(p.intent.exemption("whim").is_none());
+        // each mode is the word the file spells it with
+        for (mode, word) in [
+            (BindingMode::Off, "off"),
+            (BindingMode::Advisory, "advisory"),
+            (BindingMode::Required, "required"),
+        ] {
+            assert_eq!(mode.as_str(), word);
+            let read: BindingMode = serde_json::from_value(serde_json::json!(word)).unwrap();
+            assert_eq!(read, mode);
+        }
+    }
+
+    #[test]
     fn projection_defaults_are_file_mode_and_not_always_loaded() {
         let p: Policy = yaml::parse_into(
             "version: 1\nprojections:\n  - provider: agents\n    target: AGENTS.md\n",

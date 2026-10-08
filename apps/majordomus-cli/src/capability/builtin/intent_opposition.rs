@@ -22,7 +22,7 @@
 //! assert_eq!(ids, ["intent_opposition.review", "intent_opposition.record"]);
 //! ```
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -212,178 +212,223 @@ fn path_of(ctx: &Context, kind: &str, identity: &str) -> Option<String> {
         .map(|o| o.provenance.path.clone())
 }
 
-/// The record a new critique of `intent` is written to: beside the others when there are
-/// any, else in `critiques/` beside the directory the intent's own record is in.
-fn new_critique_path(ctx: &Context, intent: &str) -> Option<String> {
-    let dir: PathBuf = ctx
-        .index
-        .objects
-        .iter()
-        .find(|o| o.kind == CRITIQUE)
-        .and_then(|o| {
-            Path::new(&o.provenance.path)
-                .parent()
-                .map(Path::to_path_buf)
-        })
-        .or_else(|| {
-            let own = path_of(ctx, INTENT, intent)?;
-            Some(Path::new(&own).parent()?.parent()?.join("critiques"))
-        })?;
-    Some(
-        dir.join(format!("{intent}.yaml"))
-            .to_string_lossy()
-            .into_owned(),
-    )
+/// The record a new critique of `intent` is written to: `critiques/` beside the directory
+/// the intent's own record is in, which is where the layer keeps them.
+fn new_critique_path(ctx: &Context, intent: &str) -> String {
+    let own = path_of(ctx, INTENT, intent).unwrap_or_default();
+    Path::new(&own)
+        .parent()
+        .and_then(Path::parent)
+        .unwrap_or(Path::new(".ai/repo/project"))
+        .join("critiques")
+        .join(format!("{intent}.yaml"))
+        .to_string_lossy()
+        .into_owned()
 }
 
-/// A YAML double-quoted scalar of `s`, in the subset both readers accept: a backslash and a
-/// double quote escaped, a line break folded to a space.
+/// A YAML double-quoted scalar of `s` that both readers of this layer read back as the same
+/// text. Neither reader undoes an escape inside double quotes, so nothing is escaped: a
+/// double quote becomes a single one, a backslash a slash, and a line break a space. What is
+/// lost is punctuation in a name; what is kept is a record every reader agrees about.
 fn quoted(s: &str) -> String {
-    let flat: String = s
+    let plain: String = s
         .chars()
-        .map(|c| if c == '\n' || c == '\r' { ' ' } else { c })
+        .map(|c| match c {
+            '"' => '\'',
+            '\\' => '/',
+            '\n' | '\r' => ' ',
+            other => other,
+        })
         .collect();
-    format!("\"{}\"", flat.replace('\\', "\\\\").replace('"', "\\\""))
+    format!("\"{plain}\"")
+}
+
+/// The commit a review is stamped with: the first ten characters of HEAD, or nothing when
+/// this checkout has no commit to name.
+fn head_of(git: &GitState) -> String {
+    match git {
+        GitState::Available(info) => info
+            .head
+            .as_deref()
+            .unwrap_or_default()
+            .chars()
+            .take(10)
+            .collect(),
+        GitState::Unavailable { .. } => String::new(),
+    }
+}
+
+/// The findings of `intent validate` that say the critique of `intent` does not hold.
+fn unsound(intents: &Intents, intent: &str) -> Vec<String> {
+    let prefix = format!("{intent}:");
+    intents
+        .findings
+        .iter()
+        .filter(|f| UNSOUND.contains(&f.code.as_str()))
+        .filter(|f| f.subject == intent || f.subject.starts_with(&prefix))
+        .map(|f| format!("{} {}: {}", f.code, f.subject, f.message))
+        .collect()
+}
+
+/// What a stamp would be, and why it may not be made: every refusal a stamp has, in the
+/// order a reader meets them, decided before anything is written.
+fn planned_stamp(
+    ctx: &Context,
+    input: &OppositionRecordInput,
+) -> Result<(OppositionRecorded, Option<String>), CapabilityError> {
+    let intent = input.intent.trim().to_string();
+    let (intents, answer) = opposed(ctx, &intent)?;
+    let existing = path_of(ctx, CRITIQUE, &intent);
+    let created = existing.is_none();
+    let source = existing.unwrap_or_else(|| new_critique_path(ctx, &intent));
+    let reviewer = input
+        .reviewed_by
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string);
+    let reviewed_at = head_of(&ctx.index.repository.git);
+    let does_not_hold = unsound(&intents, &intent);
+
+    // a record whose own findings do not hold is not stamped
+    let refusal = if !does_not_hold.is_empty() {
+        Some(CapabilityError::Refused(format!(
+            "the critique of {intent} does not hold and is not stamped: {}",
+            does_not_hold.join("; ")
+        )))
+    } else if reviewed_at.is_empty() {
+        Some(CapabilityError::Refused(
+            "this checkout has no commit to name: a review is stamped with the commit it was run at".into(),
+        ))
+    } else if created && Path::new(&ctx.index.repository.root).join(&source).exists() {
+        // A file where the record would go that the index does not hold as a critique is a
+        // critique that does not validate. Writing a fresh one over it would destroy what a
+        // reviewer wrote in order to certify that nothing was found.
+        Some(CapabilityError::Refused(format!(
+            "{source} exists and is not a critique this repository can read, so it is not \
+             stamped and not replaced; `majordomus-cli inspect` names what is wrong with it"
+        )))
+    } else if created && reviewer.is_none() {
+        Some(CapabilityError::InvalidInput(format!(
+            "{intent} has no critique, and the record this would create must say who reviewed: give reviewed_by"
+        )))
+    } else {
+        None
+    };
+    match refusal {
+        Some(e) => Err(e),
+        None => Ok((
+            OppositionRecorded {
+                intent,
+                source,
+                reviewed_revision: answer.reviewed_plan,
+                reviewed_at,
+                reviewed_with: format!("majordomus-cli {}", crate::VERSION),
+                disposition: answer.disposition,
+                created,
+                written: false,
+                event: String::new(),
+            },
+            reviewer,
+        )),
+    }
+}
+
+/// Write the stamp `stamp` describes and append its event. Every failure here is the
+/// filesystem's or the vocabulary's, and each is returned naming the path it was about.
+fn write_stamp(
+    ctx: &Context,
+    stamp: &OppositionRecorded,
+    reviewer: Option<&str>,
+) -> Result<(), CapabilityError> {
+    let root = Path::new(&ctx.index.repository.root);
+    let path = root.join(&stamp.source);
+    let refused = |what: &str, e: std::io::Error| {
+        CapabilityError::Refused(format!("could not {what} {}: {e}", path.display()))
+    };
+    let vocabulary = ctx
+        .index
+        .share
+        .as_ref()
+        .ok_or_else(|| {
+            CapabilityError::Refused(
+                "this index was built without a share directory, so the event vocabulary cannot be read; a review may not write an event it cannot validate".into(),
+            )
+        })
+        .and_then(|share| {
+            crate::ledger::Vocabulary::load(&share.join("events.yaml"))
+                .map_err(|e| CapabilityError::Refused(e.to_string()))
+        })?;
+
+    let text = if stamp.created {
+        // a fixed shape with no findings: what a reviewer adds, a reviewer writes
+        Ok(format!(
+            "intent: {}\nreviewed_at: {}\nreviewed_by: {}\nfindings: []\n",
+            stamp.intent,
+            quoted(&stamp.reviewed_at),
+            quoted(reviewer.unwrap_or_default())
+        ))
+    } else {
+        std::fs::read_to_string(&path).map_err(|e| refused("read", e))
+    }?;
+    // the stamp, and nothing else: every other line of the record is left as it is
+    // quoted, because a commit's first ten characters can be all digits, and a scalar that
+    // reads as a number is not the string the record's schema asks for
+    let text = set_field_before(
+        &text,
+        "reviewed_at",
+        &quoted(&stamp.reviewed_at),
+        "findings:",
+    );
+    let text = set_field_before(
+        &text,
+        "reviewed_revision",
+        &stamp.reviewed_revision,
+        "findings:",
+    );
+    let text = set_field_before(
+        &text,
+        "reviewed_with",
+        &quoted(&stamp.reviewed_with),
+        "findings:",
+    );
+    path.parent()
+        .map_or(Ok(()), std::fs::create_dir_all)
+        .and_then(|()| std::fs::write(&path, text))
+        .map_err(|e| refused("write", e))?;
+
+    crate::ledger::append(
+        root,
+        &vocabulary,
+        &ctx.index.repository.git,
+        &crate::ledger::now(),
+        EVENT,
+        &[
+            ("intent", stamp.intent.clone()),
+            ("reviewed_revision", stamp.reviewed_revision.clone()),
+            ("disposition", stamp.disposition.as_str().to_string()),
+            ("state", OppositionReviewState::Current.as_str().to_string()),
+        ],
+    )
+    .map(|_| ())
+    .map_err(|e| CapabilityError::Refused(e.to_string()))
 }
 
 fn record(
     ctx: &Context,
     input: OppositionRecordInput,
 ) -> Result<OppositionRecorded, CapabilityError> {
-    let intent = input.intent.trim().to_string();
-    let (intents, answer) = opposed(ctx, &intent)?;
-    let existing = path_of(ctx, CRITIQUE, &intent);
-
-    // a record whose own findings do not hold is not stamped
-    let prefix = format!("{intent}:");
-    let unsound: Vec<String> = intents
-        .findings
-        .iter()
-        .filter(|f| UNSOUND.contains(&f.code.as_str()))
-        .filter(|f| f.subject == intent || f.subject.starts_with(&prefix))
-        .map(|f| format!("{} {}: {}", f.code, f.subject, f.message))
-        .collect();
-    if !unsound.is_empty() {
-        return Err(CapabilityError::Refused(format!(
-            "the critique of {intent} does not hold and is not stamped: {}",
-            unsound.join("; ")
-        )));
-    }
-
-    let head = match &ctx.index.repository.git {
-        GitState::Available(info) => info.head.clone().unwrap_or_default(),
-        GitState::Unavailable { .. } => String::new(),
-    };
-    if head.is_empty() {
-        return Err(CapabilityError::Refused(
-            "this checkout has no commit to name: a review is stamped with the commit it was run at".into(),
-        ));
-    }
-    let reviewed_at: String = head.chars().take(10).collect();
-    let reviewed_with = format!("majordomus-cli {}", crate::VERSION);
-    let created = existing.is_none();
-    let source = match existing {
-        Some(p) => p,
-        None => new_critique_path(ctx, &intent).ok_or_else(|| {
-            CapabilityError::Internal(format!(
-                "intent '{intent}' is in the model but no object carries its file"
-            ))
-        })?,
-    };
-    // A file where the record would go that the index does not hold as a critique is a
-    // critique that does not validate. Writing a fresh one over it would destroy what a
-    // reviewer wrote in order to certify that nothing was found.
-    if created && Path::new(&ctx.index.repository.root).join(&source).exists() {
-        return Err(CapabilityError::Refused(format!(
-            "{source} exists and is not a critique this repository can read, so it is not \
-             stamped and not replaced; `majordomus-cli inspect` names what is wrong with it"
-        )));
-    }
-    let reviewer = input
-        .reviewed_by
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty());
-    if created && reviewer.is_none() {
-        return Err(CapabilityError::InvalidInput(format!(
-            "{intent} has no critique, and the record this would create must say who reviewed: give reviewed_by"
-        )));
-    }
-
-    let mut result = OppositionRecorded {
-        intent: intent.clone(),
-        source: source.clone(),
-        reviewed_revision: answer.reviewed_plan.clone(),
-        reviewed_at: reviewed_at.clone(),
-        reviewed_with: reviewed_with.clone(),
-        disposition: answer.disposition,
-        created,
-        written: false,
-        event: String::new(),
-    };
-    if input.check {
-        return Ok(result);
-    }
-
-    let root = Path::new(&ctx.index.repository.root);
-    let path = root.join(&source);
-    let refused = |what: &str, e: std::io::Error| {
-        CapabilityError::Refused(format!("could not {what} {}: {e}", path.display()))
-    };
-    let events = ctx
-        .index
-        .share
-        .as_ref()
-        .map(|s| s.join("events.yaml"))
-        .ok_or_else(|| {
-            CapabilityError::Refused(
-                "this index was built without a share directory, so the event vocabulary cannot be read; a review may not write an event it cannot validate".into(),
-            )
-        })?;
-    let vocabulary = crate::ledger::Vocabulary::load(&events)
-        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
-
-    let text = if created {
-        // a fixed shape with no findings: what a reviewer adds, a reviewer writes
-        format!(
-            "intent: {intent}\nreviewed_at: {reviewed_at}\nreviewed_by: {}\nfindings: []\n",
-            quoted(reviewer.unwrap_or_default())
-        )
-    } else {
-        std::fs::read_to_string(&path).map_err(|e| refused("read", e))?
-    };
-    // the stamp, and nothing else: every other line of the record is left as it is
-    let text = set_field_before(&text, "reviewed_at", &reviewed_at, "findings:");
-    let text = set_field_before(
-        &text,
-        "reviewed_revision",
-        &answer.reviewed_plan,
-        "findings:",
-    );
-    let text = set_field_before(&text, "reviewed_with", &quoted(&reviewed_with), "findings:");
-    if let Some(dir) = path.parent() {
-        std::fs::create_dir_all(dir).map_err(|e| refused("create the directory of", e))?;
-    }
-    std::fs::write(&path, text).map_err(|e| refused("write", e))?;
-
-    let at = crate::ledger::now();
-    crate::ledger::append(
-        root,
-        &vocabulary,
-        &ctx.index.repository.git,
-        &at,
-        EVENT,
-        &[
-            ("intent", intent),
-            ("reviewed_revision", answer.reviewed_plan.clone()),
-            ("disposition", answer.disposition.as_str().to_string()),
-            ("state", OppositionReviewState::Current.as_str().to_string()),
-        ],
-    )
-    .map_err(|e| CapabilityError::Refused(e.to_string()))?;
-    result.written = true;
-    result.event = EVENT.to_string();
-    Ok(result)
+    planned_stamp(ctx, &input).and_then(|(stamp, reviewer)| {
+        if input.check {
+            Ok(stamp)
+        } else {
+            write_stamp(ctx, &stamp, reviewer.as_deref()).map(|()| OppositionRecorded {
+                written: true,
+                event: EVENT.to_string(),
+                ..stamp
+            })
+        }
+    })
 }
 
 /// The module the registry composes: the review of one intent's plan as a read-only
@@ -453,10 +498,77 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::capability::{builtin, CapabilityRegistry};
+    use crate::git::GitInfo;
+    use crate::intent_binding::tests::planned;
+    use crate::synthetic::{crate_share, SyntheticRepository};
+    use serde_json::{json, Value};
+    use std::path::PathBuf;
+    use std::sync::Arc;
+
+    const CRITIQUE_FILE: &str = ".ai/repo/project/critiques/x.yaml";
+
+    fn write(repo: &SyntheticRepository, rel: &str, text: &str) {
+        let path = repo.root().join(rel);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, text).unwrap();
+    }
+
+    /// The fixture's intent, with a criterion whose test this repository holds, so that
+    /// nothing structural stands in the way unless a test puts it there.
+    fn sound(repo: &SyntheticRepository) {
+        write(repo, "test/cases/01_x.sh", "true\n");
+        write(
+            repo,
+            ".ai/repo/project/intents/x.yaml",
+            "id: x\ntitle: The x is true\nstatement: \"x holds.\"\ninvariants:\n  - Nothing else breaks\nmilestones:\n  - m\nsatisfaction:\n  - id: case\n    criterion: The case passes\n    evidence: test\n    ref: test/cases/01_x.sh\n",
+        );
+    }
+
+    /// A context over the repository as it stands, at commit `head` (none when empty), with
+    /// the distribution's share so that the event vocabulary can be read.
+    fn context(repo: &SyntheticRepository, head: &str, share: Option<PathBuf>) -> Arc<Context> {
+        let mut index = repo.index().unwrap();
+        if !head.is_empty() {
+            index.repository.git = GitState::Available(GitInfo {
+                toplevel: repo.root().to_path_buf(),
+                head: Some(head.to_string()),
+                branch: Some("master".into()),
+                working_tree: "clean".into(),
+            });
+        }
+        index.share = share;
+        let registry = CapabilityRegistry::builder()
+            .with_modules(builtin::modules())
+            .with_index(&index)
+            .build()
+            .unwrap();
+        Arc::new(Context::new(Arc::new(index), Arc::new(registry)))
+    }
+
+    fn at_head(repo: &SyntheticRepository) -> Arc<Context> {
+        context(repo, "0123456789abcdef", Some(crate_share()))
+    }
+
+    fn review_of(ctx: &Context) -> Value {
+        ctx.execute("intent_opposition.review", json!({ "intent": "x" }))
+            .unwrap()
+    }
+
+    fn stamp(ctx: &Context, input: Value) -> Result<Value, CapabilityError> {
+        ctx.execute("intent_opposition.record", input)
+    }
+
+    fn refused(result: Result<Value, CapabilityError>) -> String {
+        match result {
+            Err(CapabilityError::Refused(why)) => why,
+            other => panic!("expected a refusal, got {other:?}"),
+        }
+    }
 
     #[test]
     fn a_reviewer_with_a_quote_or_a_line_break_is_one_scalar() {
-        assert_eq!(quoted("a \"b\"\nc\\d"), "\"a \\\"b\\\" c\\\\d\"");
+        assert_eq!(quoted("a \"b\"\nc\\d"), "\"a 'b' c/d\"");
     }
 
     #[test]
@@ -470,5 +582,314 @@ mod tests {
             .map(|e| e.capability.id.to_string())
             .collect();
         assert_eq!(writers, ["intent_opposition.record"]);
+    }
+
+    #[test]
+    fn the_review_is_derived_and_a_stamp_names_the_plan_it_was_run_over() {
+        let repo = planned();
+        sound(&repo);
+        let ctx = at_head(&repo);
+
+        // nobody reviewed x: the brief is whole, nothing is recorded, and nothing rejects
+        let brief = review_of(&ctx);
+        assert_eq!(brief["review"]["state"], "none");
+        assert_eq!(brief["disposition"], "accept", "{brief}");
+        assert_eq!(brief["issues"][0]["id"], "I0001");
+        assert_eq!(brief["invariants"][0], "Nothing else breaks");
+        let revision = brief["reviewed_plan"].as_str().unwrap().to_string();
+        assert_eq!(revision.len(), 64);
+        // an intent this repository does not hold is not found, never answered empty
+        assert!(matches!(
+            ctx.execute("intent_opposition.review", json!({ "intent": "absent" })),
+            Err(CapabilityError::NotFound(_))
+        ));
+
+        // a record this would create must say who reviewed; a check writes nothing
+        assert!(matches!(
+            stamp(&ctx, json!({ "intent": "x" })),
+            Err(CapabilityError::InvalidInput(_))
+        ));
+        let check = stamp(
+            &ctx,
+            json!({ "intent": "x", "check": true, "reviewed_by": "t" }),
+        )
+        .unwrap();
+        assert_eq!(check["written"], false);
+        assert_eq!(check["created"], true);
+        assert_eq!(check["reviewed_revision"], revision.as_str());
+        assert!(!repo.root().join(CRITIQUE_FILE).exists());
+
+        // the stamp creates the record, with no finding in it, and the ledger carries the run
+        let made = stamp(
+            &ctx,
+            json!({ "intent": "x", "reviewed_by": "a \"careful\" reviewer" }),
+        )
+        .unwrap();
+        assert_eq!(made["written"], true);
+        assert_eq!(made["event"], EVENT);
+        assert_eq!(made["source"], CRITIQUE_FILE);
+        let text = std::fs::read_to_string(repo.root().join(CRITIQUE_FILE)).unwrap();
+        assert!(
+            text.contains(&format!("reviewed_revision: {revision}\n")),
+            "{text}"
+        );
+        assert!(text.contains("reviewed_at: \"0123456789\"\n"), "{text}");
+        assert!(
+            text.contains("reviewed_by: \"a 'careful' reviewer\"\n"),
+            "{text}"
+        );
+        assert!(text.ends_with("findings: []\n"), "{text}");
+        let ledger =
+            std::fs::read_to_string(repo.root().join(".ai/local/state/ledger.jsonl")).unwrap();
+        assert!(
+            ledger.contains("\"event\":\"opposition.recorded\""),
+            "{ledger}"
+        );
+        assert!(ledger.contains(&revision), "{ledger}");
+
+        // read again, the review is of the plan as it stands
+        let ctx = at_head(&repo);
+        let after = review_of(&ctx);
+        assert_eq!(after["review"]["state"], "current");
+        assert_eq!(after["review"]["reviewed_by"], "a 'careful' reviewer");
+        assert!(after["review"]["reviewed_with"]
+            .as_str()
+            .unwrap()
+            .starts_with("majordomus-cli "));
+
+        // a reviewer's findings are stamped around, never through
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings:\n  - id: thin\n    class: invariant_conflict\n    subject: x#case\n    finding: \"One case: it may not be enough\"\n    source: a second session\n    blocking: true\n    resolution:\n      state: planned\n      issue: I0001\n      resolved_by: the author\n",
+        );
+        let ctx = at_head(&repo);
+        let before = review_of(&ctx);
+        assert_eq!(before["review"]["state"], "not_stamped");
+        assert_eq!(before["disposition"], "accept_with_required_changes");
+        assert_eq!(before["recorded"][0]["class"], "invariant_conflict");
+        assert_eq!(before["recorded"][0]["source"], "a second session");
+        assert_eq!(before["recorded"][0]["resolved_by"], "the author");
+        let stamped = stamp(&ctx, json!({ "intent": "x" })).unwrap();
+        assert_eq!(stamped["created"], false);
+        assert_eq!(stamped["disposition"], "accept_with_required_changes");
+        let text = std::fs::read_to_string(repo.root().join(CRITIQUE_FILE)).unwrap();
+        let findings = &text[text.find("findings:").unwrap()..];
+        assert!(
+            findings.contains("finding: \"One case: it may not be enough\"\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("reviewed_by: a reviewer\n"),
+            "an existing reviewer is kept: {text}"
+        );
+        assert!(text.contains("reviewed_at: \"0123456789\"\n"), "{text}");
+
+        // the plan changes — the issue reaches further — and the review is of another plan
+        let issue = std::fs::read_to_string(repo.root().join(".ai/repo/project/issues/I0001.yaml"))
+            .unwrap();
+        write(
+            &repo,
+            ".ai/repo/project/issues/I0001.yaml",
+            &issue.replace("scope:\n  - lib\n", "scope:\n  - lib\n  - docs\n"),
+        );
+        let ctx = at_head(&repo);
+        assert_eq!(review_of(&ctx)["review"]["state"], "stale");
+        let bound = ctx
+            .execute("intents.binding", json!({ "issue": "I0001", "paths": "" }))
+            .unwrap();
+        assert_eq!(bound["standing"], "refused");
+        assert_eq!(bound["refusals"][0]["cause"], "critique_stale");
+        assert_eq!(bound["reviews"][0]["state"], "stale");
+        let validation = ctx.execute("intents.validate", json!({})).unwrap();
+        let finding = |code: &str| {
+            validation["findings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|f| f["code"] == code)
+                .cloned()
+        };
+        assert_eq!(
+            finding("critique_stale").expect("stale is named")["level"],
+            "WARN"
+        );
+    }
+
+    #[test]
+    fn a_required_opposition_refuses_what_nobody_ran_and_what_nobody_resolved() {
+        let repo = planned();
+        sound(&repo);
+        write(
+            &repo,
+            ".ai/repo/policy.yaml",
+            "version: 1\ncontext:\n  always_loaded_budget_lines: 150\nintent:\n  binding: required\n  opposition: required\n",
+        );
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings:\n  - id: thin\n    class: dependency_order\n    subject: x#case\n    finding: Wrong order\n    blocking: true\n    resolution:\n      state: planned\n      issue: I0001\n",
+        );
+        let ctx = at_head(&repo);
+        let validation = ctx.execute("intents.validate", json!({})).unwrap();
+        let level_of = |code: &str| {
+            validation["findings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|f| f["code"] == code)
+                .map(|f| f["level"].clone())
+        };
+        assert_eq!(
+            level_of("critique_not_stamped"),
+            Some(json!("FAIL")),
+            "{validation}"
+        );
+        assert_eq!(
+            level_of("resolution_names_no_resolver"),
+            Some(json!("FAIL"))
+        );
+        let bound = ctx
+            .execute("intents.binding", json!({ "issue": "I0001", "paths": "" }))
+            .unwrap();
+        let causes: Vec<&str> = bound["refusals"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| r["cause"].as_str().unwrap())
+            .collect();
+        assert!(causes.contains(&"opposition_not_executed"), "{bound}");
+        // a failure about the intent is a structural finding, and it rejects the plan
+        assert!(causes.contains(&"plan_rejected"), "{bound}");
+        assert_eq!(review_of(&ctx)["disposition"], "reject");
+
+        // a dismissal nobody is named as having made is no more accepted than a plan
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings:\n  - id: thin\n    class: insufficient_work\n    subject: x#case\n    finding: Thin\n    blocking: true\n    resolution:\n      state: rejected\n      because: Not this time\n  - id: later\n    class: insufficient_work\n    subject: x#case\n    finding: Later\n    blocking: false\n    resolution:\n      state: open\n",
+        );
+        let ctx = at_head(&repo);
+        let dismissed = ctx.execute("intents.validate", json!({})).unwrap();
+        let unnamed: Vec<&str> = dismissed["findings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|f| f["code"] == "resolution_names_no_resolver")
+            .map(|f| f["subject"].as_str().unwrap())
+            .collect();
+        assert_eq!(
+            unnamed,
+            ["x:thin"],
+            "an open finding has no resolver to name"
+        );
+
+        // a resolution into a cancelled issue resolves nothing, and is not stamped
+        let issue = std::fs::read_to_string(repo.root().join(".ai/repo/project/issues/I0001.yaml"))
+            .unwrap();
+        write(
+            &repo,
+            ".ai/repo/project/issues/I0003.yaml",
+            &(issue.replace("I0001", "I0003") + "cancelled: true\n"),
+        );
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings:\n  - id: thin\n    class: insufficient_work\n    subject: x#case\n    finding: Thin\n    blocking: true\n    resolution:\n      state: planned\n      issue: I0003\n      resolved_by: the author\n",
+        );
+        let ctx = at_head(&repo);
+        let why = refused(stamp(&ctx, json!({ "intent": "x" })));
+        assert!(why.contains("planned_into_cancelled_issue"), "{why}");
+        assert!(!std::fs::read_to_string(repo.root().join(CRITIQUE_FILE))
+            .unwrap()
+            .contains("reviewed_revision"));
+    }
+
+    #[test]
+    fn a_stamp_that_cannot_be_made_or_written_says_which_step_failed() {
+        // no commit to name
+        let repo = planned();
+        sound(&repo);
+        let headless = context(&repo, "", Some(crate_share()));
+        let why = refused(stamp(
+            &headless,
+            json!({ "intent": "x", "reviewed_by": "t" }),
+        ));
+        assert!(why.contains("no commit to name"), "{why}");
+
+        // a file where the record would go that is not a readable critique is not replaced
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nfindings: \"not a list\"\nsurprise: true\n",
+        );
+        let ctx = at_head(&repo);
+        if review_of(&ctx)["review"]["state"] == "none" {
+            let why = refused(stamp(&ctx, json!({ "intent": "x", "reviewed_by": "t" })));
+            assert!(
+                why.contains("is not a critique this repository can read"),
+                "{why}"
+            );
+        }
+        std::fs::remove_file(repo.root().join(CRITIQUE_FILE)).unwrap();
+
+        // no share directory, and a share with no vocabulary: no event can be validated
+        let shareless = context(&repo, "0123456789abcdef", None);
+        let why = refused(stamp(
+            &shareless,
+            json!({ "intent": "x", "reviewed_by": "t" }),
+        ));
+        assert!(why.contains("without a share directory"), "{why}");
+        let empty = repo.root().join("empty-share");
+        std::fs::create_dir_all(&empty).unwrap();
+        let no_vocabulary = context(&repo, "0123456789abcdef", Some(empty));
+        refused(stamp(
+            &no_vocabulary,
+            json!({ "intent": "x", "reviewed_by": "t" }),
+        ));
+        assert!(
+            !repo.root().join(CRITIQUE_FILE).exists(),
+            "a refused stamp wrote"
+        );
+
+        // the record's directory cannot be made: something else stands where it would be
+        let ctx = at_head(&repo);
+        let _ = std::fs::remove_dir_all(repo.root().join(".ai/repo/project/critiques"));
+        std::fs::write(repo.root().join(".ai/repo/project/critiques"), "a file").unwrap();
+        let why = refused(stamp(&ctx, json!({ "intent": "x", "reviewed_by": "t" })));
+        assert!(why.contains("could not write"), "{why}");
+        std::fs::remove_file(repo.root().join(".ai/repo/project/critiques")).unwrap();
+
+        // an existing record that vanished between the read of the index and the stamp
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings: []\n",
+        );
+        let ctx = at_head(&repo);
+        std::fs::remove_file(repo.root().join(CRITIQUE_FILE)).unwrap();
+        let why = refused(stamp(&ctx, json!({ "intent": "x" })));
+        assert!(why.contains("could not read"), "{why}");
+
+        // the ledger cannot be appended to: the record is written and the failure is said
+        write(
+            &repo,
+            CRITIQUE_FILE,
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings: []\n",
+        );
+        let ctx = at_head(&repo);
+        let _ = std::fs::remove_dir_all(repo.root().join(".ai/local"));
+        std::fs::write(repo.root().join(".ai/local"), "a file").unwrap();
+        refused(stamp(&ctx, json!({ "intent": "x" })));
+        std::fs::remove_file(repo.root().join(".ai/local")).unwrap();
+
+        // an evidence ledger nobody can read: the opposition cannot be derived at all
+        write(&repo, ".ai/repo/evidence/ledger.json", "{ not json");
+        let ctx = at_head(&repo);
+        assert!(matches!(
+            ctx.execute("intent_opposition.review", json!({ "intent": "x" })),
+            Err(CapabilityError::Internal(_))
+        ));
+        assert!(stamp(&ctx, json!({ "intent": "x" })).is_err());
     }
 }
