@@ -981,3 +981,21 @@ fn a_listing_is_read_a_page_at_a_time_and_entered_by_its_parts() {
 fn urlencode(s: &str) -> String {
     majordomus_cli::http::router::percent_encode(s)
 }
+
+/// A continuity state this checkout cannot read is shown as that, in the card's place: the
+/// page still renders, and the card says what could not be read instead of showing a store
+/// it did not read.
+#[test]
+fn the_other_machines_card_says_so_when_the_state_cannot_be_read() {
+    let f = Fixture::new();
+    f.write(".ai/local/state/continuity.json", "{ not json");
+    let s = Served::start(&f.root(), &[]);
+    let (status, body) = html(&s, "/cockpit/continuity");
+    assert_eq!(status, 200, "{body}");
+    assert!(body.contains("Other machines"), "{body}");
+    assert!(body.contains("continuity.json"), "{body}");
+    assert!(
+        !body.contains("No other device has published a handover"),
+        "the card answered as if it had read the store"
+    );
+}

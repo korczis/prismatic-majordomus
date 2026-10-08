@@ -264,3 +264,126 @@ fn a_repository_that_does_not_exist_is_refused_and_nothing_is_answered() {
     assert!(out.is_empty(), "{out}");
     assert!(err.contains("does-not-exist"), "{err}");
 }
+
+/// A device with nowhere to keep its key is told so: with no home and no state directory
+/// there is no identity to read and none is invented somewhere else.
+#[test]
+fn a_process_with_no_home_and_no_state_directory_is_refused() {
+    let f = Fixture::new();
+    for args in [&["status"][..], &["device"][..]] {
+        let out = Command::new(BIN)
+            .arg("continuity")
+            .args(args)
+            .current_dir(f.root())
+            .env_remove("HOME")
+            .env_remove("XDG_STATE_HOME")
+            .env("MAJORDOMUS_LOG", "error")
+            .env("MAJORDOMUS_SHARE", dist_share())
+            .output()
+            .expect("spawn majordomus");
+        assert_ne!(out.status.code(), Some(0), "continuity {args:?}");
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            err.contains("no HOME and no XDG_STATE_HOME"),
+            "{args:?}: {err}"
+        );
+        assert!(out.stdout.is_empty(), "{args:?} answered on stdout");
+    }
+}
+
+/// A device key that cannot be read stops every subcommand before it answers anything: a
+/// record signed by a key made up on the spot would be a forgery of this device's own.
+#[test]
+fn a_device_key_that_cannot_be_read_stops_every_subcommand() {
+    let f = Fixture::new();
+    let a = Machine::new(f.root(), f.parent().join("home-a"));
+    a.git(&["checkout", "-qb", "feature/x"]);
+    // the repository declares a mesh, so the machine is opened with one
+    let device = a.json(&["device", "--label", "macbook-pro"]);
+    f.write(
+        ".ai/repo/mesh/majordomus.yaml",
+        &format!(
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: false\n             trust:\n  policy: deny_unknown\n  allow:\n    - {}\n",
+            device["public_key"].as_str().unwrap()
+        ),
+    );
+    a.git(&["add", "-A"]);
+    a.git(&["commit", "-qm", "the mesh declaration"]);
+    let (code, _, err) = a.run(&["status"]);
+    assert_eq!(code, 0, "{err}");
+    handover(&a.root, "20261003T120000Z", "write the test");
+
+    std::fs::write(a.state().join("majordomus/node.json"), "{ not a key").unwrap();
+    for args in [
+        &["status"][..],
+        &["records"][..],
+        &["plan"][..],
+        &["resume"][..],
+        &["sync"][..],
+        &["publish"][..],
+        &["device"][..],
+    ] {
+        let (code, out, err) = a.run(args);
+        assert_ne!(
+            code, 0,
+            "continuity {args:?} answered with an unreadable key: {out}"
+        );
+        assert!(out.is_empty(), "continuity {args:?}: {out}");
+        assert!(!err.is_empty(), "continuity {args:?} said nothing");
+    }
+}
+
+/// A repository whose git knows no committer still publishes: the store's commit carries
+/// no authored work, so it is made under a neutral identity instead of being refused.
+#[test]
+fn a_repository_with_no_git_identity_still_publishes() {
+    let f = Fixture::new();
+    let a = Machine::new(f.root(), f.parent().join("home-a"));
+    a.git(&["checkout", "-qb", "feature/x"]);
+    handover(&a.root, "20261003T120000Z", "write the test");
+    // no identity in the repository, and none from the machine's own configuration
+    let _ = Command::new("git")
+        .arg("-C")
+        .arg(&a.root)
+        .args(["config", "--unset-all", "user.email"])
+        .status();
+    let _ = Command::new("git")
+        .arg("-C")
+        .arg(&a.root)
+        .args(["config", "--unset-all", "user.name"])
+        .status();
+    let out = Command::new(BIN)
+        .args(["continuity", "publish", "--format", "json"])
+        .current_dir(&a.root)
+        .env("HOME", &a.home)
+        .env("XDG_STATE_HOME", a.state())
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env_remove("GIT_AUTHOR_NAME")
+        .env_remove("GIT_AUTHOR_EMAIL")
+        .env_remove("GIT_COMMITTER_NAME")
+        .env_remove("GIT_COMMITTER_EMAIL")
+        .env_remove("EMAIL")
+        .env("MAJORDOMUS_LOG", "error")
+        .env("MAJORDOMUS_SHARE", dist_share())
+        .output()
+        .expect("spawn majordomus");
+    assert_eq!(
+        out.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let published: Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(published["written"], true);
+    let author = git(
+        &a.root,
+        &[
+            "log",
+            "-1",
+            "--format=%an <%ae>",
+            "refs/majordomus/continuity",
+        ],
+    );
+    assert_eq!(author, "majordomus <majordomus@localhost>");
+}

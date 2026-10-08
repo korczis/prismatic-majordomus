@@ -542,6 +542,7 @@ flowchart TD
 
 ### From a MacBook to a Mac mini
 
+<!-- majordomus:unrun it is one sequence across two machines that share a remote, which no single checkout can be; case 821 runs the same commands in that order between two clones of one bare remote -->
 ```sh
 # MacBook, once: name the device (the key is the mesh's node key, created on first use)
 majordomus-cli continuity device --label macbook-pro

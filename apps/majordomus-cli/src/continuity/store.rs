@@ -202,16 +202,17 @@ pub fn read(root: &Path, reference: &str) -> Result<BTreeMap<String, Vec<u8>>, S
     let Some(commit) = tip(root, reference) else {
         return Ok(BTreeMap::new());
     };
-    let files = entries(root, &commit)?;
-    let ids: Vec<&str> = files.values().map(String::as_str).collect();
-    let bytes = blobs(root, &ids)?;
-    Ok(files
-        .into_iter()
-        .map(|(path, id)| {
-            let content = bytes.get(&id).cloned().unwrap_or_default();
-            (path, content)
+    // one chain: the listing, then the bytes of what it listed, and either failing is the
+    // read failing
+    entries(root, &commit).and_then(|files| {
+        let ids: Vec<&str> = files.values().map(String::as_str).collect();
+        blobs(root, &ids).map(|bytes| {
+            files
+                .iter()
+                .map(|(path, id)| (path.clone(), bytes.get(id).cloned().unwrap_or_default()))
+                .collect()
         })
-        .collect())
+    })
 }
 
 /// Two stores held different bytes under one name. Records are content-addressed, so this
@@ -645,6 +646,8 @@ mod tests {
             "a blob no record could be is not held"
         );
         // a header with no end, and a header promising more bytes than arrived
+        // a place git cannot read objects from is an error, not an empty answer
+        assert!(blobs(Path::new("/nonexistent-majordomus-store"), &["abc"]).is_err());
         assert!(parse_batch(b"abc blob 3").is_err());
         assert!(parse_batch(b"abc blob 30\nxyz\n").is_err());
         assert_eq!(

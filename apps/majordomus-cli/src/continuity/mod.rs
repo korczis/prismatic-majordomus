@@ -66,6 +66,12 @@ pub struct Machine<'a> {
     pub identity_known: bool,
 }
 
+/// The repository identity a mesh declaration states outright, when the repository has a
+/// declaration and it states one; otherwise the identity is computed from the clone.
+fn declared_repository(mesh: Option<&MeshConfig>) -> Option<String> {
+    mesh.and_then(|m| m.cooperation.repository.clone())
+}
+
 impl<'a> Machine<'a> {
     /// The machine for `root`: the device key at the mesh's identity path (created on first
     /// use, as the mesh creates it), the repository identity the mesh computes, and the
@@ -90,7 +96,7 @@ impl<'a> Machine<'a> {
             NodeIdentity::ephemeral()
         }
         .map_err(|e| e.to_string())?;
-        let declared = mesh.as_ref().and_then(|m| m.cooperation.repository.clone());
+        let declared = declared_repository(mesh.as_ref());
         let repository = crate::mesh::repository::resolve(root, declared.as_deref())
             .map_err(|e| e.to_string())?
             .id;
@@ -2500,5 +2506,691 @@ mod tests {
             Some(trusting(&[])),
         );
         assert_eq!(m.trust("00"), Trust::Untrusted);
+    }
+
+    /// The state directory with writing taken away, and given back when this goes: a
+    /// directory left unwritable could not be removed with the rest of the fixture.
+    struct ReadOnly(std::path::PathBuf);
+    impl ReadOnly {
+        fn of(root: &Path) -> ReadOnly {
+            use std::os::unix::fs::PermissionsExt;
+            let dir = root.join(local::STATE_DIR);
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+            ReadOnly(dir)
+        }
+    }
+    impl Drop for ReadOnly {
+        fn drop(&mut self) {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(&self.0, std::fs::Permissions::from_mode(0o755));
+        }
+    }
+
+    /// Every operation reads this checkout's state and the store before it decides
+    /// anything, and none of them proceeds on one it could not read: the state holds the
+    /// parent of the next publication, and a store read in part is a lineage made up.
+    #[test]
+    fn an_unreadable_state_or_store_stops_every_operation() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+
+        // the local state, cut short
+        let state = local::local_path(&a_root);
+        let good = std::fs::read(&state).unwrap();
+        std::fs::write(&state, "{ not json").unwrap();
+        let failures = [
+            ("status", status(&a).map(drop)),
+            ("publish", publish(&a, &PublishRequest::default()).map(drop)),
+            ("sync", sync(&a, None).map(drop)),
+            ("plan", plan(&a, None).map(drop)),
+            ("resume", resume(&a, None).map(drop)),
+        ];
+        for (what, answer) in failures {
+            let err = answer.expect_err(what);
+            assert!(err.contains(local::LOCAL_FILE), "{what}: {err}");
+        }
+        std::fs::write(&state, &good).unwrap();
+
+        // the store, pointed at one holding more files than a store is read for
+        let tip = store::tip(&a_root, store::REF).unwrap();
+        let oversized = store::tests_support::oversized(&a_root);
+        git(&a_root, &["update-ref", store::REF, &oversized]);
+        let failures = [
+            ("status", status(&a).map(drop)),
+            ("records", records(&a).map(drop)),
+            ("publish", publish(&a, &PublishRequest::default()).map(drop)),
+            ("sync", sync(&a, None).map(drop)),
+            ("plan", plan(&a, None).map(drop)),
+            ("resume", resume(&a, None).map(drop)),
+        ];
+        for (what, answer) in failures {
+            answer.expect_err(what);
+        }
+        // nothing was repaired behind anyone's back: the ref is where it was put, and put
+        // back the store reads as before
+        assert_eq!(store::tip(&a_root, store::REF).unwrap(), oversized);
+        git(&a_root, &["update-ref", store::REF, &tip]);
+        assert_eq!(records(&a).unwrap().records.len(), 1);
+    }
+
+    /// An operation that cannot record where it now stands says so instead of answering as
+    /// if it had: a publication, a sync that reached its remote, a sync that did not, and a
+    /// resume each end in the state file, and each fails when it cannot be written.
+    #[test]
+    fn a_state_that_cannot_be_written_is_an_error_and_not_a_success() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+
+        // B fetches A's record while it still can, so that a resume has something to resume
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        std::fs::create_dir_all(crate::mesh::handover::directory(&b_root)).unwrap();
+        {
+            let _held = ReadOnly::of(&b_root);
+            let err = resume(&b, None).unwrap_err();
+            assert!(err.contains(local::LOCAL_FILE), "{err}");
+        }
+
+        // A: a second handover, published, synced and synced to nowhere, with the state shut
+        handover(&a_root, "20261003T130000Z", &body("o", "s2", "n2"), None);
+        let gone = w.dir.path().join("gone.git");
+        git(&a_root, &["remote", "add", "gone", gone.to_str().unwrap()]);
+        let _held = ReadOnly::of(&a_root);
+        for (what, answer) in [
+            ("publish", publish(&a, &PublishRequest::default()).map(drop)),
+            ("sync", sync(&a, None).map(drop)),
+            ("unreachable sync", sync(&a, Some("gone")).map(drop)),
+        ] {
+            let err = answer.expect_err(what);
+            assert!(err.contains(local::LOCAL_FILE), "{what}: {err}");
+        }
+    }
+
+    /// How the local store stands against the remote's is read from the two refs: behind
+    /// when the remote's tip is fetched and nothing local exists, behind when the local tip
+    /// is contained in the remote's, diverged when each holds what the other lacks.
+    #[test]
+    fn a_store_is_behind_or_diverged_by_what_each_ref_contains() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        // fetched, not merged: the remote's tip is known and there is no local store
+        store::fetch(&b_root, "origin").unwrap();
+        assert_eq!(status(&b).unwrap().store.sync, SyncState::Behind);
+        sync(&b, None).unwrap();
+        assert_eq!(status(&b).unwrap().store.sync, SyncState::InSync);
+
+        // A moves the remote on; B fetches and does not merge: its tip is inside the remote's
+        handover(&a_root, "20261003T130000Z", &body("o", "s2", "n2"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+        store::fetch(&b_root, "origin").unwrap();
+        assert_eq!(status(&b).unwrap().store.sync, SyncState::Behind);
+
+        // and B publishes without merging: each side now holds a commit the other lacks
+        handover(&b_root, "20261003T140000Z", &body("o", "b", "n"), None);
+        publish(&b, &PublishRequest::default()).unwrap();
+        assert_eq!(status(&b).unwrap().store.sync, SyncState::Diverged);
+        // a sync reconciles them
+        sync(&b, None).unwrap();
+        assert_eq!(status(&b).unwrap().store.sync, SyncState::InSync);
+    }
+    /// A remote that takes no push: its `pre-receive` hook refuses every ref.
+    fn refuse_pushes(w: &World) {
+        use std::os::unix::fs::PermissionsExt;
+        let hook = w.dir.path().join("remote.git/hooks/pre-receive");
+        std::fs::create_dir_all(hook.parent().unwrap()).unwrap();
+        std::fs::write(&hook, "#!/bin/sh\nexit 1\n").unwrap();
+        std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+
+    /// A remote that does not accept the store leaves the records pending and says so: the
+    /// sync is partial, nothing is counted as published, and the local store is whole. It
+    /// is so whether the remote held no store yet or already held one.
+    #[test]
+    fn a_remote_that_refuses_the_push_leaves_the_records_pending() {
+        // the remote holds no store yet
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        refuse_pushes(&w);
+        let refused = sync(&a, None).unwrap();
+        assert_eq!(refused.published, 0);
+        assert_eq!(refused.action, SyncAction::None);
+        assert!(refused
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "continuity.push_refused"));
+        assert_eq!(status(&a).unwrap().last_sync.unwrap().outcome, "partial");
+        assert_eq!(records(&a).unwrap().records.len(), 1);
+
+        // the remote already holds one: the second attempt fetches, merges and is refused too
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+        handover(&a_root, "20261003T130000Z", &body("o", "s2", "n2"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        refuse_pushes(&w);
+        let refused = sync(&a, None).unwrap();
+        assert_eq!(refused.published, 0);
+        assert!(refused
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "continuity.push_refused"));
+        assert_eq!(status(&a).unwrap().store.sync, SyncState::Pending);
+        assert_eq!(records(&a).unwrap().records.len(), 2);
+    }
+
+    /// What the remote holds under a record's name is not taken on trust. A file with other
+    /// bytes under the name of a record this store holds is a collision and the local copy
+    /// stays; a genuine record under a name that is not its own is refused for good and is
+    /// not merged in, so a sync never spreads it.
+    #[test]
+    fn a_record_altered_or_misnamed_on_the_remote_is_not_merged() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let published = publish(&a, &PublishRequest::default()).unwrap();
+        let id = published.record.id.clone();
+        let genuine = store::read(&a_root, store::REF)
+            .unwrap()
+            .remove(&format!("records/{id}.json"))
+            .unwrap();
+
+        // another clone reaches the remote first, with other bytes under A's record name
+        // and A's bytes under a name that is not theirs
+        let kept = genuine.clone();
+        let c_root = w.clone_as("c");
+        let misnamed = format!(
+            "{}{}",
+            if id.starts_with('0') { "1" } else { "0" },
+            &id[1..]
+        );
+        store::add(
+            &c_root,
+            &[(id.clone(), b"{}\n".to_vec()), (misnamed.clone(), genuine)],
+            "altered\n",
+        )
+        .unwrap();
+        store::push(&c_root, "origin").unwrap();
+
+        // a clone with no store of its own takes the remote's without the misnamed file
+        let d_root = w.clone_as("d");
+        let d = machine(&d_root, w.identity("d", "mac-studio"), None);
+        sync(&d, None).unwrap();
+        let files = store::read(&d_root, store::REF).unwrap();
+        assert!(files.contains_key(&format!("records/{id}.json")));
+        assert!(!files.contains_key(&format!("records/{misnamed}.json")));
+
+        let synced = sync(&a, None).unwrap();
+        let codes: Vec<&str> = synced.diagnostics.iter().map(|d| d.code.as_str()).collect();
+        assert!(codes.contains(&"continuity.collision"), "{codes:?}");
+        assert!(codes.contains(&"continuity.id_mismatch"), "{codes:?}");
+        // the local copy is the one that was signed here, and the misnamed file was left out
+        let files = store::read(&a_root, store::REF).unwrap();
+        assert_eq!(files[&format!("records/{id}.json")], kept);
+        assert!(!files.contains_key(&format!("records/{misnamed}.json")));
+        assert_eq!(records(&a).unwrap().records.len(), 1);
+    }
+
+    /// A clone whose remote was taken away still knows what it fetched: a sync says there
+    /// is no remote, moves nothing, and goes on offering the record another device left.
+    #[test]
+    fn a_sync_with_no_remote_still_offers_what_was_fetched() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        git(&b_root, &["remote", "remove", "origin"]);
+        let alone = sync(&b, None).unwrap();
+        assert_eq!(alone.action, SyncAction::NoRemote);
+        assert_eq!(alone.store.sync, SyncState::NoRemote);
+        assert_eq!((alone.fetched, alone.published), (0, 0));
+        assert_eq!(alone.resumable.len(), 1);
+        assert_eq!(alone.resumable[0].device.label, "macbook-pro");
+    }
+    /// A record another device signed, added to `root`'s store as a sync would have left
+    /// it: the sample record, about this repository and this checkout's commit, with
+    /// `change` applied before it is signed.
+    fn planted(
+        root: &Path,
+        m: &Machine<'_>,
+        signer: &NodeIdentity,
+        change: impl FnOnce(&mut Record),
+    ) -> String {
+        let mut r = record::tests_support::sample();
+        r.repository = m.repository.clone();
+        r.device = record::Device {
+            node: signer.public.node_id.as_str().to_string(),
+            label: "macbook-pro".into(),
+        };
+        let head = git(root, &["rev-parse", "HEAD"]);
+        r.source.head = Some(head.clone());
+        r.handover.head = Some(head);
+        change(&mut r);
+        let signed = SignedRecord::sign(r, signer);
+        store::add(root, &[(signed.id.clone(), signed.to_bytes())], "planted\n").unwrap();
+        signed.id
+    }
+
+    /// What a plan warns of and asks for when the record itself is unusual: it continues a
+    /// record this store never received, it was published minutes ago from an episode
+    /// still open on the other device, it names no commit, its task has no scope, or its
+    /// commit is not here and no sync ever named a remote to fetch it from.
+    #[test]
+    fn a_plan_says_what_is_unusual_about_the_record_it_was_given() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let signer = w.identity("a", "macbook-pro");
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+
+        // it continues a record this store does not hold
+        let orphan = planted(&b_root, &b, &signer, |r| {
+            r.parent = Some("f".repeat(32));
+            r.line = Some("e".repeat(32));
+        });
+        let p = plan(&b, Some(&orphan)).unwrap();
+        assert!(codes(&p.warnings).contains(&"lineage_incomplete"), "{p:?}");
+        assert!(p.status.resumable(), "{:?}", p.status);
+
+        // it was published a moment ago from an episode that was still open there
+        let fresh = planted(&b_root, &b, &signer, |r| {
+            r.episode = record::EpisodeAtPublish::Open;
+            r.published_at = now_rfc3339();
+            r.handover.body.push_str("\nfresh\n");
+            r.handover.id = crate::mesh::journal::HandoverBody::digest_of(&r.handover.body);
+        });
+        let p = plan(&b, Some(&fresh)).unwrap();
+        assert!(
+            codes(&p.warnings).contains(&"origin_may_be_active"),
+            "{p:?}"
+        );
+        // the same record from long ago is not suspected of anything
+        let p = plan(&b, Some(&orphan)).unwrap();
+        assert!(!codes(&p.warnings).contains(&"origin_may_be_active"));
+
+        // it names no commit: the source cannot be compared, and that is said
+        let unplaced = planted(&b_root, &b, &signer, |r| {
+            r.source.head = None;
+            r.handover.head = None;
+        });
+        let p = plan(&b, Some(&unplaced)).unwrap();
+        assert!(codes(&p.warnings).contains(&"source_unknown"), "{p:?}");
+        assert_eq!(p.source.unwrap().relation, SourceRelation::Unknown);
+
+        // its task has no scope: the task is offered again without one
+        let unscoped = planted(&b_root, &b, &signer, |r| {
+            r.task.as_mut().unwrap().scope.clear();
+            r.task.as_mut().unwrap().title = "ship the unscoped thing".into();
+        });
+        let p = plan(&b, Some(&unscoped)).unwrap();
+        let start = p
+            .actions
+            .iter()
+            .find(|a| a.starts_with("majordomus start "))
+            .unwrap();
+        assert!(!start.contains("--scope"), "{start}");
+
+        // its commit is not here, no sync ever ran and no remote is configured: the fetch
+        // it asks for names origin, the name a clone would have
+        let _ = a_root;
+        git(&b_root, &["remote", "remove", "origin"]);
+        let elsewhere = planted(&b_root, &b, &signer, |r| {
+            r.source.head = Some("d".repeat(40));
+            r.handover.head = Some("d".repeat(40));
+        });
+        let p = plan(&b, Some(&elsewhere)).unwrap();
+        assert!(codes(&p.blockers).contains(&"head_missing"), "{p:?}");
+        assert!(
+            p.actions.contains(&"git fetch origin".to_string()),
+            "{:?}",
+            p.actions
+        );
+    }
+
+    /// A checkout whose state names a record its store no longer holds plans as one that
+    /// stands nowhere: the position is not compared with anything, and nothing is said
+    /// about a lineage that cannot be read.
+    #[test]
+    fn a_position_the_store_no_longer_holds_is_compared_with_nothing() {
+        let w = World::new();
+        let signer = w.identity("a", "macbook-pro");
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        handover(&b_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&b, &PublishRequest::default()).unwrap();
+        // the store is gone; the state still says where this checkout stood
+        git(&b_root, &["update-ref", "-d", store::REF]);
+        assert!(local::load(&b_root)
+            .unwrap()
+            .branches
+            .values()
+            .next()
+            .is_some());
+        let id = planted(&b_root, &b, &signer, |_| {});
+        let p = plan(&b, Some(&id)).unwrap();
+        assert!(p.lineage.is_none(), "{p:?}");
+        assert!(!codes(&p.warnings).contains(&"already_resumed"));
+        assert!(!codes(&p.blockers).contains(&"would_diverge"));
+    }
+
+    /// A mesh declaration that states the repository's identity is believed; one that does
+    /// not, and no declaration at all, leave it to be computed from the clone.
+    #[test]
+    fn a_declared_repository_identity_is_the_one_used() {
+        let stated: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh", "id": "fixture",
+            "cooperation": { "repository": "a".repeat(32) },
+        }))
+        .unwrap();
+        assert_eq!(declared_repository(Some(&stated)), Some("a".repeat(32)));
+        assert_eq!(declared_repository(Some(&trusting(&[]))), None);
+        assert_eq!(declared_repository(None), None);
+    }
+
+    /// A handover written in a dirty tree arrives saying so: the record this checkout
+    /// writes on resume carries the origin's working tree as it was, not as it is here.
+    #[test]
+    fn a_resume_from_a_dirty_origin_records_that_it_was_dirty() {
+        let w = World::new();
+        let signer = w.identity("a", "macbook-pro");
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        let dirty = planted(&b_root, &b, &signer, |r| {
+            r.source.working_tree = WorkingTree::Dirty;
+            r.source.changed = vec!["lib/a".into()];
+            r.source.changed_total = 1;
+        });
+        let resumed = resume(&b, Some(&dirty)).unwrap();
+        assert!(resumed.resumed, "{:?}", resumed.plan);
+        let written = std::fs::read_to_string(b_root.join(resumed.handover.unwrap())).unwrap();
+        assert!(written.contains("working_tree: dirty"), "{written}");
+        assert!(written.contains("continuity_record:"), "{written}");
+    }
+
+    /// A checkout that already stands past the record it is asked to resume says which
+    /// record it stands on and that it continues the one asked for.
+    #[test]
+    fn resuming_a_record_this_checkout_already_continued_says_so() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let first = publish(&a, &PublishRequest::default()).unwrap().record.id;
+        handover(&a_root, "20261003T130000Z", &body("o", "s2", "n2"), None);
+        let second = publish(&a, &PublishRequest::default()).unwrap().record.id;
+        sync(&a, None).unwrap();
+
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        assert!(resume(&b, Some(&second)).unwrap().resumed);
+        let p = plan(&b, Some(&first)).unwrap();
+        let already = p
+            .warnings
+            .iter()
+            .find(|i| i.code == "already_resumed")
+            .unwrap_or_else(|| panic!("{p:?}"));
+        assert!(
+            already.message.contains(", which continues this record"),
+            "{}",
+            already.message
+        );
+    }
+    /// A publication reads one handover and adds one record, and says which step failed:
+    /// a file with no front matter, one with nothing under it, an identifier that is not
+    /// one line, and a store whose ref another writer holds.
+    #[test]
+    fn a_publication_that_cannot_be_made_names_what_stopped_it() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        let dir = crate::mesh::handover::directory(&a_root);
+        std::fs::create_dir_all(&dir).unwrap();
+        let named = |name: &str| PublishRequest {
+            handover: Some(name.into()),
+            ..Default::default()
+        };
+
+        std::fs::write(dir.join("20261003T100000Z--words.md"), "just words\n").unwrap();
+        let err = publish(&a, &named("20261003T100000Z--words.md")).unwrap_err();
+        assert!(err.contains("no front matter"), "{err}");
+
+        std::fs::write(
+            dir.join("20261003T110000Z--empty.md"),
+            "---\nschema_version: 1\ncreated_at: 2026-10-03T11:00:00Z\ntask_id: none\n---\n\n",
+        )
+        .unwrap();
+        let err = publish(&a, &named("20261003T110000Z--empty.md")).unwrap_err();
+        assert!(err.contains("no body"), "{err}");
+        // a message names the repository's paths, never this machine's
+        assert!(!err.contains(&a_root.display().to_string()), "{err}");
+
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let err = publish(
+            &a,
+            &PublishRequest {
+                issue: Some("one\ntwo".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap_err();
+        assert!(err.contains("handover") || err.contains("line"), "{err}");
+
+        let lock = store::tests_support::locked(&a_root, store::REF);
+        publish(&a, &PublishRequest::default()).unwrap_err();
+        std::fs::remove_file(lock).unwrap();
+        assert!(publish(&a, &PublishRequest::default()).unwrap().written);
+    }
+
+    /// A sync that cannot read what it fetched, or cannot move its own ref, fails rather
+    /// than report a store it did not finish reconciling.
+    #[test]
+    fn a_sync_that_cannot_read_or_move_a_store_is_an_error() {
+        // the remote holds more files than a store is read for
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        let c_root = w.clone_as("c");
+        let big = store::tests_support::oversized(&c_root);
+        git(
+            &c_root,
+            &["push", "-q", "origin", &format!("{big}:{}", store::REF)],
+        );
+        let err = sync(&a, None).unwrap_err();
+        assert!(err.contains("more than"), "{err}");
+
+        // the local ref is held by another writer while the remote's store is merged in
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        handover(&b_root, "20261003T130000Z", &body("o", "b", "n"), None);
+        publish(&b, &PublishRequest::default()).unwrap();
+        sync(&b, None).unwrap();
+        let lock = store::tests_support::locked(&a_root, store::REF);
+        sync(&a, None).unwrap_err();
+        std::fs::remove_file(lock).unwrap();
+        assert_eq!(sync(&a, None).unwrap().fetched, 1);
+    }
+
+    /// The remote moved between the fetch and the push: the first push is refused, the
+    /// sync fetches and merges once more, and the second push is accepted. Nothing is left
+    /// pending and nothing is reported as refused.
+    #[test]
+    fn a_push_refused_once_is_tried_again_after_a_second_fetch() {
+        use std::os::unix::fs::PermissionsExt;
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+        handover(&a_root, "20261003T130000Z", &body("o", "s2", "n2"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        // a remote that refuses exactly one push
+        let hooks = w.dir.path().join("remote.git/hooks");
+        std::fs::create_dir_all(&hooks).unwrap();
+        let once = w.dir.path().join("refused-once");
+        std::fs::write(
+            hooks.join("pre-receive"),
+            format!(
+                "#!/bin/sh\nif [ -e '{0}' ]; then exit 0; fi\n: > '{0}'\nexit 1\n",
+                once.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(
+            hooks.join("pre-receive"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+        let synced = sync(&a, None).unwrap();
+        assert!(
+            once.exists(),
+            "the first push was not refused, so nothing was retried"
+        );
+        assert_eq!(synced.published, 1);
+        assert_eq!(synced.action, SyncAction::Published);
+        assert!(!synced
+            .diagnostics
+            .iter()
+            .any(|d| d.code == "continuity.push_refused"));
+        assert_eq!(status(&a).unwrap().store.sync, SyncState::InSync);
+    }
+
+    /// A local store replaced while a sync was pushing is read again afterwards, and a
+    /// store that can no longer be read ends the sync as an error: what the sync reports
+    /// is the store as it stands, never the one it started from.
+    #[test]
+    fn a_store_that_breaks_during_a_sync_is_an_error_and_not_a_report() {
+        use std::os::unix::fs::PermissionsExt;
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        let big = store::tests_support::oversized(&a_root);
+        // the remote's hook, run while the push is in flight, points this clone's store at
+        // a tree no store is read for
+        let hooks = w.dir.path().join("remote.git/hooks");
+        std::fs::create_dir_all(&hooks).unwrap();
+        std::fs::write(
+            hooks.join("pre-receive"),
+            format!(
+                "#!/bin/sh\nenv -u GIT_DIR -u GIT_QUARANTINE_PATH -u GIT_OBJECT_DIRECTORY \\\n  -u GIT_ALTERNATE_OBJECT_DIRECTORIES git -C '{}' update-ref {} {big}\nexit 0\n",
+                a_root.display(),
+                store::REF
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(
+            hooks.join("pre-receive"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+        let err = sync(&a, None).unwrap_err();
+        assert!(err.contains("more than"), "{err}");
+    }
+
+    /// A checkout that resumed one continuation is told so when the plan would take it to
+    /// another: the blocker names the record it stands on and that it was resumed here.
+    #[test]
+    fn a_plan_away_from_a_resumed_continuation_says_it_was_resumed_here() {
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+
+        // C continues A's record and publishes; A continues it too
+        let c_root = w.clone_as("c");
+        let c = machine(&c_root, w.identity("c", "mac-studio"), None);
+        sync(&c, None).unwrap();
+        assert!(resume(&c, None).unwrap().resumed);
+        handover(&c_root, "20261003T130000Z", &body("o", "from c", "n"), None);
+        let theirs = publish(&c, &PublishRequest::default()).unwrap().record.id;
+        sync(&c, None).unwrap();
+        handover(&a_root, "20261003T140000Z", &body("o", "from a", "n"), None);
+        publish(&a, &PublishRequest::default()).unwrap();
+        sync(&a, None).unwrap();
+
+        // B resumes C's continuation by name, then asks what else there is
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        sync(&b, None).unwrap();
+        assert!(resume(&b, Some(&theirs)).unwrap().resumed);
+        let p = plan(&b, None).unwrap();
+        let would = p
+            .blockers
+            .iter()
+            .find(|i| i.code == "would_diverge")
+            .unwrap_or_else(|| panic!("{p:?}"));
+        assert!(would.message.contains("resumed here"), "{}", would.message);
+    }
+
+    /// A resume writes the handover and the decisions before it records where it stands,
+    /// and fails at the one it could not write.
+    #[test]
+    fn a_resume_that_cannot_write_what_it_restores_is_an_error() {
+        use std::os::unix::fs::PermissionsExt;
+        let w = World::new();
+        let signer = w.identity("a", "macbook-pro");
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        let id = planted(&b_root, &b, &signer, |r| {
+            r.decisions = vec![record::CarriedDecision {
+                title: "Records travel in a ref of their own".into(),
+                text: "Why: no branch carries them".into(),
+            }];
+        });
+
+        // the handovers directory takes no file
+        let handovers = crate::mesh::handover::directory(&b_root);
+        std::fs::create_dir_all(&handovers).unwrap();
+        std::fs::set_permissions(&handovers, std::fs::Permissions::from_mode(0o555)).unwrap();
+        let refused = resume(&b, Some(&id));
+        std::fs::set_permissions(&handovers, std::fs::Permissions::from_mode(0o755)).unwrap();
+        refused.unwrap_err();
+
+        // the handover is written, and the decision log cannot be
+        {
+            let _held = ReadOnly::of(&b_root);
+            resume(&b, Some(&id)).unwrap_err();
+        }
+        assert!(resume(&b, Some(&id)).unwrap().resumed);
     }
 }

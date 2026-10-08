@@ -7954,4 +7954,70 @@ mod titled_tests {
         a.milestone = Some("M003".into());
         assert_eq!(titled(&a), "change 1 · I0810 (M003)");
     }
+    /// The card about other machines says what `continuity.status` says and nothing else:
+    /// nothing waiting on the machine that published, the handover another device left on
+    /// the one that fetched it, a diverged line as a failure, a refused file as a warning,
+    /// and a clone with no remote as one.
+    #[test]
+    fn the_other_machines_card_shows_the_status_it_is_given() {
+        use crate::continuity::tests_support::{body, handover, machine, World};
+        use crate::continuity::{self as domain, PublishRequest};
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let published = domain::publish(
+            &a,
+            &PublishRequest {
+                issue: Some("I-1842".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        domain::sync(&a, None).unwrap();
+
+        // the machine that published: it continues its own record, and nothing waits
+        let here = machines_card(&domain::status(&a).unwrap()).render();
+        assert!(here.contains("nothing waiting"), "{here}");
+        assert!(here.contains(&published.record.id[..12]), "{here}");
+        assert!(
+            here.contains("No other device has published a handover"),
+            "{here}"
+        );
+        assert!(here.contains("macbook-pro ("), "{here}");
+
+        // the machine that fetched it: one row, with the device, the branch and the issue
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        domain::sync(&b, None).unwrap();
+        let status = domain::status(&b).unwrap();
+        let there = machines_card(&status).render();
+        assert!(there.contains("1 resumable"), "{there}");
+        assert!(there.contains("nothing yet on this branch"), "{there}");
+        assert!(there.contains("<td>macbook-pro</td>"), "{there}");
+        assert!(there.contains("feature/x"), "{there}");
+        assert!(there.contains("<td>I-1842</td>"), "{there}");
+        assert!(there.contains("origin"), "{there}");
+
+        // a record that names no branch is shown as detached, and a diverged line fails
+        let mut value = serde_json::to_value(&status).unwrap();
+        value["resumable"][0]["branch"] = serde_json::Value::Null;
+        value["lines"][0]["state"] = json!("diverged");
+        let diverged: domain::Status = serde_json::from_value(value).unwrap();
+        let card = machines_card(&diverged).render();
+        assert!(card.contains("1 diverged"), "{card}");
+        assert!(card.contains("DETACHED"), "{card}");
+
+        // a file the store refused is a warning on the card
+        crate::continuity::store::add(&b_root, &[("stray".into(), b"{}".to_vec())], "x\n").unwrap();
+        let refused = domain::status(&b).unwrap();
+        let card = machines_card(&refused).render();
+        assert!(card.contains("continuity.stray_file: "), "{card}");
+
+        // and a store that names no remote says so in the remote's place
+        let mut value = serde_json::to_value(&refused).unwrap();
+        value["store"].as_object_mut().unwrap().remove("remote");
+        let alone: domain::Status = serde_json::from_value(value).unwrap();
+        assert!(machines_card(&alone).render().contains("no remote"));
+    }
 }

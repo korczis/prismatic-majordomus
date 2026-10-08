@@ -806,6 +806,21 @@ mod tests {
             "a line that did not diverge is not listed: {text}"
         );
         assert!(text.contains("no remote synced"), "{text}");
+
+        // a publication that continues a record says which, and a resume whose plan names
+        // no record (none of these operations answers one) still renders what it has
+        let (text, _) = render(
+            publish_text,
+            &json!({
+                "written": true, "handover": "h.md",
+                "record": { "id": "0123456789abcdef", "parent": "fedcba9876543210", "device": {} }
+            }),
+        );
+        assert!(text.contains("continues   fedcba987654"), "{text}");
+        let (text, code) = render(resume_text, &json!({ "resumed": true, "plan": {} }));
+        assert_eq!(code, 0);
+        assert!(text.starts_with("Session resumed\n"), "{text}");
+        assert!(!text.contains("from        "), "{text}");
     }
 
     /// A refusal is the operation's answer and exits 10; what is not there is not found;
