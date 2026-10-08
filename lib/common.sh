@@ -1211,9 +1211,39 @@ mj_change_set() {
 # The repository, named without naming a disk: the remote's URL when there is one, and a
 # hash of the common git directory when there is not. A shared record carries this; the
 # local records keep mj_git_repo_id, which is a path and is theirs to hold.
+#
+# The URL is written without its credentials. A remote configured as
+# https://x-access-token:<token>@host/o/r.git — which is how a CI clone and many a laptop
+# are configured — used to be copied whole into every shared record, and a shared record
+# is tracked and pushed: the token left the machine in a file nobody thought of as holding
+# one. The identity is the repository's, and a credential is not part of which repository
+# it is.
 mj_repository_id() {
   local remote; remote="$(mj_git config --get remote.origin.url 2>/dev/null)"
-  if [ -n "$remote" ]; then printf '%s' "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+  if [ -n "$remote" ]; then mj_url_public "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+}
+
+# A URL as it may be written down: over HTTP the whole userinfo goes, because a token is as
+# often the user name as the password; over any other scheme only a password does, because
+# `ssh://git@host/...` names a login that is no secret and is part of how the remote is
+# reached. The scp form (`git@host:o/r.git`) has no scheme and carries no password.
+#   mj_url_public <url>
+mj_url_public() {
+  local u="$1" scheme rest authority userinfo
+  case "$u" in
+    *://*)
+      scheme="${u%%://*}"; rest="${u#*://}"; authority="${rest%%/*}"
+      case "$authority" in
+        *@*)
+          userinfo="${authority%@*}"
+          case "$scheme" in
+            http|https) rest="${authority##*@}${rest#"$authority"}" ;;
+            *) rest="${userinfo%%:*}@${authority##*@}${rest#"$authority"}" ;;
+          esac ;;
+      esac
+      printf '%s://%s' "$scheme" "$rest" ;;
+    *) printf '%s' "$u" ;;
+  esac
 }
 
 mj_worktree_id() {
@@ -1336,7 +1366,7 @@ mj_resolve_latest() {
     # A shared record names the repository by its remote, a local one by its git directory;
     # the same repository answers to either (ADR 0014).
     if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ] \
-       || [ "$(mj_yget "$flat" repository_id)" = "$(mj_repository_id)" ]; then
+       || [ "$(mj_url_public "$(mj_yget "$flat" repository_id)")" = "$(mj_repository_id)" ]; then
       # Tier 0 is "this worktree". A local record names it by path; a shared one names it by
       # `worktree_id`, because an absolute path is a fact about a disk and a shared record
       # carries none (ADR 0014). Either identifies the same working copy.

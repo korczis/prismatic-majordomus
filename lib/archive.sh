@@ -376,7 +376,7 @@ mj_archive_furnish() { # stage profile flat idx sel n missing
     printf 'commit:     %s\n' "$(mj_git rev-parse HEAD 2>/dev/null || echo unknown)"
     printf 'branch:     %s\n' "$(mj_git_branch)"
     printf 'tree:       %s\n' "$(mj_git_dirty)"
-    printf 'remote:     %s\n' "$(mj_git remote get-url origin 2>/dev/null || echo none)"
+    printf 'remote:     %s\n' "$(mj_url_public "$(mj_git remote get-url origin 2>/dev/null || echo none)")"
     printf 'profile:    %s\n' "$profile"
     printf 'taken:      %s\n' "$(mj_now)"
     printf 'tool:       majordomus %s\n' "$MJ_VERSION"

@@ -859,7 +859,8 @@ mj_session_list() {
     # branch. --all lifts it and says so, because a record from elsewhere is worth seeing
     # when you asked for everything and is never worth being handed silently.
     if [ "$scope_all" = 0 ]; then
-      [ "$MJ_SREC_REPO" = "$mine" ] || [ "$MJ_SREC_REPO" = "$(mj_git_repo_id)" ] || continue
+      # a record written before the remote's credentials were dropped is still this repository's
+      [ "$(mj_url_public "$MJ_SREC_REPO")" = "$mine" ] || [ "$MJ_SREC_REPO" = "$(mj_git_repo_id)" ] || continue
       [ "$MJ_SREC_BRANCH" = "$(mj_git_branch)" ] || continue
     fi
     label="$(mj_git_label "$MJ_SREC_HEAD" "$MJ_SREC_BRANCH")"
