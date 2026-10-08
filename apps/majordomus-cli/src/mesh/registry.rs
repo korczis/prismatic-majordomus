@@ -55,6 +55,8 @@ pub enum MeshSource {
     UdpMulticast,
     /// A broadcast datagram.
     UdpBroadcast,
+    /// The TXT record of a service instance the system's DNS-SD service resolved.
+    Bonjour,
     /// A rendezvous answer or registration.
     Rendezvous,
     /// A synthetic provider (tests, self-check).
@@ -67,6 +69,7 @@ impl MeshSource {
         match self {
             MeshSource::UdpMulticast => "udp_multicast",
             MeshSource::UdpBroadcast => "udp_broadcast",
+            MeshSource::Bonjour => "bonjour",
             MeshSource::Rendezvous => "rendezvous",
             MeshSource::Synthetic => "synthetic",
         }

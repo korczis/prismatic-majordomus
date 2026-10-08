@@ -18,6 +18,7 @@ use std::time::Duration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::bonjour::BonjourProvider;
 use super::broadcast::BroadcastProvider;
 use super::config::{BroadcastMode, MeshConfig, TrustConfig};
 use super::cooperation::{Cooperation, CooperationStatus};
@@ -442,6 +443,9 @@ impl MeshRuntime {
                 !config.multicast.enabled,
             )));
         }
+        if config.bonjour.enabled {
+            providers.push(Box::new(BonjourProvider::new(config.bonjour.clone())));
+        }
         if !config.rendezvous.endpoints.is_empty() {
             providers.push(Box::new(RendezvousProvider::new(
                 config.rendezvous.endpoints.clone(),
@@ -718,6 +722,7 @@ mod tests {
                 ..MulticastConfig::default()
             },
             broadcast: Default::default(),
+            bonjour: Default::default(),
             rendezvous: Default::default(),
             trust: Default::default(),
             cooperation: Default::default(),
@@ -802,6 +807,57 @@ mod tests {
             "deny_unknown observes, never trusts"
         );
         runtime.stop();
+    }
+
+    #[test]
+    fn a_declared_bonjour_provider_is_listed_whatever_this_machine_has_to_ask() {
+        // The one place the platform's own service is asked in this suite, and only to
+        // browse: with no endpoint nothing is registered, and the service type is this
+        // process's own, so no running server hears the test and it hears none. A machine
+        // without the service lists the provider as unavailable; neither is a failure.
+        let dir = tempfile::tempdir().unwrap();
+        let mut config = quiet_config();
+        config.bonjour = crate::mesh::config::BonjourConfig {
+            enabled: true,
+            service: format!("_mjm{}._tcp", std::process::id() % 100_000),
+            interval_seconds: 5,
+        };
+        let runtime = MeshRuntime::new();
+        runtime
+            .activate(
+                &config,
+                identity_in(&dir, "self.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        let providers = runtime.status().providers;
+        assert_eq!(providers.len(), 1, "{providers:?}");
+        assert_eq!(providers[0].id, "bonjour");
+        assert!(
+            matches!(
+                providers[0].state,
+                crate::mesh::provider::MeshProviderState::Running
+                    | crate::mesh::provider::MeshProviderState::Unavailable
+            ),
+            "{providers:?}"
+        );
+        assert_eq!(providers[0].sent, 0, "no endpoint, no registration");
+        runtime.stop();
+        // and without the block, no such provider exists at all
+        let silent = MeshRuntime::new();
+        silent
+            .activate(
+                &quiet_config(),
+                identity_in(&dir, "other.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        assert!(silent.status().providers.is_empty());
+        silent.stop();
     }
 
     #[test]

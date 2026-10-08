@@ -3304,11 +3304,7 @@ pub fn mesh(ctx: &Context) -> Page {
         .providers
         .iter()
         .map(|p| {
-            let state = match p.state {
-                crate::mesh::provider::MeshProviderState::Running => "running",
-                crate::mesh::provider::MeshProviderState::Failed => "failed",
-                crate::mesh::provider::MeshProviderState::Stopped => "stopped",
-            };
+            let state = p.state.as_str();
             card_with(
                 p.id.clone(),
                 word_badge(state),

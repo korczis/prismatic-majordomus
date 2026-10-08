@@ -46,6 +46,10 @@ pub struct DoctorCheck {
     pub check: String,
     /// Whether it holds.
     pub ok: bool,
+    /// Whether it holds with a limitation worth a person's attention: something declared
+    /// that this machine cannot do, which fails nothing. Never set on a failed check.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub warning: bool,
     /// The evidence: a path, an address, an error.
     pub detail: String,
     /// What a failure or a limitation means for the mesh.
@@ -61,9 +65,18 @@ impl DoctorCheck {
         DoctorCheck {
             check: check.into(),
             ok: true,
+            warning: false,
             detail: detail.into(),
             impact: None,
             remediation: None,
+        }
+    }
+
+    fn warn(check: &str, detail: impl Into<String>, impact: &str, remediation: &str) -> Self {
+        DoctorCheck {
+            ok: true,
+            warning: true,
+            ..DoctorCheck::fail(check, detail, impact, remediation)
         }
     }
 
@@ -71,6 +84,7 @@ impl DoctorCheck {
         DoctorCheck {
             check: check.into(),
             ok: false,
+            warning: false,
             detail: detail.into(),
             impact: Some(impact.into()),
             remediation: Some(remediation.into()),
@@ -157,11 +171,12 @@ pub fn doctor_at(
         Some(Ok(config)) => checks.push(DoctorCheck::pass(
             "declaration",
             format!(
-                "{}: enabled={}, multicast={}, broadcast={}, rendezvous endpoints={}, trust={} ({} allowed key(s)), cooperation={} (heartbeat {}s, expiry {}s, {} seed(s))",
+                "{}: enabled={}, multicast={}, broadcast={}, bonjour={}, rendezvous endpoints={}, trust={} ({} allowed key(s)), cooperation={} (heartbeat {}s, expiry {}s, {} seed(s))",
                 config.id,
                 config.enabled,
                 config.multicast.enabled,
                 config.broadcast.mode != super::config::BroadcastMode::Disabled,
+                config.bonjour.enabled,
                 config.rendezvous.endpoints.len(),
                 config.trust.policy.as_str(),
                 config.trust.allow.len(),
@@ -308,6 +323,17 @@ pub fn doctor_at(
         },
     );
 
+    // Bonjour: whether the declaration asks for it, whether this machine has a DNS-SD
+    // service to ask, and — where a server decided — what its provider says.
+    checks.push(bonjour_check(
+        declaration
+            .as_ref()
+            .and_then(|d| d.as_ref().ok())
+            .is_some_and(|c| c.enabled && c.bonjour.enabled),
+        runtime,
+        super::bonjour::availability(),
+    ));
+
     // The discovery protocol, end to end in memory: sign, encode, parse, verify.
     checks.push(match protocol_probe() {
         Ok(detail) => DoctorCheck::pass("protocol", detail),
@@ -451,6 +477,60 @@ fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorChec
     }
 }
 
+/// The `bonjour` verdict. A provider the server started speaks for itself: running holds,
+/// failed fails, and unavailable — declared, on a machine with no DNS-SD service this
+/// executable can ask — holds with a warning, because the mesh runs on without it. Where no
+/// server decided, the verdict is this machine's: whether the service is there to ask.
+fn bonjour_check(
+    declared: bool,
+    runtime: Option<&MeshStatus>,
+    available: Result<&'static str, String>,
+) -> DoctorCheck {
+    const IMPACT: &str = "runtimes on this segment do not find this one through Bonjour, and it does not find them; multicast, rendezvous and seeds are unaffected";
+    const REMEDY: &str = "on Linux install avahi (avahi-daemon running, avahi-publish and avahi-browse on PATH) and restart the server, or take the bonjour block out of the mesh declaration";
+    let provider = runtime.and_then(|status| status.providers.iter().find(|p| p.id == "bonjour"));
+    if let Some(provider) = provider {
+        let detail = provider.detail.as_deref().unwrap_or("no detail");
+        return match provider.state {
+            MeshProviderState::Running => {
+                DoctorCheck::pass("bonjour", format!("declared and started: {detail}"))
+            }
+            MeshProviderState::Unavailable => DoctorCheck::warn(
+                "bonjour",
+                format!("declared and unavailable on this platform — {detail}"),
+                IMPACT,
+                REMEDY,
+            ),
+            MeshProviderState::Failed => DoctorCheck::fail(
+                "bonjour",
+                format!("declared and failed — {detail}"),
+                IMPACT,
+                "read the detail: the system's DNS-SD daemon refused or went away (mDNSResponder on macOS, avahi-daemon on Linux); start it, then restart the server",
+            ),
+            MeshProviderState::Stopped => DoctorCheck::pass("bonjour", "declared and stopped"),
+        };
+    }
+    match (declared, available) {
+        (true, Ok(mechanism)) => DoctorCheck::pass(
+            "bonjour",
+            format!("declared; {mechanism} is here to register with and browse through"),
+        ),
+        (false, Ok(mechanism)) => {
+            DoctorCheck::pass("bonjour", format!("not declared; {mechanism} is available"))
+        }
+        (true, Err(reason)) => DoctorCheck::warn(
+            "bonjour",
+            format!("declared and unavailable on this platform — {reason}"),
+            IMPACT,
+            REMEDY,
+        ),
+        (false, Err(reason)) => DoctorCheck::pass(
+            "bonjour",
+            format!("not declared, and unavailable on this platform — {reason}"),
+        ),
+    }
+}
+
 fn multicast_probe(group_text: &str) -> Result<(), MeshError> {
     let group: Ipv4Addr = group_text
         .parse()
@@ -528,6 +608,7 @@ mod tests {
                 "udp",
                 "multicast",
                 "broadcast",
+                "bonjour",
                 "protocol",
                 "link",
                 "runtime"
@@ -596,6 +677,114 @@ mod tests {
             .as_deref()
             .unwrap_or_default()
             .contains("cooperation.repository"));
+    }
+
+    fn provider(state: MeshProviderState, detail: &str) -> MeshStatus {
+        let mut status = super::super::MeshRuntime::new().status();
+        status.active = true;
+        status.providers.push(super::super::ProviderStatus {
+            id: "bonjour".into(),
+            state,
+            detail: Some(detail.into()),
+            sent: 0,
+            received: 0,
+        });
+        status
+    }
+
+    #[test]
+    fn the_bonjour_line_says_started_and_warns_without_failing_when_the_platform_has_none() {
+        let started = provider(
+            MeshProviderState::Running,
+            "majordomus-641bdb94-01234567._majordomus._tcp.local. port 8741 through mDNSResponder",
+        );
+        let check = bonjour_check(true, Some(&started), Ok("mDNSResponder"));
+        assert!(check.ok && !check.warning);
+        assert_eq!(
+            check.detail,
+            "declared and started: majordomus-641bdb94-01234567._majordomus._tcp.local. port 8741 through mDNSResponder"
+        );
+
+        // unavailable is the provider's own word, whatever this machine would answer
+        let reason = "avahi-publish and avahi-browse are not on PATH";
+        let missing = provider(MeshProviderState::Unavailable, reason);
+        let check = bonjour_check(true, Some(&missing), Ok("mDNSResponder"));
+        assert!(check.ok && check.warning, "a warning fails nothing");
+        assert_eq!(
+            check.detail,
+            format!("declared and unavailable on this platform — {reason}")
+        );
+        assert!(check.impact.as_deref().unwrap().contains("are unaffected"));
+        assert!(check.remediation.as_deref().unwrap().contains("avahi"));
+        let json = serde_json::to_value(&check).unwrap();
+        assert_eq!(json["warning"], true);
+        // and the whole report still holds: the verdict is not the warning's to change
+        let mut report = doctor_at(Some(Ok(config(true))), None, None);
+        report.checks.push(check);
+        assert!(report.checks.iter().filter(|c| c.warning).all(|c| c.ok));
+
+        let failed = bonjour_check(
+            true,
+            Some(&provider(MeshProviderState::Failed, "browse: no daemon")),
+            Ok("avahi"),
+        );
+        assert!(!failed.ok && !failed.warning);
+        assert_eq!(failed.detail, "declared and failed — browse: no daemon");
+        let stopped = bonjour_check(
+            true,
+            Some(&provider(MeshProviderState::Stopped, "")),
+            Ok("avahi"),
+        );
+        assert!(stopped.ok && stopped.detail == "declared and stopped");
+    }
+
+    #[test]
+    fn where_no_server_decided_the_bonjour_line_is_this_machines_answer() {
+        let ok = serde_json::to_value(bonjour_check(true, None, Ok("avahi"))).unwrap();
+        assert_eq!(
+            ok["detail"],
+            "declared; avahi is here to register with and browse through"
+        );
+        assert!(
+            ok.get("warning").is_none(),
+            "a check that only holds says nothing more"
+        );
+        assert_eq!(
+            bonjour_check(false, None, Ok("mDNSResponder")).detail,
+            "not declared; mDNSResponder is available"
+        );
+        let missing = || Err("no tools".to_string());
+        let warned = bonjour_check(true, None, missing());
+        assert!(warned.ok && warned.warning);
+        assert_eq!(
+            warned.detail,
+            "declared and unavailable on this platform — no tools"
+        );
+        let quiet = bonjour_check(false, None, missing());
+        assert!(quiet.ok && !quiet.warning && quiet.impact.is_none());
+        // a server that runs other providers and not this one decided nothing about it
+        let mut other = provider(MeshProviderState::Running, "group");
+        other.providers[0].id = "udp_multicast".into();
+        assert_eq!(
+            bonjour_check(false, Some(&other), Ok("avahi")).detail,
+            "not declared; avahi is available"
+        );
+
+        // through the whole self-check: declared, and the line is there either way
+        let mut declared = config(true);
+        declared.bonjour.enabled = true;
+        let report = doctor_at(Some(Ok(declared)), None, None);
+        let line = check(&report, "bonjour");
+        assert!(
+            line.ok && line.detail.starts_with("declared"),
+            "{}",
+            line.detail
+        );
+        assert!(check(&report, "declaration")
+            .detail
+            .contains("bonjour=true"));
+        let silent = doctor(None);
+        assert!(check(&silent, "bonjour").detail.starts_with("not declared"));
     }
 
     fn config(enabled: bool) -> MeshConfig {

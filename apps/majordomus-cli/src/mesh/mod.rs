@@ -6,7 +6,7 @@
 //!   and machine ([`identity`]); the node id is a digest of the public key. Hostnames,
 //!   IPs, ports and PIDs are runtime attributes and never identity.
 //! - **One protocol** ([`protocol`]): a compact, versioned, bounded, signed envelope,
-//!   the same over multicast, broadcast and rendezvous. Parsing never panics; hostile
+//!   the same over multicast, broadcast, Bonjour and rendezvous. Parsing never panics; hostile
 //!   input is a counted refusal.
 //! - **Providers observe, the manager decides** ([`provider`], [`manager`]): a
 //!   discovery mechanism hands raw bytes up and answers for its own health. The manager
@@ -43,6 +43,13 @@
 //! ```
 
 pub mod address;
+pub mod bonjour;
+// The two platform mechanisms behind `bonjour::DnsSd`. avahi's is compiled wherever it is
+// used or tested; mDNSResponder's only where its library exists.
+#[cfg(all(unix, any(test, not(target_os = "macos"))))]
+mod bonjour_avahi;
+#[cfg(target_os = "macos")]
+mod bonjour_dnssd;
 pub mod broadcast;
 pub mod config;
 pub mod cooperation;

@@ -13587,6 +13587,13 @@
           "type": "boolean"
         },
         {
+          "description": "Whether it holds with a limitation worth a person's attention: something declared\nthat this machine cannot do, which fails nothing. Never set on a failed check.",
+          "name": "warning",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
           "description": "The evidence: a path, an address, an error.",
           "name": "detail",
           "refs": [],
@@ -28422,7 +28429,7 @@
       "is_enum": true,
       "name": "MeshProviderState",
       "properties": [],
-      "type": "\"running\" | \"failed\" | \"stopped\"",
+      "type": "\"running\" | \"failed\" | \"stopped\" | \"unavailable\"",
       "used_by": [],
       "used_by_schemas": [
         "ProviderStatus"
@@ -28439,6 +28446,10 @@
         {
           "description": "Stopped by the manager.",
           "value": "stopped"
+        },
+        {
+          "description": "The mechanism does not exist on this machine — no system service to ask —\nand `ProviderStatus::detail` says what is missing. Not a failure: nothing was\ntried and nothing broke, and the mesh runs on with its other providers.",
+          "value": "unavailable"
         }
       ],
       "variants": []
@@ -28510,7 +28521,7 @@
       "is_enum": true,
       "name": "MeshSource",
       "properties": [],
-      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"synthetic\"",
+      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"bonjour\" | \"rendezvous\" | \"synthetic\"",
       "used_by": [],
       "used_by_schemas": [
         "Sighting"
@@ -28523,6 +28534,10 @@
         {
           "description": "A broadcast datagram.",
           "value": "udp_broadcast"
+        },
+        {
+          "description": "The TXT record of a service instance the system's DNS-SD service resolved.",
+          "value": "bonjour"
         },
         {
           "description": "A rendezvous answer or registration.",
@@ -35315,7 +35330,7 @@
       "name": "ProviderStatus",
       "properties": [
         {
-          "description": "The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`.",
+          "description": "The provider id: `udp_multicast`, `udp_broadcast`, `bonjour`, `rendezvous`,\n`synthetic`.",
           "name": "id",
           "refs": [],
           "required": true,
@@ -35331,7 +35346,7 @@
           "type": "MeshProviderState"
         },
         {
-          "description": "Why, when `Failed`; what it watches, when `Running`.",
+          "description": "Why, when `Failed` or `Unavailable`; what it watches, when `Running`.",
           "name": "detail",
           "refs": [],
           "required": false,

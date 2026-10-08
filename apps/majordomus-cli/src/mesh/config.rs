@@ -60,6 +60,9 @@ pub struct MeshConfig {
     /// UDP broadcast, the controlled fallback.
     #[serde(default)]
     pub broadcast: BroadcastConfig,
+    /// Bonjour: discovery through the system's DNS-SD service. Off unless declared.
+    #[serde(default)]
+    pub bonjour: BonjourConfig,
     /// Rendezvous endpoints, for networks multicast cannot cross.
     #[serde(default)]
     pub rendezvous: RendezvousConfig,
@@ -225,6 +228,93 @@ impl Default for BroadcastConfig {
     }
 }
 
+/// Bonjour settings: whether this runtime registers itself with, and browses through, the
+/// operating system's DNS-SD service (mDNSResponder on macOS, avahi on Linux), and how
+/// often it replaces the envelope its registration carries (ADR 0120).
+///
+/// Unlike multicast, the block is off when it is absent: registering a service makes its
+/// name and port visible to every device on the segment that browses mDNS, and that is a
+/// decision the declaration states rather than inherits.
+///
+/// ```
+/// use majordomus_cli::mesh::config::{BonjourConfig, MeshConfig};
+///
+/// let silent: MeshConfig = serde_json::from_value(serde_json::json!({
+///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "docs", "enabled": true
+/// })).unwrap();
+/// assert!(!silent.bonjour.enabled, "absence means off");
+///
+/// let stated: BonjourConfig = serde_json::from_value(serde_json::json!({ "enabled": true })).unwrap();
+/// assert_eq!((stated.service.as_str(), stated.interval_seconds), ("_majordomus._tcp", 15));
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BonjourConfig {
+    /// Whether the Bonjour provider runs. `false` unless declared.
+    #[serde(default)]
+    pub enabled: bool,
+    /// The DNS-SD service type registered and browsed, `_name._tcp`. Every Majordomus
+    /// that should find another uses the default; a different one is a separate set of
+    /// instances on the same segment — what a test declares, so that no running server
+    /// hears it.
+    #[serde(default = "default_service")]
+    pub service: String,
+    /// Seconds between two envelopes: how often the registration's TXT record is
+    /// replaced with a freshly signed one. At most 60, the registry's presence window.
+    #[serde(default = "default_interval")]
+    pub interval_seconds: u64,
+}
+
+impl Default for BonjourConfig {
+    fn default() -> Self {
+        BonjourConfig {
+            enabled: false,
+            service: default_service(),
+            interval_seconds: DEFAULT_INTERVAL,
+        }
+    }
+}
+
+impl BonjourConfig {
+    /// Refuse the settings that cannot work: an interval of zero (a busy loop) or above
+    /// the presence window (a runtime that is up would read as absent between two
+    /// envelopes, and a late browser would be handed an ever staler one), and a service
+    /// type that is not `_name._tcp` with a name of 1 to 15 letters, digits and hyphens.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::BonjourConfig;
+    ///
+    /// assert!(BonjourConfig::default().validate().is_ok());
+    /// assert!(BonjourConfig { interval_seconds: 61, ..Default::default() }.validate().is_err());
+    /// assert!(BonjourConfig { service: "majordomus".into(), ..Default::default() }.validate().is_err());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        if self.interval_seconds == 0 {
+            return Err("bonjour.interval_seconds of 0 would be a busy loop".into());
+        }
+        if self.interval_seconds > super::bonjour::MAX_INTERVAL {
+            return Err(format!(
+                "bonjour.interval_seconds {} is above {}: a runtime stays present for that long after one envelope, so a slower one would read as absent while it is up",
+                self.interval_seconds,
+                super::bonjour::MAX_INTERVAL
+            ));
+        }
+        let name = self
+            .service
+            .strip_prefix('_')
+            .and_then(|s| s.strip_suffix("._tcp"))
+            .unwrap_or_default();
+        let plain = |b: u8| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-';
+        if name.is_empty() || name.len() > 15 || !name.bytes().all(plain) {
+            return Err(format!(
+                "bonjour.service '{}' is not _name._tcp with a name of 1 to 15 lowercase letters, digits and hyphens",
+                self.service
+            ));
+        }
+        Ok(())
+    }
+}
+
 /// Rendezvous settings: other Majordomus servers to register with. Plain HTTP on a
 /// private network; there is no TLS in this executable, and the protocol assumes none —
 /// candidates verify end-to-end by signature, a poisoned rendezvous can withhold nodes
@@ -276,6 +366,9 @@ fn default_group() -> String {
 }
 fn default_port() -> u16 {
     DEFAULT_PORT
+}
+fn default_service() -> String {
+    super::bonjour::DEFAULT_SERVICE.into()
 }
 fn default_interval() -> u64 {
     DEFAULT_INTERVAL
@@ -350,6 +443,10 @@ impl MeshConfig {
             )));
         }
         parsed
+            .bonjour
+            .validate()
+            .map_err(|e| MeshError::Config(format!("{}: {e}", object.uri)))?;
+        parsed
             .cooperation
             .validate()
             .map_err(|e| MeshError::Config(format!("{}: {e}", object.uri)))?;
@@ -407,6 +504,70 @@ mod tests {
             "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "surprise": 1
         })))
         .is_err());
+    }
+
+    #[test]
+    fn a_bonjour_block_parses_and_its_absence_means_off() {
+        let base = |bonjour: Option<serde_json::Value>| {
+            let mut metadata = serde_json::json!({
+                "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true
+            });
+            if let Some(bonjour) = bonjour {
+                metadata["bonjour"] = bonjour;
+            }
+            MeshConfig::parse(&object(metadata))
+        };
+        let absent = base(None).unwrap();
+        assert!(!absent.bonjour.enabled, "no block, no registration");
+        assert!(absent.multicast.enabled, "and nothing else changes with it");
+        let empty = base(Some(serde_json::json!({}))).unwrap();
+        assert!(
+            !empty.bonjour.enabled,
+            "a block that does not say enabled is off"
+        );
+        let stated = base(Some(
+            serde_json::json!({"enabled": true, "interval_seconds": 20}),
+        ))
+        .unwrap();
+        assert!(stated.bonjour.enabled);
+        assert_eq!(stated.bonjour.interval_seconds, 20);
+        assert_eq!(stated.bonjour.service, "_majordomus._tcp");
+        let other = base(Some(
+            serde_json::json!({"enabled": true, "service": "_mj-test1._tcp"}),
+        ));
+        assert_eq!(other.unwrap().bonjour.service, "_mj-test1._tcp");
+        assert_eq!(BonjourConfig::default().interval_seconds, DEFAULT_INTERVAL);
+    }
+
+    #[test]
+    fn a_bonjour_interval_of_zero_or_past_the_presence_window_and_a_bad_service_are_refused() {
+        let refused = |bonjour: serde_json::Value| {
+            MeshConfig::parse(&object(serde_json::json!({
+                "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "bonjour": bonjour
+            })))
+            .unwrap_err()
+            .to_string()
+        };
+        assert!(refused(serde_json::json!({"interval_seconds": 0})).contains("busy loop"));
+        assert!(refused(serde_json::json!({"interval_seconds": 61})).contains("is above 60"));
+        for service in [
+            "majordomus",
+            "_majordomus._udp",
+            "__tcp",
+            "_._tcp",
+            "_Majordomus._tcp",
+            "_a-name-that-is-too-long._tcp",
+            "_a b._tcp",
+        ] {
+            let why = refused(serde_json::json!({"service": service}));
+            assert!(why.contains("is not _name._tcp"), "{service}: {why}");
+        }
+        assert!(refused(serde_json::json!({"port": 1})).contains("unknown field"));
+        assert!(MeshConfig::parse(&object(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
+            "bonjour": {"interval_seconds": 60}
+        })))
+        .is_ok());
     }
 
     #[test]

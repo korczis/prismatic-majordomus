@@ -29262,6 +29262,9 @@ capabilities:
               ok:
                 type: boolean
                 description: Whether it holds.
+              warning:
+                type: boolean
+                description: "Whether it holds with a limitation worth a person's attention: something declared\nthat this machine cannot do, which fails nothing. Never set on a failed check."
               detail:
                 type: string
                 description: "The evidence: a path, an address, an error."
@@ -30259,6 +30262,9 @@ capabilities:
               - type: string
                 const: udp_broadcast
                 description: A broadcast datagram.
+              - type: string
+                const: bonjour
+                description: "The TXT record of a service instance the system's DNS-SD service resolved."
               - type: string
                 const: rendezvous
                 description: A rendezvous answer or registration.
@@ -32690,7 +32696,7 @@ capabilities:
             properties:
               id:
                 type: string
-                description: "The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`."
+                description: "The provider id: `udp_multicast`, `udp_broadcast`, `bonjour`, `rendezvous`,\n`synthetic`."
               state:
                 "$ref": "#/$defs/MeshProviderState"
                 description: The state.
@@ -32698,7 +32704,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "Why, when `Failed`; what it watches, when `Running`."
+                description: "Why, when `Failed` or `Unavailable`; what it watches, when `Running`."
               sent:
                 type: integer
                 format: uint64
@@ -32726,6 +32732,9 @@ capabilities:
               - type: string
                 const: stopped
                 description: Stopped by the manager.
+              - type: string
+                const: unavailable
+                description: "The mechanism does not exist on this machine — no system service to ask —\nand `ProviderStatus::detail` says what is missing. Not a failure: nothing was\ntried and nothing broke, and the mesh runs on with its other providers."
             description: "The provider's health, as every surface reports it."
           Tallies:
             type: object

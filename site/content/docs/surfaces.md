@@ -747,7 +747,8 @@ declaration (`.ai/repo/mesh/majordomus.yaml`) says `enabled: false` [C42]. The g
 sentence is **"Discovery creates awareness, not authority."**
 
 What does **not** exist, so that nobody goes looking for it: a blackboard separate from the
-peer board; Tailscale, mDNS or DNS-SD discovery (named as possible future providers only);
+peer board; Tailscale discovery (named as a possible future provider only — DNS-SD is no
+longer on this list: the `bonjour` provider asks the system's service, ADR 0120);
 any cross-machine journal, link or claim replication on master; a Cockpit page for the
 peer board. ADR 50 keeps the two apart on purpose: "The peer board remains the only
 cooperation surface."

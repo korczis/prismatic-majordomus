@@ -291,6 +291,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
             ..MulticastConfig::default()
         },
         broadcast: Default::default(),
+        bonjour: Default::default(),
         rendezvous: Default::default(),
         trust: Default::default(),
         cooperation: Default::default(),

@@ -31,7 +31,9 @@ commits the object that says otherwise.
 2. A discovery mechanism implements `mesh::provider::MeshProvider` and hands raw
    bytes to the manager; it parses no envelope, verifies no signature, evaluates no
    trust and keeps no peer records. Adding a mechanism edits no consumer, no surface
-   and no registry.
+   and no registry. The mechanisms are UDP multicast, UDP broadcast, rendezvous and
+   Bonjour; Bonjour asks the operating system's DNS-SD service and implements no mDNS
+   of its own (ADR 0120).
 3. `mesh::registry::MeshRegistry` is the only peer store. CLI, HTTP, OpenAPI, MCP
    and Cockpit render it through the `mesh` capability module; none holds a second
    list, and the Cockpit ships no fixture nodes.
@@ -43,7 +45,10 @@ commits the object that says otherwise.
    `mesh/v1`) during shared-server startup, never blocks startup, and a provider
    failure degrades that provider alone.
 6. An advertisement carries no secret, no credential, no environment value and no
-   repository content; repositories appear only as digests.
+   repository content; repositories appear only as digests. What a provider adds
+   around the advertisement is held to the same: a Bonjour service instance is named
+   from the node id and the runtime slot alone — no host name, user name or path —
+   and its TXT record carries the advertisement and nothing else.
 
 ## Failure behaviour
 
@@ -57,7 +62,10 @@ nothing — is held by the unit and integration tests named below and by review.
 
 `scripts/ci/mesh-check` (the gate), `cargo test --manifest-path
 apps/majordomus-cli/Cargo.toml --lib mesh` (protocol refusals, replay, trust,
-dedup, bounded registry, zero-registration synthetic provider), and
+dedup, bounded registry, zero-registration synthetic provider; the Bonjour provider
+against a fake DNS-SD service), `test/cases/1002_the_mesh_is_found_over_bonjour.sh` (a
+declared Bonjour provider is named by `mesh status` and `mesh doctor` and fails nothing
+where the platform has no service), and
 `apps/majordomus-cli/tests/mesh.rs` (two runtimes discover each other over loopback
 rendezvous and converge to one record per node; a spoofed envelope is refused).
 {% endraw %}

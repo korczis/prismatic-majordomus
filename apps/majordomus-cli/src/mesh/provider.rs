@@ -1,6 +1,7 @@
 //! The provider contract: a discovery mechanism is a source of observations and nothing
-//! more. A provider watches one transport (a multicast group, a broadcast port, a
-//! rendezvous endpoint set), hands every datagram it hears to the manager as raw bytes,
+//! more. A provider watches one transport (a multicast group, a broadcast port, the
+//! system's DNS-SD service, a rendezvous endpoint set), hands every datagram it hears to
+//! the manager as raw bytes,
 //! and answers for its own health. It parses nothing, verifies nothing, trusts nothing
 //! and holds no peers — the manager owns the one verification path and the one registry,
 //! which is what makes adding a provider a registration rather than a rewrite.
@@ -146,16 +147,43 @@ pub enum MeshProviderState {
     Failed,
     /// Stopped by the manager.
     Stopped,
+    /// The mechanism does not exist on this machine — no system service to ask —
+    /// and `ProviderStatus::detail` says what is missing. Not a failure: nothing was
+    /// tried and nothing broke, and the mesh runs on with its other providers.
+    Unavailable,
+}
+
+impl MeshProviderState {
+    /// The state's word, as listings and pages show it: the same one its JSON carries.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::provider::MeshProviderState;
+    ///
+    /// assert_eq!(MeshProviderState::Unavailable.as_str(), "unavailable");
+    /// assert_eq!(
+    ///     serde_json::to_value(MeshProviderState::Unavailable).unwrap(),
+    ///     MeshProviderState::Unavailable.as_str(),
+    /// );
+    /// ```
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            MeshProviderState::Running => "running",
+            MeshProviderState::Failed => "failed",
+            MeshProviderState::Stopped => "stopped",
+            MeshProviderState::Unavailable => "unavailable",
+        }
+    }
 }
 
 /// One provider's status: state, why, and its counters.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProviderStatus {
-    /// The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`.
+    /// The provider id: `udp_multicast`, `udp_broadcast`, `bonjour`, `rendezvous`,
+    /// `synthetic`.
     pub id: String,
     /// The state.
     pub state: MeshProviderState,
-    /// Why, when `Failed`; what it watches, when `Running`.
+    /// Why, when `Failed` or `Unavailable`; what it watches, when `Running`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
     /// Advertisements transmitted.
@@ -232,6 +260,18 @@ mod tests {
         let b = beacon.next_envelope();
         assert_eq!(a.adv.seq + 1, b.adv.seq);
         assert_eq!(a.adv.node_id(), Some(node));
+    }
+
+    #[test]
+    fn a_providers_state_is_shown_by_the_word_its_json_carries() {
+        for state in [
+            MeshProviderState::Running,
+            MeshProviderState::Failed,
+            MeshProviderState::Stopped,
+            MeshProviderState::Unavailable,
+        ] {
+            assert_eq!(serde_json::to_value(&state).unwrap(), state.as_str());
+        }
     }
 
     #[test]

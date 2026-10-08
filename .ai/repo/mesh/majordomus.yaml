@@ -7,7 +7,8 @@
 # docs/MESH.md, "This repository's mesh", says what is on, what travels, and how to add
 # a machine.
 #
-# Least privilege: multicast on the local segment only (TTL 1), no broadcast, no seed,
+# Least privilege: multicast and Bonjour on the local segment only (TTL 1; mDNS is
+# link-local), no broadcast, no seed,
 # cooperation at its defaults, and `deny_unknown` — a key that is not listed below is
 # observed and trusted for nothing, and its hellos are refused as `untrusted`. The
 # worktrees of one machine share that machine's key, which is trusted as itself; another
@@ -25,6 +26,17 @@
 # reach, one thread per hub and a 5-second bound per request; a hub that does not answer
 # is asked less and less often (the interval doubles per failure, up to eight times) and
 # stops nothing else.
+#
+# Bonjour is on (ADR 0120). The firewall that drops multicast addressed to this process
+# lets the system's own DNS-SD daemon through, so each server also registers itself with
+# that daemon (mDNSResponder on a Mac, avahi on Linux) and browses for the others: two
+# Macs of one segment find each other with no hub running. What it adds to the segment:
+# one service instance per server, `majordomus-<node>-<runtime>._majordomus._tcp` with the
+# server's HTTP port, visible to every device that browses mDNS, whatever it is. Its TXT
+# record is the signed envelope a multicast advertisement already carries, and nothing
+# else. It crosses no router and no tailnet, and it trusts nobody: a runtime found this
+# way is verified and judged by `trust` below exactly as one heard any other way. A
+# machine without avahi reports the provider `unavailable` and runs on.
 schema: mesh/v1
 kind: mesh-declaration
 id: majordomus
@@ -37,6 +49,9 @@ multicast:
   interval_seconds: 15
 broadcast:
   mode: disabled
+bonjour:
+  enabled: true
+  interval_seconds: 15
 rendezvous:
   endpoints:
     # jetson: LAN, tailnet

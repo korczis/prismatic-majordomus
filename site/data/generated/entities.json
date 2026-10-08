@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 83,
+      "count": 84,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 83
+      "count": 84
     },
     {
       "kind": "application",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 388
+      "count": 389
     },
     {
       "kind": "use-case",
@@ -3144,6 +3144,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0067/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0120",
+          "kind": "adr",
+          "route": "/adrs/adr-0120/",
+          "external": false
         }
       ]
     },
@@ -3695,7 +3702,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0120",
+          "kind": "adr",
+          "route": "/adrs/adr-0120/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6205,6 +6220,87 @@
           "kind": "test",
           "route": null,
           "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0120",
+      "identity": "adr-0120",
+      "slug": "adr-0120",
+      "cockpit": "/cockpit/objects/adr/adr-0120",
+      "title": "The mesh is found through the system's DNS-SD service",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "discovery",
+        "security"
+      ],
+      "source": ".ai/repo/adrs/0120-the-mesh-is-found-through-the-system-s-dns-sd-service.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/bonjour.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/bonjour_avahi.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/bonjour_dnssd.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "mesh-declaration",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-is-observation-not-authority@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-is-observation-not-authority-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1002_the_mesh_is_found_over_bonjour.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
         }
       ],
       "referenced_by": []
@@ -11748,6 +11844,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0120",
+          "kind": "adr",
+          "route": "/adrs/adr-0120/",
           "external": false
         },
         {
