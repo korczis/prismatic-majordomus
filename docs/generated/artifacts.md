@@ -123,6 +123,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `release/v0.13.1` | `json` | — | the release record v0.13.1 |
 | `release/v0.13.2` | `json` | — | the release record v0.13.2 |
 | `release/v0.14.0` | `json` | — | the release record v0.14.0 |
+| `release/v0.15.0` | `json` | — | the release record v0.15.0 |
 | `release/v0.3.1` | `json` | — | the release record v0.3.1 |
 | `release/v0.5.0` | `json` | — | the release record v0.5.0 |
 | `release/v0.6.0` | `json` | — | the release record v0.6.0 |
@@ -169,7 +170,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `55e3bfbe01d7fbcd` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9320 | `4a79a6ebea7db8a6` |
 | `deploy/Dockerfile` | `deployment` | text | 1866 | `05e4fe64011ca785` |
-| `docs/INSTALL.md` | `install-guide` | markdown | 10457 | `eacc2327c6e3585d` |
+| `docs/INSTALL.md` | `install-guide` | markdown | 10562 | `d00906ffa24fcbe1` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
@@ -177,9 +178,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 19265 | `b9285e9122a3f638` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 31662 | `b3137101187bd83c` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 37953 | `0ae779c430beb065` |
-| `docs/generated/changelog.json` | `changelog` | json | 776611 | `0205c2708ba25e05` |
-| `docs/generated/changelog.md` | `changelog` | markdown | 191206 | `bddf49e1a5ddf1ac` |
-| `docs/generated/changelog.yaml` | `changelog` | yaml | 619058 | `ce0e89aeba269332` |
+| `docs/generated/changelog.json` | `changelog` | json | 806480 | `7ddf49eac611af28` |
+| `docs/generated/changelog.md` | `changelog` | markdown | 198804 | `534e3c72e30f1bf4` |
+| `docs/generated/changelog.yaml` | `changelog` | yaml | 642814 | `e35e9bb9dc4ffd98` |
 | `docs/generated/cli.json` | `cli` | json | 1045961 | `aaf2d6397487bb10` |
 | `docs/generated/cli.md` | `cli` | markdown | 448722 | `4b452fe47cddbccc` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 815522 | `0a5ee3551f8c5a41` |
@@ -190,7 +191,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 28388 | `0ac74803624d8a53` |
 | `docs/generated/economics.md` | `economics` | markdown | 15023 | `70e325e0f540be2d` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 23676 | `7551acdeba3e8fb0` |
-| `docs/generated/graph.json` | `graph` | json | 2734384 | `a72530d583344f89` |
+| `docs/generated/graph.json` | `graph` | json | 2735325 | `0a52b6dce7b7ede9` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `15826097ceefd72d` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `e08fd5756dba586d` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `2a1ad38a23749b61` |
@@ -305,18 +306,18 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 290 | `717cc728764b9e4f` |
 | `share/version.txt` | `version` | text | 231 | `64bb747835f4fb30` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `6037a8d682d599ce` |
-| `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1fc1c94747e6eaaa` |
+| `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `006fa1b0287d1dfa` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 693770 | `790cdc914c628d46` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92055 | `23b964d8bc651e7a` |
-| `site/data/registry/product.json` | `site-product` | json | 629383 | `96c44cc9a6eae780` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5808787 | `6710d999ae6bc1f1` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92055 | `b7c29d6077585ce5` |
+| `site/data/registry/product.json` | `site-product` | json | 629383 | `1098fe8dbd656824` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5809089 | `846459c6d2c4fe9e` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `6de6709f2b72fbcb` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `678661b3939d49ac` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `e14d419182dbbb9b` |
 | `site/static/images/logo-mark.svg` | `design-mark` | text | 904 | `e14d419182dbbb9b` |
 | `site/static/images/logo.svg` | `design-logo` | text | 1059 | `e4cbf56977b25909` |
 | `site/static/install.sh` | `installer` | text | 31451 | `fb5c54c696fd3130` |
-| `site/static/releases/latest.json` | `release/latest` | json | 2397 | `83f564ba371d953c` |
+| `site/static/releases/latest.json` | `release/latest` | json | 2397 | `ddca376a6d70e93e` |
 | `site/static/releases/v0.10.0.json` | `release/v0.10.0` | json | 2397 | `d5d062b81a621263` |
 | `site/static/releases/v0.11.0.json` | `release/v0.11.0` | json | 2397 | `d314f8a7caa0916f` |
 | `site/static/releases/v0.12.0.json` | `release/v0.12.0` | json | 2397 | `e3d6bf49c49ac776` |
@@ -324,6 +325,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/static/releases/v0.13.1.json` | `release/v0.13.1` | json | 2397 | `25322493ab5259e4` |
 | `site/static/releases/v0.13.2.json` | `release/v0.13.2` | json | 2397 | `120c55cb0822ab7f` |
 | `site/static/releases/v0.14.0.json` | `release/v0.14.0` | json | 2397 | `83f564ba371d953c` |
+| `site/static/releases/v0.15.0.json` | `release/v0.15.0` | json | 2397 | `ddca376a6d70e93e` |
 | `site/static/releases/v0.3.1.json` | `release/v0.3.1` | json | 2369 | `8331c85c5162a5b5` |
 | `site/static/releases/v0.5.0.json` | `release/v0.5.0` | json | 2369 | `09b2be2b805cf53b` |
 | `site/static/releases/v0.6.0.json` | `release/v0.6.0` | json | 2369 | `d77a5b1279df3c7a` |

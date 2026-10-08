@@ -44,7 +44,7 @@ registry entry, none declared in the MCP code. The decision is
 | | |
 |---|---|
 | election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
-| port | `--http-port` (default `8741`) on `--http-host` (default: the interface `MAJORDOMUS_HTTP_HOST` names on this machine, and `127.0.0.1` when it names none — [below](#the-interface-is-the-machines-to-name)); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
+| port | `--http-port` (default `8741`) on `--http-host` (default: the interface `MAJORDOMUS_HTTP_HOST` names on this machine, and `127.0.0.1` when it names none — [below](#the-machine-names-the-interface)); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
@@ -220,7 +220,7 @@ forgets the HTTP sessions that stopped pinging on every path, not only while the
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 
 
-### The interface is the machine's to name
+### The machine names the interface
 
 A local server binds loopback. That default does not move: the layer, its diagnostics, its
 peers and the two tools that answer about `.ai/local/` are not for every host on the
