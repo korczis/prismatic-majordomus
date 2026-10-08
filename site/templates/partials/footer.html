@@ -27,9 +27,9 @@
             the licence that applies, where to report a vulnerability now, how to contribute now. -#}
         <ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="{{ project.repository_url }}" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="{{ project.repository_url }}/blob/master/LICENSE" class="hover:text-heading hover:underline">{{ project.license }} licence</a></li>
-          <li><a href="{{ project.repository_url }}/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="{{ project.repository_url }}/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="{{ <source_blob path="LICENSE" /> }}" class="hover:text-heading hover:underline">{{ project.license }} licence</a></li>
+          <li><a href="{{ <source_blob path="SECURITY.md" /> }}" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="{{ <source_blob path="CONTRIBUTING.md" /> }}" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>

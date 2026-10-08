@@ -61,8 +61,12 @@ fi
 [ -f "$BASELINE" ] || { echo "source-pin-check: no baseline at $BASELINE (run --write-baseline)" >&2; exit 12; }
 allowed() { awk -v f="$1" '$1 == f && NF == 2 { print $2; found = 1 } END { if (!found) print 0 }' "$BASELINE"; }
 
+# `grep -v` exits 1 when it prints nothing, and under pipefail that was this script's own
+# exit: with every link converted, nothing is measured and nothing is allowed, both pipelines
+# below are empty, and the gate died at the moment the debt reached zero — exit 1, no word
+# on either stream. An empty reading is the answer, not a failure.
 rc=0
-new="$(printf '%s\n' "$now" | grep -v '^$' | while read -r f n; do
+new="$(printf '%s\n' "$now" | { grep -v '^$' || true; } | while read -r f n; do
   a="$(allowed "$f")"
   [ "$n" -le "$a" ] || echo "  NEW  $f names master in $n source link(s), the baseline allows $a"
 done)"
@@ -75,7 +79,7 @@ if [ -n "$new" ]; then
 fi
 
 # a baseline entry that has since shrunk: report, never fail
-grep -v '^#' "$BASELINE" | grep -v '^$' | while read -r f a; do
+{ grep -v -e '^#' -e '^$' "$BASELINE" || true; } | while read -r f a; do
   n="$(printf '%s\n' "$now" | awk -v f="$f" '$1 == f { print $2; found = 1 } END { if (!found) print 0 }')"
   [ "$n" -ge "$a" ] || echo "  FIXED $f: $a -> $n — tighten the baseline: scripts/ci/source-pin-check --write-baseline"
 done

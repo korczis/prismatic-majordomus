@@ -57,9 +57,9 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ s.path }}">{{ s.path }}</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ <source_blob path={s.path} /> }}">{{ s.path }}</a></dd>
       <dt class="text-body-subtle">content hash</dt><dd class="min-w-0 break-all font-mono text-heading">{{ s.sha256 }}</dd>
-      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ sk.contract }}">{{ sk.contract }}</a></dd>
+      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ <source_blob path={sk.contract} /> }}">{{ sk.contract }}</a></dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 font-mono text-heading">MCP resource <code>{{ s.uri }}</code> · <code>majordomus skills show {{ s.id }}</code></dd>
     </dl>
     <p class="mt-3 text-sm text-body">This page is generated from the file above by <code class="font-mono text-heading">scripts/generate-site-data</code>; editing the page changes nothing, editing the file changes every surface.</p>
