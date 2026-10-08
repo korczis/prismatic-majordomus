@@ -428,6 +428,8 @@ jobs:
           # recorder reads line by line, and outside the checkout the tree step measures
           CARGO_TERM_COLOR: never
           MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test-${{ matrix.lane }}.txt
+          # what the run writes inside the checkout, said by the script that writes it
+          MJ_RUST_OUTPUTS: ${{ runner.temp }}/rust-outputs.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check --ci
       - name: rust-check
         if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
@@ -438,18 +440,30 @@ jobs:
           # recorder reads line by line, and outside the checkout the next step measures
           CARGO_TERM_COLOR: never
           MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test-3.txt
+          # what the run writes inside the checkout, said by the script that writes it
+          MJ_RUST_OUTPUTS: ${{ runner.temp }}/rust-outputs.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
       # The tree the crate ran in, measured here, before the plan below is downloaded into it
-      # (ADR 0087 decision 6). The two outputs the step above names, its timings and its
-      # artifact directory, are excluded by name, and nothing else is. scripts/rust-check runs
-      # in the crate's directory, so both relative names land there, and that is where they
-      # are excluded: excluded at the root, they matched nothing and the tree read dirty.
+      # (ADR 0087 decision 6). What the step above wrote inside the checkout is excluded, and
+      # nothing else is. The list is the one scripts/rust-check wrote for this run
+      # (MJ_RUST_OUTPUTS): the timings where the step stood, the artifact directory under the
+      # crate. This step named the two itself once, both under the crate, so the timings at
+      # the root matched nothing and every lane measured its own output as a dirty tree. A run
+      # that left no list excludes nothing.
       - name: the tree the crate ran in
         if: always() && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
+        env:
+          OUTPUTS: ${{ runner.temp }}/rust-outputs.txt
         run: |
-          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)apps/majordomus-cli/timings.tsv' ':(exclude)apps/majordomus-cli/dist')"
+          set --
+          excluded='[]'
+          if [ -s "$OUTPUTS" ]; then
+            while IFS= read -r p; do set -- "$@" ":(exclude)$p"; done < "$OUTPUTS"
+            excluded="$(jq -Rn '[inputs]' < "$OUTPUTS")"
+          fi
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . "$@")"
           if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
-          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["apps/majordomus-cli/timings.tsv","apps/majordomus-cli/dist"]}' > "$RUNNER_TEMP/crate-tree.json"
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" --argjson excluded "$excluded" '{commit: $commit, working_tree: $wt, excluded: $excluded}' > "$RUNNER_TEMP/crate-tree.json"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
