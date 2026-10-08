@@ -5,7 +5,7 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 21.
+Stability: experimental. Capabilities: 23.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
@@ -94,6 +94,52 @@ The journal's events above a Lamport stamp, in Lamport order, at most a page: ea
 | `limit` | integer or null | no | At most this many (default 100, at most 1000). |
 
 Output: `EventList`.
+
+## `mesh.firewall` — The host firewall, as the mesh needs it
+
+What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last hour. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_firewall` |
+| HTTP | `GET /api/v1/mesh/firewall` |
+| CLI | `majordomus mesh firewall` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, diagnostics, firewall |
+
+| input | type | required | description |
+|---|---|---|---|
+| `port` | integer or null | no | The port this checkout's server listens on beyond loopback, when it does: a peer
+dials it there on the link protocol, so it needs admitting too. Omitted, the plan
+holds the discovery ports and the hub ports the declaration gives this machine. |
+
+Output: `FirewallReport`.
+
+## `mesh.firewall.apply` — Admit the mesh through the host firewall
+
+Run the commands mesh.firewall renders, on this host, as root: one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall; nothing else is touched, and every rule written carries the comment `majordomus mesh` so it can be told from an operator's own. Refuses, running nothing, without root or without a backend; records every command with its exit and output; and asks the firewall again afterwards, so the verdict is the firewall's. Offered on the command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP may do.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh firewall apply` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, firewall |
+
+| input | type | required | description |
+|---|---|---|---|
+| `port` | integer or null | no | The port this checkout's server listens on beyond loopback, when it does: a peer
+dials it there on the link protocol, so it needs admitting too. Omitted, the plan
+holds the discovery ports and the hub ports the declaration gives this machine. |
+
+Output: `FirewallApplyReport`.
 
 ## `mesh.handover.consume` — Consume a handover from the mesh
 

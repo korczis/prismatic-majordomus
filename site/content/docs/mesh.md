@@ -433,7 +433,7 @@ starts from ships no declaration, and nothing opens there until its own operator
 |---|---|
 | multicast | `239.255.77.77:7741`, TTL 1 — the local segment only; the sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every server on a machine hears the group |
 | broadcast | disabled |
-| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`), lundra (`192.168.100.10`, tailnet `100.65.22.118`) and the owner's MacBook Pro (`192.168.100.93`), port 8791, every 30 s |
+| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`), lundra (`192.168.100.10`, tailnet `100.65.22.118`) and the owner's MacBook Pro (`192.168.100.91`; it was `.93` until 2026-10-08), port 8791, every 30 s |
 | seeds | none |
 | cooperation | the defaults: heartbeat 5 s, expiry 30 s |
 | trust | `deny_unknown` with five keys: `641bdb94` (the owner's MacBook Pro), `5d81b5c9` (the owner's second MacBook Pro), `aaba18ea` (the owner's iMac), `9d652b2c` (jetson), `25c9758f` (lundra) |
@@ -469,7 +469,22 @@ a comment naming the machine and its node id to the trust row of the table above
 both; `majordomus mesh doctor` on that machine passes its
 `trust` check once the key is listed, and names the remedy until then. A new hub is a server
 started with `majordomus serve --host 0.0.0.0 --port 8791` on the machine, and its addresses
-added under `rendezvous.endpoints`.
+added under `rendezvous.endpoints`; then `sudo majordomus mesh firewall apply` there, because a
+hub whose host firewall drops port 8791 is a hub nobody can register with
+([The host firewall](#the-host-firewall)).
+
+**The hubs as services.** On lundra the hub is a systemd user unit,
+`~/.config/systemd/user/majordomus.service`, running the release executable of a dedicated
+checkout (`~/dev/prismatic-majordomus-hub`, detached at the trunk) with `serve --host 0.0.0.0
+--port 8791 --idle 0`, `Restart=always`, and the share of that checkout; updating it is a
+fetch and checkout of the trunk there, `just build-release`, and `systemctl --user restart
+majordomus`. On the owner's MacBook Pro the hub runs the installed release from a dedicated
+worktree (`~/dev/prismatic-majordomus-hub`, detached at the trunk): `majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, started by hand, because
+the checkout a person works in already runs its own shared server and a second one is refused.
+The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
+`RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
+that writes either unit is still owed as a typed capability (ADR 0059).
 
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,
@@ -523,10 +538,81 @@ that row, in one commit — and a disposable repository proves every briefing an
 through the start event. The hubs are started by hand; an installer that runs one as a service
 is owed as a typed capability or a Rhai workflow (ADR 0059).
 
+## The host firewall
+
+The declaration says who may link; the host firewall says what reaches the socket at all, and
+the two drift silently. On 2026-10-08 lundra, a declared hub, ran ufw with default deny and no
+rule for port 8791 or the multicast group: the kernel dropped every registration and every
+advertisement from the LAN (187 `[UFW BLOCK]` lines in a week, 109 in the last hour) while
+`mesh doctor` reported every check holding — because every check it ran was a fact of the
+process, and none was a fact of the host. So the admission is a derived requirement with a
+verdict, `mesh.firewall` (`apps/majordomus-cli/src/mesh/firewall.rs`):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| | derived from | rule |
+|---|---|---|
+| multicast | `multicast.enabled`, `.group`, `.port` | UDP to the group's port, from any source — the TTL keeps it on the segment |
+| broadcast | `broadcast.mode`, `.port`, `.networks` | UDP to the port, from the declared networks |
+| hub | every `rendezvous.endpoints` entry whose address is one of this machine's | TCP to that port, from the fleet's networks |
+| link | `--port`, when this checkout's server listens beyond loopback | TCP to that port, from the fleet's networks |
+
+</div>
+
+
+The fleet's networks are the enclosing private ranges of every address the declaration names
+(hubs and seeds): `192.168.x.0/24`, `10.0.0.0/8`, `172.16.0.0/12`, `100.64.0.0/10` for a tailnet
+— and this machine's own ranges when it names none. A public address derives no network, and
+case 491 refuses one in the declaration first. A machine that is no hub, with multicast on,
+needs exactly one rule: the group's port.
+
+`majordomus mesh firewall` prints the plan, the backend (`ufw`, `nftables`, the macOS
+application firewall, or `none`), the commands that admit the plan there, the firewall's own
+word about it — `present`, `missing`, `inactive`, or `unobservable` without root — and what
+the kernel logged it dropping toward those ports in the last five minutes, which is readable
+without root on a machine whose user is in `adm`; it exits 10 when a rule is observed missing
+or a drop was logged. `sudo majordomus mesh firewall apply` runs those commands and asks the
+firewall again, so the verdict afterwards is the firewall's; it refuses, running nothing,
+without root or without a backend. Every rule it writes carries the comment `majordomus mesh:
+…`, so it can be told from an operator's own and removed as a set. It is offered on the
+command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP
+may do. The doctor's `firewall` check, between the process's checks and the server's
+`runtime` verdict, is the same report as one line.
+
+```
+$ majordomus mesh firewall
+backend     ufw (linux)
+plan        2 rule(s) from 100.64.0.0/10, 192.168.100.0/24
+  multicast  udp/7741 to 239.255.77.77 from any — …
+  hub        tcp/8791 from 100.64.0.0/10, 192.168.100.0/24 — …
+observation unobservable: ufw status needs root; run `sudo majordomus mesh firewall` to observe the rules
+blocked     7741: 81, 8791: 28 (kernel log, last 300 s)
+commands    what `sudo majordomus mesh firewall apply` runs:
+  ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'
+  ufw allow in proto tcp from 100.64.0.0/10 to any port 8791 comment 'majordomus mesh: rendezvous hub'
+  ufw allow in proto tcp from 192.168.100.0/24 to any port 8791 comment 'majordomus mesh: rendezvous hub'
+verdict     the kernel logged 109 inbound datagram(s) or connection(s) toward the mesh's ports dropped in the last 5 minutes, and the firewall could not be asked without root: run `sudo majordomus mesh firewall apply`
+```
+
+**What it is not.** A firewall manager: it admits the mesh's ports from the fleet's private
+networks and touches no other rule, never widens a source to a public range, and never
+removes anything. On macOS the application firewall admits an executable, not a port, so the
+plan there is the server's executable allowed inbound, and a machine whose application
+firewall is off needs nothing. Where no backend is found nothing is observed and the check
+holds as an absence, like `runtime` in a process no server runs in.
+
+**Recorded, 2026-10-08.** On lundra the report above was taken as the owner, then as root
+(`missing`, both rules, 77 and 28 drops in the window), then `sudo majordomus mesh firewall
+apply` added three rules (`Rule added`, `Rule added`, `Rule updated` — the LAN hub rule had
+been added by hand a quarter of an hour earlier), after which the report as root read
+`present` with no drop in the window, and the hub's `mesh nodes`, which had listed nobody, listed both Macs of the LAN as present and trusted, each heard by multicast and registered by rendezvous.
+
 ## Operating it
 
 ```sh
-majordomus mesh doctor            # prerequisites and the server's runtime verdict; exits 10 on a failed check
+majordomus mesh doctor            # prerequisites, the host firewall, and the server's runtime verdict; exits 10 on a failed check
+majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
+sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
@@ -546,13 +632,13 @@ majordomus mesh review answer <request-key> --session s2 --verdict approved
 
 Every command has `--format json`, which prints the capability's answer unchanged.
 
-**HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/cooperation`,
+**HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
 `/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
 `/handovers/consume`, `/reviews`, `/reviews/answer`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.
 
-**MCP.** `majordomus_mesh`, `_nodes`, `_identity`, `_doctor`, `_register`, `_cooperation`, `_peers`,
+**MCP.** `majordomus_mesh`, `_nodes`, `_identity`, `_doctor`, `_firewall`, `_register`, `_cooperation`, `_peers`,
 `_peer`, `_state`, `_events`, `_verify`, `_session_open`, `_session_close`, `_claim`,
 `_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`. An
 agent claims work with `majordomus_mesh_claim` instead of inventing a coordination channel;
@@ -567,8 +653,12 @@ the same capabilities from their Capabilities pages.
 ## Troubleshooting
 
 1. **`mesh doctor`** on each machine. A failed `declaration`, `identity`, `trust`,
-   `repository`, `udp` or `multicast` check names its impact and remedy; a failed `runtime`
-   check is the server's: the declaration is enabled and its mesh is not active, and why.
+   `repository`, `udp` or `multicast` check names its impact and remedy; a failed `firewall`
+   check is the host's: a rule the mesh needs is observed missing, or the kernel logged the
+   firewall dropping toward the mesh's ports — `sudo majordomus mesh firewall apply`; a failed
+   `runtime` check is the server's: the declaration is enabled and its mesh is not active, and
+   why. A hub every other machine registers with and that lists nobody is the firewall case
+   until `mesh firewall` says otherwise.
 2. **`mesh status`** — discovery. No nodes: multicast is not routed between the machines;
    declare `cooperation.seeds` or a rendezvous. Rising `signature` refusals: a broken or
    hostile sender. `version` refusals: a peer runs an executable older than discovery
@@ -592,7 +682,8 @@ the same capabilities from their Capabilities pages.
 
 | level | what | where | runs |
 |---|---|---|---|
-| unit & property | journal dedup, gaps, hostile events, beats; compaction changes nothing live, bounds a handover's hold and hears a returning stream again; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity | `cargo test --lib mesh` | CI `rust` |
+| unit & property | journal dedup, gaps, hostile events, beats; compaction changes nothing live, bounds a handover's hold and hears a returning stream again; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity; the firewall plan from a declaration, its rendering per backend, and the judgement of a firewall's own output | `cargo test --lib mesh` | CI `rust` |
+| the host firewall | the committed declaration derives the group's port; the doctor carries `firewall`; no declaration needs nothing; a declaration naming this machine as a hub derives the hub rule from its private range alone; `apply` refuses without root, running nothing; the MCP tool answers | `test/run.sh 495_the_firewall_admits_the_mesh` | CI `suite` |
 | two runtimes in process | the real link protocol over an in-process transport: a runtime compacted while it slept is heard again whole; takers and answers outlive their runs; a taken handover keeps its stopped publisher nowhere | `cargo test --test mesh_compaction`, `test/run.sh 493_mesh_compaction_keeps_what_is_live` | CI `rust`, `suite` |
 | multi-process integration | separate `majordomus serve` processes with separate keys over TCP: two-runtime cooperation (sessions, claims, conflicts, reviews, handover, CLI parity, verify), repository isolation, untrusted key, SIGKILL expiry and restart, three runtimes in a line, hostile messages over HTTP, two worktrees under one key | `cargo test --test mesh_cooperation` | CI `rust`, `macos` |
 | network lab | four Linux containers on one docker bridge: multicast discovery with no seeds, full-mesh handshake, repository isolation, cross-node claim and conflict, cross-node handover, three-node convergence, network partition and healing, process crash and restart, `mesh verify` in a node | `test/mesh-lab/run` → `target/mesh-lab/evidence.json` | CI `mesh-lab` |

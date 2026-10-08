@@ -95,6 +95,7 @@
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
     "op-mesh-events": "docs/api/mesh/",
+    "op-mesh-firewall": "docs/api/mesh/",
     "op-mesh-handover-consume": "docs/api/mesh/",
     "op-mesh-handover-publish": "docs/api/mesh/",
     "op-mesh-identity": "docs/api/mesh/",
@@ -183,6 +184,7 @@
     "schema-ActiveTask": "docs/api/shared/",
     "schema-Actor": "docs/api/executions/",
     "schema-ActorKind": "docs/api/executions/",
+    "schema-AdmitCommand": "docs/api/mesh/",
     "schema-AdrRef": "docs/api/product/",
     "schema-AdvisorCapacity": "docs/api/reasoning/",
     "schema-AdvisorCircuit": "docs/api/reasoning/",
@@ -217,6 +219,7 @@
     "schema-Attribution": "docs/api/trace/",
     "schema-AudienceList": "docs/api/why/",
     "schema-AudienceView": "docs/api/why/",
+    "schema-Backend": "docs/api/mesh/",
     "schema-Balance": "docs/api/lifecycle/",
     "schema-BenchmarkPolicy": "docs/api/capabilities/",
     "schema-BenchmarkPrecondition": "docs/api/capabilities/",
@@ -499,6 +502,11 @@
     "schema-FieldProvenance": "docs/api/devtask/",
     "schema-FieldSource": "docs/api/environment/",
     "schema-Finding": "docs/api/why/",
+    "schema-FirewallObservation": "docs/api/mesh/",
+    "schema-FirewallObservationState": "docs/api/mesh/",
+    "schema-FirewallPlan": "docs/api/mesh/",
+    "schema-FirewallReport": "docs/api/mesh/",
+    "schema-FirewallRule": "docs/api/mesh/",
     "schema-Fixtures": "docs/api/repository/",
     "schema-Fly": "docs/api/deploy/",
     "schema-Fonts": "docs/api/design/",
@@ -770,6 +778,7 @@
     "schema-PromptSource": "docs/api/product/",
     "schema-ProofState": "docs/api/shared/",
     "schema-ProofStep": "docs/api/integration/",
+    "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
     "schema-Provider": "docs/api/deploy/",
@@ -890,6 +899,7 @@
     "schema-ReviewRequestInput": "docs/api/mesh/",
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
+    "schema-Role": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RouteCollision": "docs/api/entity/",
     "schema-RoutingDecision": "docs/api/models/",
@@ -1123,8 +1133,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 180,
-    "schemas": 887,
+    "operations": 181,
+    "schemas": 896,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1305,6 +1315,7 @@
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
     "mesh.events": "mesh",
+    "mesh.firewall": "mesh",
     "mesh.handover.consume": "mesh",
     "mesh.handover.publish": "mesh",
     "mesh.identity": "mesh",
@@ -1397,6 +1408,7 @@
     "ActiveTask": "shared",
     "Actor": "executions",
     "ActorKind": "executions",
+    "AdmitCommand": "mesh",
     "AdrRef": "product",
     "AdvisorCapacity": "reasoning",
     "AdvisorCircuit": "reasoning",
@@ -1431,6 +1443,7 @@
     "Attribution": "trace",
     "AudienceList": "why",
     "AudienceView": "why",
+    "Backend": "mesh",
     "Balance": "lifecycle",
     "BenchmarkPolicy": "capabilities",
     "BenchmarkPrecondition": "capabilities",
@@ -1713,6 +1726,11 @@
     "FieldProvenance": "devtask",
     "FieldSource": "environment",
     "Finding": "why",
+    "FirewallObservation": "mesh",
+    "FirewallObservationState": "mesh",
+    "FirewallPlan": "mesh",
+    "FirewallReport": "mesh",
+    "FirewallRule": "mesh",
     "Fixtures": "repository",
     "Fly": "deploy",
     "Fonts": "design",
@@ -1984,6 +2002,7 @@
     "PromptSource": "product",
     "ProofState": "shared",
     "ProofStep": "integration",
+    "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
     "Provider": "deploy",
@@ -2104,6 +2123,7 @@
     "ReviewRequestInput": "mesh",
     "ReviewState": "mesh",
     "ReviewView": "mesh",
+    "Role": "mesh",
     "Route": "deploy",
     "RouteCollision": "entity",
     "RoutingDecision": "models",
@@ -2416,6 +2436,42 @@
           "value": "internal"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One command that admits a rule: the rule's label, its argument vector exactly as\n`apply` executes it, and the same quoted as one line a person pastes into a root\nshell. The two are projections of one vector, so what the report shows is what runs.\n\n```\nuse std::net::Ipv4Addr;\nuse majordomus_cli::mesh::firewall::{plan, render, AdmitCommand, Backend};\nuse majordomus_cli::mesh::MeshConfig;\n\nlet config: MeshConfig = serde_json::from_value(serde_json::json!({\n    \"schema\": \"mesh/v1\", \"kind\": \"mesh-declaration\", \"id\": \"doc\", \"enabled\": true,\n})).unwrap();\nlet p = plan(Some(&config), &[Ipv4Addr::new(10, 0, 0, 2)], None);\nlet commands: Vec<AdmitCommand> = render(Backend::Ufw, &p, None);\nassert_eq!(commands[0].argv[0], \"ufw\");\nassert_eq!(commands[0].rule, \"udp/7741 to 239.255.77.77 from any\");\nassert_eq!(commands[0].line, \"ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "AdmitCommand",
+      "properties": [
+        {
+          "description": "The rule it admits.",
+          "name": "rule",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The program and its arguments, as executed.",
+          "name": "argv",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The same, quoted for a shell.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -4138,6 +4194,37 @@
         "CatalogueView"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The firewall front this host runs, as far as the executable can tell without privilege:\ndecided by `detect` from the platform and the path, and the thing `render`,\n`observe` and `apply` are specific to.\n\n```\nuse majordomus_cli::mesh::firewall::Backend;\n\nassert_eq!(serde_json::to_value(Backend::ApplicationFirewall).unwrap(), \"application_firewall\");\nassert_eq!(Backend::None.as_str(), \"none\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Backend",
+      "properties": [],
+      "type": "\"ufw\" | \"nftables\" | \"application_firewall\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [
+        {
+          "description": "Uncomplicated Firewall, the Debian and Ubuntu front: `ufw` is on the path.",
+          "value": "ufw"
+        },
+        {
+          "description": "nftables without ufw in front: `nft` is on the path.",
+          "value": "nftables"
+        },
+        {
+          "description": "macOS: the application firewall (`socketfilterfw`), which admits executables, not ports.",
+          "value": "application_firewall"
+        },
+        {
+          "description": "No firewall front this executable knows; nothing is observed and nothing is applied.",
+          "value": "none"
+        }
+      ],
       "variants": []
     },
     {
@@ -17230,6 +17317,7 @@
         "mesh.cooperation",
         "mesh.doctor",
         "mesh.events",
+        "mesh.firewall",
         "mesh.handover.publish",
         "mesh.handover.consume",
         "mesh.identity",
@@ -20447,6 +20535,278 @@
       "used_by": [],
       "used_by_schemas": [
         "ValidationReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The firewall's own word, judged against the plan: the state, the evidence behind it,\nand the labels of the rules not admitted when the state is `missing`.\n\n```\nuse majordomus_cli::mesh::firewall::{judge_ufw, plan, FirewallObservation, FirewallObservationState};\n\nlet o: FirewallObservation = judge_ufw(\"Status: inactive\\n\", &plan(None, &[], None));\nassert_eq!(o.state, FirewallObservationState::Inactive);\nassert!(o.missing.is_empty() && o.detail.contains(\"inactive\"));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallObservation",
+      "properties": [
+        {
+          "description": "The verdict.",
+          "name": "state",
+          "refs": [
+            "FirewallObservationState"
+          ],
+          "required": true,
+          "type": "FirewallObservationState"
+        },
+        {
+          "description": "The evidence: the status line, the rules found, or the refusal.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The rules not admitted, by label, when `state` is `missing`.",
+          "name": "missing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the host's firewall says about the plan, as one word. Only `missing` is a failure\non its own; `unobservable` is an absence that the kernel log may still turn into one.\n\n```\nuse majordomus_cli::mesh::firewall::FirewallObservationState;\n\nassert_eq!(serde_json::to_value(FirewallObservationState::Unobservable).unwrap(), \"unobservable\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "FirewallObservationState",
+      "properties": [],
+      "type": "\"no_backend\" | \"inactive\" | \"present\" | \"missing\" | \"unobservable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallObservation"
+      ],
+      "values": [
+        {
+          "description": "No backend to ask.",
+          "value": "no_backend"
+        },
+        {
+          "description": "The firewall is off: nothing filters, nothing is needed.",
+          "value": "inactive"
+        },
+        {
+          "description": "Every rule of the plan is admitted.",
+          "value": "present"
+        },
+        {
+          "description": "At least one rule of the plan is not admitted.",
+          "value": "missing"
+        },
+        {
+          "description": "The firewall could not be asked from this process — it needs root.",
+          "value": "unobservable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What the declaration implies this host must admit: the rules, the networks they admit\nfrom, the hub ports this machine is listed for, and the addresses the plan saw. The\nanswer of `plan`; an empty `rules` is \"nothing is needed\", which is the answer for no\ndeclaration and for a disabled one.\n\n```\nuse majordomus_cli::mesh::firewall::{plan, FirewallPlan};\n\nlet nothing: FirewallPlan = plan(None, &[], None);\nassert!(nothing.rules.is_empty() && nothing.hub_ports.is_empty() && nothing.networks.is_empty());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallPlan",
+      "properties": [
+        {
+          "description": "This machine's addresses, as the plan saw them.",
+          "name": "local_addresses",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The private networks peers come from: the enclosing ranges of every address the\ndeclaration names, or of this machine's own when it names none.",
+          "name": "networks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The ports of the declared hubs this machine is.",
+          "name": "hub_ports",
+          "refs": [],
+          "required": true,
+          "type": "array of integer (uint16)"
+        },
+        {
+          "description": "The admissions, in a fixed order.",
+          "name": "rules",
+          "refs": [
+            "FirewallRule"
+          ],
+          "required": true,
+          "type": "array of FirewallRule"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole report: the plan, the backend, the commands, the firewall's word and the\nkernel's, with one verdict sentence and one `ok`. What `mesh.firewall` answers and\nwhat the doctor's `firewall` check reads.\n\n```\nuse majordomus_cli::mesh::firewall::{report, FirewallReport, BLOCK_WINDOW_SECONDS};\n\nlet r: FirewallReport = report(None, &[], None);\nassert!(r.ok && r.commands.is_empty());\nassert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);\nassert_eq!(r.platform, std::env::consts::OS);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallReport",
+      "properties": [
+        {
+          "description": "Whether the host admits the mesh as far as it can be observed: nothing missing, and\nnothing logged as dropped.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The platform (`linux`, `macos`, …).",
+          "name": "platform",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The firewall front found.",
+          "name": "backend",
+          "refs": [
+            "Backend"
+          ],
+          "required": true,
+          "type": "Backend"
+        },
+        {
+          "description": "The executable the server runs as, which is what the macOS firewall admits.",
+          "name": "executable",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the declaration implies this host must admit.",
+          "name": "plan",
+          "refs": [
+            "FirewallPlan"
+          ],
+          "required": true,
+          "type": "FirewallPlan"
+        },
+        {
+          "description": "The commands that admit it on this backend; what `apply` runs.",
+          "name": "commands",
+          "refs": [
+            "AdmitCommand"
+          ],
+          "required": true,
+          "type": "array of AdmitCommand"
+        },
+        {
+          "description": "The firewall's own word about the plan.",
+          "name": "observation",
+          "refs": [
+            "FirewallObservation"
+          ],
+          "required": true,
+          "type": "FirewallObservation"
+        },
+        {
+          "description": "The window `blocked_recently` covers, in seconds.",
+          "name": "window_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Drops the kernel logged toward the plan's ports within the window, per port;\nabsent when the log could not be read.",
+          "name": "blocked_recently",
+          "refs": [],
+          "required": false,
+          "type": "object | null"
+        },
+        {
+          "description": "The sentence a person reads.",
+          "name": "verdict",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.firewall"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One inbound admission the mesh needs on this host: a protocol and a port, the group it is\naddressed to when it is multicast, the networks it may come from, and the sentence that\nsays why. A rule is derived, never written by hand; `FirewallRule::label` is how a\nverdict names it.\n\n```\nuse majordomus_cli::mesh::firewall::{FirewallRule, Protocol, Role};\n\nlet rule = FirewallRule {\n    role: Role::Hub,\n    protocol: Protocol::Tcp,\n    port: 8791,\n    destination: None,\n    sources: vec![\"192.168.7.0/24\".into()],\n    reason: \"this machine is a declared rendezvous hub\".into(),\n};\nassert_eq!(rule.label(), \"tcp/8791 from 192.168.7.0/24\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "FirewallRule",
+      "properties": [
+        {
+          "description": "Why.",
+          "name": "role",
+          "refs": [
+            "Role"
+          ],
+          "required": true,
+          "type": "Role"
+        },
+        {
+          "description": "The transport protocol.",
+          "name": "protocol",
+          "refs": [
+            "Protocol"
+          ],
+          "required": true,
+          "type": "Protocol"
+        },
+        {
+          "description": "The destination port.",
+          "name": "port",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint16)"
+        },
+        {
+          "description": "The destination address when it is a multicast group; `None` for this host's own.",
+          "name": "destination",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The networks the traffic may come from, as CIDR; empty admits any source, which is\nonly ever the case for the multicast group, whose TTL keeps it on the segment.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The sentence a person reads beside the rule.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallPlan"
       ],
       "values": [],
       "variants": []
@@ -34799,6 +35159,29 @@
       "variants": []
     },
     {
+      "description": "The transport protocol of a rule: discovery is datagrams, registration and the link\nprotocol are connections. Serialised as the word a firewall front takes.\n\n```\nuse majordomus_cli::mesh::firewall::Protocol;\n\nassert_eq!(serde_json::to_value(Protocol::Udp).unwrap(), \"udp\");\nassert_eq!(serde_json::to_value(Protocol::Tcp).unwrap(), \"tcp\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Protocol",
+      "properties": [],
+      "type": "\"udp\" | \"tcp\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallRule"
+      ],
+      "values": [
+        {
+          "description": "Datagrams: discovery.",
+          "value": "udp"
+        },
+        {
+          "description": "Connections: the hub's registrations and the link protocol.",
+          "value": "tcp"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.protocol`: the live channel's whole contract, derived from\nthe types that implement it.",
       "home": "executions",
       "is_enum": false,
@@ -42708,6 +43091,37 @@
         "CooperationState"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Role",
+      "properties": [],
+      "type": "\"multicast\" | \"broadcast\" | \"hub\" | \"link\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FirewallRule"
+      ],
+      "values": [
+        {
+          "description": "The declared multicast group: every runtime of the segment advertises to it.",
+          "value": "multicast"
+        },
+        {
+          "description": "The declared broadcast port, when broadcast is a permitted fallback.",
+          "value": "broadcast"
+        },
+        {
+          "description": "This machine is a declared rendezvous hub: the fleet registers here.",
+          "value": "hub"
+        },
+        {
+          "description": "This machine's server is dialed by peers on the link protocol.",
+          "value": "link"
+        }
+      ],
       "variants": []
     },
     {
@@ -58331,6 +58745,68 @@
           "result_schema": "EventList",
           "stability": "experimental",
           "summary": "The cooperation journal"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh firewall",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/firewall\"",
+          "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last hour. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+          "home": "mesh",
+          "id": "mesh.firewall",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_firewall",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The port this checkout's server listens on beyond loopback, when it does: a peer\ndials it there on the link protocol, so it needs admitting too. Omitted, the plan\nholds the discovery ports and the hub ports the declaration gives this machine.",
+              "examples": [],
+              "name": "port",
+              "required": false,
+              "type": "integer (uint16)"
+            }
+          ],
+          "path": "/api/v1/mesh/firewall",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The host firewall, as the mesh needs it: the result.",
+              "schema": "FirewallReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "FirewallReport",
+          "stability": "experimental",
+          "summary": "The host firewall, as the mesh needs it"
         },
         {
           "benchmark": "waived",

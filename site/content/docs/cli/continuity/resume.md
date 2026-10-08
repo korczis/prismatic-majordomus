@@ -1,7 +1,7 @@
 +++
 title = "majordomus continuity resume"
 description = "Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line"
-weight = 215
+weight = 217
 [extra]
 route = "/docs/cli/continuity/resume/"
 command = "majordomus continuity resume"

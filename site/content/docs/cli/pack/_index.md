@@ -4,7 +4,7 @@ description = "The tracked tree as token-bounded text shards for a language mode
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 194
+weight = 196
 [extra]
 route = "/docs/cli/pack/"
 command = "majordomus pack"

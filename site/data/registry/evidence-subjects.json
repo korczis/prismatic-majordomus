@@ -529,6 +529,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.firewall.apply",
+      "path": "/evidence/capabilities/mesh-firewall-apply/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.firewall",
+      "path": "/evidence/capabilities/mesh-firewall/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.handover.consume",
       "path": "/evidence/capabilities/mesh-handover-consume/"
     },
@@ -1624,6 +1634,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:mesh-firewall-is-derived",
+      "path": "/evidence/claims/mesh-firewall-is-derived/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:mesh-liveness-expiry",
       "path": "/evidence/claims/mesh-liveness-expiry/"
     },
@@ -2671,6 +2686,16 @@
       "kind": "command",
       "subject": "command:mesh events",
       "path": "/evidence/commands/mesh-events/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh firewall apply",
+      "path": "/evidence/commands/mesh-firewall-apply/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh firewall",
+      "path": "/evidence/commands/mesh-firewall/"
     },
     {
       "kind": "command",
@@ -4713,6 +4738,30 @@
       "page": "/evidence/capabilities/mesh-events/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.firewall": {
+      "kind": "capability",
+      "id": "mesh.firewall",
+      "page": "/evidence/capabilities/mesh-firewall/",
+      "programs": [],
+      "members": [
+        "command:mesh firewall"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.firewall.apply": {
+      "kind": "capability",
+      "id": "mesh.firewall.apply",
+      "page": "/evidence/capabilities/mesh-firewall-apply/",
+      "programs": [],
+      "members": [
+        "command:mesh firewall apply"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -8714,6 +8763,29 @@
             "docs/MESH.md",
             "apps/majordomus-cli/src/mesh/doctor.rs",
             "test/cases/494_the_mesh_is_declared_and_held.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:mesh-firewall-is-derived": {
+      "kind": "claim",
+      "id": "mesh-firewall-is-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/mesh-firewall-is-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:495_the_firewall_admits_the_mesh",
+          "path": "test/cases/495_the_firewall_admits_the_mesh.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MESH.md",
+            "apps/majordomus-cli/src/mesh/firewall.rs",
+            "test/cases/495_the_firewall_admits_the_mesh.sh"
           ]
         }
       ],
@@ -14294,6 +14366,44 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh firewall": {
+      "kind": "command",
+      "id": "mesh firewall",
+      "page": "/evidence/commands/mesh-firewall/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh firewall apply": {
+      "kind": "command",
+      "id": "mesh firewall apply",
+      "page": "/evidence/commands/mesh-firewall-apply/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh handover consume": {
       "kind": "command",
       "id": "mesh handover consume",
@@ -18880,6 +18990,18 @@
       "programs": [],
       "members": [
         "capability:mesh.events"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_firewall": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_firewall",
+      "alias_of": "capability:mesh.firewall",
+      "programs": [],
+      "members": [
+        "capability:mesh.firewall"
       ],
       "routes": [],
       "mechanisms": [],

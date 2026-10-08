@@ -4,7 +4,7 @@ description = "Token economics, measured: matched runs with and without Majordom
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 181
+weight = 183
 [extra]
 route = "/docs/cli/economics/"
 command = "majordomus economics"

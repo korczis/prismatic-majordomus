@@ -33,6 +33,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::config::MeshConfig;
+use super::firewall;
 use super::identity::{default_identity_path, NodeIdentity};
 use super::manager::MeshStatus;
 use super::protocol;
@@ -331,6 +332,12 @@ pub fn doctor_at(
         ),
     });
 
+    // The host firewall: what the declaration implies this machine must admit, and whether
+    // the host does. Every check above is a fact of the process; this one is a fact of the
+    // host, and the one that was missing when a declared hub dropped every registration
+    // at the kernel while the doctor said every check held.
+    checks.push(firewall_check(&declaration));
+
     // The runtime: what the process's mesh runtime decided about the declaration, when
     // anything decided. Every check above says the machine could run a mesh; this one says
     // whether the server did.
@@ -339,6 +346,48 @@ pub fn doctor_at(
     MeshDoctorReport {
         ok: checks.iter().all(|c| c.ok),
         checks,
+    }
+}
+
+/// The `firewall` verdict: the admissions the declaration implies on this host, derived
+/// by [`firewall::plan`] from the declaration and this machine's addresses, against what
+/// the host's firewall says and what the kernel logged it dropping. It fails when a rule
+/// is observed missing or when the kernel logged drops toward the mesh's ports in the
+/// last hour; a firewall that cannot be asked without root, with nothing logged, holds —
+/// an absence, not a verdict — and says how to ask as root.
+fn firewall_check(declaration: &Option<Result<MeshConfig, MeshError>>) -> DoctorCheck {
+    let config = declaration.as_ref().and_then(|d| d.as_ref().ok());
+    let local: Vec<std::net::Ipv4Addr> = super::address::interfaces()
+        .into_iter()
+        .map(|(_, ip)| ip)
+        .collect();
+    let report = firewall::report(config, &local, None);
+    let detail = if report.plan.rules.is_empty() {
+        report.verdict.clone()
+    } else {
+        format!(
+            "{} ({}): needs {}; {}",
+            report.backend.as_str(),
+            report.platform,
+            report
+                .plan
+                .rules
+                .iter()
+                .map(firewall::FirewallRule::label)
+                .collect::<Vec<_>>()
+                .join(", "),
+            report.verdict
+        )
+    };
+    if report.ok {
+        DoctorCheck::pass("firewall", detail)
+    } else {
+        DoctorCheck::fail(
+            "firewall",
+            detail,
+            "what the firewall drops never reaches the socket: a declared hub that drops registrations is a hub nobody can register with, and a machine that drops the multicast group hears no peer on its segment, while every other check holds",
+            "run `majordomus mesh firewall` for the rules and the commands that admit them, and `sudo majordomus mesh firewall apply` to admit them",
+        )
     }
 }
 
@@ -530,10 +579,11 @@ mod tests {
                 "broadcast",
                 "protocol",
                 "link",
+                "firewall",
                 "runtime"
             ]
         );
-        for check in ["protocol", "link", "runtime"] {
+        for check in ["protocol", "link", "firewall", "runtime"] {
             let c = report.checks.iter().find(|c| c.check == check).unwrap();
             assert!(c.ok, "{}", c.detail);
         }

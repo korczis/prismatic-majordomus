@@ -22,8 +22,8 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand,
-    MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshCommand, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs,
+    MeshReviewCommand, MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -40,8 +40,28 @@ pub fn run(args: MeshArgs) -> Result<u8> {
     match args.command {
         MeshCommand::Status(q) => ask(&q, "GET", "/api/v1/mesh", None, render_status, never),
         MeshCommand::Nodes(q) => ask(&q, "GET", "/api/v1/mesh/nodes", None, render_nodes, never),
-        MeshCommand::Identity(q) => in_process(q, &["mesh", "identity"], render_identity, never),
+        MeshCommand::Identity(q) => {
+            in_process(q, &["mesh", "identity"], json!({}), render_identity, never)
+        }
         MeshCommand::Doctor(q) => doctor(q),
+        // The host firewall is a fact of this machine, like the identity: answered in
+        // this process. `apply` runs a privileged host tool and is offered nowhere else.
+        MeshCommand::Firewall(a) => match a.command {
+            None => in_process(
+                a.query,
+                &["mesh", "firewall"],
+                json!({ "port": a.port }),
+                render_firewall,
+                not_ok,
+            ),
+            Some(MeshFirewallCommand::Apply(x)) => in_process(
+                x.query,
+                &["mesh", "firewall", "apply"],
+                json!({ "port": x.port }),
+                render_firewall_apply,
+                not_ok,
+            ),
+        },
         MeshCommand::Peers(q) => ask(&q, "GET", "/api/v1/mesh/peers", None, render_peers, never),
         MeshCommand::Peer(a) => {
             let target = format!("/api/v1/mesh/peer?runtime={}", encode(&a.runtime));
@@ -200,7 +220,7 @@ fn doctor(args: MeshQueryArgs) -> Result<u8> {
             render_doctor,
             not_ok,
         ),
-        None => in_process(args, &["mesh", "doctor"], render_doctor, not_ok),
+        None => in_process(args, &["mesh", "doctor"], json!({}), render_doctor, not_ok),
     }
 }
 
@@ -222,6 +242,7 @@ fn encode(text: &str) -> String {
 fn in_process(
     args: MeshQueryArgs,
     path: &[&str],
+    input: Value,
     render: fn(&Value) -> String,
     failed: fn(&Value) -> bool,
 ) -> Result<u8> {
@@ -238,7 +259,7 @@ fn in_process(
                 path.join(" ")
             ),
         })?;
-    let value = ctx.execute(id, json!({})).map_err(map)?;
+    let value = ctx.execute(id, input).map_err(map)?;
     emit(&args, &value, render);
     Ok(if failed(&value) { EXIT_REFUSED } else { 0 })
 }
@@ -484,6 +505,117 @@ fn render_checks(v: &Value, out: &mut String) {
             out.push_str(&format!("      remedy      {remedy}\n"));
         }
     }
+}
+
+fn render_firewall(v: &Value) -> String {
+    let mut out = String::new();
+    out.push_str(&format!(
+        "backend     {} ({})\n",
+        s(v, "backend"),
+        s(v, "platform")
+    ));
+    let plan = &v["plan"];
+    let rules = plan["rules"].as_array().cloned().unwrap_or_default();
+    let networks = strings(&plan["networks"]);
+    out.push_str(&format!(
+        "plan        {} rule(s){}\n",
+        rules.len(),
+        if networks.is_empty() {
+            String::new()
+        } else {
+            format!(" from {}", networks.join(", "))
+        }
+    ));
+    for r in &rules {
+        let to = match r["destination"].as_str() {
+            Some(group) => format!("{}/{} to {group}", s(r, "protocol"), r["port"]),
+            None => format!("{}/{}", s(r, "protocol"), r["port"]),
+        };
+        let from = strings(&r["sources"]);
+        out.push_str(&format!(
+            "  {:<10} {to} from {} — {}\n",
+            s(r, "role"),
+            if from.is_empty() {
+                "any".to_string()
+            } else {
+                from.join(", ")
+            },
+            s(r, "reason")
+        ));
+    }
+    out.push_str(&format!(
+        "observation {}: {}\n",
+        s(&v["observation"], "state"),
+        s(&v["observation"], "detail")
+    ));
+    if let Some(blocked) = v["blocked_recently"].as_object() {
+        let counts: Vec<String> = blocked
+            .iter()
+            .map(|(port, n)| format!("{port}: {n}"))
+            .collect();
+        out.push_str(&format!(
+            "blocked     {} (kernel log, last {} s)\n",
+            if counts.is_empty() {
+                "none".to_string()
+            } else {
+                counts.join(", ")
+            },
+            v["window_seconds"]
+        ));
+    }
+    let commands = v["commands"].as_array().cloned().unwrap_or_default();
+    if !commands.is_empty() {
+        out.push_str("commands    what `sudo majordomus mesh firewall apply` runs:\n");
+        for c in &commands {
+            out.push_str(&format!("  {}\n", s(c, "line")));
+        }
+    }
+    out.push_str(&format!("verdict     {}", s(v, "verdict")));
+    out
+}
+
+fn render_firewall_apply(v: &Value) -> String {
+    let mut out = String::new();
+    if let Some(refused) = v["refused"].as_str() {
+        out.push_str(&format!("refused     {refused}\n"));
+    }
+    for a in v["applied"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{}  {}\n",
+            if a["ok"] == json!(true) {
+                "ok  "
+            } else {
+                "FAIL"
+            },
+            s(a, "line")
+        ));
+        for line in s(a, "output").lines() {
+            out.push_str(&format!("      {line}\n"));
+        }
+    }
+    out.push_str(&format!(
+        "observation {}: {}\n",
+        s(&v["observation"], "state"),
+        s(&v["observation"], "detail")
+    ));
+    out.push_str(&format!(
+        "verdict     {}",
+        if v["ok"] == json!(true) {
+            "the host firewall admits the mesh"
+        } else {
+            "the host firewall does not admit the mesh (see above)"
+        }
+    ));
+    out
+}
+
+/// The strings of a JSON array; nothing for anything else.
+fn strings(v: &Value) -> Vec<String> {
+    v.as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|n| n.as_str().map(str::to_string))
+        .collect()
 }
 
 fn render_doctor(v: &Value) -> String {

@@ -6060,6 +6060,69 @@ paths:
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_mesh_events
+  "/api/v1/mesh/firewall":
+    get:
+      operationId: mesh.firewall
+      summary: "The host firewall, as the mesh needs it"
+      description: "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last hour. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing."
+      tags:
+        - mesh
+      parameters:
+        - name: port
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint16
+            minimum: 0
+            maximum: 65535
+          description: "The port this checkout's server listens on beyond loopback, when it does: a peer\ndials it there on the link protocol, so it needs admitting too. Omitted, the plan\nholds the discovery ports and the hub ports the declaration gives this machine."
+      responses:
+        "200":
+          description: "The host firewall, as the mesh needs it: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/FirewallReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.firewall
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: waived
+        reason: external_dependency
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_mesh_firewall
+      x-majordomus-cli: mesh firewall
   "/api/v1/mesh/handovers":
     post:
       operationId: mesh.handover.publish
@@ -11777,6 +11840,25 @@ components:
           const: internal
           description: "This executable's own tests and benchmarks."
       description: "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI."
+    AdmitCommand:
+      type: object
+      properties:
+        rule:
+          type: string
+          description: The rule it admits.
+        argv:
+          type: array
+          items:
+            type: string
+          description: "The program and its arguments, as executed."
+        line:
+          type: string
+          description: "The same, quoted for a shell."
+      required:
+        - rule
+        - argv
+        - line
+      description: "One command that admits a rule: the rule's label, its argument vector exactly as\n`apply` executes it, and the same quoted as one line a person pastes into a root\nshell. The two are projections of one vector, so what the report shows is what runs.\n\n```\nuse std::net::Ipv4Addr;\nuse majordomus_cli::mesh::firewall::{plan, render, AdmitCommand, Backend};\nuse majordomus_cli::mesh::MeshConfig;\n\nlet config: MeshConfig = serde_json::from_value(serde_json::json!({\n    \"schema\": \"mesh/v1\", \"kind\": \"mesh-declaration\", \"id\": \"doc\", \"enabled\": true,\n})).unwrap();\nlet p = plan(Some(&config), &[Ipv4Addr::new(10, 0, 0, 2)], None);\nlet commands: Vec<AdmitCommand> = render(Backend::Ufw, &p, None);\nassert_eq!(commands[0].argv[0], \"ufw\");\nassert_eq!(commands[0].rule, \"udp/7741 to 239.255.77.77 from any\");\nassert_eq!(commands[0].line, \"ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'\");\n```"
     AdrRef:
       type: object
       properties:
@@ -12709,6 +12791,21 @@ components:
         - moments
         - count
       description: "One audience, with the membership nobody authored."
+    Backend:
+      oneOf:
+        - type: string
+          const: ufw
+          description: "Uncomplicated Firewall, the Debian and Ubuntu front: `ufw` is on the path."
+        - type: string
+          const: nftables
+          description: "nftables without ufw in front: `nft` is on the path."
+        - type: string
+          const: application_firewall
+          description: "macOS: the application firewall (`socketfilterfw`), which admits executables, not ports."
+        - type: string
+          const: none
+          description: No firewall front this executable knows; nothing is observed and nothing is applied.
+      description: "The firewall front this host runs, as far as the executable can tell without privilege:\ndecided by `detect` from the platform and the path, and the thing `render`,\n`observe` and `apply` are specific to.\n\n```\nuse majordomus_cli::mesh::firewall::Backend;\n\nassert_eq!(serde_json::to_value(Backend::ApplicationFirewall).unwrap(), \"application_firewall\");\nassert_eq!(Backend::None.as_str(), \"none\");\n```"
     Balance:
       type: object
       properties:
@@ -21611,6 +21708,164 @@ components:
         - path
         - message
       description: "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching."
+    FirewallObservation:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/FirewallObservationState"
+          description: The verdict.
+        detail:
+          type: string
+          description: "The evidence: the status line, the rules found, or the refusal."
+        missing:
+          type: array
+          items:
+            type: string
+          description: "The rules not admitted, by label, when `state` is `missing`."
+      required:
+        - state
+        - detail
+      description: "The firewall's own word, judged against the plan: the state, the evidence behind it,\nand the labels of the rules not admitted when the state is `missing`.\n\n```\nuse majordomus_cli::mesh::firewall::{judge_ufw, plan, FirewallObservation, FirewallObservationState};\n\nlet o: FirewallObservation = judge_ufw(\"Status: inactive\\n\", &plan(None, &[], None));\nassert_eq!(o.state, FirewallObservationState::Inactive);\nassert!(o.missing.is_empty() && o.detail.contains(\"inactive\"));\n```"
+    FirewallObservationState:
+      oneOf:
+        - type: string
+          const: no_backend
+          description: No backend to ask.
+        - type: string
+          const: inactive
+          description: "The firewall is off: nothing filters, nothing is needed."
+        - type: string
+          const: present
+          description: Every rule of the plan is admitted.
+        - type: string
+          const: missing
+          description: At least one rule of the plan is not admitted.
+        - type: string
+          const: unobservable
+          description: The firewall could not be asked from this process — it needs root.
+      description: "What the host's firewall says about the plan, as one word. Only `missing` is a failure\non its own; `unobservable` is an absence that the kernel log may still turn into one.\n\n```\nuse majordomus_cli::mesh::firewall::FirewallObservationState;\n\nassert_eq!(serde_json::to_value(FirewallObservationState::Unobservable).unwrap(), \"unobservable\");\n```"
+    FirewallPlan:
+      type: object
+      properties:
+        local_addresses:
+          type: array
+          items:
+            type: string
+          description: "This machine's addresses, as the plan saw them."
+        networks:
+          type: array
+          items:
+            type: string
+          description: "The private networks peers come from: the enclosing ranges of every address the\ndeclaration names, or of this machine's own when it names none."
+        hub_ports:
+          type: array
+          items:
+            type: integer
+            format: uint16
+            minimum: 0
+            maximum: 65535
+          description: The ports of the declared hubs this machine is.
+        rules:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FirewallRule"
+          description: "The admissions, in a fixed order."
+      required:
+        - local_addresses
+        - networks
+        - hub_ports
+        - rules
+      description: "What the declaration implies this host must admit: the rules, the networks they admit\nfrom, the hub ports this machine is listed for, and the addresses the plan saw. The\nanswer of `plan`; an empty `rules` is \"nothing is needed\", which is the answer for no\ndeclaration and for a disabled one.\n\n```\nuse majordomus_cli::mesh::firewall::{plan, FirewallPlan};\n\nlet nothing: FirewallPlan = plan(None, &[], None);\nassert!(nothing.rules.is_empty() && nothing.hub_ports.is_empty() && nothing.networks.is_empty());\n```"
+    FirewallReport:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: "Whether the host admits the mesh as far as it can be observed: nothing missing, and\nnothing logged as dropped."
+        platform:
+          type: string
+          description: "The platform (`linux`, `macos`, …)."
+        backend:
+          "$ref": "#/components/schemas/Backend"
+          description: The firewall front found.
+        executable:
+          type:
+            - string
+            - "null"
+          description: "The executable the server runs as, which is what the macOS firewall admits."
+        plan:
+          "$ref": "#/components/schemas/FirewallPlan"
+          description: What the declaration implies this host must admit.
+        commands:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdmitCommand"
+          description: "The commands that admit it on this backend; what `apply` runs."
+        observation:
+          "$ref": "#/components/schemas/FirewallObservation"
+          description: "The firewall's own word about the plan."
+        window_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The window `blocked_recently` covers, in seconds."
+        blocked_recently:
+          type:
+            - object
+            - "null"
+          additionalProperties:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "Drops the kernel logged toward the plan's ports within the window, per port;\nabsent when the log could not be read."
+        verdict:
+          type: string
+          description: The sentence a person reads.
+      required:
+        - ok
+        - platform
+        - backend
+        - plan
+        - commands
+        - observation
+        - window_seconds
+        - verdict
+      description: "The whole report: the plan, the backend, the commands, the firewall's word and the\nkernel's, with one verdict sentence and one `ok`. What `mesh.firewall` answers and\nwhat the doctor's `firewall` check reads.\n\n```\nuse majordomus_cli::mesh::firewall::{report, FirewallReport, BLOCK_WINDOW_SECONDS};\n\nlet r: FirewallReport = report(None, &[], None);\nassert!(r.ok && r.commands.is_empty());\nassert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);\nassert_eq!(r.platform, std::env::consts::OS);\n```"
+    FirewallRule:
+      type: object
+      properties:
+        role:
+          "$ref": "#/components/schemas/Role"
+          description: Why.
+        protocol:
+          "$ref": "#/components/schemas/Protocol"
+          description: The transport protocol.
+        port:
+          type: integer
+          format: uint16
+          minimum: 0
+          maximum: 65535
+          description: The destination port.
+        destination:
+          type:
+            - string
+            - "null"
+          description: "The destination address when it is a multicast group; `None` for this host's own."
+        sources:
+          type: array
+          items:
+            type: string
+          description: "The networks the traffic may come from, as CIDR; empty admits any source, which is\nonly ever the case for the multicast group, whose TTL keeps it on the segment."
+        reason:
+          type: string
+          description: The sentence a person reads beside the rule.
+      required:
+        - role
+        - protocol
+        - port
+        - sources
+        - reason
+      description: "One inbound admission the mesh needs on this host: a protocol and a port, the group it is\naddressed to when it is multicast, the networks it may come from, and the sentence that\nsays why. A rule is derived, never written by hand; `FirewallRule::label` is how a\nverdict names it.\n\n```\nuse majordomus_cli::mesh::firewall::{FirewallRule, Protocol, Role};\n\nlet rule = FirewallRule {\n    role: Role::Hub,\n    protocol: Protocol::Tcp,\n    port: 8791,\n    destination: None,\n    sources: vec![\"192.168.7.0/24\".into()],\n    reason: \"this machine is a declared rendezvous hub\".into(),\n};\nassert_eq!(rule.label(), \"tcp/8791 from 192.168.7.0/24\");\n```"
     Fixtures:
       type: object
       additionalProperties: false
@@ -29576,6 +29831,15 @@ components:
         - step
         - summary
       description: One step of the cycle and what it said.
+    Protocol:
+      oneOf:
+        - type: string
+          const: udp
+          description: "Datagrams: discovery."
+        - type: string
+          const: tcp
+          description: "Connections: the hub's registrations and the link protocol."
+      description: "The transport protocol of a rule: discovery is datagrams, registration and the link\nprotocol are connections. Serialised as the word a firewall front takes.\n\n```\nuse majordomus_cli::mesh::firewall::Protocol;\n\nassert_eq!(serde_json::to_value(Protocol::Udp).unwrap(), \"udp\");\nassert_eq!(serde_json::to_value(Protocol::Tcp).unwrap(), \"tcp\");\n```"
     ProtocolReport:
       type: object
       properties:
@@ -33998,6 +34262,21 @@ components:
         - state
         - answers
       description: "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+    Role:
+      oneOf:
+        - type: string
+          const: multicast
+          description: "The declared multicast group: every runtime of the segment advertises to it."
+        - type: string
+          const: broadcast
+          description: "The declared broadcast port, when broadcast is a permitted fallback."
+        - type: string
+          const: hub
+          description: "This machine is a declared rendezvous hub: the fleet registers here."
+        - type: string
+          const: link
+          description: "This machine's server is dialed by peers on the link protocol."
+      description: "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
     Route:
       type: string
       description: "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."

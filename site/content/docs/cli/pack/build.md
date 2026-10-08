@@ -1,7 +1,7 @@
 +++
 title = "majordomus pack build"
 description = "Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one"
-weight = 196
+weight = 198
 [extra]
 route = "/docs/cli/pack/build/"
 command = "majordomus pack build"

@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh session open"
 description = "Open or update a session: what it is, what it does, where"
-weight = 139
+weight = 141
 [extra]
 route = "/docs/cli/mesh/session/open/"
 command = "majordomus mesh session open"
