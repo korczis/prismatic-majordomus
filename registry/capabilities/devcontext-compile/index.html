@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.16.0 -->
+     Generator: majordomus-cli 0.17.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -192,92 +192,139 @@
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
     <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
     <div class="mt-4 grid gap-6"><div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">input · DevContextInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>devcontext.compile</code>: what to compile a context about.</p>
-<p>A newtype over <code>devcontext::CompileInput</code> so that the schema component the OpenAPI
-document carries is named for the operation rather than for the domain type, the way
-every other module's input is.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · DevContextInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>devcontext.compile</code>: what to compile a context about.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">all_blocking_rules</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every blocking rule of the layer, not only the ones the work reaches. Honest and
+usually over budget: the answer then says <code>over_budget</code> rather than dropping what it
+may not drop.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">budget_tokens</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ceiling in estimated tokens; <code>DEFAULT_BUDGET_TOKENS</code> when absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">floor</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">number | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Relevance below which an entry is reported rather than given; <code>DEFAULT_FLOOR</code>
+when absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">intent</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the session is trying to do, in words. The only input the compiler infers
+from, and every entry it produces says so and carries a confidence below one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">An issue id (<code>I0301</code>) or its canonical identifier. Its milestone, its dependencies,
+its declared scope and the decisions over that scope follow from it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">max_depth</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How far from a seed the walk goes; <code>DEFAULT_MAX_DEPTH</code> when absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">milestone</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A milestone id or slug, or its canonical identifier.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">paths</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Repository-relative paths the work touches, added to whatever the seeds declare.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">uris</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Canonical identifiers to seed with directly, for a request about something that is
+neither an issue nor a milestone.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;CompileInput&quot;: {
-      &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.\n\nThe seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and\n`intent` all contribute, and naming several is the normal case rather than a conflict.\n`intent` is the only one the compiler infers from, which is why every entry it produces\ncarries `Selector::IntentMatch` and a confidence below one.\n\n`deny_unknown_fields` is deliberate. This is the input of a served capability, so a\nmisspelled field is a request that does not mean what its author thought; refusing it is\nthe difference between a typo and a silently smaller answer.\n\n```\nuse majordomus_cli::devcontext::CompileInput;\nuse serde_json::json;\n\n// the smallest legitimate request, which is not the same as no request\nlet nothing: CompileInput = serde_json::from_value(json!({})).unwrap();\nassert_eq!(nothing, CompileInput::default());\nassert!(nothing.issue.is_none() &amp;&amp; nothing.paths.is_empty());\n\n// the seeds combine rather than compete\nlet both: CompileInput = serde_json::from_value(json!({\n    \&quot;issue\&quot;: \&quot;I0301\&quot;,\n    \&quot;paths\&quot;: [\&quot;apps/majordomus-cli/src\&quot;],\n    \&quot;intent\&quot;: \&quot;explain the budget\&quot;,\n    \&quot;budget_tokens\&quot;: 4_000,\n})).unwrap();\nassert_eq!(both.issue.as_deref(), Some(\&quot;I0301\&quot;));\nassert_eq!(both.paths, [\&quot;apps/majordomus-cli/src\&quot;]);\nassert_eq!(both.budget_tokens, Some(4_000));\n\n// and a misspelled field is refused rather than quietly ignored\nlet typo = serde_json::from_value::&lt;CompileInput&gt;(json!({\&quot;max_dept\&quot;: 2}));\nassert!(typo.is_err(), \&quot;a typo must not become a smaller answer\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;all_blocking_rules&quot;: {
-          &quot;description&quot;: &quot;Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;budget_tokens&quot;: {
-          &quot;description&quot;: &quot;The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;floor&quot;: {
-          &quot;description&quot;: &quot;Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;max_depth&quot;: {
-          &quot;description&quot;: &quot;How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;A milestone id or slug, or its canonical identifier.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;paths&quot;: {
-          &quot;description&quot;: &quot;Repository-relative paths the work touches, added to whatever the seeds declare.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;uris&quot;: {
-          &quot;description&quot;: &quot;Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `devcontext.compile`: what to compile a context about.&quot;,
+  &quot;properties&quot;: {
+    &quot;all_blocking_rules&quot;: {
+      &quot;description&quot;: &quot;Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.&quot;,
+      &quot;type&quot;: [
+        &quot;boolean&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;budget_tokens&quot;: {
+      &quot;description&quot;: &quot;The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;floor&quot;: {
+      &quot;description&quot;: &quot;Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;type&quot;: [
+        &quot;number&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;intent&quot;: {
+      &quot;description&quot;: &quot;What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;issue&quot;: {
+      &quot;description&quot;: &quot;An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;max_depth&quot;: {
+      &quot;description&quot;: &quot;How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;milestone&quot;: {
+      &quot;description&quot;: &quot;A milestone id or slug, or its canonical identifier.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;paths&quot;: {
+      &quot;description&quot;: &quot;Repository-relative paths the work touches, added to whatever the seeds declare.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;uris&quot;: {
+      &quot;description&quot;: &quot;Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     }
   },
-  &quot;$ref&quot;: &quot;#/$defs/CompileInput&quot;,
-  &quot;description&quot;: &quot;The input of `devcontext.compile`: what to compile a context about.\n\nA newtype over `devcontext::CompileInput` so that the schema component the OpenAPI\ndocument carries is named for the operation rather than for the domain type, the way\nevery other module&#39;s input is.&quot;,
-  &quot;title&quot;: &quot;DevContextInput&quot;
+  &quot;title&quot;: &quot;DevContextInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -1147,8 +1194,8 @@ canonical identifier.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DevContextInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CompiledContext</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/a84b279d61d1be649dd2cc8c5670ce05c4904f8c/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">a17f9d9e9ff22a6e31ccbc0eac57d476d76aa0eed81680669a3b8d1c3fa41530</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.16.0</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/4090b2b8aebab8604c8da0fbda2d994a7db747e6/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">64ba1449f7e0180f3acae0ac1aaaf7c10a2dbdd0aa664572c988c3fe895dbe42</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.17.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -1213,7 +1260,7 @@ canonical identifier.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.16.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a84b279d61d1be649dd2cc8c5670ce05c4904f8c" class="font-mono underline">a84b279</a> · inputs <span class="font-mono">43d4808c5fa0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.17.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4090b2b8aebab8604c8da0fbda2d994a7db747e6" class="font-mono underline">4090b2b</a> · inputs <span class="font-mono">f17d62d0d024</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

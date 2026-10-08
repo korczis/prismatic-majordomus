@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.16.0 -->
+     Generator: majordomus-cli 0.17.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -155,16 +155,16 @@
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">203</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">215</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">179</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">189</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">1388</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">1460</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">205</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">215</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
@@ -940,6 +940,22 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <span class="break-words font-mono text-sm text-heading">majordomus shell check</span>
       <span class="break-words text-sm text-body sm:flex-1">Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/pack/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus pack</span>
+      <span class="break-words text-sm text-body sm:flex-1">The tracked tree as token-bounded text shards for a language model&#39;s file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output</span>
+      <span class="font-mono text-xs text-body-subtle">group</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/pack/plan/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus pack plan</span>
+      <span class="break-words text-sm text-body sm:flex-1">What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/pack/build/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus pack build</span>
+      <span class="break-words text-sm text-body sm:flex-1">Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/pack/verify/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus pack verify</span>
+      <span class="break-words text-sm text-body sm:flex-1">Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/dashboard/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus dashboard</span>
       <span class="break-words text-sm text-body sm:flex-1">The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it</span>
@@ -980,10 +996,42 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <span class="break-words font-mono text-sm text-heading">majordomus knowledge status</span>
       <span class="break-words text-sm text-body sm:flex-1">Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity</span>
+      <span class="break-words text-sm text-body sm:flex-1">Continue work on another machine: publish this checkout&#39;s newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written</span>
+      <span class="font-mono text-xs text-body-subtle">group</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/status/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity status</span>
+      <span class="break-words text-sm text-body sm:flex-1">This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/records/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity records</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every published handover the local store admits, by line, and every file it refused</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/device/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity device</span>
+      <span class="break-words text-sm text-body sm:flex-1">This device&#39;s identity — the mesh node key, created when absent — and its label; with --label, rename it</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/plan/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity plan</span>
+      <span class="break-words text-sm text-body sm:flex-1">Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/publish/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity publish</span>
+      <span class="break-words text-sm text-body sm:flex-1">Publish this checkout&#39;s newest handover as a signed record for another machine; refused when it carries a secret or a machine path</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/sync/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity sync</span>
+      <span class="break-words text-sm text-body sm:flex-1">Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/continuity/resume/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus continuity resume</span>
+      <span class="break-words text-sm text-body sm:flex-1">Resume a published handover when its plan is ready: write it into this checkout&#39;s handovers, carry its decisions, and continue its line</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What makes this true</h2>
-  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/a84b279d61d1be649dd2cc8c5670ce05c4904f8c/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/a84b279d61d1be649dd2cc8c5670ce05c4904f8c/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/a84b279d61d1be649dd2cc8c5670ce05c4904f8c/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
+  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/4090b2b8aebab8604c8da0fbda2d994a7db747e6/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/4090b2b8aebab8604c8da0fbda2d994a7db747e6/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/4090b2b8aebab8604c8da0fbda2d994a7db747e6/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
   <p class="mt-3 max-w-3xl text-sm text-body">The whole command line on one page: <a href="https://majordomus.dev/registry/cli/" class="text-fg-brand underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool <code class="font-mono">bin/majordomus</code>, a different program: see <a href="https://majordomus.dev/commands/" class="text-fg-brand underline">Commands</a> and its <a href="https://majordomus.dev/docs/cli-specification/" class="text-fg-brand underline">specification</a>.</p>
 </div>
 
@@ -1042,7 +1090,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.16.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a84b279d61d1be649dd2cc8c5670ce05c4904f8c" class="font-mono underline">a84b279</a> · inputs <span class="font-mono">43d4808c5fa0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.17.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4090b2b8aebab8604c8da0fbda2d994a7db747e6" class="font-mono underline">4090b2b</a> · inputs <span class="font-mono">f17d62d0d024</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

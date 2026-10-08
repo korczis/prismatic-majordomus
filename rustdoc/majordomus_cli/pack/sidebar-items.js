@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["INDEX","MANIFEST","MANIFEST_SCHEMA","OVERLAY","PROFILES"],"enum":["DropReason"],"fn":["build","fence_for","is_text","plan","verify"],"struct":["DroppedFile","PackFinding","PackPlan","PackProfile","PackVerdict","Planned","Profiles","ShardLimits","ShardPlan"]};

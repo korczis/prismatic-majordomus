@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LAUNCHER","MCP_URI"],"enum":["McpClientStanding"],"fn":["describe","module","standing","tools"],"struct":["McpClient","McpEffectCount","McpFinding","McpProjection","McpProjectionInput","McpResourceSummary","McpServerIdentity","McpServing","McpToolEntry","McpTransportEntry"]};

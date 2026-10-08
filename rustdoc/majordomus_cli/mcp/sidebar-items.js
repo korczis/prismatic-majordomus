@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["bridge","stdio","surface"],"struct":["Server"]};
+window.SIDEBAR_ITEMS = {"constant":["METHODS","PROTOCOL_VERSIONS","SERVER_NAME","SERVER_TITLE"],"mod":["bridge","stdio","surface"],"struct":["Server"]};

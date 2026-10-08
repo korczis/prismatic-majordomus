@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "a84b279d61d1be649dd2cc8c5670ce05c4904f8c",
-  "source_version": "0.16.0",
-  "registry_fingerprint": "a17f9d9e9ff22a6e31ccbc0eac57d476d76aa0eed81680669a3b8d1c3fa41530"
+  "commit": "4090b2b8aebab8604c8da0fbda2d994a7db747e6",
+  "source_version": "0.17.0",
+  "registry_fingerprint": "64ba1449f7e0180f3acae0ac1aaaf7c10a2dbdd0aa664572c988c3fe895dbe42"
  },
  "counts": {
-  "pages": 1935,
-  "capabilities": 2026,
-  "cli_commands": 91,
-  "http_routes": 170,
-  "mcp_tools": 166,
-  "mcp_resources": 1906,
-  "modules": 84
+  "pages": 1969,
+  "capabilities": 2055,
+  "cli_commands": 100,
+  "http_routes": 180,
+  "mcp_tools": 176,
+  "mcp_resources": 1926,
+  "modules": 86
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 81
+   "count": 83
   },
   {
    "kind": "application",
@@ -102,7 +102,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 326
+   "count": 327
   },
   {
    "kind": "domain",
@@ -222,7 +222,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 161
+   "count": 163
   },
   {
    "kind": "scope",
@@ -246,7 +246,7 @@
    "route": "/skills/",
    "title": null,
    "reason": null,
-   "count": 6
+   "count": 7
   },
   {
    "kind": "taxonomy",
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 375
+   "count": 388
   },
   {
    "kind": "use-case",
@@ -933,12 +933,28 @@
    "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md"
   },
   {
+   "route": "/adrs/adr-0105/",
+   "title": "A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan",
+   "description": "A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0105",
+   "source": ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md"
+  },
+  {
    "route": "/adrs/adr-0107/",
    "title": "Completion discharges obligations and never decides whether an intent is satisfied",
    "description": "Completion discharges obligations and never decides whether an intent is satisfied",
    "kind": "adr",
    "id": "majordomus://adr/adr-0107",
    "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md"
+  },
+  {
+   "route": "/adrs/adr-0110/",
+   "title": "MCP says nothing its capability does not",
+   "description": "MCP says nothing its capability does not",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0110",
+   "source": ".ai/repo/adrs/0110-mcp-says-nothing-its-capability-does-not.md"
   },
   {
    "route": "/applications/",
@@ -1311,6 +1327,11 @@
    "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
   },
   {
+   "route": "/docs/api/mcp/",
+   "title": "HTTP API: mcp",
+   "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers."
+  },
+  {
    "route": "/docs/api/mesh/",
    "title": "HTTP API: mesh",
    "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
@@ -1329,6 +1350,11 @@
    "route": "/docs/api/obligations/",
    "title": "HTTP API: obligations",
    "description": "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
+  },
+  {
+   "route": "/docs/api/pack/",
+   "title": "HTTP API: pack",
+   "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds."
   },
   {
    "route": "/docs/api/peers/",
@@ -1589,6 +1615,46 @@
    "route": "/docs/cli/completion/query/",
    "title": "majordomus completion query",
    "description": "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB"
+  },
+  {
+   "route": "/docs/cli/continuity/",
+   "title": "majordomus continuity",
+   "description": "Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written"
+  },
+  {
+   "route": "/docs/cli/continuity/device/",
+   "title": "majordomus continuity device",
+   "description": "This device's identity — the mesh node key, created when absent — and its label; with --label, rename it"
+  },
+  {
+   "route": "/docs/cli/continuity/plan/",
+   "title": "majordomus continuity plan",
+   "description": "Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin"
+  },
+  {
+   "route": "/docs/cli/continuity/publish/",
+   "title": "majordomus continuity publish",
+   "description": "Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path"
+  },
+  {
+   "route": "/docs/cli/continuity/records/",
+   "title": "majordomus continuity records",
+   "description": "Every published handover the local store admits, by line, and every file it refused"
+  },
+  {
+   "route": "/docs/cli/continuity/resume/",
+   "title": "majordomus continuity resume",
+   "description": "Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line"
+  },
+  {
+   "route": "/docs/cli/continuity/status/",
+   "title": "majordomus continuity status",
+   "description": "This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here"
+  },
+  {
+   "route": "/docs/cli/continuity/sync/",
+   "title": "majordomus continuity sync",
+   "description": "Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending"
   },
   {
    "route": "/docs/cli/convergence/",
@@ -2044,6 +2110,26 @@
    "route": "/docs/cli/models/route/",
    "title": "majordomus models route",
    "description": "Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out"
+  },
+  {
+   "route": "/docs/cli/pack/",
+   "title": "majordomus pack",
+   "description": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output"
+  },
+  {
+   "route": "/docs/cli/pack/build/",
+   "title": "majordomus pack build",
+   "description": "Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one"
+  },
+  {
+   "route": "/docs/cli/pack/plan/",
+   "title": "majordomus pack plan",
+   "description": "What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read"
+  },
+  {
+   "route": "/docs/cli/pack/verify/",
+   "title": "majordomus pack verify",
+   "description": "Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read"
   },
   {
    "route": "/docs/cli/product/",
@@ -6011,9 +6097,44 @@
    "description": "One message against this repository's commit policy: the grammar, the subject width, whether the scope is one the history uses, whether every record the message names exists, whether a fix carries a test, and whether a breaking change explains itself — as typed findings with severities, or an exemption for a subject git composed. The same verdict the commit-msg hook refuses with and the gate reads the history through."
   },
   {
+   "route": "/registry/capabilities/continuity-device/",
+   "title": "continuity.device",
+   "description": "The device a published handover names: the mesh node key (created when this device has none, in the user's state directory and never in a repository), its node id, its public key — what a trust list admits — and the label a person reads. With a label, renames the device; the key and every signature it made are unchanged."
+  },
+  {
+   "route": "/registry/capabilities/continuity-plan/",
+   "title": "continuity.plan",
+   "description": "Writes nothing. Chooses the record (named, or the one other device's handover this checkout has not resumed, on this branch first) and decides: is its signer trusted, does it diverge from the record this checkout stands on, does the local source hold the commit and branch it was written against, was it written in a dirty tree whose uncommitted files never reached a commit, may the other device still be working. The verdict is ready, ready_with_warnings, requires_source_update, conflict, choose_record, nothing_to_resume or refused, with blockers, warnings, the commands that resolve them (recommended, never run), what a resume restores and what this checkout recomputes for itself."
+  },
+  {
+   "route": "/registry/capabilities/continuity-publish/",
+   "title": "continuity.publish",
+   "description": "Projects the newest handover record into a portable record — the handover body, the repository and device identity, the episode, the source state (branch, commit, and for a dirty tree the changed paths and a fingerprint, never their content), the task and its decisions, and the record it continues — refuses it when any value carries a credential, a secret environment value or a path of this machine's disk, signs it with the device's mesh key and adds it to refs/majordomus/continuity. Touches no branch, index or working tree, and no network: a sync publishes it."
+  },
+  {
+   "route": "/registry/capabilities/continuity-records/",
+   "title": "continuity.records",
+   "description": "Every record of refs/majordomus/continuity that passed admission — schema, id, signature, repository identity, portability — by line, with each line's heads, and a diagnostic for every file refused and every lineage defect."
+  },
+  {
+   "route": "/registry/capabilities/continuity-resume/",
+   "title": "continuity.resume",
+   "description": "Plans exactly as continuity.plan does and acts only on a ready or ready_with_warnings plan: writes the handover into this checkout's handovers (where handover --resolve and the session briefing find it), appends the task's decisions to the decision log once each, and records the record as the one this checkout continues, so that its next publication extends the same line. Runs nothing the record says; the start command for the task is returned as a recommendation."
+  },
+  {
    "route": "/registry/capabilities/continuity-state/",
    "title": "continuity.state",
    "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence."
+  },
+  {
+   "route": "/registry/capabilities/continuity-status/",
+   "title": "continuity.status",
+   "description": "This device and repository identity, the record this checkout continues on its branch, how the local continuity store stands towards the remote's (from the refs alone, no network), every line of work with its heads, the handovers other devices published that this checkout could resume, and every refused record or broken lineage as a diagnostic. A diverged line — the same work continued twice — is reported; separate lines of work on separate devices are not a conflict."
+  },
+  {
+   "route": "/registry/capabilities/continuity-sync/",
+   "title": "continuity.sync",
+   "description": "Fetches the remote's refs/majordomus/continuity, merges it into the local store as the union of both (records are content-addressed, so a name holding different bytes is reported and the local copy kept), and pushes the result, never forced. Reports each line as equal, remote_newer, local_newer, diverged, local_only or remote_only. An unreachable remote changes nothing and leaves what is pending pending."
   },
   {
    "route": "/registry/capabilities/convergence-report/",
@@ -6381,6 +6502,11 @@
    "description": "The commit the served index was built at, against the commit the repository is on, read on this call. A server that froze its index at start-up answers every question about a commit from hours ago with nothing in the answer saying so; this is the reading that can tell."
   },
   {
+   "route": "/registry/capabilities/mcp-projection/",
+   "title": "mcp.projection",
+   "description": "Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository's server. Reads the registry and one file per declared client; writes nothing."
+  },
+  {
    "route": "/registry/capabilities/mesh-claim/",
    "title": "mesh.claim",
    "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only."
@@ -6524,6 +6650,16 @@
    "route": "/registry/capabilities/obligations-vocabulary/",
    "title": "obligations.vocabulary",
    "description": "The tokens a task may declare in `requires`: what each one asks of a worker, the command that discharges it, the pathspecs its evidence is hashed over, and whether its fact is remote and therefore bound to a commit rather than to a tree. Shipped data, identical in every clone, so this answers in a checkout that has never run the lifecycle."
+  },
+  {
+   "route": "/registry/capabilities/pack-plan/",
+   "title": "pack.plan",
+   "description": "What a profile of share/archive.yaml would pack: the files carried and their bytes and o200k_base tokens, every file left out by reason (worktree, link, artifact, binary, derived, excluded; derived counted, the rest listed), the shards it is cut into within the profile's token budget and file count, and every finding that refuses the build — a file over the budget, too many shards, a machine path or credential in a selected file, an empty selection, a profile without limits. Reads git's index and blobs only; writes nothing."
+  },
+  {
+   "route": "/registry/capabilities/pack-verify/",
+   "title": "pack.verify",
+   "description": "Read a pack directory inside the repository against its pack.json: every file it names is present with its digest and nothing else is, every carried file's content has the digest its marker records, no carried path is a binary, an artifact, a link or a gitlink under the profile the manifest names, no file is over the profile's token budget or holds a NUL byte or a leak, and there are no more files than the profile allows. An unreadable manifest is unmeasured, never a pass."
   },
   {
    "route": "/registry/capabilities/peers-announce/",
@@ -6981,6 +7117,11 @@
    "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
   },
   {
+   "route": "/registry/modules/mcp/",
+   "title": "MCP projection",
+   "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers."
+  },
+  {
    "route": "/registry/modules/mesh/",
    "title": "Mesh",
    "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
@@ -6999,6 +7140,11 @@
    "route": "/registry/modules/obligations/",
    "title": "Obligations",
    "description": "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
+  },
+  {
+   "route": "/registry/modules/pack/",
+   "title": "Source pack",
+   "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds."
   },
   {
    "route": "/registry/modules/peers/",
@@ -8103,6 +8249,14 @@
    "source": ".ai/repo/rules/project/optional-complexity.v1.md"
   },
   {
+   "route": "/rules/project-packs-carry-only-sources-1/",
+   "title": "A pack that leaves the machine carries only committed sources",
+   "description": "A pack that leaves the machine carries only committed sources",
+   "kind": "rule",
+   "id": "majordomus://rule/project.packs-carry-only-sources@1",
+   "source": ".ai/repo/rules/project/packs-carry-only-sources.v1.md"
+  },
+  {
    "route": "/rules/project-performance-evidence-1/",
    "title": "A performance claim carries its measurement",
    "description": "A performance claim carries its measurement",
@@ -8245,6 +8399,14 @@
    "kind": "rule",
    "id": "majordomus://rule/project.scope-is-declared@1",
    "source": ".ai/repo/rules/project/scope-is-declared.v1.md"
+  },
+  {
+   "route": "/rules/project-session-continuity-is-portable-1/",
+   "title": "Session continuity is portable, and what is portable is checked",
+   "description": "Session continuity is portable, and what is portable is checked",
+   "kind": "rule",
+   "id": "majordomus://rule/project.session-continuity-is-portable@1",
+   "source": ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
   },
   {
    "route": "/rules/project-shared-server-resilience-1/",
@@ -8400,8 +8562,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.16.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.16.0, built from commit a84b279d61d1be649dd2cc8c5670ce05c4904f8c: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.17.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.17.0, built from commit 4090b2b8aebab8604c8da0fbda2d994a7db747e6: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -8539,6 +8701,11 @@
    "description": "The `lifecycle` module: the episode lifecycle as something a person can watch."
   },
   {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/mcp/",
+   "title": "majordomus_cli::capability::builtin::mcp - Rust",
+   "description": "The `mcp` module: the MCP projection of this registry, described as one typed value."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/capability/builtin/objects/",
    "title": "majordomus_cli::capability::builtin::objects - Rust",
    "description": "The `objects` module: the declarative objects of the repository’s layer, listed, read and searched, and the one resolution of a `majordomus://` URI that `objects.get` and the MCP resource read share."
@@ -8547,6 +8714,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/obligations/",
    "title": "majordomus_cli::capability::builtin::obligations - Rust",
    "description": "The `obligations` module: what a task owes before it may be called completed, and whether the evidence that discharged each one still describes this tree."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/pack/",
+   "title": "majordomus_cli::capability::builtin::pack - Rust",
+   "description": "The `pack` module: the tracked tree as token-bounded text shards for a reader whose file search indexes text, with nothing in it that is not source."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/plan/",
@@ -9284,6 +9456,11 @@
    "description": "Canonical presentation order."
   },
   {
+   "route": "/rustdoc/majordomus_cli/pack/",
+   "title": "majordomus_cli::pack - Rust",
+   "description": "The source pack: the tracked tree as a few text files a language model’s file search can index, with nothing in it that is not source."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/peers/",
    "title": "majordomus_cli::peers - Rust",
    "description": "Peers: the clients attached to one shared server. Every MCP session, the owner’s stdio one and every one that arrived over HTTP, is a peer from the moment it attaches; `initialize` gives it a name (the client’s own `clientInfo`), and `peers.announce` lets it say what it is working on. The board lives in the server’s memory and nowhere else: it ends with the process, and nothing here touches the repository."
@@ -10012,6 +10189,11 @@
    "route": "/skills/implement/",
    "title": "Implement a change",
    "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope."
+  },
+  {
+   "route": "/skills/pack-for-chatgpt/",
+   "title": "Pack the sources for a ChatGPT project",
+   "description": "Turn a committed tree into token-bounded Markdown shards that a ChatGPT project's file search indexes, verified to carry no binary, worktree, link, build output, projection or leaked value, and hand them over with the commit they were cut from."
   },
   {
    "route": "/skills/pack-for-review/",

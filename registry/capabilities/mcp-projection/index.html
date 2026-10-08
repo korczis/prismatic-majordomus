@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mcp.projection — Prismatic Majordomus</title>
+<meta name="description" content="Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository&#39;s server. Reads the registry and one file per declared client; writes nothing.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/mcp-projection/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="mcp.projection — Prismatic Majordomus">
+<meta property="og:description" content="Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository&#39;s server. Reads the registry and one file per declared client; writes nothing.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/mcp-projection/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.17.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.16.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/domains/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/domains/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/kit/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The same argument, written in Czech</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/kit/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The same argument, written in Czech</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/challenge/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/challenge/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">mcp.projection</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">mcp.projection</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository&#39;s server. Reads the registry and one file per declared client; writes nothing.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository&#39;s server. Reads the registry and one file per declared client; writes nothing.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">experimental</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/mcp/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module mcp</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#mcp</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#introspection</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#projections</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_mcp</span><br>resource <span class="break-all">majordomus://mcp</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/mcp/#op-mcp-projection" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/mcp</a> <span class="text-xs text-body-subtle">operationId mcp.projection</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · McpProjectionInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>mcp.projection</code>: which tools to list. Everything else in the answer is
+about the projection as a whole and is always given.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::mcp::McpProjectionInput;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::capability::Effect;</span></span>
+<span class="giallo-l"><span>let all: McpProjectionInput = serde_json::from_str(&quot;{}&quot;).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(all.effect.is_none());</span></span>
+<span class="giallo-l"><span>let writers: McpProjectionInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_str(r#&quot;{&quot;effect&quot;:&quot;repository_mutation&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(writers.effect, Some(Effect::RepositoryMutation));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">effect</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">List only the tools with this effect: <code>read</code>, <code>process_state</code> or
+<code>repository_mutation</code>. Absent lists every tool.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;ExecutionEffect&quot;: {
+      &quot;description&quot;: &quot;What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit&#39;s confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;read&quot;,
+          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;process_state&quot;,
+          &quot;description&quot;: &quot;This process&#39;s own memory changes, and nothing outside it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_mutation&quot;,
+          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `mcp.projection`: which tools to list. Everything else in the answer is\nabout the projection as a whole and is always given.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjectionInput;\nuse majordomus_cli::capability::Effect;\nlet all: McpProjectionInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(all.effect.is_none());\nlet writers: McpProjectionInput =\n    serde_json::from_str(r#\&quot;{\&quot;effect\&quot;:\&quot;repository_mutation\&quot;}\&quot;#).unwrap();\nassert_eq!(writers.effect, Some(Effect::RepositoryMutation));\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;effect&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool.&quot;
+    }
+  },
+  &quot;title&quot;: &quot;McpProjectionInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · McpProjection</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The MCP projection of this registry in this repository.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::mcp::McpProjection;</span></span>
+<span class="giallo-l"><span>let p: McpProjection = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;server&quot;: { &quot;name&quot;: &quot;majordomus&quot;, &quot;title&quot;: &quot;Majordomus&quot;, &quot;version&quot;: &quot;0.14.0&quot; },</span></span>
+<span class="giallo-l"><span>    &quot;protocol_versions&quot;: [&quot;2025-06-18&quot;],</span></span>
+<span class="giallo-l"><span>    &quot;transports&quot;: [{ &quot;id&quot;: &quot;stdio&quot;, &quot;reached_by&quot;: &quot;majordomus mcp&quot;, &quot;attached&quot;: 0 }],</span></span>
+<span class="giallo-l"><span>    &quot;serving&quot;: { &quot;methods&quot;: [&quot;initialize&quot;], &quot;tools&quot;: true, &quot;resources&quot;: true, &quot;prompts&quot;: false, &quot;notifications&quot;: false },</span></span>
+<span class="giallo-l"><span>    &quot;tool_count&quot;: 2,</span></span>
+<span class="giallo-l"><span>    &quot;tools&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;effects&quot;: [{ &quot;effect&quot;: &quot;read&quot;, &quot;tools&quot;: 1 }, { &quot;effect&quot;: &quot;repository_mutation&quot;, &quot;tools&quot;: 1 }],</span></span>
+<span class="giallo-l"><span>    &quot;writers&quot;: [&quot;majordomus_plan_transition&quot;],</span></span>
+<span class="giallo-l"><span>    &quot;resources&quot;: { &quot;builtin&quot;: 1, &quot;objects&quot;: 0, &quot;template&quot;: &quot;majordomus://&lt;kind&gt;/&lt;identity&gt;&quot; },</span></span>
+<span class="giallo-l"><span>    &quot;launcher_in_repository&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;clients&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;findings&quot;: [],</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>// the count is of every tool, whatever the `effect` filter narrowed `tools` to</span></span>
+<span class="giallo-l"><span>assert_eq!(p.tool_count, p.effects.iter().map(|e| e.tools).sum::&lt;usize&gt;());</span></span>
+<span class="giallo-l"><span>assert!(p.tools.is_empty() &amp;&amp; p.writers.len() == 1);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">clients</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The clients the distribution declares a configuration for, and where each stands.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">effects</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The tools counted by effect, every effect present.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a person should act on. Empty is nothing to do.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">launcher_in_repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether this repository carries the launcher at <code>bin/majordomus-mcp</code>. Where it does
+not, the installed command of the same name is what a configuration names.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">protocol_versions</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The protocol versions accepted, newest first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">resources</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The resources.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">server</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Who answers <code>initialize</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">serving</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What of the protocol is served.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tool_count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many tools the registry projects, whatever the filter asked for.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tools</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The tools asked for, in registry order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">transports</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How a client reaches the server.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">writers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The tools that write the repository, by name. The <code>initialize</code> instructions name the
+same ones.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;ExecutionEffect&quot;: {
+      &quot;description&quot;: &quot;What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit&#39;s confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;read&quot;,
+          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;process_state&quot;,
+          &quot;description&quot;: &quot;This process&#39;s own memory changes, and nothing outside it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_mutation&quot;,
+          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionHints&quot;: {
+      &quot;description&quot;: &quot;What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared.\n\n```\nuse majordomus_cli::capability::{CapabilityKind, ExecutionPolicy, Hints};\nlet read: Hints = ExecutionPolicy::classify(CapabilityKind::Query).hints();\nassert_eq!(\n    serde_json::to_value(read).unwrap(),\n    serde_json::json!({ \&quot;read_only\&quot;: true, \&quot;destructive\&quot;: false, \&quot;idempotent\&quot;: true, \&quot;open_world\&quot;: false })\n);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;destructive&quot;: {
+          &quot;description&quot;: &quot;The call may overwrite or remove something that outlives this process.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;idempotent&quot;: {
+          &quot;description&quot;: &quot;A second identical call changes nothing the first did not.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;open_world&quot;: {
+          &quot;description&quot;: &quot;The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;read_only&quot;: {
+          &quot;description&quot;: &quot;The call changes nothing, anywhere.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;read_only&quot;,
+        &quot;destructive&quot;,
+        &quot;idempotent&quot;,
+        &quot;open_world&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpClient&quot;: {
+      &quot;description&quot;: &quot;One client the distribution declares a project-scoped configuration for.\n\n```\nuse majordomus_cli::capability::builtin::mcp::{McpClient, McpClientStanding};\nlet mut clients: Vec&lt;McpClient&gt; = serde_json::from_value(serde_json::json!([\n    { \&quot;id\&quot;: \&quot;gemini\&quot;, \&quot;title\&quot;: \&quot;Gemini CLI\&quot;, \&quot;config\&quot;: \&quot;.gemini/settings.json\&quot;, \&quot;standing\&quot;: \&quot;absent\&quot; },\n    { \&quot;id\&quot;: \&quot;claude-code\&quot;, \&quot;title\&quot;: \&quot;Claude Code\&quot;, \&quot;config\&quot;: \&quot;.mcp.json\&quot;, \&quot;standing\&quot;: \&quot;wired\&quot; },\n])).unwrap();\n// ordered by the provider&#39;s id, whatever order the distribution declared them in\nmajordomus_cli::order::canonical(&amp;mut clients);\nassert_eq!(clients[0].id, \&quot;claude-code\&quot;);\nassert_eq!(clients[0].standing, McpClientStanding::Wired);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;config&quot;: {
+          &quot;description&quot;: &quot;The file it reads, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The provider id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/McpClientStanding&quot;,
+          &quot;description&quot;: &quot;Where that file stands here.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The name a person knows it by.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;config&quot;,
+        &quot;standing&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpClientStanding&quot;: {
+      &quot;description&quot;: &quot;Where a client&#39;s project-scoped configuration stands in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpClientStanding;\n// the words a caller reads, as they are written on every surface\nassert_eq!(serde_json::to_value(McpClientStanding::Wired).unwrap(), \&quot;wired\&quot;);\nassert_eq!(serde_json::to_value(McpClientStanding::Foreign).unwrap(), \&quot;foreign\&quot;);\nassert_eq!(serde_json::to_value(McpClientStanding::Absent).unwrap(), \&quot;absent\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;wired&quot;,
+          &quot;description&quot;: &quot;The file exists and names the launcher: this client starts this repository&#39;s server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;foreign&quot;,
+          &quot;description&quot;: &quot;The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;The file does not exist: this client starts no server here until it is written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;McpEffectCount&quot;: {
+      &quot;description&quot;: &quot;How many tools have one effect.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpEffectCount;\nuse majordomus_cli::capability::Effect;\nlet c: McpEffectCount =\n    serde_json::from_value(serde_json::json!({ \&quot;effect\&quot;: \&quot;read\&quot;, \&quot;tools\&quot;: 149 })).unwrap();\nassert_eq!((c.effect, c.tools), (Effect::Read, 149));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;effect&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;,
+          &quot;description&quot;: &quot;The effect.&quot;
+        },
+        &quot;tools&quot;: {
+          &quot;description&quot;: &quot;How many tools have it.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;effect&quot;,
+        &quot;tools&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpFinding&quot;: {
+      &quot;description&quot;: &quot;Something about the projection a person should act on.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpFinding;\nlet f: McpFinding = serde_json::from_value(serde_json::json!({\n    \&quot;code\&quot;: \&quot;mcp_client_config_foreign\&quot;,\n    \&quot;message\&quot;: \&quot;.mcp.json exists and does not name majordomus-mcp\&quot;,\n    \&quot;remedy\&quot;: \&quot;add a `majordomus` server to .mcp.json whose command is majordomus-mcp\&quot;,\n})).unwrap();\n// a finding always says what to do, not only what is wrong\nassert!(!f.code.is_empty() &amp;&amp; !f.remedy.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;The stable code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;What to do about it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpResourceSummary&quot;: {
+      &quot;description&quot;: &quot;The resources a client can read.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpResourceSummary;\nlet r: McpResourceSummary = serde_json::from_value(serde_json::json!({\n    \&quot;builtin\&quot;: 54, \&quot;objects\&quot;: 1742, \&quot;template\&quot;: \&quot;majordomus://&lt;kind&gt;/&lt;identity&gt;\&quot;,\n})).unwrap();\n// the two counts together are the length of `resources/list`\nassert_eq!(r.builtin + r.objects, 1796);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;builtin&quot;: {
+          &quot;description&quot;: &quot;Resources a builtin capability answers.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;description&quot;: &quot;Objects of this repository&#39;s layer, each one more resource.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;template&quot;: {
+          &quot;description&quot;: &quot;The URI shape of an object&#39;s resource.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;builtin&quot;,
+        &quot;objects&quot;,
+        &quot;template&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpServerIdentity&quot;: {
+      &quot;description&quot;: &quot;Who answers `initialize`, as it answers.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServerIdentity;\nlet s: McpServerIdentity = serde_json::from_value(serde_json::json!({\n    \&quot;name\&quot;: \&quot;majordomus\&quot;, \&quot;title\&quot;: \&quot;Majordomus\&quot;, \&quot;version\&quot;: \&quot;0.14.0\&quot;,\n})).unwrap();\n// the version is the executable&#39;s: the protocol adapter has none of its own to drift\nassert_eq!((s.name.as_str(), s.version.as_str()), (\&quot;majordomus\&quot;, \&quot;0.14.0\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The server name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The name a person reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The version: this executable&#39;s, never one of the protocol adapter&#39;s own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;title&quot;,
+        &quot;version&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpServing&quot;: {
+      &quot;description&quot;: &quot;What the server serves of the protocol, and what it does not.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServing;\nlet s: McpServing = serde_json::from_value(serde_json::json!({\n    \&quot;methods\&quot;: [\&quot;initialize\&quot;, \&quot;tools/call\&quot;], \&quot;tools\&quot;: true, \&quot;resources\&quot;: true,\n    \&quot;prompts\&quot;: false, \&quot;notifications\&quot;: false,\n})).unwrap();\n// what is not served is stated, so a client does not learn it from a refusal\nassert!(s.tools &amp;&amp; !s.prompts &amp;&amp; !s.notifications);\nassert!(!s.methods.iter().any(|m| m.starts_with(\&quot;prompts/\&quot;)));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;methods&quot;: {
+          &quot;description&quot;: &quot;The methods a request may name. Anything else is answered `-32601`.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;notifications&quot;: {
+          &quot;description&quot;: &quot;Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;prompts&quot;: {
+          &quot;description&quot;: &quot;Prompts. Not served: the repository&#39;s prompt assets are resources, because a prompt\nserved unrendered would read as finished.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;resources&quot;: {
+          &quot;description&quot;: &quot;Resources: every capability that declares one, and every object of the layer.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;tools&quot;: {
+          &quot;description&quot;: &quot;Tools: every capability that declares one.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;methods&quot;,
+        &quot;tools&quot;,
+        &quot;resources&quot;,
+        &quot;prompts&quot;,
+        &quot;notifications&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpToolEntry&quot;: {
+      &quot;description&quot;: &quot;One tool, as the registry projects it.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpToolEntry;\nuse majordomus_cli::capability::Effect;\nlet t: McpToolEntry = serde_json::from_value(serde_json::json!({\n    \&quot;name\&quot;: \&quot;majordomus_plan_transition\&quot;, \&quot;capability\&quot;: \&quot;plan.transition\&quot;,\n    \&quot;module\&quot;: \&quot;plan\&quot;, \&quot;title\&quot;: \&quot;Move an issue\&quot;, \&quot;effect\&quot;: \&quot;repository_mutation\&quot;,\n    \&quot;hints\&quot;: { \&quot;read_only\&quot;: false, \&quot;destructive\&quot;: true, \&quot;idempotent\&quot;: false, \&quot;open_world\&quot;: false },\n})).unwrap();\nassert_eq!(t.effect, Effect::RepositoryMutation);\n// the hints are the effect&#39;s classification, carried beside it rather than restated\nassert!(t.hints.destructive &amp;&amp; !t.hints.read_only &amp;&amp; !t.hints.idempotent);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability it projects; `capabilities.describe` answers its schemas.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;effect&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;,
+          &quot;description&quot;: &quot;What a call changes.&quot;
+        },
+        &quot;hints&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionHints&quot;,
+          &quot;description&quot;: &quot;What a caller may assume before calling; the tool&#39;s annotations are this value.&quot;
+        },
+        &quot;module&quot;: {
+          &quot;description&quot;: &quot;The module that composes the capability.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The name a client calls.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;capability&quot;,
+        &quot;module&quot;,
+        &quot;title&quot;,
+        &quot;effect&quot;,
+        &quot;hints&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpTransportEntry&quot;: {
+      &quot;description&quot;: &quot;One way a client reaches the server.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpTransportEntry;\nlet t: McpTransportEntry = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;stdio\&quot;, \&quot;reached_by\&quot;: \&quot;majordomus mcp\&quot;, \&quot;attached\&quot;: 1,\n})).unwrap();\n// a count of sessions at the moment of asking, not a claim that a server is running\nassert_eq!((t.id.as_str(), t.attached), (\&quot;stdio\&quot;, 1));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;attached&quot;: {
+          &quot;description&quot;: &quot;Sessions attached to this process over it right now.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`stdio` or `http`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reached_by&quot;: {
+          &quot;description&quot;: &quot;How it is reached: the command a client starts, or the path on the shared server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;reached_by&quot;,
+        &quot;attached&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The MCP projection of this registry in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjection;\nlet p: McpProjection = serde_json::from_value(serde_json::json!({\n    \&quot;server\&quot;: { \&quot;name\&quot;: \&quot;majordomus\&quot;, \&quot;title\&quot;: \&quot;Majordomus\&quot;, \&quot;version\&quot;: \&quot;0.14.0\&quot; },\n    \&quot;protocol_versions\&quot;: [\&quot;2025-06-18\&quot;],\n    \&quot;transports\&quot;: [{ \&quot;id\&quot;: \&quot;stdio\&quot;, \&quot;reached_by\&quot;: \&quot;majordomus mcp\&quot;, \&quot;attached\&quot;: 0 }],\n    \&quot;serving\&quot;: { \&quot;methods\&quot;: [\&quot;initialize\&quot;], \&quot;tools\&quot;: true, \&quot;resources\&quot;: true, \&quot;prompts\&quot;: false, \&quot;notifications\&quot;: false },\n    \&quot;tool_count\&quot;: 2,\n    \&quot;tools\&quot;: [],\n    \&quot;effects\&quot;: [{ \&quot;effect\&quot;: \&quot;read\&quot;, \&quot;tools\&quot;: 1 }, { \&quot;effect\&quot;: \&quot;repository_mutation\&quot;, \&quot;tools\&quot;: 1 }],\n    \&quot;writers\&quot;: [\&quot;majordomus_plan_transition\&quot;],\n    \&quot;resources\&quot;: { \&quot;builtin\&quot;: 1, \&quot;objects\&quot;: 0, \&quot;template\&quot;: \&quot;majordomus://&lt;kind&gt;/&lt;identity&gt;\&quot; },\n    \&quot;launcher_in_repository\&quot;: false,\n    \&quot;clients\&quot;: [],\n    \&quot;findings\&quot;: [],\n})).unwrap();\n// the count is of every tool, whatever the `effect` filter narrowed `tools` to\nassert_eq!(p.tool_count, p.effects.iter().map(|e| e.tools).sum::&lt;usize&gt;());\nassert!(p.tools.is_empty() &amp;&amp; p.writers.len() == 1);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;clients&quot;: {
+      &quot;description&quot;: &quot;The clients the distribution declares a configuration for, and where each stands.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpClient&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;effects&quot;: {
+      &quot;description&quot;: &quot;The tools counted by effect, every effect present.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpEffectCount&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What a person should act on. Empty is nothing to do.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;launcher_in_repository&quot;: {
+      &quot;description&quot;: &quot;Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;protocol_versions&quot;: {
+      &quot;description&quot;: &quot;The protocol versions accepted, newest first.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;resources&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/McpResourceSummary&quot;,
+      &quot;description&quot;: &quot;The resources.&quot;
+    },
+    &quot;server&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/McpServerIdentity&quot;,
+      &quot;description&quot;: &quot;Who answers `initialize`.&quot;
+    },
+    &quot;serving&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/McpServing&quot;,
+      &quot;description&quot;: &quot;What of the protocol is served.&quot;
+    },
+    &quot;tool_count&quot;: {
+      &quot;description&quot;: &quot;How many tools the registry projects, whatever the filter asked for.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;tools&quot;: {
+      &quot;description&quot;: &quot;The tools asked for, in registry order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpToolEntry&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;transports&quot;: {
+      &quot;description&quot;: &quot;How a client reaches the server.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpTransportEntry&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;writers&quot;: {
+      &quot;description&quot;: &quot;The tools that write the repository, by name. The `initialize` instructions name the\nsame ones.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;server&quot;,
+    &quot;protocol_versions&quot;,
+    &quot;transports&quot;,
+    &quot;serving&quot;,
+    &quot;tool_count&quot;,
+    &quot;tools&quot;,
+    &quot;effects&quot;,
+    &quot;writers&quot;,
+    &quot;resources&quot;,
+    &quot;launcher_in_repository&quot;,
+    &quot;clients&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;title&quot;: &quot;McpProjection&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mcp-projection-direct-every-tool" class="break-all text-fg-brand hover:underline inline-block py-1">every-tool</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-mcp-projection-direct-writers" class="break-all text-fg-brand hover:underline inline-block py-1">writers</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mcp-projection-mcp-every-tool" class="break-all text-fg-brand hover:underline inline-block py-1">every-tool</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-mcp-projection-mcp-writers" class="break-all text-fg-brand hover:underline inline-block py-1">writers</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mcp-projection-http-every-tool" class="break-all text-fg-brand hover:underline inline-block py-1">every-tool</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-mcp-projection-http-writers" class="break-all text-fg-brand hover:underline inline-block py-1">writers</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">mcp.projection</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mcp.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/mcp.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mcp</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">McpProjectionInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">McpProjection</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/4090b2b8aebab8604c8da0fbda2d994a7db747e6/docs/generated/modules/mcp.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mcp.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">64ba1449f7e0180f3acae0ac1aaaf7c10a2dbdd0aa664572c988c3fe895dbe42</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.17.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/domains/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/domains/" class="hover:text-heading hover:underline">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.17.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4090b2b8aebab8604c8da0fbda2d994a7db747e6" class="font-mono underline">4090b2b</a> · inputs <span class="font-mono">f17d62d0d024</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

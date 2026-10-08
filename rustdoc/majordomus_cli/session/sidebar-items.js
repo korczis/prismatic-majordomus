@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["WRITTEN_EVENTS"],"fn":["identities","open_episodes"],"mod":["episode","identity","ledger","state","store"]};
+window.SIDEBAR_ITEMS = {"constant":["WRITTEN_EVENTS"],"fn":["identities","open_episodes","public_text","public_url"],"mod":["episode","identity","ledger","state","store"]};

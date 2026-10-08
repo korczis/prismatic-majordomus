@@ -8,26 +8,30 @@
 <a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>majordomus_cli::cli::{Cli, EXIT_USAGE};
 <a href=#9 id=9 data-nosnippet>9</a>
 <a href=#10 id=10 data-nosnippet>10</a><span class="kw">fn </span>main() -&gt; ExitCode {
-<a href=#11 id=11 data-nosnippet>11</a>    <span class="kw">let </span>cli = <span class="kw">match </span>Cli::try_parse() {
-<a href=#12 id=12 data-nosnippet>12</a>        <span class="prelude-val">Ok</span>(cli) =&gt; cli,
-<a href=#13 id=13 data-nosnippet>13</a>        <span class="prelude-val">Err</span>(e) =&gt; {
-<a href=#14 id=14 data-nosnippet>14</a>            <span class="comment">// clap prints help and version to stdout with status 0, and usage errors to
-<a href=#15 id=15 data-nosnippet>15</a>            // stderr with status 2, which is the contract's usage code.
-<a href=#16 id=16 data-nosnippet>16</a>            </span><span class="kw">let _ </span>= e.print();
-<a href=#17 id=17 data-nosnippet>17</a>            <span class="kw">return if </span>e.use_stderr() {
-<a href=#18 id=18 data-nosnippet>18</a>                ExitCode::from(EXIT_USAGE)
-<a href=#19 id=19 data-nosnippet>19</a>            } <span class="kw">else </span>{
-<a href=#20 id=20 data-nosnippet>20</a>                ExitCode::SUCCESS
-<a href=#21 id=21 data-nosnippet>21</a>            };
-<a href=#22 id=22 data-nosnippet>22</a>        }
-<a href=#23 id=23 data-nosnippet>23</a>    };
-<a href=#24 id=24 data-nosnippet>24</a>    majordomus_cli::logging::init();
-<a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">match </span>majordomus_cli::commands::run(cli) {
-<a href=#26 id=26 data-nosnippet>26</a>        <span class="prelude-val">Ok</span>(code) =&gt; ExitCode::from(code),
-<a href=#27 id=27 data-nosnippet>27</a>        <span class="prelude-val">Err</span>(err) =&gt; {
-<a href=#28 id=28 data-nosnippet>28</a>            <span class="macro">eprintln!</span>(<span class="string">"majordomus: {err}"</span>);
-<a href=#29 id=29 data-nosnippet>29</a>            ExitCode::from(err.exit_code())
-<a href=#30 id=30 data-nosnippet>30</a>        }
-<a href=#31 id=31 data-nosnippet>31</a>    }
-<a href=#32 id=32 data-nosnippet>32</a>}
+<a href=#11 id=11 data-nosnippet>11</a>    <span class="comment">// which bytes this process is, pinned before anything else runs: a server asked later
+<a href=#12 id=12 data-nosnippet>12</a>    // whether its code still exists compares against this, not against the file at that
+<a href=#13 id=13 data-nosnippet>13</a>    // path by then (I1502)
+<a href=#14 id=14 data-nosnippet>14</a>    </span><span class="kw">let _ </span>= majordomus_cli::lease::started_as();
+<a href=#15 id=15 data-nosnippet>15</a>    <span class="kw">let </span>cli = <span class="kw">match </span>Cli::try_parse() {
+<a href=#16 id=16 data-nosnippet>16</a>        <span class="prelude-val">Ok</span>(cli) =&gt; cli,
+<a href=#17 id=17 data-nosnippet>17</a>        <span class="prelude-val">Err</span>(e) =&gt; {
+<a href=#18 id=18 data-nosnippet>18</a>            <span class="comment">// clap prints help and version to stdout with status 0, and usage errors to
+<a href=#19 id=19 data-nosnippet>19</a>            // stderr with status 2, which is the contract's usage code.
+<a href=#20 id=20 data-nosnippet>20</a>            </span><span class="kw">let _ </span>= e.print();
+<a href=#21 id=21 data-nosnippet>21</a>            <span class="kw">return if </span>e.use_stderr() {
+<a href=#22 id=22 data-nosnippet>22</a>                ExitCode::from(EXIT_USAGE)
+<a href=#23 id=23 data-nosnippet>23</a>            } <span class="kw">else </span>{
+<a href=#24 id=24 data-nosnippet>24</a>                ExitCode::SUCCESS
+<a href=#25 id=25 data-nosnippet>25</a>            };
+<a href=#26 id=26 data-nosnippet>26</a>        }
+<a href=#27 id=27 data-nosnippet>27</a>    };
+<a href=#28 id=28 data-nosnippet>28</a>    majordomus_cli::logging::init();
+<a href=#29 id=29 data-nosnippet>29</a>    <span class="kw">match </span>majordomus_cli::commands::run(cli) {
+<a href=#30 id=30 data-nosnippet>30</a>        <span class="prelude-val">Ok</span>(code) =&gt; ExitCode::from(code),
+<a href=#31 id=31 data-nosnippet>31</a>        <span class="prelude-val">Err</span>(err) =&gt; {
+<a href=#32 id=32 data-nosnippet>32</a>            <span class="macro">eprintln!</span>(<span class="string">"majordomus: {err}"</span>);
+<a href=#33 id=33 data-nosnippet>33</a>            ExitCode::from(err.exit_code())
+<a href=#34 id=34 data-nosnippet>34</a>        }
+<a href=#35 id=35 data-nosnippet>35</a>    }
+<a href=#36 id=36 data-nosnippet>36</a>}
 </code></pre></div></section></main></body></html>
