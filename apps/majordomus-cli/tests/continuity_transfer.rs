@@ -208,3 +208,59 @@ fn a_handover_published_on_one_machine_is_resumed_on_another() {
     assert_eq!(code, 10);
     assert!(err.contains("is not a remote name"), "{err}");
 }
+
+/// An answer that cannot be written is a failure of the transport and never a success: the
+/// lines are collected and written once, so a report is printed whole or not at all, in
+/// either format.
+#[test]
+fn an_answer_that_cannot_be_written_is_a_transport_failure() {
+    use std::process::Stdio;
+    let f = Fixture::new();
+    let a = Machine::new(f.root(), f.parent().join("home-a"));
+    for format in ["text", "json"] {
+        // The writing end of a pipe whose only reader has exited: the stdin std made for a
+        // process that is gone. `std::io::pipe` is newer than the crate's rust-version.
+        let mut gone = Command::new(BIN)
+            .arg("--version")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        let writer = gone.stdin.take().unwrap();
+        assert!(gone.wait().unwrap().success());
+        let out = Command::new(BIN)
+            .args(["continuity", "status", "--format", format])
+            .current_dir(&a.root)
+            .env("HOME", &a.home)
+            .env("XDG_STATE_HOME", a.state())
+            .env("MAJORDOMUS_LOG", "error")
+            .env("MAJORDOMUS_SHARE", dist_share())
+            .stdin(Stdio::null())
+            .stdout(Stdio::from(writer))
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap()
+            .wait_with_output()
+            .unwrap();
+        assert_eq!(
+            out.status.code(),
+            Some(13),
+            "--format {format}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+}
+
+/// A repository that is not there is refused before any capability is asked, with the path
+/// on stderr and nothing on stdout.
+#[test]
+fn a_repository_that_does_not_exist_is_refused_and_nothing_is_answered() {
+    let f = Fixture::new();
+    let a = Machine::new(f.root(), f.parent().join("home-a"));
+    let missing = f.path("does-not-exist");
+    let (code, out, err) = a.run(&["status", "--repo", missing.to_str().unwrap()]);
+    assert_eq!(code, 13, "{err}");
+    assert!(out.is_empty(), "{out}");
+    assert!(err.contains("does-not-exist"), "{err}");
+}

@@ -28,7 +28,8 @@ pub fn run(args: ContinuityArgs) -> Result<u8> {
     answer(&app.context, &args.command, args.format, &mut stdout.lock())
 }
 
-type Text<W> = fn(&mut W, &Value) -> Result<u8>;
+/// A value as the lines a terminal shows, and the exit code those lines mean.
+type Text = fn(&Value) -> (Vec<String>, u8);
 
 fn answer<W: Write>(
     ctx: &crate::capability::Context,
@@ -36,7 +37,7 @@ fn answer<W: Write>(
     format: OutputFormat,
     out: &mut W,
 ) -> Result<u8> {
-    let (path, input, text): (&[&str], Value, Text<W>) = match command {
+    let (path, input, text): (&[&str], Value, Text) = match command {
         ContinuityCommand::Status => (&["continuity", "status"], json!({}), status_text),
         ContinuityCommand::Records => (&["continuity", "records"], json!({}), records_text),
         ContinuityCommand::Device { label } => (
@@ -71,13 +72,17 @@ fn answer<W: Write>(
     };
     let input = strip_nulls(input);
     let v = execute(ctx, path, input)?;
-    match format {
-        OutputFormat::Json => {
-            writeln!(out, "{v:#}").map_err(Error::Transport)?;
-            Ok(exit_of(command, &v))
+    // the answer first, then one write: it is printed whole or not at all, and the exit code
+    // is the value's whichever way it was rendered
+    let (rendered, code) = match format {
+        OutputFormat::Json => (format!("{v:#}"), exit_of(command, &v)),
+        OutputFormat::Text => {
+            let (lines, code) = text(&v);
+            (lines.join("\n"), code)
         }
-        OutputFormat::Text => text(out, &v),
-    }
+    };
+    writeln!(out, "{rendered}").map_err(Error::Transport)?;
+    Ok(code)
 }
 
 /// The exit code a value carries, the same whichever way it is rendered.
@@ -108,33 +113,34 @@ fn strip_nulls(v: Value) -> Value {
 
 fn execute(ctx: &crate::capability::Context, path: &[&str], input: Value) -> Result<Value> {
     let words: Vec<String> = path.iter().map(|w| w.to_string()).collect();
+    // Every path this file names is declared by the `continuity` module, and the registry
+    // refuses to build with a command line no capability claims. Should one ever be
+    // missing, the executor is asked for the words themselves and answers that it knows no
+    // such capability: one refusal, the executor's, and no second one composed here.
+    let asked = path.join(".");
     let id = ctx
         .registry
         .by_cli(&words)
-        .map(|c| c.id.as_str())
-        .ok_or_else(|| Error::Protocol {
-            reason: format!(
-                "no capability is exposed as `majordomus {}`",
-                path.join(" ")
-            ),
-        })?;
-    ctx.execute(id, input).map_err(|e| match e {
+        .map_or(asked.as_str(), |c| c.id.as_str());
+    ctx.execute(id, input).map_err(refusal)
+}
+
+/// A capability's refusal as the command line's error: what does not exist is not found, a
+/// refusal or an input the capability will not take is the operation's own answer with what
+/// to do instead (exit 10), and anything else is a failure of the program.
+fn refusal(e: CapabilityError) -> Error {
+    match e {
         CapabilityError::NotFound(reason) => Error::NotFound { reason },
-        // a refusal is the operation's own answer, with what to do instead
         CapabilityError::Refused(reason) | CapabilityError::InvalidInput(reason) => {
             Error::Refused { code: 10, reason }
         }
         other => Error::Protocol {
             reason: other.to_string(),
         },
-    })
+    }
 }
 
 // ---------------------------------------------------------------- text
-
-fn w<W: Write>(out: &mut W, line: String) -> Result<()> {
-    writeln!(out, "{line}").map_err(Error::Transport)
-}
 
 fn s<'a>(v: &'a Value, key: &str) -> &'a str {
     v[key].as_str().unwrap_or("")
@@ -153,215 +159,184 @@ fn age(v: &Value) -> String {
     }
 }
 
-fn record_lines<W: Write>(out: &mut W, r: &Value, indent: &str) -> Result<()> {
+fn record_lines(r: &Value, indent: &str) -> Vec<String> {
+    let mut lines = Vec::new();
     let device = &r["device"];
     let who = if r["this_device"].as_bool() == Some(true) {
         format!("{} (this device)", s(device, "label"))
     } else {
         format!("{} [{}]", s(device, "label"), s(r, "trust"))
     };
-    w(out, format!("{indent}record      {}", short(s(r, "id"))))?;
-    w(out, format!("{indent}device      {who}"))?;
-    w(out, format!("{indent}published   {}", age(r)))?;
+    lines.push(format!("{indent}record      {}", short(s(r, "id"))));
+    lines.push(format!("{indent}device      {who}"));
+    lines.push(format!("{indent}published   {}", age(r)));
     if !s(r, "task").is_empty() {
-        w(out, format!("{indent}intent      {}", s(r, "task")))?;
+        lines.push(format!("{indent}intent      {}", s(r, "task")));
     }
     if !s(r, "issue").is_empty() {
-        w(out, format!("{indent}issue       {}", s(r, "issue")))?;
+        lines.push(format!("{indent}issue       {}", s(r, "issue")));
     }
-    w(
-        out,
-        format!(
-            "{indent}source      {} @ {}  {}{}",
-            r["branch"].as_str().unwrap_or("DETACHED"),
-            short(s(r, "head")),
-            s(r, "working_tree"),
-            match r["changed_total"].as_u64() {
-                Some(n) if n > 0 => format!(" ({n} uncommitted)"),
-                _ => String::new(),
-            }
-        ),
-    )?;
+    lines.push(format!(
+        "{indent}source      {} @ {}  {}{}",
+        r["branch"].as_str().unwrap_or("DETACHED"),
+        short(s(r, "head")),
+        s(r, "working_tree"),
+        match r["changed_total"].as_u64() {
+            Some(n) if n > 0 => format!(" ({n} uncommitted)"),
+            _ => String::new(),
+        }
+    ));
     if !s(r, "objective").is_empty() {
-        w(out, format!("{indent}objective   {}", s(r, "objective")))?;
+        lines.push(format!("{indent}objective   {}", s(r, "objective")));
     }
-    Ok(())
+    lines
 }
 
-fn diagnostics<W: Write>(out: &mut W, v: &Value) -> Result<()> {
+fn diagnostics(v: &Value) -> Vec<String> {
+    let mut lines = Vec::new();
     for d in v["diagnostics"].as_array().into_iter().flatten() {
         let path = d["path"]
             .as_str()
             .map(|p| format!(" {p}:"))
             .unwrap_or_default();
-        w(
-            out,
-            format!(
-                "{:<7} {}{path} {}",
-                s(d, "severity").to_uppercase(),
-                s(d, "code"),
-                s(d, "message")
-            ),
-        )?;
+        lines.push(format!(
+            "{:<7} {}{path} {}",
+            s(d, "severity").to_uppercase(),
+            s(d, "code"),
+            s(d, "message")
+        ));
     }
-    Ok(())
+    lines
 }
 
-fn status_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
+fn status_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
     let device = &v["device"];
-    w(out, format!("repository  {}", short(s(v, "repository"))))?;
-    w(
-        out,
-        format!(
-            "device      {} ({})",
-            s(device, "label"),
-            short(s(device, "node"))
-        ),
-    )?;
-    w(
-        out,
-        format!(
-            "branch      {} @ {}  {}",
-            s(v, "branch"),
-            short(s(v, "head")),
-            s(v, "working_tree")
-        ),
-    )?;
+    lines.push(format!("repository  {}", short(s(v, "repository"))));
+    lines.push(format!(
+        "device      {} ({})",
+        s(device, "label"),
+        short(s(device, "node"))
+    ));
+    lines.push(format!(
+        "branch      {} @ {}  {}",
+        s(v, "branch"),
+        short(s(v, "head")),
+        s(v, "working_tree")
+    ));
     match v["position"].as_object() {
-        Some(p) => w(
-            out,
-            format!(
-                "continues   {} ({} here)",
-                short(p["record"].as_str().unwrap_or("")),
-                p["via"].as_str().unwrap_or("")
-            ),
-        )?,
-        None => w(out, "continues   nothing yet on this branch".into())?,
+        Some(p) => lines.push(format!(
+            "continues   {} ({} here)",
+            short(p["record"].as_str().unwrap_or("")),
+            p["via"].as_str().unwrap_or("")
+        )),
+        None => lines.push("continues   nothing yet on this branch".into()),
     }
     let store = &v["store"];
-    w(
-        out,
-        format!(
-            "store       {} record(s), {} refused; {} {}",
-            store["records"],
-            store["refused"],
-            store["remote"].as_str().unwrap_or("no remote"),
-            s(store, "sync")
-        ),
-    )?;
+    lines.push(format!(
+        "store       {} record(s), {} refused; {} {}",
+        store["records"],
+        store["refused"],
+        store["remote"].as_str().unwrap_or("no remote"),
+        s(store, "sync")
+    ));
     if let Some(sync) = v["last_sync"].as_object() {
-        w(
-            out,
-            format!(
-                "last sync   {} with {} at {}",
-                sync["outcome"].as_str().unwrap_or(""),
-                sync["remote"].as_str().unwrap_or(""),
-                sync["at"].as_str().unwrap_or("")
-            ),
-        )?;
+        lines.push(format!(
+            "last sync   {} with {} at {}",
+            sync["outcome"].as_str().unwrap_or(""),
+            sync["remote"].as_str().unwrap_or(""),
+            sync["at"].as_str().unwrap_or("")
+        ));
     }
     for line in v["lines"].as_array().into_iter().flatten() {
         if s(line, "state") == "diverged" {
-            w(
-                out,
-                format!(
-                    "line        {} DIVERGED: {} heads",
-                    short(s(line, "id")),
-                    line["heads"].as_array().map(Vec::len).unwrap_or(0)
-                ),
-            )?;
+            lines.push(format!(
+                "line        {} DIVERGED: {} heads",
+                short(s(line, "id")),
+                line["heads"].as_array().map(Vec::len).unwrap_or(0)
+            ));
         }
     }
     let resumable = v["resumable"].as_array().cloned().unwrap_or_default();
     if resumable.is_empty() {
-        w(out, "resumable   none".into())?;
+        lines.push("resumable   none".into());
     } else {
-        w(out, String::new())?;
-        w(
-            out,
-            format!("Resumable from another device ({})", resumable.len()),
-        )?;
+        lines.push(String::new());
+        lines.push(format!(
+            "Resumable from another device ({})",
+            resumable.len()
+        ));
         for r in &resumable {
-            record_lines(out, r, "  ")?;
-            w(out, String::new())?;
+            lines.extend(record_lines(r, "  "));
+            lines.push(String::new());
         }
     }
-    diagnostics(out, v)?;
+    lines.extend(diagnostics(v));
     for n in v["next"].as_array().into_iter().flatten() {
-        w(out, format!("next        {}", n.as_str().unwrap_or("")))?;
+        lines.push(format!("next        {}", n.as_str().unwrap_or("")));
     }
-    Ok(0)
+    (lines, 0)
 }
 
-fn records_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
+fn records_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
     let records = v["records"].as_array().cloned().unwrap_or_default();
-    w(out, format!("{} record(s)", records.len()))?;
+    lines.push(format!("{} record(s)", records.len()));
     for r in &records {
-        w(
-            out,
-            format!(
-                "{}  line {}  parent {}  {}  {}  {}",
-                short(s(r, "id")),
-                short(s(r, "line")),
-                r["parent"].as_str().map(short).unwrap_or("-"),
-                s(&r["device"], "label"),
-                r["branch"].as_str().unwrap_or("DETACHED"),
-                s(r, "published_at")
-            ),
-        )?;
+        lines.push(format!(
+            "{}  line {}  parent {}  {}  {}  {}",
+            short(s(r, "id")),
+            short(s(r, "line")),
+            r["parent"].as_str().map(short).unwrap_or("-"),
+            s(&r["device"], "label"),
+            r["branch"].as_str().unwrap_or("DETACHED"),
+            s(r, "published_at")
+        ));
     }
-    diagnostics(out, v)?;
-    Ok(0)
+    lines.extend(diagnostics(v));
+    (lines, 0)
 }
 
-fn plan_body<W: Write>(out: &mut W, v: &Value) -> Result<()> {
+fn plan_body(v: &Value) -> Vec<String> {
+    let mut lines = Vec::new();
     if let Some(r) = v.get("record").filter(|r| r.is_object()) {
-        record_lines(out, r, "  ")?;
+        lines.extend(record_lines(r, "  "));
     }
     for c in v["candidates"].as_array().into_iter().flatten() {
-        w(out, String::new())?;
-        record_lines(out, c, "  ")?;
+        lines.push(String::new());
+        lines.extend(record_lines(c, "  "));
     }
     if let Some(src) = v.get("source").filter(|s| s.is_object()) {
-        w(out, String::new())?;
-        w(out, "Source".into())?;
-        w(
-            out,
-            format!(
-                "  expected    {} @ {}",
-                src["expected_branch"].as_str().unwrap_or("DETACHED"),
-                short(src["expected_head"].as_str().unwrap_or(""))
-            ),
-        )?;
-        w(
-            out,
-            format!(
-                "  local       {} @ {}{}",
-                src["local_branch"].as_str().unwrap_or("DETACHED"),
-                short(src["local_head"].as_str().unwrap_or("")),
-                if src["local_dirty"].as_bool() == Some(true) {
-                    "  dirty"
-                } else {
-                    ""
-                }
-            ),
-        )?;
-        w(out, format!("  relation    {}", s(src, "relation")))?;
+        lines.push(String::new());
+        lines.push("Source".into());
+        lines.push(format!(
+            "  expected    {} @ {}",
+            src["expected_branch"].as_str().unwrap_or("DETACHED"),
+            short(src["expected_head"].as_str().unwrap_or(""))
+        ));
+        lines.push(format!(
+            "  local       {} @ {}{}",
+            src["local_branch"].as_str().unwrap_or("DETACHED"),
+            short(src["local_head"].as_str().unwrap_or("")),
+            if src["local_dirty"].as_bool() == Some(true) {
+                "  dirty"
+            } else {
+                ""
+            }
+        ));
+        lines.push(format!("  relation    {}", s(src, "relation")));
         if src["origin_dirty"].as_bool() == Some(true) {
-            w(
-                out,
-                format!(
-                    "  origin      dirty: {} uncommitted file(s) not in its commit",
-                    src["origin_changed_total"]
-                ),
-            )?;
+            lines.push(format!(
+                "  origin      dirty: {} uncommitted file(s) not in its commit",
+                src["origin_changed_total"]
+            ));
         }
     }
     if !s(v, "next_action").is_empty() {
-        w(out, String::new())?;
-        w(out, "Next action".into())?;
+        lines.push(String::new());
+        lines.push("Next action".into());
         for line in s(v, "next_action").lines() {
-            w(out, format!("  {line}"))?;
+            lines.push(format!("  {line}"));
         }
     }
     let list = |key: &str| -> Vec<String> {
@@ -374,134 +349,124 @@ fn plan_body<W: Write>(out: &mut W, v: &Value) -> Result<()> {
     };
     let restores = list("restores");
     if !restores.is_empty() {
-        w(out, String::new())?;
-        w(out, format!("Restores    {}", restores.join(", ")))?;
-        w(
-            out,
-            format!("Recomputes  {}", list("recomputes").join(", ")),
-        )?;
+        lines.push(String::new());
+        lines.push(format!("Restores    {}", restores.join(", ")));
+        lines.push(format!("Recomputes  {}", list("recomputes").join(", ")));
     }
     for (label, key) in [("BLOCKER", "blockers"), ("WARN", "warnings")] {
         for i in v[key].as_array().into_iter().flatten() {
-            w(
-                out,
-                format!("{label:<7} {}: {}", s(i, "code"), s(i, "message")),
-            )?;
+            lines.push(format!("{label:<7} {}: {}", s(i, "code"), s(i, "message")));
         }
     }
     for a in list("actions") {
-        w(out, format!("run         {a}"))?;
+        lines.push(format!("run         {a}"));
     }
-    Ok(())
+    lines
 }
 
-fn plan_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
-    w(out, format!("Resume      {}", s(v, "status")))?;
-    plan_body(out, v)?;
-    Ok(plan_exit(v))
+fn plan_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
+    lines.push(format!("Resume      {}", s(v, "status")));
+    lines.extend(plan_body(v));
+    (lines, plan_exit(v))
 }
 
-fn publish_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
+fn publish_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
     let r = &v["record"];
     if v["written"].as_bool() == Some(true) {
-        w(out, format!("Published   {}", short(s(r, "id"))))?;
+        lines.push(format!("Published   {}", short(s(r, "id"))));
     } else {
-        w(
-            out,
-            format!(
-                "Unchanged   {} already holds this handover",
-                short(s(r, "id"))
-            ),
-        )?;
+        lines.push(format!(
+            "Unchanged   {} already holds this handover",
+            short(s(r, "id"))
+        ));
     }
-    w(out, format!("handover    {}", s(v, "handover")))?;
-    record_lines(out, r, "")?;
+    lines.push(format!("handover    {}", s(v, "handover")));
+    lines.extend(record_lines(r, ""));
     match r["parent"].as_str() {
-        Some(p) => w(out, format!("continues   {}", short(p)))?,
-        None => w(out, format!("line        {} (new)", short(s(r, "line"))))?,
+        Some(p) => lines.push(format!("continues   {}", short(p))),
+        None => lines.push(format!("line        {} (new)", short(s(r, "line")))),
     }
     for n in v["next"].as_array().into_iter().flatten() {
-        w(out, format!("next        {}", n.as_str().unwrap_or("")))?;
+        lines.push(format!("next        {}", n.as_str().unwrap_or("")));
     }
-    Ok(0)
+    (lines, 0)
 }
 
-fn sync_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
-    w(
-        out,
-        format!(
-            "Sync        {} with {}",
-            s(v, "action"),
-            v["remote"].as_str().unwrap_or("no remote")
-        ),
-    )?;
-    w(
-        out,
-        format!(
-            "moved       {} fetched, {} published",
-            v["fetched"], v["published"]
-        ),
-    )?;
-    w(out, format!("store       {}", s(&v["store"], "sync")))?;
+fn sync_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
+    lines.push(format!(
+        "Sync        {} with {}",
+        s(v, "action"),
+        v["remote"].as_str().unwrap_or("no remote")
+    ));
+    lines.push(format!(
+        "moved       {} fetched, {} published",
+        v["fetched"], v["published"]
+    ));
+    lines.push(format!("store       {}", s(&v["store"], "sync")));
     for l in v["lines"].as_array().into_iter().flatten() {
-        w(
-            out,
-            format!("line        {}  {}", short(s(l, "line")), s(l, "relation")),
-        )?;
+        lines.push(format!(
+            "line        {}  {}",
+            short(s(l, "line")),
+            s(l, "relation")
+        ));
     }
     let resumable = v["resumable"].as_array().cloned().unwrap_or_default();
     if !resumable.is_empty() {
-        w(out, String::new())?;
-        w(
-            out,
-            format!("Resumable from another device ({})", resumable.len()),
-        )?;
+        lines.push(String::new());
+        lines.push(format!(
+            "Resumable from another device ({})",
+            resumable.len()
+        ));
         for r in &resumable {
-            record_lines(out, r, "  ")?;
+            lines.extend(record_lines(r, "  "));
         }
-        w(out, String::new())?;
-        w(out, "next        majordomus-cli continuity plan".into())?;
+        lines.push(String::new());
+        lines.push("next        majordomus-cli continuity plan".into());
     }
-    diagnostics(out, v)?;
-    Ok(if s(v, "action") == "unreachable" {
+    lines.extend(diagnostics(v));
+    let code = if s(v, "action") == "unreachable" {
         10
     } else {
         0
-    })
+    };
+    (lines, code)
 }
 
-fn resume_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
+fn resume_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
     let plan = &v["plan"];
     if v["resumed"].as_bool() == Some(true) {
-        w(out, "Session resumed".into())?;
-        w(out, format!("handover    {}", s(v, "handover")))?;
-        w(
-            out,
-            format!("decisions   {} carried", v["decisions_carried"]),
-        )?;
+        lines.push("Session resumed".into());
+        lines.push(format!("handover    {}", s(v, "handover")));
+        lines.push(format!("decisions   {} carried", v["decisions_carried"]));
         if let Some(r) = plan.get("record").filter(|r| r.is_object()) {
-            w(
-                out,
-                format!("from        {} -> this device", s(&r["device"], "label")),
-            )?;
+            lines.push(format!(
+                "from        {} -> this device",
+                s(&r["device"], "label")
+            ));
         }
     } else {
-        w(out, format!("Resume blocked  {}", s(plan, "status")))?;
+        lines.push(format!("Resume blocked  {}", s(plan, "status")));
     }
-    plan_body(out, plan)?;
-    Ok(if v["resumed"].as_bool() == Some(true) {
+    lines.extend(plan_body(plan));
+    let code = if v["resumed"].as_bool() == Some(true) {
         0
     } else {
         10
-    })
+    };
+    (lines, code)
 }
 
-fn device_text<W: Write>(out: &mut W, v: &Value) -> Result<u8> {
+fn device_text(v: &Value) -> (Vec<String>, u8) {
+    let mut lines = Vec::new();
     let d = &v["device"];
-    w(out, format!("device      {}", s(d, "label")))?;
-    w(out, format!("node        {}", s(d, "node")))?;
-    w(out, format!("public key  {}", s(v, "public_key")))?;
-    Ok(0)
+    lines.push(format!("device      {}", s(d, "label")));
+    lines.push(format!("node        {}", s(d, "node")));
+    lines.push(format!("public key  {}", s(v, "public_key")));
+    (lines, 0)
 }
 
 #[cfg(test)]
@@ -511,10 +476,9 @@ mod tests {
     use crate::continuity::{self as domain, PublishRequest};
 
     /// Render `v` with `text`, answering the lines and the exit code.
-    fn render(text: Text<Vec<u8>>, v: &Value) -> (String, u8) {
-        let mut out = Vec::new();
-        let code = text(&mut out, v).unwrap();
-        (String::from_utf8(out).unwrap(), code)
+    fn render(text: Text, v: &Value) -> (String, u8) {
+        let (lines, code) = text(v);
+        (format!("{}\n", lines.join("\n")), code)
     }
 
     fn value<T: serde::Serialize>(t: &T) -> Value {
@@ -786,6 +750,82 @@ mod tests {
             "device      mac-mini\nnode        ab\npublic key  cd\n"
         );
         assert_eq!(exit_of(&ContinuityCommand::Device { label: None }, &v), 0);
+    }
+
+    /// The two renderings no pair of clones in these tests produces by itself: a record
+    /// published under a task names its intent, and a line two devices continued
+    /// separately is called diverged with the number of its heads. The values are the
+    /// fields the renderers read and nothing else.
+    #[test]
+    fn an_intent_and_a_diverged_line_are_rendered() {
+        let record = json!({
+            "id": "0123456789abcdef", "device": { "label": "macbook-pro" }, "trust": "trusted",
+            "task": "Ship the parser", "branch": "feature/x", "head": "fedcba9876543210",
+            "working_tree": "clean", "published_at": "2026-10-03T12:00:00Z"
+        });
+        let lines = record_lines(&record, "  ");
+        assert!(
+            lines.contains(&"  intent      Ship the parser".to_string()),
+            "{lines:?}"
+        );
+        assert!(
+            lines.contains(&"  device      macbook-pro [trusted]".to_string()),
+            "{lines:?}"
+        );
+        // a record with neither names neither
+        let bare = record_lines(&json!({ "id": "ab", "device": { "label": "x" } }), "");
+        assert!(
+            !bare
+                .iter()
+                .any(|l| l.contains("intent") || l.contains("issue")),
+            "{bare:?}"
+        );
+        assert!(
+            bare.iter()
+                .any(|l| l.starts_with("source      DETACHED @ ")),
+            "{bare:?}"
+        );
+
+        let status = json!({
+            "device": { "label": "mac-mini", "node": "ab" },
+            "store": { "records": 2, "refused": 0, "sync": "synced" },
+            "lines": [
+                { "id": "aaaaaaaaaaaaaaaa", "state": "diverged", "heads": [{}, {}] },
+                { "id": "bbbbbbbbbbbbbbbb", "state": "linear", "heads": [{}] }
+            ],
+            "resumable": []
+        });
+        let (text, code) = render(status_text, &status);
+        assert_eq!(code, 0);
+        assert!(
+            text.contains("line        aaaaaaaaaaaa DIVERGED: 2 heads"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("bbbbbbbbbbbb"),
+            "a line that did not diverge is not listed: {text}"
+        );
+        assert!(text.contains("no remote synced"), "{text}");
+    }
+
+    /// A refusal is the operation's answer and exits 10; what is not there is not found;
+    /// anything else is the program's failure.
+    #[test]
+    fn a_capability_error_becomes_the_command_lines_error() {
+        assert!(matches!(
+            refusal(CapabilityError::NotFound("no such record".into())),
+            Error::NotFound { reason } if reason == "no such record"
+        ));
+        for e in [
+            CapabilityError::Refused("a secret".into()),
+            CapabilityError::InvalidInput("no label".into()),
+        ] {
+            assert!(matches!(refusal(e), Error::Refused { code: 10, .. }));
+        }
+        assert!(matches!(
+            refusal(CapabilityError::Internal("the store is gone".into())),
+            Error::Protocol { reason } if reason.contains("the store is gone")
+        ));
     }
 
     #[test]

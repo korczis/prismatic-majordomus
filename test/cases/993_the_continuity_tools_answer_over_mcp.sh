@@ -19,7 +19,7 @@ command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; MAJORDOMUS_LOG=error; export MAJORDOMUS_SHARE MAJORDOMUS_LOG
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj993.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-git init -q --bare "$S/shared.git"
+git init -q --bare -b main "$S/shared.git"
 
 # on MACHINE CMD...: run CMD in MACHINE's clone with MACHINE's own home and state
 on() { m="$1"; shift; ( cd "$S/$m/repo" && HOME="$S/$m/home" XDG_STATE_HOME="$S/$m/state" "$@" ); }

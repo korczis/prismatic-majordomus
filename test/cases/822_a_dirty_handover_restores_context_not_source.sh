@@ -12,7 +12,7 @@ command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; MAJORDOMUS_LOG=error; export MAJORDOMUS_SHARE MAJORDOMUS_LOG
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj822.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-git init -q --bare "$S/shared.git"
+git init -q --bare -b main "$S/shared.git"
 
 # Each machine is a clone with its own HOME and XDG_STATE_HOME, so its own device key; the
 # bare repository is the only thing they share. (The same harness as case 821.)
