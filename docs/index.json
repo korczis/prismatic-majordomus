@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "dba54228204923a1b7a6bd3d2f44f80e28a49024",
-  "source_version": "0.17.0",
-  "registry_fingerprint": "a28e25afa21af39c7b92f4c16ac0a63b75d868f25c5ecf0ea60e92e0f1271868"
+  "commit": "893a79be6577718eec7e92c6fd79cad1bf169ff8",
+  "source_version": "0.18.0",
+  "registry_fingerprint": "600d66a2471d8c62c4ab57c724b55c498f27ddffc6ba4c33ff4e20dbe93c3a7d"
  },
  "counts": {
-  "pages": 1969,
-  "capabilities": 2056,
-  "cli_commands": 100,
-  "http_routes": 180,
-  "mcp_tools": 176,
-  "mcp_resources": 1927,
+  "pages": 1979,
+  "capabilities": 2089,
+  "cli_commands": 101,
+  "http_routes": 181,
+  "mcp_tools": 177,
+  "mcp_resources": 1959,
   "modules": 86
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 83
+   "count": 84
   },
   {
    "kind": "application",
@@ -78,7 +78,7 @@
    "route": null,
    "title": null,
    "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-   "count": 1
+   "count": 2
   },
   {
    "kind": "deployment",
@@ -126,7 +126,7 @@
    "route": null,
    "title": null,
    "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-   "count": 1
+   "count": 2
   },
   {
    "kind": "implementation",
@@ -134,7 +134,7 @@
    "route": null,
    "title": null,
    "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-   "count": 50
+   "count": 51
   },
   {
    "kind": "intent",
@@ -142,7 +142,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-   "count": 2
+   "count": 3
   },
   {
    "kind": "issue",
@@ -150,7 +150,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 257
+   "count": 262
   },
   {
    "kind": "knowledge",
@@ -174,7 +174,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 24
+   "count": 25
   },
   {
    "kind": "moment",
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 388
+   "count": 409
   },
   {
    "kind": "use-case",
@@ -955,6 +955,14 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0110",
    "source": ".ai/repo/adrs/0110-mcp-says-nothing-its-capability-does-not.md"
+  },
+  {
+   "route": "/adrs/adr-0111/",
+   "title": "A task names what it serves, and the binding is derived, pinned and never stored",
+   "description": "A task names what it serves, and the binding is derived, pinned and never stored",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0111",
+   "source": ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md"
   },
   {
    "route": "/applications/",
@@ -1930,6 +1938,11 @@
    "route": "/docs/cli/intent/",
    "title": "majordomus intent",
    "description": "What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves"
+  },
+  {
+   "route": "/docs/cli/intent/binding/",
+   "title": "majordomus intent binding",
+   "description": "What a piece of work is bound to before it starts: the issue, the intent or the paths it names resolved to the criteria it serves, or an exemption the policy declares, with the two pins a resumed worker compares; exit 10 when refused"
   },
   {
    "route": "/docs/cli/intent/coverage/",
@@ -3803,8 +3816,8 @@
   },
   {
    "route": "/guarantees/intent-in-session-context/",
-   "title": "A session will load the intents its task serves when it starts",
-   "description": "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
+   "title": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
+   "description": "A worker starts from what must become true, not from an edit. A task that says which issue it executes, or which intent it serves, is handed that intent in its briefing: the statement, the invariants, the criteria this work serves with the state of their evidence, the critique of the plan and the recorded gap. Nobody copies an intent into a prompt."
   },
   {
    "route": "/guarantees/intent-links-resolve/",
@@ -3828,8 +3841,8 @@
   },
   {
    "route": "/guarantees/intent-refused-at-plan-start/",
-   "title": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
-   "description": "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
+   "title": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
+   "description": "The review of a plan is a precondition of the work, not a finding about it. In a repository whose policy says intent.binding: required, an issue whose intent was never critiqued, or whose critique has a blocking finding still open, does not become ACTIVE, and a task that would execute it does not start."
   },
   {
    "route": "/guarantees/intent-stage-derived/",
@@ -5912,6 +5925,36 @@
    "description": "Derive the policy fingerprint stamped into generated bootstraps from the parsed policy rather than its bytes, so that editing a comment does not rewrite AGENTS.md, CLAUDE.md and GEMINI.md."
   },
   {
+   "route": "/plan/i2000/",
+   "title": "I2000 — What a piece of work serves is one derivation, with a revision",
+   "description": "Add Intents::binding over the preflight: the work named by an issue, an intent, paths or a declared exemption resolves to a standing (bound, maintenance, exempt, refused), the intents and criteria served, and two pins of what was resolved — plan_revision, a hash of each served intent's statement, invariants and criteria, the links that reach it and its critique, and evidence_standing, a hash of the served criteria's evidence states; answer it as the read-only capability intents.binding on the command line, HTTP and MCP."
+  },
+  {
+   "route": "/plan/i2001/",
+   "title": "I2001 — start asks what the task serves and refuses a refused binding where the policy requires it",
+   "description": "Give start the flags --issue, --intent, --exempt and --because; ask intents.binding through the built executable; under policy intent.binding: required refuse a refused or unreadable binding, under advisory report it, and when the key is absent change nothing. Record what was named and the revision in the task record and the task.started ledger event."
+  },
+  {
+   "route": "/plan/i2002/",
+   "title": "I2002 — The context of a bound task says what the intent asks of this work",
+   "description": "Add an INTENT section to majordomus context for a task that named an issue or an intent: statement, invariants, the criteria served with the state of their evidence, the critique's open blocking findings and the gap's conditions, each read from intents.binding and bounded by the context budget."
+  },
+  {
+   "route": "/plan/i2003/",
+   "title": "I2003 — A handover pins the binding it was written under, and resolving it reports drift",
+   "description": "Write issue, intent and binding_revision into a handover's front matter when the task is bound, and have handover --resolve ask intents.binding again and say whether the plan revision or the evidence standing changed since."
+  },
+  {
+   "route": "/plan/i2004/",
+   "title": "I2004 — plan start refuses an issue whose binding is refused, in both engines",
+   "description": "Where the policy requires binding, have the start transition ask the binding of the issue before it stamps: plan::check in the Rust engine through the intent engine, and the shell engine through the built executable, with the same refusal text; where the policy does not require it, neither engine changes."
+  },
+  {
+   "route": "/plan/intent-bound-work/",
+   "title": "intent-bound-work — A task is bound to the intent it serves",
+   "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift."
+  },
+  {
    "route": "/plan/intent-lifecycle/",
    "title": "intent-lifecycle — Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
    "description": "An intent is a typed record above the milestones that realise it: a statement, its invariants, and satisfaction criteria each naming the evidence that settles it. Its stage is derived from the plan's milestone status and its satisfaction from the evidence ledger, never stored. A gate refuses an intent that names no milestone or evidence that resolves to nothing, a session's preflight names the intent its work serves or refuses, the Cockpit shows intents with measured and enforced coverage of its scripts, and a milestone closes on GitHub only when the intents it serves are satisfied."
@@ -6435,6 +6478,11 @@
    "route": "/registry/capabilities/intent-realization-work/",
    "title": "intent_realization.work",
    "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning."
+  },
+  {
+   "route": "/registry/capabilities/intents-binding/",
+   "title": "intents.binding",
+   "description": "What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight's own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue's scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion's evidence changes state. Nothing is stored."
   },
   {
    "route": "/registry/capabilities/intents-coverage/",
@@ -7809,12 +7857,12 @@
    "source": ".ai/repo/rules/project/advisors-are-optional.v1.md"
   },
   {
-   "route": "/rules/project-an-intent-outlives-its-sessions-2/",
+   "route": "/rules/project-an-intent-outlives-its-sessions-3/",
    "title": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
    "description": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
    "kind": "rule",
-   "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
-   "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+   "id": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
+   "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
   },
   {
    "route": "/rules/project-benchmarkable-commands-1/",
@@ -8097,12 +8145,12 @@
    "source": ".ai/repo/rules/project/independent-of-prismatic.v1.md"
   },
   {
-   "route": "/rules/project-integration-follows-the-current-master-2/",
+   "route": "/rules/project-integration-follows-the-current-master-3/",
    "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
    "description": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
    "kind": "rule",
-   "id": "majordomus://rule/project.integration-follows-the-current-master@2",
-   "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+   "id": "majordomus://rule/project.integration-follows-the-current-master@3",
+   "source": ".ai/repo/rules/project/integration-follows-the-current-master.v3.md"
   },
   {
    "route": "/rules/project-interfaces-are-projections-1/",
@@ -8562,8 +8610,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.17.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.17.0, built from commit dba54228204923a1b7a6bd3d2f44f80e28a49024: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.18.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.18.0, built from commit 893a79be6577718eec7e92c6fd79cad1bf169ff8: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -9274,6 +9322,11 @@
    "route": "/rustdoc/majordomus_cli/intent/",
    "title": "majordomus_cli::intent - Rust",
    "description": "Intents: what must become true above the milestones that realise it, and whether the recorded evidence says it has."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/intent_binding/",
+   "title": "majordomus_cli::intent_binding - Rust",
+   "description": "The binding: what a piece of work serves, resolved once, before it starts (ADR 0111)."
   },
   {
    "route": "/rustdoc/majordomus_cli/intent_plan/",

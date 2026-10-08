@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.17.0 -->
+     Generator: majordomus-cli 0.18.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -393,7 +393,7 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
         },
         {
           &quot;const&quot;: &quot;supersession&quot;,
-          &quot;description&quot;: &quot;One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared.&quot;,
+          &quot;description&quot;: &quot;One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`).&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -781,7 +781,7 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
         &quot;reasons&quot;: {
           &quot;description&quot;: &quot;The decision&#39;s reasons; a code an older executor wrote reads back verbatim.&quot;,
           &quot;items&quot;: {
-            &quot;description&quot;: &quot;A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail&#39;s) is carried verbatim.&quot;,
+            &quot;description&quot;: &quot;A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail&#39;s) is carried verbatim.&quot;,
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
@@ -855,7 +855,7 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
         },
         {
           &quot;const&quot;: &quot;supersession&quot;,
-          &quot;description&quot;: &quot;No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting.&quot;,
+          &quot;description&quot;: &quot;No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -1476,7 +1476,7 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
         &quot;reasons&quot;: {
           &quot;description&quot;: &quot;Machine-readable reasons, one for every failing gate&#39;s every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready.&quot;,
           &quot;items&quot;: {
-            &quot;description&quot;: &quot;A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail&#39;s) is carried verbatim.&quot;,
+            &quot;description&quot;: &quot;A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail&#39;s) is carried verbatim.&quot;,
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
@@ -1505,7 +1505,7 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
           &quot;type&quot;: &quot;array&quot;
         },
         &quot;superseded_by&quot;: {
-          &quot;description&quot;: &quot;The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead.&quot;,
+          &quot;description&quot;: &quot;The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: [
@@ -1642,12 +1642,12 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
         },
         {
           &quot;const&quot;: &quot;superseded&quot;,
-          &quot;description&quot;: &quot;Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy.&quot;,
+          &quot;description&quot;: &quot;A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;possibly_redundant&quot;,
-          &quot;description&quot;: &quot;Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically.&quot;,
+          &quot;description&quot;: &quot;Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -2130,8 +2130,8 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::integration</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">IntegrationStatus</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/dba54228204923a1b7a6bd3d2f44f80e28a49024/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">a28e25afa21af39c7b92f4c16ac0a63b75d868f25c5ecf0ea60e92e0f1271868</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.17.0</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/893a79be6577718eec7e92c6fd79cad1bf169ff8/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">600d66a2471d8c62c4ab57c724b55c498f27ddffc6ba4c33ff4e20dbe93c3a7d</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.18.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -2196,7 +2196,7 @@ holds it (or nothing is observed, so no base is known). <span class="font-mono t
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.17.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/dba54228204923a1b7a6bd3d2f44f80e28a49024" class="font-mono underline">dba5422</a> · inputs <span class="font-mono">46ae29b6fd1e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.18.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/893a79be6577718eec7e92c6fd79cad1bf169ff8" class="font-mono underline">893a79b</a> · inputs <span class="font-mono">cc84ce1606ea</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

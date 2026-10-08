@@ -1,0 +1,1327 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>intents.binding — Prismatic Majordomus</title>
+<meta name="description" content="What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight&#39;s own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue&#39;s scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion&#39;s evidence changes state. Nothing is stored.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/intents-binding/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="intents.binding — Prismatic Majordomus">
+<meta property="og:description" content="What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight&#39;s own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue&#39;s scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion&#39;s evidence changes state. Nothing is stored.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/intents-binding/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.18.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.17.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/domains/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/domains/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/kit/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The same argument, written in Czech</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/kit/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The same argument, written in Czech</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/challenge/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/challenge/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">intents.binding</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">intents.binding</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight&#39;s own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue&#39;s scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion&#39;s evidence changes state. Nothing is stored.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight&#39;s own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue&#39;s scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion&#39;s evidence changes state. Nothing is stored.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/intents/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module intents</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#intent</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#project</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#governance</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_intent_binding</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/intents/#op-intents-binding" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/intents/binding</a> <span class="text-xs text-body-subtle">operationId intents.binding</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus intent binding</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · IntentBindingInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>intents.binding</code>: what a worker names when it asks what its work serves.
+Flat strings, because the same value arrives as a query string, as MCP arguments and as
+the flags of <code>majordomus intent binding</code>.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::intents::IntentBindingInput;</span></span>
+<span class="giallo-l"><span>let i = IntentBindingInput { issue: Some(&quot;I1900&quot;.into()), paths: &quot;lib, docs&quot;.into(), ..Default::default() };</span></span>
+<span class="giallo-l"><span>let r = i.request();</span></span>
+<span class="giallo-l"><span>assert_eq!(r.issue.as_deref(), Some(&quot;I1900&quot;));</span></span>
+<span class="giallo-l"><span>assert_eq!(r.paths, [&quot;lib&quot;, &quot;docs&quot;]);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">because</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why the exemption applies.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">exemption</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">An exemption class the policy declares under <code>intent.exemptions</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">intent</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The intent the work serves, by id, when the worker names it directly.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue the work executes, by id.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">paths</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Repository-relative paths the work will touch, separated by commas. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `intents.binding`: what a worker names when it asks what its work serves.\nFlat strings, because the same value arrives as a query string, as MCP arguments and as\nthe flags of `majordomus intent binding`.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentBindingInput;\nlet i = IntentBindingInput { issue: Some(\&quot;I1900\&quot;.into()), paths: \&quot;lib, docs\&quot;.into(), ..Default::default() };\nlet r = i.request();\nassert_eq!(r.issue.as_deref(), Some(\&quot;I1900\&quot;));\nassert_eq!(r.paths, [\&quot;lib\&quot;, \&quot;docs\&quot;]);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;because&quot;: {
+      &quot;description&quot;: &quot;Why the exemption applies.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;exemption&quot;: {
+      &quot;description&quot;: &quot;An exemption class the policy declares under `intent.exemptions`.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;intent&quot;: {
+      &quot;description&quot;: &quot;The intent the work serves, by id, when the worker names it directly.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;issue&quot;: {
+      &quot;description&quot;: &quot;The issue the work executes, by id.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;paths&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;description&quot;: &quot;Repository-relative paths the work will touch, separated by commas.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;title&quot;: &quot;IntentBindingInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · IntentBinding</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a piece of work is bound to: its standing, what was named, the issues and intents
+it resolved to with what each intent asks of the worker, the two pins, and every refusal.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::Intents;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::intent_binding::{</span></span>
+<span class="giallo-l"><span>    bind, BindingCause, BindingRequest, BindingStanding, IntentBinding,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::plan::Plan;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::policy::IntentPolicy;</span></span>
+<span class="giallo-l"><span>#### let plan: Plan = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>####     &quot;project&quot;: {&quot;name&quot;: &quot;p&quot;, &quot;repository&quot;: &quot;o/p&quot;, &quot;default_branch&quot;: &quot;master&quot;,</span></span>
+<span class="giallo-l"><span>####                 &quot;active_milestone&quot;: &quot;&quot;},</span></span>
+<span class="giallo-l"><span>####     &quot;statuses&quot;: {&quot;issue&quot;: [], &quot;milestone&quot;: []},</span></span>
+<span class="giallo-l"><span>####     &quot;milestones&quot;: [], &quot;issues&quot;: [], &quot;waves&quot;: [], &quot;edges&quot;: [],</span></span>
+<span class="giallo-l"><span>####     &quot;milestone_edges&quot;: [], &quot;findings&quot;: []})).unwrap();</span></span>
+<span class="giallo-l"><span>let intents = Intents { intents: vec![], findings: vec![] };</span></span>
+<span class="giallo-l"><span>let nothing: IntentBinding =</span></span>
+<span class="giallo-l"><span>    bind(&amp;intents, &amp;plan, &amp;[], &amp;[], &amp;IntentPolicy::default(), BindingRequest::default());</span></span>
+<span class="giallo-l"><span>assert_eq!(nothing.standing, BindingStanding::Refused);</span></span>
+<span class="giallo-l"><span>assert_eq!(nothing.refusals[0].cause, BindingCause::NothingNamed);</span></span>
+<span class="giallo-l"><span>// nothing was reached, so there is nothing to pin</span></span>
+<span class="giallo-l"><span>assert!(nothing.plan_revision.is_empty() &amp;&amp; nothing.evidence_standing.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">evidence_standing</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The pin of where the served criteria's evidence stands; empty when no intent was
+reached.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">exemption</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The exemption accepted, when the standing is <code>exempt</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">governance</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The governance of those intents, each entry once.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">intents</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The intents the work serves, each with the criteria served, their evidence state,
+the invariants, the critique and the gap: what the worker is held to.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issues</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issues the work resolved to, each with the preflight's verdict.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">named</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the worker named, trimmed: the request this answers.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">notes</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a worker should know and no gate refuses on.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">plan_revision</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The pin of what the work is for; empty when no intent was reached.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">refusal</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When refused: every refusal's sentence, joined.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">refusals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every reason the binding was refused; empty unless the standing is <code>refused</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">standing</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>bound</code>, <code>maintenance</code>, <code>exempt</code> or <code>refused</code>.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;BindingCause&quot;: {
+      &quot;description&quot;: &quot;Why a binding was refused, as a word a reader greps for. The first seven are the\npreflight&#39;s own causes, carried through unchanged; the rest are what only a binding can\nfind.\n\n```\nuse majordomus_cli::intent::IntentPreflightCause;\nuse majordomus_cli::intent_binding::BindingCause;\n// a preflight cause keeps its word\nassert_eq!(\n    serde_json::to_string(&amp;BindingCause::from(IntentPreflightCause::IntentNotCritiqued)).unwrap(),\n    serde_json::to_string(&amp;IntentPreflightCause::IntentNotCritiqued).unwrap(),\n);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;unknown_issue&quot;,
+          &quot;description&quot;: &quot;The issue named is not an issue of the plan.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;no_issue_covers_paths&quot;,
+          &quot;description&quot;: &quot;No open issue&#39;s scope covers any of the paths.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;issue_serves_nothing&quot;,
+          &quot;description&quot;: &quot;The issue&#39;s milestone realises a live intent and the issue serves none of its criteria.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;serves_another_intent&quot;,
+          &quot;description&quot;: &quot;The issue serves a criterion of an intent whose milestones do not include its own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;serves_unknown_criterion&quot;,
+          &quot;description&quot;: &quot;The issue serves an intent or a criterion that does not exist.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;intent_not_critiqued&quot;,
+          &quot;description&quot;: &quot;An intent the work serves has no critique.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;open_blocking_finding&quot;,
+          &quot;description&quot;: &quot;The critique of an intent the work serves has a blocking finding still open.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;nothing_named&quot;,
+          &quot;description&quot;: &quot;Nothing was named: no issue, no intent, no paths and no exemption.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_intent&quot;,
+          &quot;description&quot;: &quot;The intent named is not an intent of this repository.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;intent_retired&quot;,
+          &quot;description&quot;: &quot;The intent named is cancelled or superseded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;intent_has_no_open_work&quot;,
+          &quot;description&quot;: &quot;The intent named has no open issue serving it, so there is no work to be bound to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;issue_outside_intent&quot;,
+          &quot;description&quot;: &quot;The issue named serves none of the criteria of the intent named beside it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ambiguous_intent&quot;,
+          &quot;description&quot;: &quot;Paths alone reached more than one intent; the worker must name the issue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_exemption&quot;,
+          &quot;description&quot;: &quot;The exemption class is not one the policy declares.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;exemption_without_reason&quot;,
+          &quot;description&quot;: &quot;An exemption was given with no reason.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;exemption_names_work&quot;,
+          &quot;description&quot;: &quot;An exemption was given beside an issue or an intent: work is one or the other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BindingExemption&quot;: {
+      &quot;description&quot;: &quot;The exemption a binding accepted: the class as the policy declares it, and the reason\nthe worker gave.\n\n```\nuse majordomus_cli::intent_binding::BindingExemption;\nlet e = BindingExemption {\n    class: \&quot;emergency\&quot;.into(),\n    description: \&quot;Restoring a broken trunk\&quot;.into(),\n    because: \&quot;master is red on case 500\&quot;.into(),\n};\nassert_eq!(e.class, \&quot;emergency\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;because&quot;: {
+          &quot;description&quot;: &quot;The worker&#39;s reason.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;class&quot;: {
+          &quot;description&quot;: &quot;The class id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;What the policy says the class is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;class&quot;,
+        &quot;because&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BindingRefusal&quot;: {
+      &quot;description&quot;: &quot;One reason a binding was refused.\n\n```\nuse majordomus_cli::intent_binding::{BindingCause, BindingRefusal};\nlet r = BindingRefusal::new(None, BindingCause::NothingNamed, \&quot;name the work\&quot;.into());\nassert!(r.issue.is_none());\nassert_eq!(r.cause, BindingCause::NothingNamed);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;cause&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BindingCause&quot;,
+          &quot;description&quot;: &quot;The cause.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it is about; absent when it is about no one issue.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;cause&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BindingRequest&quot;: {
+      &quot;description&quot;: &quot;What a worker named when it asked what its work serves. Every field is optional and the\ncombinations are judged, not assumed: an issue alone, an intent alone, an issue beside\nthe intent it should serve, paths alone, or an exemption with its reason.\n\n```\nuse majordomus_cli::intent_binding::BindingRequest;\nlet by_issue = BindingRequest { issue: Some(\&quot;I0001\&quot;.into()), ..Default::default() };\nassert!(!by_issue.names_nothing());\n// blanks are what a query string or a shell variable leaves behind, and name nothing\nlet blank = BindingRequest { issue: Some(\&quot;  \&quot;.into()), ..Default::default() }.trimmed();\nassert!(blank.names_nothing());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;because&quot;: {
+          &quot;description&quot;: &quot;Why the exemption applies.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;exemption&quot;: {
+          &quot;description&quot;: &quot;The exemption class, when the work is under no intent on purpose.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;The intent the work serves, when the worker names it directly.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue the work executes.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The paths the work will touch.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BindingStanding&quot;: {
+      &quot;description&quot;: &quot;Where a piece of work stands against the intents: the one word a start decides on.\n\n```\nuse majordomus_cli::intent_binding::BindingStanding;\nassert_eq!(serde_json::to_string(&amp;BindingStanding::Bound).unwrap(), \&quot;\\\&quot;bound\\\&quot;\&quot;);\nassert!(BindingStanding::Refused.refuses());\nassert!(!BindingStanding::Maintenance.refuses());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;bound&quot;,
+          &quot;description&quot;: &quot;The work serves at least one criterion of a live intent, through links that hold, and\neach such intent&#39;s plan was critiqued with no blocking finding open.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;maintenance&quot;,
+          &quot;description&quot;: &quot;The issues the work resolves to sit under milestones no live intent names: derived\nmaintenance, as `intent validate` allows.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;exempt&quot;,
+          &quot;description&quot;: &quot;The worker gave an exemption class the policy declares, with a reason.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;The work may not start as bound work; every reason is in `refusals`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ConditionState&quot;: {
+      &quot;description&quot;: &quot;The state of one criterion as the gap observed it. Four values, because \&quot;not determined\&quot;\nhas to be writable: an omitted criterion is refused, and `Unknown` is never a pass.\n\n```\nuse majordomus_cli::intent_review::ConditionState;\nassert_eq!(serde_json::to_string(&amp;ConditionState::Conflicting).unwrap(), \&quot;\\\&quot;conflicting\\\&quot;\&quot;);\nassert_ne!(ConditionState::Unknown, ConditionState::Satisfied);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;satisfied&quot;,
+          &quot;description&quot;: &quot;Already true at the observed commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;missing&quot;,
+          &quot;description&quot;: &quot;Not true; work is needed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;conflicting&quot;,
+          &quot;description&quot;: &quot;Something in the repository contradicts it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Not determined. Never read as satisfied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;CritiqueClass&quot;: {
+      &quot;description&quot;: &quot;The class of a critique finding: the question the adversarial pass asked. Closed, so that a\nreview&#39;s findings can be counted by question rather than read as prose.\n\n```\nuse majordomus_cli::intent_review::CritiqueClass;\nassert_eq!(\n    serde_json::to_string(&amp;CritiqueClass::DeliveryVerification).unwrap(),\n    \&quot;\\\&quot;delivery_verification\\\&quot;\&quot;\n);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;missed_requirement&quot;,
+          &quot;description&quot;: &quot;Does the plan miss something the intent requires?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unproven_assumption&quot;,
+          &quot;description&quot;: &quot;Which assumption is unproven?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;insufficient_work&quot;,
+          &quot;description&quot;: &quot;Which criterion lacks sufficient work?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unnecessary_work&quot;,
+          &quot;description&quot;: &quot;Which work item is unnecessary?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;regression_risk&quot;,
+          &quot;description&quot;: &quot;What could regress?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;surface_missing&quot;,
+          &quot;description&quot;: &quot;Which related surface must also change?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;delivery_verification&quot;,
+          &quot;description&quot;: &quot;Which deployment or runtime verification is required?&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;CritiqueFinding&quot;: {
+      &quot;description&quot;: &quot;One critique finding: what the review found, what it is about, whether it blocks execution,\nand how it was resolved. `class` and `resolution` are `None` when the record spells one this\nmodule does not know, and the `_text` fields keep what was written.\n\n```\nuse majordomus_cli::intent_review::{CritiqueFinding, CritiqueRecord, ResolutionState};\nlet c = CritiqueRecord::from_metadata(\&quot;c.yaml\&quot;, &amp;serde_json::json!({\n    \&quot;intent\&quot;: \&quot;x\&quot;,\n    \&quot;findings\&quot;: [{\&quot;id\&quot;: \&quot;f1\&quot;, \&quot;class\&quot;: \&quot;regression_risk\&quot;, \&quot;subject\&quot;: \&quot;x#a\&quot;,\n                  \&quot;blocking\&quot;: true, \&quot;resolution\&quot;: {\&quot;state\&quot;: \&quot;planned\&quot;, \&quot;issue\&quot;: \&quot;I1\&quot;}}],\n}));\nlet finding: &amp;CritiqueFinding = &amp;c.findings[0];\nassert!(finding.blocking);\nassert_eq!(finding.resolution, Some(ResolutionState::Planned));\nassert_eq!(finding.issue, \&quot;I1\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;because&quot;: {
+          &quot;description&quot;: &quot;Why, when rejected.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;blocking&quot;: {
+          &quot;description&quot;: &quot;Whether execution may not start while it is open.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;class&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/CritiqueClass&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The class, or `None` for a class this module does not know.&quot;
+        },
+        &quot;class_text&quot;: {
+          &quot;description&quot;: &quot;As written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;finding&quot;: {
+          &quot;description&quot;: &quot;The finding.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Unique within the critique.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue that carries it, when planned.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resolution&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ResolutionState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The resolution, or `None` for a state this module does not know.&quot;
+        },
+        &quot;resolution_text&quot;: {
+          &quot;description&quot;: &quot;As written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;`&lt;intent&gt;#&lt;criterion&gt;`, an issue id or a milestone id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;class_text&quot;,
+        &quot;subject&quot;,
+        &quot;finding&quot;,
+        &quot;blocking&quot;,
+        &quot;resolution_text&quot;,
+        &quot;issue&quot;,
+        &quot;because&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GapCondition&quot;: {
+      &quot;description&quot;: &quot;One criterion&#39;s state against the observations, as the record spells it. `state` is `None`\nwhen the file names a state this module does not know, and `state_text` keeps what was\nwritten so the finding can quote it.\n\n```\nuse majordomus_cli::intent_review::{ConditionState, GapCondition};\nlet c = GapCondition {\n    criterion: \&quot;criteria-are-covered\&quot;.into(),\n    state: Some(ConditionState::Missing),\n    state_text: \&quot;missing\&quot;.into(),\n    because: \&quot;nothing relates a criterion to an issue\&quot;.into(),\n    observations: vec![\&quot;no-serves-field\&quot;.into()],\n};\nassert_eq!(c.state, Some(ConditionState::Missing));\nassert!(!c.observations.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;because&quot;: {
+          &quot;description&quot;: &quot;Why.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;criterion&quot;: {
+          &quot;description&quot;: &quot;The criterion id of the intent.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;observations&quot;: {
+          &quot;description&quot;: &quot;The observation ids it rests on.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;state&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ConditionState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The state, or `None` when the record spells one this module does not know.&quot;
+        },
+        &quot;state_text&quot;: {
+          &quot;description&quot;: &quot;As written, so a finding can quote an unknown state.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;criterion&quot;,
+        &quot;state_text&quot;,
+        &quot;because&quot;,
+        &quot;observations&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentCriterion&quot;: {
+      &quot;description&quot;: &quot;One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \&quot;stage-is-derived\&quot;.into(),\n    criterion: \&quot;the stage follows the plan\&quot;.into(),\n    evidence: \&quot;test\&quot;.into(),\n    reference: \&quot;apps/majordomus-cli/tests/intent.rs\&quot;.into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    proof: Some(ProofState::NotRun),\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;criterion&quot;: {
+          &quot;description&quot;: &quot;What is observably true when it is met.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;evidence&quot;: {
+          &quot;description&quot;: &quot;`test`, `claim`, `command` or `deployment`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Unique within the intent.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;met&quot;: {
+          &quot;description&quot;: &quot;Derived: the state is `current`.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;proof&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Derived: the evidence module&#39;s own verdict behind `state`, for a `test` or `claim`\ncriterion whose reference resolves. A met criterion rests on `proven` (a pass at this\nrevision) or `inputs_unchanged` (a pass whose named inputs have not moved since, which\nis not proof at this revision), and every surface shows which, so `met` is never the\none tick for both.&quot;
+        },
+        &quot;ref&quot;: {
+          &quot;description&quot;: &quot;What the evidence names, as authored.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that produces the evidence again, when one is known.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentEvidenceState&quot;,
+          &quot;description&quot;: &quot;Derived: what the evidence says.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;criterion&quot;,
+        &quot;evidence&quot;,
+        &quot;ref&quot;,
+        &quot;state&quot;,
+        &quot;met&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentEvidenceState&quot;: {
+      &quot;description&quot;: &quot;What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module&#39;s one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&amp;IntentEvidenceState::NotRun).unwrap(), \&quot;\\\&quot;not_run\\\&quot;\&quot;);\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger&#39;s own included,\nleaves it current. A test that proves no claim naming an implementation names no code\nunder test, so for it nothing but the ledger may have changed since the run. The only\nstate that meets a criterion; the criterion&#39;s `proof` says whether it rests on\n`proven` or on `inputs_unchanged`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;A pass that is not current evidence: something the criterion names has changed since\nit, it names no code under test and anything but the ledger and the plan&#39;s own records\nhas changed since, the\ntest no longer hashes to what ran, the run&#39;s commit is not in this history (or git\ncould not compare it), or the run measured a tree that was not its commit — a run on a\ndirty tree, which no later tree can be matched against.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failing&quot;,
+          &quot;description&quot;: &quot;The latest recorded run failed, timed out or errored.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_run&quot;,
+          &quot;description&quot;: &quot;The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_derivable&quot;,
+          &quot;description&quot;: &quot;The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unresolved&quot;,
+          &quot;description&quot;: &quot;The reference is empty or names nothing this repository holds.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;IntentPreflightCritique&quot;: {
+      &quot;description&quot;: &quot;The critique of an intent as a preflight reads it: where it is, when and by whom the plan\nwas reviewed, and the blocking findings still open.\n\n```\nuse majordomus_cli::intent::IntentPreflightCritique;\nlet c = IntentPreflightCritique {\n    source: \&quot;.ai/repo/project/critiques/x.yaml\&quot;.into(),\n    reviewed_at: \&quot;c3f20da\&quot;.into(),\n    reviewed_by: \&quot;another session\&quot;.into(),\n    open_blocking: vec![],\n};\nassert!(c.open_blocking.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;open_blocking&quot;: {
+          &quot;description&quot;: &quot;Every blocking finding whose resolution is `open`; work may not start while one is.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CritiqueFinding&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;reviewed_at&quot;: {
+          &quot;description&quot;: &quot;The commit the plan was reviewed at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reviewed_by&quot;: {
+          &quot;description&quot;: &quot;Who or what reviewed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the record.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;source&quot;,
+        &quot;reviewed_at&quot;,
+        &quot;reviewed_by&quot;,
+        &quot;open_blocking&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentPreflightGap&quot;: {
+      &quot;description&quot;: &quot;The recorded gap of an intent as a preflight reads it, bounded to the criteria the work\nserves: what was observed of each, at which commit, and the risks.\n\n```\nuse majordomus_cli::intent::IntentPreflightGap;\nlet g = IntentPreflightGap {\n    source: \&quot;.ai/repo/project/gaps/x.yaml\&quot;.into(),\n    observed_at: \&quot;c3f20da\&quot;.into(),\n    conditions: vec![],\n    risks: vec![\&quot;the schema may refuse old records\&quot;.into()],\n};\nassert_eq!(g.risks.len(), 1);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;conditions&quot;: {
+          &quot;description&quot;: &quot;The gap&#39;s answer for each criterion the work serves, in the gap&#39;s order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/GapCondition&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;observed_at&quot;: {
+          &quot;description&quot;: &quot;The commit the observations were made on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;risks&quot;: {
+          &quot;description&quot;: &quot;The risks it recorded.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the record.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;source&quot;,
+        &quot;observed_at&quot;,
+        &quot;conditions&quot;,
+        &quot;risks&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentPreflightIntent&quot;: {
+      &quot;description&quot;: &quot;One intent the work is held to, with what a worker needs before touching it: the statement,\nthe criteria the work serves with the live state of their evidence, the invariants and\nnon-goals, the governance, the critique and the gap. Only the intents the work reaches are\ncarried, never every intent.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIntent, IntentStage};\nlet i = IntentPreflightIntent {\n    id: \&quot;x\&quot;.into(),\n    title: \&quot;X\&quot;.into(),\n    stage: IntentStage::Planned,\n    statement: \&quot;It becomes true.\&quot;.into(),\n    criteria: vec![],\n    invariants: vec![],\n    non_goals: vec![],\n    governance: vec![],\n    critique: None,\n    gap: None,\n};\n// no critique recorded is carried as an absence, never as an empty review\nassert!(i.critique.is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;criteria&quot;: {
+          &quot;description&quot;: &quot;The criteria the work serves, each with the state of its evidence now, in the intent&#39;s\norder.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/IntentCriterion&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;critique&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/IntentPreflightCritique&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The critique of its plan; absent when none was ever recorded.&quot;
+        },
+        &quot;gap&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/IntentPreflightGap&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Its recorded gap, bounded to the criteria above; absent when none was recorded.&quot;
+        },
+        &quot;governance&quot;: {
+          &quot;description&quot;: &quot;The governance a worker on this intent loads.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The identity.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;invariants&quot;: {
+          &quot;description&quot;: &quot;What must stay true.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;non_goals&quot;: {
+          &quot;description&quot;: &quot;What is deliberately not required.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;stage&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentStage&quot;,
+          &quot;description&quot;: &quot;Its derived stage.&quot;
+        },
+        &quot;statement&quot;: {
+          &quot;description&quot;: &quot;What must become true.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;stage&quot;,
+        &quot;statement&quot;,
+        &quot;criteria&quot;,
+        &quot;invariants&quot;,
+        &quot;non_goals&quot;,
+        &quot;governance&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentPreflightIssue&quot;: {
+      &quot;description&quot;: &quot;One issue the work resolved to, and what the preflight concluded about it.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIssue, IntentPreflightVerdict};\nlet i = IntentPreflightIssue {\n    issue: \&quot;I0007\&quot;.into(),\n    milestone: \&quot;ops\&quot;.into(),\n    verdict: IntentPreflightVerdict::Maintenance,\n    serves: vec![],\n    intents: vec![],\n};\n// a milestone no intent names carries maintenance, which is not a refusal\nassert_eq!(i.verdict, IntentPreflightVerdict::Maintenance);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;intents&quot;: {
+          &quot;description&quot;: &quot;The live intents whose milestones include its milestone, sorted.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;Its milestone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;serves&quot;: {
+          &quot;description&quot;: &quot;The `&lt;intent&gt;#&lt;criterion&gt;` references it declares, as declared.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;verdict&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentPreflightVerdict&quot;,
+          &quot;description&quot;: &quot;What the preflight concluded about this issue.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;issue&quot;,
+        &quot;milestone&quot;,
+        &quot;verdict&quot;,
+        &quot;serves&quot;,
+        &quot;intents&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentPreflightVerdict&quot;: {
+      &quot;description&quot;: &quot;What a preflight concluded, about one issue or about the whole piece of work.\n\n```\nuse majordomus_cli::intent::IntentPreflightVerdict;\n// the words every surface answers with\nassert_eq!(\n    serde_json::to_string(&amp;IntentPreflightVerdict::Maintenance).unwrap(),\n    \&quot;\\\&quot;maintenance\\\&quot;\&quot;\n);\nassert_ne!(IntentPreflightVerdict::Serves, IntentPreflightVerdict::Refused);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;serves&quot;,
+          &quot;description&quot;: &quot;The work serves at least one criterion of a live intent, every link holds, and the\nplan of every intent it serves was critiqued with no blocking finding left open.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;maintenance&quot;,
+          &quot;description&quot;: &quot;The work sits under milestones no live intent names and serves no criterion of a live\nintent: operational work, allowed where `majordomus intent validate` allows it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;A link is missing or points at nothing, or an intent it serves may not be executed yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;IntentStage&quot;: {
+      &quot;description&quot;: &quot;Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \&quot;executing\&quot;);\nassert!(IntentStage::Declared &lt; IntentStage::Satisfied);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;declared&quot;,
+          &quot;description&quot;: &quot;A named milestone does not resolve, or none is named.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Every milestone resolves and none has started.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;executing&quot;,
+          &quot;description&quot;: &quot;A milestone is under way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;Every milestone that counts is DONE; satisfaction is not yet evidenced.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;satisfied&quot;,
+          &quot;description&quot;: &quot;Verifying, and every criterion has current evidence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;The record says it was abandoned.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;superseded&quot;,
+          &quot;description&quot;: &quot;The record names the intent that replaced it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ProofState&quot;: {
+      &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;proven&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failing&quot;,
+          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_run&quot;,
+          &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unrunnable&quot;,
+          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;no_test&quot;,
+          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ResolutionState&quot;: {
+      &quot;description&quot;: &quot;How a critique finding was resolved: not yet, by planning work that serves the intent, or\nby rejecting it with a reason. A blocking finding left `Open` refuses execution.\n\n```\nuse majordomus_cli::intent_review::ResolutionState;\nassert_eq!(serde_json::to_string(&amp;ResolutionState::Planned).unwrap(), \&quot;\\\&quot;planned\\\&quot;\&quot;);\nassert_ne!(ResolutionState::Open, ResolutionState::Rejected);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;Not yet resolved.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Carried by an issue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;rejected&quot;,
+          &quot;description&quot;: &quot;Judged not to apply, with a reason.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;What a piece of work is bound to: its standing, what was named, the issues and intents\nit resolved to with what each intent asks of the worker, the two pins, and every refusal.\n\n```\nuse majordomus_cli::intent::Intents;\nuse majordomus_cli::intent_binding::{\n    bind, BindingCause, BindingRequest, BindingStanding, IntentBinding,\n};\nuse majordomus_cli::plan::Plan;\nuse majordomus_cli::policy::IntentPolicy;\n# let plan: Plan = serde_json::from_value(serde_json::json!({\n#     \&quot;project\&quot;: {\&quot;name\&quot;: \&quot;p\&quot;, \&quot;repository\&quot;: \&quot;o/p\&quot;, \&quot;default_branch\&quot;: \&quot;master\&quot;,\n#                 \&quot;active_milestone\&quot;: \&quot;\&quot;},\n#     \&quot;statuses\&quot;: {\&quot;issue\&quot;: [], \&quot;milestone\&quot;: []},\n#     \&quot;milestones\&quot;: [], \&quot;issues\&quot;: [], \&quot;waves\&quot;: [], \&quot;edges\&quot;: [],\n#     \&quot;milestone_edges\&quot;: [], \&quot;findings\&quot;: []})).unwrap();\nlet intents = Intents { intents: vec![], findings: vec![] };\nlet nothing: IntentBinding =\n    bind(&amp;intents, &amp;plan, &amp;[], &amp;[], &amp;IntentPolicy::default(), BindingRequest::default());\nassert_eq!(nothing.standing, BindingStanding::Refused);\nassert_eq!(nothing.refusals[0].cause, BindingCause::NothingNamed);\n// nothing was reached, so there is nothing to pin\nassert!(nothing.plan_revision.is_empty() &amp;&amp; nothing.evidence_standing.is_empty());\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;evidence_standing&quot;: {
+      &quot;description&quot;: &quot;The pin of where the served criteria&#39;s evidence stands; empty when no intent was\nreached.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;exemption&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/BindingExemption&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The exemption accepted, when the standing is `exempt`.&quot;
+    },
+    &quot;governance&quot;: {
+      &quot;description&quot;: &quot;The governance of those intents, each entry once.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;intents&quot;: {
+      &quot;description&quot;: &quot;The intents the work serves, each with the criteria served, their evidence state,\nthe invariants, the critique and the gap: what the worker is held to.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IntentPreflightIntent&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;issues&quot;: {
+      &quot;description&quot;: &quot;The issues the work resolved to, each with the preflight&#39;s verdict.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IntentPreflightIssue&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;named&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BindingRequest&quot;,
+      &quot;description&quot;: &quot;What the worker named, trimmed: the request this answers.&quot;
+    },
+    &quot;notes&quot;: {
+      &quot;description&quot;: &quot;What a worker should know and no gate refuses on.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;plan_revision&quot;: {
+      &quot;description&quot;: &quot;The pin of what the work is for; empty when no intent was reached.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;refusal&quot;: {
+      &quot;description&quot;: &quot;When refused: every refusal&#39;s sentence, joined.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;refusals&quot;: {
+      &quot;description&quot;: &quot;Every reason the binding was refused; empty unless the standing is `refused`.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BindingRefusal&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;standing&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BindingStanding&quot;,
+      &quot;description&quot;: &quot;`bound`, `maintenance`, `exempt` or `refused`.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;standing&quot;,
+    &quot;named&quot;,
+    &quot;issues&quot;,
+    &quot;intents&quot;,
+    &quot;governance&quot;,
+    &quot;plan_revision&quot;,
+    &quot;evidence_standing&quot;,
+    &quot;refusals&quot;
+  ],
+  &quot;title&quot;: &quot;IntentBinding&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-intents-binding-direct-first-issue" class="break-all text-fg-brand hover:underline inline-block py-1">first-issue</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-intents-binding-mcp-first-issue" class="break-all text-fg-brand hover:underline inline-block py-1">first-issue</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-intents-binding-http-first-issue" class="break-all text-fg-brand hover:underline inline-block py-1">first-issue</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">intents.binding</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/intents.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::intents</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">IntentBindingInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">IntentBinding</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/893a79be6577718eec7e92c6fd79cad1bf169ff8/docs/generated/modules/intents.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/intents.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">600d66a2471d8c62c4ab57c724b55c498f27ddffc6ba4c33ff4e20dbe93c3a7d</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.18.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/domains/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/domains/" class="hover:text-heading hover:underline">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.18.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/893a79be6577718eec7e92c6fd79cad1bf169ff8" class="font-mono underline">893a79b</a> · inputs <span class="font-mono">cc84ce1606ea</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

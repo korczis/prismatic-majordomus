@@ -1117,740 +1117,742 @@
 <a href=#1117 id=1117 data-nosnippet>1117</a>            cross_repository: <span class="bool-val">false</span>,
 <a href=#1118 id=1118 data-nosnippet>1118</a>            latest_reviews: Vec::new(),
 <a href=#1119 id=1119 data-nosnippet>1119</a>            review_requests: Vec::new(),
-<a href=#1120 id=1120 data-nosnippet>1120</a>        }
-<a href=#1121 id=1121 data-nosnippet>1121</a>    }
-<a href=#1122 id=1122 data-nosnippet>1122</a>
-<a href=#1123 id=1123 data-nosnippet>1123</a>    <span class="doccomment">/// A clone with an origin/master, an observation of five pull requests in five
-<a href=#1124 id=1124 data-nosnippet>1124</a>    /// dispositions, and a trail in which #1 has been passed over until it is starving.
-<a href=#1125 id=1125 data-nosnippet>1125</a>    </span><span class="kw">fn </span>world() -&gt; (Scratch, IntegrationQueue) {
-<a href=#1126 id=1126 data-nosnippet>1126</a>        <span class="comment">// tests run on parallel threads: the clock alone named two scratch clones alike
-<a href=#1127 id=1127 data-nosnippet>1127</a>        </span><span class="kw">static </span>NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(<span class="number">0</span>);
-<a href=#1128 id=1128 data-nosnippet>1128</a>        <span class="kw">let </span>root = std::env::temp_dir().join(<span class="macro">format!</span>(
-<a href=#1129 id=1129 data-nosnippet>1129</a>            <span class="string">"mj-prs-{}-{}-{}"</span>,
-<a href=#1130 id=1130 data-nosnippet>1130</a>            std::process::id(),
-<a href=#1131 id=1131 data-nosnippet>1131</a>            NEXT.fetch_add(<span class="number">1</span>, std::sync::atomic::Ordering::SeqCst),
-<a href=#1132 id=1132 data-nosnippet>1132</a>            std::time::SystemTime::now()
-<a href=#1133 id=1133 data-nosnippet>1133</a>                .duration_since(std::time::UNIX_EPOCH)
-<a href=#1134 id=1134 data-nosnippet>1134</a>                .unwrap()
-<a href=#1135 id=1135 data-nosnippet>1135</a>                .as_nanos()
-<a href=#1136 id=1136 data-nosnippet>1136</a>        ));
-<a href=#1137 id=1137 data-nosnippet>1137</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>root).unwrap();
-<a href=#1138 id=1138 data-nosnippet>1138</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>, <span class="string">"-b"</span>, <span class="string">"master"</span>]);
-<a href=#1139 id=1139 data-nosnippet>1139</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"--allow-empty"</span>, <span class="string">"-m"</span>, <span class="string">"base"</span>]);
-<a href=#1140 id=1140 data-nosnippet>1140</a>        <span class="kw">let </span>sha = git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD"</span>]);
-<a href=#1141 id=1141 data-nosnippet>1141</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"update-ref"</span>, <span class="string">"refs/remotes/origin/master"</span>, <span class="kw-2">&amp;</span>sha]);
-<a href=#1142 id=1142 data-nosnippet>1142</a>
-<a href=#1143 id=1143 data-nosnippet>1143</a>        <span class="comment">// every pull request's head is a commit of its own on top of master: a head master
-<a href=#1144 id=1144 data-nosnippet>1144</a>        // already contains would be superseded, not open work
-<a href=#1145 id=1145 data-nosnippet>1145</a>        </span><span class="kw">let </span>head = |n: u64| {
-<a href=#1146 id=1146 data-nosnippet>1146</a>            git(
-<a href=#1147 id=1147 data-nosnippet>1147</a>                <span class="kw-2">&amp;</span>root,
-<a href=#1148 id=1148 data-nosnippet>1148</a>                <span class="kw-2">&amp;</span>[<span class="string">"checkout"</span>, <span class="string">"-q"</span>, <span class="string">"-B"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"feature/{n}"</span>), <span class="kw-2">&amp;</span>sha],
-<a href=#1149 id=1149 data-nosnippet>1149</a>            );
-<a href=#1150 id=1150 data-nosnippet>1150</a>            std::fs::write(root.join(<span class="macro">format!</span>(<span class="string">"{n}.md"</span>)), <span class="macro">format!</span>(<span class="string">"change {n}\n"</span>)).unwrap();
-<a href=#1151 id=1151 data-nosnippet>1151</a>            git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{n}.md"</span>)]);
-<a href=#1152 id=1152 data-nosnippet>1152</a>            git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"-m"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"change {n}"</span>)]);
-<a href=#1153 id=1153 data-nosnippet>1153</a>            git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD"</span>])
-<a href=#1154 id=1154 data-nosnippet>1154</a>        };
-<a href=#1155 id=1155 data-nosnippet>1155</a>        <span class="kw">let </span>heads: Vec&lt;String&gt; = (<span class="number">1</span>..=<span class="number">6</span>).map(head).collect();
-<a href=#1156 id=1156 data-nosnippet>1156</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"checkout"</span>, <span class="string">"-q"</span>, <span class="string">"master"</span>]);
-<a href=#1157 id=1157 data-nosnippet>1157</a>        <span class="kw">let </span><span class="kw-2">mut </span>draft = pr(<span class="number">4</span>, <span class="kw-2">&amp;</span>heads[<span class="number">3</span>], CheckRunState::Passed);
-<a href=#1158 id=1158 data-nosnippet>1158</a>        draft.draft = <span class="bool-val">true</span>;
-<a href=#1159 id=1159 data-nosnippet>1159</a>        <span class="kw">let </span><span class="kw-2">mut </span>held = pr(<span class="number">5</span>, <span class="kw-2">&amp;</span>heads[<span class="number">4</span>], CheckRunState::Passed);
-<a href=#1160 id=1160 data-nosnippet>1160</a>        held.labels = <span class="macro">vec!</span>[<span class="string">"blocked"</span>.into()];
-<a href=#1161 id=1161 data-nosnippet>1161</a>        <span class="kw">let </span><span class="kw-2">mut </span>dependent = pr(<span class="number">6</span>, <span class="kw-2">&amp;</span>heads[<span class="number">5</span>], CheckRunState::Passed);
-<a href=#1162 id=1162 data-nosnippet>1162</a>        dependent.body = <span class="string">"Depends on #2."</span>.into();
-<a href=#1163 id=1163 data-nosnippet>1163</a>        store_observation(
-<a href=#1164 id=1164 data-nosnippet>1164</a>            <span class="kw-2">&amp;</span>root,
-<a href=#1165 id=1165 data-nosnippet>1165</a>            <span class="kw-2">&amp;</span>ForgeObservation {
-<a href=#1166 id=1166 data-nosnippet>1166</a>                schema: OBSERVATION_SCHEMA,
-<a href=#1167 id=1167 data-nosnippet>1167</a>                repository: <span class="string">"owner/repo"</span>.into(),
-<a href=#1168 id=1168 data-nosnippet>1168</a>                base: <span class="string">"master"</span>.into(),
-<a href=#1169 id=1169 data-nosnippet>1169</a>                base_sha: sha.clone(),
-<a href=#1170 id=1170 data-nosnippet>1170</a>                observed_at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
-<a href=#1171 id=1171 data-nosnippet>1171</a>                required_checks: <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="string">"ci"</span>.into()]),
-<a href=#1172 id=1172 data-nosnippet>1172</a>                review_policy: <span class="prelude-val">Some</span>(Default::default()),
-<a href=#1173 id=1173 data-nosnippet>1173</a>                up_to_date_required: <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
-<a href=#1174 id=1174 data-nosnippet>1174</a>                merge_methods: <span class="macro">vec!</span>[<span class="string">"merge"</span>.into()],
-<a href=#1175 id=1175 data-nosnippet>1175</a>                pull_requests: <span class="macro">vec!</span>[
-<a href=#1176 id=1176 data-nosnippet>1176</a>                    pr(<span class="number">1</span>, <span class="kw-2">&amp;</span>heads[<span class="number">0</span>], CheckRunState::Passed),
-<a href=#1177 id=1177 data-nosnippet>1177</a>                    pr(<span class="number">2</span>, <span class="kw-2">&amp;</span>heads[<span class="number">1</span>], CheckRunState::Failed),
-<a href=#1178 id=1178 data-nosnippet>1178</a>                    pr(<span class="number">3</span>, <span class="kw-2">&amp;</span>heads[<span class="number">2</span>], CheckRunState::Pending),
-<a href=#1179 id=1179 data-nosnippet>1179</a>                    draft,
-<a href=#1180 id=1180 data-nosnippet>1180</a>                    held,
-<a href=#1181 id=1181 data-nosnippet>1181</a>                    dependent,
-<a href=#1182 id=1182 data-nosnippet>1182</a>                ],
-<a href=#1183 id=1183 data-nosnippet>1183</a>                resolved: Default::default(),
-<a href=#1184 id=1184 data-nosnippet>1184</a>                delete_branch_on_merge: <span class="prelude-val">None</span>,
-<a href=#1185 id=1185 data-nosnippet>1185</a>            },
-<a href=#1186 id=1186 data-nosnippet>1186</a>        )
-<a href=#1187 id=1187 data-nosnippet>1187</a>        .unwrap();
-<a href=#1188 id=1188 data-nosnippet>1188</a>        <span class="kw">let </span>event = |action: IntegrationAction, pr: u64, over: Vec&lt;u64&gt;| IntegrationEvent {
-<a href=#1189 id=1189 data-nosnippet>1189</a>            at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
-<a href=#1190 id=1190 data-nosnippet>1190</a>            actor: <span class="string">"test"</span>.into(),
-<a href=#1191 id=1191 data-nosnippet>1191</a>            pr: <span class="prelude-val">Some</span>(pr),
-<a href=#1192 id=1192 data-nosnippet>1192</a>            master_before: <span class="prelude-val">Some</span>(sha.clone()),
-<a href=#1193 id=1193 data-nosnippet>1193</a>            head_sha: <span class="prelude-val">Some</span>(sha.clone()),
-<a href=#1194 id=1194 data-nosnippet>1194</a>            passed_over: over,
-<a href=#1195 id=1195 data-nosnippet>1195</a>            ..IntegrationEvent::of(action)
-<a href=#1196 id=1196 data-nosnippet>1196</a>        };
-<a href=#1197 id=1197 data-nosnippet>1197</a>        drain::record(<span class="kw-2">&amp;</span>root, event(wait::BECAME_ACTIONABLE, <span class="number">1</span>, <span class="macro">vec!</span>[])).unwrap();
-<a href=#1198 id=1198 data-nosnippet>1198</a>        <span class="kw">for _ in </span><span class="number">0</span>..wait::STARVING_AFTER {
-<a href=#1199 id=1199 data-nosnippet>1199</a>            drain::record(<span class="kw-2">&amp;</span>root, event(IntegrationAction::Selected, <span class="number">9</span>, <span class="macro">vec!</span>[<span class="number">1</span>])).unwrap();
-<a href=#1200 id=1200 data-nosnippet>1200</a>        }
-<a href=#1201 id=1201 data-nosnippet>1201</a>        <span class="kw">let </span>q = integration::queue_and_record(<span class="kw-2">&amp;</span>root).expect(<span class="string">"a queue"</span>);
-<a href=#1202 id=1202 data-nosnippet>1202</a>        (Scratch(root), q)
-<a href=#1203 id=1203 data-nosnippet>1203</a>    }
-<a href=#1204 id=1204 data-nosnippet>1204</a>
-<a href=#1205 id=1205 data-nosnippet>1205</a>    <span class="kw">fn </span>text(f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;) -&gt; String {
-<a href=#1206 id=1206 data-nosnippet>1206</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#1207 id=1207 data-nosnippet>1207</a>        f(<span class="kw-2">&amp;mut </span>out).expect(<span class="string">"rendered"</span>);
-<a href=#1208 id=1208 data-nosnippet>1208</a>        String::from_utf8(out).unwrap()
-<a href=#1209 id=1209 data-nosnippet>1209</a>    }
-<a href=#1210 id=1210 data-nosnippet>1210</a>
-<a href=#1211 id=1211 data-nosnippet>1211</a>    <span class="attr">#[test]
-<a href=#1212 id=1212 data-nosnippet>1212</a>    </span><span class="kw">fn </span>status_lists_every_pull_request_in_rank_order_and_names_the_starving() {
-<a href=#1213 id=1213 data-nosnippet>1213</a>        <span class="kw">let </span>(_s, q) = world();
-<a href=#1214 id=1214 data-nosnippet>1214</a>        <span class="kw">let </span>t = text(|o| status(<span class="kw-2">&amp;</span>q, OutputFormat::Text, o));
-<a href=#1215 id=1215 data-nosnippet>1215</a>        <span class="macro">assert!</span>(t.starts_with(<span class="string">"owner/repo · master at "</span>), <span class="string">"{t}"</span>);
-<a href=#1216 id=1216 data-nosnippet>1216</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"lanes: "</span>), <span class="string">"{t}"</span>);
-<a href=#1217 id=1217 data-nosnippet>1217</a>        <span class="kw">for </span>n <span class="kw">in </span><span class="number">1</span>..=<span class="number">6 </span>{
-<a href=#1218 id=1218 data-nosnippet>1218</a>            <span class="macro">assert!</span>(t.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"#{n} "</span>)), <span class="string">"#{n} missing:\n{t}"</span>);
-<a href=#1219 id=1219 data-nosnippet>1219</a>        }
-<a href=#1220 id=1220 data-nosnippet>1220</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"starving: #1 actionable since"</span>), <span class="string">"{t}"</span>);
-<a href=#1221 id=1221 data-nosnippet>1221</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"passed over 3×"</span>), <span class="string">"{t}"</span>);
-<a href=#1222 id=1222 data-nosnippet>1222</a>        <span class="macro">assert!</span>(t.contains(<span class="string">'…'</span>) || t.lines().all(|l| l.chars().count() &lt; <span class="number">160</span>));
-<a href=#1223 id=1223 data-nosnippet>1223</a>        <span class="kw">let </span>j: serde_json::Value =
-<a href=#1224 id=1224 data-nosnippet>1224</a>            serde_json::from_str(<span class="kw-2">&amp;</span>text(|o| status(<span class="kw-2">&amp;</span>q, OutputFormat::Json, o))).unwrap();
-<a href=#1225 id=1225 data-nosnippet>1225</a>        <span class="macro">assert_eq!</span>(j[<span class="string">"assessments"</span>].as_array().unwrap().len(), <span class="number">6</span>);
-<a href=#1226 id=1226 data-nosnippet>1226</a>        <span class="macro">assert_eq!</span>(j[<span class="string">"starving"</span>], <span class="macro">serde_json::json!</span>([<span class="number">1</span>]));
-<a href=#1227 id=1227 data-nosnippet>1227</a>    }
-<a href=#1228 id=1228 data-nosnippet>1228</a>
-<a href=#1229 id=1229 data-nosnippet>1229</a>    <span class="attr">#[test]
-<a href=#1230 id=1230 data-nosnippet>1230</a>    </span><span class="kw">fn </span>the_plan_names_the_next_merge_and_every_lane() {
-<a href=#1231 id=1231 data-nosnippet>1231</a>        <span class="kw">let </span>(_s, q) = world();
-<a href=#1232 id=1232 data-nosnippet>1232</a>        <span class="kw">let </span>t = text(|o| plan(<span class="kw-2">&amp;</span>q, OutputFormat::Text, o));
-<a href=#1233 id=1233 data-nosnippet>1233</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"#1"</span>), <span class="string">"{t}"</span>);
-<a href=#1234 id=1234 data-nosnippet>1234</a>        <span class="kw">let </span>j: serde_json::Value =
-<a href=#1235 id=1235 data-nosnippet>1235</a>            serde_json::from_str(<span class="kw-2">&amp;</span>text(|o| plan(<span class="kw-2">&amp;</span>q, OutputFormat::Json, o))).unwrap();
-<a href=#1236 id=1236 data-nosnippet>1236</a>        <span class="macro">assert_eq!</span>(j[<span class="string">"next_merge"</span>], <span class="number">1</span>, <span class="string">"{j}"</span>);
-<a href=#1237 id=1237 data-nosnippet>1237</a>        <span class="macro">assert!</span>(j[<span class="string">"repair"</span>]
-<a href=#1238 id=1238 data-nosnippet>1238</a>            .as_array()
-<a href=#1239 id=1239 data-nosnippet>1239</a>            .unwrap()
-<a href=#1240 id=1240 data-nosnippet>1240</a>            .contains(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>(<span class="number">2</span>)));
-<a href=#1241 id=1241 data-nosnippet>1241</a>    }
-<a href=#1242 id=1242 data-nosnippet>1242</a>
-<a href=#1243 id=1243 data-nosnippet>1243</a>    <span class="attr">#[test]
-<a href=#1244 id=1244 data-nosnippet>1244</a>    </span><span class="kw">fn </span>explain_says_why_each_pull_request_is_where_it_is() {
-<a href=#1245 id=1245 data-nosnippet>1245</a>        <span class="kw">let </span>(_s, q) = world();
-<a href=#1246 id=1246 data-nosnippet>1246</a>        <span class="kw">for </span>(rank, a) <span class="kw">in </span>q.assessments.iter().enumerate() {
-<a href=#1247 id=1247 data-nosnippet>1247</a>            <span class="kw">let </span>t = text(|o| explain(<span class="kw-2">&amp;</span>q, a, rank + <span class="number">1</span>, OutputFormat::Text, o));
-<a href=#1248 id=1248 data-nosnippet>1248</a>            <span class="macro">assert!</span>(t.starts_with(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"#{} "</span>, a.number)), <span class="string">"{t}"</span>);
-<a href=#1249 id=1249 data-nosnippet>1249</a>            <span class="macro">assert!</span>(t.contains(a.disposition.as_str()), <span class="string">"{t}"</span>);
-<a href=#1250 id=1250 data-nosnippet>1250</a>            <span class="kw">let </span>j: serde_json::Value =
-<a href=#1251 id=1251 data-nosnippet>1251</a>                serde_json::from_str(<span class="kw-2">&amp;</span>text(|o| explain(<span class="kw-2">&amp;</span>q, a, rank + <span class="number">1</span>, OutputFormat::Json, o)))
-<a href=#1252 id=1252 data-nosnippet>1252</a>                    .unwrap();
-<a href=#1253 id=1253 data-nosnippet>1253</a>            <span class="macro">assert_eq!</span>(j[<span class="string">"rank"</span>], rank + <span class="number">1</span>);
-<a href=#1254 id=1254 data-nosnippet>1254</a>            <span class="macro">assert_eq!</span>(j[<span class="string">"assessment"</span>][<span class="string">"number"</span>], a.number);
-<a href=#1255 id=1255 data-nosnippet>1255</a>        }
-<a href=#1256 id=1256 data-nosnippet>1256</a>    }
-<a href=#1257 id=1257 data-nosnippet>1257</a>
-<a href=#1258 id=1258 data-nosnippet>1258</a>    <span class="attr">#[test]
-<a href=#1259 id=1259 data-nosnippet>1259</a>    </span><span class="kw">fn </span>explain_names_the_successor_that_landed() {
-<a href=#1260 id=1260 data-nosnippet>1260</a>        <span class="kw">let </span>(_s, q) = world();
-<a href=#1261 id=1261 data-nosnippet>1261</a>        <span class="kw">use </span><span class="kw">crate</span>::integration::{
-<a href=#1262 id=1262 data-nosnippet>1262</a>            DependencyCertainty, DependencyState, OverlapKind, PathOverlap, PullRequestDependency,
-<a href=#1263 id=1263 data-nosnippet>1263</a>        };
-<a href=#1264 id=1264 data-nosnippet>1264</a>        <span class="kw">let </span><span class="kw-2">mut </span>a = q.assessments[<span class="number">0</span>].clone();
-<a href=#1265 id=1265 data-nosnippet>1265</a>        a.superseded_by = <span class="prelude-val">Some</span>(<span class="number">9</span>);
-<a href=#1266 id=1266 data-nosnippet>1266</a>        a.next_action = <span class="prelude-val">None</span>;
-<a href=#1267 id=1267 data-nosnippet>1267</a>        a.dependencies = [
-<a href=#1268 id=1268 data-nosnippet>1268</a>            (<span class="number">5</span>, DependencyState::Open),
-<a href=#1269 id=1269 data-nosnippet>1269</a>            (<span class="number">4</span>, DependencyState::Merged),
-<a href=#1270 id=1270 data-nosnippet>1270</a>            (<span class="number">6</span>, DependencyState::ClosedUnmerged),
-<a href=#1271 id=1271 data-nosnippet>1271</a>            (<span class="number">7</span>, DependencyState::Unread),
-<a href=#1272 id=1272 data-nosnippet>1272</a>        ]
-<a href=#1273 id=1273 data-nosnippet>1273</a>        .into_iter()
-<a href=#1274 id=1274 data-nosnippet>1274</a>        .map(|(number, state)| PullRequestDependency {
-<a href=#1275 id=1275 data-nosnippet>1275</a>            number,
-<a href=#1276 id=1276 data-nosnippet>1276</a>            certainty: DependencyCertainty::Confirmed,
-<a href=#1277 id=1277 data-nosnippet>1277</a>            satisfied: state == DependencyState::Merged,
-<a href=#1278 id=1278 data-nosnippet>1278</a>            state,
-<a href=#1279 id=1279 data-nosnippet>1279</a>        })
-<a href=#1280 id=1280 data-nosnippet>1280</a>        .collect();
-<a href=#1281 id=1281 data-nosnippet>1281</a>        a.overlaps = <span class="macro">vec!</span>[
-<a href=#1282 id=1282 data-nosnippet>1282</a>            PathOverlap {
-<a href=#1283 id=1283 data-nosnippet>1283</a>                number: <span class="number">3</span>,
-<a href=#1284 id=1284 data-nosnippet>1284</a>                paths: <span class="macro">vec!</span>[<span class="string">"src/a.rs"</span>.into()],
-<a href=#1285 id=1285 data-nosnippet>1285</a>                kind: OverlapKind::Authored,
-<a href=#1286 id=1286 data-nosnippet>1286</a>            },
-<a href=#1287 id=1287 data-nosnippet>1287</a>            PathOverlap {
-<a href=#1288 id=1288 data-nosnippet>1288</a>                number: <span class="number">8</span>,
-<a href=#1289 id=1289 data-nosnippet>1289</a>                paths: <span class="macro">vec!</span>[<span class="string">"apps/majordomus-cli/Cargo.toml"</span>.into()],
-<a href=#1290 id=1290 data-nosnippet>1290</a>                kind: OverlapKind::VersionBump,
-<a href=#1291 id=1291 data-nosnippet>1291</a>            },
-<a href=#1292 id=1292 data-nosnippet>1292</a>        ];
-<a href=#1293 id=1293 data-nosnippet>1293</a>        <span class="kw">let </span>t = text(|o| explain(<span class="kw-2">&amp;</span>q, <span class="kw-2">&amp;</span>a, <span class="number">1</span>, OutputFormat::Text, o));
-<a href=#1294 id=1294 data-nosnippet>1294</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"superseded:   by #9, which landed"</span>), <span class="string">"{t}"</span>);
-<a href=#1295 id=1295 data-nosnippet>1295</a>        <span class="macro">assert!</span>(!t.contains(<span class="string">"  next:"</span>), <span class="string">"{t}"</span>);
-<a href=#1296 id=1296 data-nosnippet>1296</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"depends on:   #5 (confirmed, open)"</span>), <span class="string">"{t}"</span>);
-<a href=#1297 id=1297 data-nosnippet>1297</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"depends on:   #4 (confirmed, landed)"</span>), <span class="string">"{t}"</span>);
-<a href=#1298 id=1298 data-nosnippet>1298</a>        <span class="macro">assert!</span>(
-<a href=#1299 id=1299 data-nosnippet>1299</a>            t.contains(<span class="string">"depends on:   #6 (confirmed, closed without a merge)"</span>),
-<a href=#1300 id=1300 data-nosnippet>1300</a>            <span class="string">"{t}"
-<a href=#1301 id=1301 data-nosnippet>1301</a>        </span>);
-<a href=#1302 id=1302 data-nosnippet>1302</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"depends on:   #7 (confirmed, unread)"</span>), <span class="string">"{t}"</span>);
-<a href=#1303 id=1303 data-nosnippet>1303</a>        <span class="macro">assert!</span>(
-<a href=#1304 id=1304 data-nosnippet>1304</a>            t.contains(<span class="string">"overlaps:     #3 (1) #8 (1, version_bump)"</span>),
-<a href=#1305 id=1305 data-nosnippet>1305</a>            <span class="string">"{t}"
-<a href=#1306 id=1306 data-nosnippet>1306</a>        </span>);
-<a href=#1307 id=1307 data-nosnippet>1307</a>    }
-<a href=#1308 id=1308 data-nosnippet>1308</a>
-<a href=#1309 id=1309 data-nosnippet>1309</a>    <span class="attr">#[test]
-<a href=#1310 id=1310 data-nosnippet>1310</a>    </span><span class="kw">fn </span>a_dry_run_proof_says_each_step_and_what_moved() {
-<a href=#1311 id=1311 data-nosnippet>1311</a>        <span class="kw">use </span><span class="kw">crate</span>::integration::proof::{
-<a href=#1312 id=1312 data-nosnippet>1312</a>            DryRunProof, Moved, ObservedClassification, ProofStep, Snapshot,
-<a href=#1313 id=1313 data-nosnippet>1313</a>        };
-<a href=#1314 id=1314 data-nosnippet>1314</a>        <span class="kw">let </span>empty = Snapshot {
-<a href=#1315 id=1315 data-nosnippet>1315</a>            sections: Vec::new(),
-<a href=#1316 id=1316 data-nosnippet>1316</a>        };
-<a href=#1317 id=1317 data-nosnippet>1317</a>        <span class="kw">let </span><span class="kw-2">mut </span>proof = DryRunProof {
-<a href=#1318 id=1318 data-nosnippet>1318</a>            ok: <span class="bool-val">true</span>,
-<a href=#1319 id=1319 data-nosnippet>1319</a>            base: <span class="string">"master"</span>.into(),
-<a href=#1320 id=1320 data-nosnippet>1320</a>            steps: <span class="macro">vec!</span>[ProofStep {
-<a href=#1321 id=1321 data-nosnippet>1321</a>                step: <span class="string">"refresh"</span>.into(),
-<a href=#1322 id=1322 data-nosnippet>1322</a>                summary: <span class="string">"observed 1"</span>.into(),
-<a href=#1323 id=1323 data-nosnippet>1323</a>            }],
-<a href=#1324 id=1324 data-nosnippet>1324</a>            moved: Vec::new(),
-<a href=#1325 id=1325 data-nosnippet>1325</a>            mirrors: Vec::new(),
-<a href=#1326 id=1326 data-nosnippet>1326</a>            before: empty.clone(),
-<a href=#1327 id=1327 data-nosnippet>1327</a>            after: empty,
-<a href=#1328 id=1328 data-nosnippet>1328</a>            classification: <span class="macro">vec!</span>[ObservedClassification {
-<a href=#1329 id=1329 data-nosnippet>1329</a>                number: <span class="number">1</span>,
-<a href=#1330 id=1330 data-nosnippet>1330</a>                head_sha: <span class="string">"a"</span>.repeat(<span class="number">40</span>),
-<a href=#1331 id=1331 data-nosnippet>1331</a>                disposition: <span class="string">"ready"</span>.into(),
-<a href=#1332 id=1332 data-nosnippet>1332</a>                next_action: <span class="prelude-val">None</span>,
-<a href=#1333 id=1333 data-nosnippet>1333</a>            }],
-<a href=#1334 id=1334 data-nosnippet>1334</a>        };
-<a href=#1335 id=1335 data-nosnippet>1335</a>        <span class="kw">let </span>t = text(|o| render_proof(<span class="kw-2">&amp;</span>proof, o));
-<a href=#1336 id=1336 data-nosnippet>1336</a>        <span class="macro">assert!</span>(t.starts_with(<span class="string">"refresh          observed 1\n"</span>), <span class="string">"{t}"</span>);
-<a href=#1337 id=1337 data-nosnippet>1337</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"  #1  aaaaaaaaaaaa  ready\n"</span>), <span class="string">"{t}"</span>);
-<a href=#1338 id=1338 data-nosnippet>1338</a>        <span class="macro">assert!</span>(
-<a href=#1339 id=1339 data-nosnippet>1339</a>            t.ends_with(<span class="string">"nothing moved (remote, forge, trail, lease, local refs)\n"</span>),
-<a href=#1340 id=1340 data-nosnippet>1340</a>            <span class="string">"{t}"
-<a href=#1341 id=1341 data-nosnippet>1341</a>        </span>);
-<a href=#1342 id=1342 data-nosnippet>1342</a>        proof.ok = <span class="bool-val">false</span>;
-<a href=#1343 id=1343 data-nosnippet>1343</a>        proof.moved = [<span class="string">"added"</span>, <span class="string">"removed"</span>]
-<a href=#1344 id=1344 data-nosnippet>1344</a>            .into_iter()
-<a href=#1345 id=1345 data-nosnippet>1345</a>            .map(|change| Moved {
-<a href=#1346 id=1346 data-nosnippet>1346</a>                section: <span class="string">"trail"</span>.into(),
-<a href=#1347 id=1347 data-nosnippet>1347</a>                change: change.into(),
-<a href=#1348 id=1348 data-nosnippet>1348</a>                line: <span class="string">"x"</span>.into(),
-<a href=#1349 id=1349 data-nosnippet>1349</a>            })
-<a href=#1350 id=1350 data-nosnippet>1350</a>            .collect();
-<a href=#1351 id=1351 data-nosnippet>1351</a>        proof.mirrors = <span class="macro">vec!</span>[<span class="string">"refs/x is y, origin serves z"</span>.into()];
-<a href=#1352 id=1352 data-nosnippet>1352</a>        <span class="kw">let </span>t = text(|o| render_proof(<span class="kw-2">&amp;</span>proof, o));
-<a href=#1353 id=1353 data-nosnippet>1353</a>        <span class="macro">assert!</span>(
-<a href=#1354 id=1354 data-nosnippet>1354</a>            t.contains(<span class="string">"moved something:\n  + trail  x\n  - trail  x\n"</span>),
-<a href=#1355 id=1355 data-nosnippet>1355</a>            <span class="string">"{t}"
-<a href=#1356 id=1356 data-nosnippet>1356</a>        </span>);
-<a href=#1357 id=1357 data-nosnippet>1357</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"mirror: refs/x is y"</span>), <span class="string">"{t}"</span>);
-<a href=#1358 id=1358 data-nosnippet>1358</a>        <span class="macro">assert!</span>(!t.contains(<span class="string">"nothing moved"</span>), <span class="string">"{t}"</span>);
-<a href=#1359 id=1359 data-nosnippet>1359</a>    }
-<a href=#1360 id=1360 data-nosnippet>1360</a>
-<a href=#1361 id=1361 data-nosnippet>1361</a>    <span class="attr">#[test]
-<a href=#1362 id=1362 data-nosnippet>1362</a>    </span><span class="kw">fn </span>a_halt_that_names_no_pull_request_says_a_pull_request() {
-<a href=#1363 id=1363 data-nosnippet>1363</a>        <span class="kw">let </span>said = describe(<span class="kw-2">&amp;</span>DrainStepOutcome::Halted {
-<a href=#1364 id=1364 data-nosnippet>1364</a>            pr: <span class="prelude-val">None</span>,
-<a href=#1365 id=1365 data-nosnippet>1365</a>            reason: <span class="string">"unproved"</span>.into(),
-<a href=#1366 id=1366 data-nosnippet>1366</a>        });
-<a href=#1367 id=1367 data-nosnippet>1367</a>        <span class="macro">assert!</span>(
-<a href=#1368 id=1368 data-nosnippet>1368</a>            said.starts_with(<span class="string">"halted: a pull request was merged"</span>),
-<a href=#1369 id=1369 data-nosnippet>1369</a>            <span class="string">"{said}"
-<a href=#1370 id=1370 data-nosnippet>1370</a>        </span>);
-<a href=#1371 id=1371 data-nosnippet>1371</a>    }
-<a href=#1372 id=1372 data-nosnippet>1372</a>
-<a href=#1373 id=1373 data-nosnippet>1373</a>    <span class="attr">#[test]
-<a href=#1374 id=1374 data-nosnippet>1374</a>    </span><span class="kw">fn </span>the_brief_is_one_line_from_files_and_absent_without_an_observation() {
-<a href=#1375 id=1375 data-nosnippet>1375</a>        <span class="kw">let </span>(s, _q) = world();
-<a href=#1376 id=1376 data-nosnippet>1376</a>        <span class="kw">let </span>b = brief(<span class="kw-2">&amp;</span>s.<span class="number">0</span>).expect(<span class="string">"a brief"</span>);
-<a href=#1377 id=1377 data-nosnippet>1377</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"master at "</span>), <span class="string">"{b}"</span>);
-<a href=#1378 id=1378 data-nosnippet>1378</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"next merge #1"</span>), <span class="string">"{b}"</span>);
-<a href=#1379 id=1379 data-nosnippet>1379</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"starving #1"</span>), <span class="string">"{b}"</span>);
-<a href=#1380 id=1380 data-nosnippet>1380</a>        <span class="macro">assert!</span>(!b.contains(<span class="string">"last merge"</span>) &amp;&amp; !b.contains(<span class="string">"; last "</span>), <span class="string">"{b}"</span>);
-<a href=#1381 id=1381 data-nosnippet>1381</a>
-<a href=#1382 id=1382 data-nosnippet>1382</a>        <span class="comment">// the trail's last merge, and the last step that says how the work went: the newest of
-<a href=#1383 id=1383 data-nosnippet>1383</a>        // a refresh, a failed or unverified merge, a stale decision — a merge is said already
-<a href=#1384 id=1384 data-nosnippet>1384</a>        </span><span class="kw">let </span>event = |action, pr: <span class="prelude-ty">Option</span>&lt;u64&gt;| drain::IntegrationEvent {
-<a href=#1385 id=1385 data-nosnippet>1385</a>            at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
-<a href=#1386 id=1386 data-nosnippet>1386</a>            pr,
-<a href=#1387 id=1387 data-nosnippet>1387</a>            ..drain::IntegrationEvent::of(action)
-<a href=#1388 id=1388 data-nosnippet>1388</a>        };
-<a href=#1389 id=1389 data-nosnippet>1389</a>        <span class="kw">use </span>drain::IntegrationAction <span class="kw">as </span>A;
-<a href=#1390 id=1390 data-nosnippet>1390</a>        <span class="kw">for </span>e <span class="kw">in </span>[
-<a href=#1391 id=1391 data-nosnippet>1391</a>            event(A::MergeFailed, <span class="prelude-val">Some</span>(<span class="number">4</span>)),
-<a href=#1392 id=1392 data-nosnippet>1392</a>            event(A::MergeSucceeded, <span class="prelude-val">Some</span>(<span class="number">5</span>)),
-<a href=#1393 id=1393 data-nosnippet>1393</a>            event(A::StaleDecision, <span class="prelude-val">Some</span>(<span class="number">6</span>)),
-<a href=#1394 id=1394 data-nosnippet>1394</a>            event(A::LeaseReleased, <span class="prelude-val">None</span>),
-<a href=#1395 id=1395 data-nosnippet>1395</a>        ] {
-<a href=#1396 id=1396 data-nosnippet>1396</a>            drain::record(<span class="kw-2">&amp;</span>s.<span class="number">0</span>, e).expect(<span class="string">"recorded"</span>);
-<a href=#1397 id=1397 data-nosnippet>1397</a>        }
-<a href=#1398 id=1398 data-nosnippet>1398</a>        <span class="kw">let </span>lease = IntegrationLease::acquire(<span class="kw-2">&amp;</span>s.<span class="number">0</span>, <span class="string">"master"</span>).expect(<span class="string">"the lease"</span>);
-<a href=#1399 id=1399 data-nosnippet>1399</a>        <span class="kw">let </span>b = brief(<span class="kw-2">&amp;</span>s.<span class="number">0</span>).expect(<span class="string">"a brief"</span>);
-<a href=#1400 id=1400 data-nosnippet>1400</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"last merge #5"</span>), <span class="string">"{b}"</span>);
-<a href=#1401 id=1401 data-nosnippet>1401</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"last stale_decision #6"</span>), <span class="string">"{b}"</span>);
-<a href=#1402 id=1402 data-nosnippet>1402</a>        <span class="macro">assert!</span>(
-<a href=#1403 id=1403 data-nosnippet>1403</a>            !b.contains(<span class="string">"merge_failed"</span>),
-<a href=#1404 id=1404 data-nosnippet>1404</a>            <span class="string">"only the newest outcome is said: {b}"
-<a href=#1405 id=1405 data-nosnippet>1405</a>        </span>);
-<a href=#1406 id=1406 data-nosnippet>1406</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"per-clone guard only"</span>), <span class="string">"{b}"</span>);
-<a href=#1407 id=1407 data-nosnippet>1407</a>        drop(lease);
-<a href=#1408 id=1408 data-nosnippet>1408</a>        drain::record(<span class="kw-2">&amp;</span>s.<span class="number">0</span>, event(A::Refreshed, <span class="prelude-val">None</span>)).expect(<span class="string">"recorded"</span>);
-<a href=#1409 id=1409 data-nosnippet>1409</a>        <span class="kw">let </span>b = brief(<span class="kw-2">&amp;</span>s.<span class="number">0</span>).expect(<span class="string">"a brief"</span>);
-<a href=#1410 id=1410 data-nosnippet>1410</a>        <span class="macro">assert!</span>(
-<a href=#1411 id=1411 data-nosnippet>1411</a>            b.contains(<span class="string">"last refreshed "</span>),
-<a href=#1412 id=1412 data-nosnippet>1412</a>            <span class="string">"an outcome without a pull request: {b}"
-<a href=#1413 id=1413 data-nosnippet>1413</a>        </span>);
-<a href=#1414 id=1414 data-nosnippet>1414</a>
-<a href=#1415 id=1415 data-nosnippet>1415</a>        <span class="kw">let </span>empty = std::env::temp_dir().join(<span class="macro">format!</span>(<span class="string">"mj-prs-empty-{}"</span>, std::process::id()));
-<a href=#1416 id=1416 data-nosnippet>1416</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>empty).unwrap();
-<a href=#1417 id=1417 data-nosnippet>1417</a>        <span class="macro">assert!</span>(
-<a href=#1418 id=1418 data-nosnippet>1418</a>            brief(<span class="kw-2">&amp;</span>empty).is_none(),
-<a href=#1419 id=1419 data-nosnippet>1419</a>            <span class="string">"a checkout that never observed says nothing"
-<a href=#1420 id=1420 data-nosnippet>1420</a>        </span>);
-<a href=#1421 id=1421 data-nosnippet>1421</a>        <span class="kw">let _ </span>= std::fs::remove_dir_all(<span class="kw-2">&amp;</span>empty);
-<a href=#1422 id=1422 data-nosnippet>1422</a>    }
-<a href=#1423 id=1423 data-nosnippet>1423</a>
-<a href=#1424 id=1424 data-nosnippet>1424</a>    <span class="attr">#[test]
-<a href=#1425 id=1425 data-nosnippet>1425</a>    </span><span class="kw">fn </span>every_drain_outcome_has_its_own_sentence() {
-<a href=#1426 id=1426 data-nosnippet>1426</a>        <span class="kw">let </span>outcomes = [
-<a href=#1427 id=1427 data-nosnippet>1427</a>            DrainStepOutcome::Idle {
-<a href=#1428 id=1428 data-nosnippet>1428</a>                why: <span class="string">"nothing"</span>.into(),
-<a href=#1429 id=1429 data-nosnippet>1429</a>            },
-<a href=#1430 id=1430 data-nosnippet>1430</a>            DrainStepOutcome::WouldMerge { pr: <span class="number">1 </span>},
-<a href=#1431 id=1431 data-nosnippet>1431</a>            DrainStepOutcome::StaleDecision {
-<a href=#1432 id=1432 data-nosnippet>1432</a>                pr: <span class="number">2</span>,
-<a href=#1433 id=1433 data-nosnippet>1433</a>                what: <span class="string">"master moved"</span>.into(),
-<a href=#1434 id=1434 data-nosnippet>1434</a>            },
-<a href=#1435 id=1435 data-nosnippet>1435</a>            DrainStepOutcome::Merged {
-<a href=#1436 id=1436 data-nosnippet>1436</a>                pr: <span class="number">3</span>,
-<a href=#1437 id=1437 data-nosnippet>1437</a>                master_before: <span class="string">"a"</span>.repeat(<span class="number">40</span>),
-<a href=#1438 id=1438 data-nosnippet>1438</a>                master_after: <span class="string">"b"</span>.repeat(<span class="number">40</span>),
-<a href=#1439 id=1439 data-nosnippet>1439</a>            },
-<a href=#1440 id=1440 data-nosnippet>1440</a>            DrainStepOutcome::MergeRefused {
-<a href=#1441 id=1441 data-nosnippet>1441</a>                pr: <span class="number">4</span>,
-<a href=#1442 id=1442 data-nosnippet>1442</a>                reason: <span class="string">"protected"</span>.into(),
-<a href=#1443 id=1443 data-nosnippet>1443</a>                class: drain::FailureClass::PolicyViolation,
-<a href=#1444 id=1444 data-nosnippet>1444</a>            },
-<a href=#1445 id=1445 data-nosnippet>1445</a>            DrainStepOutcome::VerificationFailed {
-<a href=#1446 id=1446 data-nosnippet>1446</a>                pr: <span class="number">5</span>,
-<a href=#1447 id=1447 data-nosnippet>1447</a>                reason: <span class="string">"absent"</span>.into(),
-<a href=#1448 id=1448 data-nosnippet>1448</a>            },
-<a href=#1449 id=1449 data-nosnippet>1449</a>            DrainStepOutcome::WouldRefresh { pr: <span class="number">6 </span>},
-<a href=#1450 id=1450 data-nosnippet>1450</a>            DrainStepOutcome::Refreshed {
-<a href=#1451 id=1451 data-nosnippet>1451</a>                pr: <span class="number">7</span>,
-<a href=#1452 id=1452 data-nosnippet>1452</a>                head_before: <span class="string">"c"</span>.repeat(<span class="number">40</span>),
-<a href=#1453 id=1453 data-nosnippet>1453</a>                head_after: <span class="string">"d"</span>.repeat(<span class="number">40</span>),
-<a href=#1454 id=1454 data-nosnippet>1454</a>            },
-<a href=#1455 id=1455 data-nosnippet>1455</a>            DrainStepOutcome::AwaitingChecks { pr: <span class="number">8 </span>},
-<a href=#1456 id=1456 data-nosnippet>1456</a>            DrainStepOutcome::RefreshFailed {
-<a href=#1457 id=1457 data-nosnippet>1457</a>                pr: <span class="number">9</span>,
-<a href=#1458 id=1458 data-nosnippet>1458</a>                reason: <span class="string">"conflict"</span>.into(),
-<a href=#1459 id=1459 data-nosnippet>1459</a>                class: drain::FailureClass::Conflict,
-<a href=#1460 id=1460 data-nosnippet>1460</a>            },
-<a href=#1461 id=1461 data-nosnippet>1461</a>            DrainStepOutcome::TrailUnwritable {
-<a href=#1462 id=1462 data-nosnippet>1462</a>                pr: <span class="number">10</span>,
-<a href=#1463 id=1463 data-nosnippet>1463</a>                unrecorded: IntegrationAction::MergeAttempted,
-<a href=#1464 id=1464 data-nosnippet>1464</a>                reason: <span class="string">"read-only"</span>.into(),
-<a href=#1465 id=1465 data-nosnippet>1465</a>            },
-<a href=#1466 id=1466 data-nosnippet>1466</a>        ];
-<a href=#1467 id=1467 data-nosnippet>1467</a>        <span class="kw">let </span>said: std::collections::BTreeSet&lt;String&gt; = outcomes.iter().map(describe).collect();
-<a href=#1468 id=1468 data-nosnippet>1468</a>        <span class="macro">assert_eq!</span>(
-<a href=#1469 id=1469 data-nosnippet>1469</a>            said.len(),
-<a href=#1470 id=1470 data-nosnippet>1470</a>            outcomes.len(),
-<a href=#1471 id=1471 data-nosnippet>1471</a>            <span class="string">"two outcomes read alike: {said:?}"
-<a href=#1472 id=1472 data-nosnippet>1472</a>        </span>);
-<a href=#1473 id=1473 data-nosnippet>1473</a>        <span class="macro">assert!</span>(describe(<span class="kw-2">&amp;</span>outcomes[<span class="number">3</span>]).contains(<span class="string">"aaaaaaaaaa -&gt; bbbbbbbbbb"</span>));
-<a href=#1474 id=1474 data-nosnippet>1474</a>        <span class="macro">assert!</span>(describe(<span class="kw-2">&amp;</span>outcomes[<span class="number">10</span>]).contains(<span class="string">"merge_attempted"</span>));
-<a href=#1475 id=1475 data-nosnippet>1475</a>    }
-<a href=#1476 id=1476 data-nosnippet>1476</a>
-<a href=#1477 id=1477 data-nosnippet>1477</a>    <span class="attr">#[test]
-<a href=#1478 id=1478 data-nosnippet>1478</a>    </span><span class="kw">fn </span>a_drain_that_could_not_record_an_act_exits_unusable() {
-<a href=#1479 id=1479 data-nosnippet>1479</a>        <span class="kw">let </span>report = |steps: Vec&lt;DrainStepOutcome&gt;| drain::DrainReport {
-<a href=#1480 id=1480 data-nosnippet>1480</a>            dry_run: <span class="bool-val">false</span>,
-<a href=#1481 id=1481 data-nosnippet>1481</a>            steps,
-<a href=#1482 id=1482 data-nosnippet>1482</a>            merged: Vec::new(),
-<a href=#1483 id=1483 data-nosnippet>1483</a>            stopped: String::new(),
-<a href=#1484 id=1484 data-nosnippet>1484</a>        };
-<a href=#1485 id=1485 data-nosnippet>1485</a>        <span class="kw">let </span>unrecorded = DrainStepOutcome::TrailUnwritable {
-<a href=#1486 id=1486 data-nosnippet>1486</a>            pr: <span class="number">1</span>,
-<a href=#1487 id=1487 data-nosnippet>1487</a>            unrecorded: IntegrationAction::MergeAttempted,
-<a href=#1488 id=1488 data-nosnippet>1488</a>            reason: <span class="string">"read-only"</span>.into(),
-<a href=#1489 id=1489 data-nosnippet>1489</a>        };
-<a href=#1490 id=1490 data-nosnippet>1490</a>        <span class="kw">let </span>unverified = DrainStepOutcome::VerificationFailed {
-<a href=#1491 id=1491 data-nosnippet>1491</a>            pr: <span class="number">2</span>,
-<a href=#1492 id=1492 data-nosnippet>1492</a>            reason: <span class="string">"absent"</span>.into(),
-<a href=#1493 id=1493 data-nosnippet>1493</a>        };
-<a href=#1494 id=1494 data-nosnippet>1494</a>        <span class="macro">assert_eq!</span>(drain_exit(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[unrecorded])), UNUSABLE);
-<a href=#1495 id=1495 data-nosnippet>1495</a>        <span class="macro">assert_eq!</span>(drain_exit(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[unverified])), FINDING);
-<a href=#1496 id=1496 data-nosnippet>1496</a>        <span class="macro">assert_eq!</span>(
-<a href=#1497 id=1497 data-nosnippet>1497</a>            drain_exit(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[DrainStepOutcome::WouldMerge { pr: <span class="number">3 </span>}])),
-<a href=#1498 id=1498 data-nosnippet>1498</a>            <span class="number">0
-<a href=#1499 id=1499 data-nosnippet>1499</a>        </span>);
-<a href=#1500 id=1500 data-nosnippet>1500</a>    }
-<a href=#1501 id=1501 data-nosnippet>1501</a>
-<a href=#1502 id=1502 data-nosnippet>1502</a>    <span class="attr">#[test]
-<a href=#1503 id=1503 data-nosnippet>1503</a>    </span><span class="kw">fn </span>a_moment_is_said_as_how_long_ago() {
-<a href=#1504 id=1504 data-nosnippet>1504</a>        <span class="macro">assert_eq!</span>(ago(<span class="string">"not a time"</span>), <span class="string">""</span>, <span class="string">"an unreadable moment says nothing"</span>);
-<a href=#1505 id=1505 data-nosnippet>1505</a>        <span class="kw">let </span>at = |secs: u64| {
-<a href=#1506 id=1506 data-nosnippet>1506</a>            <span class="kw">crate</span>::peers::rfc3339(
-<a href=#1507 id=1507 data-nosnippet>1507</a>                std::time::SystemTime::now() - std::time::Duration::from_secs(secs),
-<a href=#1508 id=1508 data-nosnippet>1508</a>            )
-<a href=#1509 id=1509 data-nosnippet>1509</a>        };
-<a href=#1510 id=1510 data-nosnippet>1510</a>        <span class="macro">assert!</span>(ago(<span class="kw-2">&amp;</span>at(<span class="number">5</span>)).ends_with(<span class="string">" s ago"</span>), <span class="string">"{}"</span>, ago(<span class="kw-2">&amp;</span>at(<span class="number">5</span>)));
-<a href=#1511 id=1511 data-nosnippet>1511</a>        <span class="macro">assert!</span>(ago(<span class="kw-2">&amp;</span>at(<span class="number">600</span>)).ends_with(<span class="string">" min ago"</span>), <span class="string">"{}"</span>, ago(<span class="kw-2">&amp;</span>at(<span class="number">600</span>)));
-<a href=#1512 id=1512 data-nosnippet>1512</a>        <span class="macro">assert!</span>(
-<a href=#1513 id=1513 data-nosnippet>1513</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">5 </span>* <span class="number">3600</span>)).ends_with(<span class="string">" h ago"</span>),
-<a href=#1514 id=1514 data-nosnippet>1514</a>            <span class="string">"{}"</span>,
-<a href=#1515 id=1515 data-nosnippet>1515</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">5 </span>* <span class="number">3600</span>))
-<a href=#1516 id=1516 data-nosnippet>1516</a>        );
-<a href=#1517 id=1517 data-nosnippet>1517</a>        <span class="macro">assert!</span>(
-<a href=#1518 id=1518 data-nosnippet>1518</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">3 </span>* <span class="number">86_400</span>)).ends_with(<span class="string">" d ago"</span>),
-<a href=#1519 id=1519 data-nosnippet>1519</a>            <span class="string">"{}"</span>,
-<a href=#1520 id=1520 data-nosnippet>1520</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">3 </span>* <span class="number">86_400</span>))
-<a href=#1521 id=1521 data-nosnippet>1521</a>        );
-<a href=#1522 id=1522 data-nosnippet>1522</a>    }
-<a href=#1523 id=1523 data-nosnippet>1523</a>
-<a href=#1524 id=1524 data-nosnippet>1524</a>    <span class="attr">#[test]
-<a href=#1525 id=1525 data-nosnippet>1525</a>    </span><span class="kw">fn </span>a_drain_says_why_it_stopped_once() {
-<a href=#1526 id=1526 data-nosnippet>1526</a>        <span class="kw">let </span>report = |steps: Vec&lt;DrainStepOutcome&gt;, stopped: <span class="kw-2">&amp;</span>str| drain::DrainReport {
-<a href=#1527 id=1527 data-nosnippet>1527</a>            dry_run: <span class="bool-val">true</span>,
-<a href=#1528 id=1528 data-nosnippet>1528</a>            steps,
-<a href=#1529 id=1529 data-nosnippet>1529</a>            merged: <span class="macro">vec!</span>[],
-<a href=#1530 id=1530 data-nosnippet>1530</a>            stopped: stopped.into(),
-<a href=#1531 id=1531 data-nosnippet>1531</a>        };
-<a href=#1532 id=1532 data-nosnippet>1532</a>        <span class="kw">let </span>why = <span class="string">"nothing is ready; 7 pull request(s) need master brought in first: #1"</span>;
-<a href=#1533 id=1533 data-nosnippet>1533</a>        <span class="comment">// an idle step is the reason itself: said once, not again as `stopped:`
-<a href=#1534 id=1534 data-nosnippet>1534</a>        </span><span class="kw">let </span>idle = drain_lines(<span class="kw-2">&amp;</span>report(
-<a href=#1535 id=1535 data-nosnippet>1535</a>            <span class="macro">vec!</span>[DrainStepOutcome::Idle { why: why.into() }],
-<a href=#1536 id=1536 data-nosnippet>1536</a>            why,
-<a href=#1537 id=1537 data-nosnippet>1537</a>        ));
-<a href=#1538 id=1538 data-nosnippet>1538</a>        <span class="macro">assert_eq!</span>(idle, [<span class="macro">format!</span>(<span class="string">"idle: {why}"</span>)]);
-<a href=#1539 id=1539 data-nosnippet>1539</a>        <span class="macro">assert_eq!</span>(idle.join(<span class="string">"; "</span>).matches(why).count(), <span class="number">1</span>, <span class="string">"{idle:?}"</span>);
-<a href=#1540 id=1540 data-nosnippet>1540</a>        <span class="comment">// a halt says why nothing began, once
-<a href=#1541 id=1541 data-nosnippet>1541</a>        </span><span class="kw">let </span>halted = drain_lines(<span class="kw-2">&amp;</span>report(
-<a href=#1542 id=1542 data-nosnippet>1542</a>            <span class="macro">vec!</span>[DrainStepOutcome::Halted {
-<a href=#1543 id=1543 data-nosnippet>1543</a>                pr: <span class="prelude-val">Some</span>(<span class="number">4</span>),
-<a href=#1544 id=1544 data-nosnippet>1544</a>                reason: <span class="string">"the merge commit is not on master"</span>.into(),
-<a href=#1545 id=1545 data-nosnippet>1545</a>            }],
-<a href=#1546 id=1546 data-nosnippet>1546</a>            <span class="string">"#4 could not be verified after merging (the merge commit is not on master)"</span>,
-<a href=#1547 id=1547 data-nosnippet>1547</a>        ));
-<a href=#1548 id=1548 data-nosnippet>1548</a>        <span class="macro">assert_eq!</span>(halted.len(), <span class="number">1</span>, <span class="string">"{halted:?}"</span>);
-<a href=#1549 id=1549 data-nosnippet>1549</a>        <span class="macro">assert!</span>(halted[<span class="number">0</span>].starts_with(<span class="string">"halted: #4"</span>), <span class="string">"{halted:?}"</span>);
-<a href=#1550 id=1550 data-nosnippet>1550</a>        <span class="comment">// a step that does not end the drain by itself is followed by why the drain ended
-<a href=#1551 id=1551 data-nosnippet>1551</a>        </span><span class="kw">let </span>bounded = drain_lines(<span class="kw-2">&amp;</span>report(
-<a href=#1552 id=1552 data-nosnippet>1552</a>            <span class="macro">vec!</span>[DrainStepOutcome::WouldMerge { pr: <span class="number">3 </span>}],
-<a href=#1553 id=1553 data-nosnippet>1553</a>            <span class="string">"dry run: #3 would be merged; nothing after it is planned"</span>,
-<a href=#1554 id=1554 data-nosnippet>1554</a>        ));
-<a href=#1555 id=1555 data-nosnippet>1555</a>        <span class="macro">assert_eq!</span>(
-<a href=#1556 id=1556 data-nosnippet>1556</a>            bounded,
-<a href=#1557 id=1557 data-nosnippet>1557</a>            [
-<a href=#1558 id=1558 data-nosnippet>1558</a>                <span class="string">"would merge #3"</span>.to_string(),
-<a href=#1559 id=1559 data-nosnippet>1559</a>                <span class="string">"stopped: dry run: #3 would be merged; nothing after it is planned"</span>.to_string()
-<a href=#1560 id=1560 data-nosnippet>1560</a>            ]
-<a href=#1561 id=1561 data-nosnippet>1561</a>        );
-<a href=#1562 id=1562 data-nosnippet>1562</a>        <span class="comment">// and a drain that took no step and gave no reason says nothing at all
-<a href=#1563 id=1563 data-nosnippet>1563</a>        </span><span class="macro">assert!</span>(drain_lines(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[], <span class="string">""</span>)).is_empty());
-<a href=#1564 id=1564 data-nosnippet>1564</a>    }
-<a href=#1565 id=1565 data-nosnippet>1565</a>
-<a href=#1566 id=1566 data-nosnippet>1566</a>    <span class="attr">#[test]
-<a href=#1567 id=1567 data-nosnippet>1567</a>    </span><span class="kw">fn </span>every_repair_outcome_has_its_own_sentence_and_a_refusal_names_the_files() {
-<a href=#1568 id=1568 data-nosnippet>1568</a>        <span class="kw">let </span>report = |dry_run: bool, outcome: repair::RepairOutcome| repair::RepairReport {
-<a href=#1569 id=1569 data-nosnippet>1569</a>            dry_run,
-<a href=#1570 id=1570 data-nosnippet>1570</a>            target: <span class="string">"#7"</span>.into(),
-<a href=#1571 id=1571 data-nosnippet>1571</a>            pr: <span class="prelude-val">Some</span>(<span class="number">7</span>),
-<a href=#1572 id=1572 data-nosnippet>1572</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"feature/7"</span>.into()),
-<a href=#1573 id=1573 data-nosnippet>1573</a>            base: <span class="string">"master"</span>.into(),
-<a href=#1574 id=1574 data-nosnippet>1574</a>            master_sha: <span class="string">"m"</span>.repeat(<span class="number">40</span>),
-<a href=#1575 id=1575 data-nosnippet>1575</a>            head_sha: <span class="prelude-val">Some</span>(<span class="string">"h"</span>.repeat(<span class="number">40</span>)),
-<a href=#1576 id=1576 data-nosnippet>1576</a>            observed_at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
-<a href=#1577 id=1577 data-nosnippet>1577</a>            relation: <span class="prelude-val">Some</span>(RelationToMaster::Behind {
-<a href=#1578 id=1578 data-nosnippet>1578</a>                behind: <span class="number">1</span>,
-<a href=#1579 id=1579 data-nosnippet>1579</a>                authored: <span class="macro">vec!</span>[<span class="string">"src/a.rs"</span>.into()],
-<a href=#1580 id=1580 data-nosnippet>1580</a>            }),
-<a href=#1581 id=1581 data-nosnippet>1581</a>            outcome,
-<a href=#1582 id=1582 data-nosnippet>1582</a>            diagnostics: <span class="macro">vec!</span>[],
-<a href=#1583 id=1583 data-nosnippet>1583</a>        };
-<a href=#1584 id=1584 data-nosnippet>1584</a>        <span class="kw">let </span>say = |r: repair::RepairReport| text(|o| render_repair(<span class="kw-2">&amp;</span>r, o));
-<a href=#1585 id=1585 data-nosnippet>1585</a>        <span class="kw">let </span>would = say(report(<span class="bool-val">true</span>, repair::RepairOutcome::WouldRepair));
-<a href=#1586 id=1586 data-nosnippet>1586</a>        <span class="macro">assert!</span>(
-<a href=#1587 id=1587 data-nosnippet>1587</a>            would.contains(<span class="string">"#7 (feature/7): head hhhhhhhhhh against master mmmmmmmmmm, behind"</span>),
-<a href=#1588 id=1588 data-nosnippet>1588</a>            <span class="string">"{would}"
-<a href=#1589 id=1589 data-nosnippet>1589</a>        </span>);
-<a href=#1590 id=1590 data-nosnippet>1590</a>        <span class="macro">assert!</span>(
-<a href=#1591 id=1591 data-nosnippet>1591</a>            would.contains(<span class="string">"observed at 2026-10-01T00:00:00Z"</span>),
-<a href=#1592 id=1592 data-nosnippet>1592</a>            <span class="string">"{would}"
-<a href=#1593 id=1593 data-nosnippet>1593</a>        </span>);
-<a href=#1594 id=1594 data-nosnippet>1594</a>        <span class="macro">assert!</span>(
-<a href=#1595 id=1595 data-nosnippet>1595</a>            would.contains(<span class="string">"dry run: would merge master mmmmmmmmmm into #7 (feature/7)"</span>),
-<a href=#1596 id=1596 data-nosnippet>1596</a>            <span class="string">"{would}"
-<a href=#1597 id=1597 data-nosnippet>1597</a>        </span>);
-<a href=#1598 id=1598 data-nosnippet>1598</a>        <span class="macro">assert!</span>(
-<a href=#1599 id=1599 data-nosnippet>1599</a>            would.contains(<span class="string">"leased on hhhhhhhhhh; --apply does"</span>),
-<a href=#1600 id=1600 data-nosnippet>1600</a>            <span class="string">"{would}"
-<a href=#1601 id=1601 data-nosnippet>1601</a>        </span>);
-<a href=#1602 id=1602 data-nosnippet>1602</a>        <span class="kw">let </span>done = say(report(
-<a href=#1603 id=1603 data-nosnippet>1603</a>            <span class="bool-val">false</span>,
-<a href=#1604 id=1604 data-nosnippet>1604</a>            repair::RepairOutcome::Repaired {
-<a href=#1605 id=1605 data-nosnippet>1605</a>                head_after: <span class="string">"n"</span>.repeat(<span class="number">40</span>),
-<a href=#1606 id=1606 data-nosnippet>1606</a>            },
-<a href=#1607 id=1607 data-nosnippet>1607</a>        ));
-<a href=#1608 id=1608 data-nosnippet>1608</a>        <span class="macro">assert!</span>(
-<a href=#1609 id=1609 data-nosnippet>1609</a>            done.contains(
-<a href=#1610 id=1610 data-nosnippet>1610</a>                <span class="string">"repaired #7 (feature/7): it carries master mmmmmmmmmm and is at nnnnnnnnnn"
-<a href=#1611 id=1611 data-nosnippet>1611</a>            </span>),
-<a href=#1612 id=1612 data-nosnippet>1612</a>            <span class="string">"{done}"
-<a href=#1613 id=1613 data-nosnippet>1613</a>        </span>);
-<a href=#1614 id=1614 data-nosnippet>1614</a>        <span class="macro">assert!</span>(
-<a href=#1615 id=1615 data-nosnippet>1615</a>            !done.contains(<span class="string">"observed at"</span>),
-<a href=#1616 id=1616 data-nosnippet>1616</a>            <span class="string">"an act is not a dry run: {done}"
-<a href=#1617 id=1617 data-nosnippet>1617</a>        </span>);
-<a href=#1618 id=1618 data-nosnippet>1618</a>        <span class="kw">let </span>nothing = say(report(
-<a href=#1619 id=1619 data-nosnippet>1619</a>            <span class="bool-val">true</span>,
-<a href=#1620 id=1620 data-nosnippet>1620</a>            repair::RepairOutcome::NothingToRepair {
-<a href=#1621 id=1621 data-nosnippet>1621</a>                why: <span class="string">"its head already contains master"</span>.into(),
-<a href=#1622 id=1622 data-nosnippet>1622</a>            },
-<a href=#1623 id=1623 data-nosnippet>1623</a>        ));
-<a href=#1624 id=1624 data-nosnippet>1624</a>        <span class="macro">assert!</span>(
-<a href=#1625 id=1625 data-nosnippet>1625</a>            nothing.contains(<span class="string">"nothing to repair: its head already contains master"</span>),
-<a href=#1626 id=1626 data-nosnippet>1626</a>            <span class="string">"{nothing}"
-<a href=#1627 id=1627 data-nosnippet>1627</a>        </span>);
-<a href=#1628 id=1628 data-nosnippet>1628</a>        <span class="kw">let </span>refused = say(report(
-<a href=#1629 id=1629 data-nosnippet>1629</a>            <span class="bool-val">true</span>,
-<a href=#1630 id=1630 data-nosnippet>1630</a>            repair::RepairOutcome::Refused {
-<a href=#1631 id=1631 data-nosnippet>1631</a>                refusal: repair::RepairRefusal::AuthoredConflict {
-<a href=#1632 id=1632 data-nosnippet>1632</a>                    paths: <span class="macro">vec!</span>[<span class="string">"src/a.rs"</span>.into(), <span class="string">"src/b.rs"</span>.into()],
-<a href=#1633 id=1633 data-nosnippet>1633</a>                },
-<a href=#1634 id=1634 data-nosnippet>1634</a>            },
-<a href=#1635 id=1635 data-nosnippet>1635</a>        ));
-<a href=#1636 id=1636 data-nosnippet>1636</a>        <span class="macro">assert!</span>(
-<a href=#1637 id=1637 data-nosnippet>1637</a>            refused
-<a href=#1638 id=1638 data-nosnippet>1638</a>                .contains(<span class="string">"REFUSE #7 (feature/7): merging master conflicts on 2 authored file(s)"</span>),
-<a href=#1639 id=1639 data-nosnippet>1639</a>            <span class="string">"{refused}"
-<a href=#1640 id=1640 data-nosnippet>1640</a>        </span>);
-<a href=#1641 id=1641 data-nosnippet>1641</a>        <span class="macro">assert!</span>(
-<a href=#1642 id=1642 data-nosnippet>1642</a>            refused.contains(<span class="string">"\n       src/a.rs\n       src/b.rs\n"</span>),
-<a href=#1643 id=1643 data-nosnippet>1643</a>            <span class="string">"{refused}"
-<a href=#1644 id=1644 data-nosnippet>1644</a>        </span>);
-<a href=#1645 id=1645 data-nosnippet>1645</a>        <span class="macro">assert!</span>(
-<a href=#1646 id=1646 data-nosnippet>1646</a>            refused.contains(<span class="string">"merge master in the branch's own worktree"</span>),
-<a href=#1647 id=1647 data-nosnippet>1647</a>            <span class="string">"{refused}"
-<a href=#1648 id=1648 data-nosnippet>1648</a>        </span>);
-<a href=#1649 id=1649 data-nosnippet>1649</a>        <span class="comment">// what is not open is named as it was given
-<a href=#1650 id=1650 data-nosnippet>1650</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>absent = report(
-<a href=#1651 id=1651 data-nosnippet>1651</a>            <span class="bool-val">true</span>,
-<a href=#1652 id=1652 data-nosnippet>1652</a>            repair::RepairOutcome::Refused {
-<a href=#1653 id=1653 data-nosnippet>1653</a>                refusal: repair::RepairRefusal::NotOpen {
-<a href=#1654 id=1654 data-nosnippet>1654</a>                    target: <span class="string">"#7"</span>.into(),
-<a href=#1655 id=1655 data-nosnippet>1655</a>                },
-<a href=#1656 id=1656 data-nosnippet>1656</a>            },
-<a href=#1657 id=1657 data-nosnippet>1657</a>        );
-<a href=#1658 id=1658 data-nosnippet>1658</a>        absent.pr = <span class="prelude-val">None</span>;
-<a href=#1659 id=1659 data-nosnippet>1659</a>        absent.branch = <span class="prelude-val">None</span>;
-<a href=#1660 id=1660 data-nosnippet>1660</a>        absent.head_sha = <span class="prelude-val">None</span>;
-<a href=#1661 id=1661 data-nosnippet>1661</a>        <span class="kw">let </span>absent = say(absent);
-<a href=#1662 id=1662 data-nosnippet>1662</a>        <span class="macro">assert!</span>(absent.starts_with(<span class="string">"decided on the forge"</span>), <span class="string">"{absent}"</span>);
-<a href=#1663 id=1663 data-nosnippet>1663</a>        <span class="macro">assert!</span>(
-<a href=#1664 id=1664 data-nosnippet>1664</a>            absent.contains(<span class="string">"REFUSE #7: #7 is not an open pull request"</span>),
-<a href=#1665 id=1665 data-nosnippet>1665</a>            <span class="string">"{absent}"
-<a href=#1666 id=1666 data-nosnippet>1666</a>        </span>);
-<a href=#1667 id=1667 data-nosnippet>1667</a>    }
-<a href=#1668 id=1668 data-nosnippet>1668</a>
-<a href=#1669 id=1669 data-nosnippet>1669</a>    <span class="attr">#[test]
-<a href=#1670 id=1670 data-nosnippet>1670</a>    </span><span class="kw">fn </span>a_repair_exits_by_what_it_could_vouch_for() {
-<a href=#1671 id=1671 data-nosnippet>1671</a>        <span class="kw">let </span>report = |dry_run: bool, outcome: repair::RepairOutcome, diagnostics: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
-<a href=#1672 id=1672 data-nosnippet>1672</a>            repair::RepairReport {
-<a href=#1673 id=1673 data-nosnippet>1673</a>                dry_run,
-<a href=#1674 id=1674 data-nosnippet>1674</a>                target: <span class="string">"#7"</span>.into(),
-<a href=#1675 id=1675 data-nosnippet>1675</a>                pr: <span class="prelude-val">Some</span>(<span class="number">7</span>),
-<a href=#1676 id=1676 data-nosnippet>1676</a>                branch: <span class="prelude-val">Some</span>(<span class="string">"feature/7"</span>.into()),
-<a href=#1677 id=1677 data-nosnippet>1677</a>                base: <span class="string">"master"</span>.into(),
-<a href=#1678 id=1678 data-nosnippet>1678</a>                master_sha: <span class="string">"m"</span>.repeat(<span class="number">40</span>),
-<a href=#1679 id=1679 data-nosnippet>1679</a>                head_sha: <span class="prelude-val">Some</span>(<span class="string">"h"</span>.repeat(<span class="number">40</span>)),
-<a href=#1680 id=1680 data-nosnippet>1680</a>                observed_at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
-<a href=#1681 id=1681 data-nosnippet>1681</a>                relation: <span class="prelude-val">None</span>,
-<a href=#1682 id=1682 data-nosnippet>1682</a>                outcome,
-<a href=#1683 id=1683 data-nosnippet>1683</a>                diagnostics: diagnostics.iter().map(|d| d.to_string()).collect(),
-<a href=#1684 id=1684 data-nosnippet>1684</a>            }
-<a href=#1685 id=1685 data-nosnippet>1685</a>        };
-<a href=#1686 id=1686 data-nosnippet>1686</a>        <span class="kw">let </span>refused = |refusal| repair::RepairOutcome::Refused { refusal };
-<a href=#1687 id=1687 data-nosnippet>1687</a>        <span class="kw">let </span>unwritable = refused(repair::RepairRefusal::TrailUnwritable {
-<a href=#1688 id=1688 data-nosnippet>1688</a>            reason: <span class="string">"disk full"</span>.into(),
-<a href=#1689 id=1689 data-nosnippet>1689</a>        });
-<a href=#1690 id=1690 data-nosnippet>1690</a>        <span class="comment">// an act the trail could not announce was not taken: the tool is unusable here
-<a href=#1691 id=1691 data-nosnippet>1691</a>        </span><span class="macro">assert_eq!</span>(repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">false</span>, unwritable, <span class="kw-2">&amp;</span>[])), UNUSABLE);
-<a href=#1692 id=1692 data-nosnippet>1692</a>        <span class="kw">let </span>forked = refused(repair::RepairRefusal::ForkHead);
-<a href=#1693 id=1693 data-nosnippet>1693</a>        <span class="macro">assert_eq!</span>(repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">false</span>, forked, <span class="kw-2">&amp;</span>[])), FINDING);
-<a href=#1694 id=1694 data-nosnippet>1694</a>        <span class="kw">let </span>would = || repair::RepairOutcome::WouldRepair;
-<a href=#1695 id=1695 data-nosnippet>1695</a>        <span class="macro">assert_eq!</span>(repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">true</span>, would(), <span class="kw-2">&amp;</span>[])), <span class="number">0</span>);
-<a href=#1696 id=1696 data-nosnippet>1696</a>        <span class="macro">assert_eq!</span>(
-<a href=#1697 id=1697 data-nosnippet>1697</a>            repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">true</span>, would(), <span class="kw-2">&amp;</span>[<span class="string">"stale observation"</span>])),
-<a href=#1698 id=1698 data-nosnippet>1698</a>            FINDING,
-<a href=#1699 id=1699 data-nosnippet>1699</a>            <span class="string">"a dry run over a diagnosed observation vouches for nothing"
-<a href=#1700 id=1700 data-nosnippet>1700</a>        </span>);
-<a href=#1701 id=1701 data-nosnippet>1701</a>        <span class="kw">let </span>repaired = repair::RepairOutcome::Repaired {
-<a href=#1702 id=1702 data-nosnippet>1702</a>            head_after: <span class="string">"n"</span>.repeat(<span class="number">40</span>),
-<a href=#1703 id=1703 data-nosnippet>1703</a>        };
-<a href=#1704 id=1704 data-nosnippet>1704</a>        <span class="macro">assert_eq!</span>(
-<a href=#1705 id=1705 data-nosnippet>1705</a>            repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">false</span>, repaired, <span class="kw-2">&amp;</span>[<span class="string">"stale observation"</span>])),
-<a href=#1706 id=1706 data-nosnippet>1706</a>            <span class="number">0</span>,
-<a href=#1707 id=1707 data-nosnippet>1707</a>            <span class="string">"an act decides on its own fresh observation"
-<a href=#1708 id=1708 data-nosnippet>1708</a>        </span>);
-<a href=#1709 id=1709 data-nosnippet>1709</a>    }
-<a href=#1710 id=1710 data-nosnippet>1710</a>}
-<a href=#1711 id=1711 data-nosnippet>1711</a>
-<a href=#1712 id=1712 data-nosnippet>1712</a><span class="attr">#[cfg(test)]
-<a href=#1713 id=1713 data-nosnippet>1713</a></span><span class="kw">mod </span>issue_line_tests {
-<a href=#1714 id=1714 data-nosnippet>1714</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1715 id=1715 data-nosnippet>1715</a>
-<a href=#1716 id=1716 data-nosnippet>1716</a>    <span class="attr">#[test]
-<a href=#1717 id=1717 data-nosnippet>1717</a>    </span><span class="kw">fn </span>the_issue_line_names_the_milestone_when_there_is_one() {
-<a href=#1718 id=1718 data-nosnippet>1718</a>        <span class="kw">let </span>q = <span class="kw">crate</span>::integration::issue_test_queue(<span class="kw-2">&amp;</span>[<span class="string">"feature/I0810-x"</span>]);
-<a href=#1719 id=1719 data-nosnippet>1719</a>        <span class="kw">let </span><span class="kw-2">mut </span>a = q.assessments[<span class="number">0</span>].clone();
-<a href=#1720 id=1720 data-nosnippet>1720</a>        <span class="macro">assert_eq!</span>(issue_line(<span class="kw-2">&amp;</span>a), <span class="prelude-val">None</span>);
-<a href=#1721 id=1721 data-nosnippet>1721</a>        a.issue = <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>.into());
-<a href=#1722 id=1722 data-nosnippet>1722</a>        <span class="macro">assert_eq!</span>(issue_line(<span class="kw-2">&amp;</span>a).as_deref(), <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>));
-<a href=#1723 id=1723 data-nosnippet>1723</a>        a.milestone = <span class="prelude-val">Some</span>(<span class="string">"M003"</span>.into());
-<a href=#1724 id=1724 data-nosnippet>1724</a>        <span class="macro">assert_eq!</span>(issue_line(<span class="kw-2">&amp;</span>a).as_deref(), <span class="prelude-val">Some</span>(<span class="string">"I0810 · milestone M003"</span>));
-<a href=#1725 id=1725 data-nosnippet>1725</a>    }
-<a href=#1726 id=1726 data-nosnippet>1726</a>
-<a href=#1727 id=1727 data-nosnippet>1727</a>    <span class="attr">#[test]
-<a href=#1728 id=1728 data-nosnippet>1728</a>    </span><span class="kw">fn </span>explain_says_the_issue_and_milestone() {
-<a href=#1729 id=1729 data-nosnippet>1729</a>        <span class="kw">let </span><span class="kw-2">mut </span>q = <span class="kw">crate</span>::integration::issue_test_queue(<span class="kw-2">&amp;</span>[<span class="string">"feature/I0810-x"</span>]);
-<a href=#1730 id=1730 data-nosnippet>1730</a>        q.assessments[<span class="number">0</span>].issue = <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>.into());
-<a href=#1731 id=1731 data-nosnippet>1731</a>        q.assessments[<span class="number">0</span>].milestone = <span class="prelude-val">Some</span>(<span class="string">"M003"</span>.into());
-<a href=#1732 id=1732 data-nosnippet>1732</a>        <span class="kw">let </span>a = q.assessments[<span class="number">0</span>].clone();
-<a href=#1733 id=1733 data-nosnippet>1733</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#1734 id=1734 data-nosnippet>1734</a>        explain(<span class="kw-2">&amp;</span>q, <span class="kw-2">&amp;</span>a, <span class="number">1</span>, OutputFormat::Text, <span class="kw-2">&amp;mut </span>out).unwrap();
-<a href=#1735 id=1735 data-nosnippet>1735</a>        <span class="kw">let </span>text = String::from_utf8(out).unwrap();
-<a href=#1736 id=1736 data-nosnippet>1736</a>        <span class="macro">assert!</span>(
-<a href=#1737 id=1737 data-nosnippet>1737</a>            text.contains(<span class="string">"issue:        I0810 · milestone M003"</span>),
-<a href=#1738 id=1738 data-nosnippet>1738</a>            <span class="string">"{text}"
-<a href=#1739 id=1739 data-nosnippet>1739</a>        </span>);
-<a href=#1740 id=1740 data-nosnippet>1740</a>    }
-<a href=#1741 id=1741 data-nosnippet>1741</a>}
-<a href=#1742 id=1742 data-nosnippet>1742</a>
-<a href=#1743 id=1743 data-nosnippet>1743</a><span class="attr">#[cfg(test)]
-<a href=#1744 id=1744 data-nosnippet>1744</a></span><span class="kw">mod </span>issue_write_tests {
-<a href=#1745 id=1745 data-nosnippet>1745</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1746 id=1746 data-nosnippet>1746</a>
-<a href=#1747 id=1747 data-nosnippet>1747</a>    <span class="doccomment">/// A writer that refuses the write carrying `needle`.
-<a href=#1748 id=1748 data-nosnippet>1748</a>    </span><span class="kw">struct </span>RefuseOn(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str);
-<a href=#1749 id=1749 data-nosnippet>1749</a>
-<a href=#1750 id=1750 data-nosnippet>1750</a>    <span class="kw">impl </span>Write <span class="kw">for </span>RefuseOn {
-<a href=#1751 id=1751 data-nosnippet>1751</a>        <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; std::io::Result&lt;usize&gt; {
-<a href=#1752 id=1752 data-nosnippet>1752</a>            <span class="kw">if </span>String::from_utf8_lossy(buf).contains(<span class="self">self</span>.<span class="number">0</span>) {
-<a href=#1753 id=1753 data-nosnippet>1753</a>                <span class="prelude-val">Err</span>(std::io::Error::other(<span class="string">"refused"</span>))
-<a href=#1754 id=1754 data-nosnippet>1754</a>            } <span class="kw">else </span>{
-<a href=#1755 id=1755 data-nosnippet>1755</a>                <span class="prelude-val">Ok</span>(buf.len())
-<a href=#1756 id=1756 data-nosnippet>1756</a>            }
-<a href=#1757 id=1757 data-nosnippet>1757</a>        }
-<a href=#1758 id=1758 data-nosnippet>1758</a>        <span class="kw">fn </span>flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; std::io::Result&lt;()&gt; {
-<a href=#1759 id=1759 data-nosnippet>1759</a>            <span class="prelude-val">Ok</span>(())
-<a href=#1760 id=1760 data-nosnippet>1760</a>        }
-<a href=#1761 id=1761 data-nosnippet>1761</a>    }
-<a href=#1762 id=1762 data-nosnippet>1762</a>
-<a href=#1763 id=1763 data-nosnippet>1763</a>    <span class="attr">#[test]
-<a href=#1764 id=1764 data-nosnippet>1764</a>    </span><span class="kw">fn </span>a_refused_issue_line_is_an_error() {
-<a href=#1765 id=1765 data-nosnippet>1765</a>        <span class="kw">let </span><span class="kw-2">mut </span>q = <span class="kw">crate</span>::integration::issue_test_queue(<span class="kw-2">&amp;</span>[<span class="string">"feature/I0810-x"</span>]);
-<a href=#1766 id=1766 data-nosnippet>1766</a>        q.assessments[<span class="number">0</span>].issue = <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>.into());
-<a href=#1767 id=1767 data-nosnippet>1767</a>        <span class="kw">let </span>a = q.assessments[<span class="number">0</span>].clone();
-<a href=#1768 id=1768 data-nosnippet>1768</a>        <span class="macro">assert!</span>(explain(<span class="kw-2">&amp;</span>q, <span class="kw-2">&amp;</span>a, <span class="number">1</span>, OutputFormat::Text, <span class="kw-2">&amp;mut </span>RefuseOn(<span class="string">"issue:"</span>)).is_err());
-<a href=#1769 id=1769 data-nosnippet>1769</a>    }
-<a href=#1770 id=1770 data-nosnippet>1770</a>}
-<a href=#1771 id=1771 data-nosnippet>1771</a>
-<a href=#1772 id=1772 data-nosnippet>1772</a><span class="attr">#[cfg(test)]
-<a href=#1773 id=1773 data-nosnippet>1773</a></span><span class="kw">mod </span>left_branch_render_tests {
-<a href=#1774 id=1774 data-nosnippet>1774</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1775 id=1775 data-nosnippet>1775</a>
-<a href=#1776 id=1776 data-nosnippet>1776</a>    <span class="kw">fn </span>rendered(left: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Vec&lt;drain::LeftBranch&gt;&gt;) -&gt; String {
-<a href=#1777 id=1777 data-nosnippet>1777</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#1778 id=1778 data-nosnippet>1778</a>        left_branches(left, <span class="kw-2">&amp;mut </span>out).unwrap();
-<a href=#1779 id=1779 data-nosnippet>1779</a>        String::from_utf8(out).unwrap()
-<a href=#1780 id=1780 data-nosnippet>1780</a>    }
-<a href=#1781 id=1781 data-nosnippet>1781</a>
-<a href=#1782 id=1782 data-nosnippet>1782</a>    <span class="attr">#[test]
-<a href=#1783 id=1783 data-nosnippet>1783</a>    </span><span class="kw">fn </span>every_answer_of_the_report_is_said() {
-<a href=#1784 id=1784 data-nosnippet>1784</a>        <span class="macro">assert!</span>(rendered(<span class="kw-2">&amp;</span><span class="prelude-val">None</span>).contains(<span class="string">"merged branches: unread"</span>));
-<a href=#1785 id=1785 data-nosnippet>1785</a>        <span class="macro">assert!</span>(rendered(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(Vec::new())).contains(<span class="string">"none left on origin"</span>));
-<a href=#1786 id=1786 data-nosnippet>1786</a>        <span class="kw">let </span>b = drain::LeftBranch {
-<a href=#1787 id=1787 data-nosnippet>1787</a>            branch: <span class="string">"fix/a"</span>.into(),
-<a href=#1788 id=1788 data-nosnippet>1788</a>            tip: <span class="string">"0123456789abcdef"</span>.into(),
-<a href=#1789 id=1789 data-nosnippet>1789</a>            pr: <span class="number">7</span>,
-<a href=#1790 id=1790 data-nosnippet>1790</a>            merged_at: <span class="string">"t"</span>.into(),
-<a href=#1791 id=1791 data-nosnippet>1791</a>            action: <span class="string">"left_for_a_person"</span>.into(),
-<a href=#1792 id=1792 data-nosnippet>1792</a>            next_step: <span class="string">"delete it"</span>.into(),
-<a href=#1793 id=1793 data-nosnippet>1793</a>        };
-<a href=#1794 id=1794 data-nosnippet>1794</a>        <span class="kw">let </span>text = rendered(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="macro">vec!</span>[b]));
-<a href=#1795 id=1795 data-nosnippet>1795</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"left on origin (1)"</span>), <span class="string">"{text}"</span>);
-<a href=#1796 id=1796 data-nosnippet>1796</a>        <span class="macro">assert!</span>(
-<a href=#1797 id=1797 data-nosnippet>1797</a>            text.contains(<span class="string">"fix/a"</span>) &amp;&amp; text.contains(<span class="string">"#7"</span>) &amp;&amp; text.contains(<span class="string">"0123456789ab"</span>),
-<a href=#1798 id=1798 data-nosnippet>1798</a>            <span class="string">"{text}"
-<a href=#1799 id=1799 data-nosnippet>1799</a>        </span>);
-<a href=#1800 id=1800 data-nosnippet>1800</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"next: delete it"</span>), <span class="string">"{text}"</span>);
-<a href=#1801 id=1801 data-nosnippet>1801</a>    }
-<a href=#1802 id=1802 data-nosnippet>1802</a>
-<a href=#1803 id=1803 data-nosnippet>1803</a>    <span class="doccomment">/// A writer that refuses the write carrying `needle`, so each line's refusal is reached.
-<a href=#1804 id=1804 data-nosnippet>1804</a>    </span><span class="kw">struct </span>RefuseOn(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str);
-<a href=#1805 id=1805 data-nosnippet>1805</a>
-<a href=#1806 id=1806 data-nosnippet>1806</a>    <span class="kw">impl </span>Write <span class="kw">for </span>RefuseOn {
-<a href=#1807 id=1807 data-nosnippet>1807</a>        <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; std::io::Result&lt;usize&gt; {
-<a href=#1808 id=1808 data-nosnippet>1808</a>            <span class="kw">if </span>String::from_utf8_lossy(buf).contains(<span class="self">self</span>.<span class="number">0</span>) {
-<a href=#1809 id=1809 data-nosnippet>1809</a>                <span class="prelude-val">Err</span>(std::io::Error::other(<span class="string">"refused"</span>))
-<a href=#1810 id=1810 data-nosnippet>1810</a>            } <span class="kw">else </span>{
-<a href=#1811 id=1811 data-nosnippet>1811</a>                <span class="prelude-val">Ok</span>(buf.len())
-<a href=#1812 id=1812 data-nosnippet>1812</a>            }
-<a href=#1813 id=1813 data-nosnippet>1813</a>        }
-<a href=#1814 id=1814 data-nosnippet>1814</a>        <span class="kw">fn </span>flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; std::io::Result&lt;()&gt; {
-<a href=#1815 id=1815 data-nosnippet>1815</a>            <span class="prelude-val">Ok</span>(())
-<a href=#1816 id=1816 data-nosnippet>1816</a>        }
-<a href=#1817 id=1817 data-nosnippet>1817</a>    }
-<a href=#1818 id=1818 data-nosnippet>1818</a>
-<a href=#1819 id=1819 data-nosnippet>1819</a>    <span class="attr">#[test]
-<a href=#1820 id=1820 data-nosnippet>1820</a>    </span><span class="kw">fn </span>a_refused_write_is_an_error_on_every_line() {
-<a href=#1821 id=1821 data-nosnippet>1821</a>        <span class="kw">let </span>b = drain::LeftBranch {
-<a href=#1822 id=1822 data-nosnippet>1822</a>            branch: <span class="string">"fix/a"</span>.into(),
-<a href=#1823 id=1823 data-nosnippet>1823</a>            tip: <span class="string">"0123456789abcdef"</span>.into(),
-<a href=#1824 id=1824 data-nosnippet>1824</a>            pr: <span class="number">7</span>,
-<a href=#1825 id=1825 data-nosnippet>1825</a>            merged_at: <span class="string">"t"</span>.into(),
-<a href=#1826 id=1826 data-nosnippet>1826</a>            action: <span class="string">"left_for_a_person"</span>.into(),
-<a href=#1827 id=1827 data-nosnippet>1827</a>            next_step: <span class="string">"delete it"</span>.into(),
-<a href=#1828 id=1828 data-nosnippet>1828</a>        };
-<a href=#1829 id=1829 data-nosnippet>1829</a>        <span class="kw">for </span>needle <span class="kw">in </span>[<span class="string">"left on origin"</span>, <span class="string">"fix/a"</span>, <span class="string">"next:"</span>] {
-<a href=#1830 id=1830 data-nosnippet>1830</a>            <span class="macro">assert!</span>(
-<a href=#1831 id=1831 data-nosnippet>1831</a>                left_branches(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="macro">vec!</span>[b.clone()]), <span class="kw-2">&amp;mut </span>RefuseOn(needle)).is_err(),
-<a href=#1832 id=1832 data-nosnippet>1832</a>                <span class="string">"{needle}"
-<a href=#1833 id=1833 data-nosnippet>1833</a>            </span>);
-<a href=#1834 id=1834 data-nosnippet>1834</a>        }
-<a href=#1835 id=1835 data-nosnippet>1835</a>    }
-<a href=#1836 id=1836 data-nosnippet>1836</a>
-<a href=#1837 id=1837 data-nosnippet>1837</a>    <span class="attr">#[test]
-<a href=#1838 id=1838 data-nosnippet>1838</a>    </span><span class="kw">fn </span>an_unreadable_observation_fails_the_branch_report() {
-<a href=#1839 id=1839 data-nosnippet>1839</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#1840 id=1840 data-nosnippet>1840</a>        <span class="kw">let </span>path = <span class="kw">crate</span>::integration::state_path(dir.path(), <span class="kw">crate</span>::integration::OBSERVATION_FILE);
-<a href=#1841 id=1841 data-nosnippet>1841</a>        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-<a href=#1842 id=1842 data-nosnippet>1842</a>        std::fs::write(<span class="kw-2">&amp;</span>path, <span class="string">"not an observation"</span>).unwrap();
-<a href=#1843 id=1843 data-nosnippet>1843</a>        <span class="macro">assert!</span>(cleanup_branches(dir.path(), <span class="kw-2">&amp;mut </span>Vec::new()).is_err());
-<a href=#1844 id=1844 data-nosnippet>1844</a>    }
-<a href=#1845 id=1845 data-nosnippet>1845</a>
-<a href=#1846 id=1846 data-nosnippet>1846</a>    <span class="attr">#[test]
-<a href=#1847 id=1847 data-nosnippet>1847</a>    </span><span class="kw">fn </span>cleanup_with_nothing_observed_reports_unread() {
-<a href=#1848 id=1848 data-nosnippet>1848</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#1849 id=1849 data-nosnippet>1849</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#1850 id=1850 data-nosnippet>1850</a>        cleanup_branches(dir.path(), <span class="kw-2">&amp;mut </span>out).unwrap();
-<a href=#1851 id=1851 data-nosnippet>1851</a>        <span class="macro">assert!</span>(String::from_utf8(out)
-<a href=#1852 id=1852 data-nosnippet>1852</a>            .unwrap()
-<a href=#1853 id=1853 data-nosnippet>1853</a>            .contains(<span class="string">"merged branches: unread"</span>));
-<a href=#1854 id=1854 data-nosnippet>1854</a>    }
-<a href=#1855 id=1855 data-nosnippet>1855</a>}
+<a href=#1120 id=1120 data-nosnippet>1120</a>            author_association: <span class="string">"OWNER"</span>.into(),
+<a href=#1121 id=1121 data-nosnippet>1121</a>            cross_references: <span class="kw">crate</span>::integration::CrossReferenceRead::Whole,
+<a href=#1122 id=1122 data-nosnippet>1122</a>        }
+<a href=#1123 id=1123 data-nosnippet>1123</a>    }
+<a href=#1124 id=1124 data-nosnippet>1124</a>
+<a href=#1125 id=1125 data-nosnippet>1125</a>    <span class="doccomment">/// A clone with an origin/master, an observation of five pull requests in five
+<a href=#1126 id=1126 data-nosnippet>1126</a>    /// dispositions, and a trail in which #1 has been passed over until it is starving.
+<a href=#1127 id=1127 data-nosnippet>1127</a>    </span><span class="kw">fn </span>world() -&gt; (Scratch, IntegrationQueue) {
+<a href=#1128 id=1128 data-nosnippet>1128</a>        <span class="comment">// tests run on parallel threads: the clock alone named two scratch clones alike
+<a href=#1129 id=1129 data-nosnippet>1129</a>        </span><span class="kw">static </span>NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(<span class="number">0</span>);
+<a href=#1130 id=1130 data-nosnippet>1130</a>        <span class="kw">let </span>root = std::env::temp_dir().join(<span class="macro">format!</span>(
+<a href=#1131 id=1131 data-nosnippet>1131</a>            <span class="string">"mj-prs-{}-{}-{}"</span>,
+<a href=#1132 id=1132 data-nosnippet>1132</a>            std::process::id(),
+<a href=#1133 id=1133 data-nosnippet>1133</a>            NEXT.fetch_add(<span class="number">1</span>, std::sync::atomic::Ordering::SeqCst),
+<a href=#1134 id=1134 data-nosnippet>1134</a>            std::time::SystemTime::now()
+<a href=#1135 id=1135 data-nosnippet>1135</a>                .duration_since(std::time::UNIX_EPOCH)
+<a href=#1136 id=1136 data-nosnippet>1136</a>                .unwrap()
+<a href=#1137 id=1137 data-nosnippet>1137</a>                .as_nanos()
+<a href=#1138 id=1138 data-nosnippet>1138</a>        ));
+<a href=#1139 id=1139 data-nosnippet>1139</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>root).unwrap();
+<a href=#1140 id=1140 data-nosnippet>1140</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>, <span class="string">"-b"</span>, <span class="string">"master"</span>]);
+<a href=#1141 id=1141 data-nosnippet>1141</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"--allow-empty"</span>, <span class="string">"-m"</span>, <span class="string">"base"</span>]);
+<a href=#1142 id=1142 data-nosnippet>1142</a>        <span class="kw">let </span>sha = git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD"</span>]);
+<a href=#1143 id=1143 data-nosnippet>1143</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"update-ref"</span>, <span class="string">"refs/remotes/origin/master"</span>, <span class="kw-2">&amp;</span>sha]);
+<a href=#1144 id=1144 data-nosnippet>1144</a>
+<a href=#1145 id=1145 data-nosnippet>1145</a>        <span class="comment">// every pull request's head is a commit of its own on top of master: a head master
+<a href=#1146 id=1146 data-nosnippet>1146</a>        // already contains would be superseded, not open work
+<a href=#1147 id=1147 data-nosnippet>1147</a>        </span><span class="kw">let </span>head = |n: u64| {
+<a href=#1148 id=1148 data-nosnippet>1148</a>            git(
+<a href=#1149 id=1149 data-nosnippet>1149</a>                <span class="kw-2">&amp;</span>root,
+<a href=#1150 id=1150 data-nosnippet>1150</a>                <span class="kw-2">&amp;</span>[<span class="string">"checkout"</span>, <span class="string">"-q"</span>, <span class="string">"-B"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"feature/{n}"</span>), <span class="kw-2">&amp;</span>sha],
+<a href=#1151 id=1151 data-nosnippet>1151</a>            );
+<a href=#1152 id=1152 data-nosnippet>1152</a>            std::fs::write(root.join(<span class="macro">format!</span>(<span class="string">"{n}.md"</span>)), <span class="macro">format!</span>(<span class="string">"change {n}\n"</span>)).unwrap();
+<a href=#1153 id=1153 data-nosnippet>1153</a>            git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{n}.md"</span>)]);
+<a href=#1154 id=1154 data-nosnippet>1154</a>            git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"-m"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"change {n}"</span>)]);
+<a href=#1155 id=1155 data-nosnippet>1155</a>            git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD"</span>])
+<a href=#1156 id=1156 data-nosnippet>1156</a>        };
+<a href=#1157 id=1157 data-nosnippet>1157</a>        <span class="kw">let </span>heads: Vec&lt;String&gt; = (<span class="number">1</span>..=<span class="number">6</span>).map(head).collect();
+<a href=#1158 id=1158 data-nosnippet>1158</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"checkout"</span>, <span class="string">"-q"</span>, <span class="string">"master"</span>]);
+<a href=#1159 id=1159 data-nosnippet>1159</a>        <span class="kw">let </span><span class="kw-2">mut </span>draft = pr(<span class="number">4</span>, <span class="kw-2">&amp;</span>heads[<span class="number">3</span>], CheckRunState::Passed);
+<a href=#1160 id=1160 data-nosnippet>1160</a>        draft.draft = <span class="bool-val">true</span>;
+<a href=#1161 id=1161 data-nosnippet>1161</a>        <span class="kw">let </span><span class="kw-2">mut </span>held = pr(<span class="number">5</span>, <span class="kw-2">&amp;</span>heads[<span class="number">4</span>], CheckRunState::Passed);
+<a href=#1162 id=1162 data-nosnippet>1162</a>        held.labels = <span class="macro">vec!</span>[<span class="string">"blocked"</span>.into()];
+<a href=#1163 id=1163 data-nosnippet>1163</a>        <span class="kw">let </span><span class="kw-2">mut </span>dependent = pr(<span class="number">6</span>, <span class="kw-2">&amp;</span>heads[<span class="number">5</span>], CheckRunState::Passed);
+<a href=#1164 id=1164 data-nosnippet>1164</a>        dependent.body = <span class="string">"Depends on #2."</span>.into();
+<a href=#1165 id=1165 data-nosnippet>1165</a>        store_observation(
+<a href=#1166 id=1166 data-nosnippet>1166</a>            <span class="kw-2">&amp;</span>root,
+<a href=#1167 id=1167 data-nosnippet>1167</a>            <span class="kw-2">&amp;</span>ForgeObservation {
+<a href=#1168 id=1168 data-nosnippet>1168</a>                schema: OBSERVATION_SCHEMA,
+<a href=#1169 id=1169 data-nosnippet>1169</a>                repository: <span class="string">"owner/repo"</span>.into(),
+<a href=#1170 id=1170 data-nosnippet>1170</a>                base: <span class="string">"master"</span>.into(),
+<a href=#1171 id=1171 data-nosnippet>1171</a>                base_sha: sha.clone(),
+<a href=#1172 id=1172 data-nosnippet>1172</a>                observed_at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
+<a href=#1173 id=1173 data-nosnippet>1173</a>                required_checks: <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="string">"ci"</span>.into()]),
+<a href=#1174 id=1174 data-nosnippet>1174</a>                review_policy: <span class="prelude-val">Some</span>(Default::default()),
+<a href=#1175 id=1175 data-nosnippet>1175</a>                up_to_date_required: <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
+<a href=#1176 id=1176 data-nosnippet>1176</a>                merge_methods: <span class="macro">vec!</span>[<span class="string">"merge"</span>.into()],
+<a href=#1177 id=1177 data-nosnippet>1177</a>                pull_requests: <span class="macro">vec!</span>[
+<a href=#1178 id=1178 data-nosnippet>1178</a>                    pr(<span class="number">1</span>, <span class="kw-2">&amp;</span>heads[<span class="number">0</span>], CheckRunState::Passed),
+<a href=#1179 id=1179 data-nosnippet>1179</a>                    pr(<span class="number">2</span>, <span class="kw-2">&amp;</span>heads[<span class="number">1</span>], CheckRunState::Failed),
+<a href=#1180 id=1180 data-nosnippet>1180</a>                    pr(<span class="number">3</span>, <span class="kw-2">&amp;</span>heads[<span class="number">2</span>], CheckRunState::Pending),
+<a href=#1181 id=1181 data-nosnippet>1181</a>                    draft,
+<a href=#1182 id=1182 data-nosnippet>1182</a>                    held,
+<a href=#1183 id=1183 data-nosnippet>1183</a>                    dependent,
+<a href=#1184 id=1184 data-nosnippet>1184</a>                ],
+<a href=#1185 id=1185 data-nosnippet>1185</a>                resolved: Default::default(),
+<a href=#1186 id=1186 data-nosnippet>1186</a>                delete_branch_on_merge: <span class="prelude-val">None</span>,
+<a href=#1187 id=1187 data-nosnippet>1187</a>            },
+<a href=#1188 id=1188 data-nosnippet>1188</a>        )
+<a href=#1189 id=1189 data-nosnippet>1189</a>        .unwrap();
+<a href=#1190 id=1190 data-nosnippet>1190</a>        <span class="kw">let </span>event = |action: IntegrationAction, pr: u64, over: Vec&lt;u64&gt;| IntegrationEvent {
+<a href=#1191 id=1191 data-nosnippet>1191</a>            at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
+<a href=#1192 id=1192 data-nosnippet>1192</a>            actor: <span class="string">"test"</span>.into(),
+<a href=#1193 id=1193 data-nosnippet>1193</a>            pr: <span class="prelude-val">Some</span>(pr),
+<a href=#1194 id=1194 data-nosnippet>1194</a>            master_before: <span class="prelude-val">Some</span>(sha.clone()),
+<a href=#1195 id=1195 data-nosnippet>1195</a>            head_sha: <span class="prelude-val">Some</span>(sha.clone()),
+<a href=#1196 id=1196 data-nosnippet>1196</a>            passed_over: over,
+<a href=#1197 id=1197 data-nosnippet>1197</a>            ..IntegrationEvent::of(action)
+<a href=#1198 id=1198 data-nosnippet>1198</a>        };
+<a href=#1199 id=1199 data-nosnippet>1199</a>        drain::record(<span class="kw-2">&amp;</span>root, event(wait::BECAME_ACTIONABLE, <span class="number">1</span>, <span class="macro">vec!</span>[])).unwrap();
+<a href=#1200 id=1200 data-nosnippet>1200</a>        <span class="kw">for _ in </span><span class="number">0</span>..wait::STARVING_AFTER {
+<a href=#1201 id=1201 data-nosnippet>1201</a>            drain::record(<span class="kw-2">&amp;</span>root, event(IntegrationAction::Selected, <span class="number">9</span>, <span class="macro">vec!</span>[<span class="number">1</span>])).unwrap();
+<a href=#1202 id=1202 data-nosnippet>1202</a>        }
+<a href=#1203 id=1203 data-nosnippet>1203</a>        <span class="kw">let </span>q = integration::queue_and_record(<span class="kw-2">&amp;</span>root).expect(<span class="string">"a queue"</span>);
+<a href=#1204 id=1204 data-nosnippet>1204</a>        (Scratch(root), q)
+<a href=#1205 id=1205 data-nosnippet>1205</a>    }
+<a href=#1206 id=1206 data-nosnippet>1206</a>
+<a href=#1207 id=1207 data-nosnippet>1207</a>    <span class="kw">fn </span>text(f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;) -&gt; String {
+<a href=#1208 id=1208 data-nosnippet>1208</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#1209 id=1209 data-nosnippet>1209</a>        f(<span class="kw-2">&amp;mut </span>out).expect(<span class="string">"rendered"</span>);
+<a href=#1210 id=1210 data-nosnippet>1210</a>        String::from_utf8(out).unwrap()
+<a href=#1211 id=1211 data-nosnippet>1211</a>    }
+<a href=#1212 id=1212 data-nosnippet>1212</a>
+<a href=#1213 id=1213 data-nosnippet>1213</a>    <span class="attr">#[test]
+<a href=#1214 id=1214 data-nosnippet>1214</a>    </span><span class="kw">fn </span>status_lists_every_pull_request_in_rank_order_and_names_the_starving() {
+<a href=#1215 id=1215 data-nosnippet>1215</a>        <span class="kw">let </span>(_s, q) = world();
+<a href=#1216 id=1216 data-nosnippet>1216</a>        <span class="kw">let </span>t = text(|o| status(<span class="kw-2">&amp;</span>q, OutputFormat::Text, o));
+<a href=#1217 id=1217 data-nosnippet>1217</a>        <span class="macro">assert!</span>(t.starts_with(<span class="string">"owner/repo · master at "</span>), <span class="string">"{t}"</span>);
+<a href=#1218 id=1218 data-nosnippet>1218</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"lanes: "</span>), <span class="string">"{t}"</span>);
+<a href=#1219 id=1219 data-nosnippet>1219</a>        <span class="kw">for </span>n <span class="kw">in </span><span class="number">1</span>..=<span class="number">6 </span>{
+<a href=#1220 id=1220 data-nosnippet>1220</a>            <span class="macro">assert!</span>(t.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"#{n} "</span>)), <span class="string">"#{n} missing:\n{t}"</span>);
+<a href=#1221 id=1221 data-nosnippet>1221</a>        }
+<a href=#1222 id=1222 data-nosnippet>1222</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"starving: #1 actionable since"</span>), <span class="string">"{t}"</span>);
+<a href=#1223 id=1223 data-nosnippet>1223</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"passed over 3×"</span>), <span class="string">"{t}"</span>);
+<a href=#1224 id=1224 data-nosnippet>1224</a>        <span class="macro">assert!</span>(t.contains(<span class="string">'…'</span>) || t.lines().all(|l| l.chars().count() &lt; <span class="number">160</span>));
+<a href=#1225 id=1225 data-nosnippet>1225</a>        <span class="kw">let </span>j: serde_json::Value =
+<a href=#1226 id=1226 data-nosnippet>1226</a>            serde_json::from_str(<span class="kw-2">&amp;</span>text(|o| status(<span class="kw-2">&amp;</span>q, OutputFormat::Json, o))).unwrap();
+<a href=#1227 id=1227 data-nosnippet>1227</a>        <span class="macro">assert_eq!</span>(j[<span class="string">"assessments"</span>].as_array().unwrap().len(), <span class="number">6</span>);
+<a href=#1228 id=1228 data-nosnippet>1228</a>        <span class="macro">assert_eq!</span>(j[<span class="string">"starving"</span>], <span class="macro">serde_json::json!</span>([<span class="number">1</span>]));
+<a href=#1229 id=1229 data-nosnippet>1229</a>    }
+<a href=#1230 id=1230 data-nosnippet>1230</a>
+<a href=#1231 id=1231 data-nosnippet>1231</a>    <span class="attr">#[test]
+<a href=#1232 id=1232 data-nosnippet>1232</a>    </span><span class="kw">fn </span>the_plan_names_the_next_merge_and_every_lane() {
+<a href=#1233 id=1233 data-nosnippet>1233</a>        <span class="kw">let </span>(_s, q) = world();
+<a href=#1234 id=1234 data-nosnippet>1234</a>        <span class="kw">let </span>t = text(|o| plan(<span class="kw-2">&amp;</span>q, OutputFormat::Text, o));
+<a href=#1235 id=1235 data-nosnippet>1235</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"#1"</span>), <span class="string">"{t}"</span>);
+<a href=#1236 id=1236 data-nosnippet>1236</a>        <span class="kw">let </span>j: serde_json::Value =
+<a href=#1237 id=1237 data-nosnippet>1237</a>            serde_json::from_str(<span class="kw-2">&amp;</span>text(|o| plan(<span class="kw-2">&amp;</span>q, OutputFormat::Json, o))).unwrap();
+<a href=#1238 id=1238 data-nosnippet>1238</a>        <span class="macro">assert_eq!</span>(j[<span class="string">"next_merge"</span>], <span class="number">1</span>, <span class="string">"{j}"</span>);
+<a href=#1239 id=1239 data-nosnippet>1239</a>        <span class="macro">assert!</span>(j[<span class="string">"repair"</span>]
+<a href=#1240 id=1240 data-nosnippet>1240</a>            .as_array()
+<a href=#1241 id=1241 data-nosnippet>1241</a>            .unwrap()
+<a href=#1242 id=1242 data-nosnippet>1242</a>            .contains(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>(<span class="number">2</span>)));
+<a href=#1243 id=1243 data-nosnippet>1243</a>    }
+<a href=#1244 id=1244 data-nosnippet>1244</a>
+<a href=#1245 id=1245 data-nosnippet>1245</a>    <span class="attr">#[test]
+<a href=#1246 id=1246 data-nosnippet>1246</a>    </span><span class="kw">fn </span>explain_says_why_each_pull_request_is_where_it_is() {
+<a href=#1247 id=1247 data-nosnippet>1247</a>        <span class="kw">let </span>(_s, q) = world();
+<a href=#1248 id=1248 data-nosnippet>1248</a>        <span class="kw">for </span>(rank, a) <span class="kw">in </span>q.assessments.iter().enumerate() {
+<a href=#1249 id=1249 data-nosnippet>1249</a>            <span class="kw">let </span>t = text(|o| explain(<span class="kw-2">&amp;</span>q, a, rank + <span class="number">1</span>, OutputFormat::Text, o));
+<a href=#1250 id=1250 data-nosnippet>1250</a>            <span class="macro">assert!</span>(t.starts_with(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"#{} "</span>, a.number)), <span class="string">"{t}"</span>);
+<a href=#1251 id=1251 data-nosnippet>1251</a>            <span class="macro">assert!</span>(t.contains(a.disposition.as_str()), <span class="string">"{t}"</span>);
+<a href=#1252 id=1252 data-nosnippet>1252</a>            <span class="kw">let </span>j: serde_json::Value =
+<a href=#1253 id=1253 data-nosnippet>1253</a>                serde_json::from_str(<span class="kw-2">&amp;</span>text(|o| explain(<span class="kw-2">&amp;</span>q, a, rank + <span class="number">1</span>, OutputFormat::Json, o)))
+<a href=#1254 id=1254 data-nosnippet>1254</a>                    .unwrap();
+<a href=#1255 id=1255 data-nosnippet>1255</a>            <span class="macro">assert_eq!</span>(j[<span class="string">"rank"</span>], rank + <span class="number">1</span>);
+<a href=#1256 id=1256 data-nosnippet>1256</a>            <span class="macro">assert_eq!</span>(j[<span class="string">"assessment"</span>][<span class="string">"number"</span>], a.number);
+<a href=#1257 id=1257 data-nosnippet>1257</a>        }
+<a href=#1258 id=1258 data-nosnippet>1258</a>    }
+<a href=#1259 id=1259 data-nosnippet>1259</a>
+<a href=#1260 id=1260 data-nosnippet>1260</a>    <span class="attr">#[test]
+<a href=#1261 id=1261 data-nosnippet>1261</a>    </span><span class="kw">fn </span>explain_names_the_successor_that_landed() {
+<a href=#1262 id=1262 data-nosnippet>1262</a>        <span class="kw">let </span>(_s, q) = world();
+<a href=#1263 id=1263 data-nosnippet>1263</a>        <span class="kw">use </span><span class="kw">crate</span>::integration::{
+<a href=#1264 id=1264 data-nosnippet>1264</a>            DependencyCertainty, DependencyState, OverlapKind, PathOverlap, PullRequestDependency,
+<a href=#1265 id=1265 data-nosnippet>1265</a>        };
+<a href=#1266 id=1266 data-nosnippet>1266</a>        <span class="kw">let </span><span class="kw-2">mut </span>a = q.assessments[<span class="number">0</span>].clone();
+<a href=#1267 id=1267 data-nosnippet>1267</a>        a.superseded_by = <span class="prelude-val">Some</span>(<span class="number">9</span>);
+<a href=#1268 id=1268 data-nosnippet>1268</a>        a.next_action = <span class="prelude-val">None</span>;
+<a href=#1269 id=1269 data-nosnippet>1269</a>        a.dependencies = [
+<a href=#1270 id=1270 data-nosnippet>1270</a>            (<span class="number">5</span>, DependencyState::Open),
+<a href=#1271 id=1271 data-nosnippet>1271</a>            (<span class="number">4</span>, DependencyState::Merged),
+<a href=#1272 id=1272 data-nosnippet>1272</a>            (<span class="number">6</span>, DependencyState::ClosedUnmerged),
+<a href=#1273 id=1273 data-nosnippet>1273</a>            (<span class="number">7</span>, DependencyState::Unread),
+<a href=#1274 id=1274 data-nosnippet>1274</a>        ]
+<a href=#1275 id=1275 data-nosnippet>1275</a>        .into_iter()
+<a href=#1276 id=1276 data-nosnippet>1276</a>        .map(|(number, state)| PullRequestDependency {
+<a href=#1277 id=1277 data-nosnippet>1277</a>            number,
+<a href=#1278 id=1278 data-nosnippet>1278</a>            certainty: DependencyCertainty::Confirmed,
+<a href=#1279 id=1279 data-nosnippet>1279</a>            satisfied: state == DependencyState::Merged,
+<a href=#1280 id=1280 data-nosnippet>1280</a>            state,
+<a href=#1281 id=1281 data-nosnippet>1281</a>        })
+<a href=#1282 id=1282 data-nosnippet>1282</a>        .collect();
+<a href=#1283 id=1283 data-nosnippet>1283</a>        a.overlaps = <span class="macro">vec!</span>[
+<a href=#1284 id=1284 data-nosnippet>1284</a>            PathOverlap {
+<a href=#1285 id=1285 data-nosnippet>1285</a>                number: <span class="number">3</span>,
+<a href=#1286 id=1286 data-nosnippet>1286</a>                paths: <span class="macro">vec!</span>[<span class="string">"src/a.rs"</span>.into()],
+<a href=#1287 id=1287 data-nosnippet>1287</a>                kind: OverlapKind::Authored,
+<a href=#1288 id=1288 data-nosnippet>1288</a>            },
+<a href=#1289 id=1289 data-nosnippet>1289</a>            PathOverlap {
+<a href=#1290 id=1290 data-nosnippet>1290</a>                number: <span class="number">8</span>,
+<a href=#1291 id=1291 data-nosnippet>1291</a>                paths: <span class="macro">vec!</span>[<span class="string">"apps/majordomus-cli/Cargo.toml"</span>.into()],
+<a href=#1292 id=1292 data-nosnippet>1292</a>                kind: OverlapKind::VersionBump,
+<a href=#1293 id=1293 data-nosnippet>1293</a>            },
+<a href=#1294 id=1294 data-nosnippet>1294</a>        ];
+<a href=#1295 id=1295 data-nosnippet>1295</a>        <span class="kw">let </span>t = text(|o| explain(<span class="kw-2">&amp;</span>q, <span class="kw-2">&amp;</span>a, <span class="number">1</span>, OutputFormat::Text, o));
+<a href=#1296 id=1296 data-nosnippet>1296</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"superseded:   by #9, which landed"</span>), <span class="string">"{t}"</span>);
+<a href=#1297 id=1297 data-nosnippet>1297</a>        <span class="macro">assert!</span>(!t.contains(<span class="string">"  next:"</span>), <span class="string">"{t}"</span>);
+<a href=#1298 id=1298 data-nosnippet>1298</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"depends on:   #5 (confirmed, open)"</span>), <span class="string">"{t}"</span>);
+<a href=#1299 id=1299 data-nosnippet>1299</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"depends on:   #4 (confirmed, landed)"</span>), <span class="string">"{t}"</span>);
+<a href=#1300 id=1300 data-nosnippet>1300</a>        <span class="macro">assert!</span>(
+<a href=#1301 id=1301 data-nosnippet>1301</a>            t.contains(<span class="string">"depends on:   #6 (confirmed, closed without a merge)"</span>),
+<a href=#1302 id=1302 data-nosnippet>1302</a>            <span class="string">"{t}"
+<a href=#1303 id=1303 data-nosnippet>1303</a>        </span>);
+<a href=#1304 id=1304 data-nosnippet>1304</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"depends on:   #7 (confirmed, unread)"</span>), <span class="string">"{t}"</span>);
+<a href=#1305 id=1305 data-nosnippet>1305</a>        <span class="macro">assert!</span>(
+<a href=#1306 id=1306 data-nosnippet>1306</a>            t.contains(<span class="string">"overlaps:     #3 (1) #8 (1, version_bump)"</span>),
+<a href=#1307 id=1307 data-nosnippet>1307</a>            <span class="string">"{t}"
+<a href=#1308 id=1308 data-nosnippet>1308</a>        </span>);
+<a href=#1309 id=1309 data-nosnippet>1309</a>    }
+<a href=#1310 id=1310 data-nosnippet>1310</a>
+<a href=#1311 id=1311 data-nosnippet>1311</a>    <span class="attr">#[test]
+<a href=#1312 id=1312 data-nosnippet>1312</a>    </span><span class="kw">fn </span>a_dry_run_proof_says_each_step_and_what_moved() {
+<a href=#1313 id=1313 data-nosnippet>1313</a>        <span class="kw">use </span><span class="kw">crate</span>::integration::proof::{
+<a href=#1314 id=1314 data-nosnippet>1314</a>            DryRunProof, Moved, ObservedClassification, ProofStep, Snapshot,
+<a href=#1315 id=1315 data-nosnippet>1315</a>        };
+<a href=#1316 id=1316 data-nosnippet>1316</a>        <span class="kw">let </span>empty = Snapshot {
+<a href=#1317 id=1317 data-nosnippet>1317</a>            sections: Vec::new(),
+<a href=#1318 id=1318 data-nosnippet>1318</a>        };
+<a href=#1319 id=1319 data-nosnippet>1319</a>        <span class="kw">let </span><span class="kw-2">mut </span>proof = DryRunProof {
+<a href=#1320 id=1320 data-nosnippet>1320</a>            ok: <span class="bool-val">true</span>,
+<a href=#1321 id=1321 data-nosnippet>1321</a>            base: <span class="string">"master"</span>.into(),
+<a href=#1322 id=1322 data-nosnippet>1322</a>            steps: <span class="macro">vec!</span>[ProofStep {
+<a href=#1323 id=1323 data-nosnippet>1323</a>                step: <span class="string">"refresh"</span>.into(),
+<a href=#1324 id=1324 data-nosnippet>1324</a>                summary: <span class="string">"observed 1"</span>.into(),
+<a href=#1325 id=1325 data-nosnippet>1325</a>            }],
+<a href=#1326 id=1326 data-nosnippet>1326</a>            moved: Vec::new(),
+<a href=#1327 id=1327 data-nosnippet>1327</a>            mirrors: Vec::new(),
+<a href=#1328 id=1328 data-nosnippet>1328</a>            before: empty.clone(),
+<a href=#1329 id=1329 data-nosnippet>1329</a>            after: empty,
+<a href=#1330 id=1330 data-nosnippet>1330</a>            classification: <span class="macro">vec!</span>[ObservedClassification {
+<a href=#1331 id=1331 data-nosnippet>1331</a>                number: <span class="number">1</span>,
+<a href=#1332 id=1332 data-nosnippet>1332</a>                head_sha: <span class="string">"a"</span>.repeat(<span class="number">40</span>),
+<a href=#1333 id=1333 data-nosnippet>1333</a>                disposition: <span class="string">"ready"</span>.into(),
+<a href=#1334 id=1334 data-nosnippet>1334</a>                next_action: <span class="prelude-val">None</span>,
+<a href=#1335 id=1335 data-nosnippet>1335</a>            }],
+<a href=#1336 id=1336 data-nosnippet>1336</a>        };
+<a href=#1337 id=1337 data-nosnippet>1337</a>        <span class="kw">let </span>t = text(|o| render_proof(<span class="kw-2">&amp;</span>proof, o));
+<a href=#1338 id=1338 data-nosnippet>1338</a>        <span class="macro">assert!</span>(t.starts_with(<span class="string">"refresh          observed 1\n"</span>), <span class="string">"{t}"</span>);
+<a href=#1339 id=1339 data-nosnippet>1339</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"  #1  aaaaaaaaaaaa  ready\n"</span>), <span class="string">"{t}"</span>);
+<a href=#1340 id=1340 data-nosnippet>1340</a>        <span class="macro">assert!</span>(
+<a href=#1341 id=1341 data-nosnippet>1341</a>            t.ends_with(<span class="string">"nothing moved (remote, forge, trail, lease, local refs)\n"</span>),
+<a href=#1342 id=1342 data-nosnippet>1342</a>            <span class="string">"{t}"
+<a href=#1343 id=1343 data-nosnippet>1343</a>        </span>);
+<a href=#1344 id=1344 data-nosnippet>1344</a>        proof.ok = <span class="bool-val">false</span>;
+<a href=#1345 id=1345 data-nosnippet>1345</a>        proof.moved = [<span class="string">"added"</span>, <span class="string">"removed"</span>]
+<a href=#1346 id=1346 data-nosnippet>1346</a>            .into_iter()
+<a href=#1347 id=1347 data-nosnippet>1347</a>            .map(|change| Moved {
+<a href=#1348 id=1348 data-nosnippet>1348</a>                section: <span class="string">"trail"</span>.into(),
+<a href=#1349 id=1349 data-nosnippet>1349</a>                change: change.into(),
+<a href=#1350 id=1350 data-nosnippet>1350</a>                line: <span class="string">"x"</span>.into(),
+<a href=#1351 id=1351 data-nosnippet>1351</a>            })
+<a href=#1352 id=1352 data-nosnippet>1352</a>            .collect();
+<a href=#1353 id=1353 data-nosnippet>1353</a>        proof.mirrors = <span class="macro">vec!</span>[<span class="string">"refs/x is y, origin serves z"</span>.into()];
+<a href=#1354 id=1354 data-nosnippet>1354</a>        <span class="kw">let </span>t = text(|o| render_proof(<span class="kw-2">&amp;</span>proof, o));
+<a href=#1355 id=1355 data-nosnippet>1355</a>        <span class="macro">assert!</span>(
+<a href=#1356 id=1356 data-nosnippet>1356</a>            t.contains(<span class="string">"moved something:\n  + trail  x\n  - trail  x\n"</span>),
+<a href=#1357 id=1357 data-nosnippet>1357</a>            <span class="string">"{t}"
+<a href=#1358 id=1358 data-nosnippet>1358</a>        </span>);
+<a href=#1359 id=1359 data-nosnippet>1359</a>        <span class="macro">assert!</span>(t.contains(<span class="string">"mirror: refs/x is y"</span>), <span class="string">"{t}"</span>);
+<a href=#1360 id=1360 data-nosnippet>1360</a>        <span class="macro">assert!</span>(!t.contains(<span class="string">"nothing moved"</span>), <span class="string">"{t}"</span>);
+<a href=#1361 id=1361 data-nosnippet>1361</a>    }
+<a href=#1362 id=1362 data-nosnippet>1362</a>
+<a href=#1363 id=1363 data-nosnippet>1363</a>    <span class="attr">#[test]
+<a href=#1364 id=1364 data-nosnippet>1364</a>    </span><span class="kw">fn </span>a_halt_that_names_no_pull_request_says_a_pull_request() {
+<a href=#1365 id=1365 data-nosnippet>1365</a>        <span class="kw">let </span>said = describe(<span class="kw-2">&amp;</span>DrainStepOutcome::Halted {
+<a href=#1366 id=1366 data-nosnippet>1366</a>            pr: <span class="prelude-val">None</span>,
+<a href=#1367 id=1367 data-nosnippet>1367</a>            reason: <span class="string">"unproved"</span>.into(),
+<a href=#1368 id=1368 data-nosnippet>1368</a>        });
+<a href=#1369 id=1369 data-nosnippet>1369</a>        <span class="macro">assert!</span>(
+<a href=#1370 id=1370 data-nosnippet>1370</a>            said.starts_with(<span class="string">"halted: a pull request was merged"</span>),
+<a href=#1371 id=1371 data-nosnippet>1371</a>            <span class="string">"{said}"
+<a href=#1372 id=1372 data-nosnippet>1372</a>        </span>);
+<a href=#1373 id=1373 data-nosnippet>1373</a>    }
+<a href=#1374 id=1374 data-nosnippet>1374</a>
+<a href=#1375 id=1375 data-nosnippet>1375</a>    <span class="attr">#[test]
+<a href=#1376 id=1376 data-nosnippet>1376</a>    </span><span class="kw">fn </span>the_brief_is_one_line_from_files_and_absent_without_an_observation() {
+<a href=#1377 id=1377 data-nosnippet>1377</a>        <span class="kw">let </span>(s, _q) = world();
+<a href=#1378 id=1378 data-nosnippet>1378</a>        <span class="kw">let </span>b = brief(<span class="kw-2">&amp;</span>s.<span class="number">0</span>).expect(<span class="string">"a brief"</span>);
+<a href=#1379 id=1379 data-nosnippet>1379</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"master at "</span>), <span class="string">"{b}"</span>);
+<a href=#1380 id=1380 data-nosnippet>1380</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"next merge #1"</span>), <span class="string">"{b}"</span>);
+<a href=#1381 id=1381 data-nosnippet>1381</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"starving #1"</span>), <span class="string">"{b}"</span>);
+<a href=#1382 id=1382 data-nosnippet>1382</a>        <span class="macro">assert!</span>(!b.contains(<span class="string">"last merge"</span>) &amp;&amp; !b.contains(<span class="string">"; last "</span>), <span class="string">"{b}"</span>);
+<a href=#1383 id=1383 data-nosnippet>1383</a>
+<a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="comment">// the trail's last merge, and the last step that says how the work went: the newest of
+<a href=#1385 id=1385 data-nosnippet>1385</a>        // a refresh, a failed or unverified merge, a stale decision — a merge is said already
+<a href=#1386 id=1386 data-nosnippet>1386</a>        </span><span class="kw">let </span>event = |action, pr: <span class="prelude-ty">Option</span>&lt;u64&gt;| drain::IntegrationEvent {
+<a href=#1387 id=1387 data-nosnippet>1387</a>            at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
+<a href=#1388 id=1388 data-nosnippet>1388</a>            pr,
+<a href=#1389 id=1389 data-nosnippet>1389</a>            ..drain::IntegrationEvent::of(action)
+<a href=#1390 id=1390 data-nosnippet>1390</a>        };
+<a href=#1391 id=1391 data-nosnippet>1391</a>        <span class="kw">use </span>drain::IntegrationAction <span class="kw">as </span>A;
+<a href=#1392 id=1392 data-nosnippet>1392</a>        <span class="kw">for </span>e <span class="kw">in </span>[
+<a href=#1393 id=1393 data-nosnippet>1393</a>            event(A::MergeFailed, <span class="prelude-val">Some</span>(<span class="number">4</span>)),
+<a href=#1394 id=1394 data-nosnippet>1394</a>            event(A::MergeSucceeded, <span class="prelude-val">Some</span>(<span class="number">5</span>)),
+<a href=#1395 id=1395 data-nosnippet>1395</a>            event(A::StaleDecision, <span class="prelude-val">Some</span>(<span class="number">6</span>)),
+<a href=#1396 id=1396 data-nosnippet>1396</a>            event(A::LeaseReleased, <span class="prelude-val">None</span>),
+<a href=#1397 id=1397 data-nosnippet>1397</a>        ] {
+<a href=#1398 id=1398 data-nosnippet>1398</a>            drain::record(<span class="kw-2">&amp;</span>s.<span class="number">0</span>, e).expect(<span class="string">"recorded"</span>);
+<a href=#1399 id=1399 data-nosnippet>1399</a>        }
+<a href=#1400 id=1400 data-nosnippet>1400</a>        <span class="kw">let </span>lease = IntegrationLease::acquire(<span class="kw-2">&amp;</span>s.<span class="number">0</span>, <span class="string">"master"</span>).expect(<span class="string">"the lease"</span>);
+<a href=#1401 id=1401 data-nosnippet>1401</a>        <span class="kw">let </span>b = brief(<span class="kw-2">&amp;</span>s.<span class="number">0</span>).expect(<span class="string">"a brief"</span>);
+<a href=#1402 id=1402 data-nosnippet>1402</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"last merge #5"</span>), <span class="string">"{b}"</span>);
+<a href=#1403 id=1403 data-nosnippet>1403</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"last stale_decision #6"</span>), <span class="string">"{b}"</span>);
+<a href=#1404 id=1404 data-nosnippet>1404</a>        <span class="macro">assert!</span>(
+<a href=#1405 id=1405 data-nosnippet>1405</a>            !b.contains(<span class="string">"merge_failed"</span>),
+<a href=#1406 id=1406 data-nosnippet>1406</a>            <span class="string">"only the newest outcome is said: {b}"
+<a href=#1407 id=1407 data-nosnippet>1407</a>        </span>);
+<a href=#1408 id=1408 data-nosnippet>1408</a>        <span class="macro">assert!</span>(b.contains(<span class="string">"per-clone guard only"</span>), <span class="string">"{b}"</span>);
+<a href=#1409 id=1409 data-nosnippet>1409</a>        drop(lease);
+<a href=#1410 id=1410 data-nosnippet>1410</a>        drain::record(<span class="kw-2">&amp;</span>s.<span class="number">0</span>, event(A::Refreshed, <span class="prelude-val">None</span>)).expect(<span class="string">"recorded"</span>);
+<a href=#1411 id=1411 data-nosnippet>1411</a>        <span class="kw">let </span>b = brief(<span class="kw-2">&amp;</span>s.<span class="number">0</span>).expect(<span class="string">"a brief"</span>);
+<a href=#1412 id=1412 data-nosnippet>1412</a>        <span class="macro">assert!</span>(
+<a href=#1413 id=1413 data-nosnippet>1413</a>            b.contains(<span class="string">"last refreshed "</span>),
+<a href=#1414 id=1414 data-nosnippet>1414</a>            <span class="string">"an outcome without a pull request: {b}"
+<a href=#1415 id=1415 data-nosnippet>1415</a>        </span>);
+<a href=#1416 id=1416 data-nosnippet>1416</a>
+<a href=#1417 id=1417 data-nosnippet>1417</a>        <span class="kw">let </span>empty = std::env::temp_dir().join(<span class="macro">format!</span>(<span class="string">"mj-prs-empty-{}"</span>, std::process::id()));
+<a href=#1418 id=1418 data-nosnippet>1418</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>empty).unwrap();
+<a href=#1419 id=1419 data-nosnippet>1419</a>        <span class="macro">assert!</span>(
+<a href=#1420 id=1420 data-nosnippet>1420</a>            brief(<span class="kw-2">&amp;</span>empty).is_none(),
+<a href=#1421 id=1421 data-nosnippet>1421</a>            <span class="string">"a checkout that never observed says nothing"
+<a href=#1422 id=1422 data-nosnippet>1422</a>        </span>);
+<a href=#1423 id=1423 data-nosnippet>1423</a>        <span class="kw">let _ </span>= std::fs::remove_dir_all(<span class="kw-2">&amp;</span>empty);
+<a href=#1424 id=1424 data-nosnippet>1424</a>    }
+<a href=#1425 id=1425 data-nosnippet>1425</a>
+<a href=#1426 id=1426 data-nosnippet>1426</a>    <span class="attr">#[test]
+<a href=#1427 id=1427 data-nosnippet>1427</a>    </span><span class="kw">fn </span>every_drain_outcome_has_its_own_sentence() {
+<a href=#1428 id=1428 data-nosnippet>1428</a>        <span class="kw">let </span>outcomes = [
+<a href=#1429 id=1429 data-nosnippet>1429</a>            DrainStepOutcome::Idle {
+<a href=#1430 id=1430 data-nosnippet>1430</a>                why: <span class="string">"nothing"</span>.into(),
+<a href=#1431 id=1431 data-nosnippet>1431</a>            },
+<a href=#1432 id=1432 data-nosnippet>1432</a>            DrainStepOutcome::WouldMerge { pr: <span class="number">1 </span>},
+<a href=#1433 id=1433 data-nosnippet>1433</a>            DrainStepOutcome::StaleDecision {
+<a href=#1434 id=1434 data-nosnippet>1434</a>                pr: <span class="number">2</span>,
+<a href=#1435 id=1435 data-nosnippet>1435</a>                what: <span class="string">"master moved"</span>.into(),
+<a href=#1436 id=1436 data-nosnippet>1436</a>            },
+<a href=#1437 id=1437 data-nosnippet>1437</a>            DrainStepOutcome::Merged {
+<a href=#1438 id=1438 data-nosnippet>1438</a>                pr: <span class="number">3</span>,
+<a href=#1439 id=1439 data-nosnippet>1439</a>                master_before: <span class="string">"a"</span>.repeat(<span class="number">40</span>),
+<a href=#1440 id=1440 data-nosnippet>1440</a>                master_after: <span class="string">"b"</span>.repeat(<span class="number">40</span>),
+<a href=#1441 id=1441 data-nosnippet>1441</a>            },
+<a href=#1442 id=1442 data-nosnippet>1442</a>            DrainStepOutcome::MergeRefused {
+<a href=#1443 id=1443 data-nosnippet>1443</a>                pr: <span class="number">4</span>,
+<a href=#1444 id=1444 data-nosnippet>1444</a>                reason: <span class="string">"protected"</span>.into(),
+<a href=#1445 id=1445 data-nosnippet>1445</a>                class: drain::FailureClass::PolicyViolation,
+<a href=#1446 id=1446 data-nosnippet>1446</a>            },
+<a href=#1447 id=1447 data-nosnippet>1447</a>            DrainStepOutcome::VerificationFailed {
+<a href=#1448 id=1448 data-nosnippet>1448</a>                pr: <span class="number">5</span>,
+<a href=#1449 id=1449 data-nosnippet>1449</a>                reason: <span class="string">"absent"</span>.into(),
+<a href=#1450 id=1450 data-nosnippet>1450</a>            },
+<a href=#1451 id=1451 data-nosnippet>1451</a>            DrainStepOutcome::WouldRefresh { pr: <span class="number">6 </span>},
+<a href=#1452 id=1452 data-nosnippet>1452</a>            DrainStepOutcome::Refreshed {
+<a href=#1453 id=1453 data-nosnippet>1453</a>                pr: <span class="number">7</span>,
+<a href=#1454 id=1454 data-nosnippet>1454</a>                head_before: <span class="string">"c"</span>.repeat(<span class="number">40</span>),
+<a href=#1455 id=1455 data-nosnippet>1455</a>                head_after: <span class="string">"d"</span>.repeat(<span class="number">40</span>),
+<a href=#1456 id=1456 data-nosnippet>1456</a>            },
+<a href=#1457 id=1457 data-nosnippet>1457</a>            DrainStepOutcome::AwaitingChecks { pr: <span class="number">8 </span>},
+<a href=#1458 id=1458 data-nosnippet>1458</a>            DrainStepOutcome::RefreshFailed {
+<a href=#1459 id=1459 data-nosnippet>1459</a>                pr: <span class="number">9</span>,
+<a href=#1460 id=1460 data-nosnippet>1460</a>                reason: <span class="string">"conflict"</span>.into(),
+<a href=#1461 id=1461 data-nosnippet>1461</a>                class: drain::FailureClass::Conflict,
+<a href=#1462 id=1462 data-nosnippet>1462</a>            },
+<a href=#1463 id=1463 data-nosnippet>1463</a>            DrainStepOutcome::TrailUnwritable {
+<a href=#1464 id=1464 data-nosnippet>1464</a>                pr: <span class="number">10</span>,
+<a href=#1465 id=1465 data-nosnippet>1465</a>                unrecorded: IntegrationAction::MergeAttempted,
+<a href=#1466 id=1466 data-nosnippet>1466</a>                reason: <span class="string">"read-only"</span>.into(),
+<a href=#1467 id=1467 data-nosnippet>1467</a>            },
+<a href=#1468 id=1468 data-nosnippet>1468</a>        ];
+<a href=#1469 id=1469 data-nosnippet>1469</a>        <span class="kw">let </span>said: std::collections::BTreeSet&lt;String&gt; = outcomes.iter().map(describe).collect();
+<a href=#1470 id=1470 data-nosnippet>1470</a>        <span class="macro">assert_eq!</span>(
+<a href=#1471 id=1471 data-nosnippet>1471</a>            said.len(),
+<a href=#1472 id=1472 data-nosnippet>1472</a>            outcomes.len(),
+<a href=#1473 id=1473 data-nosnippet>1473</a>            <span class="string">"two outcomes read alike: {said:?}"
+<a href=#1474 id=1474 data-nosnippet>1474</a>        </span>);
+<a href=#1475 id=1475 data-nosnippet>1475</a>        <span class="macro">assert!</span>(describe(<span class="kw-2">&amp;</span>outcomes[<span class="number">3</span>]).contains(<span class="string">"aaaaaaaaaa -&gt; bbbbbbbbbb"</span>));
+<a href=#1476 id=1476 data-nosnippet>1476</a>        <span class="macro">assert!</span>(describe(<span class="kw-2">&amp;</span>outcomes[<span class="number">10</span>]).contains(<span class="string">"merge_attempted"</span>));
+<a href=#1477 id=1477 data-nosnippet>1477</a>    }
+<a href=#1478 id=1478 data-nosnippet>1478</a>
+<a href=#1479 id=1479 data-nosnippet>1479</a>    <span class="attr">#[test]
+<a href=#1480 id=1480 data-nosnippet>1480</a>    </span><span class="kw">fn </span>a_drain_that_could_not_record_an_act_exits_unusable() {
+<a href=#1481 id=1481 data-nosnippet>1481</a>        <span class="kw">let </span>report = |steps: Vec&lt;DrainStepOutcome&gt;| drain::DrainReport {
+<a href=#1482 id=1482 data-nosnippet>1482</a>            dry_run: <span class="bool-val">false</span>,
+<a href=#1483 id=1483 data-nosnippet>1483</a>            steps,
+<a href=#1484 id=1484 data-nosnippet>1484</a>            merged: Vec::new(),
+<a href=#1485 id=1485 data-nosnippet>1485</a>            stopped: String::new(),
+<a href=#1486 id=1486 data-nosnippet>1486</a>        };
+<a href=#1487 id=1487 data-nosnippet>1487</a>        <span class="kw">let </span>unrecorded = DrainStepOutcome::TrailUnwritable {
+<a href=#1488 id=1488 data-nosnippet>1488</a>            pr: <span class="number">1</span>,
+<a href=#1489 id=1489 data-nosnippet>1489</a>            unrecorded: IntegrationAction::MergeAttempted,
+<a href=#1490 id=1490 data-nosnippet>1490</a>            reason: <span class="string">"read-only"</span>.into(),
+<a href=#1491 id=1491 data-nosnippet>1491</a>        };
+<a href=#1492 id=1492 data-nosnippet>1492</a>        <span class="kw">let </span>unverified = DrainStepOutcome::VerificationFailed {
+<a href=#1493 id=1493 data-nosnippet>1493</a>            pr: <span class="number">2</span>,
+<a href=#1494 id=1494 data-nosnippet>1494</a>            reason: <span class="string">"absent"</span>.into(),
+<a href=#1495 id=1495 data-nosnippet>1495</a>        };
+<a href=#1496 id=1496 data-nosnippet>1496</a>        <span class="macro">assert_eq!</span>(drain_exit(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[unrecorded])), UNUSABLE);
+<a href=#1497 id=1497 data-nosnippet>1497</a>        <span class="macro">assert_eq!</span>(drain_exit(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[unverified])), FINDING);
+<a href=#1498 id=1498 data-nosnippet>1498</a>        <span class="macro">assert_eq!</span>(
+<a href=#1499 id=1499 data-nosnippet>1499</a>            drain_exit(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[DrainStepOutcome::WouldMerge { pr: <span class="number">3 </span>}])),
+<a href=#1500 id=1500 data-nosnippet>1500</a>            <span class="number">0
+<a href=#1501 id=1501 data-nosnippet>1501</a>        </span>);
+<a href=#1502 id=1502 data-nosnippet>1502</a>    }
+<a href=#1503 id=1503 data-nosnippet>1503</a>
+<a href=#1504 id=1504 data-nosnippet>1504</a>    <span class="attr">#[test]
+<a href=#1505 id=1505 data-nosnippet>1505</a>    </span><span class="kw">fn </span>a_moment_is_said_as_how_long_ago() {
+<a href=#1506 id=1506 data-nosnippet>1506</a>        <span class="macro">assert_eq!</span>(ago(<span class="string">"not a time"</span>), <span class="string">""</span>, <span class="string">"an unreadable moment says nothing"</span>);
+<a href=#1507 id=1507 data-nosnippet>1507</a>        <span class="kw">let </span>at = |secs: u64| {
+<a href=#1508 id=1508 data-nosnippet>1508</a>            <span class="kw">crate</span>::peers::rfc3339(
+<a href=#1509 id=1509 data-nosnippet>1509</a>                std::time::SystemTime::now() - std::time::Duration::from_secs(secs),
+<a href=#1510 id=1510 data-nosnippet>1510</a>            )
+<a href=#1511 id=1511 data-nosnippet>1511</a>        };
+<a href=#1512 id=1512 data-nosnippet>1512</a>        <span class="macro">assert!</span>(ago(<span class="kw-2">&amp;</span>at(<span class="number">5</span>)).ends_with(<span class="string">" s ago"</span>), <span class="string">"{}"</span>, ago(<span class="kw-2">&amp;</span>at(<span class="number">5</span>)));
+<a href=#1513 id=1513 data-nosnippet>1513</a>        <span class="macro">assert!</span>(ago(<span class="kw-2">&amp;</span>at(<span class="number">600</span>)).ends_with(<span class="string">" min ago"</span>), <span class="string">"{}"</span>, ago(<span class="kw-2">&amp;</span>at(<span class="number">600</span>)));
+<a href=#1514 id=1514 data-nosnippet>1514</a>        <span class="macro">assert!</span>(
+<a href=#1515 id=1515 data-nosnippet>1515</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">5 </span>* <span class="number">3600</span>)).ends_with(<span class="string">" h ago"</span>),
+<a href=#1516 id=1516 data-nosnippet>1516</a>            <span class="string">"{}"</span>,
+<a href=#1517 id=1517 data-nosnippet>1517</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">5 </span>* <span class="number">3600</span>))
+<a href=#1518 id=1518 data-nosnippet>1518</a>        );
+<a href=#1519 id=1519 data-nosnippet>1519</a>        <span class="macro">assert!</span>(
+<a href=#1520 id=1520 data-nosnippet>1520</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">3 </span>* <span class="number">86_400</span>)).ends_with(<span class="string">" d ago"</span>),
+<a href=#1521 id=1521 data-nosnippet>1521</a>            <span class="string">"{}"</span>,
+<a href=#1522 id=1522 data-nosnippet>1522</a>            ago(<span class="kw-2">&amp;</span>at(<span class="number">3 </span>* <span class="number">86_400</span>))
+<a href=#1523 id=1523 data-nosnippet>1523</a>        );
+<a href=#1524 id=1524 data-nosnippet>1524</a>    }
+<a href=#1525 id=1525 data-nosnippet>1525</a>
+<a href=#1526 id=1526 data-nosnippet>1526</a>    <span class="attr">#[test]
+<a href=#1527 id=1527 data-nosnippet>1527</a>    </span><span class="kw">fn </span>a_drain_says_why_it_stopped_once() {
+<a href=#1528 id=1528 data-nosnippet>1528</a>        <span class="kw">let </span>report = |steps: Vec&lt;DrainStepOutcome&gt;, stopped: <span class="kw-2">&amp;</span>str| drain::DrainReport {
+<a href=#1529 id=1529 data-nosnippet>1529</a>            dry_run: <span class="bool-val">true</span>,
+<a href=#1530 id=1530 data-nosnippet>1530</a>            steps,
+<a href=#1531 id=1531 data-nosnippet>1531</a>            merged: <span class="macro">vec!</span>[],
+<a href=#1532 id=1532 data-nosnippet>1532</a>            stopped: stopped.into(),
+<a href=#1533 id=1533 data-nosnippet>1533</a>        };
+<a href=#1534 id=1534 data-nosnippet>1534</a>        <span class="kw">let </span>why = <span class="string">"nothing is ready; 7 pull request(s) need master brought in first: #1"</span>;
+<a href=#1535 id=1535 data-nosnippet>1535</a>        <span class="comment">// an idle step is the reason itself: said once, not again as `stopped:`
+<a href=#1536 id=1536 data-nosnippet>1536</a>        </span><span class="kw">let </span>idle = drain_lines(<span class="kw-2">&amp;</span>report(
+<a href=#1537 id=1537 data-nosnippet>1537</a>            <span class="macro">vec!</span>[DrainStepOutcome::Idle { why: why.into() }],
+<a href=#1538 id=1538 data-nosnippet>1538</a>            why,
+<a href=#1539 id=1539 data-nosnippet>1539</a>        ));
+<a href=#1540 id=1540 data-nosnippet>1540</a>        <span class="macro">assert_eq!</span>(idle, [<span class="macro">format!</span>(<span class="string">"idle: {why}"</span>)]);
+<a href=#1541 id=1541 data-nosnippet>1541</a>        <span class="macro">assert_eq!</span>(idle.join(<span class="string">"; "</span>).matches(why).count(), <span class="number">1</span>, <span class="string">"{idle:?}"</span>);
+<a href=#1542 id=1542 data-nosnippet>1542</a>        <span class="comment">// a halt says why nothing began, once
+<a href=#1543 id=1543 data-nosnippet>1543</a>        </span><span class="kw">let </span>halted = drain_lines(<span class="kw-2">&amp;</span>report(
+<a href=#1544 id=1544 data-nosnippet>1544</a>            <span class="macro">vec!</span>[DrainStepOutcome::Halted {
+<a href=#1545 id=1545 data-nosnippet>1545</a>                pr: <span class="prelude-val">Some</span>(<span class="number">4</span>),
+<a href=#1546 id=1546 data-nosnippet>1546</a>                reason: <span class="string">"the merge commit is not on master"</span>.into(),
+<a href=#1547 id=1547 data-nosnippet>1547</a>            }],
+<a href=#1548 id=1548 data-nosnippet>1548</a>            <span class="string">"#4 could not be verified after merging (the merge commit is not on master)"</span>,
+<a href=#1549 id=1549 data-nosnippet>1549</a>        ));
+<a href=#1550 id=1550 data-nosnippet>1550</a>        <span class="macro">assert_eq!</span>(halted.len(), <span class="number">1</span>, <span class="string">"{halted:?}"</span>);
+<a href=#1551 id=1551 data-nosnippet>1551</a>        <span class="macro">assert!</span>(halted[<span class="number">0</span>].starts_with(<span class="string">"halted: #4"</span>), <span class="string">"{halted:?}"</span>);
+<a href=#1552 id=1552 data-nosnippet>1552</a>        <span class="comment">// a step that does not end the drain by itself is followed by why the drain ended
+<a href=#1553 id=1553 data-nosnippet>1553</a>        </span><span class="kw">let </span>bounded = drain_lines(<span class="kw-2">&amp;</span>report(
+<a href=#1554 id=1554 data-nosnippet>1554</a>            <span class="macro">vec!</span>[DrainStepOutcome::WouldMerge { pr: <span class="number">3 </span>}],
+<a href=#1555 id=1555 data-nosnippet>1555</a>            <span class="string">"dry run: #3 would be merged; nothing after it is planned"</span>,
+<a href=#1556 id=1556 data-nosnippet>1556</a>        ));
+<a href=#1557 id=1557 data-nosnippet>1557</a>        <span class="macro">assert_eq!</span>(
+<a href=#1558 id=1558 data-nosnippet>1558</a>            bounded,
+<a href=#1559 id=1559 data-nosnippet>1559</a>            [
+<a href=#1560 id=1560 data-nosnippet>1560</a>                <span class="string">"would merge #3"</span>.to_string(),
+<a href=#1561 id=1561 data-nosnippet>1561</a>                <span class="string">"stopped: dry run: #3 would be merged; nothing after it is planned"</span>.to_string()
+<a href=#1562 id=1562 data-nosnippet>1562</a>            ]
+<a href=#1563 id=1563 data-nosnippet>1563</a>        );
+<a href=#1564 id=1564 data-nosnippet>1564</a>        <span class="comment">// and a drain that took no step and gave no reason says nothing at all
+<a href=#1565 id=1565 data-nosnippet>1565</a>        </span><span class="macro">assert!</span>(drain_lines(<span class="kw-2">&amp;</span>report(<span class="macro">vec!</span>[], <span class="string">""</span>)).is_empty());
+<a href=#1566 id=1566 data-nosnippet>1566</a>    }
+<a href=#1567 id=1567 data-nosnippet>1567</a>
+<a href=#1568 id=1568 data-nosnippet>1568</a>    <span class="attr">#[test]
+<a href=#1569 id=1569 data-nosnippet>1569</a>    </span><span class="kw">fn </span>every_repair_outcome_has_its_own_sentence_and_a_refusal_names_the_files() {
+<a href=#1570 id=1570 data-nosnippet>1570</a>        <span class="kw">let </span>report = |dry_run: bool, outcome: repair::RepairOutcome| repair::RepairReport {
+<a href=#1571 id=1571 data-nosnippet>1571</a>            dry_run,
+<a href=#1572 id=1572 data-nosnippet>1572</a>            target: <span class="string">"#7"</span>.into(),
+<a href=#1573 id=1573 data-nosnippet>1573</a>            pr: <span class="prelude-val">Some</span>(<span class="number">7</span>),
+<a href=#1574 id=1574 data-nosnippet>1574</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"feature/7"</span>.into()),
+<a href=#1575 id=1575 data-nosnippet>1575</a>            base: <span class="string">"master"</span>.into(),
+<a href=#1576 id=1576 data-nosnippet>1576</a>            master_sha: <span class="string">"m"</span>.repeat(<span class="number">40</span>),
+<a href=#1577 id=1577 data-nosnippet>1577</a>            head_sha: <span class="prelude-val">Some</span>(<span class="string">"h"</span>.repeat(<span class="number">40</span>)),
+<a href=#1578 id=1578 data-nosnippet>1578</a>            observed_at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
+<a href=#1579 id=1579 data-nosnippet>1579</a>            relation: <span class="prelude-val">Some</span>(RelationToMaster::Behind {
+<a href=#1580 id=1580 data-nosnippet>1580</a>                behind: <span class="number">1</span>,
+<a href=#1581 id=1581 data-nosnippet>1581</a>                authored: <span class="macro">vec!</span>[<span class="string">"src/a.rs"</span>.into()],
+<a href=#1582 id=1582 data-nosnippet>1582</a>            }),
+<a href=#1583 id=1583 data-nosnippet>1583</a>            outcome,
+<a href=#1584 id=1584 data-nosnippet>1584</a>            diagnostics: <span class="macro">vec!</span>[],
+<a href=#1585 id=1585 data-nosnippet>1585</a>        };
+<a href=#1586 id=1586 data-nosnippet>1586</a>        <span class="kw">let </span>say = |r: repair::RepairReport| text(|o| render_repair(<span class="kw-2">&amp;</span>r, o));
+<a href=#1587 id=1587 data-nosnippet>1587</a>        <span class="kw">let </span>would = say(report(<span class="bool-val">true</span>, repair::RepairOutcome::WouldRepair));
+<a href=#1588 id=1588 data-nosnippet>1588</a>        <span class="macro">assert!</span>(
+<a href=#1589 id=1589 data-nosnippet>1589</a>            would.contains(<span class="string">"#7 (feature/7): head hhhhhhhhhh against master mmmmmmmmmm, behind"</span>),
+<a href=#1590 id=1590 data-nosnippet>1590</a>            <span class="string">"{would}"
+<a href=#1591 id=1591 data-nosnippet>1591</a>        </span>);
+<a href=#1592 id=1592 data-nosnippet>1592</a>        <span class="macro">assert!</span>(
+<a href=#1593 id=1593 data-nosnippet>1593</a>            would.contains(<span class="string">"observed at 2026-10-01T00:00:00Z"</span>),
+<a href=#1594 id=1594 data-nosnippet>1594</a>            <span class="string">"{would}"
+<a href=#1595 id=1595 data-nosnippet>1595</a>        </span>);
+<a href=#1596 id=1596 data-nosnippet>1596</a>        <span class="macro">assert!</span>(
+<a href=#1597 id=1597 data-nosnippet>1597</a>            would.contains(<span class="string">"dry run: would merge master mmmmmmmmmm into #7 (feature/7)"</span>),
+<a href=#1598 id=1598 data-nosnippet>1598</a>            <span class="string">"{would}"
+<a href=#1599 id=1599 data-nosnippet>1599</a>        </span>);
+<a href=#1600 id=1600 data-nosnippet>1600</a>        <span class="macro">assert!</span>(
+<a href=#1601 id=1601 data-nosnippet>1601</a>            would.contains(<span class="string">"leased on hhhhhhhhhh; --apply does"</span>),
+<a href=#1602 id=1602 data-nosnippet>1602</a>            <span class="string">"{would}"
+<a href=#1603 id=1603 data-nosnippet>1603</a>        </span>);
+<a href=#1604 id=1604 data-nosnippet>1604</a>        <span class="kw">let </span>done = say(report(
+<a href=#1605 id=1605 data-nosnippet>1605</a>            <span class="bool-val">false</span>,
+<a href=#1606 id=1606 data-nosnippet>1606</a>            repair::RepairOutcome::Repaired {
+<a href=#1607 id=1607 data-nosnippet>1607</a>                head_after: <span class="string">"n"</span>.repeat(<span class="number">40</span>),
+<a href=#1608 id=1608 data-nosnippet>1608</a>            },
+<a href=#1609 id=1609 data-nosnippet>1609</a>        ));
+<a href=#1610 id=1610 data-nosnippet>1610</a>        <span class="macro">assert!</span>(
+<a href=#1611 id=1611 data-nosnippet>1611</a>            done.contains(
+<a href=#1612 id=1612 data-nosnippet>1612</a>                <span class="string">"repaired #7 (feature/7): it carries master mmmmmmmmmm and is at nnnnnnnnnn"
+<a href=#1613 id=1613 data-nosnippet>1613</a>            </span>),
+<a href=#1614 id=1614 data-nosnippet>1614</a>            <span class="string">"{done}"
+<a href=#1615 id=1615 data-nosnippet>1615</a>        </span>);
+<a href=#1616 id=1616 data-nosnippet>1616</a>        <span class="macro">assert!</span>(
+<a href=#1617 id=1617 data-nosnippet>1617</a>            !done.contains(<span class="string">"observed at"</span>),
+<a href=#1618 id=1618 data-nosnippet>1618</a>            <span class="string">"an act is not a dry run: {done}"
+<a href=#1619 id=1619 data-nosnippet>1619</a>        </span>);
+<a href=#1620 id=1620 data-nosnippet>1620</a>        <span class="kw">let </span>nothing = say(report(
+<a href=#1621 id=1621 data-nosnippet>1621</a>            <span class="bool-val">true</span>,
+<a href=#1622 id=1622 data-nosnippet>1622</a>            repair::RepairOutcome::NothingToRepair {
+<a href=#1623 id=1623 data-nosnippet>1623</a>                why: <span class="string">"its head already contains master"</span>.into(),
+<a href=#1624 id=1624 data-nosnippet>1624</a>            },
+<a href=#1625 id=1625 data-nosnippet>1625</a>        ));
+<a href=#1626 id=1626 data-nosnippet>1626</a>        <span class="macro">assert!</span>(
+<a href=#1627 id=1627 data-nosnippet>1627</a>            nothing.contains(<span class="string">"nothing to repair: its head already contains master"</span>),
+<a href=#1628 id=1628 data-nosnippet>1628</a>            <span class="string">"{nothing}"
+<a href=#1629 id=1629 data-nosnippet>1629</a>        </span>);
+<a href=#1630 id=1630 data-nosnippet>1630</a>        <span class="kw">let </span>refused = say(report(
+<a href=#1631 id=1631 data-nosnippet>1631</a>            <span class="bool-val">true</span>,
+<a href=#1632 id=1632 data-nosnippet>1632</a>            repair::RepairOutcome::Refused {
+<a href=#1633 id=1633 data-nosnippet>1633</a>                refusal: repair::RepairRefusal::AuthoredConflict {
+<a href=#1634 id=1634 data-nosnippet>1634</a>                    paths: <span class="macro">vec!</span>[<span class="string">"src/a.rs"</span>.into(), <span class="string">"src/b.rs"</span>.into()],
+<a href=#1635 id=1635 data-nosnippet>1635</a>                },
+<a href=#1636 id=1636 data-nosnippet>1636</a>            },
+<a href=#1637 id=1637 data-nosnippet>1637</a>        ));
+<a href=#1638 id=1638 data-nosnippet>1638</a>        <span class="macro">assert!</span>(
+<a href=#1639 id=1639 data-nosnippet>1639</a>            refused
+<a href=#1640 id=1640 data-nosnippet>1640</a>                .contains(<span class="string">"REFUSE #7 (feature/7): merging master conflicts on 2 authored file(s)"</span>),
+<a href=#1641 id=1641 data-nosnippet>1641</a>            <span class="string">"{refused}"
+<a href=#1642 id=1642 data-nosnippet>1642</a>        </span>);
+<a href=#1643 id=1643 data-nosnippet>1643</a>        <span class="macro">assert!</span>(
+<a href=#1644 id=1644 data-nosnippet>1644</a>            refused.contains(<span class="string">"\n       src/a.rs\n       src/b.rs\n"</span>),
+<a href=#1645 id=1645 data-nosnippet>1645</a>            <span class="string">"{refused}"
+<a href=#1646 id=1646 data-nosnippet>1646</a>        </span>);
+<a href=#1647 id=1647 data-nosnippet>1647</a>        <span class="macro">assert!</span>(
+<a href=#1648 id=1648 data-nosnippet>1648</a>            refused.contains(<span class="string">"merge master in the branch's own worktree"</span>),
+<a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="string">"{refused}"
+<a href=#1650 id=1650 data-nosnippet>1650</a>        </span>);
+<a href=#1651 id=1651 data-nosnippet>1651</a>        <span class="comment">// what is not open is named as it was given
+<a href=#1652 id=1652 data-nosnippet>1652</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>absent = report(
+<a href=#1653 id=1653 data-nosnippet>1653</a>            <span class="bool-val">true</span>,
+<a href=#1654 id=1654 data-nosnippet>1654</a>            repair::RepairOutcome::Refused {
+<a href=#1655 id=1655 data-nosnippet>1655</a>                refusal: repair::RepairRefusal::NotOpen {
+<a href=#1656 id=1656 data-nosnippet>1656</a>                    target: <span class="string">"#7"</span>.into(),
+<a href=#1657 id=1657 data-nosnippet>1657</a>                },
+<a href=#1658 id=1658 data-nosnippet>1658</a>            },
+<a href=#1659 id=1659 data-nosnippet>1659</a>        );
+<a href=#1660 id=1660 data-nosnippet>1660</a>        absent.pr = <span class="prelude-val">None</span>;
+<a href=#1661 id=1661 data-nosnippet>1661</a>        absent.branch = <span class="prelude-val">None</span>;
+<a href=#1662 id=1662 data-nosnippet>1662</a>        absent.head_sha = <span class="prelude-val">None</span>;
+<a href=#1663 id=1663 data-nosnippet>1663</a>        <span class="kw">let </span>absent = say(absent);
+<a href=#1664 id=1664 data-nosnippet>1664</a>        <span class="macro">assert!</span>(absent.starts_with(<span class="string">"decided on the forge"</span>), <span class="string">"{absent}"</span>);
+<a href=#1665 id=1665 data-nosnippet>1665</a>        <span class="macro">assert!</span>(
+<a href=#1666 id=1666 data-nosnippet>1666</a>            absent.contains(<span class="string">"REFUSE #7: #7 is not an open pull request"</span>),
+<a href=#1667 id=1667 data-nosnippet>1667</a>            <span class="string">"{absent}"
+<a href=#1668 id=1668 data-nosnippet>1668</a>        </span>);
+<a href=#1669 id=1669 data-nosnippet>1669</a>    }
+<a href=#1670 id=1670 data-nosnippet>1670</a>
+<a href=#1671 id=1671 data-nosnippet>1671</a>    <span class="attr">#[test]
+<a href=#1672 id=1672 data-nosnippet>1672</a>    </span><span class="kw">fn </span>a_repair_exits_by_what_it_could_vouch_for() {
+<a href=#1673 id=1673 data-nosnippet>1673</a>        <span class="kw">let </span>report = |dry_run: bool, outcome: repair::RepairOutcome, diagnostics: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+<a href=#1674 id=1674 data-nosnippet>1674</a>            repair::RepairReport {
+<a href=#1675 id=1675 data-nosnippet>1675</a>                dry_run,
+<a href=#1676 id=1676 data-nosnippet>1676</a>                target: <span class="string">"#7"</span>.into(),
+<a href=#1677 id=1677 data-nosnippet>1677</a>                pr: <span class="prelude-val">Some</span>(<span class="number">7</span>),
+<a href=#1678 id=1678 data-nosnippet>1678</a>                branch: <span class="prelude-val">Some</span>(<span class="string">"feature/7"</span>.into()),
+<a href=#1679 id=1679 data-nosnippet>1679</a>                base: <span class="string">"master"</span>.into(),
+<a href=#1680 id=1680 data-nosnippet>1680</a>                master_sha: <span class="string">"m"</span>.repeat(<span class="number">40</span>),
+<a href=#1681 id=1681 data-nosnippet>1681</a>                head_sha: <span class="prelude-val">Some</span>(<span class="string">"h"</span>.repeat(<span class="number">40</span>)),
+<a href=#1682 id=1682 data-nosnippet>1682</a>                observed_at: <span class="string">"2026-10-01T00:00:00Z"</span>.into(),
+<a href=#1683 id=1683 data-nosnippet>1683</a>                relation: <span class="prelude-val">None</span>,
+<a href=#1684 id=1684 data-nosnippet>1684</a>                outcome,
+<a href=#1685 id=1685 data-nosnippet>1685</a>                diagnostics: diagnostics.iter().map(|d| d.to_string()).collect(),
+<a href=#1686 id=1686 data-nosnippet>1686</a>            }
+<a href=#1687 id=1687 data-nosnippet>1687</a>        };
+<a href=#1688 id=1688 data-nosnippet>1688</a>        <span class="kw">let </span>refused = |refusal| repair::RepairOutcome::Refused { refusal };
+<a href=#1689 id=1689 data-nosnippet>1689</a>        <span class="kw">let </span>unwritable = refused(repair::RepairRefusal::TrailUnwritable {
+<a href=#1690 id=1690 data-nosnippet>1690</a>            reason: <span class="string">"disk full"</span>.into(),
+<a href=#1691 id=1691 data-nosnippet>1691</a>        });
+<a href=#1692 id=1692 data-nosnippet>1692</a>        <span class="comment">// an act the trail could not announce was not taken: the tool is unusable here
+<a href=#1693 id=1693 data-nosnippet>1693</a>        </span><span class="macro">assert_eq!</span>(repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">false</span>, unwritable, <span class="kw-2">&amp;</span>[])), UNUSABLE);
+<a href=#1694 id=1694 data-nosnippet>1694</a>        <span class="kw">let </span>forked = refused(repair::RepairRefusal::ForkHead);
+<a href=#1695 id=1695 data-nosnippet>1695</a>        <span class="macro">assert_eq!</span>(repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">false</span>, forked, <span class="kw-2">&amp;</span>[])), FINDING);
+<a href=#1696 id=1696 data-nosnippet>1696</a>        <span class="kw">let </span>would = || repair::RepairOutcome::WouldRepair;
+<a href=#1697 id=1697 data-nosnippet>1697</a>        <span class="macro">assert_eq!</span>(repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">true</span>, would(), <span class="kw-2">&amp;</span>[])), <span class="number">0</span>);
+<a href=#1698 id=1698 data-nosnippet>1698</a>        <span class="macro">assert_eq!</span>(
+<a href=#1699 id=1699 data-nosnippet>1699</a>            repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">true</span>, would(), <span class="kw-2">&amp;</span>[<span class="string">"stale observation"</span>])),
+<a href=#1700 id=1700 data-nosnippet>1700</a>            FINDING,
+<a href=#1701 id=1701 data-nosnippet>1701</a>            <span class="string">"a dry run over a diagnosed observation vouches for nothing"
+<a href=#1702 id=1702 data-nosnippet>1702</a>        </span>);
+<a href=#1703 id=1703 data-nosnippet>1703</a>        <span class="kw">let </span>repaired = repair::RepairOutcome::Repaired {
+<a href=#1704 id=1704 data-nosnippet>1704</a>            head_after: <span class="string">"n"</span>.repeat(<span class="number">40</span>),
+<a href=#1705 id=1705 data-nosnippet>1705</a>        };
+<a href=#1706 id=1706 data-nosnippet>1706</a>        <span class="macro">assert_eq!</span>(
+<a href=#1707 id=1707 data-nosnippet>1707</a>            repair_exit(<span class="kw-2">&amp;</span>report(<span class="bool-val">false</span>, repaired, <span class="kw-2">&amp;</span>[<span class="string">"stale observation"</span>])),
+<a href=#1708 id=1708 data-nosnippet>1708</a>            <span class="number">0</span>,
+<a href=#1709 id=1709 data-nosnippet>1709</a>            <span class="string">"an act decides on its own fresh observation"
+<a href=#1710 id=1710 data-nosnippet>1710</a>        </span>);
+<a href=#1711 id=1711 data-nosnippet>1711</a>    }
+<a href=#1712 id=1712 data-nosnippet>1712</a>}
+<a href=#1713 id=1713 data-nosnippet>1713</a>
+<a href=#1714 id=1714 data-nosnippet>1714</a><span class="attr">#[cfg(test)]
+<a href=#1715 id=1715 data-nosnippet>1715</a></span><span class="kw">mod </span>issue_line_tests {
+<a href=#1716 id=1716 data-nosnippet>1716</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1717 id=1717 data-nosnippet>1717</a>
+<a href=#1718 id=1718 data-nosnippet>1718</a>    <span class="attr">#[test]
+<a href=#1719 id=1719 data-nosnippet>1719</a>    </span><span class="kw">fn </span>the_issue_line_names_the_milestone_when_there_is_one() {
+<a href=#1720 id=1720 data-nosnippet>1720</a>        <span class="kw">let </span>q = <span class="kw">crate</span>::integration::issue_test_queue(<span class="kw-2">&amp;</span>[<span class="string">"feature/I0810-x"</span>]);
+<a href=#1721 id=1721 data-nosnippet>1721</a>        <span class="kw">let </span><span class="kw-2">mut </span>a = q.assessments[<span class="number">0</span>].clone();
+<a href=#1722 id=1722 data-nosnippet>1722</a>        <span class="macro">assert_eq!</span>(issue_line(<span class="kw-2">&amp;</span>a), <span class="prelude-val">None</span>);
+<a href=#1723 id=1723 data-nosnippet>1723</a>        a.issue = <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>.into());
+<a href=#1724 id=1724 data-nosnippet>1724</a>        <span class="macro">assert_eq!</span>(issue_line(<span class="kw-2">&amp;</span>a).as_deref(), <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>));
+<a href=#1725 id=1725 data-nosnippet>1725</a>        a.milestone = <span class="prelude-val">Some</span>(<span class="string">"M003"</span>.into());
+<a href=#1726 id=1726 data-nosnippet>1726</a>        <span class="macro">assert_eq!</span>(issue_line(<span class="kw-2">&amp;</span>a).as_deref(), <span class="prelude-val">Some</span>(<span class="string">"I0810 · milestone M003"</span>));
+<a href=#1727 id=1727 data-nosnippet>1727</a>    }
+<a href=#1728 id=1728 data-nosnippet>1728</a>
+<a href=#1729 id=1729 data-nosnippet>1729</a>    <span class="attr">#[test]
+<a href=#1730 id=1730 data-nosnippet>1730</a>    </span><span class="kw">fn </span>explain_says_the_issue_and_milestone() {
+<a href=#1731 id=1731 data-nosnippet>1731</a>        <span class="kw">let </span><span class="kw-2">mut </span>q = <span class="kw">crate</span>::integration::issue_test_queue(<span class="kw-2">&amp;</span>[<span class="string">"feature/I0810-x"</span>]);
+<a href=#1732 id=1732 data-nosnippet>1732</a>        q.assessments[<span class="number">0</span>].issue = <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>.into());
+<a href=#1733 id=1733 data-nosnippet>1733</a>        q.assessments[<span class="number">0</span>].milestone = <span class="prelude-val">Some</span>(<span class="string">"M003"</span>.into());
+<a href=#1734 id=1734 data-nosnippet>1734</a>        <span class="kw">let </span>a = q.assessments[<span class="number">0</span>].clone();
+<a href=#1735 id=1735 data-nosnippet>1735</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#1736 id=1736 data-nosnippet>1736</a>        explain(<span class="kw-2">&amp;</span>q, <span class="kw-2">&amp;</span>a, <span class="number">1</span>, OutputFormat::Text, <span class="kw-2">&amp;mut </span>out).unwrap();
+<a href=#1737 id=1737 data-nosnippet>1737</a>        <span class="kw">let </span>text = String::from_utf8(out).unwrap();
+<a href=#1738 id=1738 data-nosnippet>1738</a>        <span class="macro">assert!</span>(
+<a href=#1739 id=1739 data-nosnippet>1739</a>            text.contains(<span class="string">"issue:        I0810 · milestone M003"</span>),
+<a href=#1740 id=1740 data-nosnippet>1740</a>            <span class="string">"{text}"
+<a href=#1741 id=1741 data-nosnippet>1741</a>        </span>);
+<a href=#1742 id=1742 data-nosnippet>1742</a>    }
+<a href=#1743 id=1743 data-nosnippet>1743</a>}
+<a href=#1744 id=1744 data-nosnippet>1744</a>
+<a href=#1745 id=1745 data-nosnippet>1745</a><span class="attr">#[cfg(test)]
+<a href=#1746 id=1746 data-nosnippet>1746</a></span><span class="kw">mod </span>issue_write_tests {
+<a href=#1747 id=1747 data-nosnippet>1747</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1748 id=1748 data-nosnippet>1748</a>
+<a href=#1749 id=1749 data-nosnippet>1749</a>    <span class="doccomment">/// A writer that refuses the write carrying `needle`.
+<a href=#1750 id=1750 data-nosnippet>1750</a>    </span><span class="kw">struct </span>RefuseOn(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str);
+<a href=#1751 id=1751 data-nosnippet>1751</a>
+<a href=#1752 id=1752 data-nosnippet>1752</a>    <span class="kw">impl </span>Write <span class="kw">for </span>RefuseOn {
+<a href=#1753 id=1753 data-nosnippet>1753</a>        <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; std::io::Result&lt;usize&gt; {
+<a href=#1754 id=1754 data-nosnippet>1754</a>            <span class="kw">if </span>String::from_utf8_lossy(buf).contains(<span class="self">self</span>.<span class="number">0</span>) {
+<a href=#1755 id=1755 data-nosnippet>1755</a>                <span class="prelude-val">Err</span>(std::io::Error::other(<span class="string">"refused"</span>))
+<a href=#1756 id=1756 data-nosnippet>1756</a>            } <span class="kw">else </span>{
+<a href=#1757 id=1757 data-nosnippet>1757</a>                <span class="prelude-val">Ok</span>(buf.len())
+<a href=#1758 id=1758 data-nosnippet>1758</a>            }
+<a href=#1759 id=1759 data-nosnippet>1759</a>        }
+<a href=#1760 id=1760 data-nosnippet>1760</a>        <span class="kw">fn </span>flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; std::io::Result&lt;()&gt; {
+<a href=#1761 id=1761 data-nosnippet>1761</a>            <span class="prelude-val">Ok</span>(())
+<a href=#1762 id=1762 data-nosnippet>1762</a>        }
+<a href=#1763 id=1763 data-nosnippet>1763</a>    }
+<a href=#1764 id=1764 data-nosnippet>1764</a>
+<a href=#1765 id=1765 data-nosnippet>1765</a>    <span class="attr">#[test]
+<a href=#1766 id=1766 data-nosnippet>1766</a>    </span><span class="kw">fn </span>a_refused_issue_line_is_an_error() {
+<a href=#1767 id=1767 data-nosnippet>1767</a>        <span class="kw">let </span><span class="kw-2">mut </span>q = <span class="kw">crate</span>::integration::issue_test_queue(<span class="kw-2">&amp;</span>[<span class="string">"feature/I0810-x"</span>]);
+<a href=#1768 id=1768 data-nosnippet>1768</a>        q.assessments[<span class="number">0</span>].issue = <span class="prelude-val">Some</span>(<span class="string">"I0810"</span>.into());
+<a href=#1769 id=1769 data-nosnippet>1769</a>        <span class="kw">let </span>a = q.assessments[<span class="number">0</span>].clone();
+<a href=#1770 id=1770 data-nosnippet>1770</a>        <span class="macro">assert!</span>(explain(<span class="kw-2">&amp;</span>q, <span class="kw-2">&amp;</span>a, <span class="number">1</span>, OutputFormat::Text, <span class="kw-2">&amp;mut </span>RefuseOn(<span class="string">"issue:"</span>)).is_err());
+<a href=#1771 id=1771 data-nosnippet>1771</a>    }
+<a href=#1772 id=1772 data-nosnippet>1772</a>}
+<a href=#1773 id=1773 data-nosnippet>1773</a>
+<a href=#1774 id=1774 data-nosnippet>1774</a><span class="attr">#[cfg(test)]
+<a href=#1775 id=1775 data-nosnippet>1775</a></span><span class="kw">mod </span>left_branch_render_tests {
+<a href=#1776 id=1776 data-nosnippet>1776</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1777 id=1777 data-nosnippet>1777</a>
+<a href=#1778 id=1778 data-nosnippet>1778</a>    <span class="kw">fn </span>rendered(left: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Vec&lt;drain::LeftBranch&gt;&gt;) -&gt; String {
+<a href=#1779 id=1779 data-nosnippet>1779</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#1780 id=1780 data-nosnippet>1780</a>        left_branches(left, <span class="kw-2">&amp;mut </span>out).unwrap();
+<a href=#1781 id=1781 data-nosnippet>1781</a>        String::from_utf8(out).unwrap()
+<a href=#1782 id=1782 data-nosnippet>1782</a>    }
+<a href=#1783 id=1783 data-nosnippet>1783</a>
+<a href=#1784 id=1784 data-nosnippet>1784</a>    <span class="attr">#[test]
+<a href=#1785 id=1785 data-nosnippet>1785</a>    </span><span class="kw">fn </span>every_answer_of_the_report_is_said() {
+<a href=#1786 id=1786 data-nosnippet>1786</a>        <span class="macro">assert!</span>(rendered(<span class="kw-2">&amp;</span><span class="prelude-val">None</span>).contains(<span class="string">"merged branches: unread"</span>));
+<a href=#1787 id=1787 data-nosnippet>1787</a>        <span class="macro">assert!</span>(rendered(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(Vec::new())).contains(<span class="string">"none left on origin"</span>));
+<a href=#1788 id=1788 data-nosnippet>1788</a>        <span class="kw">let </span>b = drain::LeftBranch {
+<a href=#1789 id=1789 data-nosnippet>1789</a>            branch: <span class="string">"fix/a"</span>.into(),
+<a href=#1790 id=1790 data-nosnippet>1790</a>            tip: <span class="string">"0123456789abcdef"</span>.into(),
+<a href=#1791 id=1791 data-nosnippet>1791</a>            pr: <span class="number">7</span>,
+<a href=#1792 id=1792 data-nosnippet>1792</a>            merged_at: <span class="string">"t"</span>.into(),
+<a href=#1793 id=1793 data-nosnippet>1793</a>            action: <span class="string">"left_for_a_person"</span>.into(),
+<a href=#1794 id=1794 data-nosnippet>1794</a>            next_step: <span class="string">"delete it"</span>.into(),
+<a href=#1795 id=1795 data-nosnippet>1795</a>        };
+<a href=#1796 id=1796 data-nosnippet>1796</a>        <span class="kw">let </span>text = rendered(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="macro">vec!</span>[b]));
+<a href=#1797 id=1797 data-nosnippet>1797</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"left on origin (1)"</span>), <span class="string">"{text}"</span>);
+<a href=#1798 id=1798 data-nosnippet>1798</a>        <span class="macro">assert!</span>(
+<a href=#1799 id=1799 data-nosnippet>1799</a>            text.contains(<span class="string">"fix/a"</span>) &amp;&amp; text.contains(<span class="string">"#7"</span>) &amp;&amp; text.contains(<span class="string">"0123456789ab"</span>),
+<a href=#1800 id=1800 data-nosnippet>1800</a>            <span class="string">"{text}"
+<a href=#1801 id=1801 data-nosnippet>1801</a>        </span>);
+<a href=#1802 id=1802 data-nosnippet>1802</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"next: delete it"</span>), <span class="string">"{text}"</span>);
+<a href=#1803 id=1803 data-nosnippet>1803</a>    }
+<a href=#1804 id=1804 data-nosnippet>1804</a>
+<a href=#1805 id=1805 data-nosnippet>1805</a>    <span class="doccomment">/// A writer that refuses the write carrying `needle`, so each line's refusal is reached.
+<a href=#1806 id=1806 data-nosnippet>1806</a>    </span><span class="kw">struct </span>RefuseOn(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str);
+<a href=#1807 id=1807 data-nosnippet>1807</a>
+<a href=#1808 id=1808 data-nosnippet>1808</a>    <span class="kw">impl </span>Write <span class="kw">for </span>RefuseOn {
+<a href=#1809 id=1809 data-nosnippet>1809</a>        <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; std::io::Result&lt;usize&gt; {
+<a href=#1810 id=1810 data-nosnippet>1810</a>            <span class="kw">if </span>String::from_utf8_lossy(buf).contains(<span class="self">self</span>.<span class="number">0</span>) {
+<a href=#1811 id=1811 data-nosnippet>1811</a>                <span class="prelude-val">Err</span>(std::io::Error::other(<span class="string">"refused"</span>))
+<a href=#1812 id=1812 data-nosnippet>1812</a>            } <span class="kw">else </span>{
+<a href=#1813 id=1813 data-nosnippet>1813</a>                <span class="prelude-val">Ok</span>(buf.len())
+<a href=#1814 id=1814 data-nosnippet>1814</a>            }
+<a href=#1815 id=1815 data-nosnippet>1815</a>        }
+<a href=#1816 id=1816 data-nosnippet>1816</a>        <span class="kw">fn </span>flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; std::io::Result&lt;()&gt; {
+<a href=#1817 id=1817 data-nosnippet>1817</a>            <span class="prelude-val">Ok</span>(())
+<a href=#1818 id=1818 data-nosnippet>1818</a>        }
+<a href=#1819 id=1819 data-nosnippet>1819</a>    }
+<a href=#1820 id=1820 data-nosnippet>1820</a>
+<a href=#1821 id=1821 data-nosnippet>1821</a>    <span class="attr">#[test]
+<a href=#1822 id=1822 data-nosnippet>1822</a>    </span><span class="kw">fn </span>a_refused_write_is_an_error_on_every_line() {
+<a href=#1823 id=1823 data-nosnippet>1823</a>        <span class="kw">let </span>b = drain::LeftBranch {
+<a href=#1824 id=1824 data-nosnippet>1824</a>            branch: <span class="string">"fix/a"</span>.into(),
+<a href=#1825 id=1825 data-nosnippet>1825</a>            tip: <span class="string">"0123456789abcdef"</span>.into(),
+<a href=#1826 id=1826 data-nosnippet>1826</a>            pr: <span class="number">7</span>,
+<a href=#1827 id=1827 data-nosnippet>1827</a>            merged_at: <span class="string">"t"</span>.into(),
+<a href=#1828 id=1828 data-nosnippet>1828</a>            action: <span class="string">"left_for_a_person"</span>.into(),
+<a href=#1829 id=1829 data-nosnippet>1829</a>            next_step: <span class="string">"delete it"</span>.into(),
+<a href=#1830 id=1830 data-nosnippet>1830</a>        };
+<a href=#1831 id=1831 data-nosnippet>1831</a>        <span class="kw">for </span>needle <span class="kw">in </span>[<span class="string">"left on origin"</span>, <span class="string">"fix/a"</span>, <span class="string">"next:"</span>] {
+<a href=#1832 id=1832 data-nosnippet>1832</a>            <span class="macro">assert!</span>(
+<a href=#1833 id=1833 data-nosnippet>1833</a>                left_branches(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="macro">vec!</span>[b.clone()]), <span class="kw-2">&amp;mut </span>RefuseOn(needle)).is_err(),
+<a href=#1834 id=1834 data-nosnippet>1834</a>                <span class="string">"{needle}"
+<a href=#1835 id=1835 data-nosnippet>1835</a>            </span>);
+<a href=#1836 id=1836 data-nosnippet>1836</a>        }
+<a href=#1837 id=1837 data-nosnippet>1837</a>    }
+<a href=#1838 id=1838 data-nosnippet>1838</a>
+<a href=#1839 id=1839 data-nosnippet>1839</a>    <span class="attr">#[test]
+<a href=#1840 id=1840 data-nosnippet>1840</a>    </span><span class="kw">fn </span>an_unreadable_observation_fails_the_branch_report() {
+<a href=#1841 id=1841 data-nosnippet>1841</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#1842 id=1842 data-nosnippet>1842</a>        <span class="kw">let </span>path = <span class="kw">crate</span>::integration::state_path(dir.path(), <span class="kw">crate</span>::integration::OBSERVATION_FILE);
+<a href=#1843 id=1843 data-nosnippet>1843</a>        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+<a href=#1844 id=1844 data-nosnippet>1844</a>        std::fs::write(<span class="kw-2">&amp;</span>path, <span class="string">"not an observation"</span>).unwrap();
+<a href=#1845 id=1845 data-nosnippet>1845</a>        <span class="macro">assert!</span>(cleanup_branches(dir.path(), <span class="kw-2">&amp;mut </span>Vec::new()).is_err());
+<a href=#1846 id=1846 data-nosnippet>1846</a>    }
+<a href=#1847 id=1847 data-nosnippet>1847</a>
+<a href=#1848 id=1848 data-nosnippet>1848</a>    <span class="attr">#[test]
+<a href=#1849 id=1849 data-nosnippet>1849</a>    </span><span class="kw">fn </span>cleanup_with_nothing_observed_reports_unread() {
+<a href=#1850 id=1850 data-nosnippet>1850</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#1851 id=1851 data-nosnippet>1851</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#1852 id=1852 data-nosnippet>1852</a>        cleanup_branches(dir.path(), <span class="kw-2">&amp;mut </span>out).unwrap();
+<a href=#1853 id=1853 data-nosnippet>1853</a>        <span class="macro">assert!</span>(String::from_utf8(out)
+<a href=#1854 id=1854 data-nosnippet>1854</a>            .unwrap()
+<a href=#1855 id=1855 data-nosnippet>1855</a>            .contains(<span class="string">"merged branches: unread"</span>));
+<a href=#1856 id=1856 data-nosnippet>1856</a>    }
+<a href=#1857 id=1857 data-nosnippet>1857</a>}
 </code></pre></div></section></main></body></html>

@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.17.0 -->
+     Generator: majordomus-cli 0.18.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -153,13 +153,13 @@
 
   <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-3 lg:grid-cols-6">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">51</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">147</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">152</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">58</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/dba54228204923a1b7a6bd3d2f44f80e28a49024/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="https://majordomus.dev/docs/planning/" class="text-fg-brand underline">How that works</a>.</p><div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/893a79be6577718eec7e92c6fd79cad1bf169ff8/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="https://majordomus.dev/docs/planning/" class="text-fg-brand underline">How that works</a>.</p><div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
     <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">next ready issue</p>
     <p class="mt-2 text-lg font-semibold text-heading"><a href="https://majordomus.dev/plan/i0806/" class="text-fg-brand underline">I0806</a> — Make the session rules doctrines, with retention and archiving</p>
     <p class="mt-2 text-sm text-body">Declare the session rules in share/standard/majordomus/ with validators that doctor and watch dispatch — a malformed active or closed record, a session left open past its policy, a reference to a record that does not exist, and retention over the declared cap — and implement policy-driven archiving that never deletes and never overwrites.</p>
@@ -361,6 +361,14 @@
         <p class="text-sm leading-relaxed text-body">An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 12 done · 8 ready · 4 blocked</p>
       </a>
     </li>
+    <li>
+      <a href="https://majordomus.dev/plan/intent-bound-work/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">intent-bound-work</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+</span>
+        <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">A task is bound to the intent it serves</h3>
+        <p class="text-sm leading-relaxed text-body">`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift.</p><p class="mt-4 font-mono text-xs text-body-subtle">0 of 5 done · 5 blocked</p>
+      </a>
+    </li>
   </ul>
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Execution waves</h2>
@@ -418,7 +426,8 @@
 <span class="min-w-0 break-words text-sm text-heading">A knowledge record&#39;s file provenance survives the file&#39;s deletion</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1989/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1989</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 <span class="min-w-0 break-words text-sm text-heading">init seeds a scope for the stack it finds, not for this repository&#39;s</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1990/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1990</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 <span class="min-w-0 break-words text-sm text-heading">The pre-push check judges the refs being pushed, or says why the checkout&#39;s task binds them</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1991/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1991</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
-<span class="min-w-0 break-words text-sm text-heading">A comment-only edit of the policy regenerates no bootstrap</span></a></li>
+<span class="min-w-0 break-words text-sm text-heading">A comment-only edit of the policy regenerates no bootstrap</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2000/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2000</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">What a piece of work serves is one derivation, with a revision</span></a></li>
       </ul>
     </div>
     <div>
@@ -461,7 +470,9 @@
 <span class="min-w-0 break-words text-sm text-heading">Plan stamps written before seals existed are re-sealed by a command that keeps their original times</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1983/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1983</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">Upgrading the vendored rules reports or applies the policy and source keys those rules depend on</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1985/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1985</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">A knowledge candidate relates to its own decision and commit, not to the whole episode</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1988/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1988</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
-<span class="min-w-0 break-words text-sm text-heading">A use case&#39;s setup scripts live where the adopter declares, and its scenarios may run the adopter&#39;s own commands</span></a></li>
+<span class="min-w-0 break-words text-sm text-heading">A use case&#39;s setup scripts live where the adopter declares, and its scenarios may run the adopter&#39;s own commands</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2001/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2001</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">start asks what the task serves and refuses a refused binding where the policy requires it</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2004/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2004</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">plan start refuses an issue whose binding is refused, in both engines</span></a></li>
       </ul>
     </div>
     <div>
@@ -502,7 +513,9 @@
 <span class="min-w-0 break-words text-sm text-heading">The lifecycle commands become non-interactive capabilities</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1902/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1902</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">The gap and the critique of an intent are typed records the plan is held to</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1953/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1953</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">Evidence answers by subject, on every surface</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i1954/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1954</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
-<span class="min-w-0 break-words text-sm text-heading">Every runner reaches the ledger, through the recording branch</span></a></li>
+<span class="min-w-0 break-words text-sm text-heading">Every runner reaches the ledger, through the recording branch</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2002/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2002</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">The context of a bound task says what the intent asks of this work</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i2003/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I2003</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">A handover pins the binding it was written under, and resolving it reports drift</span></a></li>
       </ul>
     </div>
     <div>
@@ -938,6 +951,11 @@
     I1989[&quot;I1989&lt;br/&gt;init seeds a scope for the stack it finds, not for this repository&#39;s&quot;]:::ready
     I1990[&quot;I1990&lt;br/&gt;The pre-push check judges the refs being pushed, or says why the checkout&#39;s task binds them&quot;]:::ready
     I1991[&quot;I1991&lt;br/&gt;A comment-only edit of the policy regenerates no bootstrap&quot;]:::ready
+    I2000[&quot;I2000&lt;br/&gt;What a piece of work serves is one derivation, with a revision&quot;]:::blocked
+    I2001[&quot;I2001&lt;br/&gt;start asks what the task serves and refuses a refused binding where the policy requires it&quot;]:::blocked
+    I2002[&quot;I2002&lt;br/&gt;The context of a bound task says what the intent asks of this work&quot;]:::blocked
+    I2003[&quot;I2003&lt;br/&gt;A handover pins the binding it was written under, and resolving it reports drift&quot;]:::blocked
+    I2004[&quot;I2004&lt;br/&gt;plan start refuses an issue whose binding is refused, in both engines&quot;]:::blocked
     I0001 --&gt; I0002
     I0002 --&gt; I0003
     I0003 --&gt; I0004
@@ -1257,6 +1275,10 @@
     I1980 --&gt; I1983
     I1981 --&gt; I1988
     I1984 --&gt; I1985
+    I2000 --&gt; I2001
+    I2000 --&gt; I2004
+    I2001 --&gt; I2002
+    I2001 --&gt; I2003
     classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
     classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
@@ -1351,7 +1373,7 @@ majordomus plan done &lt;id&gt;</code></pre></div>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.17.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/dba54228204923a1b7a6bd3d2f44f80e28a49024" class="font-mono underline">dba5422</a> · inputs <span class="font-mono">46ae29b6fd1e</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.18.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/893a79be6577718eec7e92c6fd79cad1bf169ff8" class="font-mono underline">893a79b</a> · inputs <span class="font-mono">cc84ce1606ea</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
