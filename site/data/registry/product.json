@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.16.0"
+    "version": "0.17.0"
   },
-  "fingerprint": "14d7dffb5007d4ad9a2a0ae612aa42481ba827a4468d5a41ed03a9e4714a63ab",
+  "fingerprint": "789241c47e7809fcf47e326bf7137d761d080f209e3e28a0261c6df50c1719c6",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 51,
+    "modules": 53,
     "modules_covered": 42,
     "commands": 30,
     "commands_covered": 30,
@@ -629,7 +629,7 @@
         "use_cases": 17,
         "rules": 19,
         "enforced_rules": 16,
-        "capabilities": 21,
+        "capabilities": 28,
         "moments": 32
       },
       "evidence": {
@@ -6348,6 +6348,51 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
           "capabilities": [
             {
+              "id": "continuity.device",
+              "title": "This device's identity, and its label",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_device",
+              "route": "POST /api/v1/continuity/device",
+              "cli": "majordomus continuity device"
+            },
+            {
+              "id": "continuity.plan",
+              "title": "Whether and how a published handover can be resumed here",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_plan",
+              "route": "GET /api/v1/continuity/plan",
+              "cli": "majordomus continuity plan"
+            },
+            {
+              "id": "continuity.publish",
+              "title": "Publish this checkout's newest handover for another machine",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_publish",
+              "route": "POST /api/v1/continuity/publish",
+              "cli": "majordomus continuity publish"
+            },
+            {
+              "id": "continuity.records",
+              "title": "Every published handover the local store admits",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_records",
+              "route": "GET /api/v1/continuity/records",
+              "cli": "majordomus continuity records"
+            },
+            {
+              "id": "continuity.resume",
+              "title": "Resume a handover another machine published",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_resume",
+              "route": "POST /api/v1/continuity/resume",
+              "cli": "majordomus continuity resume"
+            },
+            {
               "id": "continuity.state",
               "title": "What the lifecycle is holding",
               "kind": "query",
@@ -6355,6 +6400,24 @@
               "tool": "majordomus_continuity",
               "resource": "majordomus://continuity",
               "route": "GET /api/v1/continuity"
+            },
+            {
+              "id": "continuity.status",
+              "title": "Where this device stands in the work published from every device",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_status",
+              "route": "GET /api/v1/continuity/status",
+              "cli": "majordomus continuity status"
+            },
+            {
+              "id": "continuity.sync",
+              "title": "Exchange published handovers with a git remote",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_sync",
+              "route": "POST /api/v1/continuity/sync",
+              "cli": "majordomus continuity sync"
             }
           ]
         },
@@ -6853,11 +6916,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
+        "capabilities": 16,
+        "mcp_tools": 16,
         "mcp_resources": 93,
-        "http_routes": 9,
-        "cli_paths": 0,
+        "http_routes": 16,
+        "cli_paths": 7,
         "commands": 7,
         "objects": 88,
         "rules": 8,
@@ -7077,7 +7140,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 81
+          "objects": 83
         },
         {
           "name": "knowledge",
@@ -7085,7 +7148,7 @@
         },
         {
           "name": "document",
-          "objects": 326
+          "objects": 327
         }
       ],
       "rule_refs": [
@@ -7358,11 +7421,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 411,
+        "mcp_resources": 414,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 408,
+        "objects": 411,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7578,7 +7641,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 161
+          "objects": 163
         }
       ],
       "rule_refs": [
@@ -7954,11 +8017,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 163,
+        "mcp_resources": 165,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 161,
+        "objects": 163,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -11444,7 +11507,7 @@
       "kind_refs": [
         {
           "name": "skill",
-          "objects": 6
+          "objects": 7
         }
       ],
       "rule_refs": [
@@ -11505,11 +11568,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 6,
+        "mcp_resources": 7,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 6,
+        "objects": 7,
         "rules": 1,
         "enforced_rules": 1,
         "docs": 1,
@@ -13819,6 +13882,11 @@
         ]
       },
       {
+        "id": "mcp",
+        "title": "MCP projection",
+        "features": []
+      },
+      {
         "id": "mesh",
         "title": "Mesh",
         "features": [
@@ -13845,6 +13913,11 @@
         "features": [
           "finish-contract"
         ]
+      },
+      {
+        "id": "pack",
+        "title": "Source pack",
+        "features": []
       },
       {
         "id": "peers",
@@ -14207,7 +14280,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (81)",
+        "title": "adr (83)",
         "features": [
           "knowledge"
         ]
@@ -14362,7 +14435,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (161)",
+        "title": "rule (163)",
         "features": [
           "doctrine"
         ]
@@ -14384,7 +14457,7 @@
       },
       {
         "id": "skill",
-        "title": "skill (6)",
+        "title": "skill (7)",
         "features": [
           "skills"
         ]
@@ -15215,6 +15288,11 @@
       "route": "/cockpit/intents"
     },
     {
+      "id": "plan",
+      "title": "Plan",
+      "route": "/cockpit/plan"
+    },
+    {
       "id": "worktrees",
       "title": "Worktrees",
       "route": "/cockpit/worktrees"
@@ -15278,22 +15356,27 @@
       "id": "api",
       "title": "API",
       "route": "/cockpit/api"
+    },
+    {
+      "id": "mcp",
+      "title": "MCP",
+      "route": "/cockpit/mcp"
     }
   ],
   "telemetry": {
-    "capabilities": 2026,
-    "builtin": 173,
-    "declarative": 1853,
-    "modules": 51,
-    "mcp_tools": 166,
-    "mcp_resources": 1906,
-    "http_routes": 170,
-    "cli_commands": 179,
+    "capabilities": 2055,
+    "builtin": 183,
+    "declarative": 1872,
+    "modules": 53,
+    "mcp_tools": 176,
+    "mcp_resources": 1926,
+    "http_routes": 180,
+    "cli_commands": 189,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1853,
+    "objects": 1872,
     "by_kind": {
-      "adr": 81,
+      "adr": 83,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -15303,7 +15386,7 @@
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 326,
+      "document": 327,
       "domain": 6,
       "feature": 27,
       "gap": 1,
@@ -15318,12 +15401,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 15,
-      "rule": 161,
+      "rule": 163,
       "scope": 1,
       "session": 84,
-      "skill": 6,
+      "skill": 7,
       "taxonomy": 10,
-      "test": 375,
+      "test": 388,
       "use-case": 48,
       "workspace": 1
     },

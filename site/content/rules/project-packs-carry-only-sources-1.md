@@ -1,7 +1,7 @@
 +++
 title = "A pack that leaves the machine carries only committed sources"
 description = "A pack that leaves the machine carries only committed sources"
-weight = 124
+weight = 125
 [extra]
 kind = "rule"
 slug = "project-packs-carry-only-sources-1"

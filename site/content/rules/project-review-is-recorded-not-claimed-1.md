@@ -1,7 +1,7 @@
 +++
 title = "Independent review is a recorded fact, weighed by evidence, never claimed and never counted"
 description = "Independent review is a recorded fact, weighed by evidence, never claimed and never counted"
-weight = 134
+weight = 135
 [extra]
 kind = "rule"
 slug = "project-review-is-recorded-not-claimed-1"

@@ -1,27 +1,27 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.16.0
+# Generator: majordomus-cli 0.17.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.16.0
+generator: majordomus-cli 0.17.0
 coverage:
   - scope: direct
-    required: 173
-    covered: 153
+    required: 183
+    covered: 159
     missing: 0
-    waived: 20
+    waived: 24
     inapplicable: 0
   - scope: http
-    required: 170
-    covered: 153
+    required: 180
+    covered: 159
     missing: 0
-    waived: 17
+    waived: 21
     inapplicable: 0
   - scope: mcp
-    required: 166
-    covered: 149
+    required: 176
+    covered: 155
     missing: 0
-    waived: 17
+    waived: 21
     inapplicable: 0
   - scope: system
     required: 13
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 522
-    covered: 468
+    required: 552
+    covered: 486
     missing: 0
-    waived: 54
+    waived: 66
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -142,6 +142,49 @@ capabilities:
       - conventional
       - not-conventional
       - merge
+  - id: continuity.device
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: continuity.plan
+    module: continuity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - by-prefix
+  - id: continuity.publish
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: continuity.records
+    module: continuity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: continuity.resume
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: continuity.state
     module: continuity
     kind: query
@@ -151,6 +194,23 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: continuity.status
+    module: continuity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: continuity.sync
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: convergence.report
     module: convergence
     kind: query
@@ -825,6 +885,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: mcp.projection
+    module: mcp
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-tool
+      - writers
   - id: mesh.claim
     module: mesh
     kind: command
@@ -1081,6 +1151,25 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: pack.plan
+    module: pack
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default-profile
+      - chatgpt
+  - id: pack.verify
+    module: pack
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - absent
   - id: peers.announce
     module: peers
     kind: command
