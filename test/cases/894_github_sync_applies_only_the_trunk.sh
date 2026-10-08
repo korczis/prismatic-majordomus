@@ -29,12 +29,20 @@ pj_issue I0002 M000
 
 STUB="$T/stub"; mkdir -p "$STUB"
 MS_TSV="$T/ms.tsv"; IS_TSV="$T/issues.tsv"; LOG="$T/gh.log"
-printf '/stub/\n/remote.git/\n/*.tsv\n/gh.log\n' >> .git/info/exclude
+printf '/stub/\n/remote.git/\n/*.tsv\n/gh.log\n/gh.log.seen\n' >> .git/info/exclude
 cat > "$STUB/gh" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$MJ_STUB_LOG"
 if [ -n "${MJ_STUB_FAIL:-}" ] && [ "$1 $2" = "$MJ_STUB_FAIL" ]; then
   echo "HTTP 403: refused by the stub" >&2; exit 1
+fi
+# a listing can be refused by what it asks for, after a number of answers: the second
+# listing of the milestones is a different event from the first
+if [ -n "${MJ_STUB_FAIL_MATCH:-}" ]; then
+  case "$*" in *"$MJ_STUB_FAIL_MATCH"*)
+    seen="$(cat "$MJ_STUB_LOG.seen" 2>/dev/null || echo 0)"; echo $((seen + 1)) > "$MJ_STUB_LOG.seen"
+    if [ "$seen" -ge "${MJ_STUB_FAIL_AFTER:-0}" ]; then echo "HTTP 502: refused by the stub" >&2; exit 1; fi ;;
+  esac
 fi
 case "$1 $2" in
   "auth status") exit 0 ;;
@@ -145,6 +153,51 @@ expect_no_grep '^FAIL'
 grep -qx 'issue close 7 --repo example/fixture' "$LOG" || { echo "    no close of #7 was sent:"; cat "$LOG"; exit 1; }
 grep -qx 'issue reopen 8 --repo example/fixture' "$LOG" || { echo "    no reopen of #8 was sent:"; cat "$LOG"; exit 1; }
 [ ! -e "$LOCK" ] || { echo "    the apply left its lock behind"; exit 1; }
+
+# --- a listing GitHub refuses is not an empty remote. Both listings ended in `|| true`: a
+#     failed one read as no milestone and no issue, so a check reported every record
+#     missing with the exit of ordinary drift, and an apply would have created each again.
+unread() {
+  rm -f "$LOG.seen"
+  PATH="$STUB:$PATH" MJ_GH_PACE=0 MJ_STUB_MS="$MS_TSV" MJ_STUB_IS="$IS_TSV" MJ_STUB_LOG="$LOG" \
+    MJ_STUB_FAIL_MATCH="$1" MJ_STUB_FAIL_AFTER="${3:-0}" "$SYNC" "$2"
+}
+for mode in --check --apply; do
+  : > "$LOG"
+  expect_exit 12 unread '/milestones' "$mode"
+  expect_grep 'github-sync: could not list the milestones of example/fixture; nothing was read and nothing was changed \(reproduce: gh api repos/example/fixture/milestones\)'
+  expect_no_grep '^DRIFT'
+  : > "$LOG"
+  expect_exit 12 unread '/issues' "$mode"
+  expect_grep 'github-sync: could not list the issues of example/fixture; nothing was read and nothing was changed'
+  expect_no_grep '^DRIFT'
+  if grep -qE '^(issue (create|edit|close|reopen)|api -X)' "$LOG"; then
+    echo "    a run that could not read the remote wrote to it:"; cat "$LOG"; exit 1
+  fi
+done
+# the milestones are listed again after they are written; that listing failing stops the run
+# before any issue is touched
+: > "$LOG"
+expect_exit 12 unread '--paginate repos/example/fixture/milestones' --apply 1
+expect_grep 'could not list the milestones of example/fixture again after writing them; no issue was touched'
+if grep -qE '^issue (create|edit|close|reopen)' "$LOG"; then
+  echo "    an issue was touched after the milestones could not be read again:"; cat "$LOG"; exit 1
+fi
+rm -f "$LOG.seen"
+[ ! -e "$LOCK" ] || { echo "    a run that could not read the remote left its lock behind"; exit 1; }
+
+# ...and the shape is refused wherever it is written, not only here: the lint reads every
+# script for a remote's answer kept in a file with the failure of asking discarded. The
+# adapter as it stands has none; with the three `|| true` put back, each is named by line.
+SCAN="$ROOT/scripts/lib/swallowed-listings.awk"
+[ -z "$(LC_ALL=C awk -f "$SCAN" "$SYNC")" ] \
+  || { echo "    the adapter keeps a remote's answer with its failure discarded:"; LC_ALL=C awk -f "$SCAN" "$SYNC"; exit 1; }
+sed -e 's/ || unreadable [a-z]*$/ || true/' -e 's/^    || unreadable [a-z]*$/    || true/' "$SYNC" > "$T/sync.mutated"
+swallowed="$(LC_ALL=C awk -f "$SCAN" "$T/sync.mutated" | wc -l | tr -d ' ')"
+[ "$swallowed" = 2 ] || { echo "    the lint found $swallowed of the 2 listings whose failure was discarded again"; exit 1; }
+rm -f "$T/sync.mutated"
+grep -q 'swallowed-listings.awk' "$ROOT/scripts/ci/shell-lint" \
+  || { echo "    scripts/ci/shell-lint does not run the scanner"; exit 1; }
 
 # --- a write GitHub refuses is reported, the run goes on, and the exit says so. Close and
 #     reopen used to end in `|| true`: this run printed nothing about #7 and exited 0.

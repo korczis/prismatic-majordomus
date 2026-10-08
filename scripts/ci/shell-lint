@@ -62,6 +62,24 @@ for f in $scripts; do
   [ -z "$out" ] || { printf 'shell-lint: %s\n' "$out"; pc_hits=1; }
 done
 [ "$pc_hits" = 0 ] || { echo "shell-lint: a counting call inside a pipeline loop is lost to a subshell; read the loop's input from a file (\`done < file\`) instead"; exit 1; }
+# A remote that did not answer is not a remote with nothing in it. `gh ... > file 2>/dev/null
+# || true` leaves an empty file either way, and scripts/github-sync read one as "no issue
+# exists": a check then reported every record missing, and an apply would have created each
+# again. Every script is read for an answer written to a file with the failure of asking
+# discarded (rule project.a-failed-read-is-not-an-empty-answer). The scanner is held to a
+# fixture whose answer is known first, as the one above is.
+echo "==> no remote answer kept with its failure discarded"
+sw_awk=scripts/lib/swallowed-listings.awk; sw_fixture=scripts/lib/swallowed-listings.fixture
+sw_want="$(sed -n 's/^# The known answer for scripts\/lib\/swallowed-listings.awk is: //p' "$sw_fixture")"
+sw_got="$(LC_ALL=C awk -f "$sw_awk" "$sw_fixture" | sed -E 's#^[^:]*:([0-9]+):.*#\1#' | tr '\n' ' ' | sed 's/ $//')"
+[ -n "$sw_want" ] && [ "$sw_got" = "$sw_want" ] || { echo "shell-lint: $sw_awk found lines [$sw_got] in $sw_fixture, whose answer is [$sw_want]; the scanner is not trustworthy"; exit 1; }
+sw_hits=0
+for f in $scripts; do
+  rc=0; out="$(LC_ALL=C awk -f "$sw_awk" "$f")" || rc=$?
+  [ "$rc" = 0 ] || { echo "shell-lint: $sw_awk could not read $f to the end"; exit 1; }
+  [ -z "$out" ] || { printf 'shell-lint: %s\n' "$out"; sw_hits=1; }
+done
+[ "$sw_hits" = 0 ] || { echo "shell-lint: say that the remote could not be read and stop (\`|| { echo ...; exit 12; }\`), or keep the answer in a variable and test it where it is set"; exit 1; }
 # The installer is POSIX shell, not bash, and is generated: it is linted as what it is, and
 # as what is actually published rather than as its template.
 if [ -f site/static/install.sh ]; then
