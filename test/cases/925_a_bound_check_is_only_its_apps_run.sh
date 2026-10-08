@@ -79,7 +79,9 @@ Q
 
 # the forge. The open list and the writers page answer the pull requests not yet merged,
 # newest first, as GitHub does; the writers page is answered only for the exact argv of the
-# page read (ten entries, no cursor), anything else is UNEXPECTED
+# page read (ten entries, no cursor), anything else is UNEXPECTED. The declarations read every
+# observation makes (ADR 0101 §6, D4) is answered from the same list: each open pull request
+# an owner's, a branch of this repository, mentioned by none
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
 echo "\$*" >> "$STATE/log"
@@ -99,11 +101,11 @@ case "\$1 \$2" in
   "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list")
     case " \$* " in
-      *" --state closed "*) echo '[]' ;;
       *" --state open "*) printf '['; open pr; printf ']\n' ;;
       *) echo "UNEXPECTED" >> "$STATE/log"; exit 1 ;;
     esac ;;
   "api graphql")
+    case "\$4" in *timelineItems*) { printf '['; open pr; printf ']'; } | jq -c '{data:{repository:{pullRequests:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[.[]|{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[]}}]}}}}'; exit 0 ;; esac
     asked=no
     if [ "\$#" = 10 ] && [ "\$3|\$5|\$6|\$7|\$8|\$9|\${10}" = "-f|-f|owner=o|-f|name=r|-F|n=50" ]; then
       [ "\$4" = "query=\$(cat "$STATE/query")" ] && asked=yes
@@ -178,9 +180,11 @@ detail="$(field 3 '.evidence[] | select(.kind == "required_checks") | .detail')"
 case "$detail" in *"ci (app 15368): missing"*) ;; *) echo "    #3's evidence does not name the bound check as missing: ${detail:-nothing}"; exit 1 ;; esac
 
 # ---------------------------------------------------------------- 2. the writers read
-grep -q '^api graphql -f query=query(.* -f owner=o -f name=r -F n=50$' "$STATE/log" \
+# a writers read in the forge's log, apart from the declarations read beside it
+WRITERS='api graphql -f query=query(.*statusCheckRollup'
+grep -q "^$WRITERS"'.* -f owner=o -f name=r -F n=50$' "$STATE/log" \
   || { echo "    the writers were not read as the adapter reads them:"; grep '^api' "$STATE/log" | cut -c1-160; exit 1; }
-[ "$(count '^api graphql ')" = 1 ] || { echo "    one observation asked for the writers $(count '^api graphql ') times, not once"; exit 1; }
+[ "$(count "^$WRITERS")" = 1 ] || { echo "    one observation asked for the writers $(count "^$WRITERS") times, not once"; exit 1; }
 
 # ---------------------------------------------------------------- 3. the drain merges #1 only
 out="$(prs drain --max 3 2>&1)" || { echo "    the drain failed:"; printf '%s\n' "$out" | sed 's/^/      /'; unexpected "the drain"; tail -8 "$STATE/log" | cut -c1-200; exit 1; }
@@ -197,7 +201,7 @@ for h in "$H2" "$H3"; do
   if git -C "$ORIGIN" merge-base --is-ancestor "$h" "$master"; then echo "    master contains $h, a head whose bound check never passed"; exit 1; fi
 done
 # every observation of the open pull requests read the writers, once, by the page form
-lists="$(count '^pr list --state open ')"; pages="$(count '^api graphql ')"
+lists="$(count '^pr list --state open ')"; pages="$(count "^$WRITERS")"
 # the refresh, the drain's first look, and the second look its merge decision is re-taken from
 [ "$lists" -ge 3 ] || { echo "    the drain did not re-take its decision from a new observation: $lists open list(s) in all"; exit 1; }
 [ "$pages" = "$lists" ] || { echo "    $lists observation(s) of the open pull requests, $pages writers read(s): not one each"; exit 1; }

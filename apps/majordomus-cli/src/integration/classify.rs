@@ -12,11 +12,12 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::model::{
-    ChangeShape, CheckKind, CheckRunState, DependencyCertainty, DependencyState, EvaluatedAgainst,
-    EvidenceKind, EvidenceSource, GateResult, IntegrationEvidence, IntegrationGate,
-    IntegrationRisk, OverlapKind, PathOverlap, PullRequestAssessment, PullRequestDependency,
-    PullRequestDisposition, PullRequestObservation, PullRequestReview, ReasonCode,
-    RelationToMaster, RequiredCheck, RequiredCheckState, ReviewPolicy,
+    ChangeShape, CheckKind, CheckRunState, CrossReferenceRead, DependencyCertainty,
+    DependencyState, EvaluatedAgainst, EvidenceKind, EvidenceSource, GateResult,
+    IntegrationEvidence, IntegrationGate, IntegrationRisk, OverlapKind, PathOverlap,
+    PullRequestAssessment, PullRequestDependency, PullRequestDisposition, PullRequestObservation,
+    PullRequestReview, ReasonCode, RelationToMaster, RequiredCheck, RequiredCheckState,
+    ReviewPolicy,
 };
 
 /// What the repository requires before a merge, as observed from the forge and the
@@ -431,17 +432,63 @@ pub struct Supersessions {
 /// one replaces, from the other side. Line-anchored, as dependencies are: the words
 /// mid-sentence are prose.
 ///
+/// Who wrote the body decides whether a declaration counts, so only what its author states
+/// counts as one ([`stated_lines()`]): a quoted line is someone else's words, and a line in a
+/// fenced code block or an HTML comment is an example or a template's hint. A dependency
+/// keeps the lenient reading: it can only make a pull request wait.
+///
 /// ```text
 /// use crate::integration::classify::declared_supersessions;
 /// let s = declared_supersessions("Supersedes #12 and #14.\nsuperseded by #20 in spirit");
 /// assert_eq!((s.supersedes, s.superseded_by), (vec![12, 14], vec![20]));
 /// assert_eq!(declared_supersessions("this supersedes #3").supersedes, Vec::<u64>::new());
+/// assert_eq!(declared_supersessions("> Supersedes #3").supersedes, Vec::<u64>::new());
 /// ```text
 pub fn declared_supersessions(body: &str) -> Supersessions {
+    let stated = stated_lines(body);
     Supersessions {
-        superseded_by: marked_numbers(body, SUPERSEDED_BY_MARKERS),
-        supersedes: marked_numbers(body, SUPERSEDES_MARKERS),
+        superseded_by: marked_numbers(&stated, SUPERSEDED_BY_MARKERS),
+        supersedes: marked_numbers(&stated, SUPERSEDES_MARKERS),
     }
+}
+
+/// The lines of a body that are its author's own statement, each on its line: none that is
+/// quoted (it opens with `>`), none inside a fenced code block (between two lines that open
+/// with the same fence, three backticks or three tildes) and none inside an HTML comment
+/// (after a line holding `<!--` and no `-->`, up to and with the next line holding `-->`; the
+/// line that opens the comment is kept, for what it states before it). A fence or a comment
+/// nobody closes takes the rest of the body with it, as it does where the body is rendered. A body pasted or prefilled from a commit message is still its author's: what
+/// they submit under their name is what they state.
+///
+/// ```text
+/// use crate::integration::classify::stated_lines;
+/// assert_eq!(stated_lines("a\n> quoted\n```\nfenced\n```\nb"), "a\nb");
+/// assert_eq!(stated_lines("a <!--\nhint\n-->\nb"), "a <!--\nb");
+/// ```text
+pub fn stated_lines(body: &str) -> String {
+    let fence_of = |line: &str| ["```", "~~~"].into_iter().find(|f| line.starts_with(f));
+    let mut fence: Option<&str> = None;
+    let mut comment = false;
+    let mut stated: Vec<&str> = Vec::new();
+    for line in body.lines() {
+        let opening = line.trim_start();
+        let opens = fence_of(opening);
+        if let Some(open) = fence {
+            // only the fence that opened the block closes it
+            fence = Some(open).filter(|open| !opening.starts_with(open));
+        } else if comment {
+            comment = !line.contains("-->");
+        } else if opens.is_some() {
+            fence = opens;
+        } else if !opening.starts_with('>') {
+            // a quoted line is someone else's words
+            comment = line
+                .rsplit_once("<!--")
+                .is_some_and(|(_, after)| !after.contains("-->"));
+            stated.push(line);
+        }
+    }
+    stated.join("\n")
 }
 
 /// The pull-request numbers a body declares under any of `markers`, in ascending order.
@@ -636,8 +683,15 @@ pub struct QueueContext {
     pub shapes: BTreeMap<u64, ChangeShape>,
     /// The declared successors of each open pull request, by its number, in successor order:
     /// from its own body (`Superseded by #N`) and from any other's, open or not
-    /// (`Supersedes #N`).
+    /// (`Supersedes #N`). Authorised successors only ([`declaration_is_authorised()`]): these
+    /// hold and close.
     pub superseded_by: BTreeMap<u64, Vec<Successor>>,
+    /// The declarations nobody entitled made, by the number of the pull request each claims
+    /// to replace: evidence, and nothing else.
+    pub possible_supersessions: BTreeMap<u64, Vec<PossibleSupersession>>,
+    /// The open pull requests whose cross-references were not read whole, each with how far
+    /// the read got: each is held, whatever else is known of it.
+    pub references_unread: BTreeMap<u64, CrossReferenceRead>,
     /// What became of each declared dependency that is not open, by its number, as the
     /// forge reported it. A dependency neither open nor here is unread.
     pub dependency_states: BTreeMap<u64, DependencyState>,
@@ -667,7 +721,79 @@ pub fn confirmed_dependencies(
     (declared, stacked_on)
 }
 
-/// One pull request declared to replace another.
+/// The forge associations whose pull requests may declare a supersession.
+pub const DECLARING_ASSOCIATIONS: &[&str] = &["OWNER", "MEMBER", "COLLABORATOR"];
+
+/// Whether a pull request with this author association, from this repository or a fork,
+/// may declare that one pull request replaces another: an owner, a member or a collaborator,
+/// with a branch in this repository. The word is the forge's, matched exactly; an empty or
+/// unknown one authorises nothing, and neither does anything from a fork.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::classify::declaration_is_authorised;
+/// assert!(declaration_is_authorised("COLLABORATOR", false));
+/// assert!(!declaration_is_authorised("CONTRIBUTOR", false), "anyone can open a pull request");
+/// assert!(!declaration_is_authorised("OWNER", true), "a fork declares nothing");
+/// assert!(!declaration_is_authorised("", false), "unread is unauthorised");
+/// ```
+pub fn declaration_is_authorised(author_association: &str, cross_repository: bool) -> bool {
+    !cross_repository && DECLARING_ASSOCIATIONS.contains(&author_association)
+}
+
+/// A declaration by someone the repository does not let declare one: evidence, never a
+/// decision. It neither holds the pull request it names nor closes it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PossibleSupersession {
+    /// The pull request said to replace this one.
+    pub successor: u64,
+    /// Whose body said so: the replaced one's own, or the successor's.
+    pub declared_in: u64,
+    /// The declarer's login; empty when unread.
+    pub declared_by: String,
+    /// The declarer's association, verbatim; empty when unread.
+    pub association: String,
+    /// Whether the declarer's head lives in a fork.
+    pub cross_repository: bool,
+}
+
+/// What the evidence says of a declaration nobody entitled made about `replaced`: who said
+/// it, what they are to the repository, and what a declaration that counts looks like.
+fn possible_supersession_detail(replaced: u64, said: &PossibleSupersession) -> String {
+    let or = |text: &str, unread: &str| {
+        if text.is_empty() {
+            unread.to_string()
+        } else {
+            text.to_string()
+        }
+    };
+    let who = or(&said.declared_by, "an unread author");
+    let association = or(&said.association, "association unread");
+    let fork = if said.cross_repository {
+        ", from a fork"
+    } else {
+        ""
+    };
+    let n = said.successor;
+    if said.declared_in == replaced {
+        format!(
+            "its body says superseded by #{n}, but its author {who} ({association}{fork}) is not \
+             an owner, member or collaborator with a branch in this repository: it is neither \
+             held nor closed by that. To replace it, one of them says `Supersedes #{replaced}` \
+             in a pull request of this repository"
+        )
+    } else {
+        format!(
+            "#{n} by {who} ({association}{fork}) says it supersedes #{replaced}: not a \
+             declaration this repository acts on, so #{replaced} is neither held nor closed by \
+             it. To replace #{replaced}, an owner, member or collaborator says \
+             `Supersedes #{replaced}` in a pull request of this repository"
+        )
+    }
+}
+
+/// One pull request declared to replace another, by someone the repository lets declare it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Successor {
     /// The successor.
@@ -684,19 +810,40 @@ pub struct Successor {
 pub enum SuccessorState {
     /// Still open.
     Open,
-    /// No longer open, and git finds its head in master: it landed.
+    /// No longer open, and git finds its head or its merge commit in master: it landed,
+    /// whatever the forge calls it.
     Landed {
-        /// Its head, as the forge reported it.
+        /// The commit git found in master: its head, or its merge commit.
         head_sha: String,
-        /// Whether the forge calls it merged.
+        /// Whether the forge calls it merged. It words the evidence and decides nothing.
         merged: bool,
+        /// Whether that commit is its merge commit (a squash leaves no commit of its head on
+        /// master), not its head.
+        by_merge_commit: bool,
     },
-    /// No longer open, and its head is not in master: closed unmerged, or merged by a squash
-    /// or a rebase, which leaves no commit of its head on master.
+    /// No longer open, and master contains neither its head nor its merge commit.
+    /// `merged: false` is closed unmerged and releases the hold; `merged: true` is merged
+    /// somewhere master does not contain.
     NotLanded {
         /// Whether the forge calls it merged.
         merged: bool,
     },
+    /// No longer open, and the forge says it changes no file, or did not say how many: it
+    /// brought nothing to master wherever its head now points — a branch reset onto master
+    /// has its head there — so git is not asked and it never landed. `merged` as for
+    /// [`SuccessorState::NotLanded`].
+    Empty {
+        /// Whether the forge calls it merged.
+        merged: bool,
+    },
+    /// Closed unmerged with its head in a fork, or somewhere the forge did not name: whoever
+    /// owns that fork can point the head at any commit of master before closing, so where it
+    /// points proves nothing, git is not asked, and it releases its hold.
+    ForkClosed,
+    /// Open, declared in its own body, and nothing could be read of who its author is to the
+    /// repository: the declaration may be one that counts, so the one it names is held until
+    /// a refresh reads it.
+    DeclarerUnread,
     /// Not open, and the forge or git could not say what became of it.
     Unread,
 }
@@ -967,6 +1114,39 @@ pub fn classify(
         relation_detail(relation),
         &git,
     ));
+    // held on its own read state, whoever declared what: a declaration that was not read is
+    // never taken for none
+    let references_unread: Option<CrossReferenceRead> = queue
+        .references_unread
+        .get(&pr.number)
+        .copied()
+        .filter(|read| *read != CrossReferenceRead::Whole);
+    evidence.extend(references_unread.map(|read| {
+        let n = pr.number;
+        if read == CrossReferenceRead::Truncated {
+            ev(
+                EvidenceKind::Supersession,
+                "references_truncated",
+                format!(
+                    "more pull requests mention #{n} than were read ({}; a mention by an \
+                     issue or from another repository counts toward that limit): one of them \
+                     may say it supersedes #{n}, so #{n} is held until a person decides it",
+                    super::forge::REFERENCE_PAGES * 100
+                ),
+                &forge,
+            )
+        } else {
+            ev(
+                EvidenceKind::Supersession,
+                "references_unread",
+                format!(
+                    "the pull requests that mention #{n} were not read: one of them may say it \
+                     supersedes #{n}, so #{n} is held"
+                ),
+                &forge,
+            )
+        }
+    }));
     let successors: &[Successor] = queue
         .superseded_by
         .get(&pr.number)
@@ -984,13 +1164,22 @@ pub fn classify(
                 format!("#{} ({declared}) is open", s.number),
                 &forge,
             ),
-            SuccessorState::Landed { head_sha, merged } => ev(
+            SuccessorState::Landed {
+                head_sha,
+                merged,
+                by_merge_commit,
+            } => ev(
                 EvidenceKind::Supersession,
                 "landed",
                 format!(
-                    "#{} ({declared}) is {}, and master contains its head {}",
+                    "#{} ({declared}) is {}, and master contains its {} {}",
                     s.number,
                     if *merged { "merged" } else { "closed" },
+                    if *by_merge_commit {
+                        "merge commit"
+                    } else {
+                        "head"
+                    },
                     short(head_sha)
                 ),
                 &EvidenceSource::Git {
@@ -1001,14 +1190,58 @@ pub fn classify(
             SuccessorState::NotLanded { merged } => ev(
                 EvidenceKind::Supersession,
                 "not_landed",
+                if *merged {
+                    format!(
+                        "#{} ({declared}) is merged, but master contains neither its head nor \
+                         its merge commit: merged into another branch, or this clone's master \
+                         is behind",
+                        s.number
+                    )
+                } else {
+                    format!(
+                        "#{} ({declared}) was closed unmerged, and master contains neither its \
+                         head nor a merge commit of it: it replaces nothing, and #{} is decided \
+                         on its own",
+                        s.number, pr.number
+                    )
+                },
+                &forge,
+            ),
+            SuccessorState::Empty { merged } => ev(
+                EvidenceKind::Supersession,
+                "not_landed",
                 format!(
-                    "#{} ({declared}) is {}, but master does not contain its head",
+                    "#{} ({declared}) is {}, and the forge names no file it changes: it \
+                     brought nothing to master, wherever its head points, so it replaces \
+                     nothing{}",
                     s.number,
+                    if *merged { "merged" } else { "closed" },
                     if *merged {
-                        "merged by a squash or a rebase"
+                        String::new()
                     } else {
-                        "closed unmerged"
+                        format!(", and #{} is decided on its own", pr.number)
                     }
+                ),
+                &forge,
+            ),
+            SuccessorState::ForkClosed => ev(
+                EvidenceKind::Supersession,
+                "not_landed",
+                format!(
+                    "#{} ({declared}) was closed unmerged and its head lives in a fork: where \
+                     that head points proves nothing, so it replaces nothing, and #{} is \
+                     decided on its own",
+                    s.number, pr.number
+                ),
+                &forge,
+            ),
+            SuccessorState::DeclarerUnread => ev(
+                EvidenceKind::Supersession,
+                "unread",
+                format!(
+                    "#{} ({declared}) is open, and who its author is to the repository could \
+                     not be read: the declaration may count, so #{} is held until it is read",
+                    s.number, pr.number
                 ),
                 &forge,
             ),
@@ -1023,6 +1256,18 @@ pub fn classify(
             ),
         });
     }
+    let possible: &[PossibleSupersession] = queue
+        .possible_supersessions
+        .get(&pr.number)
+        .map_or(&[], Vec::as_slice);
+    evidence.extend(possible.iter().map(|said| {
+        ev(
+            EvidenceKind::Supersession,
+            "possible_supersession",
+            possible_supersession_detail(pr.number, said),
+            &forge,
+        )
+    }));
     let landed: Option<u64> = successors
         .iter()
         .filter(|s| matches!(s.state, SuccessorState::Landed { .. }))
@@ -1133,7 +1378,10 @@ pub fn classify(
                 None
             },
         ),
-        (IntegrationGate::Supersession, supersession(successors)),
+        (
+            IntegrationGate::Supersession,
+            supersession(successors, references_unread),
+        ),
         (
             IntegrationGate::RelationToMaster,
             match relation {
@@ -1423,12 +1671,20 @@ pub fn classify(
     }
 }
 
-/// What the supersession gate answers for these declared successors: nothing when there is
-/// none. Of several, the strongest decides — one that landed makes it `superseded`, else one
-/// still open makes it wait for that one, else one closed without landing leaves it to a person
-/// (`possibly_redundant`), else it is `unknown` — and every successor gives its reason, the
-/// deciding kind first.
-fn supersession(successors: &[Successor]) -> Option<Failure> {
+/// What the supersession gate answers for these authorised successors: nothing when there is
+/// none and the pull requests that mention it were all read. A partial read of those
+/// (`references`) decides before anything else: it is `unknown`, held, whatever is known of
+/// its successors. Then, of several successors, the strongest decides — one that landed makes
+/// it `superseded`, else one still open makes it wait for that one, else one merged somewhere
+/// master does not contain leaves it to a person (`possibly_redundant`), else one that could
+/// not be read, or an open declarer nothing was read of, makes it `unknown` — and every
+/// successor gives its reason, the deciding kind first. A successor closed unmerged is in no
+/// group, with its head on master or not when that head lives in a fork or it changes no
+/// file: it releases its hold, and gives none.
+fn supersession(
+    successors: &[Successor],
+    references: Option<CrossReferenceRead>,
+) -> Option<Failure> {
     let of = |want: fn(&SuccessorState) -> bool| -> Vec<u64> {
         successors
             .iter()
@@ -1438,9 +1694,15 @@ fn supersession(successors: &[Successor]) -> Option<Failure> {
     };
     let landed = of(|s| matches!(s, SuccessorState::Landed { .. }));
     let open = of(|s| matches!(s, SuccessorState::Open));
-    let not_landed = of(|s| matches!(s, SuccessorState::NotLanded { .. }));
-    let unread = of(|s| matches!(s, SuccessorState::Unread));
+    let not_landed = of(|s| {
+        matches!(
+            s,
+            SuccessorState::NotLanded { merged: true } | SuccessorState::Empty { merged: true }
+        )
+    });
+    let unread = of(|s| matches!(s, SuccessorState::Unread | SuccessorState::DeclarerUnread));
     let mut reasons: Vec<ReasonCode> = Vec::new();
+    reasons.extend(references.map(|_| ReasonCode::DeclarationsUnread));
     reasons.extend(
         landed
             .iter()
@@ -1460,7 +1722,17 @@ fn supersession(successors: &[Successor]) -> Option<Failure> {
             .iter()
             .map(|&number| ReasonCode::SuccessorUnread { number }),
     );
-    let (disposition, next) = if let Some(n) = landed.first() {
+    let (disposition, next) = if let Some(read) = references {
+        let remedy = if read == CrossReferenceRead::Truncated {
+            "a person decides it: more pull requests and issues mention it than are read, one \
+             may supersede it, and no refresh clears that (docs/INTEGRATION.md, held by its \
+             mentions)"
+        } else {
+            "majordomus prs refresh; the pull requests that mention it were not all read, and \
+             one may supersede it"
+        };
+        (PullRequestDisposition::Unknown, remedy.to_string())
+    } else if let Some(n) = landed.first() {
         (
             PullRequestDisposition::Superseded,
             format!("close it: #{n}, which supersedes it, landed"),
@@ -1474,8 +1746,9 @@ fn supersession(successors: &[Successor]) -> Option<Failure> {
         (
             PullRequestDisposition::PossiblyRedundant,
             format!(
-                "#{n}, which was to supersede it, did not land: a person decides whether this \
-                 one is still wanted, and removes the declaration if so"
+                "#{n}, which was to supersede it, is merged but brought nothing git finds on \
+                 master: a person decides whether this one is still wanted, and removes the \
+                 declaration if so"
             ),
         )
     } else {
@@ -1672,8 +1945,10 @@ mod decision_branches {
         );
     }
 
+    /// Under D3 this is the batch row: the forge calls it closed, git finds its head in
+    /// master, and it landed.
     #[test]
-    fn a_successor_closed_without_a_merge_whose_head_landed_is_said_closed() {
+    fn a_successor_closed_with_its_head_on_master_landed() {
         let p = pr(serde_json::json!({}));
         let mut ctx = context();
         ctx.superseded_by.insert(
@@ -1684,18 +1959,371 @@ mod decision_branches {
                 state: SuccessorState::Landed {
                     head_sha: "h2".into(),
                     merged: false,
+                    by_merge_commit: false,
                 },
             }],
         );
         let a = classify(&p, &up_to_date(), "m", "t", &policy(None, &[]), &ctx);
         assert_eq!(a.disposition, PullRequestDisposition::Superseded);
         assert!(
-            a.evidence.iter().any(|e| e
-                .detail
-                .contains("#2 (its body says superseded by #2) is closed")),
+            a.evidence.iter().any(|e| e.detail.contains(
+                "#2 (its body says superseded by #2) is closed, and master contains its head h2"
+            )),
             "{:?}",
             a.evidence
         );
+    }
+
+    /// #1 with its required check passed and no review asked for, against `ctx`: ready
+    /// unless the supersession gate says otherwise.
+    fn decided(ctx: &QueueContext) -> PullRequestAssessment {
+        let p = pr(serde_json::json!({
+            "statusCheckRollup": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"}]
+        }));
+        let no_review = ReviewPolicy {
+            approvals: 0,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        classify(
+            &p,
+            &up_to_date(),
+            "m",
+            "t",
+            &policy(Some(no_review), &[]),
+            ctx,
+        )
+    }
+
+    /// A context in which #1 has these authorised successors.
+    fn succeeded_by(states: Vec<(u64, SuccessorState)>) -> QueueContext {
+        let mut ctx = context();
+        ctx.superseded_by.insert(
+            1,
+            states
+                .into_iter()
+                .map(|(number, state)| Successor {
+                    number,
+                    declared_in: 1,
+                    state,
+                })
+                .collect(),
+        );
+        ctx
+    }
+
+    fn supersession_evidence(a: &PullRequestAssessment) -> Vec<(&str, &str)> {
+        a.evidence
+            .iter()
+            .filter(|e| e.kind == EvidenceKind::Supersession)
+            .map(|e| (e.status.as_str(), e.detail.as_str()))
+            .collect()
+    }
+
+    fn gate_passed(a: &PullRequestAssessment) -> bool {
+        a.gates
+            .iter()
+            .any(|g| g.gate == IntegrationGate::Supersession && g.passed)
+    }
+
+    #[test]
+    fn only_an_owner_member_or_collaborator_of_this_repository_declares() {
+        for word in ["OWNER", "MEMBER", "COLLABORATOR"] {
+            assert!(declaration_is_authorised(word, false), "{word}");
+            assert!(!declaration_is_authorised(word, true), "{word} from a fork");
+        }
+        for word in [
+            "CONTRIBUTOR",
+            "FIRST_TIME_CONTRIBUTOR",
+            "FIRST_TIMER",
+            "MANNEQUIN",
+            "NONE",
+            "",
+            "owner",
+            " OWNER",
+        ] {
+            assert!(!declaration_is_authorised(word, false), "{word:?}");
+            assert!(
+                !declaration_is_authorised(word, true),
+                "{word:?} from a fork"
+            );
+        }
+        assert_eq!(DECLARING_ASSOCIATIONS.len(), 3);
+    }
+
+    #[test]
+    fn a_successor_that_landed_by_its_merge_commit_says_so() {
+        let ctx = succeeded_by(vec![(
+            2,
+            SuccessorState::Landed {
+                head_sha: "squash2".into(),
+                merged: true,
+                by_merge_commit: true,
+            },
+        )]);
+        let a = decided(&ctx);
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+        assert_eq!(a.superseded_by, Some(2));
+        let landed = a
+            .evidence
+            .iter()
+            .find(|e| e.status == "landed")
+            .expect("landed");
+        assert!(
+            landed
+                .detail
+                .contains("is merged, and master contains its merge commit squash2"),
+            "{}",
+            landed.detail
+        );
+        assert_eq!(
+            landed.source,
+            Some(EvidenceSource::Git {
+                master_sha: "m".into(),
+                head_sha: "squash2".into()
+            }),
+            "the commit git found is the one named"
+        );
+    }
+
+    #[test]
+    fn a_successor_closed_unmerged_releases_the_hold() {
+        let a = decided(&succeeded_by(vec![(
+            2,
+            SuccessorState::NotLanded { merged: false },
+        )]));
+        assert_eq!(
+            a.disposition,
+            PullRequestDisposition::Ready,
+            "{:?}",
+            a.reasons
+        );
+        assert!(gate_passed(&a), "{:?}", a.gates);
+        assert!(
+            !a.reasons
+                .iter()
+                .any(|r| r.code().starts_with("successor_") || r.code() == "superseded_by"),
+            "{:?}",
+            a.reasons
+        );
+        assert_eq!(a.superseded_by, None);
+        let said = supersession_evidence(&a);
+        assert_eq!(said.len(), 1, "{said:?}");
+        assert_eq!(said[0].0, "not_landed");
+        assert!(
+            said[0]
+                .1
+                .contains("#2 (its body says superseded by #2) was closed unmerged")
+                && said[0].1.contains("#1 is decided on its own"),
+            "{}",
+            said[0].1
+        );
+    }
+
+    #[test]
+    fn a_successor_merged_elsewhere_is_a_persons() {
+        let a = decided(&succeeded_by(vec![(
+            2,
+            SuccessorState::NotLanded { merged: true },
+        )]));
+        assert_eq!(a.disposition, PullRequestDisposition::PossiblyRedundant);
+        assert_eq!(a.reasons[0], "successor_not_landed:#2");
+        assert!(!gate_passed(&a));
+        assert!(
+            a.next_action
+                .as_deref()
+                .is_some_and(|n| n
+                    .contains("#2, which was to supersede it, is merged but brought nothing git")),
+            "{:?}",
+            a.next_action
+        );
+        let said = supersession_evidence(&a);
+        assert_eq!(said[0].0, "not_landed");
+        assert!(
+            said[0]
+                .1
+                .contains("is merged, but master contains neither its head nor its merge commit"),
+            "{}",
+            said[0].1
+        );
+        assert_eq!(
+            crate::integration::drain::cleanup_action(a.disposition),
+            Some(crate::integration::drain::LEFT_FOR_A_PERSON)
+        );
+    }
+
+    #[test]
+    fn a_released_hold_does_not_release_anothers() {
+        let released = (2, SuccessorState::NotLanded { merged: false });
+        let a = decided(&succeeded_by(vec![
+            released.clone(),
+            (3, SuccessorState::Open),
+        ]));
+        assert_eq!(a.disposition, PullRequestDisposition::WaitingForDependency);
+        assert_eq!(a.reasons[0], "successor_open:#3");
+        assert!(
+            !a.reasons.iter().any(|r| *r == "successor_not_landed:#2"),
+            "{:?}",
+            a.reasons
+        );
+        let a = decided(&succeeded_by(vec![released, (3, SuccessorState::Unread)]));
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        assert_eq!(a.reasons[0], "successor_unread:#3");
+    }
+
+    #[test]
+    fn an_unauthorised_declaration_is_evidence_and_nothing_else() {
+        let said = |successor: u64, declared_in: u64, by: &str, association: &str, fork: bool| {
+            PossibleSupersession {
+                successor,
+                declared_in,
+                declared_by: by.into(),
+                association: association.into(),
+                cross_repository: fork,
+            }
+        };
+        let mut ctx = context();
+        ctx.possible_supersessions.insert(
+            1,
+            vec![
+                said(2, 2, "mallory", "COLLABORATOR", true),
+                said(3, 1, "a", "CONTRIBUTOR", false),
+                said(4, 4, "", "NONE", false),
+                said(5, 5, "eve", "", false),
+            ],
+        );
+        // another pull request's possible supersessions are not this one's
+        ctx.possible_supersessions
+            .insert(9, vec![said(8, 8, "x", "NONE", false)]);
+        let a = decided(&ctx);
+        assert_eq!(
+            a.disposition,
+            PullRequestDisposition::Ready,
+            "{:?}",
+            a.reasons
+        );
+        assert!(gate_passed(&a));
+        assert_eq!(a.superseded_by, None);
+        let evidence = supersession_evidence(&a);
+        assert_eq!(evidence.len(), 4, "{evidence:?}");
+        assert!(evidence
+            .iter()
+            .all(|(status, _)| *status == "possible_supersession"));
+        assert!(
+            evidence[0].1.starts_with(
+                "#2 by mallory (COLLABORATOR, from a fork) says it supersedes #1: not a \
+                 declaration this repository acts on, so #1 is neither held nor closed by it."
+            ),
+            "{}",
+            evidence[0].1
+        );
+        assert!(evidence[0]
+            .1
+            .contains("says `Supersedes #1` in a pull request of this repository"));
+        assert!(
+            evidence[1].1.starts_with(
+                "its body says superseded by #3, but its author a (CONTRIBUTOR) is not an owner, \
+                 member or collaborator with a branch in this repository: it is neither held nor \
+                 closed by that."
+            ),
+            "{}",
+            evidence[1].1
+        );
+        assert!(
+            evidence[2]
+                .1
+                .starts_with("#4 by an unread author (NONE) says"),
+            "{}",
+            evidence[2].1
+        );
+        assert!(
+            evidence[3]
+                .1
+                .starts_with("#5 by eve (association unread) says"),
+            "{}",
+            evidence[3].1
+        );
+        assert_eq!(
+            crate::integration::drain::cleanup_action(a.disposition),
+            None,
+            "nothing closes it"
+        );
+    }
+
+    #[test]
+    fn references_not_read_whole_hold_whatever_else_is_known() {
+        let landed = || {
+            succeeded_by(vec![(
+                2,
+                SuccessorState::Landed {
+                    head_sha: "h2".into(),
+                    merged: true,
+                    by_merge_commit: false,
+                },
+            )])
+        };
+        let mut ctx = landed();
+        ctx.references_unread
+            .insert(1, CrossReferenceRead::Truncated);
+        let a = decided(&ctx);
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        assert_eq!(a.reasons[0], "declarations_unread");
+        assert!(
+            a.reasons.iter().any(|r| *r == "superseded_by:#2"),
+            "what is known is still said: {:?}",
+            a.reasons
+        );
+        assert_eq!(a.superseded_by, None, "never closable on a partial read");
+        assert!(!gate_passed(&a));
+        assert!(
+            a.next_action.as_deref().is_some_and(|n| n
+                .starts_with("a person decides it: more pull requests and issues")
+                && n.contains("no refresh clears that")),
+            "{:?}",
+            a.next_action
+        );
+        let said = supersession_evidence(&a);
+        assert_eq!(
+            said[0].0, "references_truncated",
+            "the read state comes first"
+        );
+        assert!(
+            said[0]
+                .1
+                .contains("more pull requests mention #1 than were read (5000; a mention by")
+                && said[0].1.contains("#1 is held"),
+            "{}",
+            said[0].1
+        );
+        assert_eq!(said[1].0, "landed");
+        assert_eq!(
+            crate::integration::drain::cleanup_action(a.disposition),
+            None
+        );
+
+        let mut ctx = context();
+        ctx.references_unread.insert(1, CrossReferenceRead::Unread);
+        let a = decided(&ctx);
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        assert_eq!(a.reasons[0], "declarations_unread");
+        let said = supersession_evidence(&a);
+        assert_eq!(said.len(), 1);
+        assert_eq!(said[0].0, "references_unread");
+        assert!(
+            said[0]
+                .1
+                .contains("the pull requests that mention #1 were not read"),
+            "{}",
+            said[0].1
+        );
+
+        // read whole, or another pull request's read: nothing is held
+        let mut ctx = landed();
+        ctx.references_unread.insert(1, CrossReferenceRead::Whole);
+        ctx.references_unread.insert(7, CrossReferenceRead::Unread);
+        let a = decided(&ctx);
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+        assert_eq!(a.superseded_by, Some(2));
     }
 
     #[test]

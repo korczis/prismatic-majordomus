@@ -7,7 +7,8 @@
 #      bound, so the refresh asks the forge who wrote each check run: one `gh api graphql`
 #      read, the first page of the open pull requests, with the owner and the name as strings
 #      (`-f`) and only the page size typed (`-F n=50`). The scripted forge answers that read
-#      argument for argument and nothing else of `api graphql`. #1 reports `lint` as a commit
+#      argument for argument, the declarations read every refresh makes (ADR 0101 §6, D4),
+#      and nothing else of `api graphql`. #1 reports `lint` as a commit
 #      status (another writer), so `lint` has not reported: it waits for checks. #2 reports
 #      `lint` as a check run app 15368 wrote: ready, because the writer was read and is the
 #      bound app, not because nobody asked: the recorded observation carries the app, and the
@@ -71,8 +72,9 @@ echo '{"required_status_checks":{"contexts":["ci"],"checks":[{"context":"ci"}]}}
 echo '[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"lint","integration_id":15368}]}}]' > "$STATE/rules.json"
 
 # the forge: protection.json absent is an unprotected branch; rules.json holding FAIL is a
-# refusal. Of `api graphql` it answers one call only: the first page of the writers read,
-# each argument where the adapter puts it. A second page (`-f after=`), the read of one pull
+# refusal. Of `api graphql` it answers the declarations read (every open pull request an
+# owner's, a branch of this repository, mentioned by none) and one writers call only: the
+# first page, each argument where the adapter puts it. A second page (`-f after=`), the read of one pull
 # request (`-F number=`), a typed owner or name (`-F owner=`) or another query is UNEXPECTED.
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
@@ -89,6 +91,7 @@ case "\$1 \$2" in
     cat "$STATE/rules.json" ;;
   "pr list") cat "$STATE/prs.json" ;;
   "api graphql")
+    case "\$4" in *timelineItems*) jq -c '{data:{repository:{pullRequests:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[.[]|{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[]}}]}}}}' "$STATE/prs.json"; exit 0 ;; esac
     if [ "\$#" = 10 ] && [ "\$3 \$5 \$6 \$7 \$8 \$9 \${10}" = "-f -f owner=o -f name=r -F n=50" ] \\
       && [ "\$4" = "query=\$(cat "$STATE/writers.query")" ]; then cat "$STATE/writers.json"
     else echo "UNEXPECTED" >> "$STATE/log"; exit 1; fi ;;
@@ -103,7 +106,7 @@ prs() { "$RB" prs --repo "$W" "$@"; }
 # prints is this case's subject either way
 look() { prs refresh >/dev/null || { echo "    refresh failed"; tail -5 "$STATE/log" | cut -c1-160; exit 1; }; q="$(prs status --format json 2>/dev/null)" || :; [ -n "$q" ] || { echo "    status printed no queue"; exit 1; }; }
 # how many times the writers were asked for, so far
-asked() { grep -c '^api graphql ' "$STATE/log" || :; }
+asked() { grep -c '^api graphql .*statusCheckRollup' "$STATE/log" || :; }
 field() { printf '%s' "$q" | jq -r --argjson n "$1" ".assessments[] | select(.number == \$n) | $2"; }
 
 # ---------------------------------------------------------------- 1. protection and rulesets
@@ -120,7 +123,7 @@ case "$detail" in *"ci: passed"*"lint (app 15368): passed"*) ;; *) echo "    #2'
 # the writer was read: one call, argument for argument (the stub answers no other), and the
 # observation the verdict was taken from records the app on #2's lint
 [ "$(asked)" = 1 ] || { echo "    the writers were asked for $(asked) times in one refresh of two pull requests, not once"; exit 1; }
-grep -q '^api graphql -f query=query(.* -f owner=o -f name=r -F n=50$' "$STATE/log" \
+grep -q '^api graphql -f query=query(.*statusCheckRollup.* -f owner=o -f name=r -F n=50$' "$STATE/log" \
   || { echo "    the writers were not read as the adapter reads them:"; grep '^api graphql' "$STATE/log" | cut -c1-160; exit 1; }
 OBS="$W/.ai/local/state/integration/observation.json"
 [ -f "$OBS" ] || { echo "    the refresh recorded no observation at $OBS"; exit 1; }
