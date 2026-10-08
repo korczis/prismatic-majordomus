@@ -21,7 +21,9 @@
 //! true. Every answer also carries the fingerprint it was compiled from, so a caller can
 //! tell two trees apart without asking a second question.
 
-use schemars::JsonSchema;
+use std::borrow::Cow;
+
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
@@ -43,10 +45,30 @@ pub const DEVCONTEXT_POLICY_URI: &str = "majordomus://devcontext/policy";
 /// A newtype over [`devcontext::CompileInput`] so that the schema component the OpenAPI
 /// document carries is named for the operation rather than for the domain type, the way
 /// every other module's input is.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+///
+/// Its schema is the wrapped type's own object under this type's name, never a reference
+/// to it: a tool's input schema is an object at its root, and a client that reads a bare
+/// `$ref` there offers none of the server's tools.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(transparent)]
-#[schemars(rename = "DevContextInput")]
 pub struct CompileInput(pub devcontext::CompileInput);
+
+impl JsonSchema for CompileInput {
+    fn schema_name() -> Cow<'static, str> {
+        "DevContextInput".into()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        concat!(module_path!(), "::DevContextInput").into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        named_object::<devcontext::CompileInput>(
+            generator,
+            "The input of `devcontext.compile`: what to compile a context about.",
+        )
+    }
+}
 
 impl BenchmarkCases for CompileInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
@@ -61,10 +83,37 @@ impl BenchmarkCases for CompileInput {
 }
 
 /// The input of `devcontext.explain`: one identifier, and the request to judge it under.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+///
+/// Its schema is the wrapped type's own object under this type's name, for the reason
+/// [`CompileInput`] gives.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(transparent)]
-#[schemars(rename = "DevContextExplainInput")]
 pub struct ExplainInput(pub devcontext::ExplainInput);
+
+impl JsonSchema for ExplainInput {
+    fn schema_name() -> Cow<'static, str> {
+        "DevContextExplainInput".into()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        concat!(module_path!(), "::DevContextExplainInput").into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        named_object::<devcontext::ExplainInput>(
+            generator,
+            "The input of `devcontext.explain`: one identifier, and the request to judge it under.",
+        )
+    }
+}
+
+/// The schema of `T` itself, described as the operation's input: what a newtype over `T`
+/// publishes, so that its root is `T`'s object and not a reference to `T`.
+fn named_object<T: JsonSchema>(generator: &mut SchemaGenerator, description: &str) -> Schema {
+    let mut schema = T::json_schema(generator);
+    schema.insert("description".into(), description.into());
+    schema
+}
 
 impl BenchmarkCases for ExplainInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
@@ -155,6 +204,42 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A newtype's derived schema is a reference to the type it wraps. These two publish
+    /// the wrapped object itself, under the operation's name, and the wire shape — serde's
+    /// transparent one — is the wrapped type's.
+    #[test]
+    fn an_input_publishes_the_object_it_wraps_and_not_a_reference_to_it() {
+        let compile = schemars::schema_for!(CompileInput).to_value();
+        assert_eq!(compile["type"], "object", "{compile}");
+        assert_eq!(compile["title"], "DevContextInput");
+        assert!(compile.get("$ref").is_none(), "{compile}");
+        assert_eq!(
+            compile["description"],
+            "The input of `devcontext.compile`: what to compile a context about."
+        );
+        let wrapped = schemars::schema_for!(devcontext::CompileInput).to_value();
+        assert_eq!(compile["properties"], wrapped["properties"]);
+        assert_eq!(compile["required"], wrapped["required"]);
+
+        let explain = schemars::schema_for!(ExplainInput).to_value();
+        assert_eq!(explain["type"], "object", "{explain}");
+        assert_eq!(explain["title"], "DevContextExplainInput");
+        assert!(explain.get("$ref").is_none(), "{explain}");
+        assert!(explain["properties"]["uri"].is_object(), "{explain}");
+
+        // two names, two identities: a generator that met both keeps both
+        assert_ne!(CompileInput::schema_id(), ExplainInput::schema_id());
+        assert_ne!(
+            CompileInput::schema_id(),
+            devcontext::CompileInput::schema_id()
+        );
+
+        assert_eq!(
+            serde_json::to_value(CompileInput::default()).unwrap(),
+            serde_json::to_value(devcontext::CompileInput::default()).unwrap()
+        );
+    }
 
     #[test]
     fn the_declaration_yields_the_projections_it_claims() {

@@ -105,12 +105,16 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
+    Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
     Knowledge(KnowledgeArgs),
+    /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
+    Continuity(ContinuityArgs),
 }
 
 #[derive(Debug, Args)]
@@ -232,6 +236,67 @@ pub struct DashboardArgs {
 pub enum DashboardCommand {
     /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
     Overview,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus pack`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PackArgs, PackCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pack", "plan", "chatgpt"]).unwrap();
+/// let Command::Pack(args) = cli.command else { panic!("not the pack command") };
+/// let args: PackArgs = args;
+/// assert!(matches!(args.command, PackCommand::Plan { profile: Some(_) }));
+/// ```
+pub struct PackArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`, `build` or `verify`. Required: the group runs nothing of its own.
+    pub command: PackCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus pack`: `plan` is the verdict before anything is written,
+/// `build` writes the pack and verifies what it wrote, and `verify` reads a written pack.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PackCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pack", "build", "--out", "tmp/p", "--force"]).unwrap();
+/// let Command::Pack(args) = cli.command else { panic!("not the pack command") };
+/// assert!(matches!(args.command, PackCommand::Build { force: true, .. }));
+/// ```
+pub enum PackCommand {
+    /// What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read
+    Plan {
+        /// A profile of share/archive.yaml (default: its `default`)
+        profile: Option<String>,
+    },
+    /// Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one
+    Build {
+        /// A profile of share/archive.yaml (default: its `default`)
+        profile: Option<String>,
+        /// Write here instead of `tmp/packs/<repo>-<profile>-<commit>`
+        #[arg(long, value_name = "DIR")]
+        out: Option<PathBuf>,
+        /// Replace a pack already at the destination (never a directory that is not a pack)
+        #[arg(long)]
+        force: bool,
+    },
+    /// Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read
+    Verify {
+        /// The pack's directory, inside the repository
+        dir: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2423,6 +2488,93 @@ pub enum KnowledgeCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus continuity`. The output shape is global, so it reads where a person writes
+/// it, and the group runs nothing of its own.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityArgs, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "continuity", "resume", "--record", "a1b2"]).unwrap();
+/// let Command::Continuity(args) = cli.command else { panic!("not the continuity command") };
+/// let args: ContinuityArgs = args;
+/// assert!(matches!(args.command, ContinuityCommand::Resume { record: Some(r) } if r == "a1b2"));
+/// assert!(Cli::try_parse_from(["majordomus", "continuity"]).is_err(), "a subcommand is required");
+/// ```
+pub struct ContinuityArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `records`, `plan`, `publish`, `sync` or `resume`. Required, so that every
+    /// runnable path is a capability's.
+    pub command: ContinuityCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus continuity`: the command line of `continuity.status`,
+/// `continuity.records`, `continuity.device`, `continuity.plan`, `continuity.publish`,
+/// `continuity.sync` and `continuity.resume`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "continuity", "publish", "--issue", "#184"]);
+/// let Command::Continuity(args) = cli.command else { panic!("continuity") };
+/// let ContinuityCommand::Publish { issue, handover, .. } = args.command else { panic!("publish") };
+/// assert_eq!(issue.as_deref(), Some("#184"));
+/// assert!(handover.is_none(), "the newest handover by default");
+/// ```
+pub enum ContinuityCommand {
+    /// This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here
+    Status,
+    /// Every published handover the local store admits, by line, and every file it refused
+    Records,
+    /// This device's identity — the mesh node key, created when absent — and its label; with --label, rename it
+    Device {
+        /// A label for this device (macbook-pro, mac-mini)
+        #[arg(long)]
+        label: Option<String>,
+    },
+    /// Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin
+    Plan {
+        /// A record id or a unique prefix; the one resumable handover when absent
+        #[arg(long)]
+        record: Option<String>,
+    },
+    /// Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path
+    Publish {
+        /// A handover record's file name under .ai/local/state/handovers/; the newest when absent
+        #[arg(long)]
+        handover: Option<String>,
+        /// The issue the work belongs to
+        #[arg(long)]
+        issue: Option<String>,
+        /// The milestone it belongs to
+        #[arg(long)]
+        milestone: Option<String>,
+    },
+    /// Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending
+    Sync {
+        /// The git remote; the current branch's, else origin, when absent
+        #[arg(long)]
+        remote: Option<String>,
+    },
+    /// Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line
+    Resume {
+        /// A record id or a unique prefix; the one resumable handover when absent
+        #[arg(long)]
+        record: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus why`. The facets and the output shape are global, so they read the way a
 /// person writes them — `why list --audience solo-builder` — and are declared once.
 pub struct WhyArgs {
@@ -4364,6 +4516,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "pack plan",
+        examples: &[ExampleDoc {
+            id: "pack-plan-chatgpt-json",
+            title: "What the ChatGPT profile would pack, before anything is written",
+            description: "The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read.",
+            argv: &["pack", "plan", "chatgpt", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/dropped", "/shards", "/findings", "/passes"]),
+        }],
+    },
+    CommandExamples {
+        command: "pack build",
+        examples: &[ExampleDoc {
+            id: "pack-build-chatgpt",
+            title: "Write the ChatGPT pack and read it back",
+            description: "Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards.",
+            argv: &["pack", "build", "chatgpt"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["pack verify: clean"]),
+        }],
+    },
+    CommandExamples {
+        command: "pack verify",
+        examples: &[ExampleDoc {
+            id: "pack-verify-absent",
+            title: "A directory that holds no pack",
+            description: "A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything.",
+            argv: &["pack", "verify", "tmp/packs/absent"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "shell check",
         examples: &[ExampleDoc {
             id: "shell-check-json",
@@ -4394,6 +4579,83 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity status",
+        examples: &[ExampleDoc {
+            id: "continuity-status-json",
+            title: "Where this device stands in the work published from every device",
+            description: "The same value `GET /api/v1/continuity/status` and the MCP tool `majordomus_continuity_status` return: this repository's identity (a digest of its root commits, the same in every clone), this device, the record this checkout continues on its branch, how the local store stands towards the remote's — read from refs, with no network — and what other devices published that could be resumed here. A repository that has published nothing answers with an empty store, which is an answer and not an error.",
+            argv: &["continuity", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/repository", "/device/node", "/store/sync", "/resumable"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity device",
+        examples: &[ExampleDoc {
+            id: "continuity-device-json",
+            title: "This device, as a published handover names it",
+            description: "The node id and public key of this device's mesh key — created on first use in the user's state directory, never in a repository — and its label. `--label mac-mini` renames it without changing the key.",
+            argv: &["continuity", "device", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/device/node", "/device/label", "/public_key"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity records",
+        examples: &[ExampleDoc {
+            id: "continuity-records-json",
+            title: "Every published handover, by line",
+            description: "Every record of refs/majordomus/continuity that passed admission, every line of work with its heads, and a diagnostic for each refused file. Empty in a repository that has published nothing.",
+            argv: &["continuity", "records", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/records", "/lines", "/diagnostics"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity plan",
+        examples: &[ExampleDoc {
+            id: "continuity-plan-nothing",
+            title: "A plan with nothing to resume",
+            description: "With no handover published from another device, the plan says so — `nothing_to_resume` — and exits 0: absence is an answer. With one, the same command decides trust, lineage and source compatibility and lists the commands that resolve each blocker without running any of them.",
+            argv: &["continuity", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/status", "/blockers", "/warnings", "/actions"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity publish",
+        examples: &[ExampleDoc {
+            id: "continuity-publish-nothing",
+            title: "Nothing to publish without a handover",
+            description: "A publication reads the newest handover record; a checkout that has written none is told to write one with `majordomus handover` and exits 10, before any device key is created.",
+            argv: &["continuity", "publish"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "continuity sync",
+        examples: &[ExampleDoc {
+            id: "continuity-sync-no-remote",
+            title: "A repository with no remote keeps its records",
+            description: "Sync moves records only through a git remote. A repository with none answers `no_remote` and exits 0: the records stay in this clone, and that is a valid state rather than a failure.",
+            argv: &["continuity", "sync", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/action", "/store/sync"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity resume",
+        examples: &[ExampleDoc {
+            id: "continuity-resume-nothing",
+            title: "A resume with nothing to resume writes nothing",
+            description: "Resume acts only on a ready plan. With no published handover it writes nothing and exits 10, printing the plan that declined.",
+            argv: &["continuity", "resume"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

@@ -9,5 +9,5 @@ pub(crate) mod protocol;
 pub mod stdio;
 pub mod surface;
 
-pub use protocol::Server;
+pub use protocol::{Server, METHODS, PROTOCOL_VERSIONS, SERVER_NAME, SERVER_TITLE};
 pub use surface::Surface;

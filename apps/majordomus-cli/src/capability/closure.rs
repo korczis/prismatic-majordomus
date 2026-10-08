@@ -133,7 +133,9 @@ pub struct Unbacked {
 /// This is the coverage matrix of the rule: a row per capability, a column per interface.
 /// It is derived, never written down — a capability that reaches nothing shows as a row of
 /// `false`, which is exactly the "exists but is invisible" case worth seeing.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 pub struct Row {
     /// The canonical id.
     pub id: String,
@@ -143,17 +145,21 @@ pub struct Row {
     pub kind: String,
     /// Where it stands.
     pub stability: String,
+    /// What a call changes: nothing, this process's memory, or the repository. The same
+    /// classification every projection reads, so the matrix answers "where is it reachable"
+    /// and "what does reaching it risk" in one row.
+    pub effect: super::model::Effect,
     /// The command line, when it declares one and clap has it.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cli: Option<String>,
     /// The HTTP route, when it declares one.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub http: Option<String>,
     /// The MCP tool name, when it declares one.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mcp_tool: Option<String>,
     /// The MCP resource URI, when it declares one.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mcp_resource: Option<String>,
     /// Whether every exposure this row declares is answered by its surface.
     pub closed: bool,
@@ -163,13 +169,15 @@ pub struct Row {
 
 /// The whole matrix, with the findings and the debt beside it: one value that answers
 /// "where does each capability appear, and is any claim unmet".
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 #[schemars(rename = "ClosureMatrix")]
 pub struct Matrix {
     /// One row per capability, in id order.
     pub rows: Vec<Row>,
     /// Every unmet claim, in capability order. Empty is the rule satisfied.
-    #[serde(skip)]
+    #[serde(skip, default)]
     pub findings: Vec<Finding>,
     /// Runnable commands of the command line that no capability claims, in command order.
     pub unbacked: Vec<String>,
@@ -284,6 +292,7 @@ fn row(c: &Capability, commands: &BTreeMap<&[String], &CommandDoc>) -> Row {
         module: c.module.to_string(),
         kind: format!("{:?}", c.kind).to_lowercase(),
         stability: format!("{:?}", c.stability).to_lowercase(),
+        effect: c.execution.effect,
         cli: cli
             .filter(|_| cli_present)
             .map(|e| format!("majordomus {}", e.path.join(" "))),
