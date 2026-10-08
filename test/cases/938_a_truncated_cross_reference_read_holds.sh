@@ -248,9 +248,9 @@ cp "$STATE/declarations-1.json" "$STATE/declarations-1-every.json"
 look
 grep -- ' -F number=' "$STATE/log" > "$STATE/alone" || :
 [ "$(grep -c . "$STATE/alone")" = 50 ] \
-  || { echo "    #1 was read alone $(grep -c . "$STATE/alone") time(s), not 50:"; sed 's/.*}}}}}}}}//' "$STATE/alone" | sort | uniq -c; exit 1; }
+  || { echo "    #1 was read alone $(grep -c . "$STATE/alone") time(s), not 50:"; sed 's/.*}}}}}}}}//' "$STATE/alone" | LC_ALL=C sort | uniq -c; exit 1; }
 [ "$(grep -c -- ' -F number=1$' "$STATE/alone")" = 1 ] && [ "$(grep -c -- ' -F number=1 -f after=again$' "$STATE/alone")" = 49 ] \
-  || { echo "    #1 was not read from the start once and then forty-nine times after the cursor given:"; sed 's/.*}}}}}}}}//' "$STATE/alone" | sort | uniq -c; exit 1; }
+  || { echo "    #1 was not read from the start once and then forty-nine times after the cursor given:"; sed 's/.*}}}}}}}}//' "$STATE/alone" | LC_ALL=C sort | uniq -c; exit 1; }
 [ "$(count ' -F n=50')" = 1 ] || { echo "    the declarations page was asked for $(count ' -F n=50') time(s), not once"; exit 1; }
 
 # ---------------------------------------------------------------- 2. held, and said so
