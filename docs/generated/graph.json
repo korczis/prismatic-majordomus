@@ -19985,7 +19985,7 @@
         "source": ".ai/repo/project/issues/I0806.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Both doctrines appear in doctrine list with a validator that exists, and doctor proves each reaches the command that claims to run it",
+            "majordomus.session-records and majordomus.session-lifecycle appear in the rule list with a validator that exists, and doctor proves each reaches the command that claims to run it",
             "A malformed closed record fails doctor and drifts watch, and the finding carries a reproduce command",
             "A session naming a checkpoint path that does not exist is reported, naming both",
             "Archiving moves records without deleting them and refuses to overwrite an existing archive",
@@ -20014,13 +20014,13 @@
             "lib/session.sh",
             "lib/doctor.sh",
             "lib/watch.sh",
-            ".majordomus/policy.yaml",
-            "test/cases/63_session_doctrines.sh"
+            ".ai/repo/policy.yaml",
+            "test/cases/63_session_records.sh"
           ],
           "slug": "session-doctrines-retention",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-08",
           "validation": [
-            "bash test/run.sh 63_session_doctrines",
+            "bash test/run.sh 63_session_records",
             "bin/majordomus doctor",
             "bin/majordomus watch"
           ]
@@ -21502,6 +21502,8 @@
           "acceptance_criteria": [
             "The JSON parses with jq and carries every phase and counter of the text form"
           ],
+          "completed_at": "2026-10-08T10:34:30Z",
+          "completed_event": "sha256:59d8f70f3a741075e5c84edd1510372f6ddadd3bbaa3e236a7aa57c7552e8959",
           "created_at": "2026-09-05",
           "current_state": "The report is text.",
           "depends_on": [
@@ -21524,10 +21526,14 @@
             "lib/bench.sh"
           ],
           "slug": "timing-json",
-          "updated_at": "2026-09-05",
+          "started_at": "2026-10-08T10:33:54Z",
+          "started_event": "sha256:0e1214d416ebdacde9adf6643ae6868a844c8735d2841ec42c4ecd96e826a745",
+          "updated_at": "2026-10-08T10:34:30Z",
           "validation": [
             "MJ_TIMING=1 bin/majordomus --json doctor"
           ],
+          "verified_at": "2026-10-08T10:34:25Z",
+          "verified_event": "sha256:6b271ee9c91f5d800365caa3f339e143c8e89399235da20c3497de1c59d7ec6e",
           "why": "A breakdown that only humans can read cannot be compared by a check."
         }
       },
@@ -26791,7 +26797,6 @@
             "The run is recorded as evidence naming the date, the counts and the commit"
           ],
           "created_at": "2026-09-09",
-          "current_state": "GitHub holds 8 milestones and 19 issues against 15 milestones and 184 issues canonically. `scripts/github-sync --check` reports 191 findings at 867f3a9.",
           "depends_on": [
             "I1401",
             "I1402",
@@ -26815,7 +26820,7 @@
             ".ai/repo/ci/github-drift-baseline.txt"
           ],
           "slug": "projection-backfill",
-          "updated_at": "2026-09-09",
+          "updated_at": "2026-10-08",
           "validation": [
             "scripts/github-sync --plan",
             "scripts/github-sync --check"
@@ -27180,6 +27185,8 @@
             "The check is answerable by a client holding no second executable",
             "A current server is not reported stale, proved by a fresh start"
           ],
+          "completed_at": "2026-10-08T10:34:20Z",
+          "completed_event": "sha256:e442a9e03f5637eb97037e4ad36e7a3ba00934dfd647fe6e29a405748b2accf8",
           "created_at": "2026-09-11",
           "depends_on": [],
           "evidence_required": [
@@ -27199,11 +27206,15 @@
             "test/cases"
           ],
           "slug": "stale-server-is-not-ready",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-08T10:33:49Z",
+          "started_event": "sha256:1ea7805a852c0dadd0bdc8062896f1c5dd2db25b082b9273ca5f31b6219b8110",
+          "updated_at": "2026-10-08T10:34:20Z",
           "validation": [
             "bin/majordomus-cli serve status",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-08T10:34:14Z",
+          "verified_event": "sha256:9ea89634e746bf8a7ae91669147f7450e92e04b5d8a7294c4b2a9d8b303cc99d"
         }
       },
       {
@@ -28061,6 +28072,8 @@
             "A schema word the case's role table does not place fails the case, naming the word",
             "scripts/cockpit-assets --check exits 0 over the rebuilt stylesheet"
           ],
+          "completed_at": "2026-10-08T10:50:24Z",
+          "completed_event": "sha256:0725b4c6b2770c1539bd2c6352b9137fb7b606f8067104ae17a931a4e104af19",
           "created_at": "2026-09-26",
           "depends_on": [],
           "evidence_required": [
@@ -28085,11 +28098,15 @@
             "test/cases/501_verdict_words_are_status_words.sh"
           ],
           "slug": "verdicts-are-status-words",
-          "updated_at": "2026-09-26",
+          "started_at": "2026-10-08T10:49:50Z",
+          "started_event": "sha256:bfe183e8f33f1ff35a394fcde8744365e9bca0c556daeaad083f3d44d3ef1696",
+          "updated_at": "2026-10-08T10:50:24Z",
           "validation": [
             "bash test/run.sh 501_verdict_words_are_status_words",
             "scripts/cockpit-assets --check"
-          ]
+          ],
+          "verified_at": "2026-10-08T10:50:20Z",
+          "verified_event": "sha256:539fc6daefc0f7bc5a732433c845f1936dfdcd02a609e2e57b1ba3e2708b8fda"
         }
       },
       {
@@ -28106,6 +28123,8 @@
             "The cockpit and deployments features carry a claim each, and each claim's test names the claim id",
             "bin/majordomus-cli product validate and bin/majordomus usecase validate pass"
           ],
+          "completed_at": "2026-10-08T10:50:38Z",
+          "completed_event": "sha256:b55b17bc1bd2fdddaa2c53b17142592fba5ebfc21a4f9b0b2b704fca9557bdc1",
           "created_at": "2026-09-26",
           "depends_on": [],
           "evidence_required": [
@@ -28135,13 +28154,17 @@
             "docs/claims"
           ],
           "slug": "every-feature-reaches-a-test",
-          "updated_at": "2026-09-26",
+          "started_at": "2026-10-08T10:49:57Z",
+          "started_event": "sha256:dc68e3b0e90f85e7868cf74e4bc048572cc92e6c498c43f40f8e12e95365428a",
+          "updated_at": "2026-10-08T10:50:38Z",
           "validation": [
             "bash test/run.sh 503_every_use_case_has_a_feature",
             "bin/majordomus-cli product validate",
             "bin/majordomus usecase validate",
             "scripts/ci/claim-proof-check --strict"
-          ]
+          ],
+          "verified_at": "2026-10-08T10:50:33Z",
+          "verified_event": "sha256:032f07a442de799cd86ba0128dbba510f104c553791d67e1c9b9a3260217c515"
         }
       },
       {
@@ -28152,6 +28175,8 @@
         "route": "/cockpit/objects/issue/i1948",
         "source": ".ai/repo/project/issues/I1948.yaml",
         "facts": {
+          "completed_at": "2026-10-08T10:52:43Z",
+          "completed_event": "sha256:2cc24671fe855ab0e90ec96cabc03e9cd058e47b9475bdf4ba0ce7eadf2d761e",
           "created_at": "2026-09-26",
           "depends_on": [],
           "evidence_required": [
@@ -28191,13 +28216,17 @@
             "test/cases/133_rule_graph.sh"
           ],
           "slug": "evidence-is-judged-at-the-presented-revision",
-          "updated_at": "2026-09-26",
+          "started_at": "2026-10-08T10:50:08Z",
+          "started_event": "sha256:fb82d681582e8642a52cdafe2ee9e8771aa628057159a5f7e9c0d4f575ee2c4d",
+          "updated_at": "2026-10-08T10:52:43Z",
           "validation": [
             "bash test/run.sh 502_evidence_is_judged_at_the_presented_revision",
             "bash test/run.sh 133_rule_graph",
             "bash test/run.sh 124_evidence",
             "cargo test --workspace --all-features"
-          ]
+          ],
+          "verified_at": "2026-10-08T10:52:39Z",
+          "verified_event": "sha256:f8d9f549b1bc2859e6dd97c930ccd6112931ccd2eec5086eea2106db935092c8"
         }
       },
       {
@@ -28242,7 +28271,7 @@
             "test/cases/357_ci_records_evidence.sh"
           ],
           "slug": "the-ci-evidence-is-recorded-clean",
-          "updated_at": "2026-09-26",
+          "updated_at": "2026-10-08",
           "validation": [
             "bash test/run.sh 357_ci_records_evidence"
           ]
@@ -28261,6 +28290,8 @@
             "The output of public_text passes generate::forbidden_in",
             "cargo test --test redaction and the redaction doctests pass"
           ],
+          "completed_at": "2026-10-08T10:52:30Z",
+          "completed_event": "sha256:3df192de1ea044ceca92953cac2e450155855d264b082cbc3384275ce78ee4d9",
           "created_at": "2026-09-26",
           "depends_on": [],
           "evidence_required": [
@@ -28284,11 +28315,15 @@
             "test/cases/504_public_text_is_redacted_once.sh"
           ],
           "slug": "evidence-output-is-redacted-once",
-          "updated_at": "2026-09-26",
+          "started_at": "2026-10-08T10:50:03Z",
+          "started_event": "sha256:ab261c9e0defdf268783a747f1818b23c2f193d62042cb48db7d3cdf015b373d",
+          "updated_at": "2026-10-08T10:52:30Z",
           "validation": [
             "bash test/run.sh 504_public_text_is_redacted_once",
             "cargo test --test redaction"
-          ]
+          ],
+          "verified_at": "2026-10-08T10:52:27Z",
+          "verified_event": "sha256:9e56b085ee364a6940c72d3fa830045fcc80575cef31ae228bbc715b444106a2"
         }
       },
       {
@@ -28370,6 +28405,8 @@
             "A case holds the tests of commands.json equal to the index's command routes",
             "Subject findings never enter the claim report's findings"
           ],
+          "completed_at": "2026-10-08T10:53:13Z",
+          "completed_event": "sha256:fd795cd8ba13054de4d5b628ff44cf4f073a34c4d9343182e29f3ad0b6bb3045",
           "created_at": "2026-09-26",
           "current_state": "No subject index exists. scripts/generate-site-data derives the tests of commands.json, lib/commands.sh reads the first header line, and scripts/ci/command-furnished reads any line.",
           "depends_on": [
@@ -28405,12 +28442,16 @@
             ".gitattributes"
           ],
           "slug": "evidence-subjects-are-derived",
-          "updated_at": "2026-09-26",
+          "started_at": "2026-10-08T10:53:02Z",
+          "started_event": "sha256:7827fa7ebc0b340166331f977b55f7cc77cbda8d8d1d0525bdc3a4207d319acf",
+          "updated_at": "2026-10-08T10:53:13Z",
           "validation": [
             "bash test/run.sh 507_evidence_subjects_are_derived",
             "majordomus generate --check",
             "cargo test --workspace --all-features"
           ],
+          "verified_at": "2026-10-08T10:53:08Z",
+          "verified_event": "sha256:8f644cf5852ce7951a002ab6db1f8d89d93831eae266a4ecae28ec4b1abe2b7f",
           "why": "Nothing ties a widget to a subject, and the command-to-test join is derived in shell more than once, with different rules for which header line counts."
         }
       },
@@ -29155,7 +29196,7 @@
             "docs/generated/graph.schema.json"
           ],
           "slug": "the-composed-graph-is-whole-or-refused",
-          "updated_at": "2026-10-03",
+          "updated_at": "2026-10-08",
           "validation": [
             "bash test/run.sh 390_unresolved_relation_refuses_generation",
             "cargo test --lib graph::",
@@ -29176,6 +29217,8 @@
             "A call to such a reporter inside a pipeline-fed loop is refused, with the file and line",
             "The known-answer fixture holds a flag-setting reporter, and the guard refuses itself when it does not find it"
           ],
+          "completed_at": "2026-10-08T10:34:40Z",
+          "completed_event": "sha256:cadec40c694e04079d7bdb20329bad5ba53a2ba2e5abca8edae08f0263915979",
           "created_at": "2026-10-04",
           "depends_on": [],
           "evidence_required": [
@@ -29196,10 +29239,14 @@
             "test/cases"
           ],
           "slug": "a-flag-setting-reporter-is-a-reporter",
-          "updated_at": "2026-10-04",
+          "started_at": "2026-10-08T10:33:59Z",
+          "started_event": "sha256:9f95a71421a6e43fdf99b134e998a11e24e6642747bb0d52eabfe18a89c13235",
+          "updated_at": "2026-10-08T10:34:40Z",
           "validation": [
             "bash scripts/ci/shell-lint"
-          ]
+          ],
+          "verified_at": "2026-10-08T10:34:35Z",
+          "verified_event": "sha256:50b3c6c85a09f0a414b8499746bfb3c440acdfdf0d601dc5408250f92db0bf9f"
         }
       },
       {
