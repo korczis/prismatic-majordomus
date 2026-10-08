@@ -137,18 +137,16 @@ if [ "$got" != 127.0.0.1 ]; then
 fi
 
 # ---------------------------------------------------------------- the server mcp elects
-# A client's `majordomus mcp` is the third thing that starts a server. Its stdin is held
-# open by a pipe nobody writes to, so it serves until it is stopped.
-mkfifo "$S/in"
-MAJORDOMUS_HTTP_HOST=0.0.0.0 "$RB" mcp --http-port 0 <"$S/in" >"$S/mcp.out" 2>"$S/mcp.log" &
-pid=$!
-exec 9>"$S/in"
-n=0
-while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/mcp.log" 2>/dev/null; do
-  n=$((n+1)); sleep 0.1
-done
-exec 9>&-
-kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; pid=""
+# A client's `majordomus mcp` is the third thing that starts a server. It runs in the
+# foreground here and serves for as long as its stdin stays open: the reader below holds it
+# open until the server has said where it listens, at most fifteen seconds, and then ends,
+# which is the client going away. Nothing is left running if this case is interrupted.
+MAJORDOMUS_HTTP_HOST=0.0.0.0 "$RB" mcp --http-port 0 >"$S/mcp.out" 2>"$S/mcp.log" < <(
+  n=0
+  while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/mcp.log" 2>/dev/null; do
+    n=$((n+1)); sleep 0.1
+  done
+) || true
 if ! grep -q 'listening on http://0\.0\.0\.0:' "$S/mcp.log"; then
   echo "    the server mcp elected did not bind what the variable named:"; cat "$S/mcp.log"; exit 1
 fi

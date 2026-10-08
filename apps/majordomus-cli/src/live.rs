@@ -458,7 +458,10 @@ impl Live {
         // at once was handed the commit before its own. It waits instead; the check below
         // then finds the new generation, or rebuilds when the rebuilder's stamp was older
         // than this caller's.
-        let _one_at_a_time = self.rebuilding.lock().unwrap_or_else(|e| e.into_inner());
+        let _one_at_a_time = self
+            .rebuilding
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let previous = {
             let state = read(&self.state);
             if state.current(&taken) {
