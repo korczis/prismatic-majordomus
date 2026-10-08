@@ -717,11 +717,29 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.batch_check",
+        "kind": "capability",
+        "label": "integration.batch_check",
+        "summary": "A composed branch that is not a batch is refused",
+        "route": "/cockpit/capabilities/integration.batch_check",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.cleanup",
         "kind": "capability",
         "label": "integration.cleanup",
         "summary": "What cleanup would do",
         "route": "/cockpit/capabilities/integration.cleanup",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.compose",
+        "kind": "capability",
+        "label": "integration.compose",
+        "summary": "The plan of a batch",
+        "route": "/cockpit/capabilities/integration.compose",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "status": "query"
       },
@@ -2623,11 +2641,27 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/integration/batch.rs",
+        "kind": "file",
+        "label": "batch.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/batch.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/integration/classify.rs",
         "kind": "file",
         "label": "classify.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/integration/classify.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/compose.rs",
+        "kind": "file",
+        "label": "compose.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/compose.rs",
         "external": true
       },
       {
@@ -2668,6 +2702,14 @@
         "label": "relation.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/integration/relation.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/repair.rs",
+        "kind": "file",
+        "label": "repair.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/repair.rs",
         "external": true
       },
       {
@@ -3708,6 +3750,14 @@
         "label": "domain.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/domain/domain.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/integration-batch/integration-batch.v1.schema.json",
+        "kind": "file",
+        "label": "integration-batch.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/integration-batch/integration-batch.v1.schema.json",
         "external": true
       },
       {
@@ -6342,6 +6392,41 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0114",
+        "kind": "adr",
+        "label": "adr-0114",
+        "summary": "A batch is composed by the integrator, names its members, and is one candidate like any other",
+        "route": "/cockpit/objects/adr/adr-0114",
+        "source": ".ai/repo/adrs/0114-a-batch-is-composed-by-the-integrator-names-its-members-and-.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-08",
+          "related": [
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "rule:project.integration-follows-the-current-master",
+            "rule:project.land-and-publish",
+            "file:apps/majordomus-cli/src/integration/repair.rs",
+            "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:docs/INTEGRATION.md",
+            "test:test/cases/939_a_batch_landed_successor_supersedes.sh",
+            "file:apps/majordomus-cli/src/integration/compose.rs",
+            "file:apps/majordomus-cli/src/integration/batch.rs",
+            "test:apps/majordomus-cli/tests/integration_compose.rs",
+            "test:test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+            "test:test/cases/1001_a_batch_is_planned_before_it_is_composed.sh",
+            "test:test/cases/277_entities_are_routable.sh",
+            "test:test/cases/936_the_rule_names_every_closure_ground.sh"
+          ],
+          "tags": [
+            "integration",
+            "git",
+            "github",
+            "governance",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -6898,6 +6983,21 @@
           ],
           "weight": 10,
           "workflow": "A few sessions a day across one or two checkouts, architecture held in one head, no review step and no handover to anybody but tomorrow."
+        }
+      },
+      {
+        "id": "majordomus://claim/a-batch-names-its-members",
+        "kind": "claim",
+        "label": "a-batch-names-its-members",
+        "summary": "A batch names its members: a branch that merges the heads of two or more open pull requests, or that touches a batch manifest, is refused by a gate of every plan unless it carries exactly one manifest naming those members in that order, each at the head that was merged and the merge commit that carries it, and no commit of its own changes anything a member's branch could",
+        "route": "/cockpit/objects/claim/a-batch-names-its-members",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/integration/batch.rs",
+          "responsibility": "none",
+          "source": "docs/INTEGRATION.md",
+          "test": "test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh"
         }
       },
       {
@@ -12155,6 +12255,57 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.integration",
+        "kind": "context",
+        "label": "ai.repo.integration",
+        "summary": "Integration",
+        "route": "/cockpit/objects/context/ai-repo-integration",
+        "source": ".ai/repo/integration/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/kinds.yaml",
+            "docs/INTEGRATION.md"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://context/ai.repo.integration.batches",
+        "kind": "context",
+        "label": "ai.repo.integration.batches",
+        "summary": "Integration batches",
+        "route": "/cockpit/objects/context/ai-repo-integration-batches",
+        "source": ".ai/repo/integration/batches/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/integration-batch/integration-batch.v1.schema.json",
+            "share/kinds.yaml",
+            "apps/majordomus-cli/src/integration/compose.rs"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "label": "ai.repo.knowledge",
@@ -13444,6 +13595,14 @@
         "summary": "Worktrees",
         "route": "/cockpit/objects/document/docs-worktrees-md",
         "source": "docs/WORKTREES.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/a-batch-names-its-members.md",
+        "kind": "document",
+        "label": "docs/claims/a-batch-names-its-members.md",
+        "summary": "A batch names its members",
+        "route": "/cockpit/objects/document/docs-claims-a-batch-names-its-members-md",
+        "source": "docs/claims/a-batch-names-its-members.md"
       },
       {
         "id": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -36766,12 +36925,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "id": "majordomus://rule/project.integration-follows-the-current-master@4",
         "kind": "rule",
-        "label": "project.integration-follows-the-current-master@3",
+        "label": "project.integration-follows-the-current-master@4",
         "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-3",
-        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v3.md",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-4",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v4.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -42307,6 +42466,20 @@
         "source": "test/cases/09_site_mobile_first.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+        "kind": "test",
+        "label": "test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+        "route": "/cockpit/objects/test/test-cases-1000-a-composed-branch-that-is-not-a-batch-is-refused-sh",
+        "source": "test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1001_a_batch_is_planned_before_it_is_composed.sh",
+        "kind": "test",
+        "label": "test/cases/1001_a_batch_is_planned_before_it_is_composed.sh",
+        "route": "/cockpit/objects/test/test-cases-1001-a-batch-is-planned-before-it-is-composed-sh",
+        "source": "test/cases/1001_a_batch_is_planned_before_it_is_composed.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/100_environment.sh",
         "kind": "test",
         "label": "test/cases/100_environment.sh",
@@ -47441,6 +47614,14 @@
         "external": true
       },
       {
+        "id": "test:apps/majordomus-cli/tests/integration_compose.rs",
+        "kind": "test",
+        "label": "integration_compose.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/integration_compose.rs",
+        "external": true
+      },
+      {
         "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
         "kind": "test",
         "label": "knowledge_base.rs",
@@ -48750,6 +48931,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.batch_check",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.batch_check",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.batch_check",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.cleanup",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -48761,6 +48957,21 @@
       },
       {
         "source": "capability:integration.cleanup",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.compose",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.compose",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.compose",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -53686,7 +53897,7 @@
       },
       {
         "source": "majordomus://adr/adr-0101",
-        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@4",
         "kind": "put_in_force"
       },
       {
@@ -54040,6 +54251,81 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0114",
+        "target": "file:apps/majordomus-cli/src/integration/batch.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "file:apps/majordomus-cli/src/integration/compose.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "file:apps/majordomus-cli/src/integration/drain.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "file:apps/majordomus-cli/src/integration/repair.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@4",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://test/test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://test/test/cases/1001_a_batch_is_planned_before_it_is_composed.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://test/test/cases/277_entities_are_routable.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://test/test/cases/936_the_rule_names_every_closure_ground.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "majordomus://test/test/cases/939_a_batch_landed_successor_supersedes.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0114",
+        "target": "test:apps/majordomus-cli/tests/integration_compose.rs",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -54223,6 +54509,26 @@
         "source": "majordomus://audience/solo-builder",
         "target": "kind:audience",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-batch-names-its-members",
+        "target": "file:apps/majordomus-cli/src/integration/batch.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/a-batch-names-its-members",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-batch-names-its-members",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/a-batch-names-its-members",
+        "target": "majordomus://test/test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/a-finding-names-how-to-see-it-again",
@@ -59165,6 +59471,41 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.integration",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.integration",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.integration",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.integration.batches",
+        "target": "file:apps/majordomus-cli/src/integration/compose.rs",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.integration.batches",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.integration.batches",
+        "target": "file:share/schemas/majordomus/integration-batch/integration-batch.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.integration.batches",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.knowledge",
         "target": "file:share/knowledge-sources.yaml",
         "kind": "tracks"
@@ -59916,6 +60257,11 @@
       },
       {
         "source": "majordomus://document/docs/WORKTREES.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/a-batch-names-its-members.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -67500,17 +67846,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@4",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@4",
         "target": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@4",
         "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },
@@ -68781,6 +69127,16 @@
       },
       {
         "source": "majordomus://test/test/cases/09_site_mobile_first.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1001_a_batch_is_planned_before_it_is_composed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -73946,7 +74302,17 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.batch_check",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.cleanup",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.compose",
         "kind": "composes"
       },
       {
@@ -74506,8 +74872,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2469,
-      "edges": 5406,
+      "nodes": 2483,
+      "edges": 5443,
       "acyclic": false,
       "truncated": false
     }

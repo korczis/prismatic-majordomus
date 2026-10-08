@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 84,
+      "count": 85,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 84
+      "count": 85
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 237
+      "count": 238
     },
     {
       "kind": "command",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 36
+      "count": 38
     },
     {
       "kind": "critique",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 328
     },
     {
       "kind": "domain",
@@ -150,6 +150,14 @@
       "title": null,
       "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
       "count": 51
+    },
+    {
+      "kind": "integration-batch",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "A batch manifest is the integrator's record of one composition: the master it was composed on and its members in order, each with its head and the merge commit that carries it (ADR 0114). It is YAML with no prose, so the generic entity page would render an empty body; a page that lays out the members is not built yet. Until it is, `majordomus prs explain`, the Cockpit's integration page and the file under .ai/repo/integration/batches/ answer for a batch.",
+      "count": 0
     },
     {
       "kind": "intent",
@@ -277,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 409
+      "count": 411
     },
     {
       "kind": "use-case",
@@ -5768,9 +5776,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.integration-follows-the-current-master@3",
+          "label": "project.integration-follows-the-current-master@4",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "route": "/rules/project-integration-follows-the-current-master-4/",
           "external": false
         },
         {
@@ -5823,7 +5831,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0114",
+          "kind": "adr",
+          "route": "/adrs/adr-0114/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6345,6 +6361,124 @@
           "kind": "test",
           "route": null,
           "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0114",
+      "identity": "adr-0114",
+      "slug": "adr-0114",
+      "cockpit": "/cockpit/objects/adr/adr-0114",
+      "title": "A batch is composed by the integrator, names its members, and is one candidate like any other",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "git",
+        "github",
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/adrs/0114-a-batch-is-composed-by-the-integrator-names-its-members-and-.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/batch.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/compose.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/drain.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/repair.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@4",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-4/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1001_a_batch_is_planned_before_it_is_composed.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/277_entities_are_routable.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/936_the_rule_names_every_closure_ground.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/939_a_batch_landed_successor_supersedes.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/integration_compose.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
         }
       ],
       "referenced_by": []
@@ -9464,9 +9598,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.integration-follows-the-current-master@3",
+          "label": "project.integration-follows-the-current-master@4",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "route": "/rules/project-integration-follows-the-current-master-4/",
           "external": false
         }
       ]
@@ -11362,10 +11496,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.integration-follows-the-current-master@3",
-      "identity": "project.integration-follows-the-current-master@3",
-      "slug": "project-integration-follows-the-current-master-3",
-      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-3",
+      "id": "majordomus://rule/project.integration-follows-the-current-master@4",
+      "identity": "project.integration-follows-the-current-master@4",
+      "slug": "project-integration-follows-the-current-master-4",
+      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-4",
       "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
       "status": "active",
       "tags": [
@@ -11376,7 +11510,7 @@
         "governance",
         "evidence"
       ],
-      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v3.md",
+      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v4.md",
       "references": [
         {
           "edge": "depends_on",
@@ -11399,6 +11533,13 @@
           "label": "adr-0101",
           "kind": "adr",
           "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0114",
+          "kind": "adr",
+          "route": "/adrs/adr-0114/",
           "external": false
         }
       ]
@@ -11790,10 +11931,17 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0114",
+          "kind": "adr",
+          "route": "/adrs/adr-0114/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
-          "label": "project.integration-follows-the-current-master@3",
+          "label": "project.integration-follows-the-current-master@4",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "route": "/rules/project-integration-follows-the-current-master-4/",
           "external": false
         },
         {

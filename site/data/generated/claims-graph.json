@@ -2148,6 +2148,15 @@
       "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
     },
     {
+      "id": "claim:a-batch-names-its-members",
+      "kind": "claim",
+      "label": "A batch names its members: a branch that merges the heads of two or more open pull requests, or that touches a batch manifest, is refused by a gate of every plan unless it carries exactly one manifest naming those members in that order, each at the head that was merged and the merge commit that carries it, and no commit of its own changes anything a member's branch could",
+      "status": "guaranteed",
+      "route": "/guarantees/a-batch-names-its-members/",
+      "external": false,
+      "note": "The case builds a batch by hand in a fixture repository with a scripted forge and sees it refused naming both members, sees the same branch pass with its manifest, and sees a fix on the batch branch, a reordered manifest and a member that moved each refused by name; a forge that cannot be read is exit 12, never clean. Case 1001 holds the other half through the command line (the executor composes the branch, the manifest and the Supersedes lines, and is refused while ADR 0114 is not accepted) and tests/integration_compose.rs the act's rarer endings. Members are open pull requests of this repository as the forge lists them at the time of the check; a batch merged before the gate existed is not judged, and naming the member behind a red batch from its logs is not built."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -2347,6 +2356,13 @@
       "id": "impl:apps/majordomus-cli/src/index.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/index.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/integration/batch.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/integration/batch.rs",
       "route": null,
       "external": false
     },
@@ -3247,6 +3263,13 @@
       "external": false
     },
     {
+      "id": "source:docs/INTEGRATION.md",
+      "kind": "source",
+      "label": "docs/INTEGRATION.md",
+      "route": "/docs/integration/",
+      "external": false
+    },
+    {
       "id": "source:docs/KNOWLEDGE.md",
       "kind": "source",
       "label": "docs/KNOWLEDGE.md",
@@ -3560,6 +3583,13 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+      "kind": "test",
+      "label": "test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh"
     },
     {
       "id": "test:test/cases/103_obligations.sh",
@@ -5533,6 +5563,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:a-batch-names-its-members",
+      "target": "source:docs/INTEGRATION.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -6658,6 +6693,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:a-batch-names-its-members",
+      "target": "impl:apps/majordomus-cli/src/integration/batch.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -7780,6 +7820,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-batch-names-its-members",
+      "target": "test:test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh",
       "kind": "proved_by"
     }
   ]

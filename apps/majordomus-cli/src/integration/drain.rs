@@ -37,6 +37,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::compose::{self, BatchManifest, BatchPlan, ComposedBatch, LeftOut, NotComposed};
 use super::{
     at, events_path, local_master, refresh, EvaluatedAgainst, IntegrationEvidence,
     IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
@@ -451,6 +452,19 @@ pub enum IntegrationAction {
     /// auto-merge, another base, an undecidable relation) or by the act (a merge, derive,
     /// commit or push that failed) — and nothing reached the branch; `class` says why.
     RepairRefused,
+    /// A person asked for a batch (`prs compose --apply`) and the queue holds at least two
+    /// eligible members: the detail names them, in order, each at the head it was decided on.
+    ComposeSelected,
+    /// The members are about to be merged, in order, onto the decided master in a scratch
+    /// worktree, and the result pushed as a new branch.
+    ComposeAttempted,
+    /// The batch was composed, pushed as a new branch and its pull request opened;
+    /// `head_after` is the batch's head.
+    Composed,
+    /// The composition was refused — by the decision (fewer than two eligible members) or by
+    /// the act (too few members left after the ones that conflicted were dropped, a derive,
+    /// commit or push that failed, a branch that already exists) — `class` says why.
+    ComposeRefused,
     /// Nothing was ready.
     Idle,
     /// A continuous drain's cycle could not observe the forge, and the outage was short
@@ -488,6 +502,10 @@ impl IntegrationAction {
             IntegrationAction::RepairAttempted => "repair_attempted",
             IntegrationAction::Repaired => "repaired",
             IntegrationAction::RepairRefused => "repair_refused",
+            IntegrationAction::ComposeSelected => "compose_selected",
+            IntegrationAction::ComposeAttempted => "compose_attempted",
+            IntegrationAction::Composed => "composed",
+            IntegrationAction::ComposeRefused => "compose_refused",
             IntegrationAction::Idle => "idle",
             IntegrationAction::ObserveFailed => "observe_failed",
         }
@@ -678,7 +696,9 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
         event.class = match event.action {
             IntegrationAction::StaleDecision => Some(FailureClass::Stale),
             IntegrationAction::MergeFailed => Some(FailureClass::of_merge_refusal(&event.detail)),
-            IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {
+            IntegrationAction::RefreshFailed
+            | IntegrationAction::RepairRefused
+            | IntegrationAction::ComposeRefused => {
                 Some(FailureClass::of_refresh_failure(&event.detail))
             }
             IntegrationAction::VerificationFailed => Some(FailureClass::VerificationFailed),
@@ -915,6 +935,24 @@ pub trait Integrator {
     /// executor's refresh (`prs drain --refresh`) and a person's repair (`prs repair`) are
     /// this one act.
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
+    /// Compose the batch `plan` decided ([`super::compose`], ADR 0114): in a scratch worktree
+    /// of the executor's own, starting from the plan's master, one `--no-ff` merge per member
+    /// of the head the plan recorded, in the plan's order; then the manifest, a fresh derive
+    /// and one composition commit; then a push as a *new* branch and the batch's pull request,
+    /// whose body supersedes each member. A member whose merge conflicts on an authored path
+    /// is dropped, named with the paths, and the composition goes on; fewer than two members
+    /// left is [`NotComposed::TooFew`] and nothing is pushed. Never a push to a branch that
+    /// exists, never a merge into master. An integrator that composes nothing says so: that
+    /// is the default, so a scripted repository that never composes need not pretend to.
+    fn compose_branch(&mut self, plan: &BatchPlan) -> Result<ComposedBatch, NotComposed> {
+        Err(NotComposed::Failed {
+            reason: format!(
+                "this integrator composes no batch: {} member(s) on {} were left alone",
+                plan.members.len(),
+                plan.base
+            ),
+        })
+    }
     /// Close a pull request with a comment saying why.
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
 }
@@ -1895,12 +1933,8 @@ pub(crate) fn landing(
     Ok(Some(merge))
 }
 
-/// Why the merge of `master` in the scratch worktree `dir` stopped, from the paths it left
-/// unmerged, each named as authored or derived by master's own `.gitattributes`
-/// ([`super::relation::derived_paths`]); `None` when git names none, or cannot say which is
-/// which. An authored conflict is the owner's to settle; a derived one means this clone has no
-/// `merge.derived` driver.
-fn unmerged_paths(root: &Path, dir: &Path, master: &str) -> Option<String> {
+/// The paths the merge in progress in the worktree `dir` left unmerged, as git lists them.
+fn unmerged_in(dir: &Path) -> Vec<String> {
     let listed = Command::new("git")
         .arg("-C")
         .arg(dir)
@@ -1908,11 +1942,20 @@ fn unmerged_paths(root: &Path, dir: &Path, master: &str) -> Option<String> {
         .output()
         .map(|o| o.stdout)
         .unwrap_or_default();
-    let paths: Vec<String> = String::from_utf8_lossy(&listed)
+    String::from_utf8_lossy(&listed)
         .split('\0')
         .filter(|p| !p.is_empty())
         .map(str::to_string)
-        .collect();
+        .collect()
+}
+
+/// Why the merge of `master` in the scratch worktree `dir` stopped, from the paths it left
+/// unmerged, each named as authored or derived by master's own `.gitattributes`
+/// ([`super::relation::derived_paths`]); `None` when git names none, or cannot say which is
+/// which. An authored conflict is the owner's to settle; a derived one means this clone has no
+/// `merge.derived` driver.
+fn unmerged_paths(root: &Path, dir: &Path, master: &str) -> Option<String> {
+    let paths = unmerged_in(dir);
     Some(paths)
         .filter(|paths| !paths.is_empty())
         .and_then(|paths| {
@@ -1938,6 +1981,181 @@ fn unmerged_paths(root: &Path, dir: &Path, master: &str) -> Option<String> {
                 named.join(", ")
             )
         })
+}
+
+/// The last three lines a tool wrote, newest first, on one line: what a refusal relays of a
+/// derive or a hook that failed.
+fn last_lines(said: &str) -> String {
+    said.lines().rev().take(3).collect::<Vec<_>>().join(" | ")
+}
+
+/// A scratch worktree of the executor's own, under the common git directory, detached at one
+/// commit: where a refresh, a repair and a composition merge, derive and commit, so that a
+/// person's checkouts are never touched. One left behind by an interrupted act is removed
+/// first, and this one is removed when the value goes, whatever the act came to.
+struct Scratch<'a> {
+    root: &'a Path,
+    dir: PathBuf,
+}
+
+impl<'a> Scratch<'a> {
+    /// The worktree `majordomus/integration/<name>` of `root`'s common directory, at `commit`.
+    fn at(root: &'a Path, name: &str, commit: &str) -> Result<Self, String> {
+        let dir = common_dir(root)?.join("majordomus/integration").join(name);
+        let scratch = Scratch { root, dir };
+        // git's complaint that there is none to remove is not the person's to read, so it is
+        // captured rather than inherited
+        scratch.remove();
+        let add = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["worktree", "add", "--detach"])
+            .arg(&scratch.dir)
+            .arg(commit)
+            .output()
+            .map_err(|e| e.to_string())?;
+        if !add.status.success() {
+            return Err(format!(
+                "git worktree add: {}",
+                String::from_utf8_lossy(&add.stderr).trim()
+            ));
+        }
+        Ok(scratch)
+    }
+
+    fn remove(&self) {
+        let _ = Command::new("git")
+            .arg("-C")
+            .arg(self.root)
+            .args(["worktree", "remove", "--force"])
+            .arg(&self.dir)
+            .output();
+    }
+
+    /// One git command in the worktree: what it printed, or what it was and why it failed.
+    fn git(&self, args: &[&str]) -> Result<String, String> {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(&self.dir)
+            .args(args)
+            .output()
+            .map_err(|e| e.to_string())?;
+        if out.status.success() {
+            Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+        } else {
+            Err(format!(
+                "git {}: {}",
+                args.join(" "),
+                String::from_utf8_lossy(&out.stderr).trim()
+            ))
+        }
+    }
+
+    /// One git command that runs the repository's hooks (a commit, a merge that commits, a
+    /// push): run without `MAJORDOMUS_SHARE`, so the hooks judge this worktree's tree with
+    /// this worktree's share. What it printed, or its standard error verbatim.
+    fn hooked(&self, args: &[&str]) -> Result<String, String> {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(&self.dir)
+            .args(args)
+            .env_remove("MAJORDOMUS_SHARE")
+            .output()
+            .map_err(|e| e.to_string())?;
+        if out.status.success() {
+            Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+        } else {
+            Err(String::from_utf8_lossy(&out.stderr).into_owned())
+        }
+    }
+
+    /// The worktree's own `scripts/derive`, building into the checkout's target directory:
+    /// the derived artifacts of the tree as it stands, regenerated rather than resolved.
+    fn derive(&self) -> Result<(), String> {
+        let target = self.root.join("apps/majordomus-cli/target");
+        let derive = Command::new(self.dir.join("scripts/derive"))
+            .current_dir(&self.dir)
+            .env_remove("MAJORDOMUS_SHARE")
+            .env("CARGO_TARGET_DIR", &target)
+            .output()
+            .map_err(|e| format!("scripts/derive could not run: {e}"))?;
+        if derive.status.success() {
+            Ok(())
+        } else {
+            Err(format!(
+                "scripts/derive failed: {}",
+                last_lines(&String::from_utf8_lossy(&derive.stderr))
+            ))
+        }
+    }
+
+    /// The one `release bump` of the tree as it stands (ADR 0114 D6): the version it declared
+    /// before and the one it declares after, or `None` when the tree declares no version and
+    /// there is nothing to raise.
+    ///
+    /// Asked of the worktree's own executable, through its own launcher, as the derive is
+    /// the worktree's own `scripts/derive` — and for the same reason. What a version must be
+    /// is decided by the public contract, and the contract is the capability registry
+    /// compiled into an executable ([`crate::release::compat::analyze`] reads it from the
+    /// process it runs in): this process carries the contract of the checkout that composes,
+    /// not of the tree that was composed, so calling the analysis here would measure the
+    /// wrong tree exactly when a member changes the contract. The launcher builds the
+    /// composed tree and runs *its* `release bump`, which writes the two version files or
+    /// nothing. It is never given `MAJORDOMUS_BIN`: an executable named from outside is some
+    /// other tree's. The versions are read back from the tree with the library's own reader
+    /// ([`crate::release::version::declared`]), not parsed from what the command printed.
+    fn bump(&self) -> Result<Option<compose::VersionStep>, String> {
+        let Some(before) = crate::release::version::declared(&self.dir) else {
+            return Ok(None);
+        };
+        let target = self.root.join("apps/majordomus-cli/target");
+        let out = Command::new(self.dir.join("bin/majordomus-cli"))
+            .args(["release", "bump"])
+            .current_dir(&self.dir)
+            .env_remove("MAJORDOMUS_SHARE")
+            .env_remove("MAJORDOMUS_BIN")
+            .env("CARGO_TARGET_DIR", &target)
+            .output()
+            .map_err(|e| format!("the composed tree's release bump could not run: {e}"))?;
+        if !out.status.success() {
+            let said = format!(
+                "{}{}",
+                String::from_utf8_lossy(&out.stdout),
+                String::from_utf8_lossy(&out.stderr)
+            );
+            return Err(format!(
+                "the version the composed tree must declare could not be decided (release \
+                 bump: {}): {}",
+                out.status,
+                last_lines(said.trim())
+            ));
+        }
+        let after = crate::release::version::declared(&self.dir).ok_or_else(|| {
+            format!(
+                "{} declares no version after release bump",
+                crate::release::version::MANIFEST
+            )
+        })?;
+        Ok(Some(compose::VersionStep { before, after }))
+    }
+
+    /// The paths the merge in progress left unmerged, split into authored and derived by
+    /// `master`'s own `.gitattributes`; `None` when git names none or cannot say which is
+    /// which.
+    fn unmerged(&self, master: &str) -> Option<(Vec<String>, Vec<String>)> {
+        let paths = unmerged_in(&self.dir);
+        if paths.is_empty() {
+            return None;
+        }
+        let derived = super::relation::derived_paths(self.root, master, &paths).ok()?;
+        Some(paths.into_iter().partition(|p| !derived.contains(p)))
+    }
+}
+
+impl Drop for Scratch<'_> {
+    fn drop(&mut self) {
+        self.remove();
+    }
 }
 
 impl Integrator for ForgeIntegrator<'_> {
@@ -2082,52 +2300,11 @@ impl Integrator for ForgeIntegrator<'_> {
         // stale lease: the record is kept fresh for as long as it runs
         let _alive = self.lease.map(IntegrationLease::keep_alive);
         let root = self.root;
-        let common = common_dir(root)?;
-        let dir = common
-            .join("majordomus/integration")
-            .join(format!("pr-{}", a.number));
         let head = a.evaluated_against.head_sha.clone();
         let master = a.evaluated_against.master_sha.clone();
-        // a scratch worktree of our own: the person's checkouts are never touched. One left
-        // by an interrupted act is removed first; git's complaint that there is none is not
-        // the person's to read, so it is captured rather than inherited
-        let _ = Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .args(["worktree", "remove", "--force"])
-            .arg(&dir)
-            .output();
-        let git_in = |args: &[&str]| -> Result<String, String> {
-            let out = Command::new("git")
-                .arg("-C")
-                .arg(&dir)
-                .args(args)
-                .output()
-                .map_err(|e| e.to_string())?;
-            if out.status.success() {
-                Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
-            } else {
-                Err(format!(
-                    "git {}: {}",
-                    args.join(" "),
-                    String::from_utf8_lossy(&out.stderr).trim()
-                ))
-            }
-        };
-        let add = Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .args(["worktree", "add", "--detach"])
-            .arg(&dir)
-            .arg(&head)
-            .output()
-            .map_err(|e| e.to_string())?;
-        if !add.status.success() {
-            return Err(format!(
-                "git worktree add: {}",
-                String::from_utf8_lossy(&add.stderr).trim()
-            ));
-        }
+        let scratch = Scratch::at(root, &format!("pr-{}", a.number), &head)?;
+        let dir = scratch.dir.clone();
+        let git_in = |args: &[&str]| scratch.git(args);
         let result = (|| -> Result<String, String> {
             // rerere off: a resolution recorded during some other merge is a memory of what
             // one person decided about two other commits, and replaying it here would resolve
@@ -2146,44 +2323,17 @@ impl Integrator for ForgeIntegrator<'_> {
                 return Err(why);
             }
             // the derived artifacts of the merge result, regenerated rather than resolved
-            let target = root.join("apps/majordomus-cli/target");
-            let derive = Command::new(dir.join("scripts/derive"))
-                .current_dir(&dir)
-                .env_remove("MAJORDOMUS_SHARE")
-                .env("CARGO_TARGET_DIR", &target)
-                .output()
-                .map_err(|e| format!("scripts/derive could not run: {e}"))?;
-            if !derive.status.success() {
+            if let Err(e) = scratch.derive() {
                 let _ = git_in(&["merge", "--abort"]);
-                return Err(format!(
-                    "scripts/derive failed: {}",
-                    String::from_utf8_lossy(&derive.stderr)
-                        .lines()
-                        .rev()
-                        .take(3)
-                        .collect::<Vec<_>>()
-                        .join(" | ")
-                ));
+                return Err(e);
             }
             git_in(&["add", "-A"])?;
             let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
-            let commit = Command::new("git")
-                .arg("-C")
-                .arg(&dir)
-                .args(["commit", "--no-edit", "-m", &message])
-                .env_remove("MAJORDOMUS_SHARE")
-                .output()
-                .map_err(|e| e.to_string())?;
-            if !commit.status.success() {
+            if let Err(said) = scratch.hooked(&["commit", "--no-edit", "-m", &message]) {
                 let _ = git_in(&["merge", "--abort"]);
                 return Err(format!(
                     "the merge commit was refused: {}",
-                    String::from_utf8_lossy(&commit.stderr)
-                        .lines()
-                        .rev()
-                        .take(3)
-                        .collect::<Vec<_>>()
-                        .join(" | ")
+                    last_lines(&said)
                 ));
             }
             let new_head = git_in(&["rev-parse", "HEAD"])?;
@@ -2211,32 +2361,208 @@ impl Integrator for ForgeIntegrator<'_> {
             // git refuses it. Rewinding it to an ancestor of the observed head is the one move
             // that slips through: the push is then a fast-forward that restores the commits the
             // author removed. That window is accepted, and it never rewrites anything.
-            let push = Command::new("git")
-                .arg("-C")
-                .arg(&dir)
-                .args([
+            scratch
+                .hooked(&[
                     "push",
                     "origin",
                     &format!("{new_head}:refs/heads/{}", a.head_ref),
                 ])
-                .env_remove("MAJORDOMUS_SHARE")
-                .output()
-                .map_err(|e| e.to_string())?;
-            if !push.status.success() {
-                return Err(format!(
-                    "the push was refused: {}",
-                    String::from_utf8_lossy(&push.stderr).trim()
-                ));
-            }
+                .map_err(|said| format!("the push was refused: {}", said.trim()))?;
             Ok(new_head)
         })();
-        let _ = Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .args(["worktree", "remove", "--force"])
-            .arg(&dir)
-            .output();
+        // the scratch worktree is removed when `scratch` goes, whatever the result
         result
+    }
+
+    fn compose_branch(&mut self, plan: &BatchPlan) -> Result<ComposedBatch, NotComposed> {
+        // a composition runs the repository's derive, as a refresh does: the lease's record is
+        // kept fresh for as long as it runs
+        let _alive = self.lease.map(IntegrationLease::keep_alive);
+        let failed = |reason: String| NotComposed::Failed { reason };
+        let master = plan.master_sha.as_str();
+        // a scratch worktree of our own, at the master that was decided on: the batch's
+        // first-parent line starts there
+        let scratch = Scratch::at(
+            self.root,
+            &format!("batch-{}", compose::short(master)),
+            master,
+        )
+        .map_err(failed)?;
+        let mut members: Vec<compose::ComposedMember> = Vec::new();
+        let mut dropped: Vec<LeftOut> = Vec::new();
+        for m in &plan.members {
+            // rerere off, as in a refresh: nobody decided anything about these two commits.
+            // The merge commits at once: its second parent is the head that was decided on
+            let merge = scratch.hooked(&[
+                "-c",
+                "rerere.enabled=false",
+                "merge",
+                "--no-ff",
+                "--no-edit",
+                "-m",
+                &compose::merge_message(m, &plan.base),
+                &m.head,
+            ]);
+            if let Err(said) = merge {
+                let unmerged = scratch.unmerged(master);
+                let _ = scratch.git(&["merge", "--abort"]);
+                match unmerged {
+                    // two people wrote two things: this member's owner settles it on the
+                    // member's branch, and the composition goes on without it
+                    Some((authored, _)) if !authored.is_empty() => dropped.push(LeftOut::of(
+                        m,
+                        compose::LeftOutReason::ConflictsInBatch { paths: authored },
+                    )),
+                    Some((_, derived)) => {
+                        return Err(failed(format!(
+                            "merging #{} conflicts only on {} derived path(s) ({}): the derive \
+                             settles those, and this clone has no merge.derived driver to let \
+                             the merge through (just derive-merge-driver)",
+                            m.number,
+                            derived.len(),
+                            derived.join(", ")
+                        )))
+                    }
+                    None => {
+                        return Err(failed(format!(
+                            "merging #{} at {} failed: {}",
+                            m.number,
+                            m.head,
+                            last_lines(&said)
+                        )))
+                    }
+                }
+                continue;
+            }
+            let commit = scratch.git(&["rev-parse", "HEAD"]).map_err(failed)?;
+            if scratch.git(&["rev-parse", "HEAD^2"]).ok().as_deref() != Some(m.head.as_str())
+                || members.iter().any(|c| c.merge_commit == commit)
+            {
+                // git made no merge commit: the head was in the composition already
+                dropped.push(LeftOut::of(m, compose::LeftOutReason::AlreadyInBatch));
+                continue;
+            }
+            members.push(compose::ComposedMember {
+                number: m.number,
+                head: m.head.clone(),
+                title: m.title.clone(),
+                merge_commit: commit,
+            });
+        }
+        if members.len() < compose::MIN_MEMBERS {
+            return Err(NotComposed::TooFew {
+                remaining: members.iter().map(|m| m.number).collect(),
+                dropped,
+            });
+        }
+        let manifest = BatchManifest::of(
+            &plan.base,
+            master,
+            &crate::peers::rfc3339(SystemTime::now()),
+            members,
+        );
+        let branch = compose::branch_of(&manifest.id);
+        // a new branch or nothing: the same members on the same master were composed before
+        // when it exists, and a branch somebody else holds is never moved. A listing that
+        // fails is its own refusal, in git's words
+        let listed = scratch
+            .git(&["ls-remote", "origin", &format!("refs/heads/{branch}")])
+            .map_err(|e| failed(format!("the branch could not be listed: {e}")))?;
+        if let Some(there) = listed.split_whitespace().next() {
+            return Err(failed(format!(
+                "{branch} already exists on origin at {there}: these members were composed on \
+                 this master before; nothing was pushed"
+            )));
+        }
+        // one bump, to what the public contract of the composed tree requires, after the
+        // members and before the derive, which stamps the version it finds (ADR 0114 D6). A
+        // member carries no bump of its own; when nothing is required nothing is written, and
+        // the manifest says which it was
+        let manifest = match scratch.bump().map_err(failed)? {
+            Some(step) => manifest.versioned(&step),
+            None => manifest,
+        };
+        let path = compose::manifest_path(&manifest.id);
+        let file = scratch.dir.join(&path);
+        // a title is the forge's text, and the layer's YAML is a subset: a manifest that does
+        // not read back as what was composed is not committed
+        let text = manifest.to_yaml();
+        if BatchManifest::parse(&text).as_ref() != Ok(&manifest) {
+            return Err(failed(format!(
+                "the manifest of {branch} does not read back as it was written; nothing was pushed"
+            )));
+        }
+        fs::create_dir_all(file.parent().unwrap_or(&scratch.dir))
+            .and_then(|()| fs::write(&file, text))
+            .map_err(|e| failed(format!("{path} could not be written: {e}")))?;
+        // tracked before the derive, which indexes tracked files: the manifest is an object
+        // of the layer, and what the derive writes about it lands in the same commit
+        scratch.git(&["add", "--", &path]).map_err(failed)?;
+        scratch.derive().map_err(failed)?;
+        scratch.git(&["add", "-A"]).map_err(failed)?;
+        scratch
+            .hooked(&["commit", "-m", &compose::composition_message(&manifest)])
+            .map_err(|said| {
+                failed(format!(
+                    "the composition commit was refused: {}",
+                    last_lines(&said)
+                ))
+            })?;
+        let head = scratch.git(&["rev-parse", "HEAD"]).map_err(failed)?;
+        // attribution is structural (ADR 0114 D4): from master, on the first-parent line, one
+        // merge per member and then the composition commit, or nothing is pushed
+        let line = scratch
+            .git(&["rev-list", "--first-parent", &format!("{master}..{head}")])
+            .map_err(failed)?;
+        if line.lines().count() != manifest.members.len() + 1 {
+            return Err(failed(format!(
+                "the composed branch holds {} commit(s) on its first-parent line from {master}, \
+                 not one per member and the composition commit ({}); nothing was pushed",
+                line.lines().count(),
+                manifest.members.len() + 1
+            )));
+        }
+        // A plain push, never forced, to a name that was not there a moment ago: were it
+        // created meanwhile, git accepts this only as a fast-forward of what is there, and
+        // nothing is ever overwritten.
+        scratch
+            .hooked(&["push", "origin", &format!("{head}:refs/heads/{branch}")])
+            .map_err(|said| failed(format!("the push was refused: {}", said.trim())))?;
+        // never retried: a creation that timed out may have opened it
+        let opened = gh(
+            self.root,
+            &[
+                "pr",
+                "create",
+                "--base",
+                &plan.base,
+                "--head",
+                &branch,
+                "--title",
+                &compose::pull_request_title(&manifest),
+                "--body",
+                &compose::pull_request_body(&manifest),
+            ],
+        )
+        .map_err(|e| {
+            failed(format!(
+                "{branch} was pushed at {head}, and its pull request could not be opened: {e}; \
+                 open it against {} with the body its manifest ({path}) gives",
+                plan.base
+            ))
+        })?;
+        Ok(ComposedBatch {
+            // the forge answers with the pull request's address, its number last
+            pull_request: opened
+                .trim()
+                .rsplit('/')
+                .next()
+                .and_then(|n| n.parse().ok()),
+            branch,
+            head,
+            manifest,
+            dropped,
+        })
     }
 }
 

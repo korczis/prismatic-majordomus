@@ -12,6 +12,8 @@ Majordomus does not merge a list of pull requests. It integrates the next provab
 change into the current master, verifies that it landed, discards what it assumed, and
 decides again from what is there now. The decision is recorded in ADR 0101, the rule is
 `project.integration-follows-the-current-master`, and the code is `crate::integration`.
+Several pull requests may still land in one merge: as a [batch](#batches), which is one more
+pull request that the executor composed and that names its members (ADR 0114).
 
 ## The pipeline
 
@@ -330,7 +332,8 @@ conflicting. For an authorised declaration, what became of the successor decides
 Landed is git's fact. The successor's head, or the merge commit the forge names for it, is an
 ancestor of master; the forge's `merged` only words the evidence ("is merged" or "is closed").
 So a successor merged by a squash lands by its merge commit, and one closed after a batch
-carried its head into master landed too.
+carried its head into master landed too. A [batch](#batches) the executor composed declares
+itself the successor of every member, so this is the row its members are closed by.
 
 Git's fact is trusted only about a head nobody could move to manufacture it (ADR 0101 §6,
 the amendment to D3; the owner may reverse it). A successor the forge does not call merged
@@ -485,7 +488,8 @@ removed. That window is accepted; no history is ever overwritten. That is a merg
 never a rewrite, as `project.land-and-publish` prescribes. The pipeline is one deep: while a
 refreshed pull request waits for its checks, no other is refreshed, because merging the first
 would put the second behind again. Throughput is therefore one pull request per run of the
-required check, which is the true cost of this repository's mechanics.
+required check, which is the true cost of this repository's mechanics. A [batch](#batches)
+is how several pull requests share that one run, when a person asks for it.
 
 Only a run the executor started holds the pipeline: the required check of the head a
 `refreshed` event recorded as pushed (`head_after`), while it is *pending* or *missing*. Both
@@ -545,6 +549,126 @@ A merge, derive, commit or push that fails leaves nothing on the branch and is
 asks the forge to merge, and never touches a person's checkout. A refusal decided from the
 classification is recorded too when `--apply` was given, so the trail says why a requested
 repair did not happen.
+
+## Batches
+
+A batch is one pull request that carries several. `prs compose` builds it, on a person's
+request and never on the executor's own: there is no continuous composition, and a drain
+does not batch. Once it is open it is an ordinary candidate, classified, ranked, repaired,
+merged and verified like any other, so one merge at a time still holds; that one merge
+lands every member's work. The decision and its reasons are
+[ADR 0114](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0114-a-batch-is-composed-by-the-integrator-names-its-members-and-.md).
+
+**Who may be a member.** Nothing is classified a second time: composition reads the
+assessments the queue already holds. A pull request is a member when it is open on the
+base, is not a draft, carries no blocking label, has its head in this repository, has no
+auto-merge armed and no declared successor, satisfies the review policy, has every required
+check passed on its current head, and has every declared dependency landed or placed before
+it in the batch. Its head may be `behind` master. That is the one gate a member may fail,
+and it is what a batch buys: a member is not refreshed and run alone again. A pull request
+that is itself a batch, or that an open batch already names, is not a member. Members are
+taken in rank order up to `integration.batch.max_members` of `.ai/repo/policy.yaml`. The
+code has no default: `--max` lowers the size for one composition and never raises it, and
+with neither the command refuses and names the key. Fewer than two eligible is not a batch;
+one pull request is `prs repair`.
+
+**The dry run.** `prs compose` with no flag is a read, like `prs status`: it decides on the
+last recorded observation, reaches no network, takes no lease and writes nothing to the
+trail. It prints the members in composition order, then every pull request it left out with
+the one reason that decided it (a pending or failing required check, a review, a draft, a
+fork's head, a dependency, an authored conflict), and says what `--apply` would do.
+
+**The act.** `prs compose --apply` is refused on two grounds, each by name and before the
+forge is asked anything:
+
+- while ADR 0114 is not `accepted` in this repository's layer. The status is read from the
+  decision's own front matter; accepting a decision is a person's act, and until it is taken
+  only the dry run answers;
+- until the audit trail holds one verified merge since the last merge that could not be
+  verified. Composing is not the first thing an executor does to a repository:
+  `prs drain --max 1` lands that merge.
+
+Past both, it follows the drain's rules. It takes the base branch's integration lease,
+observes the forge again and decides again on that, and records `compose_selected` and then
+`compose_attempted` before anything reaches the remote. In a scratch worktree under the
+common git directory it merges each member's head onto the decided master with `--no-ff`,
+in order; takes one `release bump` to what the public contract of the composed tree
+requires; writes the manifest; runs `scripts/derive`; and makes one composition commit. It
+pushes that as a new branch `int/batch-<id>`, never to a branch that exists, opens the pull
+request, and records `composed`, or `compose_refused` with the failure's class. A member
+whose merge conflicts on an authored path is dropped and named with the paths, and the
+composition goes on without it; when fewer than two are left nothing is pushed. A conflict
+on `merge=derived` paths alone is settled by the derive, and in a clone without the
+`merge.derived` driver the act fails whole rather than resolve anything by hand.
+
+**The manifest.** The act writes `.ai/repo/integration/batches/<id>.yaml`, of kind
+`integration-batch/v1`: the base, the master the batch was composed on, the version before
+and after the one bump, and each member in order with its number, its head, its title and
+the merge commit that carries it. The id is that master's short name followed by the member
+numbers, so the same members on the same master are the same batch and composing them twice
+is refused by the branch that already exists. The manifest is committed on the batch branch
+and lands with it; it is an object of the layer, indexed and validated against its schema
+like any other. The pull request's body carries one `Supersedes #N` line per member, which
+is an authorised [declaration](#supersession-markers): each member is held while the batch
+is open, released if the batch is closed without landing, and closed by `prs cleanup
+--apply` once master contains the batch.
+
+**Attribution.** From the master it was composed on, a batch's first-parent line holds one
+merge commit per member, whose second parent is that member's recorded head, and then at
+most one composition commit, which changes only the manifest, the version files `release
+bump` writes and `merge=derived` paths. Nothing else: a fix is written on the member's
+branch and the batch is composed again. So a regression found after a batch landed is
+located over the batch's own range, and the commit the bisection stops at is one member's
+merge, which the manifest names, or the composition commit, which no person wrote:
+
+<!-- majordomus:unrun it needs a master a batch has landed on and a regression to find, which no documentation check has; tests/integration_compose.rs builds a batch and asserts the first-parent shape the bisection relies on -->
+```sh
+git bisect start --first-parent <the batch's last commit> <base_master of its manifest>
+git bisect run <the command that shows the regression>
+git bisect reset
+```
+
+**The gate.** `prs batch-check` is the `batch-check` gate of the structure job, planned for
+every change. It walks the first-parent line from the merge base to the head (the forge's
+test merge of a pull request is looked through to the pull request's own head). A branch is
+a batch to be judged when that line merges the current heads of two or more other open
+pull requests of this repository, or when the branch adds or changes a file under
+`.ai/repo/integration/batches/`, whatever it merges. One merged pull request and no manifest
+is a stack and is not this gate's subject. A batch to be judged is refused, exit 10, with
+one finding for each of these:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| What it finds | What it names |
+|---|---|
+| member merges and no manifest: a batch built by hand | every member, its head and its merge commit |
+| more than one manifest added or changed, or one that does not read | the paths, or the reason |
+| a merged pull request the manifest does not name | the member and the merge commit |
+| a member the manifest names that no merge carries, because its head moved or it landed | the member and the manifest's line |
+| members in another order than their merges | the position and the line |
+| a `head` or a `merge_commit` that is not the merge's | both values and the line |
+| a manifest of fewer than two members | how many merges there are |
+| a commit of the batch itself that changes anything but the manifest, the version files and derived paths | the commit and the path |
+
+</div>
+
+
+The open pull requests' heads are read from the forge, and only when git alone cannot
+decide; that is all the gate asks of it, and the job's token needs `pull-requests: read`
+for it. When they are needed and cannot be read the gate exits 12, "cannot run", and never
+0. A merge of the base into the batch is nobody's member and brings no finding.
+
+**What you see.** `prs explain` on a batch lists its members in composition order, each
+with its head and the merge commit that carries it, and the version line; on a member it
+names the open batch that carries it. The Cockpit's integration page has a Batches card with
+the same, and marks a member whose head moved since it was merged. The plan is
+`GET /api/v1/pull-requests/compose` (`majordomus_pull_requests_compose`) and the gate is
+`GET /api/v1/pull-requests/batch-check`.
+
+**What is not decided.** Reading a red batch's failed jobs and naming the member whose
+paths they mention is not built. It would be evidence and never a verdict, and nothing rests
+on it. A red batch is fixed on the member's branch and composed again, and when no log
+makes the member plain, the bisection above finds it.
 
 ## Cleanup
 
@@ -669,6 +793,8 @@ json` stays the list of pull requests to close.
   | `refreshed` (with the head it pushed), `refresh_failed` | after it |
   | `repair_selected`, `repair_attempted` | `prs repair --apply` chose the named pull request, and is about to merge master into it and push |
   | `repaired` (with the head it pushed), `repair_refused` (with its class) | after it, or when the classification refused it |
+  | `compose_selected`, `compose_attempted` | `prs compose --apply` chose a batch's members, and is about to merge them, commit and push the new branch |
+  | `composed` (with the branch, its head and the members), `compose_refused` (with its class) | after it, or when the fresh observation left fewer than two eligible. A refusal taken before the forge is asked (the decision's status, the rollout record, the size) decided nothing about any pull request and is recorded nowhere |
   | `close_attempted` | before a redundant or superseded pull request is closed |
   | `closed_redundant`, `closed_superseded` (with its evidence), `close_failed` | after it |
   | `idle` | nothing was ready |
@@ -744,6 +870,9 @@ json` stays the list of pull requests to close.
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by an authorised successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 | `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
 | `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
+| `majordomus prs compose [--max N]` | no | the batch that would be composed from the last observation: the members in order and who is left out, with the reason (a dry run) |
+| `majordomus prs compose [--max N] --apply` | yes | compose it, under the lease: one merge per member, the manifest, one commit, a new branch `int/batch-<id>` and its pull request |
+| `majordomus prs batch-check [--base R] [--head R]` | only for a batch | the gate: a branch that merges two or more open pull requests, or touches a batch manifest, is the batch its manifest says; exit 10 refused, 12 cannot run |
 
 </div>
 
@@ -796,4 +925,8 @@ the rollout's record allows it (see below).
    merge that could not be verified starts the count again, even after
    `--resume-after-failure`, because the record it ends was the evidence. The gate reads
    the trail and nothing else: stages 2 and 3 are what fill it (ADR 0101 §13).
+
+Composing a [batch](#batches) is not a stage. It is asked for, and it has a threshold of its
+own: `prs compose --apply` is refused until the trail holds one verified merge since the
+last that could not be verified, and while ADR 0114 is not accepted (ADR 0114 D7).
 {% endraw %}

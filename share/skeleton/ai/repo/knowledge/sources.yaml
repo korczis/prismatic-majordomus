@@ -197,6 +197,15 @@ sources:
     pathspec: ':(glob).ai/repo/mesh/*.yaml'
     required: false
 
+  # The manifests of the batches the integrator composed (ADR 0114): without this class a
+  # manifest that landed with its batch is a file nothing indexes, and `prs explain` and
+  # the Cockpit could not name a batch's members.
+  - id: integration-batch
+    kind: integration-batch
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/integration/batches/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs

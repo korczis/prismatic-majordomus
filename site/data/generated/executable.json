@@ -1275,6 +1275,23 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-batch_check",
+      "claims": [],
+      "cli": "majordomus prs batch-check",
+      "id": "integration.batch_check",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-batch-check/",
+      "slug": "integration-batch-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "A composed branch that is not a batch is refused",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/integration/#op-integration-cleanup",
       "claims": [],
       "cli": null,
@@ -1290,6 +1307,23 @@
       "tests": [],
       "title": "What cleanup would do",
       "tool": "majordomus_pull_requests_cleanup"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-compose",
+      "claims": [],
+      "cli": null,
+      "id": "integration.compose",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-compose/",
+      "slug": "integration-compose",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The plan of a batch",
+      "tool": "majordomus_pull_requests_compose"
     },
     {
       "api_anchor": "/docs/api/integration/#op-integration-events",
@@ -3843,6 +3877,13 @@
         "route": "/guarantees/review-is-never-fabricated/",
         "status": "guaranteed",
         "test": "test/cases/736_reasoning_check_refuses_drift.sh"
+      },
+      {
+        "id": "a-batch-names-its-members",
+        "implementation": "apps/majordomus-cli/src/integration/batch.rs",
+        "route": "/guarantees/a-batch-names-its-members/",
+        "status": "guaranteed",
+        "test": "test/cases/1000_a_composed_branch_that_is_not_a_batch_is_refused.sh"
       }
     ],
     "http": [
@@ -3907,8 +3948,8 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
-    "claims": 89,
+    "capabilities": 186,
+    "claims": 90,
     "modules": 53
   },
   "generator": "majordomus-cli 0.18.0",
@@ -4537,9 +4578,19 @@
     {
       "capabilities": [
         {
+          "id": "integration.batch_check",
+          "route": "/registry/capabilities/integration-batch-check/",
+          "slug": "integration-batch-check"
+        },
+        {
           "id": "integration.cleanup",
           "route": "/registry/capabilities/integration-cleanup/",
           "slug": "integration-cleanup"
+        },
+        {
+          "id": "integration.compose",
+          "route": "/registry/capabilities/integration-compose/",
+          "slug": "integration-compose"
         },
         {
           "id": "integration.events",

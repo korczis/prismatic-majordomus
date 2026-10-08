@@ -174,6 +174,12 @@ struct World {
     /// On this observation (1-based) the queue's policy names no merge method, whatever
     /// its pull requests say: an observation that contradicts itself.
     no_method_on: Option<usize>,
+    /// Every plan a composition was asked for, as it was asked.
+    composed: Vec<super::compose::BatchPlan>,
+    /// The members whose merge into a composition conflicts, with the authored paths.
+    compose_conflicts: BTreeMap<u64, Vec<String>>,
+    /// The composition fails with these words.
+    compose_fails: Option<&'static str>,
 }
 
 impl Default for World {
@@ -206,6 +212,9 @@ impl Default for World {
             outages: Vec::new(),
             close_comments: Vec::new(),
             no_method_on: None,
+            composed: Vec::new(),
+            compose_conflicts: BTreeMap::new(),
+            compose_fails: None,
         }
     }
 }
@@ -536,6 +545,79 @@ impl Integrator for World {
         }
         self.gone_as(pr, Gone::Closed);
         Ok(())
+    }
+
+    fn compose_branch(
+        &mut self,
+        plan: &super::compose::BatchPlan,
+    ) -> Result<super::compose::ComposedBatch, super::compose::NotComposed> {
+        use super::compose::{self, LeftOut, LeftOutReason, NotComposed};
+        self.composed.push(plan.clone());
+        if let Some(reason) = self.compose_fails {
+            return Err(NotComposed::Failed {
+                reason: reason.into(),
+            });
+        }
+        assert_eq!(
+            plan.master_sha,
+            master_sha(self.master),
+            "composed on a master that is not the current one"
+        );
+        let mut members = Vec::new();
+        let mut dropped = Vec::new();
+        for m in &plan.members {
+            let s = self
+                .open
+                .iter()
+                .find(|s| s.number == m.number)
+                .expect("composed a pull request that is not open");
+            assert_eq!(s.head, m.head, "composed a head that was not decided on");
+            assert!(
+                !s.failing && !s.ci_pending && !s.ci_unreported,
+                "composed a pull request whose required check has not passed"
+            );
+            assert!(
+                s.labels.is_empty() && !s.draft && !s.cross_repository && !s.auto_merge,
+                "composed a pull request that is held"
+            );
+            match self.compose_conflicts.get(&m.number) {
+                Some(paths) => dropped.push(LeftOut::of(
+                    m,
+                    LeftOutReason::ConflictsInBatch {
+                        paths: paths.clone(),
+                    },
+                )),
+                None => members.push(compose::ComposedMember {
+                    number: m.number,
+                    head: m.head.clone(),
+                    title: m.title.clone(),
+                    merge_commit: format!("merge-{}", m.number),
+                }),
+            }
+        }
+        if members.len() < compose::MIN_MEMBERS {
+            return Err(NotComposed::TooFew {
+                remaining: members.iter().map(|m| m.number).collect(),
+                dropped,
+            });
+        }
+        let manifest =
+            compose::BatchManifest::of(&plan.base, &plan.master_sha, "t-composed", members);
+        // the batch is one more open pull request, whose body supersedes each member
+        let number = 900 + self.composed.len() as u64;
+        let mut batch = sim(number);
+        batch.head_ref = compose::branch_of(&manifest.id);
+        batch.head = format!("batch-{}", manifest.id);
+        batch.contains = self.master;
+        batch.body = compose::pull_request_body(&manifest);
+        self.open.push(batch.clone());
+        Ok(compose::ComposedBatch {
+            branch: batch.head_ref,
+            head: batch.head,
+            pull_request: Some(number),
+            manifest,
+            dropped,
+        })
     }
 }
 
@@ -2673,7 +2755,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 32] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -2699,6 +2781,10 @@ const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
     drain::IntegrationAction::RepairAttempted,
     drain::IntegrationAction::Repaired,
     drain::IntegrationAction::RepairRefused,
+    drain::IntegrationAction::ComposeSelected,
+    drain::IntegrationAction::ComposeAttempted,
+    drain::IntegrationAction::Composed,
+    drain::IntegrationAction::ComposeRefused,
     drain::IntegrationAction::Idle,
     drain::IntegrationAction::FailureAcknowledged,
     drain::IntegrationAction::ObserveFailed,
@@ -2734,6 +2820,10 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::RepairAttempted
         | A::Repaired
         | A::RepairRefused
+        | A::ComposeSelected
+        | A::ComposeAttempted
+        | A::Composed
+        | A::ComposeRefused
         | A::Idle
         | A::FailureAcknowledged
         | A::ObserveFailed => (),
@@ -3306,6 +3396,12 @@ impl Integrator for Shared {
     }
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
         self.0.lock().unwrap().close(pr, head_sha, comment)
+    }
+    fn compose_branch(
+        &mut self,
+        plan: &super::compose::BatchPlan,
+    ) -> Result<super::compose::ComposedBatch, super::compose::NotComposed> {
+        self.0.lock().unwrap().compose_branch(plan)
     }
 }
 
@@ -7466,4 +7562,1324 @@ fn the_trail_0_14_0_wrote_is_still_read_and_no_event_needs_a_new_field() {
     let unknown: ReasonCode = serde_json::from_value(serde_json::json!("a_later_code:#7")).unwrap();
     assert_eq!(unknown, ReasonCode::Unrecognised("a_later_code:#7".into()));
     assert_eq!(serde_json::to_value(&unknown).unwrap(), "a_later_code:#7");
+}
+
+// ---------------------------------------------------------------- compose: a batch (ADR 0114)
+
+use crate::integration::compose::{
+    self, BatchManifest, ComposeOutcome, ComposeRefusal, ComposedMember, LeftOutReason,
+};
+
+/// Master has moved once. #1 and #2 are behind it with a passed check, #3 contains it.
+fn batch_world() -> World {
+    let mut fresh = sim(3);
+    fresh.contains = 1;
+    World {
+        open: vec![sim(1), sim(2), fresh],
+        master: 1,
+        ..Default::default()
+    }
+}
+
+/// A scratch repository whose trail holds the verified merge that unlocks composition.
+fn unlocked() -> std::path::PathBuf {
+    let root = scratch();
+    drain::record(
+        &root,
+        drain::IntegrationEvent::of(drain::IntegrationAction::MergeSucceeded),
+    )
+    .unwrap();
+    root
+}
+
+/// Why `n` is left out of the batch planned on `w`, at most five members.
+fn left_out(w: &World, n: u64) -> LeftOutReason {
+    let plan = compose::decide(&w.queue(), 5);
+    assert!(!plan.numbers().contains(&n), "#{n} is a member: {plan:?}");
+    plan.left_out
+        .into_iter()
+        .find(|l| l.number == n)
+        .unwrap_or_else(|| panic!("#{n} is neither a member nor left out"))
+        .reason
+}
+
+/// `batch_world` with `change` made to #1.
+fn with_one(change: impl FnOnce(&mut Sim)) -> World {
+    let mut w = batch_world();
+    change(&mut w.open[0]);
+    w
+}
+
+fn compose_outcome(r: &compose::ComposeReport) -> String {
+    match &r.outcome {
+        ComposeOutcome::WouldCompose => "would_compose".into(),
+        ComposeOutcome::Composed { .. } => "composed".into(),
+        ComposeOutcome::Refused { refusal } => format!(
+            "refused:{}",
+            serde_json::to_value(refusal).unwrap()["kind"]
+                .as_str()
+                .unwrap()
+        ),
+    }
+}
+
+#[test]
+fn a_member_behind_master_is_eligible_and_so_is_one_that_contains_it() {
+    let w = batch_world();
+    let q = w.queue();
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::NeedsRefresh);
+    assert_eq!(disposition(&q, 3), PullRequestDisposition::Ready);
+    let plan = compose::decide(&q, 5);
+    // every one of them, in the queue's own rank order
+    let ranked: Vec<u64> = q.assessments.iter().map(|a| a.number).collect();
+    assert_eq!(plan.numbers(), ranked);
+    assert!(plan.left_out.is_empty(), "{:?}", plan.left_out);
+    assert_eq!(
+        (
+            plan.base.as_str(),
+            plan.master_sha.as_str(),
+            plan.max_members
+        ),
+        ("master", "m1", 5)
+    );
+    // each at the head it was decided on, with its title
+    let one = plan.members.iter().find(|m| m.number == 1).unwrap();
+    assert_eq!(
+        (one.head.as_str(), one.title.as_str()),
+        ("h1.0", "change 1")
+    );
+    assert_eq!(compose_outcome(&compose::dry_run(&q, 5)), "would_compose");
+}
+
+#[test]
+fn a_required_check_that_is_pending_missing_or_failed_is_not_passed() {
+    use RequiredCheckState as S;
+    assert_eq!(
+        left_out(&with_one(|s| s.ci_pending = true), 1),
+        LeftOutReason::RequiredChecks { state: S::Pending }
+    );
+    assert_eq!(
+        left_out(&with_one(|s| s.ci_unreported = true), 1),
+        LeftOutReason::RequiredChecks { state: S::Missing }
+    );
+    assert_eq!(
+        left_out(&with_one(|s| s.failing = true), 1),
+        LeftOutReason::RequiredChecks { state: S::Failed }
+    );
+    // and one that contains master is asked the same question
+    let mut w = batch_world();
+    w.open[2].ci_pending = true;
+    assert_eq!(
+        left_out(&w, 3),
+        LeftOutReason::RequiredChecks { state: S::Pending }
+    );
+}
+
+#[test]
+fn a_draft_is_left_out() {
+    assert_eq!(
+        left_out(&with_one(|s| s.draft = true), 1),
+        LeftOutReason::Draft
+    );
+}
+
+#[test]
+fn a_fork_is_left_out_behind_master_or_not() {
+    assert_eq!(
+        left_out(&with_one(|s| s.cross_repository = true), 1),
+        LeftOutReason::ForkHead
+    );
+    let mut w = batch_world();
+    w.open[2].cross_repository = true;
+    assert_eq!(
+        disposition(&w.queue(), 3),
+        PullRequestDisposition::Ready,
+        "a fork that contains master is ready to merge, and still no member"
+    );
+    assert_eq!(left_out(&w, 3), LeftOutReason::ForkHead);
+}
+
+#[test]
+fn a_blocking_label_leaves_it_out_and_names_the_label() {
+    assert_eq!(
+        left_out(&with_one(|s| s.labels = vec!["hold".into()]), 1),
+        LeftOutReason::Label {
+            names: vec!["hold".into()]
+        }
+    );
+}
+
+#[test]
+fn an_unsatisfied_review_leaves_it_out() {
+    let mut w = with_one(|s| s.review = "CHANGES_REQUESTED");
+    w.reviews_required = Some(true);
+    for s in &mut w.open[1..] {
+        s.review = "APPROVED";
+    }
+    assert_eq!(
+        left_out(&w, 1),
+        LeftOutReason::Review {
+            state: PullRequestReview::ChangesRequested
+        }
+    );
+    assert_eq!(compose::decide(&w.queue(), 5).numbers().len(), 2);
+}
+
+#[test]
+fn another_base_auto_merge_and_a_relation_with_nothing_to_merge_leave_it_out() {
+    assert_eq!(
+        left_out(&with_one(|s| s.base = "release"), 1),
+        LeftOutReason::OtherBase {
+            base: "release".into()
+        }
+    );
+    assert_eq!(
+        left_out(&with_one(|s| s.auto_merge = true), 1),
+        LeftOutReason::AutoMergeArmed
+    );
+    let mut w = with_one(|s| s.conflicts_after = Some(90));
+    w.merged = vec![90];
+    assert_eq!(
+        left_out(&w, 1),
+        LeftOutReason::AuthoredConflict {
+            paths: vec!["src/1.rs".into()]
+        }
+    );
+    let mut w = with_one(|s| s.redundant_after = Some(90));
+    w.merged = vec![90];
+    assert_eq!(
+        left_out(&w, 1),
+        LeftOutReason::NothingToLand {
+            relation: "superseded".into()
+        }
+    );
+    // a repository that allows no merge commit lands nothing, a batch included
+    let mut w = batch_world();
+    w.merge_methods = vec!["squash"];
+    assert_eq!(left_out(&w, 1), LeftOutReason::MergeCommitNotAllowed);
+    // a pull request whose mentions were not read may be superseded by one of them
+    let w = with_one(|s| s.references = crate::integration::CrossReferenceRead::Unread);
+    assert!(
+        matches!(left_out(&w, 1), LeftOutReason::Supersession { ref reasons } if reasons.len() == 1),
+        "{:?}",
+        left_out(&w, 1)
+    );
+}
+
+#[test]
+fn a_dependency_that_has_not_landed_and_is_no_member_leaves_it_out() {
+    // #1 waits for #9, a draft: #9 cannot ride, so neither can #1
+    let mut w = with_one(|s| s.depends_on = Some(9));
+    let mut draft = sim(9);
+    draft.draft = true;
+    w.open.push(draft);
+    assert_eq!(
+        left_out(&w, 1),
+        LeftOutReason::Dependency { waits_for: vec![9] }
+    );
+    // one that was closed without a merge can be satisfied by no place in the batch
+    let mut w = with_one(|s| s.depends_on = Some(9));
+    w.gone.push((sim(9), Gone::Closed));
+    assert_eq!(
+        left_out(&w, 1),
+        LeftOutReason::Dependency { waits_for: vec![9] }
+    );
+    // one that landed is no obstacle
+    let mut w = with_one(|s| s.depends_on = Some(9));
+    w.gone.push((sim(9), Gone::Merged));
+    assert!(compose::decide(&w.queue(), 5).numbers().contains(&1));
+    // two that wait for each other never ride: neither can be placed first
+    let mut w = with_one(|s| s.depends_on = Some(2));
+    w.open[1].depends_on = Some(1);
+    assert_eq!(
+        left_out(&w, 1),
+        LeftOutReason::Dependency { waits_for: vec![2] }
+    );
+    assert_eq!(
+        compose_outcome(&compose::dry_run(&w.queue(), 5)),
+        "refused:too_few"
+    );
+}
+
+#[test]
+fn a_dependency_inside_the_batch_is_placed_before_what_waits_for_it() {
+    // #1 would rank before #2 on its own; it declares that it waits for #2
+    let w = with_one(|s| s.depends_on = Some(2));
+    let q = w.queue();
+    assert_eq!(
+        disposition(&q, 1),
+        PullRequestDisposition::WaitingForDependency
+    );
+    let members = compose::decide(&q, 5).numbers();
+    let at = |n: u64| members.iter().position(|m| *m == n).unwrap();
+    assert!(at(2) < at(1), "{members:?}");
+    assert_eq!(members.len(), 3);
+    // with room for two, the dependent rides only if what it waits for does
+    let two = compose::decide(&q, 2);
+    let at = |n: u64| two.numbers().iter().position(|m| *m == n);
+    assert!(at(1).is_none() || at(2) < at(1), "{two:?}");
+}
+
+#[test]
+fn the_members_are_capped_and_the_rest_are_left_out_as_over_the_cap() {
+    let q = batch_world().queue();
+    let ranked: Vec<u64> = q.assessments.iter().map(|a| a.number).collect();
+    let plan = compose::decide(&q, 2);
+    assert_eq!(plan.numbers(), ranked[..2]);
+    assert_eq!(plan.left_out.len(), 1);
+    assert_eq!(plan.left_out[0].number, ranked[2]);
+    assert_eq!(plan.left_out[0].reason, LeftOutReason::OverMax { max: 2 });
+}
+
+#[test]
+fn fewer_than_two_members_is_not_a_batch() {
+    let mut w = batch_world();
+    w.open.truncate(1);
+    let r = compose::dry_run(&w.queue(), 5);
+    assert_eq!(compose_outcome(&r), "refused:too_few", "{r:?}");
+    assert_eq!(r.plan.as_ref().unwrap().numbers(), [1]);
+    // nor is a batch of at most one, however many are eligible
+    let r = compose::dry_run(&batch_world().queue(), 1);
+    assert_eq!(compose_outcome(&r), "refused:max_too_small", "{r:?}");
+    // and applying either pushes nothing
+    let root = unlocked();
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    assert_eq!(compose_outcome(&r), "refused:too_few");
+    assert!(w.composed.is_empty());
+    let refused = drain::events(&root).pop().unwrap();
+    assert_eq!(refused.action.as_str(), "compose_refused");
+    assert_eq!(refused.class, Some(drain::FailureClass::PolicyViolation));
+    let r = compose::apply(&root, &mut w, 1).unwrap();
+    assert_eq!(compose_outcome(&r), "refused:max_too_small");
+    assert_eq!(
+        w.observations, 1,
+        "a size that is no batch observes nothing"
+    );
+}
+
+#[test]
+fn a_batch_is_no_member_and_what_an_open_batch_names_is_no_member_either() {
+    let root = unlocked();
+    let mut w = batch_world();
+    w.open.push(sim(4));
+    w.open[3].contains = 1;
+    let r = compose::apply(&root, &mut w, 3).unwrap();
+    let ComposeOutcome::Composed { composed } = &r.outcome else {
+        panic!("{r:?}");
+    };
+    let batch = composed.pull_request.unwrap();
+    let members = composed.manifest.numbers();
+    assert_eq!(members.len(), 3);
+    // the batch is open now: it holds its members, and is one candidate like any other
+    let q = w.queue();
+    for n in &members {
+        assert_eq!(
+            left_out(&w, *n),
+            LeftOutReason::NamedByOpen { number: batch },
+            "#{n}"
+        );
+        assert_eq!(
+            disposition(&q, *n),
+            PullRequestDisposition::WaitingForDependency
+        );
+    }
+    assert_eq!(left_out(&w, batch), LeftOutReason::IsBatch);
+    assert_eq!(disposition(&q, batch), PullRequestDisposition::Ready);
+    assert_eq!(q.next_merge, Some(batch), "the batch is the next merge");
+    // one pull request is left: composing again is refused, and nothing is pushed twice
+    let again = compose::apply(&root, &mut w, 3).unwrap();
+    assert_eq!(compose_outcome(&again), "refused:too_few", "{again:?}");
+    assert_eq!(w.composed.len(), 1);
+    // a branch named as a batch's is one whatever its body says
+    let mut w = batch_world();
+    w.open[0].head_ref = "int/batch-by-hand".into();
+    assert_eq!(left_out(&w, 1), LeftOutReason::IsBatch);
+}
+
+proptest! {
+    #[test]
+    fn a_batch_plan_does_not_depend_on_the_order_observed(
+        w in arb_world(),
+        seed in any::<u64>(),
+        max in 0usize..6,
+    ) {
+        let obs = w.observation();
+        let queue = build_queue(&obs, &master_sha(w.master), |p| w.relation(p.number));
+        let plan = compose::decide(&queue, max);
+        // the forge lists them in another order
+        let mut shuffled = obs.clone();
+        let len = shuffled.pull_requests.len();
+        if len > 1 {
+            shuffled.pull_requests.rotate_left((seed as usize) % len);
+            shuffled.pull_requests.reverse();
+        }
+        let other = build_queue(&shuffled, &master_sha(w.master), |p| w.relation(p.number));
+        prop_assert_eq!(&compose::decide(&other, max), &plan);
+        // and a queue whose assessments were reordered after it was built
+        let mut reordered = queue.clone();
+        reordered.assessments.reverse();
+        prop_assert_eq!(&compose::decide(&reordered, max), &plan);
+        // every open pull request is a member or left out, never both, and the cap holds
+        prop_assert!(plan.members.len() <= max);
+        let mut seen: Vec<u64> = plan.numbers();
+        seen.extend(plan.left_out.iter().map(|l| l.number));
+        seen.sort_unstable();
+        let mut open: Vec<u64> = queue.assessments.iter().map(|a| a.number).collect();
+        open.sort_unstable();
+        prop_assert_eq!(seen, open);
+        // a member passed its own checks on its own head, and is never held
+        for m in &plan.members {
+            let s = w.open.iter().find(|s| s.number == m.number).unwrap();
+            prop_assert!(!s.failing && !s.draft && !s.cross_repository && !s.auto_merge);
+            prop_assert!(s.labels.is_empty() && s.base == "master");
+            // what it waits for is placed before it
+            let a = queue.get(m.number).unwrap();
+            for d in a.dependencies.iter().filter(|d| !d.satisfied) {
+                let at = |n: u64| plan.members.iter().position(|x| x.number == n);
+                prop_assert!(at(d.number) < at(m.number), "#{} before #{}", d.number, m.number);
+                prop_assert!(at(d.number).is_some());
+            }
+        }
+    }
+}
+
+#[test]
+fn a_compose_dry_run_reads_the_recorded_observation_and_writes_nothing() {
+    let dir = unique_temp("mj-integration-compose-plan");
+    git(&dir, &["init", "-q", "-b", "master"]);
+    // nothing observed: no classification to decide from, said as status says it
+    let err = compose::plan(&dir, 4).unwrap_err();
+    assert!(err.contains("prs refresh"), "{err}");
+    git(&dir, &["commit", "-q", "--allow-empty", "-m", "base"]);
+    let mut heads = Vec::new();
+    for n in 1..=2u64 {
+        git(
+            &dir,
+            &["checkout", "-q", "-B", &format!("feature/{n}"), "master"],
+        );
+        std::fs::write(dir.join(format!("{n}.txt")), "x\n").unwrap();
+        git(&dir, &["add", "."]);
+        git(&dir, &["commit", "-q", "-m", &format!("change {n}")]);
+        heads.push(git(&dir, &["rev-parse", "HEAD"]));
+    }
+    git(&dir, &["checkout", "-q", "master"]);
+    git(
+        &dir,
+        &["commit", "-q", "--allow-empty", "-m", "master moves"],
+    );
+    let master = git(&dir, &["rev-parse", "HEAD"]);
+    observed(
+        &dir,
+        &master,
+        vec![observed_pr(1, &heads[0]), observed_pr(2, &heads[1])],
+    );
+    let r = compose::plan(&dir, 4).unwrap();
+    assert_eq!(compose_outcome(&r), "would_compose", "{r:?}");
+    assert!(r.dry_run);
+    let plan = r.plan.unwrap();
+    assert_eq!(plan.numbers(), [1, 2]);
+    assert_eq!(
+        (plan.master_sha.as_str(), plan.observed_at.as_str()),
+        (master.as_str(), "t0")
+    );
+    assert_eq!(plan.members[1].head, heads[1]);
+    // a read: no trail line, no summary, no batch branch
+    assert!(trail_actions(&dir).is_empty());
+    assert!(!dir
+        .join(".git/majordomus/integration/summary.json")
+        .exists());
+    assert_eq!(git(&dir, &["branch", "--list", "int/*"]), "");
+    let _ = std::fs::remove_dir_all(&dir);
+    // and over a scripted world it asks the integrator for nothing at all
+    let w = batch_world();
+    let _ = compose::dry_run(&w.queue(), 4);
+    assert_eq!(
+        (
+            w.observations,
+            w.composed.len(),
+            w.merge_calls,
+            w.refresh_calls,
+            w.close_calls
+        ),
+        (0, 0, 0, 0, 0)
+    );
+}
+
+/// A scripted world that reads the trail at the moment the composition is asked for.
+struct WatchingCompose<'r> {
+    world: World,
+    root: &'r std::path::Path,
+    trail_at_act: Option<Vec<String>>,
+}
+
+impl Integrator for WatchingCompose<'_> {
+    fn observe(&mut self) -> Result<IntegrationQueue, String> {
+        self.world.observe()
+    }
+    fn merge(&mut self, pr: u64, head: &str, method: &str) -> Result<(), String> {
+        self.world.merge(pr, head, method)
+    }
+    fn verify(
+        &mut self,
+        pr: u64,
+        at: &crate::integration::EvaluatedAgainst,
+        method: &str,
+    ) -> Result<drain::Landed, drain::NotLanded> {
+        self.world.verify(pr, at, method)
+    }
+    fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
+        self.world.refresh_branch(a, base)
+    }
+    fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+        self.world.close(pr, head, comment)
+    }
+    fn compose_branch(
+        &mut self,
+        plan: &compose::BatchPlan,
+    ) -> Result<compose::ComposedBatch, compose::NotComposed> {
+        self.trail_at_act = Some(trail_actions(self.root));
+        self.world.compose_branch(plan)
+    }
+}
+
+#[test]
+fn an_applied_composition_records_its_selection_and_attempt_before_the_act_and_its_outcome_after() {
+    let root = unlocked();
+    let mut w = WatchingCompose {
+        world: batch_world(),
+        root: &root,
+        trail_at_act: None,
+    };
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    assert_eq!(compose_outcome(&r), "composed", "{r:?}");
+    assert!(!r.dry_run);
+    assert_eq!(
+        w.trail_at_act.as_deref(),
+        Some(
+            &[
+                "merge_succeeded".to_string(),
+                "compose_selected".to_string(),
+                "compose_attempted".to_string()
+            ][..]
+        ),
+        "the composition was asked for before the trail named it"
+    );
+    assert_eq!(
+        trail_actions(&root),
+        [
+            "merge_succeeded",
+            "compose_selected",
+            "compose_attempted",
+            "composed"
+        ]
+    );
+    let trail = drain::events(&root);
+    // the selection names every member at the head it was decided on, on the decided master
+    for m in &r.plan.as_ref().unwrap().members {
+        assert!(
+            trail[1]
+                .detail
+                .contains(&format!("#{} at {}", m.number, m.head)),
+            "{}",
+            trail[1].detail
+        );
+    }
+    assert_eq!(trail[1].master_before.as_deref(), Some("m1"));
+    let ComposeOutcome::Composed { composed } = &r.outcome else {
+        unreachable!()
+    };
+    let done = &trail[3];
+    assert_eq!(done.head_after.as_deref(), Some(composed.head.as_str()));
+    assert_eq!(done.pr, composed.pull_request);
+    assert!(done.detail.contains(&composed.branch), "{}", done.detail);
+    assert!(done.class.is_none());
+    assert!(composed.branch.starts_with("int/batch-m1-"), "{composed:?}");
+    // never a merge into master, never a push to a member's branch
+    assert_eq!(
+        (
+            w.world.merge_calls,
+            w.world.refresh_calls,
+            w.world.master,
+            w.world.observations
+        ),
+        (0, 0, 1, 1)
+    );
+    assert_eq!(w.world.composed.len(), 1);
+}
+
+#[test]
+fn an_applied_composition_decides_on_the_fresh_observation_and_never_on_an_earlier_plan() {
+    // what a person read a moment ago: #1 at h1.0, on m1
+    let stale = compose::decide(&batch_world().queue(), 5);
+    let head_of = |plan: &compose::BatchPlan, n: u64| {
+        plan.members
+            .iter()
+            .find(|m| m.number == n)
+            .map(|m| m.head.clone())
+    };
+    assert_eq!(head_of(&stale, 1).as_deref(), Some("h1.0"));
+
+    // the author pushes to #1 before the act observes
+    let root = unlocked();
+    let mut w = batch_world();
+    w.meanwhile = vec![(1, Meanwhile::HeadMoves(1))];
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    assert_eq!(compose_outcome(&r), "composed", "{r:?}");
+    assert_eq!(w.composed.len(), 1);
+    assert_eq!(head_of(&w.composed[0], 1).as_deref(), Some("h1.0+"));
+    assert_ne!(w.composed[0], stale, "the stale plan was composed");
+
+    // master moves before the act observes: the batch starts from the new one
+    let root = unlocked();
+    let mut w = batch_world();
+    w.master_moves_on = Some(1);
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    assert_eq!(compose_outcome(&r), "composed", "{r:?}");
+    assert_eq!(w.composed[0].master_sha, "m2");
+    assert_ne!(w.composed[0].master_sha, stale.master_sha);
+    assert!(drain::events(&root)[2].detail.contains("m2"));
+
+    // a member that stopped being eligible meanwhile is not composed
+    let root = unlocked();
+    let mut w = batch_world();
+    w.meanwhile = vec![(1, Meanwhile::Labelled(1, "hold"))];
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    assert_eq!(compose_outcome(&r), "composed", "{r:?}");
+    assert!(!w.composed[0].numbers().contains(&1));
+    assert!(stale.numbers().contains(&1));
+}
+
+#[test]
+fn a_member_whose_merge_conflicts_is_dropped_and_the_batch_composes_with_the_rest() {
+    let root = unlocked();
+    let mut w = batch_world();
+    w.compose_conflicts
+        .insert(2, vec!["src/shared.rs".to_string()]);
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    let ComposeOutcome::Composed { composed } = &r.outcome else {
+        panic!("{r:?}");
+    };
+    let mut carried = composed.manifest.numbers();
+    carried.sort_unstable();
+    assert_eq!(carried, [1, 3]);
+    assert_eq!(composed.dropped.len(), 1);
+    assert_eq!(composed.dropped[0].number, 2);
+    assert_eq!(
+        composed.dropped[0].reason,
+        LeftOutReason::ConflictsInBatch {
+            paths: vec!["src/shared.rs".into()]
+        }
+    );
+    // the batch is named by who it carries, and supersedes only them
+    assert!(!composed.branch.contains("-2"), "{}", composed.branch);
+    let batch = w.open.last().unwrap();
+    assert_eq!(
+        super::classify::declared_supersessions(&batch.body).supersedes,
+        carried
+    );
+    let done = drain::events(&root).pop().unwrap();
+    assert_eq!(done.action.as_str(), "composed");
+    assert!(
+        done.detail.contains("dropped #2") && done.detail.contains("src/shared.rs"),
+        "{}",
+        done.detail
+    );
+}
+
+#[test]
+fn a_composition_left_with_one_member_pushes_nothing_and_records_the_refusal() {
+    let root = unlocked();
+    let mut w = batch_world();
+    w.open.truncate(2);
+    w.compose_conflicts.insert(2, vec!["src/shared.rs".into()]);
+    let open_before = w.open.len();
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    let ComposeOutcome::Refused {
+        refusal: ComposeRefusal::TooFewComposed { remaining, dropped },
+    } = &r.outcome
+    else {
+        panic!("{r:?}");
+    };
+    assert_eq!(remaining, &[1]);
+    assert_eq!(dropped[0].number, 2);
+    assert_eq!(w.open.len(), open_before, "a batch was opened");
+    assert_eq!(
+        trail_actions(&root),
+        [
+            "merge_succeeded",
+            "compose_selected",
+            "compose_attempted",
+            "compose_refused"
+        ]
+    );
+    let refused = drain::events(&root).pop().unwrap();
+    assert_eq!(refused.class, Some(drain::FailureClass::Conflict));
+    assert!(
+        refused.detail.contains("nothing was pushed") && refused.detail.contains("#2"),
+        "{}",
+        refused.detail
+    );
+}
+
+#[test]
+fn a_composition_that_fails_is_classed_and_recorded_and_an_unrecorded_one_is_not_taken() {
+    let root = unlocked();
+    let mut w = batch_world();
+    w.compose_fails = Some("the push was refused: ! [rejected] int/batch-x (fetch first)");
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    let ComposeOutcome::Refused {
+        refusal: ComposeRefusal::ActFailed { class, reason },
+    } = &r.outcome
+    else {
+        panic!("{r:?}");
+    };
+    assert_eq!(*class, drain::FailureClass::Stale);
+    assert!(reason.contains("rejected"));
+    let refused = drain::events(&root).pop().unwrap();
+    assert_eq!(refused.action.as_str(), "compose_refused");
+    assert_eq!(refused.class, Some(drain::FailureClass::Stale));
+
+    // the second write — compose_attempted — is refused: nothing is asked of the integrator
+    let root = unlocked();
+    let mut w = batch_world();
+    drain::FAIL_WRITE.with(|n| n.set(2));
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    drain::FAIL_WRITE.with(|n| n.set(0));
+    assert_eq!(compose_outcome(&r), "refused:trail_unwritable", "{r:?}");
+    assert!(
+        w.composed.is_empty(),
+        "a push reached the remote unrecorded"
+    );
+    assert_eq!(
+        trail_actions(&root),
+        ["merge_succeeded", "compose_selected"]
+    );
+    // and the first — compose_selected
+    let root = unlocked();
+    drain::FAIL_WRITE.with(|n| n.set(1));
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    drain::FAIL_WRITE.with(|n| n.set(0));
+    assert_eq!(compose_outcome(&r), "refused:trail_unwritable", "{r:?}");
+    assert!(w.composed.is_empty());
+
+    // an integrator that composes nothing says so, and that is a refusal like any other
+    struct Plain(World);
+    impl Integrator for Plain {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            self.0.observe()
+        }
+        fn merge(&mut self, pr: u64, head: &str, method: &str) -> Result<(), String> {
+            self.0.merge(pr, head, method)
+        }
+        fn verify(
+            &mut self,
+            pr: u64,
+            at: &crate::integration::EvaluatedAgainst,
+            method: &str,
+        ) -> Result<drain::Landed, drain::NotLanded> {
+            self.0.verify(pr, at, method)
+        }
+        fn refresh_branch(&mut self, a: &PullRequestAssessment, b: &str) -> Result<String, String> {
+            self.0.refresh_branch(a, b)
+        }
+        fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.0.close(pr, head, comment)
+        }
+    }
+    let root = unlocked();
+    let r = compose::apply(&root, &mut Plain(batch_world()), 5).unwrap();
+    assert_eq!(compose_outcome(&r), "refused:act_failed", "{r:?}");
+}
+
+#[test]
+fn composition_is_refused_until_the_trail_holds_a_verified_merge() {
+    use drain::IntegrationAction as A;
+    let of = |actions: &[A]| -> Vec<drain::IntegrationEvent> {
+        actions
+            .iter()
+            .map(|a| drain::IntegrationEvent::of(*a))
+            .collect()
+    };
+    let refused = compose::rollout_refused(&of(&[A::Observed, A::Selected])).unwrap();
+    assert!(
+        refused.contains("prs drain --max 1") && refused.contains("holds 0"),
+        "{refused}"
+    );
+    assert_eq!(compose::rollout_refused(&of(&[A::MergeSucceeded])), None);
+    // a merge that could not be verified ends the record it followed
+    assert!(compose::rollout_refused(&of(&[A::MergeSucceeded, A::VerificationFailed])).is_some());
+    assert_eq!(
+        compose::rollout_refused(&of(&[A::VerificationFailed, A::MergeSucceeded])),
+        None
+    );
+    // the act asks it before the forge, and records nothing about a batch nobody decided
+    let root = scratch();
+    let mut w = batch_world();
+    let r = compose::apply(&root, &mut w, 5).unwrap();
+    assert_eq!(compose_outcome(&r), "refused:rollout_incomplete", "{r:?}");
+    assert!(r.plan.is_none());
+    assert_eq!((w.observations, w.composed.len()), (0, 0));
+    assert!(trail_actions(&root).is_empty());
+}
+
+fn manifest_of(numbers: &[u64]) -> BatchManifest {
+    BatchManifest::of(
+        "master",
+        "4090b2b8ae17c0ffee4090b2b8ae17c0ffee4090",
+        "2026-10-08T12:00:00Z",
+        numbers
+            .iter()
+            .map(|n| ComposedMember {
+                number: *n,
+                head: format!("{n:040x}"),
+                title: format!("fix(x): a title with: a colon, a #{n} and \"quotes\""),
+                merge_commit: format!("{:040x}", n + 1000),
+            })
+            .collect(),
+    )
+}
+
+#[test]
+fn a_manifest_round_trips_and_lists_its_members_in_composition_order() {
+    let m = manifest_of(&[815, 806, 9]);
+    assert_eq!(m.id, "4090b2b8ae-815-806-9");
+    assert_eq!(m.schema, "integration-batch/v1");
+    assert_eq!(compose::branch_of(&m.id), "int/batch-4090b2b8ae-815-806-9");
+    assert_eq!(
+        compose::manifest_path(&m.id),
+        ".ai/repo/integration/batches/4090b2b8ae-815-806-9.yaml"
+    );
+    let text = m.to_yaml();
+    let back = BatchManifest::parse(&text).unwrap();
+    assert_eq!(back, m, "{text}");
+    assert_eq!(
+        back.numbers(),
+        [815, 806, 9],
+        "composition order, not number order"
+    );
+    assert_eq!(back.to_yaml(), text, "byte-deterministic");
+    // the keys in declaration order, the members' too
+    let at = |key: &str| text.find(key).unwrap_or_else(|| panic!("{key} in {text}"));
+    let top = [
+        "schema:",
+        "id:",
+        "base:",
+        "base_master:",
+        "composed_at:",
+        "members:",
+    ];
+    assert!(top.windows(2).all(|w| at(w[0]) < at(w[1])), "{text}");
+    let member = ["number: 815", "head:", "title:", "merge_commit:"];
+    assert!(member.windows(2).all(|w| at(w[0]) < at(w[1])), "{text}");
+    assert!(
+        text.starts_with("schema: integration-batch/v1\nid: "),
+        "{text}"
+    );
+    // another schema, and a key this version does not know, are refused
+    let other = text.replace("integration-batch/v1", "integration-batch/v2");
+    assert!(BatchManifest::parse(&other).unwrap_err().contains("v2"));
+    assert!(BatchManifest::parse(&format!("{text}version: 1\n")).is_err());
+    assert!(BatchManifest::parse("a:\tb\n").is_err());
+    // a head that is all digits stays a string, and a title keeps whatever the forge holds
+    let mut odd = manifest_of(&[1, 2]);
+    odd.members[0].head = "1234567890".into();
+    odd.members[0].title = "it's a \\ path, 'quoted', true # not a comment ".into();
+    odd.members[1].title = "true".into();
+    odd.base = "release/1.x".into();
+    assert_eq!(BatchManifest::parse(&odd.to_yaml()).unwrap(), odd);
+    assert_eq!(compose::yaml_scalar("int/batch-1"), "int/batch-1");
+    assert_eq!(compose::yaml_scalar("1234"), "'1234'");
+    assert_eq!(compose::yaml_scalar("Yes"), "'Yes'");
+    assert_eq!(compose::yaml_scalar("it's"), "'it''s'");
+    // a batch with no member is still a document
+    let empty = BatchManifest::of("master", "m", "t", Vec::new());
+    assert_eq!(BatchManifest::parse(&empty.to_yaml()).unwrap(), empty);
+}
+
+#[test]
+fn a_batchs_body_supersedes_each_member_and_a_title_declares_nothing() {
+    let mut m = manifest_of(&[815, 806]);
+    // a title that reads like a declaration is a title
+    m.members[0].title = "Supersedes #1 and depends on #2".into();
+    let body = compose::pull_request_body(&m);
+    let said = super::classify::declared_supersessions(&body);
+    assert_eq!(said.supersedes, [806, 815]);
+    assert!(said.superseded_by.is_empty());
+    assert!(super::declared_dependencies(&body).is_empty(), "{body}");
+    assert!(body.contains(".ai/repo/integration/batches/"), "{body}");
+    assert_eq!(
+        compose::pull_request_title(&m),
+        "Batch 4090b2b8ae-815-806: #815, #806"
+    );
+    // the commits a batch is made of say whose they are
+    let member = compose::BatchMember {
+        number: 815,
+        head: "abc".into(),
+        title: "a change".into(),
+    };
+    let merge = compose::merge_message(&member, "master");
+    assert!(merge.starts_with("Merge pull request #815 into a batch on master\n\n"));
+    let composition = compose::composition_message(&m);
+    assert!(
+        composition.starts_with("chore(batch): batch 4090b2b8ae-815-806 is composed and derived\n"),
+        "{composition}"
+    );
+    assert_eq!(compose::short("m1"), "m1");
+}
+
+#[test]
+fn every_reason_and_refusal_of_a_composition_has_its_sentence_and_its_class() {
+    use drain::FailureClass as C;
+    let member = compose::BatchMember {
+        number: 7,
+        head: "h7".into(),
+        title: "seven".into(),
+    };
+    let reasons = [
+        (
+            LeftOutReason::OtherBase {
+                base: "release".into(),
+            },
+            "release",
+        ),
+        (LeftOutReason::IsBatch, "itself a batch"),
+        (LeftOutReason::Draft, "draft"),
+        (
+            LeftOutReason::Label {
+                names: vec!["hold".into()],
+            },
+            "hold",
+        ),
+        (LeftOutReason::AutoMergeArmed, "auto-merge"),
+        (LeftOutReason::ForkHead, "fork"),
+        (LeftOutReason::NamedByOpen { number: 900 }, "#900"),
+        (
+            LeftOutReason::Supersession {
+                reasons: vec![crate::integration::ReasonCode::DeclarationsUnread],
+            },
+            "declarations_unread",
+        ),
+        (
+            LeftOutReason::AuthoredConflict {
+                paths: vec!["a.rs".into()],
+            },
+            "a.rs",
+        ),
+        (
+            LeftOutReason::NothingToLand {
+                relation: "contained".into(),
+            },
+            "cleanup",
+        ),
+        (
+            LeftOutReason::Undecidable {
+                reason: "no merge base".into(),
+            },
+            "no merge base",
+        ),
+        (LeftOutReason::MergeCommitNotAllowed, "merge commit"),
+        (
+            LeftOutReason::Review {
+                state: PullRequestReview::Pending,
+            },
+            "pending",
+        ),
+        (
+            LeftOutReason::RequiredChecks {
+                state: RequiredCheckState::Missing,
+            },
+            "missing",
+        ),
+        (
+            LeftOutReason::Dependency {
+                waits_for: vec![3, 4],
+            },
+            "#3, #4",
+        ),
+        (LeftOutReason::OverMax { max: 2 }, "2 member"),
+        (
+            LeftOutReason::ConflictsInBatch {
+                paths: vec!["b.rs".into()],
+            },
+            "b.rs",
+        ),
+        (LeftOutReason::AlreadyInBatch, "already contained"),
+    ];
+    let mut kinds = BTreeSet::new();
+    for (reason, says) in reasons {
+        let sentence = reason.to_string();
+        assert!(sentence.contains(says), "{reason:?}: {sentence}");
+        let wire = serde_json::to_value(&reason).unwrap();
+        kinds.insert(wire["kind"].as_str().unwrap().to_string());
+        let back: LeftOutReason = serde_json::from_value(wire).unwrap();
+        assert_eq!(back, reason);
+        assert_eq!(compose::LeftOut::of(&member, reason).number, 7);
+    }
+    assert_eq!(kinds.len(), 18, "one wire word each: {kinds:?}");
+    let dropped = vec![compose::LeftOut::of(&member, LeftOutReason::AlreadyInBatch)];
+    let refusals = [
+        (
+            ComposeRefusal::MaxTooSmall { max: 1 },
+            C::PolicyViolation,
+            "at most 1 was asked for",
+        ),
+        (
+            ComposeRefusal::NoMaxMembers,
+            C::PolicyViolation,
+            "integration.batch.max_members",
+        ),
+        (
+            ComposeRefusal::MaxAbovePolicy { max: 9, policy: 8 },
+            C::PolicyViolation,
+            "--max 9 is above the 8",
+        ),
+        (
+            ComposeRefusal::DecisionNotAccepted {
+                status: "its status is `proposed`".into(),
+            },
+            C::PolicyViolation,
+            "a person's act",
+        ),
+        (
+            ComposeRefusal::TooFew { eligible: 1 },
+            C::PolicyViolation,
+            "1 pull request(s)",
+        ),
+        (
+            ComposeRefusal::RolloutIncomplete {
+                reason: "needs a merge".into(),
+            },
+            C::PolicyViolation,
+            "needs a merge",
+        ),
+        (
+            ComposeRefusal::TooFewComposed {
+                remaining: vec![1],
+                dropped,
+            },
+            C::Conflict,
+            "nothing was pushed",
+        ),
+        (
+            ComposeRefusal::ActFailed {
+                reason: "derive failed".into(),
+                class: C::Transient,
+            },
+            C::Transient,
+            "derive failed",
+        ),
+        (
+            ComposeRefusal::TrailUnwritable {
+                reason: "a directory".into(),
+            },
+            C::Unreadable,
+            "a directory",
+        ),
+    ];
+    for (refusal, class, says) in refusals {
+        assert_eq!(refusal.class(), class, "{refusal:?}");
+        assert!(refusal.to_string().contains(says), "{refusal}");
+    }
+}
+
+// ------------------------------------------------- compose: the kind, the size, the decision
+
+/// The schema the distribution ships for a batch manifest, compiled.
+fn shipped_batch_schema() -> (serde_json::Value, jsonschema::Validator) {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../share/schemas/majordomus/integration-batch/integration-batch.v1.schema.json");
+    let json: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display())),
+    )
+    .expect("the shipped schema is JSON");
+    let validator = jsonschema::validator_for(&json).expect("the shipped schema compiles");
+    (json, validator)
+}
+
+/// What the shipped schema says against a rendered manifest: the layer's own reader turns the
+/// YAML into the value an index would hold, and the schema judges that.
+fn schema_errors(text: &str) -> Vec<String> {
+    let value = serde_json::Value::Object(
+        crate::metadata::yaml::parse_mapping(text).expect("the layer reads the manifest"),
+    );
+    shipped_batch_schema()
+        .1
+        .iter_errors(&value)
+        .map(|e| format!("{}: {e}", e.instance_path()))
+        .collect()
+}
+
+#[test]
+fn a_rendered_manifest_satisfies_the_shipped_schema_and_the_two_declare_the_same_keys() {
+    // as the composition writes it, with and without a version to record
+    let plain = manifest_of(&[815, 806]);
+    assert_eq!(schema_errors(&plain.to_yaml()), Vec::<String>::new());
+    let raised = manifest_of(&[815, 806]).versioned(&compose::VersionStep {
+        before: "0.18.0".into(),
+        after: "0.19.0".into(),
+    });
+    let text = raised.to_yaml();
+    assert_eq!(schema_errors(&text), Vec::<String>::new(), "{text}");
+    assert_eq!(BatchManifest::parse(&text).unwrap(), raised, "{text}");
+    assert_eq!(raised.bumped(), Some(true));
+    assert_eq!(plain.bumped(), None);
+    assert!(
+        text.contains("composed_at: '2026-10-08T12:00:00Z'\nversion_before: '0.18.0'\nversion_after: '0.19.0'\nmembers:"),
+        "{text}"
+    );
+    // the schema refuses what the type would not have written
+    assert!(
+        !schema_errors(&text.replace("integration-batch/v1", "integration-batch/v2")).is_empty()
+    );
+    assert!(!schema_errors(&format!("{text}surprise: 1\n")).is_empty());
+    assert!(
+        !schema_errors(&manifest_of(&[815]).to_yaml()).is_empty(),
+        "one member is no batch"
+    );
+    // the Rust type and the shipped schema name the same keys, and require the same ones:
+    // a field added to one and not the other fails here, not in a repository that adopted it
+    let (shipped, _) = shipped_batch_schema();
+    let typed = serde_json::to_value(schemars::schema_for!(BatchManifest)).unwrap();
+    let keys = |schema: &serde_json::Value, at: &str| -> (Vec<String>, Vec<String>) {
+        let node = schema
+            .pointer(at)
+            .unwrap_or_else(|| panic!("{at} in {schema}"));
+        let mut properties: Vec<String> = node["properties"]
+            .as_object()
+            .expect("properties")
+            .keys()
+            .cloned()
+            .collect();
+        let mut required: Vec<String> = node["required"]
+            .as_array()
+            .expect("required")
+            .iter()
+            .filter_map(|v| v.as_str().map(str::to_string))
+            .collect();
+        properties.sort();
+        required.sort();
+        (properties, required)
+    };
+    assert_eq!(keys(&shipped, ""), keys(&typed, ""));
+    let member = typed
+        .get("$defs")
+        .or_else(|| typed.get("definitions"))
+        .and_then(|d| d.get("ComposedMember"))
+        .expect("the member type")
+        .clone();
+    assert_eq!(
+        keys(&shipped, "/properties/members/items"),
+        keys(&member, "")
+    );
+    assert_eq!(
+        shipped["properties"]["schema"]["const"],
+        compose::BATCH_SCHEMA
+    );
+    // and the kind is declared for the directory the composition writes into
+    let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+    let kinds = std::fs::read_to_string(share.join("kinds.yaml")).unwrap();
+    assert!(
+        kinds.contains("  integration-batch:\n    format: yaml\n")
+            && kinds.contains("schema: majordomus.integration-batch/v1")
+            && kinds.contains(&format!("supported: [{}]", compose::BATCH_SCHEMA)),
+        "share/kinds.yaml does not declare the kind"
+    );
+    let sources =
+        std::fs::read_to_string(share.join("skeleton/ai/repo/knowledge/sources.yaml")).unwrap();
+    assert!(
+        sources.contains(&format!("pathspec: ':(glob){}/*.yaml'", compose::BATCH_DIR)),
+        "the skeleton's sources name no class for {}",
+        compose::BATCH_DIR
+    );
+}
+
+#[test]
+fn the_size_is_the_policys_and_a_flag_only_lowers_it() {
+    use compose::resolve_max;
+    assert_eq!(resolve_max(Some(8), None), Ok(8));
+    assert_eq!(resolve_max(Some(8), Some(3)), Ok(3));
+    assert_eq!(resolve_max(Some(8), Some(8)), Ok(8));
+    assert_eq!(resolve_max(None, Some(3)), Ok(3));
+    let none = resolve_max(None, None).unwrap_err();
+    assert_eq!(none, ComposeRefusal::NoMaxMembers);
+    assert!(
+        none.to_string().contains(compose::MAX_MEMBERS_KEY),
+        "{none}"
+    );
+    let above = resolve_max(Some(8), Some(9)).unwrap_err();
+    assert_eq!(above, ComposeRefusal::MaxAbovePolicy { max: 9, policy: 8 });
+    assert!(above.to_string().contains("never raise"), "{above}");
+    // no layer declares no cap; a layer's policy declares it or not; an unreadable one is
+    // neither
+    let root = layer(None, None);
+    assert_eq!(compose::policy_max(&root), Ok(None));
+    assert_eq!(
+        compose::max_members(&root, None),
+        Err(ComposeRefusal::NoMaxMembers)
+    );
+    std::fs::write(
+        root.join(".ai/repo/policy.yaml"),
+        "version: 1\nintegration:\n  batch:\n    max_members: 8\n",
+    )
+    .unwrap();
+    assert_eq!(compose::policy_max(&root), Ok(Some(8)));
+    assert_eq!(compose::max_members(&root, Some(2)), Ok(2));
+    std::fs::write(root.join(".ai/repo/policy.yaml"), "version: [\n").unwrap();
+    assert!(compose::policy_max(&root).is_err());
+    assert!(matches!(
+        compose::max_members(&root, Some(2)),
+        Err(ComposeRefusal::ActFailed { .. })
+    ));
+    assert_eq!(
+        compose::policy_max(&unique_temp("mj-compose-no-layer")),
+        Ok(None)
+    );
+    // this repository declares it, and so does the skeleton a new one is written from
+    for policy in [
+        "../../.ai/repo/policy.yaml",
+        "../../share/skeleton/policy.yaml",
+    ] {
+        let text =
+            std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(policy))
+                .unwrap();
+        let parsed: crate::policy::Policy = crate::metadata::yaml::parse_into(&text).unwrap();
+        assert_eq!(parsed.integration.batch.max_members, Some(8), "{policy}");
+    }
+}
+
+/// A fixture layer: a manifest naming the policy and the decisions, a policy, and ADR 0114
+/// with `status` when one is given — beside `also`, another decision, accepted.
+fn layer(status: Option<&str>, also: Option<&str>) -> std::path::PathBuf {
+    let root = unique_temp("mj-compose-layer");
+    std::fs::create_dir_all(root.join(".ai/repo/adrs")).unwrap();
+    std::fs::write(
+        root.join(".ai/manifest.yaml"),
+        "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n  adrs: repo/adrs\n",
+    )
+    .unwrap();
+    std::fs::write(root.join(".ai/repo/policy.yaml"), "version: 1\n").unwrap();
+    let adr = |id: &str, status: &str| {
+        format!("---\nschema: adr/v1\nid: {id}\nkind: adr\ntitle: A decision\nstatus: {status}\ndate: 2026-10-08\n---\n\n# A decision\n\nstatus: accepted, says the body, which nobody asked\n")
+    };
+    if let Some(status) = status {
+        std::fs::write(
+            root.join(".ai/repo/adrs/0114-a-batch-is-composed.md"),
+            adr("adr-0114", status),
+        )
+        .unwrap();
+    }
+    if let Some(other) = also {
+        std::fs::write(
+            root.join(".ai/repo/adrs/0101-one-at-a-time.md"),
+            adr(other, "accepted"),
+        )
+        .unwrap();
+    }
+    root
+}
+
+#[test]
+fn the_act_is_refused_until_the_layer_holds_the_decision_as_accepted() {
+    // proposed: refused, naming the decision, its status, and whose act accepting is
+    let proposed = layer(Some("proposed"), Some("adr-0101"));
+    assert_eq!(
+        compose::decision_status(&proposed),
+        Ok(Some((
+            "proposed".to_string(),
+            ".ai/repo/adrs/0114-a-batch-is-composed.md".to_string()
+        )))
+    );
+    let refusal = compose::decision_refused(&proposed).expect("refused while proposed");
+    assert!(matches!(
+        refusal,
+        ComposeRefusal::DecisionNotAccepted { .. }
+    ));
+    let said = refusal.to_string();
+    assert!(said.contains("ADR 0114 (adr-0114)"), "{said}");
+    assert!(said.contains("its status is `proposed`"), "{said}");
+    assert!(said.contains("a person's act"), "{said}");
+    assert!(said.contains("dry run"), "{said}");
+    assert_eq!(refusal.class(), drain::FailureClass::PolicyViolation);
+    // accepted: nothing refuses, and the body's words decide nothing
+    let accepted = layer(Some("accepted"), Some("adr-0101"));
+    assert_eq!(compose::decision_refused(&accepted), None);
+    // another decision's acceptance is not this one's; neither is no layer at all
+    for root in [
+        layer(None, Some("adr-0101")),
+        unique_temp("mj-compose-no-layer"),
+    ] {
+        let said = compose::decision_refused(&root)
+            .expect("refused")
+            .to_string();
+        assert!(said.contains("holds no such decision"), "{said}");
+    }
+    // a status the front matter does not state is not accepted
+    let unstated = layer(None, None);
+    std::fs::write(
+        unstated.join(".ai/repo/adrs/0114-x.md"),
+        "---\nschema: adr/v1\nid: adr-0114\ntitle: t\n---\n\n# t\n",
+    )
+    .unwrap();
+    let said = compose::decision_refused(&unstated).unwrap().to_string();
+    assert!(said.contains("`unstated`"), "{said}");
+    // this repository's own record is the one the reader finds, whatever it says today
+    let here = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let (status, file) = compose::decision_status(&here)
+        .expect("this repository's layer reads")
+        .expect("this repository holds ADR 0114");
+    assert!(file.starts_with(".ai/repo/adrs/0114-"), "{file}");
+    assert!(!status.is_empty());
+}
+
+#[test]
+fn a_batch_carries_its_manifest_and_each_open_member_names_it() {
+    // #1 and #2 are members of the batch #7 composed; #3 is not
+    let root = unlocked();
+    let mut w = batch_world();
+    let r = compose::apply(&root, &mut w, 2).unwrap();
+    let ComposeOutcome::Composed { composed } = &r.outcome else {
+        panic!("{r:?}");
+    };
+    let batch = composed.pull_request.expect("the batch's pull request");
+    let manifest = composed.manifest.clone();
+    let mut q = w.queue();
+    assert!(q
+        .assessments
+        .iter()
+        .all(|a| a.batch.is_none() && a.carried_by.is_none()));
+    let asked = std::cell::RefCell::new(Vec::new());
+    compose::carry(&mut q, |a| {
+        asked.borrow_mut().push(a.number);
+        (a.number == batch).then(|| manifest.clone())
+    });
+    // only what can be a batch is asked about: a queue with none costs no read
+    assert_eq!(*asked.borrow(), [batch]);
+    assert_eq!(q.get(batch).unwrap().batch.as_ref(), Some(&manifest));
+    assert_eq!(
+        q.get(batch).unwrap().carried_by,
+        None,
+        "a batch does not carry itself"
+    );
+    for n in manifest.numbers() {
+        assert_eq!(q.get(n).unwrap().carried_by, Some(batch), "#{n}");
+        assert!(q.get(n).unwrap().batch.is_none());
+    }
+    let outside: Vec<u64> = (1..=3)
+        .filter(|n| !manifest.numbers().contains(n))
+        .collect();
+    assert_eq!(outside.len(), 1, "{manifest:?}");
+    assert_eq!(q.get(outside[0]).unwrap().carried_by, None);
+    // a batch whose manifest does not read carries none, and names nobody
+    let mut q = w.queue();
+    compose::carry(&mut q, |_| None);
+    assert!(q
+        .assessments
+        .iter()
+        .all(|a| a.batch.is_none() && a.carried_by.is_none()));
+    // absent on the wire where it says nothing, so an older reader sees what it always saw
+    let wire = serde_json::to_value(q.get(outside[0]).unwrap()).unwrap();
+    assert!(
+        wire.get("batch").is_none() && wire.get("carried_by").is_none(),
+        "{wire}"
+    );
 }

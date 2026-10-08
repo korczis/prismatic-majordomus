@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 184 | 160 | 0 | 24 |
-| http | 181 | 160 | 0 | 21 |
-| mcp | 177 | 156 | 0 | 21 |
+| direct | 186 | 161 | 0 | 25 |
+| http | 183 | 161 | 0 | 22 |
+| mcp | 178 | 157 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 555 | 489 | 0 | 66 |
+| total | 560 | 492 | 0 | 68 |
 
 ## Capabilities
 
@@ -91,7 +91,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `integration.batch_check` | integration | query | — | waived | — | waived | — |
 | `integration.cleanup` | integration | query | — | covered | covered | covered | `default` |
+| `integration.compose` | integration | query | — | covered | covered | covered | `policy-size`, `four-members` |
 | `integration.events` | integration | query | — | covered | covered | covered | `default` |
 | `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
 | `integration.prove_dry_run` | integration | query | — | waived | waived | waived | — |

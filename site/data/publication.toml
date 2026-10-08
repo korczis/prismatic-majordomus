@@ -26,6 +26,11 @@
 #   description  the section's one-line summary, for `entity`
 #   weight       where the section sorts among the site's sections, for `entity`
 #   reason       why a kind is not published, for `none`
+#   empty        why the index may hold no object of the kind, for a kind `share/kinds.yaml`
+#                declares whose objects are written by an act and not by a person. Without
+#                it an entry for a kind the index does not hold is refused; with it the entry
+#                stands before the first object and after, so the act that writes the first
+#                one need not also edit this file
 #
 # A kind published as `entity` must not also have an editorial section: two pages for one
 # object is the duplication this whole subsystem exists to remove.
@@ -171,6 +176,12 @@ reason = "A gap is what one worker observed of the repository against an intent'
 kind = "implementation"
 projection = "none"
 reason = "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is."
+
+[[kinds]]
+kind = "integration-batch"
+projection = "none"
+reason = "A batch manifest is the integrator's record of one composition: the master it was composed on and its members in order, each with its head and the merge commit that carries it (ADR 0114). It is YAML with no prose, so the generic entity page would render an empty body; a page that lays out the members is not built yet. Until it is, `majordomus prs explain`, the Cockpit's integration page and the file under .ai/repo/integration/batches/ answer for a batch."
+empty = "A manifest is written only by `majordomus prs compose --apply`, on a batch branch that may carry no authored line (ADR 0114 D4), so this entry cannot arrive with the first manifest and stands before it."
 
 [[kinds]]
 kind = "intent"

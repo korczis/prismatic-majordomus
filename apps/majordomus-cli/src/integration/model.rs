@@ -1120,6 +1120,23 @@ pub struct PullRequestAssessment {
     pub head_ref: String,
     /// The base branch.
     pub base_ref: String,
+    /// Whether the head lives in a fork rather than in this repository, as the forge reported
+    /// it. Said whatever the head is to master: the `fork_head` reason is given only where a
+    /// fork's head is also behind, and a batch asks the question of every candidate
+    /// ([`super::compose`]). Absent on the wire when it does not.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub fork_head: bool,
+    /// The manifest this pull request carries on its head, when it is a batch (ADR 0114):
+    /// its members in composition order, each with the head that was merged and the merge
+    /// commit that carries it. Read from git at the head that was decided on, never from the
+    /// pull request's body. Absent for anything that is not a batch, and for a batch whose
+    /// manifest could not be read. Set in one place ([`super::compose::carry`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch: Option<super::compose::BatchManifest>,
+    /// The open batch whose manifest names this pull request as a member, when one does.
+    /// Set in the same place.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub carried_by: Option<u64>,
     /// The revisions this was decided against.
     pub evaluated_against: EvaluatedAgainst,
     /// The classification.

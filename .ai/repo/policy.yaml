@@ -52,6 +52,16 @@ intent:
     - id: exploration
       description: Reading, measuring or prototyping whose result is a finding and not a change to the product
 
+# The pull-request integrator (ADR 0101, ADR 0114). `batch.max_members` is the most members
+# `majordomus prs compose` puts in one batch: a batch buys throughput by landing several
+# proved pull requests in one merge, and pays for it in what a red batch costs to bisect, so
+# the size is this repository's decision and the code carries no default. `--max` may lower
+# it for one composition and never raise it; with the key absent and no `--max`, `compose`
+# refuses and names the key.
+integration:
+  batch:
+    max_members: 8
+
 handover:
   required_sections: [Objective, Current State, Next Action]
   retention_max_files: 200

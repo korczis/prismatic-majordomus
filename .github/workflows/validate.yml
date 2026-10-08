@@ -162,6 +162,14 @@ jobs:
     needs: plan
     timeout-minutes: 40
     runs-on: ubuntu-latest
+    # A job's permissions replace the workflow's, so the two it had are named again. The one
+    # added is `pull-requests: read`: `prs batch-check` lists the open pull requests' heads
+    # to tell a composed branch from ordinary work (ADR 0114 D5), and without the scope the
+    # list is refused and the gate answers 12, "cannot run", on every batch.
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
     steps:
       # the whole history and its tags: `version-matches-surface` asks what the public
       # surface has lost since the last release, and it finds that release with

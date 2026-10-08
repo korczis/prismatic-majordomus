@@ -13,6 +13,13 @@
 #      the URI and the route name the same object;
 #   4. the publication declaration covers every kind the index holds, in this repository as
 #      it stands, so that a kind added without a decision is a failure here and not a silence.
+#   5. a kind whose objects an act writes may be declared before the first one exists, and
+#      only by saying so: `empty = "<why>"` on a kind share/kinds.yaml declares. A batch
+#      manifest is committed by `prs compose --apply` on a branch that may carry no authored
+#      line (ADR 0114 D4), so under the old two-way rule declaring `integration-batch` failed
+#      while no batch existed and the first batch would have failed without it. The gate
+#      still refuses the entry without `empty`, an `empty` that says nothing, and an `empty`
+#      on a kind nothing declares.
 . "$ROOT/test/lib.sh"
 
 GATE="$ROOT/scripts/ci/entity-check"
@@ -91,5 +98,38 @@ fi
 out="$(MAJORDOMUS_PUBLICATION="$S/renamed.toml" env -u MAJORDOMUS_SHARE bash "$GATE" 2>&1 || true)"
 case "$out" in *"holds kind 'adr' and"*) ;; *) note "the finding does not name the undeclared kind" ;; esac
 case "$out" in *"'adr-typo'"*) ;; *) note "the finding does not name the kind the index does not hold" ;; esac
+
+# ---------------------------------------------------------------- a kind that may be empty says so
+PUBLICATION="$ROOT/site/data/publication.toml"
+refused() {   # <declaration> -> what the gate says on stderr
+  { MAJORDOMUS_PUBLICATION="$1" env -u MAJORDOMUS_SHARE bash "$GATE" >/dev/null; } 2>&1 || true
+}
+accepts() { MAJORDOMUS_PUBLICATION="$1" env -u MAJORDOMUS_SHARE bash "$GATE" >/dev/null 2>&1; }
+grep -q '^kind = "integration-batch"$' "$PUBLICATION" \
+  || note "site/data/publication.toml does not declare integration-batch, and the first composed batch may not add the entry"
+awk '/^kind = "integration-batch"$/ { on = 1 } /^\[\[kinds\]\]/ { on = 0 } on && /^empty = "..*"$/ { found = 1 } END { exit !found }' "$PUBLICATION" \
+  || note "the integration-batch entry does not say why the index may hold no manifest (empty = \"...\")"
+held="$(printf '%s' "$KINDS" | jq -r '[.kinds[] | select(.kind == "integration-batch") | .count] | add // 0')"
+# without the word, a kind the index does not hold is refused as it always was
+awk '/^kind = "integration-batch"$/ { on = 1 } /^\[\[kinds\]\]/ { on = 0 } !(on && /^empty = /)' "$PUBLICATION" > "$S/silent.toml"
+if [ "$held" = 0 ]; then
+  if accepts "$S/silent.toml"; then
+    note "entity-check accepted integration-batch with no object and no \`empty\`"
+  fi
+  out="$(refused "$S/silent.toml")"
+  case "$out" in *"declares kind 'integration-batch' and the index holds no object of it"*) ;;
+    *) note "the refusal does not name the kind the index does not hold: $out" ;; esac
+else
+  # with a manifest in the tree the entry holds with the word and without it
+  accepts "$S/silent.toml" || note "entity-check refuses integration-batch although the index holds $held"
+fi
+# an `empty` that says nothing is no reason
+sed 's/^empty = ".*"$/empty = ""/' "$PUBLICATION" > "$S/mute.toml"
+if accepts "$S/mute.toml"; then note "entity-check accepted an \`empty\` that says nothing"; fi
+# and the word is for a kind the distribution declares: it does not excuse a typo
+sed 's/^kind = "integration-batch"$/kind = "integration-batsh"/' "$PUBLICATION" > "$S/typo.toml"
+out="$(refused "$S/typo.toml")"
+case "$out" in *"share/kinds.yaml declares no kind 'integration-batsh'"*) ;;
+  *) note "an \`empty\` on a kind nothing declares was not refused by name: $out" ;; esac
 
 exit "$fail"

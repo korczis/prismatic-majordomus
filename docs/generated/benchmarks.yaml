@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.18.0
 coverage:
   - scope: direct
-    required: 184
-    covered: 160
+    required: 186
+    covered: 161
     missing: 0
-    waived: 24
+    waived: 25
     inapplicable: 0
   - scope: http
-    required: 181
-    covered: 160
+    required: 183
+    covered: 161
     missing: 0
-    waived: 21
+    waived: 22
     inapplicable: 0
   - scope: mcp
-    required: 177
-    covered: 156
+    required: 178
+    covered: 157
     missing: 0
     waived: 21
     inapplicable: 0
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 555
-    covered: 489
+    required: 560
+    covered: 492
     missing: 0
-    waived: 66
+    waived: 68
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -705,6 +705,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: integration.batch_check
+    module: integration
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: waived
+    cases: []
   - id: integration.cleanup
     module: integration
     kind: query
@@ -714,6 +722,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: integration.compose
+    module: integration
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - policy-size
+      - four-members
   - id: integration.events
     module: integration
     kind: query

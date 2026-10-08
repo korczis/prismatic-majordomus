@@ -4,8 +4,10 @@
 # while cleanup also closed on equal patches and on any body's declaration; a rule that names
 # fewer grounds than the code acts on describes another program. Read from this repository:
 #
-#   1. project.integration-follows-the-current-master is version 3, in a file named .v3.md,
-#      and no .v2.md is left beside it
+#   1. project.integration-follows-the-current-master is version 4, in a file named .v4.md,
+#      and no earlier version is left beside it. Version 3 named the closure grounds below;
+#      version 4 keeps every one of them and adds the batch (ADR 0114), which is held by
+#      cases 1000 and 1001 and tests/integration_compose.rs, not here
 #   2. its closure bullet names the four grounds: ancestry, a merge that changes no file,
 #      every commit on master as an equal patch, and a declaration by an owner, member or
 #      collaborator whose successor git finds in master; it says the forge's word proves
@@ -16,11 +18,11 @@
 #      proposed: acceptance is the owner's act
 . "$ROOT/test/lib.sh"
 RULES="$ROOT/.ai/repo/rules/project"
-RULE="$RULES/integration-follows-the-current-master.v3.md"
+RULE="$RULES/integration-follows-the-current-master.v4.md"
 
-# ---------------------------------------------------------------- 1. version 3, alone
+# ---------------------------------------------------------------- 1. version 4, alone
 [ -f "$RULE" ] || { echo "    there is no ${RULE#"$ROOT"/}"; exit 1; }
-grep -q '^version: 3$' "$RULE" || { echo "    the rule's front matter does not say version: 3"; exit 1; }
+grep -q '^version: 4$' "$RULE" || { echo "    the rule's front matter does not say version: 4"; exit 1; }
 grep -q '^id: project.integration-follows-the-current-master$' "$RULE" || { echo "    the file does not carry the rule's id"; exit 1; }
 for old in "$RULES"/integration-follows-the-current-master.v*.md; do
   [ "$old" = "$RULE" ] || { echo "    another version of the rule is still there: ${old#"$ROOT"/}"; exit 1; }
@@ -84,4 +86,4 @@ for said in 'Amendment to D3, 2026-10-07' '**R2** Truncation holds' '**R6** `MEM
 done
 case "$adr" in *possible_supersession*declarations_unread*|*declarations_unread*possible_supersession*) ;;
   *) echo "    ADR 0101 does not name possible_supersession and declarations_unread"; exit 1 ;; esac
-echo "    the rule is version 3 and names all four closure grounds and the cases that hold them; ADR 0101 is proposed"
+echo "    the rule is version 4 and names all four closure grounds and the cases that hold them; ADR 0101 is proposed"

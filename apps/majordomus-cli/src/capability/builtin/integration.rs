@@ -1,6 +1,6 @@
 //! The `integration` module: the pull-request integration queue, projected (ADR 0101).
 //!
-//! Four questions, all read-only and all offline but the dry-run proof. Each renders the queue
+//! Seven questions, all read-only and all offline but the dry-run proof and the batch gate. Each renders the queue
 //! [`crate::integration::queue_of`] builds from the last recorded forge observation and
 //! this clone's fetched master — the value `majordomus prs status` prints — so the HTTP
 //! route, the MCP tool, the Cockpit and the command line cannot disagree. None reaches the
@@ -21,6 +21,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::integration::{
+    batch::BatchCheck,
+    compose::ComposeReport,
     drain::{
         CleanupItem, IntegrationEvent, IntegrationLease, IntegrationLeaseState, LeftBranchReport,
     },
@@ -140,6 +142,104 @@ pub struct IntegrationExplanation {
     pub assessment: Option<PullRequestAssessment>,
 }
 
+/// How large a batch to plan.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BatchPlanInput {
+    /// At most this many members, for this plan: lowers the policy's
+    /// `integration.batch.max_members` and never raises it. Absent, the policy's value is the
+    /// size; with neither there is no plan, and the reason names the key. A batch has at
+    /// least two: a smaller number is answered with the refusal, not with a plan.
+    #[serde(default)]
+    pub max: Option<usize>,
+}
+
+impl BenchmarkCases for BatchPlanInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("policy-size", BatchPlanInput { max: None }),
+            NamedCase::new("four-members", BatchPlanInput { max: Some(4) }),
+        ]
+    }
+}
+
+/// What to judge.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BatchCheckInput {
+    /// The base to judge against: a ref or a commit. Absent, the integration base as this
+    /// clone has it (`origin/<base>`).
+    #[serde(default)]
+    pub base: Option<String>,
+    /// The head to judge: a ref or a commit. Absent, `HEAD`.
+    #[serde(default)]
+    pub head: Option<String>,
+}
+
+impl BenchmarkCases for BatchCheckInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // waived where it is declared: the gate reads the forge
+        vec![NamedCase::new("head", BatchCheckInput::default())]
+    }
+}
+
+/// The plan of a batch, or why there is none.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntegrationBatchPlan {
+    /// Whether a forge observation is recorded in this checkout.
+    pub observed: bool,
+    /// Why there is no plan, when there is none.
+    pub reason: Option<String>,
+    /// The dry run of `prs compose --max <max>`: the plan, what would be done with it, and
+    /// what the observation it rests on cannot vouch for.
+    pub report: Option<ComposeReport>,
+    /// Why `--apply` would be refused before it decided anything: the trail does not yet
+    /// hold the verified merge that unlocks composition (ADR 0114 D7). `None` when it does.
+    pub rollout: Option<String>,
+    /// Why `--apply` would be refused whatever the trail holds: the layer does not hold
+    /// ADR 0114 as accepted, which is a person's act. `None` when it does.
+    #[serde(default)]
+    pub decision: Option<String>,
+}
+
+/// [`IntegrationBatchPlan`] for the checkout at `root`: [`crate::integration::compose::plan`]
+/// over the recorded observation, and the rollout record read from the trail. No network, no
+/// lease, no write.
+pub fn batch_plan(root: &Path, max: Option<usize>) -> IntegrationBatchPlan {
+    use crate::integration::compose;
+    let rollout = compose::rollout_refused(&crate::integration::drain::events(root));
+    let decision = compose::decision_refused(root).map(|refusal| refusal.to_string());
+    // the size is the policy's, lowered by `max`; with neither there is nothing to plan
+    let max = match compose::max_members(root, max) {
+        Ok(max) => max,
+        Err(refusal) => {
+            return IntegrationBatchPlan {
+                observed: matches!(crate::integration::load_observation(root), Ok(Some(_))),
+                reason: Some(refusal.to_string()),
+                report: None,
+                rollout,
+                decision,
+            }
+        }
+    };
+    match compose::plan(root, max) {
+        Ok(report) => IntegrationBatchPlan {
+            observed: true,
+            reason: None,
+            report: Some(report),
+            rollout,
+            decision,
+        },
+        Err(reason) => IntegrationBatchPlan {
+            observed: false,
+            reason: Some(reason),
+            report: None,
+            rollout,
+            decision,
+        },
+    }
+}
+
 /// The audit trail.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct IntegrationEvents {
@@ -235,6 +335,31 @@ fn integration_cleanup(ctx: &Context, _: Empty) -> Result<IntegrationCleanup, Ca
     Ok(cleanup_status(root(ctx), now))
 }
 
+fn integration_compose(
+    ctx: &Context,
+    input: BatchPlanInput,
+) -> Result<IntegrationBatchPlan, CapabilityError> {
+    Ok(batch_plan(root(ctx), input.max))
+}
+
+/// The gate, for the checkout the context serves. "Cannot run" — a base this clone does not
+/// have, a git or a forge that could not answer — is a refusal with the reason, never a
+/// verdict.
+fn integration_batch_check(
+    ctx: &Context,
+    input: BatchCheckInput,
+) -> Result<BatchCheck, CapabilityError> {
+    use crate::integration::batch;
+    let root = root(ctx);
+    let base = match input.base {
+        Some(base) => base,
+        None => batch::default_base(root).map_err(CapabilityError::Refused)?,
+    };
+    let head = input.head.unwrap_or_else(|| "HEAD".to_string());
+    batch::check(root, &base, &head, || batch::open_heads(root))
+        .map_err(|e| CapabilityError::Refused(format!("batch-check cannot run: {e}")))
+}
+
 fn integration_prove_dry_run(
     ctx: &Context,
     _: Empty,
@@ -315,6 +440,39 @@ pub fn module() -> ModuleDescriptor {
                 handler: integration_cleanup,
             },
             capability! {
+                id: "integration.compose",
+                title: "The plan of a batch",
+                description: "What `majordomus prs compose` would compose, decided offline from the recorded observation (ADR 0114): the base and the master commit every member was decided against, the members in composition order — each an open pull request on the base that is not a draft, carries no holding label, has its head in this repository, satisfies the review policy and has every required check passed on its own head, which may be behind master, with every declared dependency landed or placed before it, taken in rank order up to the policy's `integration.batch.max_members`, which `max` may lower and never raise — each with its head and title, and every other open pull request with the one typed reason it is left out; then what would be done (`would_compose`, or the refusal: fewer than two eligible is not a batch), the queue's diagnostics, and whether the rollout record or the status of ADR 0114 in the layer would refuse `--apply`. With no `max` and no policy key there is no plan, and the reason names the key. A read: it merges, pushes and records nothing — `majordomus prs compose --apply` is the act, under the integration lease. `observed: false` with the reason when this checkout has recorded no observation.",
+                input: BatchPlanInput,
+                output: IntegrationBatchPlan,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_pull_requests_compose"),
+                    http: get("/api/v1/pull-requests/compose"),
+                    cli: None,
+                },
+                tags: ["integration", "pull-requests", "batch"],
+                cache: CachePolicy::Disabled,
+                handler: integration_compose,
+            },
+            capability! {
+                id: "integration.batch_check",
+                title: "A composed branch that is not a batch is refused",
+                description: "The gate of ADR 0114 D5, `majordomus prs batch-check`. Walks the first-parent line from the merge base of `base` and `head`: a merge there with exactly two parents whose second is the current head of another open pull request of this repository is a member merge; a merge whose other parents are all ancestors of the base is a merge of the base. A branch is a batch to be judged when it merges two or more pull requests that way, or when it adds or changes a manifest under `.ai/repo/integration/batches/` relative to the base, whatever it merges; neither is `not_a_batch` — one merge and no manifest is a stack. A batch to be judged must add or change exactly one manifest, whose members are exactly the member merges' pull requests in first-parent order, at least two of them, each `head` the merge's second parent and each `merge_commit` the merge; and every other commit on the line that is not a merge of the base may change only that manifest, the version files `release bump` writes and paths that are `merge=derived`. Otherwise `refused`, with one typed finding per disagreement naming the commit, the path, or the manifest line and member. Answers the base, the merge base, the head that was judged (the forge's test merge of a pull request is looked through to the pull request's own head), whether the forge was read, the member merges, the manifest, the verdict and the findings. The open pull requests are read from the forge through the GitHub CLI, and only when git alone cannot decide; when they are needed and cannot be read, or git cannot answer, the call is refused with the reason — it never reports clean because it could not look. A read: nothing is fetched, stored or recorded.",
+                input: BatchCheckInput,
+                output: BatchCheck,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: get("/api/v1/pull-requests/batch-check"),
+                    cli: Some(CliExposure { path: vec!["prs".into(), "batch-check".into()] }),
+                },
+                tags: ["integration", "pull-requests", "batch", "gate", "live"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: integration_batch_check,
+            },
+            capability! {
                 id: "integration.prove_dry_run",
                 title: "Proof that a dry run moves nothing",
                 description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
@@ -354,6 +512,8 @@ mod tests {
                 "integration.explain",
                 "integration.events",
                 "integration.cleanup",
+                "integration.compose",
+                "integration.batch_check",
                 "integration.prove_dry_run"
             ]
         );
@@ -369,5 +529,41 @@ mod tests {
                 e.capability.id
             );
         }
+    }
+
+    #[test]
+    fn a_batch_plan_without_an_observation_says_so_and_names_the_rollout() {
+        let dir = std::env::temp_dir().join(format!(
+            "mj-capability-compose-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let init = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&dir)
+            .args(["init", "-q"])
+            .status()
+            .unwrap();
+        assert!(init.success());
+        let plan = batch_plan(&dir, Some(4));
+        assert!(!plan.observed);
+        assert!(plan.report.is_none());
+        assert!(
+            plan.reason.as_deref().unwrap_or("").contains("prs refresh"),
+            "{plan:?}"
+        );
+        // the trail holds no verified merge: `--apply` would be refused, and the read says so
+        assert!(
+            plan.rollout
+                .as_deref()
+                .unwrap_or("")
+                .contains("ADR 0114 D7"),
+            "{plan:?}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

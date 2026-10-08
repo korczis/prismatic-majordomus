@@ -13866,6 +13866,18 @@
           "route": "/docs/cli/prs/repair/"
         },
         {
+          "about": "Compose a batch (ADR 0114): one pull request that carries several, each proved on its own head. A member is open, on the base, not a draft, unlabelled, in this repository, reviewed as the policy asks, with every required check passed on its head — which may be behind master — and every dependency landed or placed before it; everyone else is left out with the reason. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and in a scratch worktree merges each member's head onto master in rank order, writes the manifest, derives, commits once, pushes a new branch `int/batch-<id>` and opens its pull request, which supersedes each member; it never merges into master. Between the merges and the derive it takes one `release bump` to what the public contract of the composed tree requires, and the manifest records the version before and after. Refused until the trail holds a verified merge, and while ADR 0114 is not accepted in the layer. Exit 10 on a refusal or an absent observation, 12 when it could not act",
+          "command": "majordomus prs compose",
+          "name": "compose",
+          "route": "/docs/cli/prs/compose/"
+        },
+        {
+          "about": "The gate of ADR 0114 D5: a composed branch that is not a batch is refused. Walks the first-parent line from the merge base of `--base` and `--head`; a merge there whose second parent is the current head of another open pull request of this repository is a member merge. Fewer than two and no manifest added or changed under `.ai/repo/integration/batches/`: not a batch, exit 0. Two or more, or a manifest added or changed whatever the branch merges: it must add or change exactly one manifest, naming exactly those members, at least two, in that order with those heads and merge commits, and every other commit on the line that is not a merge of the base may change only the manifest, the version files `release bump` writes and `merge=derived` paths. The open pull requests are read from the forge, and only when git alone cannot decide. Exit 0 not a batch or a conforming one, 10 refused with every finding named, 12 when it cannot run — git or the forge could not be read — never clean because it could not look",
+          "command": "majordomus prs batch-check",
+          "name": "batch-check",
+          "route": "/docs/cli/prs/batch-check/"
+        },
+        {
           "about": "The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded",
           "command": "majordomus prs events",
           "name": "events",
@@ -14979,6 +14991,334 @@
       ],
       "route": "/docs/cli/prs/repair/",
       "usage": "majordomus prs repair [OPTIONS] <TARGET>"
+    },
+    {
+      "about": "Compose a batch (ADR 0114): one pull request that carries several, each proved on its own head. A member is open, on the base, not a draft, unlabelled, in this repository, reviewed as the policy asks, with every required check passed on its head — which may be behind master — and every dependency landed or placed before it; everyone else is left out with the reason. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and in a scratch worktree merges each member's head onto master in rank order, writes the manifest, derives, commits once, pushes a new branch `int/batch-<id>` and opens its pull request, which supersedes each member; it never merges into master. Between the merges and the derive it takes one `release bump` to what the public contract of the composed tree requires, and the manifest records the version before and after. Refused until the trail holds a verified merge, and while ADR 0114 is not accepted in the layer. Exit 10 on a refusal or an absent observation, 12 when it could not act",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many members, for this composition: lowers the policy's `integration.batch.max_members` and never raises it. Without it the policy's value is the size; with neither, the command refuses and names the key. A batch has at least two",
+          "long": "max",
+          "name": "max",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Act: take the lease, observe the forge again, record the act, merge the members, derive, commit, push the new branch and open its pull request. Without it nothing is changed, fetched or recorded",
+          "long": "apply",
+          "name": "apply",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "APPLY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Decide and change nothing: the default, spelled out",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs compose",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "compose",
+            "--max",
+            "4"
+          ],
+          "command": "majordomus prs compose --max 4",
+          "description": "The dry run, which is the default, is a read: it decides which open pull requests may ride one batch, and in what order, from the queue the last recorded observation built, as `prs status` does, and names everyone it leaves out with the reason. The same plan `GET /api/v1/pull-requests/compose?max=` gives. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.",
+          "expectation": "exits 10",
+          "id": "prs-compose-unobserved",
+          "setup": [],
+          "title": "A batch is planned on the recorded observation, or not at all"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "compose",
+      "parent_route": "/docs/cli/prs/",
+      "path": [
+        "majordomus",
+        "prs",
+        "compose"
+      ],
+      "route": "/docs/cli/prs/compose/",
+      "usage": "majordomus prs compose [OPTIONS]"
+    },
+    {
+      "about": "The gate of ADR 0114 D5: a composed branch that is not a batch is refused. Walks the first-parent line from the merge base of `--base` and `--head`; a merge there whose second parent is the current head of another open pull request of this repository is a member merge. Fewer than two and no manifest added or changed under `.ai/repo/integration/batches/`: not a batch, exit 0. Two or more, or a manifest added or changed whatever the branch merges: it must add or change exactly one manifest, naming exactly those members, at least two, in that order with those heads and merge commits, and every other commit on the line that is not a merge of the base may change only the manifest, the version files `release bump` writes and `merge=derived` paths. The open pull requests are read from the forge, and only when git alone cannot decide. Exit 0 not a batch or a conforming one, 10 refused with every finding named, 12 when it cannot run — git or the forge could not be read — never clean because it could not look",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The base to judge against: a ref or a commit. Default: the integration base as this clone has it (`origin/<base>`)",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BASE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The head to judge: a ref or a commit. Default: HEAD. The forge's test merge of a pull request (`refs/pull/<n>/merge`) is looked through to the pull request's own head",
+          "long": "head",
+          "name": "head",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "HEAD"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs batch-check",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "batch-check",
+            "--base",
+            "HEAD",
+            "--head",
+            "HEAD"
+          ],
+          "command": "majordomus prs batch-check --base HEAD --head HEAD",
+          "description": "The gate of ADR 0114 D5 walks the first-parent line from the merge base of the base and the head. With fewer than two merges there of anything but the base, git alone decides: the branch is not a batch, the forge is never asked, and the command says so in one line and exits 0. It reads the open pull requests' heads only when the line holds two such merges; a forge it then cannot read is exit 12 — it never reports clean because it could not look — and a branch that merges two open pull requests without the manifest `prs compose` writes is exit 10, each finding naming the commit, the path or the manifest line.",
+          "expectation": "exits 0; prints batch-check: not a batch",
+          "id": "prs-batch-check-not-a-batch",
+          "setup": [],
+          "title": "A branch that merges no other pull request is not a batch"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "batch-check",
+      "parent_route": "/docs/cli/prs/",
+      "path": [
+        "majordomus",
+        "prs",
+        "batch-check"
+      ],
+      "route": "/docs/cli/prs/batch-check/",
+      "usage": "majordomus prs batch-check [OPTIONS]"
     },
     {
       "about": "The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded",
@@ -34067,10 +34407,10 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1485,
+    "commands": 218,
+    "examples": 218,
+    "runnable": 192
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.18.0",

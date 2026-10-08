@@ -481,6 +481,24 @@ gates:
     runs: scripts/ci/step-bound-check
     summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
 
+  # ADR 0114 D5. A branch that merges the heads of two or more other open pull requests is a
+  # batch, and a batch is composed by `prs compose`, which writes the manifest this gate
+  # compares with git. Always planned: what makes a branch a batch is its history, which no
+  # class of changed paths can name. It walks git first and reads the forge — the open pull
+  # requests' heads, through the job's GH_TOKEN — only when the first-parent line holds two
+  # merges of anything but the base or the branch adds or changes a manifest (which always
+  # makes it a batch to be judged), so a branch of ordinary work and a master push are
+  # decided without it; when the forge is needed and cannot be read the gate exits 12,
+  # "cannot run", never 0. The list is the heads alone (`gh pr list`, `pull-requests: read`
+  # on the job) and not a whole observation. The judge is typed Rust (ADR 0069), run through
+  # the launcher: it builds nothing of its own here, because `economics-claims` above is
+  # `always` and has built the same debug executable in this job on every plan.
+  - id: batch-check
+    job: structure
+    always: true
+    runs: bin/majordomus-cli prs batch-check
+    summary: a branch that merges two or more other open pull requests, or that adds or changes a batch manifest, carries exactly one batch manifest naming those members in that order at those heads, and no commit of its own changes anything but the manifest, the version files and derived paths (ADR 0114)
+
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check

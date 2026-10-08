@@ -104,6 +104,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus prs drain`](#majordomus-prs-drain) | `/docs/cli/prs/drain/` | Merge the next ready pull request, verify it landed, observe again, and repeat — at most `--max` merges; `--dry-run` decides without acting |
 | [`majordomus prs cleanup`](#majordomus-prs-cleanup) | `/docs/cli/prs/cleanup/` | Close the pull requests whose work is provably on master already; without `--apply` it only lists them |
 | [`majordomus prs repair`](#majordomus-prs-repair) | `/docs/cli/prs/repair/` | Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act |
+| [`majordomus prs compose`](#majordomus-prs-compose) | `/docs/cli/prs/compose/` | Compose a batch (ADR 0114): one pull request that carries several, each proved on its own head. A member is open, on the base, not a draft, unlabelled, in this repository, reviewed as the policy asks, with every required check passed on its head — which may be behind master — and every dependency landed or placed before it; everyone else is left out with the reason. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and in a scratch worktree merges each member's head onto master in rank order, writes the manifest, derives, commits once, pushes a new branch `int/batch-<id>` and opens its pull request, which supersedes each member; it never merges into master. Between the merges and the derive it takes one `release bump` to what the public contract of the composed tree requires, and the manifest records the version before and after. Refused until the trail holds a verified merge, and while ADR 0114 is not accepted in the layer. Exit 10 on a refusal or an absent observation, 12 when it could not act |
+| [`majordomus prs batch-check`](#majordomus-prs-batch-check) | `/docs/cli/prs/batch-check/` | The gate of ADR 0114 D5: a composed branch that is not a batch is refused. Walks the first-parent line from the merge base of `--base` and `--head`; a merge there whose second parent is the current head of another open pull request of this repository is a member merge. Fewer than two and no manifest added or changed under `.ai/repo/integration/batches/`: not a batch, exit 0. Two or more, or a manifest added or changed whatever the branch merges: it must add or change exactly one manifest, naming exactly those members, at least two, in that order with those heads and merge commits, and every other commit on the line that is not a merge of the base may change only the manifest, the version files `release bump` writes and `merge=derived` paths. The open pull requests are read from the forge, and only when git alone cannot decide. Exit 0 not a batch or a conforming one, 10 refused with every finding named, 12 when it cannot run — git or the forge could not be read — never clean because it could not look |
 | [`majordomus prs events`](#majordomus-prs-events) | `/docs/cli/prs/events/` | The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded |
 | [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed |
 | [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run) | `/docs/cli/prs/prove-dry-run/` | Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on |
@@ -2722,7 +2724,7 @@ Examples:
 
 Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
 
-Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
+Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs compose`](#majordomus-prs-compose), [`majordomus prs batch-check`](#majordomus-prs-batch-check), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
 
 ```text
 majordomus prs [OPTIONS] [COMMAND]
@@ -2946,6 +2948,65 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-prs-compose"></a>
+## `majordomus prs compose`
+
+Compose a batch (ADR 0114): one pull request that carries several, each proved on its own head. A member is open, on the base, not a draft, unlabelled, in this repository, reviewed as the policy asks, with every required check passed on its head — which may be behind master — and every dependency landed or placed before it; everyone else is left out with the reason. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and in a scratch worktree merges each member's head onto master in rank order, writes the manifest, derives, commits once, pushes a new branch `int/batch-<id>` and opens its pull request, which supersedes each member; it never merges into master. Between the merges and the derive it takes one `release bump` to what the public contract of the composed tree requires, and the manifest records the version before and after. Refused until the trail holds a verified merge, and while ADR 0114 is not accepted in the layer. Exit 10 on a refusal or an absent observation, 12 when it could not act
+
+```text
+majordomus prs compose [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--max` | `<MAX>` | — | At most this many members, for this composition: lowers the policy's `integration.batch.max_members` and never raises it. Without it the policy's value is the size; with neither, the command refuses and names the key. A batch has at least two |
+| `--apply` | flag | — | Act: take the lease, observe the forge again, record the act, merge the members, derive, commit, push the new branch and open its pull request. Without it nothing is changed, fetched or recorded |
+| `--dry-run` | flag | — | Decide and change nothing: the default, spelled out |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A batch is planned on the recorded observation, or not at all** — The dry run, which is the default, is a read: it decides which open pull requests may ride one batch, and in what order, from the queue the last recorded observation built, as `prs status` does, and names everyone it leaves out with the reason. The same plan `GET /api/v1/pull-requests/compose?max=` gives. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.
+
+  ```console
+  $ majordomus prs compose --max 4
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-prs-batch-check"></a>
+## `majordomus prs batch-check`
+
+The gate of ADR 0114 D5: a composed branch that is not a batch is refused. Walks the first-parent line from the merge base of `--base` and `--head`; a merge there whose second parent is the current head of another open pull request of this repository is a member merge. Fewer than two and no manifest added or changed under `.ai/repo/integration/batches/`: not a batch, exit 0. Two or more, or a manifest added or changed whatever the branch merges: it must add or change exactly one manifest, naming exactly those members, at least two, in that order with those heads and merge commits, and every other commit on the line that is not a merge of the base may change only the manifest, the version files `release bump` writes and `merge=derived` paths. The open pull requests are read from the forge, and only when git alone cannot decide. Exit 0 not a batch or a conforming one, 10 refused with every finding named, 12 when it cannot run — git or the forge could not be read — never clean because it could not look
+
+```text
+majordomus prs batch-check [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--base` | `<BASE>` | — | The base to judge against: a ref or a commit. Default: the integration base as this clone has it (`origin/<base>`) |
+| `--head` | `<HEAD>` | — | The head to judge: a ref or a commit. Default: HEAD. The forge's test merge of a pull request (`refs/pull/<n>/merge`) is looked through to the pull request's own head |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A branch that merges no other pull request is not a batch** — The gate of ADR 0114 D5 walks the first-parent line from the merge base of the base and the head. With fewer than two merges there of anything but the base, git alone decides: the branch is not a batch, the forge is never asked, and the command says so in one line and exits 0. It reads the open pull requests' heads only when the line holds two such merges; a forge it then cannot read is exit 12 — it never reports clean because it could not look — and a branch that merges two open pull requests without the manifest `prs compose` writes is exit 10, each finding naming the commit, the path or the manifest line.
+
+  ```console
+  $ majordomus prs batch-check --base HEAD --head HEAD
+  ```
+
+  Verified: exits 0; prints batch-check: not a batch.
 
 <a id="majordomus-prs-events"></a>
 ## `majordomus prs events`

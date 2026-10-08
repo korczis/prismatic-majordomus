@@ -1,0 +1,9 @@
++++
+title = "integration.batch_check"
+description = "The gate of ADR 0114 D5, `majordomus prs batch-check`. Walks the first-parent line from the merge base of `base` and `head`: a merge there with exactly two parents whose second is the current head of another open pull request of this repository is a member merge; a merge whose other parents are all ancestors of the base is a merge of the base. A branch is a batch to be judged when it merges two or more pull requests that way, or when it adds or changes a manifest under `.ai/repo/integration/batches/` relative to the base, whatever it merges; neither is `not_a_batch` — one merge and no manifest is a stack. A batch to be judged must add or change exactly one manifest, whose members are exactly the member merges' pull requests in first-parent order, at least two of them, each `head` the merge's second parent and each `merge_commit` the merge; and every other commit on the line that is not a merge of the base may change only that manifest, the version files `release bump` writes and paths that are `merge=derived`. Otherwise `refused`, with one typed finding per disagreement naming the commit, the path, or the manifest line and member. Answers the base, the merge base, the head that was judged (the forge's test merge of a pull request is looked through to the pull request's own head), whether the forge was read, the member merges, the manifest, the verdict and the findings. The open pull requests are read from the forge through the GitHub CLI, and only when git alone cannot decide; when they are needed and cannot be read, or git cannot answer, the call is refused with the reason — it never reports clean because it could not look. A read: nothing is fetched, stored or recorded."
+weight = 73
+slug = "integration-batch-check"
+[extra]
+id = "integration.batch_check"
+source = "apps/majordomus-cli/src/capability/builtin/integration.rs"
++++

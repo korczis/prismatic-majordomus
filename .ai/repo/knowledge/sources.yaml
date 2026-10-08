@@ -248,6 +248,15 @@ sources:
     pathspec: ':(glob).ai/repo/releases/*.yaml'
     required: false
 
+  # The manifests of the batches the integrator composed (ADR 0114): without this class a
+  # manifest that landed with its batch is a file nothing indexes, and `prs explain` and
+  # the Cockpit could not name a batch's members.
+  - id: integration-batch
+    kind: integration-batch
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/integration/batches/*.yaml'
+    required: false
+
   # The implementation and test classes exist so that the chain a claim already declares —
   # claim, the file that implements it, the case that proves it — resolves to real nodes
   # instead of to three strings. Without them every claim's edges dangle by construction,

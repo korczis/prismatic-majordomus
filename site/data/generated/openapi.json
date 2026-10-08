@@ -70,7 +70,9 @@
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
+    "op-integration-batch_check": "docs/api/integration/",
     "op-integration-cleanup": "docs/api/integration/",
+    "op-integration-compose": "docs/api/integration/",
     "op-integration-events": "docs/api/integration/",
     "op-integration-explain": "docs/api/integration/",
     "op-integration-prove_dry_run": "docs/api/integration/",
@@ -219,6 +221,12 @@
     "schema-AudienceList": "docs/api/why/",
     "schema-AudienceView": "docs/api/why/",
     "schema-Balance": "docs/api/lifecycle/",
+    "schema-BatchCheck": "docs/api/integration/",
+    "schema-BatchFinding": "docs/api/integration/",
+    "schema-BatchManifest": "docs/api/integration/",
+    "schema-BatchMember": "docs/api/integration/",
+    "schema-BatchPlan": "docs/api/integration/",
+    "schema-BatchVerdict": "docs/api/integration/",
     "schema-BenchmarkPolicy": "docs/api/capabilities/",
     "schema-BenchmarkPrecondition": "docs/api/capabilities/",
     "schema-BindingCause": "docs/api/intents/",
@@ -312,6 +320,11 @@
     "schema-CompilerPolicy": "docs/api/devcontext/",
     "schema-Completion": "docs/api/gates/",
     "schema-Component": "docs/api/continuity/",
+    "schema-ComposeOutcome": "docs/api/integration/",
+    "schema-ComposeRefusal": "docs/api/integration/",
+    "schema-ComposeReport": "docs/api/integration/",
+    "schema-ComposedBatch": "docs/api/integration/",
+    "schema-ComposedMember": "docs/api/integration/",
     "schema-ConclusionView": "docs/api/reasoning/",
     "schema-Concurrency": "docs/api/deploy/",
     "schema-ConditionState": "docs/api/intents/",
@@ -556,6 +569,7 @@
     "schema-InstanceId": "docs/api/mesh/",
     "schema-Integration": "docs/api/trace/",
     "schema-IntegrationAction": "docs/api/integration/",
+    "schema-IntegrationBatchPlan": "docs/api/integration/",
     "schema-IntegrationCleanup": "docs/api/integration/",
     "schema-IntegrationEvent": "docs/api/integration/",
     "schema-IntegrationEvents": "docs/api/integration/",
@@ -626,6 +640,8 @@
     "schema-LedgerMark": "docs/api/knowledge-base/",
     "schema-LeftBranch": "docs/api/integration/",
     "schema-LeftBranchReport": "docs/api/integration/",
+    "schema-LeftOut": "docs/api/integration/",
+    "schema-LeftOutReason": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LineState": "docs/api/continuity/",
@@ -658,6 +674,7 @@
     "schema-McpToolEntry": "docs/api/mcp/",
     "schema-McpTransportEntry": "docs/api/mcp/",
     "schema-Measured": "docs/api/design/",
+    "schema-MemberMerge": "docs/api/integration/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
@@ -1130,8 +1147,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 181,
-    "schemas": 893,
+    "operations": 183,
+    "schemas": 908,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1287,7 +1304,9 @@
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
+    "integration.batch_check": "integration",
     "integration.cleanup": "integration",
+    "integration.compose": "integration",
     "integration.events": "integration",
     "integration.explain": "integration",
     "integration.prove_dry_run": "integration",
@@ -1440,6 +1459,12 @@
     "AudienceList": "why",
     "AudienceView": "why",
     "Balance": "lifecycle",
+    "BatchCheck": "integration",
+    "BatchFinding": "integration",
+    "BatchManifest": "integration",
+    "BatchMember": "integration",
+    "BatchPlan": "integration",
+    "BatchVerdict": "integration",
     "BenchmarkPolicy": "capabilities",
     "BenchmarkPrecondition": "capabilities",
     "BindingCause": "intents",
@@ -1533,6 +1558,11 @@
     "CompilerPolicy": "devcontext",
     "Completion": "gates",
     "Component": "continuity",
+    "ComposeOutcome": "integration",
+    "ComposeRefusal": "integration",
+    "ComposeReport": "integration",
+    "ComposedBatch": "integration",
+    "ComposedMember": "integration",
     "ConclusionView": "reasoning",
     "Concurrency": "deploy",
     "ConditionState": "intents",
@@ -1777,6 +1807,7 @@
     "InstanceId": "mesh",
     "Integration": "trace",
     "IntegrationAction": "integration",
+    "IntegrationBatchPlan": "integration",
     "IntegrationCleanup": "integration",
     "IntegrationEvent": "integration",
     "IntegrationEvents": "integration",
@@ -1847,6 +1878,8 @@
     "LedgerMark": "knowledge-base",
     "LeftBranch": "integration",
     "LeftBranchReport": "integration",
+    "LeftOut": "integration",
+    "LeftOutReason": "integration",
     "Libc": "distribution",
     "LimitsView": "executions",
     "LineState": "continuity",
@@ -1879,6 +1912,7 @@
     "McpToolEntry": "mcp",
     "McpTransportEntry": "mcp",
     "Measured": "design",
+    "MemberMerge": "integration",
     "MeshDoctorReport": "mesh",
     "MeshEvent": "mesh",
     "MeshIdentityReport": "mesh",
@@ -4258,6 +4292,645 @@
         "Recovery"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of one `prs batch-check`.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "BatchCheck",
+      "properties": [
+        {
+          "description": "The base, as it was named.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`merge-base(base, head)`: where the first-parent line that was walked starts.",
+          "name": "merge_base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit that was judged.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The forge's test merge that was looked through to reach `head`, when the head that\nwas named is one.",
+          "name": "looked_through",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the forge's list of open pull requests was read. `false` when git alone\ndecided: the branch touches no manifest and the line holds fewer than two merges of\nanything but the base.",
+          "name": "forge_read",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The member merges, in first-parent order.",
+          "name": "members",
+          "refs": [
+            "MemberMerge"
+          ],
+          "required": true,
+          "type": "array of MemberMerge"
+        },
+        {
+          "description": "The one manifest the branch adds or changes, when it adds exactly one.",
+          "name": "manifest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The verdict.",
+          "name": "verdict",
+          "refs": [
+            "BatchVerdict"
+          ],
+          "required": true,
+          "type": "BatchVerdict"
+        },
+        {
+          "description": "Why it is refused; empty otherwise.",
+          "name": "findings",
+          "refs": [
+            "BatchFinding"
+          ],
+          "required": true,
+          "type": "array of BatchFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.batch_check"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One way a branch that merges several pull requests is not the batch its manifest says.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "BatchFinding",
+      "properties": [],
+      "type": "one of 10 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "BatchCheck"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The branch merges these pull requests' heads and adds no manifest.",
+          "properties": [
+            {
+              "description": "The member merges that were found.",
+              "name": "members",
+              "refs": [
+                "MemberMerge"
+              ],
+              "required": true,
+              "type": "array of MemberMerge"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"manifest_missing\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The branch adds or changes more than one manifest: a batch has one identity.",
+          "properties": [
+            {
+              "description": "The manifests it touches.",
+              "name": "paths",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"manifest_ambiguous\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The manifest is not an `integration-batch/v1` document.",
+          "properties": [
+            {
+              "description": "The manifest.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Why it could not be read.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"manifest_unreadable\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A member merge the manifest does not name.",
+          "properties": [
+            {
+              "description": "The pull request that was merged.",
+              "name": "number",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "The merge commit that carries it.",
+              "name": "merge_commit",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The manifest that is silent about it.",
+              "name": "manifest",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"member_not_in_manifest\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A member the manifest names that no merge on the first-parent line carries.",
+          "properties": [
+            {
+              "description": "The pull request the manifest names.",
+              "name": "number",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "The manifest.",
+              "name": "manifest",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The line of the manifest that names it.",
+              "name": "line",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"member_not_merged\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The manifest lists a member at another position than its merge has on the line.",
+          "properties": [
+            {
+              "description": "The 1-based position.",
+              "name": "position",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "The pull request the manifest has there.",
+              "name": "listed",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "The pull request whose merge is there.",
+              "name": "merged",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "The manifest.",
+              "name": "manifest",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The line of the manifest that names `listed`.",
+              "name": "line",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"member_out_of_order\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The manifest's `head` for a member is not the second parent of its merge.",
+          "properties": [
+            {
+              "description": "The member.",
+              "name": "number",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "What the manifest says.",
+              "name": "listed",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The merge's second parent.",
+              "name": "merged",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The manifest.",
+              "name": "manifest",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The line of the manifest that names the member.",
+              "name": "line",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"wrong_head\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The manifest's `merge_commit` for a member is not the commit that merges it.",
+          "properties": [
+            {
+              "description": "The member.",
+              "name": "number",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "What the manifest says.",
+              "name": "listed",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The merge commit on the line.",
+              "name": "merged",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The manifest.",
+              "name": "manifest",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The line of the manifest that names the member.",
+              "name": "line",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"wrong_merge_commit\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The manifest names exactly the member merges, and there are fewer than two: one pull\nrequest is `prs repair`, and none is no composition at all.",
+          "properties": [
+            {
+              "description": "How many member merges the first-parent line holds.",
+              "name": "found",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "The manifest.",
+              "name": "manifest",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"too_few_members\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A commit of the batch itself changes a path no composition may: not the manifest, not\na version file `release bump` writes, not a `merge=derived` path.",
+          "properties": [
+            {
+              "description": "The commit on the first-parent line.",
+              "name": "commit",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Its subject.",
+              "name": "subject",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The path it changes.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"foreign_change\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "A batch's manifest, of kind `integration-batch/v1`: the batch's identity, tracked on its\nbranch at `manifest_path` and landing with it. A regression found after a batch landed\nis located by `git bisect --first-parent` over the batch's range, and this names the\nmember each merge commit carries.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "BatchManifest",
+      "properties": [
+        {
+          "description": "`BATCH_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The batch's id (`batch_id`).",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The integration base.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The master commit the batch was composed on.",
+          "name": "base_master",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was composed, RFC 3339.",
+          "name": "composed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version the composed tree declared after the member merges and before the one\n`release bump` of the composition (ADR 0114 D6). Absent when the tree declares none.",
+          "name": "version_before",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The version the composition commit declares: equal to `version_before` when the\npublic contract of the composed tree required nothing above it and no bump was\nwritten.",
+          "name": "version_after",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The members, in composition order.",
+          "name": "members",
+          "refs": [
+            "ComposedMember"
+          ],
+          "required": true,
+          "type": "array of ComposedMember"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComposedBatch",
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One member of a planned batch: a pull request at the head it was decided on.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "BatchMember",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The head commit its eligibility was decided on, and the one that is merged.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title, as observed.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BatchPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The plan of one batch: who would be merged onto which master, in what order, and who is\nleft out. Deterministic: the same queue, in whatever order its pull requests were listed,\ngives the same plan.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "BatchPlan",
+      "properties": [
+        {
+          "description": "The integration base.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The master commit every member was decided against, and the one the batch starts from.",
+          "name": "master_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the forge was observed, for the observation the plan rests on.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The most members that were asked for.",
+          "name": "max_members",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The members, in composition order.",
+          "name": "members",
+          "refs": [
+            "BatchMember"
+          ],
+          "required": true,
+          "type": "array of BatchMember"
+        },
+        {
+          "description": "Every other open pull request, in rank order, with why it is not a member.",
+          "name": "left_out",
+          "refs": [
+            "LeftOut"
+          ],
+          "required": true,
+          "type": "array of LeftOut"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComposeReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the gate decided.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "BatchVerdict",
+      "properties": [],
+      "type": "\"not_a_batch\" | \"batch\" | \"refused\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BatchCheck"
+      ],
+      "values": [
+        {
+          "description": "The branch merges fewer than two other open pull requests and touches no manifest:\nnot this gate's subject.",
+          "value": "not_a_batch"
+        },
+        {
+          "description": "It merges two or more, or touches a manifest, and it is the batch its manifest says.",
+          "value": "batch"
+        },
+        {
+          "description": "It merges two or more, or touches a manifest, and it is not.",
+          "value": "refused"
+        }
+      ],
       "variants": []
     },
     {
@@ -9180,6 +9853,435 @@
           "value": "source_state"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What a composition did, or would do.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ComposeOutcome",
+      "properties": [],
+      "type": "one of 3 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComposeReport"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Dry run: the plan's members would be merged in order, derived, committed and pushed as\na new branch.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"would_compose\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The batch was composed, pushed as a new branch and its pull request opened.",
+          "properties": [
+            {
+              "description": "What was pushed. Boxed: it carries the whole manifest, and a refusal carries a\nsentence.",
+              "name": "composed",
+              "refs": [
+                "ComposedBatch"
+              ],
+              "required": true,
+              "type": "ComposedBatch"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"composed\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Refused, and why.",
+          "properties": [
+            {
+              "description": "Why.",
+              "name": "refusal",
+              "refs": [
+                "ComposeRefusal"
+              ],
+              "required": true,
+              "type": "ComposeRefusal"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"refused\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "Why a batch is not composed.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ComposeRefusal",
+      "properties": [],
+      "type": "one of 9 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComposeOutcome"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Fewer than two members were asked for: that is not a batch.",
+          "properties": [
+            {
+              "description": "What was asked for.",
+              "name": "max",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"max_too_small\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Neither the policy nor the caller says how many members a batch may carry: the code\nhas no default (ADR 0114 D2).",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"no_max_members\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The caller asked for more members than the policy allows: `--max` only lowers.",
+          "properties": [
+            {
+              "description": "What was asked for.",
+              "name": "max",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "What the policy allows.",
+              "name": "policy",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"max_above_policy\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The decision that makes composition a capability is not accepted in this layer, so\nthe act is not taken; the dry run is unaffected.",
+          "properties": [
+            {
+              "description": "The decision's status, in the layer's words, or why it could not be read.",
+              "name": "status",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"decision_not_accepted\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Fewer than two pull requests are eligible: one is `prs repair`, none is nothing.",
+          "properties": [
+            {
+              "description": "How many are eligible.",
+              "name": "eligible",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"too_few\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The trail does not yet hold the verified merge that unlocks composition (ADR 0114 D7).",
+          "properties": [
+            {
+              "description": "What the trail holds, and what it needs.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"rollout_incomplete\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The composition was taken and dropped the members that conflicted, and fewer than two\nwere left. Nothing was pushed.",
+          "properties": [
+            {
+              "description": "The members whose merges succeeded.",
+              "name": "remaining",
+              "refs": [],
+              "required": true,
+              "type": "array of integer (uint64)"
+            },
+            {
+              "description": "The members that were dropped, and why.",
+              "name": "dropped",
+              "refs": [
+                "LeftOut"
+              ],
+              "required": true,
+              "type": "array of LeftOut"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"too_few_composed\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The act was taken and failed — a merge, a derive, a commit the hooks refused, a branch\nthat already exists, a push or a pull request the forge refused.",
+          "properties": [
+            {
+              "description": "What failed, in the words of the step that failed.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Why, as a class.",
+              "name": "class",
+              "refs": [
+                "FailureClass"
+              ],
+              "required": true,
+              "type": "FailureClass"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"act_failed\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The trail could not record the act first, so it was not taken.",
+          "properties": [
+            {
+              "description": "Why the trail refused it.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"trail_unwritable\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "The answer of one `prs compose`.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ComposeReport",
+      "properties": [
+        {
+          "description": "Whether nothing was allowed to change.",
+          "name": "dry_run",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The plan the outcome was decided on; `None` when the refusal came before any queue was\nread.",
+          "name": "plan",
+          "refs": [
+            "BatchPlan"
+          ],
+          "required": false,
+          "type": "BatchPlan | null"
+        },
+        {
+          "description": "What happened.",
+          "name": "outcome",
+          "refs": [
+            "ComposeOutcome"
+          ],
+          "required": true,
+          "type": "ComposeOutcome"
+        },
+        {
+          "description": "What the observation the decision rests on cannot vouch for — the queue's own\ndiagnostics, such as an observation older than an hour. A dry run with any exits 10, as\nevery other reading of a diagnosed queue does.",
+          "name": "diagnostics",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationBatchPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A batch that was composed and pushed.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ComposedBatch",
+      "properties": [
+        {
+          "description": "The batch's head branch, new on the remote.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The batch's head: the composition commit.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request that was opened for it, when the forge's answer named one.",
+          "name": "pull_request",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The manifest that was committed.",
+          "name": "manifest",
+          "refs": [
+            "BatchManifest"
+          ],
+          "required": true,
+          "type": "BatchManifest"
+        },
+        {
+          "description": "The planned members the composition dropped, and why.",
+          "name": "dropped",
+          "refs": [
+            "LeftOut"
+          ],
+          "required": true,
+          "type": "array of LeftOut"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ComposeOutcome"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One member as the batch carries it: the planned member and the merge commit that brought\nits head in.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ComposedMember",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The head that was merged: the merge commit's second parent.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title, as observed.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The merge commit on the batch's first-parent line that carries it.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BatchManifest"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -17571,7 +18673,9 @@
         "product.providers",
         "product.validate",
         "integration.queue",
+        "integration.batch_check",
         "integration.cleanup",
+        "integration.compose",
         "integration.events",
         "integration.explain",
         "integration.prove_dry_run",
@@ -20130,6 +21234,7 @@
       "type": "\"stale\" | \"conflict\" | \"new_failing_check\" | \"review_revoked\" | \"transient\" | \"policy_violation\" | \"verification_failed\" | \"unreadable\"",
       "used_by": [],
       "used_by_schemas": [
+        "ComposeRefusal",
         "IntegrationEvent"
       ],
       "values": [
@@ -23186,7 +24291,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"compose_selected\" | \"compose_attempted\" | \"composed\" | \"compose_refused\" | \"idle\" | \"observe_failed\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -23298,6 +24403,22 @@
           "value": "repair_refused"
         },
         {
+          "description": "A person asked for a batch (`prs compose --apply`) and the queue holds at least two\neligible members: the detail names them, in order, each at the head it was decided on.",
+          "value": "compose_selected"
+        },
+        {
+          "description": "The members are about to be merged, in order, onto the decided master in a scratch\nworktree, and the result pushed as a new branch.",
+          "value": "compose_attempted"
+        },
+        {
+          "description": "The batch was composed, pushed as a new branch and its pull request opened;\n`head_after` is the batch's head.",
+          "value": "composed"
+        },
+        {
+          "description": "The composition was refused — by the decision (fewer than two eligible members) or by\nthe act (too few members left after the ones that conflicted were dropped, a derive,\ncommit or push that failed, a branch that already exists) — `class` says why.",
+          "value": "compose_refused"
+        },
+        {
           "description": "Nothing was ready.",
           "value": "idle"
         },
@@ -23306,6 +24427,58 @@
           "value": "observe_failed"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The plan of a batch, or why there is none.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationBatchPlan",
+      "properties": [
+        {
+          "description": "Whether a forge observation is recorded in this checkout.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why there is no plan, when there is none.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The dry run of `prs compose --max <max>`: the plan, what would be done with it, and\nwhat the observation it rests on cannot vouch for.",
+          "name": "report",
+          "refs": [
+            "ComposeReport"
+          ],
+          "required": false,
+          "type": "ComposeReport | null"
+        },
+        {
+          "description": "Why `--apply` would be refused before it decided anything: the trail does not yet\nhold the verified merge that unlocks composition (ADR 0114 D7). `None` when it does.",
+          "name": "rollout",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why `--apply` would be refused whatever the trail holds: the layer does not hold\nADR 0114 as accepted, which is a person's act. `None` when it does.",
+          "name": "decision",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.compose"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -27244,6 +28417,390 @@
       "variants": []
     },
     {
+      "description": "One pull request the batch does not carry, and why.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeftOut",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The head the decision was taken on.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title, as observed.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it is not a member.",
+          "name": "reason",
+          "refs": [
+            "LeftOutReason"
+          ],
+          "required": true,
+          "type": "LeftOutReason"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BatchPlan",
+        "ComposeRefusal",
+        "ComposedBatch"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why a pull request is not a member of the batch.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeftOutReason",
+      "properties": [],
+      "type": "one of 18 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "LeftOut"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "It targets another branch than the integration base — another pull request's head\n(it is stacked) or a branch of its own.",
+          "properties": [
+            {
+              "description": "The branch it targets.",
+              "name": "base",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"other_base\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It is itself a batch: its head branch is a batch's, or it is the declared successor of\ntwo or more open pull requests. A batch is one candidate, never a member.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"is_batch\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It is a draft.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"draft\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A label whose policy is to hold, or to call it obsolete, is on it.",
+          "properties": [
+            {
+              "description": "The labels, as the forge spells them.",
+              "name": "names",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"label\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The forge has auto-merge armed on it and would merge it on its own.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"auto_merge_armed\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Its head lives in a fork, not in this repository.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"fork_head\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "An open pull request — a batch, or any declared successor — already names it as what\nit supersedes.",
+          "properties": [
+            {
+              "description": "The open pull request that names it.",
+              "name": "number",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"named_by_open\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Its supersession is otherwise undecided or decided against it: a successor landed, one\ncould not be read, or the pull requests that mention it were not all read.",
+          "properties": [
+            {
+              "description": "What the classifier said.",
+              "name": "reasons",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"supersession\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Merging it into master conflicts on authored paths: the owner's to settle first.",
+          "properties": [
+            {
+              "description": "The conflicting authored paths.",
+              "name": "paths",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"authored_conflict\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Its work is on master already, or only derived files would change: cleanup's lane.",
+          "properties": [
+            {
+              "description": "What git decided the head is to master.",
+              "name": "relation",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"nothing_to_land\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git could not decide what the head is to master.",
+          "properties": [
+            {
+              "description": "Why.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"undecidable\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The repository allows no merge commit, the only way a batch — or anything — lands.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"merge_commit_not_allowed\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The review policy is not satisfied on its head.",
+          "properties": [
+            {
+              "description": "The review state.",
+              "name": "state",
+              "refs": [
+                "PullRequestReview"
+              ],
+              "required": true,
+              "type": "PullRequestReview"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"review\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Its required checks have not all passed on its head: failed, pending, missing,\nskipped without permission, or unread.",
+          "properties": [
+            {
+              "description": "Their verdict.",
+              "name": "state",
+              "refs": [
+                "RequiredCheckState"
+              ],
+              "required": true,
+              "type": "RequiredCheckState"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"required_checks\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A dependency it declares has not landed and is not a member placed before it.",
+          "properties": [
+            {
+              "description": "The dependencies it still waits for.",
+              "name": "waits_for",
+              "refs": [],
+              "required": true,
+              "type": "array of integer (uint64)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"dependency\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It is eligible, and the batch already holds as many members as were asked for.",
+          "properties": [
+            {
+              "description": "The most members the batch may have.",
+              "name": "max",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"over_max\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "During the composition: its merge onto the members before it conflicts on authored\npaths. It was dropped and the composition went on without it.",
+          "properties": [
+            {
+              "description": "The conflicting authored paths.",
+              "name": "paths",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"conflicts_in_batch\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "During the composition: its head was already contained in what was composed before\nit, so its merge would be no merge commit and it would carry nothing.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"already_in_batch\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "The C library a Linux artifact is linked against.",
       "home": "distribution",
       "is_enum": true,
@@ -28660,6 +30217,43 @@
       "used_by": [],
       "used_by_schemas": [
         "ContrastReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A merge commit on the first-parent line whose second parent is another open pull\nrequest's current head.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "MemberMerge",
+      "properties": [
+        {
+          "description": "The pull request whose head was merged.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "That head: the merge commit's second parent.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The merge commit.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BatchCheck",
+        "BatchFinding"
       ],
       "values": [],
       "variants": []
@@ -36041,6 +37635,29 @@
           "type": "string"
         },
         {
+          "description": "Whether the head lives in a fork rather than in this repository, as the forge reported\nit. Said whatever the head is to master: the `fork_head` reason is given only where a\nfork's head is also behind, and a batch asks the question of every candidate\n(`super::compose`). Absent on the wire when it does not.",
+          "name": "fork_head",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The manifest this pull request carries on its head, when it is a batch (ADR 0114):\nits members in composition order, each with the head that was merged and the merge\ncommit that carries it. Read from git at the head that was decided on, never from the\npull request's body. Absent for anything that is not a batch, and for a batch whose\nmanifest could not be read. Set in one place (`super::compose::carry`).",
+          "name": "batch",
+          "refs": [
+            "BatchManifest"
+          ],
+          "required": false,
+          "type": "BatchManifest | null"
+        },
+        {
+          "description": "The open batch whose manifest names this pull request as a member, when one does.\nSet in the same place.",
+          "name": "carried_by",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
           "description": "The revisions this was decided against.",
           "name": "evaluated_against",
           "refs": [
@@ -36369,6 +37986,7 @@
       "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"stale\" | \"code_owners_pending\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "LeftOutReason",
         "PullRequestAssessment"
       ],
       "values": [
@@ -41750,6 +43368,7 @@
       "type": "\"passed\" | \"skipped\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "LeftOutReason",
         "PullRequestAssessment"
       ],
       "values": [
@@ -55952,7 +57571,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "evidence claim",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/claim?claim=a-finding-names-how-to-see-it-again\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/claim?claim=a-batch-names-its-members\"",
           "description": "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give.",
           "home": "evidence",
           "id": "evidence.claim",
@@ -55966,7 +57585,7 @@
               "examples": [
                 {
                   "case": "first-claim",
-                  "value": "\"a-finding-names-how-to-see-it-again\""
+                  "value": "\"a-batch-names-its-members\""
                 }
               ],
               "name": "claim",
@@ -56019,7 +57638,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "evidence proves",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/test?test=suite%3A138_governance_gates\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/test?test=suite%3A1000_a_composed_branch_that_is_not_a_batch_is_refused\"",
           "description": "One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.",
           "home": "evidence",
           "id": "evidence.test",
@@ -56033,7 +57652,7 @@
               "examples": [
                 {
                   "case": "first-test",
-                  "value": "\"suite:138_governance_gates\""
+                  "value": "\"suite:1000_a_composed_branch_that_is_not_a_batch_is_refused\""
                 }
               ],
               "name": "test",
@@ -57127,6 +58746,75 @@
           "summary": "The integration queue"
         },
         {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "prs batch-check",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/batch-check\"",
+          "description": "The gate of ADR 0114 D5, `majordomus prs batch-check`. Walks the first-parent line from the merge base of `base` and `head`: a merge there with exactly two parents whose second is the current head of another open pull request of this repository is a member merge; a merge whose other parents are all ancestors of the base is a merge of the base. A branch is a batch to be judged when it merges two or more pull requests that way, or when it adds or changes a manifest under `.ai/repo/integration/batches/` relative to the base, whatever it merges; neither is `not_a_batch` — one merge and no manifest is a stack. A batch to be judged must add or change exactly one manifest, whose members are exactly the member merges' pull requests in first-parent order, at least two of them, each `head` the merge's second parent and each `merge_commit` the merge; and every other commit on the line that is not a merge of the base may change only that manifest, the version files `release bump` writes and paths that are `merge=derived`. Otherwise `refused`, with one typed finding per disagreement naming the commit, the path, or the manifest line and member. Answers the base, the merge base, the head that was judged (the forge's test merge of a pull request is looked through to the pull request's own head), whether the forge was read, the member merges, the manifest, the verdict and the findings. The open pull requests are read from the forge through the GitHub CLI, and only when git alone cannot decide; when they are needed and cannot be read, or git cannot answer, the call is refused with the reason — it never reports clean because it could not look. A read: nothing is fetched, stored or recorded.",
+          "home": "integration",
+          "id": "integration.batch_check",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The base to judge against: a ref or a commit. Absent, the integration base as this\nclone has it (`origin/<base>`).",
+              "examples": [],
+              "name": "base",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The head to judge: a ref or a commit. Absent, `HEAD`.",
+              "examples": [],
+              "name": "head",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/pull-requests/batch-check",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "A composed branch that is not a batch is refused: the result.",
+              "schema": "BatchCheck",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "BatchCheck",
+          "stability": "experimental",
+          "summary": "A composed branch that is not a batch is refused"
+        },
+        {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [],
@@ -57179,6 +58867,73 @@
           "result_schema": "IntegrationCleanup",
           "stability": "experimental",
           "summary": "What cleanup would do"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/compose?max=4\"",
+          "description": "What `majordomus prs compose` would compose, decided offline from the recorded observation (ADR 0114): the base and the master commit every member was decided against, the members in composition order — each an open pull request on the base that is not a draft, carries no holding label, has its head in this repository, satisfies the review policy and has every required check passed on its own head, which may be behind master, with every declared dependency landed or placed before it, taken in rank order up to the policy's `integration.batch.max_members`, which `max` may lower and never raise — each with its head and title, and every other open pull request with the one typed reason it is left out; then what would be done (`would_compose`, or the refusal: fewer than two eligible is not a batch), the queue's diagnostics, and whether the rollout record or the status of ADR 0114 in the layer would refuse `--apply`. With no `max` and no policy key there is no plan, and the reason names the key. A read: it merges, pushes and records nothing — `majordomus prs compose --apply` is the act, under the integration lease. `observed: false` with the reason when this checkout has recorded no observation.",
+          "home": "integration",
+          "id": "integration.compose",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_requests_compose",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "At most this many members, for this plan: lowers the policy's\n`integration.batch.max_members` and never raises it. Absent, the policy's value is the\nsize; with neither there is no plan, and the reason names the key. A batch has at\nleast two: a smaller number is answered with the refusal, not with a plan.",
+              "examples": [
+                {
+                  "case": "four-members",
+                  "value": "4"
+                }
+              ],
+              "name": "max",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/pull-requests/compose",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The plan of a batch: the result.",
+              "schema": "IntegrationBatchPlan",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationBatchPlan",
+          "stability": "experimental",
+          "summary": "The plan of a batch"
         },
         {
           "benchmark": "required",

@@ -238,6 +238,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "with --apply, brings master into one named pull request's branch and pushes it under the base branch's integration lease, the act recorded on the integration trail first: a mutation of the repository and its remote. Its default dry run decides on the recorded observation and changes nothing.",
     },
     LocalCommand {
+        command: "prs compose",
+        reason: LocalReason::WritesRepository,
+        note: "with --apply, merges the eligible pull requests' heads into a new batch branch, pushes it and opens its pull request under the base branch's integration lease, the act recorded on the integration trail first: a mutation of the repository and its remote. Its default dry run is the plan `integration.compose` answers, decided on the recorded observation, and changes nothing.",
+    },
+    LocalCommand {
         command: "prs cleanup",
         reason: LocalReason::WritesRepository,
         note: "closes pull requests on the forge whose work is provably on master, only with --apply.",

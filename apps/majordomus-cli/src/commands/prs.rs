@@ -3,9 +3,9 @@
 //! Nothing is decided here. `status`, `plan`, `explain`, `events` and `brief` render the
 //! queue the integration module builds from the last recorded observation — the same value
 //! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
-//! never reach the network; neither does `repair` without `--apply`, which decides on the same
-//! queue. `refresh`, `drain`, `repair --apply` and `cleanup` are the ones that do, and each says
-//! so in its help.
+//! never reach the network; neither do `repair` and `compose` without `--apply`, which decide on
+//! the same queue. `refresh`, `drain`, `repair --apply`, `compose --apply` and `cleanup` are the
+//! ones that do, and each says so in its help.
 //!
 //! Exit codes: 0 when the answer is complete; 10 when it is a finding (a stale or absent
 //! observation, a drain that stopped on a verification failure, a pull request that is not
@@ -19,7 +19,7 @@ use serde::Serialize;
 use crate::cli::{OutputFormat, PrsArgs, PrsCommand};
 use crate::error::{Error, Result};
 use crate::integration::{
-    self,
+    self, batch, compose,
     drain::{self, DrainStepOutcome, ForgeIntegrator, IntegrationLease},
     repair, IntegrationQueue, PullRequestAssessment, RelationToMaster,
 };
@@ -217,6 +217,183 @@ fn repair_applied(
                 lease: Some(&lease),
             };
             repair::apply(root, &mut integrator, target)
+        })
+        .map_err(unusable)
+}
+
+/// A batch for a person: the members in composition order, then who was left out and why,
+/// then what happened. Said whole, in one write.
+fn render_compose(r: &compose::ComposeReport, out: &mut impl Write) -> Result<()> {
+    let mut lines: Vec<String> = Vec::new();
+    if let Some(plan) = &r.plan {
+        lines.push(format!(
+            "a batch on {} {}, at most {} member(s): {} eligible, {} left out",
+            plan.base,
+            short(&plan.master_sha),
+            plan.max_members,
+            plan.members.len(),
+            plan.left_out.len()
+        ));
+        lines.extend(r.dry_run.then(|| {
+            format!(
+                "decided on the forge as observed at {}; prs refresh observes it again",
+                plan.observed_at
+            )
+        }));
+        lines.extend(plan.members.iter().enumerate().map(|(i, m)| {
+            format!(
+                "  {:>2}. #{:<5} {}  {}",
+                i + 1,
+                m.number,
+                short(&m.head),
+                trunc(&m.title, 72)
+            )
+        }));
+        if !plan.left_out.is_empty() {
+            lines.push("left out:".to_string());
+        }
+        lines.extend(plan.left_out.iter().map(left_out_line));
+    }
+    match &r.outcome {
+        compose::ComposeOutcome::WouldCompose => lines.push(
+            "dry run: would merge the members in that order onto master in a scratch worktree, \
+             write the manifest, derive, commit, push a new branch int/batch-<id> and open its \
+             pull request; --apply does"
+                .to_string(),
+        ),
+        compose::ComposeOutcome::Composed { composed } => {
+            lines.push(format!(
+                "composed {} at {}{}: {}",
+                composed.branch,
+                short(&composed.head),
+                composed
+                    .pull_request
+                    .map(|n| format!(", pull request #{n}"))
+                    .unwrap_or_default(),
+                composed
+                    .manifest
+                    .members
+                    .iter()
+                    .map(|m| format!("#{} as {}", m.number, short(&m.merge_commit)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ));
+            lines.extend(version_line(&composed.manifest));
+            if !composed.dropped.is_empty() {
+                lines.push("dropped during the composition:".to_string());
+            }
+            lines.extend(composed.dropped.iter().map(left_out_line));
+        }
+        compose::ComposeOutcome::Refused { refusal } => {
+            lines.push(format!("REFUSE: {refusal}"));
+        }
+    }
+    w(out, lines.join("\n"))
+}
+
+/// What the composition's one bump did, as the manifest records it; nothing when the tree
+/// declares no version.
+fn version_line(m: &compose::BatchManifest) -> Option<String> {
+    let (before, after) = m.version_before.as_ref().zip(m.version_after.as_ref())?;
+    Some(if m.bumped() == Some(true) {
+        format!("version: raised {before} -> {after}, what the public contract of the composed tree requires")
+    } else {
+        format!("version: stays {before}; the public contract of the composed tree requires nothing above it")
+    })
+}
+
+/// The members a batch carries, in composition order, as `explain` says them.
+fn batch_lines(m: &compose::BatchManifest) -> Vec<String> {
+    let mut lines = vec![format!(
+        "  batch:        {} on {} {}, {} member(s) in composition order",
+        m.id,
+        m.base,
+        short(&m.base_master),
+        m.members.len()
+    )];
+    lines.extend(m.members.iter().enumerate().map(|(i, c)| {
+        format!(
+            "    {:>2}. #{:<5} head {}  merged as {}  {}",
+            i + 1,
+            c.number,
+            short(&c.head),
+            short(&c.merge_commit),
+            trunc(&c.title, 60)
+        )
+    }));
+    lines.extend(version_line(m).map(|v| format!("    {v}")));
+    lines
+}
+
+/// The gate's answer for a person: the verdict in one line, then every finding on its own.
+fn render_batch_check(r: &batch::BatchCheck, out: &mut impl Write) -> Result<()> {
+    let mut lines = vec![r.summary()];
+    lines.extend(r.looked_through.iter().map(|merge| {
+        format!(
+            "  judged {}: the head that was named, {}, is the forge's test merge of it",
+            short(&r.head),
+            short(merge)
+        )
+    }));
+    lines.extend(r.findings.iter().map(|f| format!("  {f}")));
+    w(out, lines.join("\n"))
+}
+
+/// One pull request a batch does not carry, on one line.
+fn left_out_line(l: &compose::LeftOut) -> String {
+    format!("  #{:<5} {}  {}", l.number, short(&l.head), l.reason)
+}
+
+/// The exit status of a composition, as a repair's: 12 when the trail could not record the
+/// act, 10 for any other refusal and for a dry run over an observation nobody can vouch for,
+/// 0 otherwise.
+fn compose_exit(r: &compose::ComposeReport) -> u8 {
+    match &r.outcome {
+        compose::ComposeOutcome::Refused {
+            refusal: compose::ComposeRefusal::TrailUnwritable { .. },
+        } => UNUSABLE,
+        compose::ComposeOutcome::Refused { .. } => FINDING,
+        _ if r.dry_run && !r.diagnostics.is_empty() => FINDING,
+        _ => 0,
+    }
+}
+
+/// A refusal taken before any queue was read, as the finding it is (10).
+fn compose_refused(refusal: compose::ComposeRefusal) -> Error {
+    Error::Refused {
+        code: if matches!(refusal, compose::ComposeRefusal::ActFailed { .. }) {
+            UNUSABLE
+        } else {
+            FINDING
+        },
+        reason: refusal.to_string(),
+    }
+}
+
+/// The act of `prs compose --apply`: a push to the forge's remote and a new pull request,
+/// under the base branch's lease for the whole of it, so a drain never races it. Two things
+/// are asked first, before the lease, the base or the forge, and each is a finding (10):
+/// that the layer holds ADR 0114 as accepted — a person's act, which nothing here takes —
+/// and that the trail holds the rollout record (ADR 0114 D7). Every other way the act
+/// cannot be taken is unusable (12).
+fn compose_applied(root: &std::path::Path, max: usize) -> Result<compose::ComposeReport> {
+    if let Some(refusal) = compose::decision_refused(root) {
+        return Err(compose_refused(refusal));
+    }
+    if let Some(reason) = compose::rollout_refused(&drain::events(root)) {
+        return Err(Error::Refused {
+            code: FINDING,
+            reason,
+        });
+    }
+    executor_base(root)
+        .and_then(|base| integration::exclusive::acquire(root, &base))
+        .and_then(|lease| {
+            let mut integrator = ForgeIntegrator {
+                root,
+                lease: Some(&lease),
+            };
+            compose::apply(root, &mut integrator, max)
         })
         .map_err(unusable)
 }
@@ -493,6 +670,46 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 render_repair(&report, &mut out)
             };
             printed.map(|()| repair_exit(&report))
+        }
+        PrsCommand::BatchCheck { base, head } => {
+            // "cannot run" is its own answer (12), never a verdict: a base this clone does not
+            // have, a git that could not answer, a forge that was needed and could not be read
+            let base = match base {
+                Some(base) => base,
+                None => batch::default_base(&root).map_err(unusable)?,
+            };
+            let head = head.unwrap_or_else(|| "HEAD".to_string());
+            let report = batch::check(&root, &base, &head, || batch::open_heads(&root))
+                .map_err(|e| unusable(format!("batch-check cannot run: {e}")))?;
+            if format == OutputFormat::Json {
+                json(&mut out, &report)?;
+            } else {
+                render_batch_check(&report, &mut out)?;
+            }
+            Ok(if report.verdict == batch::BatchVerdict::Refused {
+                FINDING
+            } else {
+                0
+            })
+        }
+        PrsCommand::Compose { max, apply, .. } => {
+            // the size is the policy's, lowered by --max; with neither, nothing decides
+            let asked = max.map(|m| usize::try_from(m).unwrap_or(usize::MAX));
+            let max = compose::max_members(&root, asked).map_err(compose_refused)?;
+            // the default is the read `status` makes, from the last recorded observation — no
+            // network, no lease, nothing written to the trail; `--apply` is the act
+            let report = if apply {
+                compose_applied(&root, max)
+            } else {
+                compose::plan(&root, max).map_err(unobserved)
+            }?;
+            let printed = if format == OutputFormat::Json {
+                json(&mut out, &report)
+            } else {
+                report.diagnostics.iter().for_each(|d| eprintln!("! {d}"));
+                render_compose(&report, &mut out)
+            };
+            printed.map(|()| compose_exit(&report))
         }
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
@@ -954,6 +1171,20 @@ fn explain(
     ];
     if let Some(by) = a.superseded_by {
         lines.push(format!("  superseded:   by #{by}, which landed"));
+    }
+    // a batch names its members; a member names the open batch that carries it (ADR 0114)
+    if let Some(m) = &a.batch {
+        lines.extend(batch_lines(m));
+    } else if a.head_ref.starts_with(compose::BATCH_BRANCH_PREFIX) {
+        lines.push(format!(
+            "  batch:        named as one ({}), and its head carries no manifest that reads",
+            a.head_ref
+        ));
+    }
+    if let Some(by) = a.carried_by {
+        lines.push(format!(
+            "  carried by:   batch #{by}, open: it lands with that batch, and a fix here means composing the batch again"
+        ));
     }
     lines.push(format!(
         "  reasons:      {}",
@@ -1707,6 +1938,299 @@ mod tests {
             repair_exit(&report(false, repaired, &["stale observation"])),
             0,
             "an act decides on its own fresh observation"
+        );
+    }
+
+    fn batch_report(
+        dry_run: bool,
+        outcome: compose::ComposeOutcome,
+        diagnostics: &[&str],
+    ) -> compose::ComposeReport {
+        let member = |n: u64| compose::BatchMember {
+            number: n,
+            head: format!("h{n}hhhhhhhhhhhh"),
+            title: format!("change {n}"),
+        };
+        compose::ComposeReport {
+            dry_run,
+            plan: Some(compose::BatchPlan {
+                base: "master".into(),
+                master_sha: "mmmmmmmmmmmmmmmm".into(),
+                observed_at: "2026-10-08T10:00:00Z".into(),
+                max_members: 2,
+                members: vec![member(7), member(8)],
+                left_out: vec![compose::LeftOut::of(
+                    &member(9),
+                    compose::LeftOutReason::Draft,
+                )],
+            }),
+            outcome,
+            diagnostics: diagnostics.iter().map(|d| d.to_string()).collect(),
+        }
+    }
+
+    fn composed_batch() -> compose::ComposedBatch {
+        let carried = |n: u64| compose::ComposedMember {
+            number: n,
+            head: format!("h{n}hhhhhhhhhhhh"),
+            title: format!("change {n}"),
+            merge_commit: format!("c{n}cccccccccccc"),
+        };
+        compose::ComposedBatch {
+            branch: "int/batch-mmmmmmmmmm-7-8".into(),
+            head: "bbbbbbbbbbbbbbbb".into(),
+            pull_request: Some(77),
+            manifest: compose::BatchManifest::of(
+                "master",
+                "mmmmmmmmmmmmmmmm",
+                "2026-10-08T10:05:00Z",
+                vec![carried(7), carried(8)],
+            ),
+            dropped: vec![compose::LeftOut {
+                number: 6,
+                head: "h6hhhhhhhhhhhh".into(),
+                title: "change 6".into(),
+                reason: compose::LeftOutReason::ConflictsInBatch {
+                    paths: vec!["src/a.rs".into()],
+                },
+            }],
+        }
+    }
+
+    #[test]
+    fn a_batch_is_said_members_first_then_who_was_left_out_and_why() {
+        let say = |r: compose::ComposeReport| text(|o| render_compose(&r, o));
+        let would = say(batch_report(
+            true,
+            compose::ComposeOutcome::WouldCompose,
+            &[],
+        ));
+        let lines: Vec<&str> = would.lines().collect();
+        assert_eq!(
+            lines[0],
+            "a batch on master mmmmmmmmmm, at most 2 member(s): 2 eligible, 1 left out"
+        );
+        assert!(
+            lines[1].contains("observed at 2026-10-08T10:00:00Z"),
+            "{would}"
+        );
+        assert_eq!(lines[2], "   1. #7     h7hhhhhhhh  change 7");
+        assert_eq!(lines[3], "   2. #8     h8hhhhhhhh  change 8");
+        assert_eq!(lines[4], "left out:");
+        assert_eq!(lines[5], "  #9     h9hhhhhhhh  it is a draft");
+        assert!(
+            lines[6].starts_with("dry run: would merge the members"),
+            "{would}"
+        );
+        assert!(would.contains("--apply does"), "{would}");
+
+        let done = say(batch_report(
+            false,
+            compose::ComposeOutcome::Composed {
+                composed: Box::new(composed_batch()),
+            },
+            &[],
+        ));
+        assert!(!done.contains("prs refresh observes"), "{done}");
+        assert!(
+            done.contains(
+                "composed int/batch-mmmmmmmmmm-7-8 at bbbbbbbbbb, pull request #77: \
+                 #7 as c7cccccccc, #8 as c8cccccccc"
+            ),
+            "{done}"
+        );
+        assert!(done.contains("dropped during the composition:"), "{done}");
+        assert!(done.contains("#6") && done.contains("src/a.rs"), "{done}");
+
+        let refused = say(batch_report(
+            true,
+            compose::ComposeOutcome::Refused {
+                refusal: compose::ComposeRefusal::TooFew { eligible: 1 },
+            },
+            &[],
+        ));
+        assert!(
+            refused.contains("REFUSE: 1 pull request(s) are eligible"),
+            "{refused}"
+        );
+        // a refusal taken before any queue was read has no plan to print
+        let early = say(compose::ComposeReport {
+            dry_run: false,
+            plan: None,
+            outcome: compose::ComposeOutcome::Refused {
+                refusal: compose::ComposeRefusal::MaxTooSmall { max: 1 },
+            },
+            diagnostics: Vec::new(),
+        });
+        assert!(
+            early.starts_with("REFUSE: a batch has at least 2"),
+            "{early}"
+        );
+    }
+
+    #[test]
+    fn a_composition_exits_by_what_it_could_vouch_for() {
+        let refused = |refusal| compose::ComposeOutcome::Refused { refusal };
+        let unwritable = refused(compose::ComposeRefusal::TrailUnwritable {
+            reason: "the trail refused the write".into(),
+        });
+        assert_eq!(
+            compose_exit(&batch_report(false, unwritable, &[])),
+            UNUSABLE
+        );
+        let too_few = refused(compose::ComposeRefusal::TooFew { eligible: 0 });
+        assert_eq!(compose_exit(&batch_report(true, too_few, &[])), FINDING);
+        let would = || compose::ComposeOutcome::WouldCompose;
+        assert_eq!(compose_exit(&batch_report(true, would(), &[])), 0);
+        assert_eq!(
+            compose_exit(&batch_report(true, would(), &["stale observation"])),
+            FINDING,
+            "a dry run over a diagnosed queue is a finding"
+        );
+        let composed = compose::ComposeOutcome::Composed {
+            composed: Box::new(composed_batch()),
+        };
+        assert_eq!(
+            compose_exit(&batch_report(false, composed, &["stale observation"])),
+            0,
+            "an act decides on its own fresh observation"
+        );
+    }
+
+    #[test]
+    fn a_composition_without_the_rollout_record_is_a_finding_before_the_lease() {
+        let s = Scratch(std::env::temp_dir().join(format!(
+            "mj-prs-compose-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        )));
+        std::fs::create_dir_all(s.0.join(".ai/repo/adrs")).unwrap();
+        let init = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&s.0)
+            .args(["init", "-q"])
+            .status()
+            .unwrap();
+        assert!(init.success());
+        // a layer that holds ADR 0114, as a person left it
+        std::fs::write(
+            s.0.join(".ai/manifest.yaml"),
+            "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n  adrs: repo/adrs\n",
+        )
+        .unwrap();
+        let decided = |status: &str| {
+            std::fs::write(
+                s.0.join(".ai/repo/adrs/0114-a-batch.md"),
+                format!(
+                    "---\nschema: adr/v1\nid: adr-0114\ntitle: t\nstatus: {status}\n---\n\n# t\n"
+                ),
+            )
+            .unwrap();
+        };
+        // while the decision is proposed the act is refused on that, before the rollout
+        // record, the lease or the forge is asked
+        decided("proposed");
+        let Err(Error::Refused { code, reason }) = compose_applied(&s.0, 4) else {
+            panic!("composed under a decision nobody accepted");
+        };
+        assert_eq!(code, FINDING);
+        assert!(
+            reason.contains("ADR 0114") && reason.contains("`proposed`"),
+            "{reason}"
+        );
+        assert!(reason.contains("a person's act"), "{reason}");
+        assert!(!reason.contains("D7"), "{reason}");
+        // accepted, the rollout record is the next thing asked
+        decided("accepted");
+        let Err(Error::Refused { code, reason }) = compose_applied(&s.0, 4) else {
+            panic!("composed without a record");
+        };
+        assert_eq!(code, FINDING);
+        assert!(reason.contains("ADR 0114 D7"), "{reason}");
+    }
+
+    #[test]
+    fn explain_lists_a_batchs_members_and_names_a_members_batch() {
+        let mut q =
+            crate::integration::issue_test_queue(&["int/batch-mmmmmmmmmm-7-8", "feature/7"]);
+        // the batch first, whatever the rank says
+        q.assessments
+            .sort_by_key(|a| !a.head_ref.starts_with(compose::BATCH_BRANCH_PREFIX));
+        let said = |q: &IntegrationQueue, i: usize| {
+            text(|o| explain(q, &q.assessments[i], i + 1, OutputFormat::Text, o))
+        };
+        // named as a batch, and nothing read from its head
+        let unread = said(&q, 0);
+        assert!(
+            unread.contains("batch:        named as one (int/batch-mmmmmmmmmm-7-8)"),
+            "{unread}"
+        );
+        assert!(!said(&q, 1).contains("batch"), "an ordinary pull request");
+        let mut manifest = composed_batch().manifest;
+        manifest.version_before = Some("0.18.0".into());
+        manifest.version_after = Some("0.19.0".into());
+        q.assessments[0].batch = Some(manifest);
+        q.assessments[1].carried_by = Some(q.assessments[0].number);
+        let batch = said(&q, 0);
+        let lines: Vec<&str> = batch.lines().collect();
+        let at = lines
+            .iter()
+            .position(|l| l.starts_with("  batch:"))
+            .unwrap_or_else(|| panic!("{batch}"));
+        assert_eq!(
+            lines[at],
+            "  batch:        mmmmmmmmmm-7-8 on master mmmmmmmmmm, 2 member(s) in composition order"
+        );
+        assert_eq!(
+            lines[at + 1],
+            "     1. #7     head h7hhhhhhhh  merged as c7cccccccc  change 7"
+        );
+        assert_eq!(
+            lines[at + 2],
+            "     2. #8     head h8hhhhhhhh  merged as c8cccccccc  change 8"
+        );
+        assert!(
+            lines[at + 3].contains("version: raised 0.18.0 -> 0.19.0"),
+            "{batch}"
+        );
+        let member = said(&q, 1);
+        assert!(
+            member.contains(&format!(
+                "carried by:   batch #{}, open",
+                q.assessments[0].number
+            )),
+            "{member}"
+        );
+    }
+
+    #[test]
+    fn the_gate_says_its_verdict_in_one_line_and_each_finding_on_its_own() {
+        let report = batch::BatchCheck {
+            base: "origin/master".into(),
+            merge_base: "mmmm".into(),
+            head: "hhhhhhhhhhhhhhhh".into(),
+            looked_through: Some("tttttttttttttttt".into()),
+            forge_read: true,
+            members: Vec::new(),
+            manifest: None,
+            verdict: batch::BatchVerdict::Refused,
+            findings: vec![batch::BatchFinding::ForeignChange {
+                commit: "cccccccccccccccc".into(),
+                subject: "fix".into(),
+                path: "src/a.rs".into(),
+            }],
+        };
+        let said = text(|o| render_batch_check(&report, o));
+        let lines: Vec<&str> = said.lines().collect();
+        assert_eq!(lines.len(), 3, "{said}");
+        assert!(lines[0].starts_with("batch-check: REFUSED"), "{said}");
+        assert!(lines[1].contains("the forge's test merge"), "{said}");
+        assert!(
+            lines[2].contains("commit cccccccccc (fix) changes src/a.rs"),
+            "{said}"
         );
     }
 }

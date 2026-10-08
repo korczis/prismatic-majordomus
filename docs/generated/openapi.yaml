@@ -3766,7 +3766,7 @@ paths:
           description: "The claim id, as `docs/CLAIMS.yaml` spells it."
           examples:
             first-claim:
-              value: a-finding-names-how-to-see-it-again
+              value: a-batch-names-its-members
       responses:
         "200":
           description: "What proves this claim: the result."
@@ -3828,7 +3828,7 @@ paths:
           description: "`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity."
           examples:
             first-test:
-              value: suite:138_governance_gates
+              value: suite:1000_a_composed_branch_that_is_not_a_batch_is_refused
       responses:
         "200":
           description: "What this test proves: the result."
@@ -8921,6 +8921,70 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_pull_requests
       x-majordomus-cli: prs status
+  "/api/v1/pull-requests/batch-check":
+    get:
+      operationId: integration.batch_check
+      summary: A composed branch that is not a batch is refused
+      description: "The gate of ADR 0114 D5, `majordomus prs batch-check`. Walks the first-parent line from the merge base of `base` and `head`: a merge there with exactly two parents whose second is the current head of another open pull request of this repository is a member merge; a merge whose other parents are all ancestors of the base is a merge of the base. A branch is a batch to be judged when it merges two or more pull requests that way, or when it adds or changes a manifest under `.ai/repo/integration/batches/` relative to the base, whatever it merges; neither is `not_a_batch` — one merge and no manifest is a stack. A batch to be judged must add or change exactly one manifest, whose members are exactly the member merges' pull requests in first-parent order, at least two of them, each `head` the merge's second parent and each `merge_commit` the merge; and every other commit on the line that is not a merge of the base may change only that manifest, the version files `release bump` writes and paths that are `merge=derived`. Otherwise `refused`, with one typed finding per disagreement naming the commit, the path, or the manifest line and member. Answers the base, the merge base, the head that was judged (the forge's test merge of a pull request is looked through to the pull request's own head), whether the forge was read, the member merges, the manifest, the verdict and the findings. The open pull requests are read from the forge through the GitHub CLI, and only when git alone cannot decide; when they are needed and cannot be read, or git cannot answer, the call is refused with the reason — it never reports clean because it could not look. A read: nothing is fetched, stored or recorded."
+      tags:
+        - integration
+      parameters:
+        - name: base
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The base to judge against: a ref or a commit. Absent, the integration base as this\nclone has it (`origin/<base>`)."
+        - name: head
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The head to judge: a ref or a commit. Absent, `HEAD`."
+      responses:
+        "200":
+          description: "A composed branch that is not a batch is refused: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BatchCheck"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.batch_check
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: waived
+        reason: external_dependency
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-cli: prs batch-check
   "/api/v1/pull-requests/cleanup":
     get:
       operationId: integration.cleanup
@@ -8973,6 +9037,69 @@ paths:
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_pull_requests_cleanup
+  "/api/v1/pull-requests/compose":
+    get:
+      operationId: integration.compose
+      summary: The plan of a batch
+      description: "What `majordomus prs compose` would compose, decided offline from the recorded observation (ADR 0114): the base and the master commit every member was decided against, the members in composition order — each an open pull request on the base that is not a draft, carries no holding label, has its head in this repository, satisfies the review policy and has every required check passed on its own head, which may be behind master, with every declared dependency landed or placed before it, taken in rank order up to the policy's `integration.batch.max_members`, which `max` may lower and never raise — each with its head and title, and every other open pull request with the one typed reason it is left out; then what would be done (`would_compose`, or the refusal: fewer than two eligible is not a batch), the queue's diagnostics, and whether the rollout record or the status of ADR 0114 in the layer would refuse `--apply`. With no `max` and no policy key there is no plan, and the reason names the key. A read: it merges, pushes and records nothing — `majordomus prs compose --apply` is the act, under the integration lease. `observed: false` with the reason when this checkout has recorded no observation."
+      tags:
+        - integration
+      parameters:
+        - name: max
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "At most this many members, for this plan: lowers the policy's\n`integration.batch.max_members` and never raises it. Absent, the policy's value is the\nsize; with neither there is no plan, and the reason names the key. A batch has at\nleast two: a smaller number is answered with the refusal, not with a plan."
+          examples:
+            four-members:
+              value: 4
+      responses:
+        "200":
+          description: "The plan of a batch: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntegrationBatchPlan"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.compose
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_requests_compose
   "/api/v1/pull-requests/events":
     get:
       operationId: integration.events
@@ -12856,6 +12983,392 @@ components:
         - agrees
         - note
       description: "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.\n\nThe sign matters and the two directions mean opposite things. Positive `unaccounted` is\nthe outage: episodes that started, are not open, and produced no closed record — work\nthat happened and left nothing behind. Negative is ordinary bookkeeping: the ledger was\nrotated, or a record was committed from a checkout whose ledger lines are not in this\none, so there are more records than started lines to account for them.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Balance;\nuse serde_json::json;\n\nlet of = |started, closed, open, unaccounted, agrees| -> Balance {\n    serde_json::from_value(json!({\n        \"started\": started, \"closed\": closed, \"open\": open,\n        \"unaccounted\": unaccounted, \"agrees\": agrees, \"note\": \"as measured\",\n    })).unwrap()\n};\n\n// the good case: every episode that started either closed or is still open\nlet sound = of(40, 37, 3, 0, true);\nassert_eq!(sound.started as i64 - sound.closed as i64 - sound.open as i64, sound.unaccounted);\nassert!(sound.agrees);\n\n// the outage ADR 0052 describes: four closes that were never recorded\nlet lost = of(40, 33, 3, 4, false);\nassert!(lost.unaccounted > 0 && !lost.agrees);\n\n// and a rotated ledger, which is not a fault in either half\nlet rotated = of(2, 37, 3, -38, false);\nassert!(rotated.unaccounted < 0, \"more records than lines to account for them\");\n```"
+    BatchCheck:
+      type: object
+      properties:
+        base:
+          type: string
+          description: "The base, as it was named."
+        merge_base:
+          type: string
+          description: "`merge-base(base, head)`: where the first-parent line that was walked starts."
+        head:
+          type: string
+          description: The commit that was judged.
+        looked_through:
+          type:
+            - string
+            - "null"
+          description: "The forge's test merge that was looked through to reach `head`, when the head that\nwas named is one."
+        forge_read:
+          type: boolean
+          description: "Whether the forge's list of open pull requests was read. `false` when git alone\ndecided: the branch touches no manifest and the line holds fewer than two merges of\nanything but the base."
+        members:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MemberMerge"
+          description: "The member merges, in first-parent order."
+        manifest:
+          type:
+            - string
+            - "null"
+          description: "The one manifest the branch adds or changes, when it adds exactly one."
+        verdict:
+          "$ref": "#/components/schemas/BatchVerdict"
+          description: The verdict.
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BatchFinding"
+          description: Why it is refused; empty otherwise.
+      required:
+        - base
+        - merge_base
+        - head
+        - forge_read
+        - members
+        - verdict
+        - findings
+      description: "The answer of one `prs batch-check`."
+    BatchFinding:
+      oneOf:
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                "$ref": "#/components/schemas/MemberMerge"
+              description: The member merges that were found.
+            kind:
+              type: string
+              const: manifest_missing
+          required:
+            - kind
+            - members
+          description: "The branch merges these pull requests' heads and adds no manifest."
+        - type: object
+          properties:
+            paths:
+              type: array
+              items:
+                type: string
+              description: The manifests it touches.
+            kind:
+              type: string
+              const: manifest_ambiguous
+          required:
+            - kind
+            - paths
+          description: "The branch adds or changes more than one manifest: a batch has one identity."
+        - type: object
+          properties:
+            path:
+              type: string
+              description: The manifest.
+            reason:
+              type: string
+              description: Why it could not be read.
+            kind:
+              type: string
+              const: manifest_unreadable
+          required:
+            - kind
+            - path
+            - reason
+          description: "The manifest is not an `integration-batch/v1` document."
+        - type: object
+          properties:
+            number:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The pull request that was merged.
+            merge_commit:
+              type: string
+              description: The merge commit that carries it.
+            manifest:
+              type: string
+              description: The manifest that is silent about it.
+            kind:
+              type: string
+              const: member_not_in_manifest
+          required:
+            - kind
+            - number
+            - merge_commit
+            - manifest
+          description: A member merge the manifest does not name.
+        - type: object
+          properties:
+            number:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The pull request the manifest names.
+            manifest:
+              type: string
+              description: The manifest.
+            line:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The line of the manifest that names it.
+            kind:
+              type: string
+              const: member_not_merged
+          required:
+            - kind
+            - number
+            - manifest
+            - line
+          description: A member the manifest names that no merge on the first-parent line carries.
+        - type: object
+          properties:
+            position:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The 1-based position.
+            listed:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The pull request the manifest has there.
+            merged:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The pull request whose merge is there.
+            manifest:
+              type: string
+              description: The manifest.
+            line:
+              type: integer
+              format: uint
+              minimum: 0
+              description: "The line of the manifest that names `listed`."
+            kind:
+              type: string
+              const: member_out_of_order
+          required:
+            - kind
+            - position
+            - listed
+            - merged
+            - manifest
+            - line
+          description: The manifest lists a member at another position than its merge has on the line.
+        - type: object
+          properties:
+            number:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The member.
+            listed:
+              type: string
+              description: What the manifest says.
+            merged:
+              type: string
+              description: "The merge's second parent."
+            manifest:
+              type: string
+              description: The manifest.
+            line:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The line of the manifest that names the member.
+            kind:
+              type: string
+              const: wrong_head
+          required:
+            - kind
+            - number
+            - listed
+            - merged
+            - manifest
+            - line
+          description: "The manifest's `head` for a member is not the second parent of its merge."
+        - type: object
+          properties:
+            number:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The member.
+            listed:
+              type: string
+              description: What the manifest says.
+            merged:
+              type: string
+              description: The merge commit on the line.
+            manifest:
+              type: string
+              description: The manifest.
+            line:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The line of the manifest that names the member.
+            kind:
+              type: string
+              const: wrong_merge_commit
+          required:
+            - kind
+            - number
+            - listed
+            - merged
+            - manifest
+            - line
+          description: "The manifest's `merge_commit` for a member is not the commit that merges it."
+        - type: object
+          properties:
+            found:
+              type: integer
+              format: uint
+              minimum: 0
+              description: How many member merges the first-parent line holds.
+            manifest:
+              type: string
+              description: The manifest.
+            kind:
+              type: string
+              const: too_few_members
+          required:
+            - kind
+            - found
+            - manifest
+          description: "The manifest names exactly the member merges, and there are fewer than two: one pull\nrequest is `prs repair`, and none is no composition at all."
+        - type: object
+          properties:
+            commit:
+              type: string
+              description: The commit on the first-parent line.
+            subject:
+              type: string
+              description: Its subject.
+            path:
+              type: string
+              description: The path it changes.
+            kind:
+              type: string
+              const: foreign_change
+          required:
+            - kind
+            - commit
+            - subject
+            - path
+          description: "A commit of the batch itself changes a path no composition may: not the manifest, not\na version file `release bump` writes, not a `merge=derived` path."
+      description: One way a branch that merges several pull requests is not the batch its manifest says.
+    BatchManifest:
+      type: object
+      additionalProperties: false
+      properties:
+        schema:
+          type: string
+          description: "`BATCH_SCHEMA`."
+        id:
+          type: string
+          description: "The batch's id (`batch_id`)."
+        base:
+          type: string
+          description: The integration base.
+        base_master:
+          type: string
+          description: The master commit the batch was composed on.
+        composed_at:
+          type: string
+          description: "When it was composed, RFC 3339."
+        version_before:
+          type:
+            - string
+            - "null"
+          description: "The version the composed tree declared after the member merges and before the one\n`release bump` of the composition (ADR 0114 D6). Absent when the tree declares none."
+        version_after:
+          type:
+            - string
+            - "null"
+          description: "The version the composition commit declares: equal to `version_before` when the\npublic contract of the composed tree required nothing above it and no bump was\nwritten."
+        members:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ComposedMember"
+          description: "The members, in composition order."
+      required:
+        - schema
+        - id
+        - base
+        - base_master
+        - composed_at
+        - members
+      description: "A batch's manifest, of kind `integration-batch/v1`: the batch's identity, tracked on its\nbranch at `manifest_path` and landing with it. A regression found after a batch landed\nis located by `git bisect --first-parent` over the batch's range, and this names the\nmember each merge commit carries."
+    BatchMember:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        head:
+          type: string
+          description: "The head commit its eligibility was decided on, and the one that is merged."
+        title:
+          type: string
+          description: "Its title, as observed."
+      required:
+        - number
+        - head
+        - title
+      description: "One member of a planned batch: a pull request at the head it was decided on."
+    BatchPlan:
+      type: object
+      properties:
+        base:
+          type: string
+          description: The integration base.
+        master_sha:
+          type: string
+          description: "The master commit every member was decided against, and the one the batch starts from."
+        observed_at:
+          type: string
+          description: "When the forge was observed, for the observation the plan rests on."
+        max_members:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The most members that were asked for.
+        members:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BatchMember"
+          description: "The members, in composition order."
+        left_out:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LeftOut"
+          description: "Every other open pull request, in rank order, with why it is not a member."
+      required:
+        - base
+        - master_sha
+        - observed_at
+        - max_members
+        - members
+        - left_out
+      description: "The plan of one batch: who would be merged onto which master, in what order, and who is\nleft out. Deterministic: the same queue, in whatever order its pull requests were listed,\ngives the same plan."
+    BatchVerdict:
+      oneOf:
+        - type: string
+          const: not_a_batch
+          description: "The branch merges fewer than two other open pull requests and touches no manifest:\nnot this gate's subject."
+        - type: string
+          const: batch
+          description: "It merges two or more, or touches a manifest, and it is the batch its manifest says."
+        - type: string
+          const: refused
+          description: "It merges two or more, or touches a manifest, and it is not."
+      description: What the gate decided.
     BenchmarkPolicy:
       oneOf:
         - type: object
@@ -15465,6 +15978,252 @@ components:
           const: source_state
           description: "The source state, from this checkout's git."
       description: "What a resume writes, recomputes or leaves."
+    ComposeOutcome:
+      oneOf:
+        - type: object
+          properties:
+            outcome:
+              type: string
+              const: would_compose
+          required:
+            - outcome
+          description: "Dry run: the plan's members would be merged in order, derived, committed and pushed as\na new branch."
+        - type: object
+          properties:
+            composed:
+              "$ref": "#/components/schemas/ComposedBatch"
+              description: "What was pushed. Boxed: it carries the whole manifest, and a refusal carries a\nsentence."
+            outcome:
+              type: string
+              const: composed
+          required:
+            - outcome
+            - composed
+          description: "The batch was composed, pushed as a new branch and its pull request opened."
+        - type: object
+          properties:
+            refusal:
+              "$ref": "#/components/schemas/ComposeRefusal"
+              description: Why.
+            outcome:
+              type: string
+              const: refused
+          required:
+            - outcome
+            - refusal
+          description: "Refused, and why."
+      description: "What a composition did, or would do."
+    ComposeRefusal:
+      oneOf:
+        - type: object
+          properties:
+            max:
+              type: integer
+              format: uint
+              minimum: 0
+              description: What was asked for.
+            kind:
+              type: string
+              const: max_too_small
+          required:
+            - kind
+            - max
+          description: "Fewer than two members were asked for: that is not a batch."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: no_max_members
+          required:
+            - kind
+          description: "Neither the policy nor the caller says how many members a batch may carry: the code\nhas no default (ADR 0114 D2)."
+        - type: object
+          properties:
+            max:
+              type: integer
+              format: uint
+              minimum: 0
+              description: What was asked for.
+            policy:
+              type: integer
+              format: uint
+              minimum: 0
+              description: What the policy allows.
+            kind:
+              type: string
+              const: max_above_policy
+          required:
+            - kind
+            - max
+            - policy
+          description: "The caller asked for more members than the policy allows: `--max` only lowers."
+        - type: object
+          properties:
+            status:
+              type: string
+              description: "The decision's status, in the layer's words, or why it could not be read."
+            kind:
+              type: string
+              const: decision_not_accepted
+          required:
+            - kind
+            - status
+          description: "The decision that makes composition a capability is not accepted in this layer, so\nthe act is not taken; the dry run is unaffected."
+        - type: object
+          properties:
+            eligible:
+              type: integer
+              format: uint
+              minimum: 0
+              description: How many are eligible.
+            kind:
+              type: string
+              const: too_few
+          required:
+            - kind
+            - eligible
+          description: "Fewer than two pull requests are eligible: one is `prs repair`, none is nothing."
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: "What the trail holds, and what it needs."
+            kind:
+              type: string
+              const: rollout_incomplete
+          required:
+            - kind
+            - reason
+          description: The trail does not yet hold the verified merge that unlocks composition (ADR 0114 D7).
+        - type: object
+          properties:
+            remaining:
+              type: array
+              items:
+                type: integer
+                format: uint64
+                minimum: 0
+              description: The members whose merges succeeded.
+            dropped:
+              type: array
+              items:
+                "$ref": "#/components/schemas/LeftOut"
+              description: "The members that were dropped, and why."
+            kind:
+              type: string
+              const: too_few_composed
+          required:
+            - kind
+            - remaining
+            - dropped
+          description: "The composition was taken and dropped the members that conflicted, and fewer than two\nwere left. Nothing was pushed."
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: "What failed, in the words of the step that failed."
+            class:
+              "$ref": "#/components/schemas/FailureClass"
+              description: "Why, as a class."
+            kind:
+              type: string
+              const: act_failed
+          required:
+            - kind
+            - reason
+            - class
+          description: "The act was taken and failed — a merge, a derive, a commit the hooks refused, a branch\nthat already exists, a push or a pull request the forge refused."
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: Why the trail refused it.
+            kind:
+              type: string
+              const: trail_unwritable
+          required:
+            - kind
+            - reason
+          description: "The trail could not record the act first, so it was not taken."
+      description: Why a batch is not composed.
+    ComposeReport:
+      type: object
+      properties:
+        dry_run:
+          type: boolean
+          description: Whether nothing was allowed to change.
+        plan:
+          anyOf:
+            - "$ref": "#/components/schemas/BatchPlan"
+            - type: "null"
+          description: "The plan the outcome was decided on; `None` when the refusal came before any queue was\nread."
+        outcome:
+          "$ref": "#/components/schemas/ComposeOutcome"
+          description: What happened.
+        diagnostics:
+          type: array
+          items:
+            type: string
+          description: "What the observation the decision rests on cannot vouch for — the queue's own\ndiagnostics, such as an observation older than an hour. A dry run with any exits 10, as\nevery other reading of a diagnosed queue does."
+          default: []
+      required:
+        - dry_run
+        - outcome
+      description: "The answer of one `prs compose`."
+    ComposedBatch:
+      type: object
+      properties:
+        branch:
+          type: string
+          description: "The batch's head branch, new on the remote."
+        head:
+          type: string
+          description: "The batch's head: the composition commit."
+        pull_request:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The pull request that was opened for it, when the forge's answer named one."
+        manifest:
+          "$ref": "#/components/schemas/BatchManifest"
+          description: The manifest that was committed.
+        dropped:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LeftOut"
+          description: "The planned members the composition dropped, and why."
+      required:
+        - branch
+        - head
+        - manifest
+        - dropped
+      description: A batch that was composed and pushed.
+    ComposedMember:
+      type: object
+      additionalProperties: false
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        head:
+          type: string
+          description: "The head that was merged: the merge commit's second parent."
+        title:
+          type: string
+          description: "Its title, as observed."
+        merge_commit:
+          type: string
+          description: "The merge commit on the batch's first-parent line that carries it."
+      required:
+        - number
+        - head
+        - title
+        - merge_commit
+      description: "One member as the batch carries it: the planned member and the merge commit that brought\nits head in."
     ConclusionView:
       type: object
       properties:
@@ -23257,12 +24016,54 @@ components:
           const: repair_refused
           description: "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
         - type: string
+          const: compose_selected
+          description: "A person asked for a batch (`prs compose --apply`) and the queue holds at least two\neligible members: the detail names them, in order, each at the head it was decided on."
+        - type: string
+          const: compose_attempted
+          description: "The members are about to be merged, in order, onto the decided master in a scratch\nworktree, and the result pushed as a new branch."
+        - type: string
+          const: composed
+          description: "The batch was composed, pushed as a new branch and its pull request opened;\n`head_after` is the batch's head."
+        - type: string
+          const: compose_refused
+          description: "The composition was refused — by the decision (fewer than two eligible members) or by\nthe act (too few members left after the ones that conflicted were dropped, a derive,\ncommit or push that failed, a branch that already exists) — `class` says why."
+        - type: string
           const: idle
           description: Nothing was ready.
         - type: string
           const: observe_failed
           description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
       description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+    IntegrationBatchPlan:
+      type: object
+      properties:
+        observed:
+          type: boolean
+          description: Whether a forge observation is recorded in this checkout.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why there is no plan, when there is none."
+        report:
+          anyOf:
+            - "$ref": "#/components/schemas/ComposeReport"
+            - type: "null"
+          description: "The dry run of `prs compose --max <max>`: the plan, what would be done with it, and\nwhat the observation it rests on cannot vouch for."
+        rollout:
+          type:
+            - string
+            - "null"
+          description: "Why `--apply` would be refused before it decided anything: the trail does not yet\nhold the verified merge that unlocks composition (ADR 0114 D7). `None` when it does."
+        decision:
+          type:
+            - string
+            - "null"
+          description: "Why `--apply` would be refused whatever the trail holds: the layer does not hold\nADR 0114 as accepted, which is a person's act. `None` when it does."
+          default: null
+      required:
+        - observed
+      description: "The plan of a batch, or why there is none."
     IntegrationCleanup:
       type: object
       properties:
@@ -25470,6 +26271,241 @@ components:
         - base
         - refreshed_by
       description: "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network."
+    LeftOut:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        head:
+          type: string
+          description: The head the decision was taken on.
+        title:
+          type: string
+          description: "Its title, as observed."
+        reason:
+          "$ref": "#/components/schemas/LeftOutReason"
+          description: Why it is not a member.
+      required:
+        - number
+        - head
+        - title
+        - reason
+      description: "One pull request the batch does not carry, and why."
+    LeftOutReason:
+      oneOf:
+        - type: object
+          properties:
+            base:
+              type: string
+              description: The branch it targets.
+            kind:
+              type: string
+              const: other_base
+          required:
+            - kind
+            - base
+          description: "It targets another branch than the integration base — another pull request's head\n(it is stacked) or a branch of its own."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: is_batch
+          required:
+            - kind
+          description: "It is itself a batch: its head branch is a batch's, or it is the declared successor of\ntwo or more open pull requests. A batch is one candidate, never a member."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: draft
+          required:
+            - kind
+          description: It is a draft.
+        - type: object
+          properties:
+            names:
+              type: array
+              items:
+                type: string
+              description: "The labels, as the forge spells them."
+            kind:
+              type: string
+              const: label
+          required:
+            - kind
+            - names
+          description: "A label whose policy is to hold, or to call it obsolete, is on it."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: auto_merge_armed
+          required:
+            - kind
+          description: The forge has auto-merge armed on it and would merge it on its own.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: fork_head
+          required:
+            - kind
+          description: "Its head lives in a fork, not in this repository."
+        - type: object
+          properties:
+            number:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: The open pull request that names it.
+            kind:
+              type: string
+              const: named_by_open
+          required:
+            - kind
+            - number
+          description: "An open pull request — a batch, or any declared successor — already names it as what\nit supersedes."
+        - type: object
+          properties:
+            reasons:
+              type: array
+              items:
+                description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+                type: string
+              description: What the classifier said.
+            kind:
+              type: string
+              const: supersession
+          required:
+            - kind
+            - reasons
+          description: "Its supersession is otherwise undecided or decided against it: a successor landed, one\ncould not be read, or the pull requests that mention it were not all read."
+        - type: object
+          properties:
+            paths:
+              type: array
+              items:
+                type: string
+              description: The conflicting authored paths.
+            kind:
+              type: string
+              const: authored_conflict
+          required:
+            - kind
+            - paths
+          description: "Merging it into master conflicts on authored paths: the owner's to settle first."
+        - type: object
+          properties:
+            relation:
+              type: string
+              description: What git decided the head is to master.
+            kind:
+              type: string
+              const: nothing_to_land
+          required:
+            - kind
+            - relation
+          description: "Its work is on master already, or only derived files would change: cleanup's lane."
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: Why.
+            kind:
+              type: string
+              const: undecidable
+          required:
+            - kind
+            - reason
+          description: Git could not decide what the head is to master.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: merge_commit_not_allowed
+          required:
+            - kind
+          description: "The repository allows no merge commit, the only way a batch — or anything — lands."
+        - type: object
+          properties:
+            state:
+              "$ref": "#/components/schemas/PullRequestReview"
+              description: The review state.
+            kind:
+              type: string
+              const: review
+          required:
+            - kind
+            - state
+          description: The review policy is not satisfied on its head.
+        - type: object
+          properties:
+            state:
+              "$ref": "#/components/schemas/RequiredCheckState"
+              description: Their verdict.
+            kind:
+              type: string
+              const: required_checks
+          required:
+            - kind
+            - state
+          description: "Its required checks have not all passed on its head: failed, pending, missing,\nskipped without permission, or unread."
+        - type: object
+          properties:
+            waits_for:
+              type: array
+              items:
+                type: integer
+                format: uint64
+                minimum: 0
+              description: The dependencies it still waits for.
+            kind:
+              type: string
+              const: dependency
+          required:
+            - kind
+            - waits_for
+          description: A dependency it declares has not landed and is not a member placed before it.
+        - type: object
+          properties:
+            max:
+              type: integer
+              format: uint
+              minimum: 0
+              description: The most members the batch may have.
+            kind:
+              type: string
+              const: over_max
+          required:
+            - kind
+            - max
+          description: "It is eligible, and the batch already holds as many members as were asked for."
+        - type: object
+          properties:
+            paths:
+              type: array
+              items:
+                type: string
+              description: The conflicting authored paths.
+            kind:
+              type: string
+              const: conflicts_in_batch
+          required:
+            - kind
+            - paths
+          description: "During the composition: its merge onto the members before it conflicts on authored\npaths. It was dropped and the composition went on without it."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: already_in_batch
+          required:
+            - kind
+          description: "During the composition: its head was already contained in what was composed before\nit, so its merge would be no merge commit and it would carry nothing."
+      description: Why a pull request is not a member of the batch.
     Libc:
       oneOf:
         - type: string
@@ -26209,6 +27245,25 @@ components:
         - enforced
         - seen
       description: "One measured pair: a foreground on a ground, in one theme."
+    MemberMerge:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request whose head was merged.
+        head:
+          type: string
+          description: "That head: the merge commit's second parent."
+        merge_commit:
+          type: string
+          description: The merge commit.
+      required:
+        - number
+        - head
+        - merge_commit
+      description: "A merge commit on the first-parent line whose second parent is another open pull\nrequest's current head."
     MeshDoctorReport:
       type: object
       properties:
@@ -30320,6 +31375,21 @@ components:
         base_ref:
           type: string
           description: The base branch.
+        fork_head:
+          type: boolean
+          description: "Whether the head lives in a fork rather than in this repository, as the forge reported\nit. Said whatever the head is to master: the `fork_head` reason is given only where a\nfork's head is also behind, and a batch asks the question of every candidate\n(`super::compose`). Absent on the wire when it does not."
+        batch:
+          anyOf:
+            - "$ref": "#/components/schemas/BatchManifest"
+            - type: "null"
+          description: "The manifest this pull request carries on its head, when it is a batch (ADR 0114):\nits members in composition order, each with the head that was merged and the merge\ncommit that carries it. Read from git at the head that was decided on, never from the\npull request's body. Absent for anything that is not a batch, and for a batch whose\nmanifest could not be read. Set in one place (`super::compose::carry`)."
+        carried_by:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The open batch whose manifest names this pull request as a member, when one does.\nSet in the same place."
         evaluated_against:
           "$ref": "#/components/schemas/EvaluatedAgainst"
           description: The revisions this was decided against.

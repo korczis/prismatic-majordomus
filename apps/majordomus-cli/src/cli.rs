@@ -3071,6 +3071,18 @@ pub struct PrsArgs {
 /// let Command::Prs(args) = cli.command else { panic!() };
 /// assert!(matches!(args.command, Some(PrsCommand::Repair { apply: false, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "repair", "137", "--apply", "--dry-run"]).is_err());
+/// // a batch is planned unless it is applied; its size is the policy's, which --max lowers
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "compose", "--max", "4"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Compose { max: Some(4), apply: false, .. })));
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "compose"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Compose { max: None, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "compose", "--max", "1"]).is_err());
+/// // the gate judges HEAD against the integration base unless told otherwise
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "batch-check", "--base", "origin/master"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::BatchCheck { base: Some(_), head: None })));
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -3128,6 +3140,27 @@ pub enum PrsCommand {
         /// Decide and change nothing: the default, spelled out.
         #[arg(long, conflicts_with = "apply")]
         dry_run: bool,
+    },
+    /// Compose a batch (ADR 0114): one pull request that carries several, each proved on its own head. A member is open, on the base, not a draft, unlabelled, in this repository, reviewed as the policy asks, with every required check passed on its head — which may be behind master — and every dependency landed or placed before it; everyone else is left out with the reason. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and in a scratch worktree merges each member's head onto master in rank order, writes the manifest, derives, commits once, pushes a new branch `int/batch-<id>` and opens its pull request, which supersedes each member; it never merges into master. Between the merges and the derive it takes one `release bump` to what the public contract of the composed tree requires, and the manifest records the version before and after. Refused until the trail holds a verified merge, and while ADR 0114 is not accepted in the layer. Exit 10 on a refusal or an absent observation, 12 when it could not act
+    Compose {
+        /// At most this many members, for this composition: lowers the policy's `integration.batch.max_members` and never raises it. Without it the policy's value is the size; with neither, the command refuses and names the key. A batch has at least two.
+        #[arg(long, value_parser = clap::value_parser!(u64).range(2..))]
+        max: Option<u64>,
+        /// Act: take the lease, observe the forge again, record the act, merge the members, derive, commit, push the new branch and open its pull request. Without it nothing is changed, fetched or recorded.
+        #[arg(long)]
+        apply: bool,
+        /// Decide and change nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
+    },
+    /// The gate of ADR 0114 D5: a composed branch that is not a batch is refused. Walks the first-parent line from the merge base of `--base` and `--head`; a merge there whose second parent is the current head of another open pull request of this repository is a member merge. Fewer than two and no manifest added or changed under `.ai/repo/integration/batches/`: not a batch, exit 0. Two or more, or a manifest added or changed whatever the branch merges: it must add or change exactly one manifest, naming exactly those members, at least two, in that order with those heads and merge commits, and every other commit on the line that is not a merge of the base may change only the manifest, the version files `release bump` writes and `merge=derived` paths. The open pull requests are read from the forge, and only when git alone cannot decide. Exit 0 not a batch or a conforming one, 10 refused with every finding named, 12 when it cannot run — git or the forge could not be read — never clean because it could not look
+    BatchCheck {
+        /// The base to judge against: a ref or a commit. Default: the integration base as this clone has it (`origin/<base>`).
+        #[arg(long)]
+        base: Option<String>,
+        /// The head to judge: a ref or a commit. Default: HEAD. The forge's test merge of a pull request (`refs/pull/<n>/merge`) is looked through to the pull request's own head.
+        #[arg(long)]
+        head: Option<String>,
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
@@ -4918,6 +4951,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "repair", "1"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs compose",
+        examples: &[ExampleDoc {
+            id: "prs-compose-unobserved",
+            title: "A batch is planned on the recorded observation, or not at all",
+            description: "The dry run, which is the default, is a read: it decides which open pull requests may ride one batch, and in what order, from the queue the last recorded observation built, as `prs status` does, and names everyone it leaves out with the reason. The same plan `GET /api/v1/pull-requests/compose?max=` gives. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.",
+            argv: &["prs", "compose", "--max", "4"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs batch-check",
+        examples: &[ExampleDoc {
+            id: "prs-batch-check-not-a-batch",
+            title: "A branch that merges no other pull request is not a batch",
+            description: "The gate of ADR 0114 D5 walks the first-parent line from the merge base of the base and the head. With fewer than two merges there of anything but the base, git alone decides: the branch is not a batch, the forge is never asked, and the command says so in one line and exits 0. It reads the open pull requests' heads only when the line holds two such merges; a forge it then cannot read is exit 12 — it never reports clean because it could not look — and a branch that merges two open pull requests without the manifest `prs compose` writes is exit 10, each finding naming the commit, the path or the manifest line.",
+            argv: &["prs", "batch-check", "--base", "HEAD", "--head", "HEAD"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["batch-check: not a batch"]),
         }],
     },
     CommandExamples {
