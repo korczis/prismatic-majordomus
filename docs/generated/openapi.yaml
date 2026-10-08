@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.17.0
+# Generator: majordomus-cli 0.18.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.17.0"
+  version: "0.18.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -4758,6 +4758,96 @@ paths:
           uri: majordomus://intents
           name: intents
       x-majordomus-cli: intent list
+  "/api/v1/intents/binding":
+    get:
+      operationId: intents.binding
+      summary: What a piece of work is bound to before it starts
+      description: "What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight's own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue's scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion's evidence changes state. Nothing is stored."
+      tags:
+        - intents
+      parameters:
+        - name: issue
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The issue the work executes, by id."
+          examples:
+            first-issue:
+              value: I0001
+        - name: intent
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The intent the work serves, by id, when the worker names it directly."
+        - name: paths
+          in: query
+          required: false
+          schema:
+            type: string
+            default: ""
+          description: "Repository-relative paths the work will touch, separated by commas."
+          examples:
+            first-issue:
+              value: ""
+        - name: exemption
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "An exemption class the policy declares under `intent.exemptions`."
+        - name: because
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Why the exemption applies.
+      responses:
+        "200":
+          description: "What a piece of work is bound to before it starts: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntentBinding"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: intents.binding
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::intents
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_intent_binding
+      x-majordomus-cli: intent binding
   "/api/v1/intents/coverage":
     get:
       operationId: intents.coverage
@@ -4827,7 +4917,7 @@ paths:
           description: "The intent's id."
           examples:
             first-intent:
-              value: intent-lifecycle
+              value: intent-bound-work
       responses:
         "200":
           description: "Why an intent stands where it stands: the result."
@@ -4961,7 +5051,7 @@ paths:
           description: "An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out."
           examples:
             first-intent:
-              value: intent-lifecycle
+              value: intent-bound-work
       responses:
         "200":
           description: "Which work realises which intent, and what each still lacks: the result."
@@ -5023,7 +5113,7 @@ paths:
           description: "The intent's id, which is also its file name under `.ai/repo/project/intents/`."
           examples:
             first-intent:
-              value: intent-lifecycle
+              value: intent-bound-work
       responses:
         "200":
           description: "One intent, with everything derived about it: the result."
@@ -11742,6 +11832,27 @@ components:
         head:
           type: string
           description: The commit it started at.
+        issue:
+          type: string
+          description: "The issue the worker said this task executes (`start --issue`). A name, never state:\nwhat it serves is answered by `intents.binding` on every read (ADR 0111)."
+        intent:
+          type: string
+          description: "The intent the worker said this task serves (`start --intent`)."
+        exemption:
+          type: string
+          description: "The exemption class the worker gave instead (`start --exempt`)."
+        exemption_because:
+          type: string
+          description: The reason given with the exemption.
+        binding:
+          type: string
+          description: "The standing `intents.binding` answered when the task started — what `start` was\ntold then, not where the work stands now."
+        plan_revision:
+          type: string
+          description: The pin of what the work was for when the task started.
+        evidence_standing:
+          type: string
+          description: "The pin of where the served criteria's evidence stood when the task started."
       required:
         - id
         - task
@@ -12786,6 +12897,135 @@ components:
           const: plan_holds_an_issue
           description: "The plan holds at least one issue. A command whose every honest case is a refusal\nchosen from an issue's own status has no such refusal in a plan with no issue: the\nonly answer there is a lookup miss, which times an error path and is not the\noperation."
       description: "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
+    BindingCause:
+      oneOf:
+        - type: string
+          const: unknown_issue
+          description: The issue named is not an issue of the plan.
+        - type: string
+          const: no_issue_covers_paths
+          description: "No open issue's scope covers any of the paths."
+        - type: string
+          const: issue_serves_nothing
+          description: "The issue's milestone realises a live intent and the issue serves none of its criteria."
+        - type: string
+          const: serves_another_intent
+          description: The issue serves a criterion of an intent whose milestones do not include its own.
+        - type: string
+          const: serves_unknown_criterion
+          description: The issue serves an intent or a criterion that does not exist.
+        - type: string
+          const: intent_not_critiqued
+          description: An intent the work serves has no critique.
+        - type: string
+          const: open_blocking_finding
+          description: The critique of an intent the work serves has a blocking finding still open.
+        - type: string
+          const: nothing_named
+          description: "Nothing was named: no issue, no intent, no paths and no exemption."
+        - type: string
+          const: unknown_intent
+          description: The intent named is not an intent of this repository.
+        - type: string
+          const: intent_retired
+          description: The intent named is cancelled or superseded.
+        - type: string
+          const: intent_has_no_open_work
+          description: "The intent named has no open issue serving it, so there is no work to be bound to."
+        - type: string
+          const: issue_outside_intent
+          description: The issue named serves none of the criteria of the intent named beside it.
+        - type: string
+          const: ambiguous_intent
+          description: Paths alone reached more than one intent; the worker must name the issue.
+        - type: string
+          const: unknown_exemption
+          description: The exemption class is not one the policy declares.
+        - type: string
+          const: exemption_without_reason
+          description: An exemption was given with no reason.
+        - type: string
+          const: exemption_names_work
+          description: "An exemption was given beside an issue or an intent: work is one or the other."
+      description: "Why a binding was refused, as a word a reader greps for. The first seven are the\npreflight's own causes, carried through unchanged; the rest are what only a binding can\nfind.\n\n```\nuse majordomus_cli::intent::IntentPreflightCause;\nuse majordomus_cli::intent_binding::BindingCause;\n// a preflight cause keeps its word\nassert_eq!(\n    serde_json::to_string(&BindingCause::from(IntentPreflightCause::IntentNotCritiqued)).unwrap(),\n    serde_json::to_string(&IntentPreflightCause::IntentNotCritiqued).unwrap(),\n);\n```"
+    BindingExemption:
+      type: object
+      properties:
+        class:
+          type: string
+          description: The class id.
+        description:
+          type: string
+          description: What the policy says the class is for.
+        because:
+          type: string
+          description: "The worker's reason."
+      required:
+        - class
+        - because
+      description: "The exemption a binding accepted: the class as the policy declares it, and the reason\nthe worker gave.\n\n```\nuse majordomus_cli::intent_binding::BindingExemption;\nlet e = BindingExemption {\n    class: \"emergency\".into(),\n    description: \"Restoring a broken trunk\".into(),\n    because: \"master is red on case 500\".into(),\n};\nassert_eq!(e.class, \"emergency\");\n```"
+    BindingRefusal:
+      type: object
+      properties:
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue it is about; absent when it is about no one issue.
+        cause:
+          "$ref": "#/components/schemas/BindingCause"
+          description: The cause.
+        message:
+          type: string
+          description: "What is wrong, in one sentence."
+      required:
+        - cause
+        - message
+      description: "One reason a binding was refused.\n\n```\nuse majordomus_cli::intent_binding::{BindingCause, BindingRefusal};\nlet r = BindingRefusal::new(None, BindingCause::NothingNamed, \"name the work\".into());\nassert!(r.issue.is_none());\nassert_eq!(r.cause, BindingCause::NothingNamed);\n```"
+    BindingRequest:
+      type: object
+      properties:
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue the work executes.
+        intent:
+          type:
+            - string
+            - "null"
+          description: "The intent the work serves, when the worker names it directly."
+        paths:
+          type: array
+          items:
+            type: string
+          description: The paths the work will touch.
+        exemption:
+          type:
+            - string
+            - "null"
+          description: "The exemption class, when the work is under no intent on purpose."
+        because:
+          type:
+            - string
+            - "null"
+          description: Why the exemption applies.
+      description: "What a worker named when it asked what its work serves. Every field is optional and the\ncombinations are judged, not assumed: an issue alone, an intent alone, an issue beside\nthe intent it should serve, paths alone, or an exemption with its reason.\n\n```\nuse majordomus_cli::intent_binding::BindingRequest;\nlet by_issue = BindingRequest { issue: Some(\"I0001\".into()), ..Default::default() };\nassert!(!by_issue.names_nothing());\n// blanks are what a query string or a shell variable leaves behind, and name nothing\nlet blank = BindingRequest { issue: Some(\"  \".into()), ..Default::default() }.trimmed();\nassert!(blank.names_nothing());\n```"
+    BindingStanding:
+      oneOf:
+        - type: string
+          const: bound
+          description: "The work serves at least one criterion of a live intent, through links that hold, and\neach such intent's plan was critiqued with no blocking finding open."
+        - type: string
+          const: maintenance
+          description: "The issues the work resolves to sit under milestones no live intent names: derived\nmaintenance, as `intent validate` allows."
+        - type: string
+          const: exempt
+          description: "The worker gave an exemption class the policy declares, with a reason."
+        - type: string
+          const: refused
+          description: "The work may not start as bound work; every reason is in `refusals`."
+      description: "Where a piece of work stands against the intents: the one word a start decides on.\n\n```\nuse majordomus_cli::intent_binding::BindingStanding;\nassert_eq!(serde_json::to_string(&BindingStanding::Bound).unwrap(), \"\\\"bound\\\"\");\nassert!(BindingStanding::Refused.refuses());\nassert!(!BindingStanding::Maintenance.refuses());\n```"
     Blocker:
       type: object
       properties:
@@ -13933,7 +14173,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The evidence, as reason codes."
         action:
@@ -20168,7 +20408,7 @@ components:
           description: The forge has auto-merge armed; emitted whenever it is.
         - type: string
           const: supersession
-          description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+          description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`)."
         - type: string
           const: repository_settings
           description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -23100,7 +23340,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The decision's reasons; a code an older executor wrote reads back verbatim."
         detail:
@@ -23226,7 +23466,7 @@ components:
           description: The forge has no auto-merge armed on it.
         - type: string
           const: supersession
-          description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+          description: "No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it."
         - type: string
           const: relation_to_master
           description: "Its head is not on master already, and git could say that it merges cleanly."
@@ -23513,6 +23753,66 @@ components:
         - verification_failures
         - unreadable_events
       description: "The integrator's throughput over a window of the trail."
+    IntentBinding:
+      type: object
+      properties:
+        standing:
+          "$ref": "#/components/schemas/BindingStanding"
+          description: "`bound`, `maintenance`, `exempt` or `refused`."
+        named:
+          "$ref": "#/components/schemas/BindingRequest"
+          description: "What the worker named, trimmed: the request this answers."
+        exemption:
+          anyOf:
+            - "$ref": "#/components/schemas/BindingExemption"
+            - type: "null"
+          description: "The exemption accepted, when the standing is `exempt`."
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentPreflightIssue"
+          description: "The issues the work resolved to, each with the preflight's verdict."
+        intents:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentPreflightIntent"
+          description: "The intents the work serves, each with the criteria served, their evidence state,\nthe invariants, the critique and the gap: what the worker is held to."
+        governance:
+          type: array
+          items:
+            type: string
+          description: "The governance of those intents, each entry once."
+        plan_revision:
+          type: string
+          description: The pin of what the work is for; empty when no intent was reached.
+        evidence_standing:
+          type: string
+          description: "The pin of where the served criteria's evidence stands; empty when no intent was\nreached."
+        notes:
+          type: array
+          items:
+            type: string
+          description: What a worker should know and no gate refuses on.
+        refusals:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BindingRefusal"
+          description: "Every reason the binding was refused; empty unless the standing is `refused`."
+        refusal:
+          type:
+            - string
+            - "null"
+          description: "When refused: every refusal's sentence, joined."
+      required:
+        - standing
+        - named
+        - issues
+        - intents
+        - governance
+        - plan_revision
+        - evidence_standing
+        - refusals
+      description: "What a piece of work is bound to: its standing, what was named, the issues and intents\nit resolved to with what each intent asks of the worker, the two pins, and every refusal.\n\n```\nuse majordomus_cli::intent::Intents;\nuse majordomus_cli::intent_binding::{\n    bind, BindingCause, BindingRequest, BindingStanding, IntentBinding,\n};\nuse majordomus_cli::plan::Plan;\nuse majordomus_cli::policy::IntentPolicy;\n# let plan: Plan = serde_json::from_value(serde_json::json!({\n#     \"project\": {\"name\": \"p\", \"repository\": \"o/p\", \"default_branch\": \"master\",\n#                 \"active_milestone\": \"\"},\n#     \"statuses\": {\"issue\": [], \"milestone\": []},\n#     \"milestones\": [], \"issues\": [], \"waves\": [], \"edges\": [],\n#     \"milestone_edges\": [], \"findings\": []})).unwrap();\nlet intents = Intents { intents: vec![], findings: vec![] };\nlet nothing: IntentBinding =\n    bind(&intents, &plan, &[], &[], &IntentPolicy::default(), BindingRequest::default());\nassert_eq!(nothing.standing, BindingStanding::Refused);\nassert_eq!(nothing.refusals[0].cause, BindingCause::NothingNamed);\n// nothing was reached, so there is nothing to pin\nassert!(nothing.plan_revision.is_empty() && nothing.evidence_standing.is_empty());\n```"
     IntentCoverage:
       type: object
       properties:
@@ -30041,7 +30341,7 @@ components:
             - "null"
           format: uint64
           minimum: 0
-          description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+          description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only."
         issue:
           type:
             - string
@@ -30058,7 +30358,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
         gates:
@@ -30208,10 +30508,10 @@ components:
           description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
         - type: string
           const: superseded
-          description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+          description: "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
         - type: string
           const: possibly_redundant
-          description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+          description: "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
         - type: string
           const: other_base
           description: Targets a branch other than the integration base.
@@ -38896,7 +39196,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.17.0
+  generator: majordomus-cli 0.18.0
   infrastructure:
     - id: home
       path: /
@@ -38941,4 +39241,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.17.0
+x-majordomus-generator: majordomus-cli 0.18.0

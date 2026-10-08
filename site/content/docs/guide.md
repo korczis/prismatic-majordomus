@@ -259,6 +259,7 @@ $ majordomus-cli intent list
 $ majordomus-cli intent validate
 $ majordomus-cli intent coverage
 $ majordomus-cli intent preflight --issue <id>
+$ majordomus-cli intent binding --issue <id>
 $ majordomus-cli intent realization
 $ majordomus-cli intent explain <id>
 ```
@@ -271,11 +272,11 @@ The Cockpit shows the same answers at `/cockpit/intents` and `/cockpit/intents/<
 `apps/majordomus-cli/tests/intent.rs` for the preflight, and
 `apps/majordomus-cli/tests/intent_realization.rs` for the HTTP, MCP and Cockpit surfaces.
 
-**Maturity.** On master, and partial. `plan start` does not refuse work that starts before the
-plan was critiqued: `intent validate` and the `intent-check` gate name it afterwards. A session
-does not load intents when it starts, the GitHub projection closes a milestone without reading
-its intents, and a `command` or `deployment` criterion is never met. Each of these is a planned
-claim in [`CLAIMS.yaml`](@/guarantees/_index.md).
+**Maturity.** On master, and partial. A task that names an issue or an intent is briefed from
+it, and where the policy says `intent.binding: required` a start on a plan nobody critiqued is
+refused; this repository's own policy is `advisory`, which reports it. The GitHub projection
+closes a milestone without reading its intents, and a `command` or `deployment` criterion is
+never met. Each of those two is a planned claim in [`CLAIMS.yaml`](@/guarantees/_index.md).
 
 ### Worktrees
 
@@ -538,9 +539,9 @@ $ majordomus-cli evidence show
 - Overlap is reported, never enforced. The only refusal is a task's own scope.
 - Automatic session capture exists for Claude Code only.
 - Plan and board views in the Cockpit, and a richer entry preflight, are open pull requests.
-- Intents are judged, not enforced at the moment work starts: `plan start` lets an issue start
-  before its intent's plan was critiqued, a session does not load intents, GitHub milestones
-  close without reading them, and a `command` or `deployment` criterion is never met.
+- Intents are enforced at the moment work starts only where the policy requires binding; this
+  repository's policy is `advisory`. GitHub milestones close without reading them, and a
+  `command` or `deployment` criterion is never met.
 - The command line and the Cockpit's area list are written by hand, checked against the
   registry rather than generated from it. [`HOW_IT_WORKS.md`](@/docs/how-it-works.md) lists every such
   place.

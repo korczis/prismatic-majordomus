@@ -33,10 +33,11 @@ fn git(dir: &Path, args: &[&str]) -> String {
 
 /// The scripted forge. `@STATE@`, `@ORIGIN@` and `@WORK@` are replaced with the test's paths.
 /// A file under the state directory changes an answer: `down` refuses every call,
-/// `protection.json` holding `FAIL` or `TRANSIENT` refuses the protection read, `closed-fails`
-/// the list of closed pull requests, `view-fails` every `pr view`, `view-transient` the view
-/// of a successor; `view-<n>.json` is the successor `n` as the forge shows it; `forget` and
-/// `unfetchable` lose the observation or the origin as a merge is looked at.
+/// `protection.json` holding `FAIL` or `TRANSIENT` refuses the protection read, `view-fails`
+/// every `pr view`, `view-transient` the view of a successor; `view-<n>.json` is the successor
+/// `n` as the forge shows it; `forget` and `unfetchable` lose the observation or the origin as
+/// a merge is looked at. The declarations read (`api graphql`) answers that every listed pull
+/// request is its owner's and that nothing mentions it.
 const GH: &str = r#"#!/bin/sh
 S="@STATE@"; O="@ORIGIN@"; W="@WORK@"
 echo "$*" >> "$S/log"
@@ -53,11 +54,10 @@ case "$1 $2" in
   "api repos/o/r/rules/branches/master")
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
+  "api graphql") jq -c --slurpfile gone "$S/gone.json" '{data:{repository:{pullRequests:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[.[]|select(.number as $n|($gone[0]|index($n))|not)|{number,authorAssociation:"OWNER",isCrossRepository:false,timelineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[]}}]}}}}' "$S/prs.json" ;;
   "pr list")
     case " $* " in
-      *" --state closed "*)
-        if [ -f "$S/closed-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
-        echo '[]' ;;
+      *" --state closed "*) echo UNEXPECTED >> "$S/log"; exit 1 ;;
       *) jq -c --slurpfile gone "$S/gone.json" '[.[] | select(.number as $n | ($gone[0] | index($n)) | not)]' "$S/prs.json" ;;
     esac ;;
   "pr merge")
@@ -79,7 +79,7 @@ case "$1 $2" in
   "pr view")
     if [ -f "$S/view-fails" ]; then echo 'HTTP 403: Resource not accessible by integration' >&2; exit 1; fi
     case " $* " in
-      *" --json number,state,headRefOid,body "*)
+      *" --json number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles "*)
         if [ -f "$S/view-transient" ]; then echo 'HTTP 502: Bad Gateway' >&2; exit 1
         elif [ -f "$S/view-$3.json" ]; then cat "$S/view-$3.json"
         else echo "no pull requests found for #$3" >&2; exit 1; fi ;;

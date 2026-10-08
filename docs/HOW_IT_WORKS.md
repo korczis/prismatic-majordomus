@@ -1281,7 +1281,7 @@ does not have to find them.
   multi-machine operation rests on a recorded manual run (`docs/MESH.md`).
 - The Rust side of the session lifecycle is a read model; the cutover is proposed.
 - The intent record is partly adopted (ADR 0070): `.ai/repo/project/intents/` holds the records
-  `intent validate` and `intent preflight` read, and no session or completion policy consumes them.
+  `intent validate` and `intent preflight` read; a task is bound to them at `start` and briefed from them (ADR 0111), and no completion policy consumes them.
 - A version can be declared before it is released: the crate's version and the latest release
   record are separate facts; the navbar names the release and the changelog shows the unreleased
   version above it.

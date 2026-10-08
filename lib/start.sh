@@ -6,8 +6,11 @@
 . "$MJ_LIB_DIR/handover.sh"
 # shellcheck source=check.sh
 . "$MJ_LIB_DIR/check.sh"
+# shellcheck source=intent_binding.sh
+. "$MJ_LIB_DIR/intent_binding.sh"
 mj_cmd_start() {
   local task="" scope="" requires="" profile="" owner="${USER:-unknown}"
+  local issue="" intent="" exempt="" because=""
   while [ $# -gt 0 ]; do case "$1" in
     --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs paths"; scope="$scope,$2"; shift 2 ;;
     --scope=*) scope="$scope,${1#--scope=}"; shift ;;
@@ -16,9 +19,18 @@ mj_cmd_start() {
     --profile) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--profile needs a name"; profile="$2"; shift 2 ;;
     --profile=*) profile="${1#--profile=}"; shift ;;
     --owner) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--owner needs a value"; owner="$2"; shift 2 ;;
+    --issue) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--issue needs an issue id"; issue="$2"; shift 2 ;;
+    --issue=*) issue="${1#--issue=}"; shift ;;
+    --intent) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--intent needs an intent id"; intent="$2"; shift 2 ;;
+    --intent=*) intent="${1#--intent=}"; shift ;;
+    --exempt) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--exempt needs an exemption class"; exempt="$2"; shift 2 ;;
+    --exempt=*) exempt="${1#--exempt=}"; shift ;;
+    --because) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--because needs a reason"; because="$2"; shift 2 ;;
+    --because=*) because="${1#--because=}"; shift ;;
     --help|-h) cat <<H
 usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]]
                        [--profile <name>] [--owner <who>]
+                       [--issue <id> | --intent <id> | --exempt <class> --because "<reason>"]
   one active task per checkout; refuses (15) while a task is active — handover or finish it first
   scope paths are normalised (no trailing /, no escapes); overlap with other worktrees is reported
   --requires  what this task owes before it may be called completed: tokens of
@@ -26,6 +38,13 @@ usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[
               A scope says where a worker may write; requires says what the worker owes.
               \`check\` reports each one, \`evidence --covers\` discharges the ones a worker
               records, and \`finish --outcome completed\` refuses while any is outstanding.
+  --issue     the issue this task executes; --intent the intent it serves, named directly;
+              --exempt a class the policy declares under intent.exemptions, with --because.
+              What the task is bound to is asked of \`majordomus-cli intent binding\` once, here:
+              under policy intent.binding: required a refused binding does not start (10),
+              under advisory it is reported, and with the key absent it is asked only when
+              one of these flags is given. The record keeps what was named and two pins a
+              handover carries; the intent itself is derived on every read (ADR 0111).
 H
       return 0 ;;
     -*) mj_die "$MJ_EX_USAGE" "start: unknown option $1" ;;
@@ -81,6 +100,33 @@ H
     done; IFS="$IFS_save"
   fi
 
+  # What the task is bound to, asked once, before anything is written. A flag is a question
+  # the worker put, so it is asked under every policy and an answer that cannot be read
+  # refuses; with no flag the policy decides whether the scope alone is asked at all.
+  local bind_mode bind_asked=0 bind_named=0 bind_standing="" plan_rev="" ev_standing=""
+  bind_mode="$(mj_binding_mode)"
+  [ -n "$issue$intent$exempt" ] && bind_named=1
+  [ -z "$because" ] || [ -n "$exempt" ] || mj_die "$MJ_EX_USAGE" "start: --because gives the reason of --exempt; it was given alone"
+  if [ "$bind_named" = 1 ] || [ "$bind_mode" != off ]; then
+    bind_asked=1
+    if mj_binding_ask "$issue" "$intent" "$(printf '%s' "$norm" | sed 's/^ //; s/ /,/g')" "$exempt" "$because"; then
+      bind_standing="$MJ_BIND_STANDING"
+      plan_rev="$(mj_binding_get '.plan_revision // empty')"
+      ev_standing="$(mj_binding_get '.evidence_standing // empty')"
+      if [ "$bind_standing" = refused ]; then
+        if [ "$bind_named" = 1 ] || [ "$bind_mode" = required ]; then
+          mj_binding_get '.refusals[] | "refused  \(.cause)  \(.message)"' >&2
+          mj_die "$MJ_EX_REFUSED" "the task is bound to nothing it may start under; name the issue it executes (--issue), the intent it serves (--intent), or an exemption the policy declares (--exempt <class> --because \"<reason>\"); see: majordomus-cli intent binding --help"
+        fi
+        mj_warn intent "-" "this task's binding is refused ($(mj_binding_get '[.refusals[].cause] | join(", ")')); policy intent.binding is advisory, so it starts" "majordomus-cli intent binding --path $(printf '%s' "$norm" | sed 's/^ //; s/ / --path /g')"
+      fi
+    elif [ "$bind_named" = 1 ] || [ "$bind_mode" = required ]; then
+      mj_die "$MJ_EX_REFUSED" "$MJ_BIND_WHY; the binding is unknown, and unknown is never a pass (run: $MJ_BIND_FIX)"
+    else
+      mj_warn intent "-" "$MJ_BIND_WHY; the binding is unknown and policy intent.binding is advisory, so the task starts unbound" "$MJ_BIND_FIX"
+    fi
+  fi
+
   local id; id="t-$(mj_now_compact | tr -d 'TZ')-$(mj_rand16 | cut -c1-4)"
   local now; now="$(mj_now)"
   mkdir -p "$MJ_STATE_DIR"
@@ -88,14 +134,29 @@ H
     printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
     for p in $norm; do printf '  - %s\n' "$p"; done
     if [ -n "$req_norm" ]; then printf 'requires:\n'; for tok in $req_norm; do printf '  - %s\n' "$tok"; done; fi
+    # what the worker named, and two pins; never the intent's stage, verdict or criteria
+    [ -z "$issue" ]  || printf 'issue: %s\n' "$issue"
+    [ -z "$intent" ] || printf 'intent: %s\n' "$intent"
+    if [ -n "$exempt" ]; then printf 'exemption: %s\nexemption_because: "%s"\n' "$exempt" "$(printf '%s' "$because" | sed 's/"/\\"/g')"; fi
+    [ -z "$bind_standing" ] || printf 'binding: %s\n' "$bind_standing"
+    [ -z "$plan_rev" ]      || printf 'plan_revision: %s\n' "$plan_rev"
+    [ -z "$ev_standing" ]   || printf 'evidence_standing: %s\n' "$ev_standing"
     printf 'started_at: %s\ncheckpoint_at: %s\noutcome: active\n' "$now" "$now"
     printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$MJ_STATE_DIR/current.yaml.mj-tmp" && mv "$MJ_STATE_DIR/current.yaml.mj-tmp" "$MJ_STATE_DIR/current.yaml"
-  mj_ledger_append task.started "\"task_id\":\"$id\",\"profile\":\"$profile\",\"owner\":\"$(mj_json_esc "$owner")\",\"scope\":\"$(mj_json_esc "$(printf '%s' "$norm" | sed 's/^ //')")\",\"requires\":\"$(mj_json_esc "$(printf '%s' "$req_norm" | sed 's/^ //')")\""
+  mj_ledger_append task.started "\"task_id\":\"$id\",\"profile\":\"$profile\",\"owner\":\"$(mj_json_esc "$owner")\",\"scope\":\"$(mj_json_esc "$(printf '%s' "$norm" | sed 's/^ //')")\",\"requires\":\"$(mj_json_esc "$(printf '%s' "$req_norm" | sed 's/^ //')")\"$(
+    [ "$bind_asked" = 0 ] || printf ',"issue":"%s","intent":"%s","exemption":"%s","because":"%s","binding":"%s","plan_revision":"%s"' \
+      "$(mj_json_esc "$issue")" "$(mj_json_esc "$intent")" "$(mj_json_esc "$exempt")" "$(mj_json_esc "$because")" "${bind_standing:-unknown}" "$plan_rev")"
 
   printf 'started %s  profile=%s  scope=%s%s\n' "$id" "$profile" "$(printf '%s' "$norm" | sed 's/^ //; s/ /,/g')" \
     "$([ -z "$req_norm" ] || printf '  requires=%s' "$(printf '%s' "$req_norm" | sed 's/^ //; s/ /,/g')")"
+  if [ -n "$bind_standing" ]; then
+    printf 'binding  %s%s%s\n' "$bind_standing" \
+      "$(mj_binding_get '[.intents[]?.id] | if length > 0 then "  serves " + join(", ") else "" end')" \
+      "$(mj_binding_get 'if .exemption then "  " + .exemption.class + " — " + .exemption.because else "" end')"
+    mj_binding_get '.notes[]? | "note     " + .'
+  fi
   mj_report_overlap "$norm"
   # continuity: name the prior record this checkout would resolve to, without injecting it
   if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then

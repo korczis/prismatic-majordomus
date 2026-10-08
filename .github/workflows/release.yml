@@ -306,6 +306,33 @@ jobs:
           echo "::notice::the release record is proposed in $url; the site will not name ${{ needs.plan.outputs.tag }} until it merges"
           echo "record_pr=$url" >> "$GITHUB_OUTPUT"
 
+      # The record's pull request starts no check of its own.
+      #
+      # It was opened with GITHUB_TOKEN, and GitHub starts no workflow from an event that
+      # token caused: the `pull_request` run it records concludes failure with no job in it.
+      # So the proposal above sat BLOCKED with an empty check rollup after v0.15.0 and again
+      # after v0.16.0, the required `ci` never reported, and each release waited for a
+      # person to close and reopen the pull request before its record could merge, with
+      # smoke failing by design the whole time. A dispatch is the one event that token may
+      # cause, so the pipeline asks for the verdict itself, on the record's branch, planned
+      # as that pull request's own run would have been (validate.yml, input plan=change).
+      # The check-runs attach to the branch's head commit, which is what the pull request
+      # and its required check read.
+      #
+      # A dispatch that cannot be started is said, with the remedy, and does not fail the
+      # job: the release is published either way, and smoke must still run to say so.
+      - name: ask for the record's verdict, because its pull request starts none
+        if: steps.record.outputs.record_pr != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="release/record-${{ needs.plan.outputs.tag }}"
+          if gh workflow run validate.yml --ref "$branch" -f plan=change; then
+            echo "validate requested on $branch, planned as the change it is"
+          else
+            echo "::warning::could not start validate on $branch; the record's pull request has no check until somebody closes and reopens it, or runs: gh workflow run validate.yml --ref $branch -f plan=change"
+          fi
+
       # The step without which none of the above reaches a user.
       #
       # GitHub does not start a workflow from a push made with GITHUB_TOKEN. That is a
