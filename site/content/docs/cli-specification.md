@@ -278,9 +278,11 @@ Begin a scoped task.
 
 **Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile
 <name>` default from `policy.profiles.default`. `--owner <string>` free-form, default
-`$USER`.
+`$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
+what the task serves.
 
-**Reads:** policy, profile, git state.
+**Reads:** policy, profile, git state, and `intents.binding` through the built executable
+when the binding is asked.
 **Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.
 
 **Behaviour:**
@@ -295,6 +297,13 @@ Begin a scoped task.
   there is no sidecar file.
 - Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from
   arguments.
+- Asks what the task is bound to (ADR 0111) when given `--issue`, `--intent` or
+  `--exempt`, and on every start when the policy's `intent.binding` is `advisory` or
+  `required`. A refused answer to a question the worker put, or any refused or unreadable
+  answer under `required`, refuses (`15`) and writes nothing, naming each cause and the
+  three ways through. Under `advisory` a refusal is a warning. The record keeps what was
+  named, the standing, and two pins (`plan_revision`, `evidence_standing`); nothing of the
+  intent itself is stored. [Planning](@/docs/planning.md) has the standings and causes.
 
 ```
 $ majordomus start "fix OAuth callback" --scope lib/auth --profile debugging
@@ -1878,6 +1887,7 @@ majordomus intent validate                 every finding over the intents, cover
 majordomus intent coverage                 which work carries which criterion, and why
 majordomus intent preflight --issue <id>   may the work on an issue proceed, held to what
 majordomus intent preflight --path <p>     the same for the open issues covering a path
+majordomus intent binding --issue <id>     what a task naming that issue is bound to, with its pins
 majordomus intent realization              which work realises which intent, and whether reality agrees
 majordomus intent explain <id>             why an intent stands where it stands
 ```

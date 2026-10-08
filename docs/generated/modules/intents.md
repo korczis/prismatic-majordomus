@@ -1,11 +1,37 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `intents` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.17.0 -->
+     Generator: majordomus-cli 0.18.0 -->
 # Module `intents` — Intent
 
 What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
 
-Stability: behaviorally_verified. Capabilities: 5.
+Stability: behaviorally_verified. Capabilities: 6.
+
+## `intents.binding` — What a piece of work is bound to before it starts
+
+What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight's own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue's scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion's evidence changes state. Nothing is stored.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_intent_binding` |
+| HTTP | `GET /api/v1/intents/binding` |
+| CLI | `majordomus intent binding` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::intents |
+| tags | intent, project, governance |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issue` | string or null | no | The issue the work executes, by id. |
+| `intent` | string or null | no | The intent the work serves, by id, when the worker names it directly. |
+| `paths` | string | no | Repository-relative paths the work will touch, separated by commas. |
+| `exemption` | string or null | no | An exemption class the policy declares under `intent.exemptions`. |
+| `because` | string or null | no | Why the exemption applies. |
+
+Output: `IntentBinding`.
 
 ## `intents.coverage` — Which work carries which criterion, and why each issue exists
 

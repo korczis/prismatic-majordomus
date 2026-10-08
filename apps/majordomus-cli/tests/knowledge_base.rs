@@ -168,10 +168,30 @@ fn repository() -> (Fixture, String, String) {
 }
 
 /// The fields whose value depends on the clock, removed before two surfaces are compared.
+///
+/// Each surface reads the clock for itself, so two answers taken a moment apart may sit on
+/// either side of a day: `278d old` from one and `279d old` from the other. The age is in
+/// `age_minutes` and worded in `freshness_reason`, and a finding quotes that wording. So
+/// the wording is set aside in the findings of the answer that carries it before the two
+/// fields are removed; everything else a finding says is still compared.
 fn stable(mut v: Value) -> Value {
     fn strip(v: &mut Value) {
         match v {
             Value::Object(m) => {
+                let worded = m
+                    .get("freshness_reason")
+                    .and_then(Value::as_str)
+                    .filter(|reason| !reason.is_empty())
+                    .map(str::to_string);
+                if let (Some(reason), Some(Value::Array(findings))) =
+                    (worded, m.get_mut("findings"))
+                {
+                    for finding in findings.iter_mut() {
+                        if let Value::String(text) = finding {
+                            *text = text.replace(&reason, "<its age>");
+                        }
+                    }
+                }
                 m.remove("age_minutes");
                 m.remove("freshness_reason");
                 for (_, child) in m.iter_mut() {
@@ -378,6 +398,35 @@ fn a_closed_episode_no_derivation_followed_is_a_stopped_writer_once_the_deriver_
         "the finding names the remedy: {v}"
     );
     s.stop();
+}
+
+/// Two answers that differ only in the age the clock gave them are the same answer: in the
+/// two fields that carry it, and where a finding quotes it. One that differs in anything
+/// else a finding says is not.
+#[test]
+fn an_age_a_finding_quotes_is_set_aside_with_the_fields_that_carry_it() {
+    let answer = |minutes: i64, reason: &str, episode: &str| {
+        json!({
+            "freshness": "stale", "age_minutes": minutes, "freshness_reason": reason,
+            "findings": [
+                format!("episodes close and no knowledge.derived followed the newest ({episode}, {reason}); the writer has stopped. fix: majordomus knowledge derive --episode {episode}"),
+                "1 ledger line(s) did not parse and were not judged; run `majordomus doctor`"
+            ],
+            "candidates": [{"age_minutes": minutes, "freshness_reason": reason, "id": "k1"}]
+        })
+    };
+    let before = answer(400_319, "278d old", "e1");
+    let after = answer(400_321, "279d old", "e1");
+    assert_ne!(before, after);
+    assert_eq!(stable(before.clone()), stable(after));
+    let kept = stable(before.clone());
+    assert_eq!(
+        kept["findings"][0],
+        "episodes close and no knowledge.derived followed the newest (e1, <its age>); the writer has stopped. fix: majordomus knowledge derive --episode e1"
+    );
+    assert_eq!(kept["findings"][1], before["findings"][1]);
+    // what a finding says besides the age is still compared
+    assert_ne!(stable(before), stable(answer(400_319, "278d old", "e2")));
 }
 
 #[test]

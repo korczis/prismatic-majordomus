@@ -299,6 +299,42 @@
         }
       }
     },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Whether work must be bound to what it serves before it starts, and the exemption classes a worker may give instead (ADR 0111). Absent is off: a policy that predates the block starts work as it always did.",
+      "properties": {
+        "binding": {
+          "type": "string",
+          "enum": [
+            "off",
+            "advisory",
+            "required"
+          ],
+          "description": "off: the binding is asked only when start is given --issue, --intent or --exempt. advisory: every start asks and a refused binding is reported. required: a refused or unreadable binding does not start, and plan start refuses an issue whose binding is refused."
+        },
+        "exemptions": {
+          "type": "array",
+          "description": "The classes a worker may give with a reason when the work serves no intent on purpose. The absence of an intent is never an exemption by itself.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "projections": {
       "type": "array",
       "items": {

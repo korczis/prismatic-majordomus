@@ -9,7 +9,7 @@
 //!
 //! Every capability here reads [`crate::intent::Intents`], built on demand from the index,
 //! the plan [`crate::plan::Plan::build`] derives from the same index, and the evidence
-//! ledger. All five are read-only: there is no intent status to write, because the stage is
+//! ledger. All six are read-only: there is no intent status to write, because the stage is
 //! derived, and no transition, because the plan already owns the lifecycle of the work an
 //! intent is realised by (ADR 0070), and the coverage of its criteria by the plan (ADR 0073).
 //!
@@ -18,7 +18,7 @@
 //! let m = intents::module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
 //! assert_eq!(ids, ["intents.list", "intents.record", "intents.validate",
-//!                  "intents.coverage", "intents.preflight"]);
+//!                  "intents.coverage", "intents.preflight", "intents.binding"]);
 //! ```
 
 use schemars::JsonSchema;
@@ -31,6 +31,7 @@ use crate::capability::module::ModuleDescriptor;
 use crate::intent::{
     IntentFinding, IntentPreflight, IntentView, Intents, RepositoryEvidence, INTENT,
 };
+use crate::intent_binding::{bind, BindingRequest, IntentBinding};
 use crate::intent_plan::IntentCoverage;
 use crate::intent_review::{CritiqueRecord, GapRecord};
 use crate::plan::Plan;
@@ -210,6 +211,83 @@ impl BenchmarkCases for IntentPreflightInput {
     }
 }
 
+/// The input of `intents.binding`: what a worker names when it asks what its work serves.
+/// Flat strings, because the same value arrives as a query string, as MCP arguments and as
+/// the flags of `majordomus intent binding`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentBindingInput;
+/// let i = IntentBindingInput { issue: Some("I1900".into()), paths: "lib, docs".into(), ..Default::default() };
+/// let r = i.request();
+/// assert_eq!(r.issue.as_deref(), Some("I1900"));
+/// assert_eq!(r.paths, ["lib", "docs"]);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct IntentBindingInput {
+    /// The issue the work executes, by id.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub issue: Option<String>,
+    /// The intent the work serves, by id, when the worker names it directly.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent: Option<String>,
+    /// Repository-relative paths the work will touch, separated by commas.
+    #[serde(default)]
+    pub paths: String,
+    /// An exemption class the policy declares under `intent.exemptions`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exemption: Option<String>,
+    /// Why the exemption applies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub because: Option<String>,
+}
+
+impl IntentBindingInput {
+    /// The typed request: the paths split at commas, everything else as given.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::intents::IntentBindingInput;
+    /// assert!(IntentBindingInput::default().request().trimmed().names_nothing());
+    /// ```
+    pub fn request(&self) -> BindingRequest {
+        BindingRequest {
+            issue: self.issue.clone(),
+            intent: self.intent.clone(),
+            paths: self
+                .paths
+                .split(',')
+                .map(str::trim)
+                .filter(|p| !p.is_empty())
+                .map(str::to_string)
+                .collect(),
+            exemption: self.exemption.clone(),
+            because: self.because.clone(),
+        }
+    }
+}
+
+impl BenchmarkCases for IntentBindingInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        match plan.issues.first() {
+            Some(i) => vec![NamedCase::new(
+                "first-issue",
+                IntentBindingInput {
+                    issue: Some(i.id.clone()),
+                    ..Default::default()
+                },
+            )],
+            None => vec![NamedCase::new(
+                "paths",
+                IntentBindingInput {
+                    paths: "README.md".into(),
+                    ..Default::default()
+                },
+            )],
+        }
+    }
+}
+
 // ---------------------------------------------------------------- handlers
 
 fn derived(ctx: &Context) -> Result<(Plan, Intents), CapabilityError> {
@@ -289,7 +367,35 @@ fn intent_preflight(
     ))
 }
 
-/// The module the registry composes: five read-only capabilities over one derivation, each
+/// The policy's `intent:` block, or its default when the repository or the policy cannot be
+/// read: no exemption class is then declared, so none can be given, which is the refusal an
+/// unreadable policy owes rather than a class invented for it.
+fn intent_policy(ctx: &Context) -> crate::policy::IntentPolicy {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    crate::repository::Repository::open(&root)
+        .ok()
+        .and_then(|repo| crate::policy::LoadedPolicy::load(&repo).ok())
+        .map(|loaded| loaded.policy.intent)
+        .unwrap_or_default()
+}
+
+fn intent_binding(
+    ctx: &Context,
+    input: IntentBindingInput,
+) -> Result<IntentBinding, CapabilityError> {
+    derived(ctx).map(|(plan, intents)| {
+        bind(
+            &intents,
+            &plan,
+            &GapRecord::all(&ctx.index),
+            &CritiqueRecord::all(&ctx.index),
+            &intent_policy(ctx),
+            input.request(),
+        )
+    })
+}
+
+/// The module the registry composes: six read-only capabilities over one derivation, each
 /// declared once here and projected to the command line, HTTP, MCP and OpenAPI from that
 /// declaration.
 ///
@@ -393,6 +499,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: intent_preflight,
             },
+            capability! {
+                id: "intents.binding",
+                title: "What a piece of work is bound to before it starts",
+                description: "What a task asks before it starts (ADR 0111): given the issue the work executes, the intent it serves, the paths it will touch, or an exemption class with its reason, one standing — `bound` when the work serves a criterion of a live intent through links the preflight accepts, `maintenance` when its issues sit under milestones no live intent names, `exempt` when the class is one the policy declares under `intent.exemptions` and a reason was given, `refused` otherwise, each refusal with a cause: the preflight's own seven, and nothing_named, unknown_intent, intent_retired, intent_has_no_open_work, issue_outside_intent, ambiguous_intent (paths alone reached more than one intent), unknown_exemption, exemption_without_reason, exemption_names_work. The answer carries what was named, the issues and intents resolved with what each intent asks of the worker, a note when the paths lie outside the named issue's scope, and two pins a later reader compares: `plan_revision`, which moves when the intent, a link or the critique is edited, and `evidence_standing`, which moves when a served criterion's evidence changes state. Nothing is stored.",
+                input: IntentBindingInput,
+                output: IntentBinding,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_intent_binding"),
+                    http: get("/api/v1/intents/binding"),
+                    cli: Some(crate::capability::CliExposure { path: vec!["intent".into(), "binding".into()] }),
+                },
+                tags: ["intent", "project", "governance"],
+                cache: CachePolicy::Disabled,
+                handler: intent_binding,
+            },
         ],
     }
 }
@@ -438,6 +560,12 @@ mod tests {
                 "majordomus_intent_preflight",
                 "/api/v1/intents/preflight",
                 &["intent", "preflight"],
+            ),
+            (
+                "intents.binding",
+                "majordomus_intent_binding",
+                "/api/v1/intents/binding",
+                &["intent", "binding"],
             ),
         ];
         let ids: Vec<&str> = m

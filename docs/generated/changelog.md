@@ -1,11 +1,81 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.17.0 -->
+     Generator: majordomus-cli 0.18.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.17.0**
+Current version: **0.18.0**
+
+## v0.17.0 — 2026-10-08
+
+### Decisions
+
+- **ADR-0110** MCP says nothing its capability does not _(proposed)_
+- **ADR-0105** A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan _(proposed)_
+
+### Added
+
+- **mcp**: a tool says nothing its capability does not (`24f88e9cc`)
+- **timing**: the timing report is one line of JSON under --json (`3142d2762`)
+- **pack**: a source pack for ChatGPT, verified to carry only committed sources (`748b4cd22`)
+- **cockpit**: the plan, one milestone and one issue, with moves run as executions (`54cf109dc`)
+- **continuity**: a handover moves between machines as a signed record and is resumed on a plan (`d385ed52b`)
+
+### Fixed
+
+- **test**: case 886 gives both runs of context one clock (`acb1ebb45`)
+- **mcp**: every tool's input schema is an object at its root (`88a03d1fc`)
+- **pack**: every changed line of the source pack is reached by a test (`7573e2682`)
+- **cockpit**: the plan pages spell no layer path and their links are 24px targets (`98f386a02`)
+- **mcp**: the clients are ordered by the canonical order, and the case's requests are bounded (`e90368b7f`)
+- **security**: a remote's URL is published without its credential (`8fdb8ed2e`)
+- **pack**: every exported item shows itself, and the pack tools are called (`8592877a0`)
+- **server**: the staleness judgement is unit-tested and case 885 is bounded (`dc1119870`)
+- **cockpit**: the issue page's moves ask capabilities.describe, not the registry (`a23e632a3`)
+- **server**: a server serving code that no longer exists stops calling itself ready (`8c29f1f3a`)
+- **handover**: two records of one second resolve to the later write, not the larger suffix (`fd36929ae`)
+- **continuity**: the offered handovers and the changed paths take the canonical order (`aa46dceac`)
+
+### Documentation
+
+- **continuity**: the continuity code carries its examples and its tests (`9b4d3f1b4`)
+- **mcp**: every exported type of the projection carries an example, as rustfmt formats it (`fe6d177c5`)
+
+### Tests
+
+- **continuity**: every changed path of the continuity code is driven (`fbea8da0b`)
+- **continuity**: the command writes its report once, and the cases name their remote branch (`c123ccd97`)
+- **continuity**: the seven continuity tools are asked as a client asks them (`1aad152bd`)
+- **mcp**: every changed path of the projection is driven; unreachable arms are folded (`f1fe41d8c`)
+- **session**: every branch of the public URL rule is reached by a unit test (`28ada7aa6`)
+- **mcp**: a remote keeps its login, and no shared record holds its password (`ba47d6651`)
+- **mcp**: the projection's account of itself is held against the server (`a79fcdf9b`)
+- **mcp**: the stdio round trip asserts a tool's hints, not the constant they replaced (`82a7ab31d`)
+- **mcp**: the server is held to the protocol and its boundaries from outside (`032c54ee0`)
+- **cockpit**: the last unreached arms of the plan pages are reached (`88c1edacb`)
+- **cockpit**: every arm of the plan pages is reached by a test (`f4401610e`)
+
+### Housekeeping
+
+- **batch**: batch 2 is composed, raised to 0.17.0 and derived (`3b9f93790`)
+- **release**: record v0.16.0 and the metadata it publishes (`52e9738c6`)
+- **derive**: the projections follow the merge with master (`a993a21d4`)
+- **derive**: the projections follow the conformance suite (`6bd507c91`)
+
+### Formatting
+
+- **integration**: the trail test is formatted as rustfmt formats it (`9f00e62c6`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.17.0-aarch64-apple-darwin.tar.gz (`db80bb29dcc5`)
+- `macos-x86_64` — majordomus-v0.17.0-x86_64-apple-darwin.tar.gz (`2293e5867027`)
+- `linux-x86_64-gnu` — majordomus-v0.17.0-x86_64-unknown-linux-gnu.tar.gz (`d18f937c7493`)
+- `linux-x86_64-musl` — majordomus-v0.17.0-x86_64-unknown-linux-musl.tar.gz (`7597dcf38b2b`)
+- `linux-aarch64-gnu` — majordomus-v0.17.0-aarch64-unknown-linux-gnu.tar.gz (`fd4ca7f47470`)
+- `linux-aarch64-musl` — majordomus-v0.17.0-aarch64-unknown-linux-musl.tar.gz (`a5fc3dd0a1d2`)
+
 
 ## v0.16.0 — 2026-10-08
 
