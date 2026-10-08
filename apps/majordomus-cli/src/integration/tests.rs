@@ -5306,6 +5306,110 @@ fn a_landing_is_proved_from_the_merge_commit_parents() {
     let _ = std::fs::remove_dir_all(&d);
 }
 
+/// An `origin` holding `master` at one commit, a clone of it that has fetched, and that commit.
+fn origin_and_clone(prefix: &str) -> (std::path::PathBuf, std::path::PathBuf, String) {
+    let top = unique_temp(prefix);
+    let (origin, clone) = (top.join("origin"), top.join("clone"));
+    std::fs::create_dir_all(&origin).unwrap();
+    git(&origin, &["init", "-q", "-b", "master"]);
+    git(&origin, &["commit", "-q", "--allow-empty", "-m", "base"]);
+    let m0 = git(&origin, &["rev-parse", "HEAD"]);
+    git(
+        &top,
+        &[
+            "clone",
+            "-q",
+            origin.to_str().unwrap(),
+            clone.to_str().unwrap(),
+        ],
+    );
+    (origin, clone, m0)
+}
+
+/// The verifier reads the base from a ref of its own. Another session holding the lock of the
+/// shared `refs/remotes/origin/master` — which is what a concurrent fetch does — refused the
+/// verifier's fetch on 2026-10-08 and a merge that had landed was called unverified; and a
+/// shared ref another fetch wrote back to an older master is not what the verifier reads.
+#[test]
+fn the_base_after_a_merge_is_read_from_a_ref_no_other_fetch_writes() {
+    use std::time::Duration;
+    let (origin, clone, m0) = origin_and_clone("mj-verify-ref");
+    git(&origin, &["commit", "-q", "--allow-empty", "-m", "landed"]);
+    let m1 = git(&origin, &["rev-parse", "HEAD"]);
+    // the shared ref is locked by somebody else, and still says the old master
+    let lock = clone.join(".git/refs/remotes/origin/master.lock");
+    std::fs::write(&lock, "").unwrap();
+    let shared = [
+        "fetch",
+        "--quiet",
+        "origin",
+        "+refs/heads/master:refs/remotes/origin/master",
+    ];
+    let refused = std::process::Command::new("git")
+        .arg("-C")
+        .arg(&clone)
+        .args(shared)
+        .output()
+        .unwrap();
+    assert!(
+        !refused.status.success(),
+        "the fixture is the fetch the verifier used to make, and it is refused"
+    );
+    let none = Duration::ZERO;
+    assert_eq!(
+        drain::base_after_merge(&clone, "master", &m0, none, none),
+        Ok(m1.clone())
+    );
+    assert_eq!(
+        git(
+            &clone,
+            &["rev-parse", &format!("{}master", drain::VERIFY_REF_PREFIX)]
+        ),
+        m1
+    );
+    assert_eq!(
+        crate::integration::local_master(&clone, "master"),
+        Some(m0.clone()),
+        "the shared ref was not written"
+    );
+    // and what is read is enough for the landing proof to go on to its own question
+    let err = drain::landing(&clone, &at_of(&m0, &m0), "merge", &m1).unwrap_err();
+    assert!(err.contains("unexpected_master"), "{err}");
+    let _ = std::fs::remove_dir_all(clone.parent().unwrap());
+}
+
+/// A read that came before the forge moved its branch is asked again, not concluded from; a
+/// base that never moves is answered as it is when the time is up, and a fetch that cannot be
+/// made says why.
+#[test]
+fn a_base_that_has_not_moved_yet_is_asked_again_until_the_time_is_up() {
+    use std::time::Duration;
+    let (origin, clone, m0) = origin_and_clone("mj-verify-wait");
+    let every = Duration::from_millis(50);
+    // nothing lands: the old master, once the time is up
+    assert_eq!(
+        drain::base_after_merge(&clone, "master", &m0, Duration::from_millis(120), every),
+        Ok(m0.clone())
+    );
+    // it lands a moment after the first read
+    let later = origin.clone();
+    let lands = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(300));
+        git(&later, &["commit", "-q", "--allow-empty", "-m", "landed"]);
+        git(&later, &["rev-parse", "HEAD"])
+    });
+    let seen = drain::base_after_merge(&clone, "master", &m0, Duration::from_secs(60), every);
+    assert_eq!(seen, Ok(lands.join().unwrap()));
+    // a base the remote does not have cannot be fetched, and that is what is said
+    let err =
+        drain::base_after_merge(&clone, "no-such-branch", &m0, Duration::ZERO, every).unwrap_err();
+    assert!(
+        err.contains("git fetch of the base failed after the merge"),
+        "{err}"
+    );
+    let _ = std::fs::remove_dir_all(clone.parent().unwrap());
+}
+
 // ---------------------------------------------------------------- a refused candidate does not block the queue (WP7)
 
 #[test]
