@@ -7,6 +7,60 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.16.0**
 
+## v0.16.0 — 2026-10-08
+
+### Added
+
+- **serve**: the interface a local server binds is the machine's to name (`c39c30cb7`)
+- **evidence**: a recording carries what its run measured, as a typed run (`0e0e9443e`)
+- **evidence**: a crate binary that ran nothing is not a pass (`62f9ec556`)
+
+### Fixed
+
+- **batch**: the findings of the first run that are the batch's own (`90b6dff01`)
+- **docs**: the heading a link names has one anchor in every renderer (`4f5baa60c`)
+- **test**: case 991 judges a terminated command after the one that follows it (`a390e0235`)
+- **live**: a request that arrives during a rebuild waits for it (`e3e122211`)
+- **test**: case 413 records the reports its run stamped (`b2f66bc5b`)
+- **evidence**: a run's records and its excluded outputs are put in canonical order (`2f12b7501`)
+- **finish**: the registry declares exit 13, a note that could not be recorded (`bcaef20f7`)
+- **finish**: a note is read once, and kept before the outcome says completed (`1b404b69c`)
+- **lint**: a reporter that sets a flag is a reporter (`15f95faf9`)
+
+### Changed
+
+- **evidence**: a coverage summary is read without a debug-only assertion (`c0a296d0c`)
+
+### Documentation
+
+- **serve**: the host resolution's public items carry an example (`dec928066`)
+- **evidence**: the stamp and record pair says why no documentation check runs it (`67daf5123`)
+- **evidence**: a run's totals say what they count (`9687d8b0f`)
+
+### Tests
+
+- **serve**: every arm of the host resolution runs under a test (`29865face`)
+- **evidence**: the newest failing recording is the one a stale judgement names (`3265284a1`)
+- **evidence**: every line the typed run changed is reached by a test (`5a96f3a6e`)
+- **evidence**: the text recording runs through the command and reports a failed write (`df28b9543`)
+- **evidence**: every line the crate adapter changed is reached by a test (`d41005bbb`)
+
+### Housekeeping
+
+- **derive**: the batch's derived artifacts follow the case 991 fix (`a27f5b7d6`)
+- **release**: record v0.15.0 and the metadata it publishes (`f062a71cd`)
+- **derive**: the projections follow the merge with master (`0594c0097`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.16.0-aarch64-apple-darwin.tar.gz (`b92c3af90eed`)
+- `macos-x86_64` — majordomus-v0.16.0-x86_64-apple-darwin.tar.gz (`9ee53da26715`)
+- `linux-x86_64-gnu` — majordomus-v0.16.0-x86_64-unknown-linux-gnu.tar.gz (`f784ddaf5c29`)
+- `linux-x86_64-musl` — majordomus-v0.16.0-x86_64-unknown-linux-musl.tar.gz (`62d6248ebde7`)
+- `linux-aarch64-gnu` — majordomus-v0.16.0-aarch64-unknown-linux-gnu.tar.gz (`2a2973a878f4`)
+- `linux-aarch64-musl` — majordomus-v0.16.0-aarch64-unknown-linux-musl.tar.gz (`aa85553180e1`)
+
+
 ## v0.15.0 — 2026-10-07
 
 ### Decisions

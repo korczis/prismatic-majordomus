@@ -33857,6 +33857,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.16.0",
+        "kind": "release-record",
+        "label": "v0.16.0",
+        "summary": "v0.16.0",
+        "route": "/cockpit/objects/release-record/v0-16-0",
+        "source": ".ai/repo/releases/v0.16.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "f70c522d737cb1ede39f87ee0171cbc3721ead8b",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.16.0",
+          "published_at": "2026-10-08T05:32:07Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.16.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -64749,6 +64772,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.16.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -72720,8 +72748,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2394,
-      "edges": 5247,
+      "nodes": 2395,
+      "edges": 5248,
       "acyclic": true,
       "truncated": false
     }
