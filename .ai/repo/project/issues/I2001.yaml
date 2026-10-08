@@ -1,0 +1,50 @@
+id: I2001
+milestone: intent-bound-work
+title: start asks what the task serves and refuses a refused binding where the policy requires it
+slug: start-asks-what-the-task-serves
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#start-is-gated
+objective: "Give start the flags --issue, --intent, --exempt and --because; ask intents.binding through the built executable; under policy intent.binding: required refuse a refused or unreadable binding, under advisory report it, and when the key is absent change nothing. Record what was named and the revision in the task record and the task.started ledger event."
+why: "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused."
+current_state: "start takes a description, a scope, requires, a profile and an owner, and reads no intent."
+desired_state: "A task record carries issue, intent or exemption with its reason, and binding_revision; a refused binding is refused (exit 15) naming the cause and the three ways through."
+scope:
+  - lib/start.sh
+  - lib/intent_binding.sh
+  - .ai/repo/policy.yaml
+  - apps/majordomus-cli/src/capability/builtin/continuity.rs
+  - test/cases/960_a_task_starts_bound_to_what_it_serves.sh
+  - docs
+  - lib/common.sh
+  - share/schemas/majordomus/policy
+  - share/schemas/majordomus/current
+  - share/skeleton
+  - share/events.yaml
+  - share/allow
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/tests/intent_realization.rs
+depends_on:
+  - I2000
+acceptance_criteria:
+  - Under required, start with a refused binding is refused (exit 15) and writes no task record
+  - Under required, start with --exempt of a declared class and --because starts and the ledger carries both
+  - With the policy key absent, start with no new flag behaves exactly as before
+  - continuity.state reports what the active task named
+  - The policy schema, the task record schema and the task.started event declare the new keys, and doctor passes with the policy key set
+  - intent realization reads the issue a task named from the ledger as a declared link, and agrees with intents.binding about the same task
+  - A scope that lies outside the named issue's scope is said in the binding as a note the start prints
+  - Under required an unreadable binding (no built executable, no jq) refuses naming the command that builds it; under advisory it warns; with the key absent a flag that was given is still asked and an unreadable answer refuses
+  - The share of scope-only starts that bind against this repository's plan is measured before this repository's policy is set to required, and the value chosen is recorded with the measurement
+validation:
+  - bash test/run.sh 960_a_task_starts_bound_to_what_it_serves
+  - bash test/run.sh 04_start_check
+evidence_required:
+  - start_refuses_a_refused_binding
+  - an_absent_policy_key_changes_nothing
+  - realization_and_binding_agree
+  - scope_only_binding_rate_measured
+created_at: 2026-10-07
+updated_at: 2026-10-07
