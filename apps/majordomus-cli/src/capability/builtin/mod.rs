@@ -58,6 +58,7 @@ pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
 pub mod lifecycle;
+pub mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub mod objects;
@@ -197,6 +198,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         episodes,
         peers,
         server,
+        mcp,
         session_domain,
         shell,
         pack,

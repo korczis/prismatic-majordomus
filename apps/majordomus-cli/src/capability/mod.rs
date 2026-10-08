@@ -50,9 +50,9 @@ pub use executor::CapabilityExecutor;
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
     Availability, BenchmarkPolicy, BenchmarkPrecondition, CachePolicy, Capability, CapabilityId,
-    CapabilityKind, CliExposure, Concurrency, Effect, ExecutionPolicy, Exposure, HttpExposure,
-    HttpMethod, McpExposure, McpResource, ModuleId, Provenance, Stability, Visibility,
-    WaiverReason,
+    CapabilityKind, CliExposure, Concurrency, Effect, ExecutionPolicy, Exposure, Hints,
+    HttpExposure, HttpMethod, McpExposure, McpResource, ModuleId, Provenance, Stability,
+    Visibility, WaiverReason,
 };
 pub use module::ModuleDescriptor;
 pub use registry::{CapabilityRegistry, Entry, RegistryError};

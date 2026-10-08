@@ -288,11 +288,19 @@ pub struct ToolView {
     pub kind: CapabilityKind,
     /// Leaves the process as it found it.
     pub read_only: bool,
+    /// What a call changes: nothing, this process's memory, or the repository.
+    pub effect: crate::capability::Effect,
+    /// What a caller may assume before calling, classified from the effect.
+    pub hints: crate::capability::Hints,
     /// The input type's name.
     pub input: String,
     /// The output type's name.
     pub output: String,
 }
+
+/// The URI shape of a declarative object's resource, as every surface that describes the
+/// MCP projection states it.
+pub const MCP_RESOURCE_TEMPLATE: &str = "majordomus://<kind>/<identity>";
 
 /// One MCP resource a builtin capability answers.
 #[derive(Debug, Clone, Serialize)]
@@ -572,7 +580,9 @@ pub fn dataset(
                     title: c.title.clone(),
                     description: c.description.clone(),
                     kind: c.kind,
-                    read_only: c.kind.is_read_only(),
+                    read_only: c.execution.hints().read_only,
+                    effect: c.execution.effect,
+                    hints: c.execution.hints(),
                     input: c.input.name.clone().unwrap_or_else(|| "object".into()),
                     output: c.output.name.clone().unwrap_or_else(|| "object".into()),
                 })
@@ -592,7 +602,7 @@ pub fn dataset(
                 })
             })
             .collect(),
-        resource_template: "majordomus://<kind>/<identity>",
+        resource_template: MCP_RESOURCE_TEMPLATE,
     };
 
     let http = HttpView {

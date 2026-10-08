@@ -562,6 +562,7 @@ manifest section it falls under, and its size.
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
 | `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
+| `majordomus_mcp` | `mcp.projection` | `effect?` | the projection described (below): server, protocol versions, transports and attached sessions, methods served, every tool with its effect and hints, the writers, the resources, and where each declared client's configuration stands here |
 | `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
 | `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
 | `majordomus_worktree_status` | `worktree.status` | `path?` | one worktree — the repository's own, or the one holding `path` — with its standing, canonical path, uncommitted work and whether it is where it belongs; a path in another repository is refused |
@@ -595,11 +596,59 @@ different question and not a superset: `continuity.state` follows
 `state/session-current.yaml`, and that pointer is a symlink the most recent start event
 re-aims. [`CONTINUITY.md`](CONTINUITY.md) has the model and the whole path.
 
-Every query is read-only and says so in its annotations; `majordomus_announce`, the one
-command, says it is not, and it changes this process's memory and nothing else. Each tool
-carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
-`outputSchema` from the canonical schemas. A refused call is a result with
-`isError: true`; an unknown tool, method or resource is a protocol error.
+### The projection, described
+
+`mcp.projection` — the tool `majordomus_mcp`, the resource `majordomus://mcp`, the route
+`GET /api/v1/mcp`, the Cockpit page `/cockpit/mcp` and the first lines of
+`majordomus mcp --inspect` — answers what this document would otherwise have to list and
+keep true by hand:
+
+```bash
+majordomus mcp --inspect    # its lines beginning server, protocol, effect, writes and client are this answer
+curl -s http://127.0.0.1:8741/api/v1/mcp | jq '{server, protocol_versions, effects, writers, clients}'
+curl -s 'http://127.0.0.1:8741/api/v1/mcp?effect=repository_mutation' | jq '.tools[].name'
+```
+
+| field | what it is | where it comes from |
+|---|---|---|
+| `server`, `protocol_versions` | who answers `initialize`, and with which versions | the constants the server answers with; the version is the executable's |
+| `transports` | `stdio` and `http`, and the sessions attached over each right now | this process's peer board at the moment of asking |
+| `serving` | the methods a request may name; that prompts and notifications are not served | the list the dispatcher consults before looking at a request |
+| `tools`, `tool_count`, `effects`, `writers` | every tool (or those of one `effect`) with its capability, effect and hints | the registry; the effect is the capability's classification |
+| `resources` | how many capabilities answer a URI, how many objects the layer holds, the URI shape | the registry and the index |
+| `clients` | each client the distribution declares a configuration for, and whether the file here is `wired`, `foreign` or `absent` | `share/providers.yaml` and one read of each file |
+| `findings` | a configuration that exists and does not name the launcher; no client configured at all | derived from `clients`, each with its remedy |
+
+Nothing in it is a list of its own, so it cannot disagree with `tools/list`: a capability
+that gains a tool is in the answer, on the Cockpit page and in the generated reference at
+the next request, with no other file edited.
+
+### What a tool may change
+
+A tool's annotations are not written in the MCP code: they are the capability's
+classified hints (`ExecutionPolicy::hints`), which follow from its effect, and the effect
+itself is carried in `_meta.majordomus.effect`.
+
+| effect | what a call changes | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
+|---|---|---|---|---|---|
+| `read` | nothing | `true` | `false` | `true` | `false` |
+| `process_state` | this process's memory and nothing outside it (a peer announcing itself) | `false` | `false` | `false` | `false` |
+| `repository_mutation` | the repository's own files | `false` | `true` | `false` | `false` |
+
+The classification is conservative in the direction a caller can survive: nothing that
+changes something is announced as safe to repeat, because no handler has declared that a
+second call is a no-op, and anything that writes the repository is announced as able to
+overwrite or remove. `openWorldHint` is `false` throughout because no handler reaches
+beyond the machine: observing the forge and consulting an advisor are commands a person
+runs, not capabilities. Which tools write the repository is never a list in this document:
+the `initialize` instructions name them, derived from the registry, and so does
+`majordomus mcp --inspect`. Each tool carries the canonical id in `_meta.majordomus.id` and
+its `inputSchema` and `outputSchema` from the canonical schemas. A refused call is a result with
+`isError: true`, the reason as text, and the category as one word in
+`_meta.majordomus.error.code` — `invalid_input`, `not_found` or `refused`, the same word the
+HTTP route answers as `error.code`, because both read it from the error itself. A
+refused result carries no `structuredContent`: the output schema describes a success. An
+unknown tool, method or resource is a protocol error.
 
 ## Failure behaviour
 
@@ -636,8 +685,12 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
   provider files are served as documents with their directory recorded; nothing merges
   or ranks them, because the repository defines no merge semantics. Recorded in
   [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](../.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
-- **Any mutation of the repository**, subscriptions, list-change notifications, and a
-  server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
+- **A mutation of the repository that is not a capability.** A tool writes the repository
+  only when its capability declares `.writes_repository()`; the handler is the one the
+  HTTP route and the command line reach, so a refusal there is the same refusal here, and
+  MCP adds no writer of its own.
+- **Subscriptions, list-change notifications**, and a server-initiated stream on `/mcp`
+  (this server sends nothing unasked). The HTTP
   projection of the same registry is served by the shared server and by `majordomus
   serve`; see [`CAPABILITIES.md`](CAPABILITIES.md).
 - **Persistent coordination.** A peer board is one process's memory, and the gathered board
