@@ -265,6 +265,7 @@ fn a_failing_guard_keeps_the_verdict_unsatisfied() {
     let view = shown(&f);
     assert_eq!(view["satisfaction"][0]["met"], true);
     assert_eq!(view["guards"][0]["violated"], true);
+    assert_eq!(view["guards"][0]["standing"], "violated");
     assert_eq!(view["guards"][0]["evaluation"]["outcome"], "fail");
     assert_eq!(
         view["verdict"],

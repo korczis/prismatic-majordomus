@@ -2998,6 +2998,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/cockpit_intents.rs",
+        "kind": "file",
+        "label": "cockpit_intents.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/cockpit_intents.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/executor.rs",
         "kind": "file",
         "label": "executor.rs",
@@ -3019,14 +3027,6 @@
         "label": "intent.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/intent.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/intent_realization.rs",
-        "kind": "file",
-        "label": "intent_realization.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/intent_realization.rs",
         "external": true
       },
       {
@@ -8263,16 +8263,15 @@
         "id": "majordomus://claim/intent-cockpit-pages",
         "kind": "claim",
         "label": "intent-cockpit-pages",
-        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "summary": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
         "route": "/cockpit/objects/claim/intent-cockpit-pages",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
           "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
           "responsibility": "plan",
           "source": "docs/COCKPIT.md",
-          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+          "test": "apps/majordomus-cli/tests/cockpit_intents.rs"
         }
       },
       {
@@ -12539,6 +12538,20 @@
         }
       },
       {
+        "id": "majordomus://critique/intent-in-the-cockpit",
+        "kind": "critique",
+        "label": "intent-in-the-cockpit",
+        "summary": "intent-in-the-cockpit",
+        "route": "/cockpit/objects/critique/intent-in-the-cockpit",
+        "source": ".ai/repo/project/critiques/intent-in-the-cockpit.yaml",
+        "facts": {
+          "intent": "intent-in-the-cockpit",
+          "reviewed_at": "8993bbf173",
+          "reviewed_revision": "b6b1c2fd0bcc803ddd52ba7c462813b10e2673ce836b9f412ab50eed3f5123ab",
+          "reviewed_with": "majordomus-cli 0.15.0"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-opposition",
         "kind": "critique",
         "label": "intent-opposition",
@@ -14054,7 +14067,7 @@
         "id": "majordomus://document/docs/claims/intent-cockpit-pages.md",
         "kind": "document",
         "label": "docs/claims/intent-cockpit-pages.md",
-        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "summary": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
         "route": "/cockpit/objects/document/docs-claims-intent-cockpit-pages-md",
         "source": "docs/claims/intent-cockpit-pages.md"
       },
@@ -17039,6 +17052,25 @@
         }
       },
       {
+        "id": "majordomus://gap/intent-in-the-cockpit",
+        "kind": "gap",
+        "label": "intent-in-the-cockpit",
+        "summary": "intent-in-the-cockpit",
+        "route": "/cockpit/objects/gap/intent-in-the-cockpit",
+        "source": ".ai/repo/project/gaps/intent-in-the-cockpit.yaml",
+        "facts": {
+          "intent": "intent-in-the-cockpit",
+          "observed_at": "8993bbf173",
+          "recorded_at": "2026-10-08",
+          "recorded_by": "claude-code (session fcbeae95; first-hand read of cockpit/intents.rs and an earlier read-only audit of the Cockpit's conventions)",
+          "risks": [
+            "The Cockpit may not read the index and may not derive; every new fact needs a capability that already answers it",
+            "Asking a second capability per page costs a second derivation of the intent model",
+            "The word for a guard's standing is worked out by the command line and by the briefing script, each for itself"
+          ]
+        }
+      },
+      {
         "id": "majordomus://gap/intent-opposition",
         "kind": "gap",
         "label": "intent-opposition",
@@ -17467,6 +17499,39 @@
             "intent-bound-work"
           ],
           "updated_at": "2026-10-07"
+        }
+      },
+      {
+        "id": "majordomus://intent/intent-in-the-cockpit",
+        "kind": "intent",
+        "label": "intent-in-the-cockpit",
+        "summary": "A person reading the Cockpit sees why an intent stands where it does, without opening a record",
+        "route": "/cockpit/objects/intent/intent-in-the-cockpit",
+        "source": ".ai/repo/project/intents/intent-in-the-cockpit.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "governance": [
+            "rule:project.derived-once",
+            "adr:adr-0107",
+            "adr:adr-0112",
+            "adr:adr-0113"
+          ],
+          "invariants": [
+            "The Cockpit derives no stage, verdict, guard standing, disposition, review state or evidence state; it renders the word a capability answered and chooses only the colour it is read in",
+            "An accepting disposition is never drawn as healthy unless the review it belongs to is current",
+            "No page reads the index directly, and no figure is shown that a capability did not answer",
+            "No control on these pages marks a criterion, a guard or an intent satisfied",
+            "A status is never told by colour alone; every badge carries its word"
+          ],
+          "milestones": [
+            "intent-in-the-cockpit"
+          ],
+          "non_goals": [
+            "Showing how an intent's plan is projected to GitHub; that is the reconciliation milestone",
+            "Running or stamping a review from the page; the page reads",
+            "A graph of the plan; the plan pages are another pull request's"
+          ],
+          "updated_at": "2026-10-08"
         }
       },
       {
@@ -30304,6 +30369,148 @@
         }
       },
       {
+        "id": "majordomus://issue/I2030",
+        "kind": "issue",
+        "label": "I2030",
+        "summary": "The page of one intent says why its verdict is what it is",
+        "route": "/cockpit/objects/issue/i2030",
+        "source": ".ai/repo/project/issues/I2030.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A violated guard is named under the verdict and in the guards card with the word violated, a holding one with holds, one not judged with not judged, and no surface computes that word but the engine",
+            "Each reason of the verdict links to the row of its criterion or guard",
+            "An optional criterion is marked optional and is not among the reasons",
+            "A judged criterion shows the commit and outcome of its run and the inputs that changed since",
+            "An intent without guards shows no guards card",
+            "Unit tests in cockpit/intents.rs cover each branch in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The detail page renders stage, verdict badge, criteria with evidence badges, milestones, work and the because lines.",
+          "depends_on": [],
+          "desired_state": "A person reads the verdict's reasons, the guards and the judged runs on the page; an intent with no guard and no optional criterion renders as it did, with no empty card.",
+          "evidence_required": [
+            "the_intent_page_explains_the_verdict"
+          ],
+          "milestone": "intent-in-the-cockpit",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-in-the-cockpit#verdict-is-explained-on-the-page"
+          ],
+          "slug": "the-intent-page-explains-the-verdict",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib cockpit::intents",
+            "cargo test --test cockpit_intents"
+          ],
+          "why": "The page shows a verdict badge and nothing of what it rests on, so a person told unsatisfied still has to ask the command line why."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2031",
+        "kind": "issue",
+        "label": "I2031",
+        "summary": "The page of one intent shows the review of its plan and the gap",
+        "route": "/cockpit/objects/issue/i2031",
+        "source": ".ai/repo/project/issues/I2031.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stale review, a current one, an unstamped one and none are each shown by their word",
+            "A blocking open finding is shown as blocking and open, and the disposition as reject",
+            "A failure of the opposition capability is an alert in that card and the cards after it still render",
+            "No review beside accept is never drawn in green",
+            "Unit tests cover each state in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The page asks intent_realization.explain and shows no critique, no disposition and no gap.",
+          "depends_on": [
+            "I2030"
+          ],
+          "desired_state": "A person sees whether the plan was reviewed as it stands, what was found, and what remains open.",
+          "evidence_required": [
+            "the_intent_page_shows_the_review"
+          ],
+          "milestone": "intent-in-the-cockpit",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-in-the-cockpit#review-is-on-the-page"
+          ],
+          "slug": "the-intent-page-shows-the-review",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib cockpit::intents",
+            "cargo test --test cockpit_intents"
+          ],
+          "why": "The review of a plan and what it found exist only on the command line, and they are the reason work may or may not start."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2032",
+        "kind": "issue",
+        "label": "I2032",
+        "summary": "The list shows the verdict, and the documents say what the pages show",
+        "route": "/cockpit/objects/issue/i2032",
+        "source": ".ai/repo/project/issues/I2032.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each row shows its intent's verdict by word, from intent_realization.work",
+            "The verdict, each criterion state and each guard standing on the page are the ones intent explain answers on the same fixture",
+            "docs/COCKPIT.md and the claim say what the pages show, and the Cockpit's gates pass",
+            "The generated OpenAPI and the derived copies of the claim are regenerated"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The list renders intent_realization.work: stage, met, work, providers, findings, title.",
+          "depends_on": [
+            "I2031"
+          ],
+          "desired_state": "Each row carries the verdict's word from the answer the list already has; one test compares the page's words with the command line's answer on one fixture.",
+          "evidence_required": [
+            "the_intent_list_shows_the_verdict"
+          ],
+          "milestone": "intent-in-the-cockpit",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-in-the-cockpit#list-says-the-verdict"
+          ],
+          "slug": "the-intent-list-shows-the-verdict",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib cockpit::intents",
+            "cargo test --test cockpit_intents"
+          ],
+          "why": "The list shows a stage and a count, and an intent can be at stage verifying because a guard is failing while the count reads complete."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31135,6 +31342,52 @@
             "cargo test --test intent_binding",
             "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
             "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "milestone",
+        "label": "intent-in-the-cockpit",
+        "summary": "The Cockpit shows the intent loop",
+        "route": "/cockpit/objects/milestone/intent-in-the-cockpit",
+        "source": ".ai/repo/project/milestones/intent-in-the-cockpit.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The page of one intent shows the verdict's reasons, the guards, the evaluations and the review",
+            "The list shows the verdict",
+            "No state, standing, verdict or disposition is derived in the Cockpit, and the Cockpit's gates pass"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "cockpit/intents.rs renders intent_realization.work and intent_realization.explain: stage, a verdict badge, criteria with evidence state, milestones, work, the because lines and findings.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "New components or styles",
+            "A new capability or route; two answers gain one field each"
+          ],
+          "order": 135,
+          "outcome": "The page of one intent answers why it stands where it does; the list shows the verdict beside the stage.",
+          "priority": "p2",
+          "risks": [
+            "A second capability asked on the page of one intent derives the intent model a second time; the list asks one.",
+            "Every changed line owes an in-process test, and the Cockpit's own gates (projection, ui-integrity, design, accessibility) hold the markup.",
+            "The records and the tests they name land in one pull request."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "slug": "intent-in-the-cockpit",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --test cockpit_intents",
+            "cargo test --lib cockpit::intents",
+            "scripts/ci/cockpit-projection-check"
           ]
         }
       },
@@ -55933,7 +56186,7 @@
       },
       {
         "source": "majordomus://claim/intent-cockpit-pages",
-        "target": "file:apps/majordomus-cli/tests/intent_realization.rs",
+        "target": "file:apps/majordomus-cli/tests/cockpit_intents.rs",
         "kind": "tested_by"
       },
       {
@@ -59307,6 +59560,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-in-the-cockpit",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-opposition",
         "target": "kind:critique",
         "kind": "is_a"
@@ -61122,6 +61380,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/intent-in-the-cockpit",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-opposition",
         "target": "kind:gap",
         "kind": "is_a"
@@ -61393,6 +61656,11 @@
       },
       {
         "source": "majordomus://intent/intent-bound-work",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-in-the-cockpit",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -65747,6 +66015,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2030",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2030",
+        "target": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2031",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2031",
+        "target": "majordomus://issue/I2030",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2031",
+        "target": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2032",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2032",
+        "target": "majordomus://issue/I2031",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2032",
+        "target": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -65855,6 +66163,11 @@
         "source": "majordomus://milestone/intent-bound-work",
         "target": "majordomus://milestone/intent-planning",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/intent-in-the-cockpit",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/intent-lifecycle",
@@ -74218,8 +74531,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2426,
-      "edges": 5336,
+      "nodes": 2433,
+      "edges": 5348,
       "acyclic": true,
       "truncated": false
     }

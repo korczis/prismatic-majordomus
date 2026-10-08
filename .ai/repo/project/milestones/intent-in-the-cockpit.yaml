@@ -1,0 +1,35 @@
+id: intent-in-the-cockpit
+title: The Cockpit shows the intent loop
+slug: intent-in-the-cockpit
+order: 135
+priority: p2
+problem: "The Cockpit's intent pages show the stage, the criteria and the realising work. They show nothing of what the last three milestones made derivable: why the verdict is what it is, which run judged a criterion, the guards, the review of the plan and its findings, the gap. A person has to run four commands to learn why an intent is not satisfied."
+outcome: "The page of one intent answers why it stands where it does; the list shows the verdict beside the stage."
+current_state: "cockpit/intents.rs renders intent_realization.work and intent_realization.explain: stage, a verdict badge, criteria with evidence state, milestones, work, the because lines and findings."
+desired_state: "The same two pages also render verdict reasons and violated guards, evaluations, optional markers, guards, and one card from intent_opposition.review; the list reads the verdict intent_realization.work now carries."
+scope:
+  - apps/majordomus-cli/src
+  - apps/majordomus-cli/tests
+  - lib/intent_binding.sh
+  - .ai/repo/project
+  - docs
+  - site
+non_scope:
+  - New components or styles
+  - A new capability or route; two answers gain one field each
+acceptance_criteria:
+  - "The page of one intent shows the verdict's reasons, the guards, the evaluations and the review"
+  - "The list shows the verdict"
+  - "No state, standing, verdict or disposition is derived in the Cockpit, and the Cockpit's gates pass"
+validation:
+  - cargo test --test cockpit_intents
+  - cargo test --lib cockpit::intents
+  - scripts/ci/cockpit-projection-check
+evidence_required: []
+depends_on: []
+risks:
+  - "A second capability asked on the page of one intent derives the intent model a second time; the list asks one."
+  - "Every changed line owes an in-process test, and the Cockpit's own gates (projection, ui-integrity, design, accessibility) hold the markup."
+  - "The records and the tests they name land in one pull request."
+created_at: 2026-10-08
+updated_at: 2026-10-08

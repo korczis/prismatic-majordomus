@@ -418,13 +418,7 @@ fn guard_line(indent: &str, g: &Value) -> String {
     format!(
         "{indent}guard       {}  {}  {} {}  — {}",
         s(g, "id"),
-        if g["violated"] == true {
-            "violated"
-        } else if s(g, "state") == "current" {
-            "holds"
-        } else {
-            "not judged"
-        },
+        s(g, "standing").replace('_', " "),
         s(g, "evidence"),
         s(g, "state"),
         s(g, "invariant"),
@@ -1048,12 +1042,13 @@ mod tests {
             "guards": [
                 {"id": "broken", "invariant": "It stays true", "evidence": "test",
                  "ref": "t", "state": "failing", "violated": true,
+                 "standing": "violated",
                  "evaluation": {"commit": "c0ffee", "working_tree": "dirty",
                                 "outcome": "fail", "at": "2026-10-08T00:00:00Z"}},
                 {"id": "fine", "invariant": "It holds", "evidence": "test", "ref": "t",
-                 "state": "current", "violated": false},
+                 "state": "current", "violated": false, "standing": "holds"},
                 {"id": "idle", "invariant": "Nobody ran it", "evidence": "claim", "ref": "c",
-                 "state": "not_run", "violated": false}
+                 "state": "not_run", "violated": false, "standing": "not_judged"}
             ],
             "satisfaction": [
                 {"id": "a", "state": "current", "met": true, "evidence": "test", "ref": "t"},

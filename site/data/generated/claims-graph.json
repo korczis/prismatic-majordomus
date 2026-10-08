@@ -926,11 +926,11 @@
     {
       "id": "claim:intent-cockpit-pages",
       "kind": "claim",
-      "label": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+      "label": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
       "status": "guaranteed",
       "route": "/guarantees/intent-cockpit-pages/",
       "external": false,
-      "note": "Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404."
+      "note": "Both pages render what `intent_realization` and `intent_opposition.review` answer and decide nothing themselves; the test compares the words on the served page with the command line's answer on one repository. Each criterion links the test object it names and the issue serving it, each reason of the verdict links its row, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404."
     },
     {
       "id": "claim:intent-guard-is-judged",
@@ -3376,6 +3376,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cockpit.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/cockpit_intents.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/cockpit_intents.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cockpit_intents.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/executor.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/executor.rs",
@@ -3395,13 +3402,6 @@
       "label": "apps/majordomus-cli/tests/intent.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent.rs"
-    },
-    {
-      "id": "test:apps/majordomus-cli/tests/intent_realization.rs",
-      "kind": "test",
-      "label": "apps/majordomus-cli/tests/intent_realization.rs",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent_realization.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/intent_satisfaction.rs",
@@ -7067,7 +7067,7 @@
     },
     {
       "source": "claim:intent-cockpit-pages",
-      "target": "test:apps/majordomus-cli/tests/intent_realization.rs",
+      "target": "test:apps/majordomus-cli/tests/cockpit_intents.rs",
       "kind": "proved_by"
     },
     {

@@ -1,0 +1,35 @@
+id: I2031
+milestone: intent-in-the-cockpit
+title: The page of one intent shows the review of its plan and the gap
+slug: the-intent-page-shows-the-review
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-in-the-cockpit#review-is-on-the-page
+objective: "On the page of one intent, from intent_opposition.review: a card with the review's state against the plan, the disposition, who reviewed and the stamp, then every structural finding and every recorded finding with whether it blocks and, for a recorded one, its resolution, source and resolver; and the recorded gap's conditions. The card is a function of the capability's answer or its failure, so a failure is rendered and tested without one having to be provoked. An accepting disposition is coloured only under a current review; no review and no gap condition are each said in words. A finding is one row with its text, source and resolver behind a disclosure."
+why: "The review of a plan and what it found exist only on the command line, and they are the reason work may or may not start."
+current_state: "The page asks intent_realization.explain and shows no critique, no disposition and no gap."
+desired_state: "A person sees whether the plan was reviewed as it stands, what was found, and what remains open."
+scope:
+  - apps/majordomus-cli/src
+  - apps/majordomus-cli/tests
+  - lib/intent_binding.sh
+  - .ai/repo/project
+  - docs
+  - site
+depends_on:
+  - I2030
+acceptance_criteria:
+  - A stale review, a current one, an unstamped one and none are each shown by their word
+  - A blocking open finding is shown as blocking and open, and the disposition as reject
+  - A failure of the opposition capability is an alert in that card and the cards after it still render
+  - No review beside accept is never drawn in green
+  - Unit tests cover each state in process
+validation:
+  - cargo test --lib cockpit::intents
+  - cargo test --test cockpit_intents
+evidence_required:
+  - the_intent_page_shows_the_review
+created_at: 2026-10-08
+updated_at: 2026-10-08
