@@ -102,7 +102,8 @@ doctor says which applies.
 ## Discovery
 
 Discovery finds candidates. Every datagram heard — multicast (preferred; group, port and TTL
-declared), broadcast (a declared fallback), or a rendezvous answer — passes one verification
+declared), broadcast (a declared fallback), the TXT record of a Bonjour service instance, or
+a rendezvous answer — passes one verification
 path in `mesh::manager` (size → shape → version → bounds → staleness → signature → own-runtime
 skip → trust policy) into one registry keyed by node and runtime. Envelopes are at most 1200
 bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
@@ -116,6 +117,51 @@ Multicast sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every run
 machine hears the group. A server bound to `0.0.0.0` advertises its interfaces' addresses,
 physical and overlay interfaces before container bridges; a server bound to loopback
 advertises loopback, which only its own machine can dial.
+
+### Bonjour
+
+The `bonjour` provider (ADR 0120) finds the machines of one network segment through the
+operating system's DNS-SD service: mDNSResponder on macOS, reached through the C API of
+`<dns_sd.h>`; avahi on Linux, through `avahi-publish` and `avahi-browse` as child processes.
+It opens no socket and speaks no mDNS itself. That is the point of it: the macOS firewall
+drops inbound multicast addressed to an ordinary process — the multicast provider hears
+nothing on a Mac — and lets the system daemon through.
+
+A server registers one instance of `_majordomus._tcp` in `local.`, named
+`majordomus-<node>-<runtime>` (eight hex characters of each; no host name, user name or
+path), on the port of its HTTP endpoint. The instance's TXT record carries the same signed
+envelope a multicast datagram does, its bytes split unencoded across ordered strings:
+`txtvers=1`, `n=<count>`, then `e0=…` to `e<n-1>=…`, at most 252 bytes each — 1234 bytes for
+the largest envelope, inside the 1300 DNS-SD recommends. The server browses the same type,
+joins each instance's strings back into bytes and hands them to the manager unread. An
+instance whose parts are missing, repeated, out of order or too large is counted in the
+provider's status line and dropped; an envelope that does not verify is a counted refusal like
+any other.
+
+The record is replaced with a newly signed envelope every `interval_seconds` (15 by default,
+60 at most), because an envelope older than 300 seconds is refused as stale, a repeated one
+renews nothing, and a node is `present` for 60 seconds after its last. On macOS that is an
+update in place. avahi has no such operation, so on Linux the publisher is restarted: the
+instance leaves and returns once per interval.
+
+To see what a server registered, from any machine of the segment:
+
+<!-- majordomus:unrun both ask the machine's DNS-SD daemon and never return: `dns-sd -B` and `avahi-browse` without `-t` browse until interrupted, and neither tool is on every runner; the crate's ignored test `the_real_service_registers_this_runtime_and_browses_its_envelope_back` registers and browses through the daemon itself -->
+```sh
+dns-sd -B _majordomus._tcp            # macOS: every instance on the segment
+dns-sd -Z _majordomus._tcp            # macOS: with each one's port and TXT record
+avahi-browse -rt _majordomus._tcp     # Linux: resolved, then exits
+```
+
+What it does not do. It grants no trust: a runtime found this way is verified by its
+signature and judged by the `trust` policy exactly as one heard on multicast, and under
+`deny_unknown` an unlisted key is observed and trusted for nothing. It reaches no further
+than the link: mDNS crosses no router, and nothing of it passes through a tailnet, so
+machines on different segments still need a rendezvous hub or a seed. And it is not private:
+the instance's name and port are answered to every device on the segment that browses, which
+is why the block is off unless the declaration says `enabled: true`. A machine with neither
+service reports the provider `unavailable` with the reason — `mesh doctor` marks that line
+`WARN` and fails nothing — and runs on with its other providers.
 
 ## Trust
 
@@ -377,7 +423,8 @@ What the mesh defends against, and how:
 
 
 What it does not defend against: an observer on the network sees that a Majordomus runs, its
-advertisements and — for linked peers — session intents, claim scopes, review subjects and
+advertisements — with Bonjour declared, without listening for them: the system's daemon
+answers any browser of the segment with the instance's name, port and advertisement — and — for linked peers — session intents, claim scopes, review subjects and
 published handover bodies, because nothing is encrypted; run it on a private network or an
 overlay. A holder of an allowed node key is that node. A compromised trusted peer can publish
 misleading claims and handovers under its own identity — they are attributed to it and expire
@@ -394,6 +441,7 @@ id: majordomus
 enabled: true                 # nothing opens without it
 multicast: { enabled: true, group: 239.255.77.77, port: 7741, ttl: 1, interval_seconds: 15 }
 broadcast: { mode: disabled }
+bonjour: { enabled: true, interval_seconds: 15 }   # off when the block is absent
 rendezvous: { endpoints: [], interval_seconds: 60 }
 trust:
   policy: deny_unknown
@@ -433,6 +481,7 @@ starts from ships no declaration, and nothing opens there until its own operator
 |---|---|
 | multicast | `239.255.77.77:7741`, TTL 1 — the local segment only; the sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every server on a machine hears the group |
 | broadcast | disabled |
+| bonjour | enabled, a new envelope every 15 s: one instance per server, `majordomus-<node>-<runtime>._majordomus._tcp.local.`, through the system's DNS-SD service |
 | rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`), lundra (`192.168.100.10`, tailnet `100.65.22.118`) and the owner's MacBook Pro (`192.168.100.93`), port 8791, every 30 s |
 | seeds | none |
 | cooperation | the defaults: heartbeat 5 s, expiry 30 s |
@@ -451,7 +500,9 @@ MacBook Pro (its LAN address only: the hub the Macs of one segment reach when th
 are off, and an address its router must keep handing it), listening
 beyond loopback on port 8791, listed by its LAN and its tailnet address. Multicast cannot cross
 the tailnet, and the macOS firewall drops it inbound, so the hubs are how machines on different
-segments find each other. Every server registers with every hub it can reach, one thread per
+segments find each other. Two machines of one segment no longer need one: Bonjour goes
+through the system's DNS-SD daemon, which that firewall lets through (ADR 0120), so the Macs
+of a segment find each other with every hub off. It crosses no router and no tailnet. Every server registers with every hub it can reach, one thread per
 hub with a 5-second bound per request. A hub that does not answer is asked less and less often
 — the 30-second interval doubles per failure, up to eight times — and delays nothing else: a
 server whose five hub addresses are all unreachable starts, discovers and links over multicast, and
@@ -459,7 +510,8 @@ answers requests, exactly as one with none (`mesh status` shows the `rendezvous`
 `running` with `sent 0`).
 
 **What travels.** What the security model above says: advertisements on the local segment and
-to the hubs; to linked runtimes of the owner's machines, session metadata, claim scopes, review
+to the hubs — and, through Bonjour, each server's instance name and HTTP port to every device
+of the segment that browses mDNS, with the same advertisement as its TXT record; to linked runtimes of the owner's machines, session metadata, claim scopes, review
 subjects and published handover bodies. Nothing is encrypted; every hub address is on the
 private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refuses a
 declaration that names a public one.
@@ -660,7 +712,10 @@ and link protocol 1; replication of anything but session metadata, claims, hando
 
 ## Extending it
 
-A new discovery mechanism implements `mesh::provider::MeshProvider` and needs no other change.
+A new discovery mechanism implements `mesh::provider::MeshProvider`; no consumer, surface or
+registry is edited for it. What Bonjour took beyond that is what a declared provider takes: a
+block in the declaration and its schema, the line in `mesh::manager` that starts it, and a
+word for its sightings in `MeshSource`.
 A new transport implements `mesh::link::LinkTransport` inside `src/mesh/`. A new kind of
 cooperative event is a variant of `mesh::journal::EventBody`, a case of `mesh::state::fold`
 and a capability of the mesh module; older runtimes relay it untouched. A change to the link

@@ -3,7 +3,7 @@
   "$id": "https://majordomus.dev/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
   "x-majordomus-schema": "majordomus.mesh-declaration/v1",
   "title": "Mesh",
-  "description": "The mesh declaration of a repository, under .ai/repo/mesh/: whether this repository's shared servers participate in discovery of other running Majordomus instances, over which transports (multicast, broadcast fallback, rendezvous endpoints), and whom they trust. Absent, or enabled: false, means no discovery socket opens anywhere this repository's servers run — the default posture is that nothing leaves the machine, and this object is the one place a person changes that (ADR 0043). Trust allow entries are Ed25519 public keys; nothing secret belongs here.",
+  "description": "The mesh declaration of a repository, under .ai/repo/mesh/: whether this repository's shared servers participate in discovery of other running Majordomus instances, over which transports (multicast, broadcast fallback, Bonjour, rendezvous endpoints), and whom they trust. Absent, or enabled: false, means no discovery socket opens anywhere this repository's servers run — the default posture is that nothing leaves the machine, and this object is the one place a person changes that (ADR 0043). Trust allow entries are Ed25519 public keys; nothing secret belongs here.",
   "x-majordomus-allow": "mesh-declaration",
   "type": "object",
   "additionalProperties": false,
@@ -58,6 +58,25 @@
           "items": { "type": "string" }
         },
         "interval_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "bonjour": {
+      "description": "Bonjour (ADR 0120): discovery through the operating system's DNS-SD service — mDNSResponder on macOS, avahi on Linux. Off unless declared with enabled: true. The server registers one service instance named majordomus-<node>-<runtime> on its HTTP port, whose TXT record carries the same signed envelope a multicast advertisement does, and browses for the others. The instance's name and port are visible to every device on the segment that browses mDNS.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "service": {
+          "description": "The DNS-SD service type registered and browsed. Leave it out: every Majordomus that should find another uses _majordomus._tcp.",
+          "type": "string",
+          "pattern": "^_[a-z0-9-]{1,15}\\._tcp$"
+        },
+        "interval_seconds": {
+          "description": "Seconds between two envelopes: how often the registration's TXT record is replaced with a freshly signed one. At most 60, the time a node stays present after one.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        }
       }
     },
     "rendezvous": {

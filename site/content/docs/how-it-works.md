@@ -1148,11 +1148,12 @@ which may link and replicate the journal, and it grants no execution rights.
 
 A repository with no mesh declaration, or one declared `enabled: false`, opens no discovery
 socket, and the skeleton a new repository starts from ships none. This repository's own
-declaration, `.ai/repo/mesh/majordomus.yaml`, is enabled: multicast on the local segment,
-rendezvous hubs on the owner's private network and tailnet, and the trusted keys it lists
-(`docs/MESH.md`, "This repository's mesh"). There is no Tailscale or mDNS
-provider; ADR 0050 lists them as future providers, and a rendezvous endpoint reachable over a
-tailnet is the supported way to span machines. Data flow is the same as every other surface:
+declaration, `.ai/repo/mesh/majordomus.yaml`, is enabled: multicast and Bonjour on the local
+segment, rendezvous hubs on the owner's private network and tailnet, and the trusted keys it
+lists (`docs/MESH.md`, "This repository's mesh"). Bonjour is a provider that asks the
+operating system's DNS-SD service (mDNSResponder, avahi) and opens no socket of its own
+(ADR 0120). There is no Tailscale provider; ADR 0050 lists it as a future one, and a
+rendezvous endpoint reachable over a tailnet is the supported way to span machines. Data flow is the same as every other surface:
 `mesh.status` and `mesh.nodes` capabilities, served over HTTP and MCP and rendered at
 `/cockpit/mesh`.
 
@@ -1402,7 +1403,9 @@ does not have to find them.
 
 **Not built, or partly built**
 
-- Tailscale and mDNS discovery providers; NAT traversal and wide-area links. Cross-machine
+- A Tailscale discovery provider; NAT traversal and wide-area links (Bonjour finds
+  machines of one segment and reaches no further). The avahi side of the Bonjour provider is
+  tested against stand-in tools and has not run against a live avahi daemon. Cross-machine
   cooperation exists over rendezvous endpoints and trusted keys, is experimental, and its
   multi-machine operation rests on a recorded manual run (`docs/MESH.md`).
 - The Rust side of the session lifecycle is a read model; the cutover is proposed.

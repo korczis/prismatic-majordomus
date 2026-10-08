@@ -6,9 +6,9 @@
 # decided otherwise and committed .ai/repo/mesh/majordomus.yaml enabled. What this case holds:
 #
 #   1. the committed declaration, as the executable reads it: enabled, multicast on the local
-#      segment only (TTL 1), no broadcast, rendezvous hubs only at private or tailnet
-#      addresses, no seed, cooperation at its defaults, trust `deny_unknown` with an
-#      allowlist of public keys and nothing wider;
+#      segment only (TTL 1), Bonjour (link-local by nature), no broadcast, rendezvous hubs
+#      only at private or tailnet addresses, no seed, cooperation at its defaults, trust
+#      `deny_unknown` with an allowlist of public keys and nothing wider;
 #   2. the mesh self-check holds over this repository on a machine with no identity yet;
 #   3. two runtimes of one repository on one machine — two worktrees, one node key, which is
 #      this repository's everyday shape — run from that declaration, observe each other and
@@ -19,8 +19,8 @@
 #   5. `mesh doctor` tells that machine its key is not listed, and how to list it.
 #
 # Offline and bounded: the fixture runtimes take the committed declaration and change only
-# its transport — multicast off, and the declared hubs replaced by a loopback rendezvous
-# endpoint (and, for the stranger, a seed) — so nothing is sent to the declared group, which
+# its transport — multicast and Bonjour off, and the declared hubs replaced by a loopback
+# rendezvous endpoint (and, for the stranger, a seed) — so nothing is sent to the declared group, which
 # a developer's own servers listen on, nothing is sent to the owner's hubs, and nothing
 # depends on a network interface. The multicast path itself is proved by the crate's suite
 # and test/mesh-lab/run. Every identity lives under $T.
@@ -57,8 +57,8 @@ EMPTY="$T/no-identity"; mkdir -p "$EMPTY"
 jq '.output' "$T/doctor.run.json" > "$T/doctor.json"
 decl="$(jq -r '.checks[] | select(.check == "declaration") | .detail' "$T/doctor.json")"
 case "$decl" in
-  "majordomus: enabled=true, multicast=true, broadcast=false, rendezvous endpoints="*", trust=deny_unknown ("*" allowed key(s)), cooperation=true (heartbeat 5s, expiry 30s, 0 seed(s))") ;;
-  *) echo "    the committed declaration is not the reviewed one (enabled, local multicast, no broadcast,"
+  "majordomus: enabled=true, multicast=true, broadcast=false, bonjour=true, rendezvous endpoints="*", trust=deny_unknown ("*" allowed key(s)), cooperation=true (heartbeat 5s, expiry 30s, 0 seed(s))") ;;
+  *) echo "    the committed declaration is not the reviewed one (enabled, local multicast, no broadcast, bonjour,"
      echo "    no seed, deny_unknown, cooperation at its defaults); the executable reads:"
      echo "    $decl"; exit 1 ;;
 esac
@@ -87,7 +87,9 @@ jq -e '.ok == true' "$T/doctor.json" >/dev/null \
 [ -e "$EMPTY/majordomus/node.json" ] && { echo "    the self-check created an identity; it must only read"; exit 1; }
 
 # ---------------------------------------------------------------- 3. two worktrees, one key
-# The committed declaration with its transport made loopback-only: multicast off, and the
+# The committed declaration with its transport made loopback-only: multicast and Bonjour off
+# (a fixture that registered itself with the system's DNS-SD service would be found by every
+# real server of the segment), and the
 # declared hubs (the endpoint items and their comments) replaced by one loopback endpoint or
 # none. Every other line is carried over as committed — trust, allowlist and cooperation
 # included — and the number of lines changed is checked, so a reshaped declaration fails here
@@ -98,6 +100,7 @@ derive_declaration() { # out want-changes [rendezvous-url [seed-url]]
     hubs && /^    / { next }
     { hubs = 0 }
     s == "multicast:" && /^  enabled:/ { print "  enabled: false"; n++; next }
+    s == "bonjour:" && /^  enabled:/ { print "  enabled: false"; n++; next }
     s == "rendezvous:" && /^  endpoints:/ {
       if (rv != "") { print "  endpoints:"; print "    - " rv } else print "  endpoints: []"
       hubs = 1; n++; next
@@ -127,7 +130,7 @@ mkdir -p "$R"
   git add -A && git commit -qm base
 ) || { echo "    the fixture repository could not be made"; exit 1; }
 mkdir -p "$R/.ai/repo/mesh"
-derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 2 || exit 1
+derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 3 || exit 1
 git -C "$R" add .ai/repo/mesh/majordomus.yaml
 git -C "$R" commit -qm "the committed mesh declaration, loopback-only"
 B="$T/wt-b"; C="$T/wt-c"
@@ -149,7 +152,7 @@ runtime_of() { mj "$1" "$2" mesh peers --format json | jq -r '.runtime // empty'
 serve "$R" "$MACHINE"
 poll 300 has_url "$R" || { cat "$R.serve.log"; exit 1; }
 URL_A="$(url_of "$R")"
-derive_declaration "$B/.ai/repo/mesh/majordomus.yaml" 2 "$URL_A" || exit 1
+derive_declaration "$B/.ai/repo/mesh/majordomus.yaml" 3 "$URL_A" || exit 1
 serve "$B" "$MACHINE"
 poll 300 has_url "$B" || { cat "$B.serve.log"; exit 1; }
 
@@ -188,7 +191,7 @@ expect_exit 0 mj "$B" "$MACHINE" mesh verify
 expect_grep 'cooperation verified'
 
 # ---------------------------------------------------------------- 4. another machine, unlisted
-derive_declaration "$C/.ai/repo/mesh/majordomus.yaml" 3 "$URL_A" "$URL_A" || exit 1
+derive_declaration "$C/.ai/repo/mesh/majordomus.yaml" 4 "$URL_A" "$URL_A" || exit 1
 serve "$C" "$STRANGER"
 poll 300 has_url "$C" || { cat "$C.serve.log"; exit 1; }
 RT_C="$(runtime_of "$C" "$STRANGER")"

@@ -469,10 +469,12 @@ fn render_checks(v: &Value, out: &mut String) {
     for c in v["checks"].as_array().into_iter().flatten() {
         out.push_str(&format!(
             "{}  {:<12} {}\n",
-            if c["ok"] == json!(true) {
-                "ok  "
-            } else {
+            if c["ok"] != json!(true) {
                 "FAIL"
+            } else if c["warning"] == json!(true) {
+                "WARN"
+            } else {
+                "ok  "
             },
             c["check"].as_str().unwrap_or("?"),
             c["detail"].as_str().unwrap_or(""),
@@ -1428,6 +1430,18 @@ mod tests {
             "{bad}"
         );
         assert!(bad.contains("      remedy      free the port"), "{bad}");
+
+        // a check that holds and warns is neither: it says WARN and fails nothing
+        let limited = render_doctor(&json!({
+            "ok": true,
+            "checks": [{ "check": "bonjour", "ok": true, "warning": true,
+                         "detail": "declared and unavailable on this platform",
+                         "impact": "nothing is found through Bonjour" }],
+        }));
+        assert_eq!(
+            limited,
+            "WARN  bonjour      declared and unavailable on this platform\n      impact      nothing is found through Bonjour\nverdict    every check holds"
+        );
         assert!(
             bad.ends_with("verdict    a check failed (see above)"),
             "{bad}"

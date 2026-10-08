@@ -320,7 +320,10 @@ It is observation: nothing is executed remotely.
 
 **Maturity.** On master, off by default: a new repository has no declaration. This repository
 runs its own (`.ai/repo/mesh/majordomus.yaml`, enabled; `docs/MESH.md`, "This repository's
-mesh"). There is no Tailscale or mDNS provider. The peer board and the claims replicate across
+mesh"). Machines of one network segment also find each other through Bonjour, the
+operating system's DNS-SD service, when the declaration says so (ADR 0120); that path is
+proved on macOS, and on Linux it is tested against stand-ins for avahi's tools only. There is
+no Tailscale provider. The peer board and the claims replicate across
 runtimes, on one machine or several, over authenticated links (ADR 0067).
 
 ### Rules, doctrines and the rule proof
@@ -517,7 +520,8 @@ $ majordomus-cli evidence show
 
 - CI runs every gate but does not record its runs into the evidence ledger, so most rules and
   claims read `not run` until someone records a run.
-- The mesh has no Tailscale or mDNS provider.
+- The mesh has no Tailscale provider, and nothing that finds a machine beyond its own network
+  segment without a rendezvous hub: Bonjour is link-local.
 - Overlap is reported, never enforced. The only refusal is a task's own scope.
 - Automatic session capture exists for Claude Code only.
 - Plan and board views in the Cockpit, and a richer entry preflight, are open pull requests.

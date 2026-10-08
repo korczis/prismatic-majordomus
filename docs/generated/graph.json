@@ -2734,6 +2734,30 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/bonjour.rs",
+        "kind": "file",
+        "label": "bonjour.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/bonjour.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/bonjour_avahi.rs",
+        "kind": "file",
+        "label": "bonjour_avahi.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/bonjour_avahi.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/bonjour_dnssd.rs",
+        "kind": "file",
+        "label": "bonjour_dnssd.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/bonjour_dnssd.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
         "kind": "file",
         "label": "cooperation.rs",
@@ -6288,6 +6312,34 @@
             "projections",
             "capabilities",
             "safety"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0120",
+        "kind": "adr",
+        "label": "adr-0120",
+        "summary": "The mesh is found through the system's DNS-SD service",
+        "route": "/cockpit/objects/adr/adr-0120",
+        "source": ".ai/repo/adrs/0120-the-mesh-is-found-through-the-system-s-dns-sd-service.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-08",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+            "rule:project.mesh-is-observation-not-authority",
+            "file:.ai/repo/mesh/majordomus.yaml",
+            "file:apps/majordomus-cli/src/mesh/bonjour.rs",
+            "file:apps/majordomus-cli/src/mesh/bonjour_dnssd.rs",
+            "file:apps/majordomus-cli/src/mesh/bonjour_avahi.rs",
+            "test:test/cases/1002_the_mesh_is_found_over_bonjour.sh",
+            "file:docs/MESH.md"
+          ],
+          "tags": [
+            "mesh",
+            "discovery",
+            "security"
           ]
         }
       },
@@ -41906,6 +41958,13 @@
         "source": "test/cases/09_site_mobile_first.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1002_the_mesh_is_found_over_bonjour.sh",
+        "kind": "test",
+        "label": "test/cases/1002_the_mesh_is_found_over_bonjour.sh",
+        "route": "/cockpit/objects/test/test-cases-1002-the-mesh-is-found-over-bonjour-sh",
+        "source": "test/cases/1002_the_mesh_is_found_over_bonjour.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/100_environment.sh",
         "kind": "test",
         "label": "test/cases/100_environment.sh",
@@ -53399,6 +53458,56 @@
       {
         "source": "majordomus://adr/adr-0110",
         "target": "test:apps/majordomus-cli/tests/mcp_prose.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "file:apps/majordomus-cli/src/mesh/bonjour.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "file:apps/majordomus-cli/src/mesh/bonjour_avahi.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "file:apps/majordomus-cli/src/mesh/bonjour_dnssd.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "majordomus://adr/adr-0059",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "majordomus://mesh-declaration/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0120",
+        "target": "majordomus://test/test/cases/1002_the_mesh_is_found_over_bonjour.sh",
         "kind": "put_in_force"
       },
       {
@@ -68027,6 +68136,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1002_the_mesh_is_found_over_bonjour.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/100_environment.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -73638,8 +73752,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2435,
-      "edges": 5342,
+      "nodes": 2440,
+      "edges": 5353,
       "acyclic": false,
       "truncated": false
     }

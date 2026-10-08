@@ -38,14 +38,23 @@ it is described as real.
   the same repository whose keys the declaration trusts; over those links it shares session
   metadata (client, intent, issue, branch, head), claim scopes, review subjects and handover
   bodies a person explicitly published. Every message is Ed25519-signed; nothing is
-  encrypted, so a mesh belongs on a private network or an overlay. Nothing a peer sends
+  encrypted, so a mesh belongs on a private network or an overlay. When the declaration
+  also enables `bonjour` (ADR 0120; off unless the block says so), the server registers one
+  service instance with the operating system's DNS-SD daemon and opens no socket for it:
+  the instance's name (`majordomus-` and sixteen hex characters of the node id and runtime
+  slot), its HTTP port and, as its TXT record, the same signed advertisement become
+  answerable to every device on the network segment that browses mDNS, not only to
+  listeners of the mesh's multicast group. It adds no fact to the advertisement, crosses no
+  router, and grants nothing: what is found that way is verified and trusted exactly as
+  before. Nothing a peer sends
   executes anything, and the only file a peer's event can cause to be written is a handover,
   into this checkout's handovers directory, by an explicit `mesh handover consume`.
   `scripts/ci/mesh-check`, `apps/majordomus-cli/tests/mesh_cooperation.rs` and
   `test/mesh-lab/run` hold it; `docs/MESH.md` has the threat model. The skeleton a new
   repository starts from ships no declaration. This repository commits its own enabled:
-  multicast on the local segment only, rendezvous hubs on the owner's private network and
-  tailnet, and `deny_unknown` trust listing the owner's five machines' keys and no other
+  multicast and Bonjour on the local segment only, rendezvous hubs on the owner's private
+  network and tailnet, and `deny_unknown` trust listing the owner's five machines' keys and no
+  other
   (`docs/MESH.md`, "This repository's mesh"; `test/cases/491_the_mesh_is_on_here.sh`).
   Every session start says whether this checkout's server holds that declaration: the hook
   runs the executable's `mesh doctor`, which asks the server on loopback, so the hook library
