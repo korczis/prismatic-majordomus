@@ -672,6 +672,15 @@
         "status": "query"
       },
       {
+        "id": "capability:gates.policy",
+        "kind": "capability",
+        "label": "gates.policy",
+        "summary": "The completion policy",
+        "route": "/cockpit/capabilities/gates.policy",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -11085,7 +11094,7 @@
           "requires_repository": true,
           "requires_task": "required",
           "stage": "work",
-          "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
+          "syntax": "majordomus evidence --covers <token> (--command <cmd> | --artifact <ref>) [--type <kind>] [--result <r>] | --gate <id> --exit <status> [--command <cmd>] | --run-gates",
           "visibility": "public",
           "writes": [
             ".ai/local/state/ledger.jsonl"
@@ -11680,7 +11689,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
-          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] [--issue <id>|none]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
@@ -11705,6 +11714,7 @@
             "2",
             "10",
             "12",
+            "13",
             "15"
           ],
           "json": false,
@@ -44587,6 +44597,13 @@
         "source": "test/cases/87b_release_archive_shape.sh"
       },
       {
+        "id": "majordomus://test/test/cases/880_completion_is_proved.sh",
+        "kind": "test",
+        "label": "test/cases/880_completion_is_proved.sh",
+        "route": "/cockpit/objects/test/test-cases-880-completion-is-proved-sh",
+        "source": "test/cases/880_completion_is_proved.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
         "kind": "test",
         "label": "test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
@@ -48644,6 +48661,21 @@
       },
       {
         "source": "capability:gates.model",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -70388,6 +70420,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/880_completion_is_proved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -73868,6 +73905,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.policy",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -74454,8 +74496,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2466,
-      "edges": 5403,
+      "nodes": 2468,
+      "edges": 5408,
       "acyclic": false,
       "truncated": false
     }

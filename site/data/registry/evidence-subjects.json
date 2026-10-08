@@ -379,6 +379,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:gates.policy",
+      "path": "/evidence/capabilities/gates-policy/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:graph.get",
       "path": "/evidence/capabilities/graph-get/"
     },
@@ -4378,6 +4383,16 @@
       "kind": "capability",
       "id": "gates.model",
       "page": "/evidence/capabilities/gates-model/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:gates.policy": {
+      "kind": "capability",
+      "id": "gates.policy",
+      "page": "/evidence/capabilities/gates-policy/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -11619,6 +11634,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:880_completion_is_proved",
+          "path": "test/cases/880_completion_is_proved.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:04_start_check",
           "path": "test/cases/04_start_check.sh",
@@ -13326,6 +13347,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:880_completion_is_proved",
+          "path": "test/cases/880_completion_is_proved.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:103_obligations",
           "path": "test/cases/103_obligations.sh",
@@ -13632,6 +13659,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:880_completion_is_proved",
+          "path": "test/cases/880_completion_is_proved.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:06_finish",
           "path": "test/cases/06_finish.sh",
@@ -13701,6 +13734,12 @@
           "via": "negative",
           "test": "suite:578_an_unknown_gate_refuses_completed",
           "path": "test/cases/578_an_unknown_gate_refuses_completed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:880_completion_is_proved",
+          "path": "test/cases/880_completion_is_proved.sh",
           "category": "e2e"
         }
       ],
@@ -13829,6 +13868,12 @@
           "via": "behaviour",
           "test": "suite:827_a_record_is_admitted_before_it_is_read",
           "path": "test/cases/827_a_record_is_admitted_before_it_is_read.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:880_completion_is_proved",
+          "path": "test/cases/880_completion_is_proved.sh",
           "category": "e2e"
         },
         {
@@ -18019,6 +18064,18 @@
       "programs": [],
       "members": [
         "capability:gates.completion"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_completion_policy": {
+      "kind": "mcp",
+      "id": "majordomus_completion_policy",
+      "alias_of": "capability:gates.policy",
+      "programs": [],
+      "members": [
+        "capability:gates.policy"
       ],
       "routes": [],
       "mechanisms": [],
