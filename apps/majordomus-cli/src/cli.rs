@@ -105,12 +105,16 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
+    Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
     Knowledge(KnowledgeArgs),
+    /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
+    Continuity(ContinuityArgs),
 }
 
 #[derive(Debug, Args)]
@@ -165,7 +169,8 @@ pub enum IntentCommand {
     Validate,
     /// Which work carries which criterion, and the reason every issue exists
     Coverage,
-    /// Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
+    /// Which intent the work on an issue, or on some paths, serves, whether it is maintenance,
+    /// or why it may not proceed; exit 10 when refused
     Preflight {
         /// The issue the work executes
         #[arg(long)]
@@ -231,6 +236,67 @@ pub struct DashboardArgs {
 pub enum DashboardCommand {
     /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
     Overview,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus pack`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PackArgs, PackCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pack", "plan", "chatgpt"]).unwrap();
+/// let Command::Pack(args) = cli.command else { panic!("not the pack command") };
+/// let args: PackArgs = args;
+/// assert!(matches!(args.command, PackCommand::Plan { profile: Some(_) }));
+/// ```
+pub struct PackArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`, `build` or `verify`. Required: the group runs nothing of its own.
+    pub command: PackCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus pack`: `plan` is the verdict before anything is written,
+/// `build` writes the pack and verifies what it wrote, and `verify` reads a written pack.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PackCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pack", "build", "--out", "tmp/p", "--force"]).unwrap();
+/// let Command::Pack(args) = cli.command else { panic!("not the pack command") };
+/// assert!(matches!(args.command, PackCommand::Build { force: true, .. }));
+/// ```
+pub enum PackCommand {
+    /// What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read
+    Plan {
+        /// A profile of share/archive.yaml (default: its `default`)
+        profile: Option<String>,
+    },
+    /// Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one
+    Build {
+        /// A profile of share/archive.yaml (default: its `default`)
+        profile: Option<String>,
+        /// Write here instead of `tmp/packs/<repo>-<profile>-<commit>`
+        #[arg(long, value_name = "DIR")]
+        out: Option<PathBuf>,
+        /// Replace a pack already at the destination (never a directory that is not a pack)
+        #[arg(long)]
+        force: bool,
+    },
+    /// Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read
+    Verify {
+        /// The pack's directory, inside the repository
+        dir: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -1930,7 +1996,7 @@ pub struct EvidenceArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `show`, `claim`, `proves` or `record`. Required: the group runs nothing of its own,
+    /// `show`, `claim`, `proves`, `record` or `stamp`. Required: the group runs nothing of its own,
     /// so that every runnable path here is one a capability declares
     /// rather than one classified command-line-only in `cli::local`.
     pub command: EvidenceCommand,
@@ -1947,7 +2013,9 @@ pub struct EvidenceArgs {
 /// `show`, `claim` and `proves` are the command line of `evidence.report`,
 /// `evidence.claim` and `evidence.test`; `record` is the command line of
 /// `evidence.record`, which is a command line and nothing else because it writes a tracked
-/// file and this server is read-only. The capability is `evidence.test` and the command is
+/// file and this server is read-only; `stamp` is the command line of `evidence.stamp`, a
+/// read offered only here because it reads a path its caller names. The capability is
+/// `evidence.test` and the command is
 /// `proves` — `test` is a word the fish completion adapter refuses, so the command line
 /// spells the relation with the verb rather than renaming the identity.
 ///
@@ -1979,6 +2047,21 @@ pub struct EvidenceArgs {
 /// assert!(matches!(
 ///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
 ///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+/// ));
+///
+/// // a run measures the checkout it left; the recording carries that measurement
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "stamp", "--report", "suite.tsv", "--exclude", "dist"]),
+///     EvidenceCommand::Stamp { report: Some(r), exclude, .. }
+///         if r.ends_with("suite.tsv") && exclude == ["dist"]
+/// ));
+/// assert!(matches!(
+///     parse(&[
+///         "majordomus", "evidence", "record", "--suite", "s.tsv", "--provenance", "p.json",
+///         "--provenance", "crate=c.json", "--ledger", "local",
+///     ]),
+///     EvidenceCommand::Record { provenance, ledger: Some(l), .. }
+///         if provenance == ["p.json", "crate=c.json"] && l == "local"
 /// ));
 /// ```
 pub enum EvidenceCommand {
@@ -2035,6 +2118,34 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+        /// The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=`
+        /// when the file names no producer and several reports are given
+        #[arg(long, value_name = "[PRODUCER=]FILE")]
+        provenance: Vec<String>,
+        /// The summary `scripts/rust-coverage --summary-json` wrote
+        #[arg(long)]
+        coverage: Option<PathBuf>,
+        /// repo (the default) or local
+        #[arg(long)]
+        ledger: Option<String>,
+        /// Also write the run record to this file
+        #[arg(long)]
+        run_record: Option<PathBuf>,
+    },
+    /// Measure the checkout as a run left it, for `record --provenance`
+    Stamp {
+        /// The producer whose run this is: suite, crate or coverage
+        #[arg(long)]
+        producer: Option<String>,
+        /// The report the run wrote
+        #[arg(long)]
+        report: Option<PathBuf>,
+        /// One of the run's own untracked outputs (a file, or a directory with everything under it)
+        #[arg(long)]
+        exclude: Vec<String>,
+        /// Write the measurement to this file
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
 }
 
@@ -2374,6 +2485,93 @@ pub enum KnowledgeCommand {
     },
     /// Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness
     Status,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus continuity`. The output shape is global, so it reads where a person writes
+/// it, and the group runs nothing of its own.
+///
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityArgs, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "continuity", "resume", "--record", "a1b2"]).unwrap();
+/// let Command::Continuity(args) = cli.command else { panic!("not the continuity command") };
+/// let args: ContinuityArgs = args;
+/// assert!(matches!(args.command, ContinuityCommand::Resume { record: Some(r) } if r == "a1b2"));
+/// assert!(Cli::try_parse_from(["majordomus", "continuity"]).is_err(), "a subcommand is required");
+/// ```
+pub struct ContinuityArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `records`, `plan`, `publish`, `sync` or `resume`. Required, so that every
+    /// runnable path is a capability's.
+    pub command: ContinuityCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus continuity`: the command line of `continuity.status`,
+/// `continuity.records`, `continuity.device`, `continuity.plan`, `continuity.publish`,
+/// `continuity.sync` and `continuity.resume`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ContinuityCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "continuity", "publish", "--issue", "#184"]);
+/// let Command::Continuity(args) = cli.command else { panic!("continuity") };
+/// let ContinuityCommand::Publish { issue, handover, .. } = args.command else { panic!("publish") };
+/// assert_eq!(issue.as_deref(), Some("#184"));
+/// assert!(handover.is_none(), "the newest handover by default");
+/// ```
+pub enum ContinuityCommand {
+    /// This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here
+    Status,
+    /// Every published handover the local store admits, by line, and every file it refused
+    Records,
+    /// This device's identity — the mesh node key, created when absent — and its label; with --label, rename it
+    Device {
+        /// A label for this device (macbook-pro, mac-mini)
+        #[arg(long)]
+        label: Option<String>,
+    },
+    /// Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin
+    Plan {
+        /// A record id or a unique prefix; the one resumable handover when absent
+        #[arg(long)]
+        record: Option<String>,
+    },
+    /// Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path
+    Publish {
+        /// A handover record's file name under .ai/local/state/handovers/; the newest when absent
+        #[arg(long)]
+        handover: Option<String>,
+        /// The issue the work belongs to
+        #[arg(long)]
+        issue: Option<String>,
+        /// The milestone it belongs to
+        #[arg(long)]
+        milestone: Option<String>,
+    },
+    /// Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending
+    Sync {
+        /// The git remote; the current branch's, else origin, when absent
+        #[arg(long)]
+        remote: Option<String>,
+    },
+    /// Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line
+    Resume {
+        /// A record id or a unique prefix; the one resumable handover when absent
+        #[arg(long)]
+        record: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -3067,9 +3265,11 @@ pub struct McpArgs {
     #[arg(long)]
     pub standalone: bool,
 
-    /// Interface the shared server binds when this process is the one that starts it
-    #[arg(long, default_value = "127.0.0.1", value_name = "HOST")]
-    pub http_host: String,
+    /// Interface the shared server binds when this process is the one that starts it;
+    /// without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback
+    /// (`127.0.0.1`) when that is unset
+    #[arg(long, value_name = "HOST")]
+    pub http_host: Option<String>,
 
     /// Port the shared server binds when this process starts it; when it is taken, a free
     /// port is used instead and the URL is logged on stderr either way
@@ -3079,6 +3279,92 @@ pub struct McpArgs {
 
 /// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
 pub const DEFAULT_PORT: u16 = 8741;
+
+/// The interface a local server binds when nothing says otherwise.
+pub const LOOPBACK_HOST: &str = "127.0.0.1";
+
+/// The variable that names, for one machine, the interface a local server binds.
+///
+/// It is the machine's fact and not the repository's: a tracked setting would make every
+/// clone of a public repository listen on its network, and a flag would have to be repeated
+/// by every caller that starts a server — the session-start hook, `serve ensure`, each
+/// client's `majordomus mcp`. A variable is inherited by all of them, and an environment
+/// that does not set it keeps loopback.
+pub const HTTP_HOST_ENV: &str = "MAJORDOMUS_HTTP_HOST";
+
+/// Where the interface a local server binds came from.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_http_host, HostOrigin};
+/// // only an address the environment supplied is announced in the log as the variable's
+/// assert_eq!(resolve_http_host(None, Some("0.0.0.0")).1, HostOrigin::Environment);
+/// assert_ne!(HostOrigin::Flag, HostOrigin::Default);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HostOrigin {
+    /// `--host` or `--http-host` on this command line.
+    Flag,
+    /// [`HTTP_HOST_ENV`] in this process's environment.
+    Environment,
+    /// Neither: [`LOOPBACK_HOST`].
+    Default,
+}
+
+/// The interface a local server binds: the flag when one was given, else what
+/// [`HTTP_HOST_ENV`] names, else loopback. A variable that is set and blank is unset.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_http_host, HostOrigin};
+/// assert_eq!(
+///     resolve_http_host(Some("10.0.0.1"), Some("0.0.0.0")),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, Some(" 0.0.0.0 ")),
+///     ("0.0.0.0".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, Some("  ")),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, None),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// ```
+pub fn resolve_http_host(flag: Option<&str>, environment: Option<&str>) -> (String, HostOrigin) {
+    if let Some(host) = flag {
+        return (host.to_string(), HostOrigin::Flag);
+    }
+    match environment.map(str::trim).filter(|h| !h.is_empty()) {
+        Some(host) => (host.to_string(), HostOrigin::Environment),
+        None => (LOOPBACK_HOST.to_string(), HostOrigin::Default),
+    }
+}
+
+/// [`resolve_http_host`] against this process's environment: what `serve`, `mcp` and
+/// `server.status` all read, so that the address a server binds and the address the status
+/// calls desired cannot disagree.
+///
+/// ```
+/// use majordomus_cli::cli::{local_http_host, HostOrigin};
+/// // a flag is the answer whatever the environment holds
+/// assert_eq!(
+///     local_http_host(Some("127.0.0.1")),
+///     ("127.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let (host, origin) = resolve_http_host(flag, environment.as_deref());
+    if origin == HostOrigin::Environment {
+        tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        );
+    }
+    (host, origin)
+}
 
 #[derive(Debug, Args)]
 /// `majordomus serve`.
@@ -3091,9 +3377,10 @@ pub struct ServeArgs {
     /// `status`, `ensure` or `stop`; none serves.
     pub command: Option<ServeCommand>,
 
-    /// Interface to bind; loopback unless you say otherwise
-    #[arg(long, default_value = "127.0.0.1")]
-    pub host: String,
+    /// Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine,
+    /// and loopback (`127.0.0.1`) when that is unset
+    #[arg(long, value_name = "HOST")]
+    pub host: Option<String>,
 
     /// Port to bind; 0 picks a free one and the address is logged on stderr
     #[arg(long, default_value_t = DEFAULT_PORT)]
@@ -4229,6 +4516,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "pack plan",
+        examples: &[ExampleDoc {
+            id: "pack-plan-chatgpt-json",
+            title: "What the ChatGPT profile would pack, before anything is written",
+            description: "The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read.",
+            argv: &["pack", "plan", "chatgpt", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/dropped", "/shards", "/findings", "/passes"]),
+        }],
+    },
+    CommandExamples {
+        command: "pack build",
+        examples: &[ExampleDoc {
+            id: "pack-build-chatgpt",
+            title: "Write the ChatGPT pack and read it back",
+            description: "Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards.",
+            argv: &["pack", "build", "chatgpt"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["pack verify: clean"]),
+        }],
+    },
+    CommandExamples {
+        command: "pack verify",
+        examples: &[ExampleDoc {
+            id: "pack-verify-absent",
+            title: "A directory that holds no pack",
+            description: "A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything.",
+            argv: &["pack", "verify", "tmp/packs/absent"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "shell check",
         examples: &[ExampleDoc {
             id: "shell-check-json",
@@ -4259,6 +4579,83 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity status",
+        examples: &[ExampleDoc {
+            id: "continuity-status-json",
+            title: "Where this device stands in the work published from every device",
+            description: "The same value `GET /api/v1/continuity/status` and the MCP tool `majordomus_continuity_status` return: this repository's identity (a digest of its root commits, the same in every clone), this device, the record this checkout continues on its branch, how the local store stands towards the remote's — read from refs, with no network — and what other devices published that could be resumed here. A repository that has published nothing answers with an empty store, which is an answer and not an error.",
+            argv: &["continuity", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/repository", "/device/node", "/store/sync", "/resumable"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity device",
+        examples: &[ExampleDoc {
+            id: "continuity-device-json",
+            title: "This device, as a published handover names it",
+            description: "The node id and public key of this device's mesh key — created on first use in the user's state directory, never in a repository — and its label. `--label mac-mini` renames it without changing the key.",
+            argv: &["continuity", "device", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/device/node", "/device/label", "/public_key"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity records",
+        examples: &[ExampleDoc {
+            id: "continuity-records-json",
+            title: "Every published handover, by line",
+            description: "Every record of refs/majordomus/continuity that passed admission, every line of work with its heads, and a diagnostic for each refused file. Empty in a repository that has published nothing.",
+            argv: &["continuity", "records", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/records", "/lines", "/diagnostics"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity plan",
+        examples: &[ExampleDoc {
+            id: "continuity-plan-nothing",
+            title: "A plan with nothing to resume",
+            description: "With no handover published from another device, the plan says so — `nothing_to_resume` — and exits 0: absence is an answer. With one, the same command decides trust, lineage and source compatibility and lists the commands that resolve each blocker without running any of them.",
+            argv: &["continuity", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/status", "/blockers", "/warnings", "/actions"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity publish",
+        examples: &[ExampleDoc {
+            id: "continuity-publish-nothing",
+            title: "Nothing to publish without a handover",
+            description: "A publication reads the newest handover record; a checkout that has written none is told to write one with `majordomus handover` and exits 10, before any device key is created.",
+            argv: &["continuity", "publish"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "continuity sync",
+        examples: &[ExampleDoc {
+            id: "continuity-sync-no-remote",
+            title: "A repository with no remote keeps its records",
+            description: "Sync moves records only through a git remote. A repository with none answers `no_remote` and exits 0: the records stay in this clone, and that is a valid state rather than a failure.",
+            argv: &["continuity", "sync", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/action", "/store/sync"]),
+        }],
+    },
+    CommandExamples {
+        command: "continuity resume",
+        examples: &[ExampleDoc {
+            id: "continuity-resume-nothing",
+            title: "A resume with nothing to resume writes nothing",
+            description: "Resume acts only on a ready plan. With no published handover it writes nothing and exits 10, printing the plan that declined.",
+            argv: &["continuity", "resume"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {
@@ -4303,6 +4700,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence stamp",
+        examples: &[ExampleDoc {
+            id: "evidence-stamp-json",
+            title: "What a run measured, as one document",
+            description: "The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report.",
+            argv: &["evidence", "stamp", "--producer", "suite", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/producer", "/commit", "/working_tree", "/recorder", "/host"]),
         }],
     },
     CommandExamples {
@@ -5213,11 +5621,11 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "intent preflight",
         examples: &[ExampleDoc {
             id: "intent-preflight",
-            title: "Which intent the work on an issue serves",
-            description: "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.",
+            title: "Which intent the work on an issue serves, or why it may not proceed",
+            description: "The issue followed through the criteria it declares it serves to the intent each belongs to, with what that intent asks of the worker: its statement, the served criteria and their evidence, invariants, non-goals, governance, critique and gap. A broken link, or an intent whose plan was never critiqued or has a blocking finding open, is a refusal naming its cause, and exit 10; the example fixture's intent has no critique, so this is that refusal. Work under milestones no intent names is maintenance, and exits 0.",
             argv: &["intent", "preflight", "--issue", "I0001"],
             setup: &[],
-            expect: Expect::StdoutContains(&["serves", "fixture-intent"]),
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

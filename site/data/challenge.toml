@@ -8,17 +8,22 @@
 # not guaranteed, and refuses the whole page when the scenario stops passing or stops
 # refusing anything.
 #
-# Same rules as marketing.toml: no numbers (scripts/site-check), no capability lists.
+# Same rules as marketing.toml: no numbers (scripts/site-check), no capability lists, and no
+# count in words either: how often the run refused is the run's to say, and /challenge/
+# prints it from the recorded data (scripts/site-check refuses a count that disagrees).
 
 use_case = "catch-an-agent-that-says-it-is-done"
 
 [page]
 kicker = "the challenge"
 title = "Try to get unfinished work accepted."
-lead = "A coding agent claims a directory, edits a file outside it, says it is done, hands over, and comes back. Majordomus refuses twice, names the reason each time, and accepts the work only when the repository's own test passes. Every line below is a recorded run of the real tool, executed when this page was generated."
+lead = "A coding agent claims a directory, edits a file outside it, says it is done, hands over, and comes back. Majordomus refuses it, names the reason every time, and accepts the work only when the repository's own test passes. Every line below is a recorded run of the real tool, executed when this page was generated."
 problem = "Coding agents are good at doing the work and bad at knowing when it is finished. They touch files nobody asked for, report success over a failing test, and forget the task when the session ends. A better prompt does not fix that, because the prompt is the part being ignored. What fixes it is a check the worker cannot talk its way past."
 replay_title = "The run, step by step"
 replay_lead = "Step through it, or read it straight down. A step marked worker is the change being judged; every other step is Majordomus answering it."
+verdicts_title = "What it checked, and what it decided"
+verdicts_lead = "Every step at which Majordomus judged the work, in the order the run reached it: each line of the contract it checked, passed or failed, and the verdict that closed the step. It is read off the run's own output, which is one click away in the replay above."
+verdicts_closing = "The agent saying it is finished is not one of the inputs. The work is accepted when every line of the contract passes, and not before."
 compare_title = "Where the decision lives"
 compare_lead = "The same work, with and without a control plane. Each row links the guarantee that holds it and the test that proves the guarantee."
 reproduce_title = "Run it yourself"

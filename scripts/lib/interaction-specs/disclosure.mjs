@@ -34,10 +34,11 @@ export default {
       // One click, and a second only if the first changed nothing — re-reading first, so a toggle
       // that landed between the last poll and now is not undone by a retry it no longer needs.
       const press = async (want) => {
-        // a summary in a tab panel that is not selected is reached by selecting its tab first
+        // a summary in a tab panel that is not selected is reached by selecting its tab first;
+        // a panel is hidden by its attribute or, under Alpine's x-show, by its display
         const tab = await c.locator.evaluate((s) => {
           const panel = s.closest('[role="tabpanel"]');
-          return panel && panel.hidden ? panel.getAttribute('aria-labelledby') : null;
+          return panel && (panel.hidden || getComputedStyle(panel).display === 'none') ? panel.getAttribute('aria-labelledby') : null;
         });
         if (tab) await page.locator(`[id="${tab}"]`).click();
         await c.locator.click();

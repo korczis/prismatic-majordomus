@@ -1,6 +1,6 @@
 +++
 title = "Economics"
-description = "the claim it refuses to make, what v0.1 controls without measuring, where the cost actually is, what the ledger alone can measure, and what honest measurement would take"
+description = "the question, what is measured and how each number is labelled, control and treatment, how runs become a statement, and what is not measured"
 weight = 35
 [extra]
 source = "docs/ECONOMICS.md"

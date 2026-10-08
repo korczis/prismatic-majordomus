@@ -120,15 +120,65 @@ pub fn inspect(root: &Path) -> GitState {
 /// assert_eq!(working_tree_ignoring(dir.path(), &["ledger.json"]), "dirty");
 /// ```
 pub fn working_tree_ignoring(root: &Path, ignore: &[&str]) -> String {
+    working_tree_excluding(root, ignore, &[])
+}
+
+/// `clean`, `dirty` or `unknown`, as [`working_tree_ignoring`] decides it, except that an
+/// untracked path equal to one of `outputs`, or under one of them, is not a change either.
+/// An output never hides a tracked change.
+///
+/// This is the one tree measurement: a run's stamp and the presented tree both go through
+/// it. A run writes its own report and build products into the checkout; those are not a
+/// change to what it tested, but only while they are untracked. A tracked file under an
+/// output is still a change, so an output cannot be used to make a modified checkout read
+/// clean. Outputs are compared by path segment (`dist` covers `dist/out.bin`, never
+/// `distx/y`), after a leading `./` and a trailing `/` are removed; no pathspec is ever
+/// built from them.
+///
+/// ```
+/// use majordomus_cli::git::working_tree_excluding;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// std::fs::write(dir.path().join("a.md"), "a").unwrap();
+/// git(&["add", "-A"]);
+/// git(&["commit", "-qm", "init"]);
+///
+/// std::fs::create_dir(dir.path().join("dist")).unwrap();
+/// std::fs::write(dir.path().join("dist/out.bin"), "x").unwrap();
+/// assert_eq!(working_tree_excluding(dir.path(), &[], &["dist"]), "clean");
+/// assert_eq!(working_tree_excluding(dir.path(), &[], &[]), "dirty");
+///
+/// // an output never hides a tracked change
+/// std::fs::write(dir.path().join("a.md"), "b").unwrap();
+/// assert_eq!(working_tree_excluding(dir.path(), &[], &["dist", "a.md"]), "dirty");
+/// ```
+pub fn working_tree_excluding(root: &Path, ignore: &[&str], outputs: &[&str]) -> String {
+    let outputs: Vec<&str> = outputs.iter().map(|o| normalise_output(o)).collect();
+    let is_output = |path: &str| {
+        outputs.iter().any(|o| {
+            !o.is_empty()
+                && (path == *o || path.strip_prefix(o).is_some_and(|r| r.starts_with('/')))
+        })
+    };
     // `--untracked-files=all` because the default collapses an untracked directory to the
     // directory's own name: a repository that does not yet track its ledger would be
     // reported dirty for `.ai/`, which is not a path any caller can name.
     match run(root, &["status", "--porcelain", "--untracked-files=all"]) {
         Ok(s) => {
-            if s.lines()
-                .filter(|l| !l.trim().is_empty())
-                .any(|l| !ignore.contains(&porcelain_path(l)))
-            {
+            let change = s.lines().filter(|l| !l.trim().is_empty()).any(|l| {
+                let path = porcelain_path(l);
+                let ignored = ignore.contains(&path);
+                let untracked_output = l.starts_with("??") && is_output(path);
+                !(ignored || untracked_output)
+            });
+            if change {
                 "dirty"
             } else {
                 "clean"
@@ -137,6 +187,15 @@ pub fn working_tree_ignoring(root: &Path, ignore: &[&str]) -> String {
         Err(_) => "unknown",
     }
     .to_string()
+}
+
+/// An output as the caller wrote it, without any leading `./` or trailing `/`.
+fn normalise_output(output: &str) -> &str {
+    let mut o = output;
+    while let Some(rest) = o.strip_prefix("./") {
+        o = rest;
+    }
+    o.trim_end_matches('/')
 }
 
 /// The repository-relative path of one `git status --porcelain` line: two status columns, a
@@ -451,4 +510,103 @@ fn run(root: &Path, args: &[&str]) -> Result<String> {
     String::from_utf8(out.stdout).map_err(|e| Error::Git {
         reason: e.to_string(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::process::Command;
+
+    fn repo(files: &[&str]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .output();
+            assert!(out.unwrap().status.success(), "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        for f in files {
+            let p = dir.path().join(f);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, "committed").unwrap();
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "init"]);
+        dir
+    }
+
+    fn write(dir: &tempfile::TempDir, path: &str) {
+        let p = dir.path().join(path);
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(p, "changed").unwrap();
+    }
+
+    #[test]
+    fn an_output_never_hides_a_tracked_change() {
+        let dir = repo(&["dist/keep.txt", "a.md"]);
+        write(&dir, "dist/keep.txt");
+        assert_eq!(working_tree_excluding(dir.path(), &[], &["dist"]), "dirty");
+        assert_eq!(
+            working_tree_excluding(dir.path(), &[], &["./dist/"]),
+            "dirty"
+        );
+        assert_eq!(
+            working_tree_excluding(dir.path(), &[], &["dist/keep.txt"]),
+            "dirty"
+        );
+    }
+
+    #[test]
+    fn an_untracked_output_directory_is_excluded_by_segment() {
+        let dir = repo(&["a.md"]);
+        write(&dir, "dist/out.bin");
+        assert_eq!(working_tree_excluding(dir.path(), &[], &["dist"]), "clean");
+        assert_eq!(
+            working_tree_excluding(dir.path(), &[], &["./dist/"]),
+            "clean"
+        );
+        write(&dir, "distx/y");
+        assert_eq!(working_tree_excluding(dir.path(), &[], &["dist"]), "dirty");
+        assert_eq!(
+            working_tree_excluding(dir.path(), &[], &["dist", "distx"]),
+            "clean"
+        );
+    }
+
+    #[test]
+    fn ignoring_is_excluding_with_no_outputs() {
+        let ledger = "ledger.json";
+        let states: [(&str, Option<&str>); 5] = [
+            ("clean", None),
+            ("a modified ledger", Some(ledger)),
+            ("a modified other file", Some("a.md")),
+            ("an untracked ledger", Some("sub/ledger.json")),
+            ("an untracked other file", Some("new.md")),
+        ];
+        for (what, change) in states {
+            let dir = repo(&[ledger, "a.md"]);
+            if let Some(path) = change {
+                write(&dir, path);
+            }
+            for ignore in [&[][..], &[ledger][..], &["sub/ledger.json"][..]] {
+                assert_eq!(
+                    working_tree_ignoring(dir.path(), ignore),
+                    working_tree_excluding(dir.path(), ignore, &[]),
+                    "{what}, ignoring {ignore:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_path_that_is_not_a_work_tree_is_unknown() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("absent");
+        assert_eq!(working_tree_excluding(&missing, &[], &["dist"]), "unknown");
+    }
 }

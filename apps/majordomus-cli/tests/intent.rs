@@ -75,6 +75,108 @@ fn the_command_line_http_and_mcp_answer_the_same_intents() {
     assert_eq!(status, 404);
 }
 
+/// The verdict of the fixture intent as the command line, HTTP and MCP each answer it, for both
+/// the list and the record: every one of the six must be the same value.
+fn verdict_everywhere(f: &Fixture) -> Value {
+    let (_, list) = cli_json(f, &["intent", "list"]);
+    let (_, shown) = cli_json(f, &["intent", "show", "fixture-intent"]);
+    let served = Served::start(&f.root(), &[]);
+    let (_, http_list) = served.get("/api/v1/intents");
+    let (_, http_record) = served.get("/api/v1/intents/record?id=fixture-intent");
+    let mcp_list = tool(f, "majordomus_intents", json!({}));
+    let mcp_record = tool(
+        f,
+        "majordomus_intent_record",
+        json!({ "id": "fixture-intent" }),
+    );
+    let cli = shown["verdict"].clone();
+    assert!(cli.is_object(), "intent show carries no verdict: {shown:#}");
+    for (surface, v) in [
+        ("intent list", &list["intents"][0]["verdict"]),
+        ("GET /api/v1/intents", &http_list["intents"][0]["verdict"]),
+        ("GET /api/v1/intents/record", &http_record["verdict"]),
+        ("majordomus_intents", &mcp_list["intents"][0]["verdict"]),
+        ("majordomus_intent_record", &mcp_record["verdict"]),
+    ] {
+        assert_eq!(
+            v, &cli,
+            "{surface} and `intent show` disagree on the verdict"
+        );
+    }
+    for (surface, counts) in [
+        ("intent list", &list["verdicts"]),
+        ("GET /api/v1/intents", &http_list["verdicts"]),
+        ("majordomus_intents", &mcp_list["verdicts"]),
+    ] {
+        assert_eq!(
+            counts,
+            &json!({ cli["state"].as_str().unwrap(): 1 }),
+            "{surface}"
+        );
+    }
+    assert_eq!(
+        shown["stage"], "planned",
+        "the stage is the plan's and never moves here"
+    );
+    cli
+}
+
+#[test]
+fn the_command_line_http_and_mcp_agree_on_the_verdict_the_evidence_alone_derives() {
+    let f = Fixture::new();
+    // nothing recorded: the test the ledger can settle is unmet, so the evidence says no
+    assert_eq!(
+        verdict_everywhere(&f),
+        json!({ "state": "unsatisfied", "reasons": [
+            { "criterion": "the-case-passes", "evidence": "test", "state": "not_run" }] })
+    );
+
+    // a passing run, recorded, satisfies the verdict while the milestone is still open
+    let id = TestId::of("test/cases/00_x.sh").unwrap();
+    let source = std::fs::read(f.path(&id.source())).unwrap();
+    let mut ledger = Ledger::empty();
+    ledger.merge([Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome: Outcome::Pass,
+        seconds: 1,
+        commit: f.git(&["rev-parse", "HEAD"]).trim().to_string(),
+        working_tree: "clean".into(),
+        digest: digest_of(&source),
+        at: "2026-10-05T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: id.reproduce(),
+        run: None,
+    }]);
+    ledger.save(&f.root()).unwrap();
+    f.commit("record a passing run");
+    assert_eq!(
+        verdict_everywhere(&f),
+        json!({ "state": "satisfied", "reasons": [] })
+    );
+
+    // a command criterion the ledger cannot settle leaves the evidence unable to answer
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        &common::INTENT.replace(
+            "    ref: test/cases/00_x.sh\n",
+            "    ref: test/cases/00_x.sh
+  - id: it-ships
+    criterion: The fixture ships
+    evidence: command
+    ref: just ship
+",
+        ),
+    );
+    f.commit("a command criterion");
+    assert_eq!(
+        verdict_everywhere(&f),
+        json!({ "state": "unknown", "reasons": [
+            { "criterion": "it-ships", "evidence": "command", "state": "not_derivable" }] })
+    );
+}
+
 #[test]
 fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there() {
     let f = Fixture::new();
@@ -122,6 +224,285 @@ fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there()
 
     record(run(Outcome::Fail, digest_of(&source)));
     assert_eq!(criterion(&f)["state"], "failing");
+}
+
+/// A test criterion and a claim criterion over the same case, judged at every step through
+/// the built executable: both read what the evidence module calls current, and nothing else.
+#[test]
+fn a_criterion_is_met_only_by_evidence_current_at_the_working_tree_and_follows_it_both_ways() {
+    let f = Fixture::new();
+    let intent = ".ai/repo/project/intents/fixture-intent.yaml";
+    f.write(
+        intent,
+        &common::INTENT.replace(
+            "    ref: test/cases/00_x.sh\n",
+            "    ref: test/cases/00_x.sh
+  - id: the-claim-holds
+    criterion: The claim the case proves holds
+    evidence: claim
+    ref: policy-parse
+",
+        ),
+    );
+    f.commit("a claim criterion beside the test criterion");
+    let declared = std::fs::read(f.path(intent)).unwrap();
+
+    // (state, met) of both criteria, which must always agree: one judgement, two routes
+    let judged = |f: &Fixture| -> (String, bool) {
+        let (code, v) = cli_json(f, &["intent", "show", "fixture-intent"]);
+        assert_eq!(code, 0, "{v:#}");
+        let of = |id: &str| {
+            let c = v["satisfaction"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|c| c["id"] == id)
+                .unwrap()
+                .clone();
+            (c["state"].as_str().unwrap().to_string(), c["met"] == true)
+        };
+        let (test, claim) = (of("the-case-passes"), of("the-claim-holds"));
+        assert_eq!(test, claim, "the test and the claim route disagree");
+        test
+    };
+    let current = || ("current".to_string(), true);
+    let not_met = |state: &str| (state.to_string(), false);
+    // the verdict a met criterion rests on, through both routes: never one tick for two answers
+    let proof = |f: &Fixture| -> String {
+        let (_, v) = cli_json(f, &["intent", "show", "fixture-intent"]);
+        let proofs: Vec<String> = v["satisfaction"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| c["proof"].as_str().unwrap_or("absent").to_string())
+            .collect();
+        assert_eq!(
+            proofs[0], proofs[1],
+            "the test and the claim route disagree"
+        );
+        proofs[0].clone()
+    };
+
+    let id = TestId::of("test/cases/00_x.sh").unwrap();
+    // a run of the case as it is in the tree now, at HEAD, on a tree the recorder saw as `tree`
+    let run = |outcome: Outcome, tree: &str| Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome,
+        seconds: 1,
+        commit: f.git(&["rev-parse", "HEAD"]).trim().to_string(),
+        working_tree: tree.into(),
+        digest: digest_of(&std::fs::read(f.path(&id.source())).unwrap()),
+        at: "2026-10-04T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: id.reproduce(),
+        run: None,
+    };
+    let record = |e: Execution| {
+        let mut ledger = Ledger::empty();
+        ledger.merge([e]);
+        ledger.save(&f.root()).unwrap();
+        f.commit("record a run");
+    };
+
+    assert_eq!(judged(&f), not_met("not_run"));
+
+    // a clean pass at HEAD meets both
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current());
+    assert_eq!(proof(&f), "proven", "a pass at this revision");
+
+    // a change the criterion does not name leaves it met: currency is the inputs, not HEAD;
+    // and it says so, rather than wearing the tick of a proof at this revision
+    f.write("README.md", "# Fixture\n\nRead AGENTS.md, then this.\n");
+    f.commit("an unrelated change");
+    assert_eq!(judged(&f), current());
+    assert_eq!(
+        proof(&f),
+        "inputs_unchanged",
+        "a pass whose named inputs did not move"
+    );
+    let (_, out, _) = run_in(&f.root(), &["intent", "show", "fixture-intent"], "");
+    assert!(
+        out.contains("current (inputs_unchanged)"),
+        "the terminal names the verdict a met criterion rests on:\n{out}"
+    );
+
+    // the code under test changes in the working tree: the pass is of something else now,
+    // though the test file hashes exactly as it did
+    f.write(
+        "lib/a.sh",
+        "#!/usr/bin/env bash\n# the one library file\necho b\n",
+    );
+    assert_eq!(
+        judged(&f),
+        not_met("stale"),
+        "an uncommitted change to the code"
+    );
+    f.commit("the code under test changes");
+    assert_eq!(
+        judged(&f),
+        not_met("stale"),
+        "a committed change to the code"
+    );
+
+    // a pass recorded on a dirty tree, whose test digest matches and whose named inputs did
+    // not move, is still not current: its commit does not describe what ran
+    f.write(
+        "docs/notes.md",
+        "pending, not committed when the case ran\n",
+    );
+    record(run(Outcome::Pass, "dirty"));
+    assert_eq!(judged(&f), not_met("stale"), "a dirty-tree run");
+
+    // repaired: a clean pass of the code as it is now meets it again
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current(), "repaired");
+
+    // regression: the latest run fails, and the criterion is unmet again
+    record(run(Outcome::Fail, "clean"));
+    assert_eq!(judged(&f), not_met("failing"), "regressed");
+
+    // the case itself changes: the last pass no longer measured it
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current());
+    f.write(
+        "test/cases/00_x.sh",
+        "# majordomus-covers: none\n. \"$ROOT/test/lib.sh\"\ntrue\ntrue\n",
+    );
+    f.commit("the case changes");
+    assert_eq!(judged(&f), not_met("stale"), "a changed case");
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current(), "the changed case, run");
+
+    // every state above was derived: the intent was never written
+    assert_eq!(
+        std::fs::read(f.path(intent)).unwrap(),
+        declared,
+        "the intent record changed"
+    );
+}
+
+/// A test that proves no claim declares nothing about the code under test: its own file is not
+/// that code. Its pass is current only while nothing has changed since the run, so a change to
+/// the code alone, with the test file byte-identical, un-meets the criterion.
+#[test]
+fn a_test_that_names_no_code_under_test_is_current_only_at_the_commit_it_ran_on() {
+    let f = Fixture::new();
+    let case = "test/cases/01_y.sh";
+    f.write(
+        case,
+        "# majordomus-covers: none\n# claims: none\n. \"$ROOT/test/lib.sh\"\ntrue\n",
+    );
+    let intent = ".ai/repo/project/intents/fixture-intent.yaml";
+    f.write(
+        intent,
+        &common::INTENT.replace(
+            "    ref: test/cases/00_x.sh\n",
+            &format!("    ref: {case}\n"),
+        ),
+    );
+    f.commit("a criterion over a case that proves no claim");
+
+    let id = TestId::of(case).unwrap();
+    let record_clean_pass = |f: &Fixture| {
+        let mut ledger = Ledger::empty();
+        ledger.merge([Execution {
+            test: id.as_string(),
+            runner: Runner::Suite,
+            source: id.source(),
+            outcome: Outcome::Pass,
+            seconds: 1,
+            commit: f.git(&["rev-parse", "HEAD"]).trim().to_string(),
+            working_tree: "clean".into(),
+            digest: digest_of(&std::fs::read(f.path(&id.source())).unwrap()),
+            at: "2026-10-04T00:00:00Z".into(),
+            origin: Origin::Local,
+            command: id.reproduce(),
+            run: None,
+        }]);
+        ledger.save(&f.root()).unwrap();
+        f.commit("record a run");
+    };
+    let judged = |f: &Fixture| -> (String, bool, String) {
+        let (code, v) = cli_json(f, &["intent", "show", "fixture-intent"]);
+        assert_eq!(code, 0, "{v:#}");
+        let c = &v["satisfaction"][0];
+        assert_eq!(c["ref"], case);
+        (
+            c["state"].as_str().unwrap().to_string(),
+            c["met"] == true,
+            c["proof"].as_str().unwrap_or("absent").to_string(),
+        )
+    };
+    let is = |state: &str, met: bool, proof: &str| (state.to_string(), met, proof.to_string());
+
+    record_clean_pass(&f);
+    assert_eq!(
+        judged(&f),
+        is("current", true, "proven"),
+        "a pass at this revision"
+    );
+
+    // the code under test breaks, the case's file untouched: nothing the repository declares
+    // rules the change out, so the pass is not current evidence of the code as it is now
+    f.write(
+        "lib/a.sh",
+        "#!/usr/bin/env bash\n# the one library file\nexit 1\n",
+    );
+    assert_eq!(
+        judged(&f),
+        is("stale", false, "stale"),
+        "an uncommitted change to the code"
+    );
+    f.commit("the code under test breaks");
+    assert_eq!(
+        judged(&f),
+        is("stale", false, "stale"),
+        "a committed change to the code"
+    );
+
+    // a run of the code as it is now meets it again
+    record_clean_pass(&f);
+    assert_eq!(
+        judged(&f),
+        is("current", true, "proven"),
+        "rerun at the checkout"
+    );
+
+    // the issue serving the criterion declares `lib` as the code under test, so a change
+    // outside it does not move the pass: it stays met, and says it rests on unchanged inputs
+    // rather than on a run at this revision
+    f.write("README.md", "# Fixture\n\nA later edit.\n");
+    f.commit("a change outside the declared code under test");
+    assert_eq!(
+        judged(&f),
+        is("current", true, "inputs_unchanged"),
+        "a change outside the scope the serving issue declares"
+    );
+
+    // with nothing declared — no issue serves the criterion, and the case proves no claim —
+    // the test's own file is not the code under test, and any later change is one the pass
+    // cannot rule out
+    f.write(
+        ".ai/repo/project/issues/I0001.yaml",
+        &common::ISSUE.replace("serves:\n  - fixture-intent#the-case-passes\n", ""),
+    );
+    f.commit("the issue no longer serves the criterion");
+    record_clean_pass(&f);
+    assert_eq!(
+        judged(&f),
+        is("current", true, "proven"),
+        "a pass at this revision, with nothing declared"
+    );
+    f.write("README.md", "# Fixture\n\nAnother edit.\n");
+    f.commit("a later change");
+    assert_eq!(
+        judged(&f),
+        is("stale", false, "stale"),
+        "a change it names nothing against"
+    );
 }
 
 #[test]
@@ -192,36 +573,129 @@ fn a_key_the_schema_does_not_declare_is_refused_by_the_index() {
     assert!(hit, "{:#?}", common::diagnostics(&v));
 }
 
+/// Record a critique of the fixture's intent with no finding, so work serving it may proceed.
+fn critiqued(f: &Fixture) {
+    f.write(
+        ".ai/repo/project/critiques/fixture-intent.yaml",
+        "intent: fixture-intent\nreviewed_at: HEAD\nreviewed_by: the test\nfindings: []\n",
+    );
+    f.commit("the plan is critiqued");
+}
+
+/// Which intent the work on an issue serves, or the link that is missing: the claim
+/// `intent-preflight-names-the-intent` of docs/CLAIMS.yaml.
 #[test]
-fn preflight_names_the_intent_the_work_serves_or_the_missing_link() {
+fn preflight_names_the_intent_the_work_serves_or_why_it_may_not_proceed() {
     let f = Fixture::new();
+    // the fixture's issue serves its intent, whose plan nobody has critiqued yet
     let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
-    assert_eq!(code, 0);
+    assert_eq!(code, 10, "{v}");
+    assert_eq!(v["verdict"], "refused");
+    assert_eq!(v["refusals"][0]["cause"], "intent_not_critiqued");
+    assert_eq!(v["intents"][0]["id"], "fixture-intent");
+
+    critiqued(&f);
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
+    assert_eq!(code, 0, "{v}");
     assert_eq!(v["verdict"], "serves");
+    assert_eq!(v["issues"][0]["verdict"], "serves");
     assert_eq!(v["matches"][0]["intent"], "fixture-intent");
-    assert_eq!(v["matches"][0]["milestone"], "fixture-milestone");
+    assert_eq!(v["matches"][0]["criteria"], json!(["the-case-passes"]));
     assert_eq!(v["governance"], json!(["rule:project.alpha"]));
+    let held = &v["intents"][0];
+    assert_eq!(held["criteria"][0]["id"], "the-case-passes");
+    assert_eq!(held["criteria"][0]["state"], "not_run");
+    assert_eq!(
+        held["invariants"][0],
+        "The fixture stays a valid repository"
+    );
+    assert_eq!(held["critique"]["open_blocking"], json!([]));
     let mcp = tool(
         &f,
         "majordomus_intent_preflight",
         json!({ "issue": "I0001" }),
     );
-    assert_eq!(v, mcp);
+    assert_eq!(v, mcp, "the command line and MCP disagree");
+    let served = Served::start(&f.root(), &[]);
+    let (status, http) = served.get("/api/v1/intents/preflight?issue=I0001");
+    assert_eq!(status, 200);
+    assert_eq!(v, http, "the command line and HTTP disagree");
 
     let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I9999"]);
     assert_eq!(code, 10);
+    assert_eq!(v["refusals"][0]["cause"], "unknown_issue");
     assert!(v["refusal"].as_str().unwrap().contains("I9999"));
 
-    // a milestone no intent names is the missing link
+    // the issue still serves the intent once it is gone: a link to nothing
     f.remove(".ai/repo/project/intents/fixture-intent.yaml");
+    f.remove(".ai/repo/project/critiques/fixture-intent.yaml");
     f.commit("no intent");
     let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
     assert_eq!(code, 10);
-    assert!(v["refusal"].as_str().unwrap().contains("fixture-milestone"));
+    assert_eq!(v["refusals"][0]["cause"], "serves_unknown_criterion");
+
+    // and once it serves nothing either, it is maintenance under a milestone of no intent,
+    // which `intent validate` accepts and the preflight therefore does too
+    let issue = std::fs::read_to_string(f.path(".ai/repo/project/issues/I0001.yaml")).unwrap();
+    f.write(
+        ".ai/repo/project/issues/I0001.yaml",
+        &issue.replace("serves:\n  - fixture-intent#the-case-passes\n", ""),
+    );
+    f.commit("maintenance");
+    let (code, out, _) = run_in(&f.root(), &["intent", "validate"], "");
+    assert_eq!(code, 0, "{out}");
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
+    assert_eq!(code, 0, "{v}");
+    assert_eq!(v["verdict"], "maintenance");
+    assert_eq!(v["intents"], json!([]));
+    assert_eq!(v["refusals"], json!([]));
 
     let (code, _, err) = run_in(&f.root(), &["intent", "preflight"], "");
     assert_ne!(code, 0, "a preflight of nothing is refused");
     assert!(err.contains("name the issue"), "{err}");
+}
+
+#[test]
+fn preflight_refuses_work_while_a_blocking_critique_finding_is_open() {
+    let f = Fixture::new();
+    let critique = |resolution: &str| {
+        format!(
+            "intent: fixture-intent
+reviewed_at: HEAD
+reviewed_by: the test
+findings:
+  - id: thin
+    class: insufficient_work
+    subject: fixture-intent#the-case-passes
+    finding: One case may not be enough
+    blocking: true
+    resolution:
+{resolution}
+"
+        )
+    };
+    f.write(
+        ".ai/repo/project/critiques/fixture-intent.yaml",
+        &critique("      state: open"),
+    );
+    f.commit("an open blocker");
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--path", "lib/a.sh"]);
+    assert_eq!(code, 10, "{v}");
+    assert_eq!(v["refusals"][0]["cause"], "open_blocking_finding");
+    assert_eq!(v["refusals"][0]["issue"], "I0001");
+    assert_eq!(
+        v["intents"][0]["critique"]["open_blocking"][0]["id"],
+        "thin"
+    );
+
+    f.write(
+        ".ai/repo/project/critiques/fixture-intent.yaml",
+        &critique("      state: planned\n      issue: I0001"),
+    );
+    f.commit("plan the blocker");
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--path", "lib/a.sh"]);
+    assert_eq!(code, 0, "{v}");
+    assert_eq!(v["verdict"], "serves");
 }
 
 /// The four verbs of `majordomus intent`, each over the fixture's one intent and one issue.
@@ -266,6 +740,7 @@ fn run_into_a_closed_pipe(f: &Fixture, args: &[&str]) -> (i32, String) {
 #[test]
 fn an_answer_that_cannot_be_written_is_a_transport_failure_and_never_a_success() {
     let f = Fixture::new();
+    critiqued(&f);
     for args in VERBS {
         // each verb answers 0 over this fixture when its answer can be written
         let (code, _, err) = run_in(&f.root(), args, "");
@@ -328,22 +803,28 @@ fn outside_a_repository_no_intent_verb_answers() {
 }
 
 #[test]
-fn the_text_preflight_names_the_verdict_and_the_refusal_or_the_issues_it_followed() {
+fn the_text_preflight_names_the_verdict_each_issue_what_the_intent_asks_and_each_refusal() {
     let f = Fixture::new();
     let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I9999"], "");
     assert_eq!(code, 10, "{out}");
     let lines: Vec<&str> = out.lines().collect();
-    assert_eq!(lines[0], "verdict     refused");
     assert_eq!(
-        lines[1],
-        "refusal     `I9999` is not an issue under .ai/repo/project/issues/"
-    );
-    assert_eq!(
-        lines.len(),
-        2,
-        "a refusal names no issue and no intent:\n{out}"
+        lines,
+        [
+            "verdict     refused",
+            "refusal     unknown_issue  `I9999` is not an issue under .ai/repo/project/issues/",
+        ],
+        "a refusal before any issue names no issue and no intent"
     );
 
+    let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I0001"], "");
+    assert_eq!(code, 10, "{out}");
+    assert!(
+        out.contains("refusal     intent_not_critiqued  I0001 serves intent fixture-intent"),
+        "{out}"
+    );
+
+    critiqued(&f);
     let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I0001"], "");
     assert_eq!(code, 0, "{out}");
     let lines: Vec<&str> = out.lines().collect();
@@ -351,8 +832,13 @@ fn the_text_preflight_names_the_verdict_and_the_refusal_or_the_issues_it_followe
         lines,
         [
             "verdict     serves",
-            "issues      I0001",
-            "intent      fixture-intent  planned  via milestone fixture-milestone and issue I0001",
+            "issue       I0001  serves  milestone fixture-milestone  \
+             serves fixture-intent#the-case-passes",
+            "intent      fixture-intent  planned  The fixture's outcome is true",
+            "  statement   The outcome the fixture milestone reaches is true for its users.",
+            "  criterion   the-case-passes  not_run",
+            "  invariant   The fixture stays a valid repository",
+            "  critique    reviewed at HEAD by the test; open blocking: none",
             "governance  rule:project.alpha",
         ]
     );

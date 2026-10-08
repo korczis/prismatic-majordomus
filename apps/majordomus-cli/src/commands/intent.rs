@@ -53,10 +53,10 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             }
             let v = call(&app.context, &["intent", "preflight"], input)?;
             emit(format, &v, preflight_text)?;
-            Ok(if v["verdict"] == "serves" {
-                0
-            } else {
+            Ok(if v["verdict"] == "refused" {
                 EXIT_INVALID
+            } else {
+                0
             })
         }
         IntentCommand::Realization { intent } => {
@@ -224,15 +224,16 @@ fn list_text(v: &Value) -> String {
         .unwrap_or(2)
         .max(2);
     let mut out = vec![format!(
-        "{:<width$}  {:<10}  {:<7}  TITLE",
-        "ID", "STAGE", "MET"
+        "{:<width$}  {:<10}  {:<11}  {:<7}  TITLE",
+        "ID", "STAGE", "VERDICT", "MET"
     )];
     for i in &intents {
         let total = i["satisfaction"].as_array().map_or(0, Vec::len);
         out.push(format!(
-            "{:<width$}  {:<10}  {:<7}  {}",
+            "{:<width$}  {:<10}  {:<11}  {:<7}  {}",
             s(i, "id"),
             s(i, "stage"),
+            s(&i["verdict"], "state"),
             format!("{}/{total}", i["met"]),
             s(i, "title"),
         ));
@@ -289,7 +290,12 @@ fn show_text(v: &Value) -> String {
         String::new(),
         format!("  {}", s(v, "statement")),
         String::new(),
-        format!("  stage {}   source {}", s(v, "stage"), s(v, "source")),
+        format!(
+            "  stage {}   verdict {}   source {}",
+            s(v, "stage"),
+            s(&v["verdict"], "state"),
+            s(v, "source")
+        ),
     ];
     for inv in v["invariants"].as_array().into_iter().flatten() {
         out.push(format!("  invariant   {}", inv.as_str().unwrap_or("")));
@@ -303,15 +309,29 @@ fn show_text(v: &Value) -> String {
     }
     for c in v["satisfaction"].as_array().into_iter().flatten() {
         out.push(format!(
-            "  criterion   {}  {}  {} {}{}",
+            "  criterion   {}  {}{}  {} {}{}",
             s(c, "id"),
             s(c, "state"),
+            // a met criterion names the verdict it rests on: `proven` and `inputs_unchanged`
+            // are two answers, never one tick
+            match (c["met"].as_bool(), c["proof"].as_str()) {
+                (Some(true), Some(p)) => format!(" ({p})"),
+                _ => String::new(),
+            },
             s(c, "evidence"),
             s(c, "ref"),
             c["reproduce"]
                 .as_str()
                 .map(|r| format!("  [reproduce: {r}]"))
                 .unwrap_or_default()
+        ));
+    }
+    for r in v["verdict"]["reasons"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "  held back   {}  {} {}",
+            s(r, "criterion"),
+            s(r, "evidence"),
+            s(r, "state"),
         ));
     }
     for g in v["governance"].as_array().into_iter().flatten() {
@@ -350,31 +370,94 @@ fn validate_text(v: &Value) -> String {
     out.join("\n")
 }
 
-fn preflight_text(v: &Value) -> String {
-    let mut out = vec![format!("verdict     {}", s(v, "verdict"))];
-    let issues: Vec<&str> = v["issues"]
-        .as_array()
+fn words(v: &Value) -> Vec<&str> {
+    v.as_array()
         .into_iter()
         .flatten()
         .filter_map(Value::as_str)
-        .collect();
-    if !issues.is_empty() {
-        out.push(format!("issues      {}", issues.join(", ")));
-    }
-    for m in v["matches"].as_array().into_iter().flatten() {
+        .collect()
+}
+
+/// The verdict, each issue with its own, each intent the work is held to with what it asks
+/// of the worker, then every refusal with its cause.
+fn preflight_text(v: &Value) -> String {
+    let mut out = vec![format!("verdict     {}", s(v, "verdict"))];
+    for i in v["issues"].as_array().into_iter().flatten() {
+        let serves = words(&i["serves"]);
         out.push(format!(
-            "intent      {}  {}  via milestone {} and issue {}",
-            s(m, "intent"),
-            s(m, "stage"),
-            s(m, "milestone"),
-            s(m, "issue"),
+            "issue       {}  {}  milestone {}{}",
+            s(i, "issue"),
+            s(i, "verdict"),
+            s(i, "milestone"),
+            if serves.is_empty() {
+                String::new()
+            } else {
+                format!("  serves {}", serves.join(" "))
+            }
         ));
     }
-    for g in v["governance"].as_array().into_iter().flatten() {
-        out.push(format!("governance  {}", g.as_str().unwrap_or("")));
+    for i in v["intents"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "intent      {}  {}  {}",
+            s(i, "id"),
+            s(i, "stage"),
+            s(i, "title")
+        ));
+        out.push(format!("  statement   {}", s(i, "statement")));
+        for c in i["criteria"].as_array().into_iter().flatten() {
+            out.push(format!("  criterion   {}  {}", s(c, "id"), s(c, "state")));
+        }
+        for inv in words(&i["invariants"]) {
+            out.push(format!("  invariant   {inv}"));
+        }
+        for n in words(&i["non_goals"]) {
+            out.push(format!("  non-goal    {n}"));
+        }
+        let critique = &i["critique"];
+        if critique.is_object() {
+            let open: Vec<&str> = critique["open_blocking"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|f| s(f, "id"))
+                .collect();
+            out.push(format!(
+                "  critique    reviewed at {} by {}; open blocking: {}",
+                s(critique, "reviewed_at"),
+                s(critique, "reviewed_by"),
+                if open.is_empty() {
+                    "none".to_string()
+                } else {
+                    open.join(", ")
+                }
+            ));
+        } else {
+            out.push("  critique    none recorded".into());
+        }
+        let gap = &i["gap"];
+        if gap.is_object() {
+            let conditions: Vec<String> = gap["conditions"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|c| format!("{} {}", s(c, "criterion"), s(c, "state_text")))
+                .collect();
+            out.push(format!(
+                "  gap         observed at {}: {}",
+                s(gap, "observed_at"),
+                conditions.join(", ")
+            ));
+        }
     }
-    if let Some(r) = v["refusal"].as_str() {
-        out.push(format!("refusal     {r}"));
+    for g in words(&v["governance"]) {
+        out.push(format!("governance  {g}"));
+    }
+    for r in v["refusals"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "refusal     {}  {}",
+            s(r, "cause"),
+            s(r, "message")
+        ));
     }
     out.join("\n")
 }
@@ -383,6 +466,60 @@ fn preflight_text(v: &Value) -> String {
 mod tests {
     use super::*;
     use crate::synthetic::SyntheticRepository;
+
+    /// Every part of an answer has its line: an issue serving nothing, an intent with
+    /// non-goals, an open blocking finding and a recorded gap, one with no critique at all,
+    /// the governance and each refusal with its cause.
+    #[test]
+    fn the_preflight_text_says_every_part_of_the_answer() {
+        let answer = json!({
+            "verdict": "refused",
+            "issues": [
+                {"issue": "I1", "verdict": "serves", "milestone": "m", "serves": ["x#case"]},
+                {"issue": "I2", "verdict": "refused", "milestone": "m", "serves": []}
+            ],
+            "intents": [
+                {"id": "x", "stage": "active", "title": "The x", "statement": "x holds",
+                 "criteria": [{"id": "case", "state": "current"}],
+                 "invariants": ["never y"], "non_goals": ["not z"],
+                 "critique": {"reviewed_at": "c0ffee", "reviewed_by": "a reviewer",
+                              "open_blocking": [{"id": "F1"}, {"id": "F2"}]},
+                 "gap": {"observed_at": "2026-10-06T00:00:00Z",
+                         "conditions": [{"criterion": "case", "state_text": "not met"}]}},
+                {"id": "w", "stage": "active", "title": "The w", "statement": "w holds",
+                 "criteria": [], "invariants": [], "non_goals": [], "critique": null,
+                 "gap": null}
+            ],
+            "governance": ["rule:project.alpha"],
+            "refusals": [{"cause": "issue_serves_nothing", "message": "I2 serves nothing"}]
+        });
+        let text = preflight_text(&answer);
+        for line in [
+            "verdict     refused",
+            "issue       I1  serves  milestone m  serves x#case",
+            "issue       I2  refused  milestone m",
+            "intent      x  active  The x",
+            "  statement   x holds",
+            "  criterion   case  current",
+            "  invariant   never y",
+            "  non-goal    not z",
+            "  critique    reviewed at c0ffee by a reviewer; open blocking: F1, F2",
+            "  gap         observed at 2026-10-06T00:00:00Z: case not met",
+            "intent      w  active  The w",
+            "  critique    none recorded",
+            "governance  rule:project.alpha",
+            "refusal     issue_serves_nothing  I2 serves nothing",
+        ] {
+            assert!(
+                text.lines().any(|l| l == line),
+                "{line:?} missing from\n{text}"
+            );
+        }
+        // an issue that serves nothing says no `serves` at all
+        assert!(text
+            .lines()
+            .any(|l| l.ends_with("milestone m") && l.contains("I2")));
+    }
 
     #[test]
     fn each_verb_reaches_its_capability_and_an_unexposed_one_is_named() {
@@ -422,6 +559,35 @@ mod tests {
             }
             other => panic!("a preflight of nothing answered: {other:?}"),
         }
+    }
+
+    #[test]
+    fn list_and_show_print_the_verdict_beside_the_stage() {
+        let intent = json!({
+            "id": "probe", "title": "Probe", "statement": "True.", "stage": "executing",
+            "source": "s.yaml", "met": 1,
+            "satisfaction": [{"id": "a"}, {"id": "b"}],
+            "verdict": {"state": "unknown",
+                        "reasons": [{"criterion": "b", "evidence": "command",
+                                     "state": "not_derivable"}]},
+        });
+        let list = list_text(&json!({ "count": 1, "intents": [intent] }));
+        assert_eq!(
+            list.lines().take(2).collect::<Vec<_>>(),
+            [
+                "ID     STAGE       VERDICT      MET      TITLE",
+                "probe  executing   unknown      1/2      Probe",
+            ]
+        );
+        let show = show_text(&intent);
+        assert!(
+            show.contains("  stage executing   verdict unknown   source s.yaml"),
+            "{show}"
+        );
+        assert!(
+            show.contains("  held back   b  command not_derivable"),
+            "{show}"
+        );
     }
 
     #[test]

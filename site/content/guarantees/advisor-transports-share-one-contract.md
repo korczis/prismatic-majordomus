@@ -1,7 +1,7 @@
 +++
 title = "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential"
 description = "Whatever an advisor is — an API, a client tool, a local runtime, a mesh peer — talking to"
-weight = 231
+weight = 246
 [extra]
 claim_id = "advisor-transports-share-one-contract"
 status = "guaranteed"

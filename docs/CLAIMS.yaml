@@ -621,7 +621,7 @@ claims:
     test: test/cases/03_update.sh
     status: guaranteed
     responsibility: projection
-    note: Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.
+    note: Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own or names a rule id the effective set does not provide (case 899). A person and a worker reach the same layer by the same two hops.
 
   - id: legacy-migration
     claim: A repository on the pre-.ai layout is migrated once, explicitly, with a previewed plan and a verified backup of its local state, and the command is idempotent afterwards
@@ -864,6 +864,108 @@ claims:
     status: guaranteed
     responsibility: plan
     note: The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise.
+
+  # Intents (ADR 0070, 0073, 0075): what must become true above the milestones that realise it.
+  # Every claim the site makes about intents is one of these, and the homepage's account of what
+  # of the model exists and what does not is rendered from their statuses, not written beside them.
+  - id: intent-stage-derived
+    claim: An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent.rs
+    test: test/cases/367_an_intent_is_satisfied_only_by_evidence.sh
+    status: guaranteed
+    responsibility: plan
+    note: Nothing about an intent is stored but its statement. A passing run while a milestone is open meets the criterion and satisfies nothing; closing the milestone satisfies it; changing the test after its run makes the evidence stale and the intent falls back to verifying, and a failing run is not evidence either, with the intent file untouched throughout. `majordomus intent list`, `intent show`, the HTTP API and the MCP tools answer from the same derivation.
+
+  - id: intent-links-resolve
+    claim: An intent whose criterion names evidence that resolves to nothing is refused by name
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent.rs
+    test: test/cases/367_an_intent_is_satisfied_only_by_evidence.sh
+    status: guaranteed
+    responsibility: plan
+    note: "`majordomus intent validate` exits 10 with `unresolved_evidence_ref` naming the intent, and the intent-check gate runs it. A milestone or governance entry that resolves to nothing is refused the same way. A reference to nothing would otherwise read as a planned intent forever."
+
+  - id: intent-criteria-covered
+    claim: Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent_plan.rs
+    test: test/cases/386_a_plan_is_held_to_its_intent.sh
+    status: guaranteed
+    responsibility: plan
+    note: An issue names the criterion it serves in `serves`; coverage from criterion to issue is derived on every read and `majordomus intent coverage` prints it, with the reason every issue exists. An intent with no work yet is `intent_not_planned`, a warning, because that is where every intent starts.
+
+  - id: intent-plan-reviewed
+    claim: A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent_review.rs
+    test: test/cases/386_a_plan_is_held_to_its_intent.sh
+    status: guaranteed
+    responsibility: plan
+    note: The refusal is `majordomus intent validate` and the intent-check gate, after the start. `plan start` itself succeeds; refusing the start is intent-refused-at-plan-start, which is planned. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together.
+
+  - id: intent-realization-held-to-evidence
+    claim: The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent_realization.rs
+    test: test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh
+    status: guaranteed
+    responsibility: plan
+    note: "`majordomus intent realization` exits 10 with `closed_work_contradicted` and the intent-realization gate runs it; `intent explain` says why an intent stands where it stands. Every link says how it is known: declared, observed, derived or inferred. Closed work that is merely unproven, and an issue closed while the criterion it serves is unmet, are warnings rather than refusals."
+
+  - id: intent-preflight-names-the-intent
+    claim: Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent.rs
+    test: apps/majordomus-cli/tests/intent.rs
+    status: guaranteed
+    responsibility: plan
+    note: "`majordomus intent preflight --issue <id>` (or `--path`) follows the criteria the issue declares in `serves`, never its milestone alone, and judges each link by the coverage `intent validate` reports from. It answers `serves` (exit 0) when every link holds and each intent served has a critique with no blocking finding open, `maintenance` (exit 0) for an issue that serves nothing under a milestone no live intent names, and `refused` (exit 10) naming its cause: unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued or open_blocking_finding. The MCP tool answers the same. It is a question a worker asks, not a step any command takes for it: `plan start` does not run it."
+
+  - id: intent-cockpit-pages
+    claim: The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>
+    source: docs/COCKPIT.md
+    implementation: apps/majordomus-cli/src/cockpit/intents.rs
+    test: apps/majordomus-cli/tests/intent_realization.rs
+    status: guaranteed
+    responsibility: plan
+    note: Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.
+
+  - id: intent-in-session-context
+    claim: A session will load the intents its task serves when it starts
+    source: docs/PLANNING.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; no responsibility implements it yet
+    note: "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it."
+
+  - id: intent-refused-at-plan-start
+    claim: Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards
+    source: docs/PLANNING.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; no responsibility implements it yet
+    note: Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed.
+
+  - id: intent-closes-github-milestones
+    claim: A milestone will be closed on GitHub only once the intents it realises are satisfied
+    source: docs/PLANNING.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; no responsibility implements it yet
+    note: The GitHub projection closes a milestone from its derived plan status alone and reads no intent. Closed work the evidence contradicts is refused by the intent-realization gate, not by the tracker.
+
+  - id: intent-command-deployment-evidence
+    claim: A criterion settled by a command or by a deployment will be met by recorded evidence
+    source: docs/PLANNING.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; no responsibility implements it yet
+    note: Such a criterion resolves and reads `not_derivable`, and never meets a criterion by itself, because the evidence ledger records runs of tests and claims only. An intent whose criteria are all of these kinds cannot be satisfied today.
 
   - id: mcp-stdio-surface
     claim: The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout
@@ -1935,6 +2037,41 @@ claims:
     responsibility: policy
     note: Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data.
 
+  - id: evidence-a-crate-binary-that-ran-nothing-is-not-a-pass
+    claim: A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/record.rs
+    test: test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh
+    status: guaranteed
+    responsibility: none
+    note: 'The result line of cargo test says ok for a binary that ran nothing, so the recorder reads its counts. A failed count is a failure, a binary that passed nothing or ran a filtered subset is a skip, a line with no count or a binary with no result line is an error, and escape sequences are stripped first. The unit-test binary of the crate, its doctests, binaries outside tests/ and result lines no Running line named are listed in the recording as dropped, with the reason, because no claim can name them until a runner records them one by one.'
+
+  - id: evidence-tree-is-measured-by-the-run
+    claim: A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/record.rs
+    test: test/cases/505_a_recording_carries_what_its_run_measured.sh
+    status: guaranteed
+    responsibility: none
+    note: 'evidence stamp measures the checkout as the run left it, the evidence ledger ignored and only the run''s own untracked outputs excluded; evidence record --provenance carries that measurement into the report''s executions and takes the digest of a clean run from the commit. The stamp measures when it is taken, not while the run executed, and a CI job''s tree file names no report until CI stamps with its report.'
+
+  - id: evidence-a-recording-is-a-typed-run
+    claim: Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/run.rs
+    test: test/cases/505_a_recording_carries_what_its_run_measured.sh
+    status: guaranteed
+    responsibility: none
+    note: 'evidence record returns an EvidenceRunRecord and writes it with --run-record; --coverage binds the scripts/rust-coverage summary to its commit and measured tree with the floors the threshold files state. A run record decides no verdict; it can only withhold proven through the one monotone rule, which no surface applies yet.'
+
+  - id: evidence-local-recording-stays-local
+    claim: A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/ledger.rs
+    test: test/cases/505_a_recording_carries_what_its_run_measured.sh
+    status: guaranteed
+    responsibility: none
+    note: 'The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from.'
 
   - id: a-skipped-case-is-not-a-proof
     claim: A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names

@@ -1,4 +1,4 @@
-# The known answer for scripts/lib/pipeline-counts.awk with FNS=bad is lines 5 8 15 17 25 32.
+# The known answer for scripts/lib/pipeline-counts.awk with FNS=bad is lines 5 8 15 17 25 32 35.
 # shell-lint scans this file before it trusts the scanner with any other.
 bad() { fails=$((fails+1)); }
 printf x | while read -r l; do
@@ -31,3 +31,5 @@ JS
 printf o | while read -r o; do
   bad o "$JS_TEXT"
 done
+while read -r h; do bad p "$h"; done <<< "$(awk '{print "x"}' f)"
+printf q | while read -r q; do bad q "$q"; done

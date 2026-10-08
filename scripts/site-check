@@ -94,6 +94,22 @@ if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_t
 elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the unbuilt-half heading '$pt'"
 elif [ "${#pl}" -lt 200 ]; then bad promo "planned_lead is ${#pl} characters; it names the unbuilt capabilities, not a word"
 else ok promo "the homepage names the unbuilt half of the model: '$pt'"; fi
+# what of the model is built and what is not is the claims matrix's to say, not the prose's: the
+# claims whose id carries the prefix manifesto.toml names are listed under that heading, each
+# under the status docs/CLAIMS.yaml declares for it. The prose once denied an intent view the
+# Cockpit had, and called refused a start that `plan start` lets through; a list rendered from
+# the matrix cannot drift from it that way. An empty selection is a prefix that matches
+# nothing, which would render an empty box and pass, so it is refused rather than read as clean.
+cp_="$(sed -n 's/^claim_prefix = "\(.*\)"$/\1/p' "$SITE/data/manifesto.toml")"
+want_dc="$(jq -r --arg p "$cp_" '.claims[] | select($p != "" and (.id | startswith($p))) | "\(.status) \(.id)"' \
+  "$SITE/data/generated/capabilities.json" | LC_ALL=C sort)"
+got_dc="$(grep -oE 'data-direction-(status|claim)="[^"]*"' "$PUB/index.html" \
+  | awk -F'"' '/^data-direction-status=/ { st = $2; next } { print st " " $2 }' | LC_ALL=C sort)"
+if [ -z "$cp_" ]; then bad promo "manifesto.toml names no claim_prefix; what of the model is built would be prose again"
+elif ! printf '%s\n' "$want_dc" | grep -q '^guaranteed '; then bad promo "no guaranteed claim in docs/CLAIMS.yaml carries the prefix '$cp_'; the built half would render empty"
+elif [ "$want_dc" != "$got_dc" ]; then
+  bad promo "the homepage does not list the '$cp_' claims under the status docs/CLAIMS.yaml declares: $(printf '%s\n' "$want_dc" | grep -vxF -f <(printf '%s\n' "$got_dc") | head -3 | tr '\n' ';')"
+else ok promo "the homepage lists every '$cp_' claim under its declared status ($(printf '%s\n' "$want_dc" | grep -c .) claim(s))"; fi
 # 3b. the product surface: the homepage and /features/ are projections of
 # site/data/registry/product.json, so every feature has its page, every page has its feature,
 # every mark on the matrix is the dataset's, and no feature, module, command, provider or
@@ -172,12 +188,91 @@ if [ -f "$PD" ]; then
   for f in $(jq -r '.providers[].bootstraps[]?.target, .providers[].client_config' "$PD" | grep -v '^null$' | LC_ALL=C sort -u); do
     hit="$(grep -l -F -- "$f" "$SITE"/templates/index.html "$SITE"/templates/feature.html \
              "$SITE"/templates/features-section.html "$SITE"/templates/features-matrix.html \
-             "$SITE"/templates/partials/feature-surfaces.html \
+             "$SITE"/templates/partials/feature-surfaces.html "$SITE"/templates/partials/feature-card.html \
              "$SITE"/data/nav.toml "$SITE"/data/marketing.toml 2>/dev/null || true)"
     [ -z "$hit" ] || { bad product "the provider file $f is named by hand in: $(printf '%s' "$hit" | tr '\n' ' ')"; prod_bad=1; }
   done
   [ "$prod_bad" = 0 ] && ok product "$(jq '.counts.features' "$PD") feature(s) over $(jq '.surfaces | length' "$PD") interface(s): every one has its page, no page is an orphan, every featured one is a chapter of the homepage, the matrix shows exactly the marks the model derived, and nothing is named by hand"
 else bad product "site/data/registry/product.json missing (regenerate: majordomus generate site)"; fi
+# 3b-d. feature exploration: /features/ is the product by domain, a feature is drawn by one
+# card, and a feature's page is placed under its domain. Every expectation is the dataset's:
+# a shown domain is stable and named by a stable feature, its members are the features that
+# name it (ADR 0104), and a public feature no shown domain holds is listed apart. So each
+# public feature is one card on /features/, in the group of its domain or in the group of
+# none; each card anywhere on the site names a public feature and links that feature's page;
+# a feature with a domain carries the domain in its breadcrumb; and the templates that draw
+# features select none by hand and print no number of their own.
+FI="$PUB/features/index.html"
+if [ -f "$PD" ] && [ -f "$FI" ]; then
+  fx_bad=0
+  # the cards of /features/, each with the group it sits in: the text after a group's marker
+  # and before the next is that group's
+  FX_ROWS="$(awk '{
+      line = $0
+      while (match(line, /data-features-domain="[^"]*"|data-feature-card="[^"]*"/)) {
+        tok = substr(line, RSTART, RLENGTH); line = substr(line, RSTART + RLENGTH)
+        split(tok, kv, "\""); if (tok ~ /^data-features-domain/) grp = kv[2]; else print kv[2] "\t" grp
+      }
+    }' "$FI")"
+  for id in $(jq -r '.features[] | select(.status != "draft") | .id' "$PD"); do
+    want="$(jq -r --arg i "$id" '[.domains[]? | select(.status == "stable" and (.features | length) > 0)
+      | select([.features[].id] | index($i)) | .id] | first // ""' "$PD")"
+    got="$(printf '%s\n' "$FX_ROWS" | awk -F'\t' -v i="$id" '$1 == i' )"
+    n="$(printf '%s' "$got" | grep -c . || true)"
+    [ "$n" = 1 ] || { bad features "/features/ draws $n card(s) for feature $id; the dataset makes it one"; fx_bad=1; continue; }
+    [ "$(printf '%s' "$got" | cut -f2)" = "$want" ] \
+      || { bad features "/features/ files $id under '$(printf '%s' "$got" | cut -f2)', the dataset under '${want:-no shown domain}'"; fx_bad=1; }
+  done
+  # every group on /features/ is a shown domain, in the dataset's order, or the group of none
+  want_groups="$(jq -r '[.domains[]? | select(.status == "stable" and (.features | length) > 0) | .id] | join(" ")' "$PD")"
+  got_groups="$(grep -o 'data-features-domain="[^"]*"' "$FI" | sed 's/.*="//; s/"$//' | grep . | tr '\n' ' ' | sed 's/ $//')"
+  [ "$got_groups" = "$want_groups" ] || { bad features "/features/ groups by '$got_groups'; the shown domains are '$want_groups'"; fx_bad=1; }
+  # every feature card on the site names a public feature, and its first link is that
+  # feature's page, which the build carries
+  for page in $(grep -l 'data-feature-card="' $pages 2>/dev/null); do
+    while IFS="$MJ_TAB" read -r id href; do
+      route="$(jq -r --arg i "$id" '.features[] | select(.id == $i and .status != "draft") | .route' "$PD")"
+      rel="${page#"$PUB"}"
+      [ -n "$route" ] || { bad features "$rel draws a card for '$id', which is no public feature"; fx_bad=1; continue; }
+      case "$href" in *"$PREFIX$route") ;; *) bad features "$rel: the card of $id links $href, not $PREFIX$route"; fx_bad=1; continue ;; esac
+      [ -f "$PUB${route}index.html" ] || { bad features "$rel: the card of $id links $route, which the build does not carry"; fx_bad=1; }
+    done <<EOF_CARDS
+$(awk '{
+    line = $0
+    while (line != "") {
+      if (cur == "" && match(line, /data-feature-card="[^"]*"/)) {
+        tok = substr(line, RSTART, RLENGTH); split(tok, kv, "\""); cur = kv[2]; line = substr(line, RSTART + RLENGTH); continue
+      }
+      if (cur != "" && match(line, /href="[^"]*"/)) {
+        tok = substr(line, RSTART, RLENGTH); split(tok, kv, "\""); print cur "\t" kv[2]; cur = ""; line = substr(line, RSTART + RLENGTH); continue
+      }
+      break
+    }
+  }' "$page")
+EOF_CARDS
+  done
+  # a feature with a domain is placed under it: its breadcrumb links the domain's page
+  for row in $(jq -r '.features[] | select(.status != "draft" and .domain_ref != null) | "\(.id)|\(.domain_ref.route)"' "$PD"); do
+    id="${row%%|*}"; droute="${row#*|}"
+    crumb="$(awk '/aria-label="Breadcrumb"/ { on = 1 } on { print } on && /<\/nav>/ { exit }' "$PUB/features/$id/index.html" 2>/dev/null)"
+    [ -n "$crumb" ] || { bad features "/features/$id/ has no breadcrumb"; fx_bad=1; continue; }
+    printf '%s' "$crumb" | grep -qF "$PREFIX$droute\"" \
+      || { bad features "/features/$id/: the breadcrumb does not link its domain $droute"; fx_bad=1; }
+  done
+  # the templates that draw features choose none by hand and print no number of their own:
+  # a feature or domain id compared as a literal would be a second inventory, and a number
+  # written into their markup would be a count nobody derived
+  FX_TEMPLATES="$SITE/templates/features-section.html $SITE/templates/feature.html $SITE/templates/partials/feature-card.html $SITE/templates/partials/feature-surfaces.html"
+  for id in $(jq -r '.features[].id, (.domains[]?.id)' "$PD" | LC_ALL=C sort -u); do
+    # shellcheck disable=SC2086
+    hit="$(grep -lE "(==|!=|in) *\\[?[\"']${id}[\"']" $FX_TEMPLATES 2>/dev/null || true)"
+    [ -z "$hit" ] || { bad features "'$id' is selected by hand in: $(printf '%s' "$hit" | sed "s#^$ROOT/##" | tr '\n' ' ')"; fx_bad=1; }
+  done
+  # shellcheck disable=SC2086
+  hit="$(grep -nE '>[[:space:]]*[0-9]+[[:space:]]*<' $FX_TEMPLATES 2>/dev/null || true)"
+  [ -z "$hit" ] || { bad features "a number is written into a feature template: $(printf '%s' "$hit" | head -3 | tr '\n' ' ')"; fx_bad=1; }
+  [ "$fx_bad" = 0 ] && ok features "every public feature is one card on /features/, under its domain or under none; every card names a public feature and links its page; a feature with a domain is placed under it; no feature template selects or counts by hand"
+fi
 # 3b. the terminal is a replay, not a mockup. Every panel the homepage shows is a run
 # site/data/generated/terminal.json recorded, and every run the dataset holds is on the page:
 # both directions, because a page that drops a refusal and a dataset that gains one unnoticed
@@ -190,8 +285,11 @@ else bad product "site/data/registry/product.json missing (regenerate: majordomu
 TD="$SITE/data/generated/terminal.json"
 if [ -f "$TD" ]; then
   term_bad=0
-  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one
-  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
+  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one.
+  # The text is read with its tags removed: the terminal draws the prompt outside the command
+  # it copies (partials/terminal-run.html), so "$ <command>" is what a reader sees, not a
+  # byte sequence of the markup.
+  HOME_HTML="$(sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
   n=0
   while IFS="$MJ_TAB" read -r cmd first; do
     n=$((n + 1))
@@ -369,6 +467,34 @@ if [ -f "$design" ]; then
   grep -q -- "--mj-design:\"$fp\"" "$SITE/static/app.css" && ok design "app.css carries --mj-design $fp" || bad design "app.css does not carry --mj-design \"$fp\"; rebuild the CSS"
 else
   bad design "site/data/registry/design.json missing; run majordomus generate design"
+fi
+# 7c. one status vocabulary per axis. A badge drawn by partials/status-badge.html names its
+# kind: a claim's declared status is one docs/CLAIMS.yaml declares, a feature's one feature/v1
+# allows, and a proof badge says exactly the state `majordomus evidence show` derived for its
+# claim, or unknown where none was. The challenge states how often its run refused only as the
+# recorded run counts it. scripts/lib/status-vocabulary.awk judges both; each vocabulary is
+# read from its declaration here, and none is listed.
+SV_AWK="$ROOT/scripts/lib/status-vocabulary.awk"; SV_VOCAB="$(mktemp "${TMPDIR:-/tmp}/mj.sv.XXXXXX")"
+{ jq -r '.status_order[] | "claim\t\(.)"' "$SITE/data/generated/capabilities.json"
+  jq -r '.properties.status.enum[] | "feature\t\(.)"' "$ROOT/share/schemas/majordomus/feature/feature.v1.schema.json"
+  jq -r 'if .evidence.available then .evidence.claims | to_entries[] | "proof\t\(.key)\t\(.value.state)" else empty end' "$SITE/data/registry/product.json"
+} > "$SV_VOCAB" || bad vocabulary "a status vocabulary could not be read from its declaration"
+sv_out="$(awk -v mode=badges -v vocab="$SV_VOCAB" -f "$SV_AWK" $pages)"; rm -f "$SV_VOCAB"
+# findings print as this file's own lines and are counted here, not in a pipeline's subshell
+sv_report() { # <check> <awk output>: prints the findings, returns how many there were
+  printf '%s\n' "$2" | awk -F'\t' -v c="$1" -v pub="$PUB" '$1 == "FAIL" { f = $2; sub("^" pub, "", f); printf "FAIL %-12s %s: %s\n", c, f, $3; n++ } END { exit n > 255 ? 255 : n }'
+}
+sv_n="$(printf '%s\n' "$sv_out" | awk -F'\t' '$1 == "COUNT" { print $2 }')"
+sv_bad=0; sv_report vocabulary "$sv_out" || sv_bad=$?
+if [ "$sv_bad" -gt 0 ]; then fails=$((fails + sv_bad))
+elif [ "${sv_n:-0}" -gt 0 ]; then ok vocabulary "$sv_n status badge(s), each in the vocabulary of its kind: declared claim, feature, recorded evidence"
+else bad vocabulary "no page renders a status badge of a declared kind; a check over nothing has not passed"; fi
+if [ -f "$PUB/challenge/index.html" ] && [ -f "$SITE/data/generated/challenge.json" ]; then
+  sv_want="$(jq -r '.counts.refusals' "$SITE/data/generated/challenge.json")"
+  sv_out="$(awk -v mode=refusals -v want="$sv_want" -f "$SV_AWK" "$PUB/challenge/index.html")"
+  sv_bad=0; sv_report refusals "$sv_out" || sv_bad=$?
+  if [ "$sv_bad" -gt 0 ]; then fails=$((fails + sv_bad))
+  else ok refusals "/challenge/ states no refusal count but the recorded run's ($sv_want)"; fi
 fi
 # 8. no external runtime dependency: every script/stylesheet is served from this site's own origin
 BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"

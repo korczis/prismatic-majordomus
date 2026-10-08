@@ -1,11 +1,171 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.17.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.14.0**
+Current version: **0.17.0**
+
+## v0.16.0 — 2026-10-08
+
+### Added
+
+- **serve**: the interface a local server binds is the machine's to name (`c39c30cb7`)
+- **evidence**: a recording carries what its run measured, as a typed run (`0e0e9443e`)
+- **evidence**: a crate binary that ran nothing is not a pass (`62f9ec556`)
+
+### Fixed
+
+- **batch**: the findings of the first run that are the batch's own (`90b6dff01`)
+- **docs**: the heading a link names has one anchor in every renderer (`4f5baa60c`)
+- **test**: case 991 judges a terminated command after the one that follows it (`a390e0235`)
+- **live**: a request that arrives during a rebuild waits for it (`e3e122211`)
+- **test**: case 413 records the reports its run stamped (`b2f66bc5b`)
+- **evidence**: a run's records and its excluded outputs are put in canonical order (`2f12b7501`)
+- **finish**: the registry declares exit 13, a note that could not be recorded (`bcaef20f7`)
+- **finish**: a note is read once, and kept before the outcome says completed (`1b404b69c`)
+- **lint**: a reporter that sets a flag is a reporter (`15f95faf9`)
+
+### Changed
+
+- **evidence**: a coverage summary is read without a debug-only assertion (`c0a296d0c`)
+
+### Documentation
+
+- **serve**: the host resolution's public items carry an example (`dec928066`)
+- **evidence**: the stamp and record pair says why no documentation check runs it (`67daf5123`)
+- **evidence**: a run's totals say what they count (`9687d8b0f`)
+
+### Tests
+
+- **serve**: every arm of the host resolution runs under a test (`29865face`)
+- **evidence**: the newest failing recording is the one a stale judgement names (`3265284a1`)
+- **evidence**: every line the typed run changed is reached by a test (`5a96f3a6e`)
+- **evidence**: the text recording runs through the command and reports a failed write (`df28b9543`)
+- **evidence**: every line the crate adapter changed is reached by a test (`d41005bbb`)
+
+### Housekeeping
+
+- **derive**: the batch's derived artifacts follow the case 991 fix (`a27f5b7d6`)
+- **release**: record v0.15.0 and the metadata it publishes (`f062a71cd`)
+- **derive**: the projections follow the merge with master (`0594c0097`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.16.0-aarch64-apple-darwin.tar.gz (`b92c3af90eed`)
+- `macos-x86_64` — majordomus-v0.16.0-x86_64-apple-darwin.tar.gz (`9ee53da26715`)
+- `linux-x86_64-gnu` — majordomus-v0.16.0-x86_64-unknown-linux-gnu.tar.gz (`f784ddaf5c29`)
+- `linux-x86_64-musl` — majordomus-v0.16.0-x86_64-unknown-linux-musl.tar.gz (`62d6248ebde7`)
+- `linux-aarch64-gnu` — majordomus-v0.16.0-aarch64-unknown-linux-gnu.tar.gz (`2a2973a878f4`)
+- `linux-aarch64-musl` — majordomus-v0.16.0-aarch64-unknown-linux-musl.tar.gz (`aa85553180e1`)
+
+
+## v0.15.0 — 2026-10-07
+
+### Added
+
+- **mesh**: the owner's MacBook Pro is a rendezvous hub on the LAN (`5e81feda0`)
+- **mesh**: the owner's second MacBook Pro and iMac are trusted (`45b8d5df8`)
+- **intent**: derive an intent's verdict from its evidence alone (`ed66fee5e`)
+- **site**: a feature page is placed under its domain and told in order (`55b52bf3f`)
+- **site**: /features/ is the product by domain (`a03cfa6bc`)
+- **site**: one feature card, drawn from a feature or a domain member (`b17efb1ad`)
+- **site**: every badge component is drawn by the one status primitive (`3a538752c`)
+- **site**: the challenge tells the story of its run before its output (`50997beaa`)
+- **site**: one terminal primitive for the concise story and the full evidence (`16e1d5a92`)
+- **site**: one status primitive, and the chain from a claim to its proof (`27445eaf8`)
+
+### Fixed
+
+- **tmp**: only a name directly in TMPDIR is moved, and a dead root is swept (`f9b6e00a1`)
+- **tmp**: a command leaves nothing behind in TMPDIR (`744c7d552`)
+- **update**: the renderer's scratch directory is named as the temp path it is (`f7b9d6d4c`)
+- **site**: both committed site graphs are taken through one refusal, which a test reaches (`4e7d9f49a`)
+- **economics**: the context suite is re-recorded at B3's tree (`2488bc630`)
+- **graph**: the composed graph read as data is whole; a committed graph is never a prefix (`9f98133aa`)
+- **integration**: a drain says why it stopped once (`bdabd87db`)
+- **test**: case 545 waits for the re-read it is promised; multicast binds the port it uses (`7e78012d2`)
+- **intent**: case 895 sorts pinned, and the satisfaction rule names no absent path (`f1880423b`)
+- **test**: case 884's feature and domain declare what their schemas require (`4153efdd4`)
+- **doctor**: a stale bootstrap warns; the rule names its enforcement (`e2a9a7b43`)
+- **doctor**: a generated bootstrap names only rules in force (`48869b3ca`)
+- **site**: the copy-button spec reaches a button inside a collapsed disclosure (`924ad830c`)
+- **generate**: the registry counts the web surfaces every checkout has (`e6392cc17`)
+- **intent**: a criterion is met only by evidence current at the judged revision (`88223bb02`)
+- **intent**: preflight follows what an issue serves and answers serves, maintenance or refused (`9d3449a35`)
+- **github**: --apply refuses an adapter loaded from a tree that is not the trunk (`64cd0ebef`)
+- **release**: prose names no version label, and the limitations page says what is true (`82d3b7c67`)
+- **github**: --apply projects only the clean trunk, one at a time, and a refused write fails it (`c97f92cf4`)
+- **site-check**: the feature-id grep pattern braces its variable (SC1087) (`b60361833`)
+- **site**: a feature's status and its claims' proof use the one status badge (`7dec31466`)
+- **knowledge**: a domain is a kind the graph knows, and a feature is part of its domain (`c7484f446`)
+- **knowledge**: every kind the skeleton declares is a kind the graph knows (`435392297`)
+- **site**: a status badge contains its own screen-reader label (`39d3625f5`)
+- **site**: a copy button says when the clipboard refuses, and a run's exit reads as a number (`eb0a11e66`)
+- **site**: the features hero gives its three ways in equal weight (`21331aef4`)
+- **site**: a feature's own headings read as headings and lead its outline (`3b91599f6`)
+- **site**: the interfaces table keeps its caption inside its scroller (`7fa8d2240`)
+- **site**: a recorded run wraps inside its block instead of scrolling sideways (`c3a04f441`)
+- **yaml**: a doubled quote inside single quotes is one quote (`9030dc479`)
+
+### Changed
+
+- **site**: a graph artifact is one map, with no branch a graph cannot take (`19c183c6a`)
+- **site**: both site graphs are one artifact helper, with no early return a test cannot reach (`92923fac5`)
+- **intent**: the plan-records filter takes no branch a comparison never reaches (`dc06d3961`)
+- **intent**: drop the unreachable unresolved-milestone branch in drift (`c65e0012f`)
+
+### Documentation
+
+- **readme**: restore the token-measurement limitation #785 wrote, and derive the batch on B3 (`a3c97b048`)
+- **graph**: derive_whole links derive() unambiguously (`d44649947`)
+- **integration**: the stage-1 transcript is marked as a run against the real forge (`2260311ef`)
+- **integration**: rollout stage 1 is recorded, taken with the released 0.14.0 (`e5ff8962d`)
+- **mesh**: MulticastProvider::port carries its example (`79ecdbb94`)
+- **intent**: the preflight claim says what preflight does: serves, maintenance or a cause (`7dcb7b50f`)
+- **rules**: the intent rules list every drift code the engine emits (`834e75bc2`)
+- **intent**: completion never decides whether an intent is satisfied (`d8580ff69`)
+- **intent**: the preflight says it is at least as strict as validate, not its twin (`307387374`)
+- **intent**: the preflight claim says it is a question, and the new prose is wrapped (`a737898a7`)
+- **intent**: the homepage lists what of the intent model is built from the claims matrix (`2bb84d39f`)
+- the declared status is "rejected", and economics measures what it measures (`bdd0fd6f5`)
+
+### Tests
+
+- **integration**: a drain's JSON report is driven; its write takes no arm of its own (`b30dc76f9`)
+- **intent**: every reachable path of the preflight is driven; unreachable arms are folded (`7ac448873`)
+- **intent**: case 893 drives the preflight's three verdicts through a fresh init (`fe5e8be96`)
+- **release**: every changed branch of the label check is covered by a unit test (`f76abc08f`)
+- **site**: case 12 asserts the matrix's two defined evidence columns (`6b8611e51`)
+- **site**: a feature added under a domain is drawn there, and removed, is gone (`3370cd526`)
+- **site**: site-check holds the feature index and pages to the dataset (`b97de7c7c`)
+- **site**: a status speaks the vocabulary of its kind, and a refusal count is the run's (`b9559c211`)
+
+### Housekeeping
+
+- **plan**: close the four issues master already holds, and the episodes nobody closed (`21704692c`)
+- **release**: the intent batch is 0.15.0, the minor its public contract requires (`05ed532db`)
+- **derive**: regenerate after refreshing the intent batch on master 5908234ce0 (`f1dafe906`)
+- **derive**: regenerate B3 on master 5908234ce0 (v0.14.0 recorded) (`f6eeac612`)
+- **release**: record v0.14.0 and the metadata it publishes (`e772b9e83`)
+- **derive**: regenerate B3 on master 815b96b5a1 and the flakes fix (`340955ce5`)
+- **derive**: regenerate after composing the intent batch (`96f214782`)
+- **release**: release 0.13.2 with B3 (`3ea3c8bc1`)
+- **derive**: the registry counts the surfaces a clean checkout has (`00e71aff3`)
+- **derive**: the projections follow the preflight rebased onto master (`985053190`)
+- **derive**: the intent claims' projections are current on master 2a4fe055b8 (`b7ec513ae`)
+- **ci**: case 810's duration is measured, not defaulted (`8f7ec3cc8`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.15.0-aarch64-apple-darwin.tar.gz (`744aee1f6fc9`)
+- `macos-x86_64` — majordomus-v0.15.0-x86_64-apple-darwin.tar.gz (`e617e74ae909`)
+- `linux-x86_64-gnu` — majordomus-v0.15.0-x86_64-unknown-linux-gnu.tar.gz (`17ea43108693`)
+- `linux-x86_64-musl` — majordomus-v0.15.0-x86_64-unknown-linux-musl.tar.gz (`a9da8a5d941f`)
+- `linux-aarch64-gnu` — majordomus-v0.15.0-aarch64-unknown-linux-gnu.tar.gz (`3218abe60a5e`)
+- `linux-aarch64-musl` — majordomus-v0.15.0-aarch64-unknown-linux-musl.tar.gz (`ed6d4e068aa2`)
+
 
 ## v0.14.0 — 2026-10-06
 

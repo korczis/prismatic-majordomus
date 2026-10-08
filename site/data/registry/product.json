@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.14.0"
+    "version": "0.17.0"
   },
-  "fingerprint": "3f77048f9412cd812fcc35fa570255de18379e42e45b29cae6ca1ef1e947b12d",
+  "fingerprint": "430c1429619adce9f50681a2f41c308dad9954e5098d69fc05813eb69836651d",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 51,
+    "modules": 53,
     "modules_covered": 42,
     "commands": 30,
     "commands_covered": 30,
@@ -629,7 +629,7 @@
         "use_cases": 17,
         "rules": 19,
         "enforced_rules": 16,
-        "capabilities": 21,
+        "capabilities": 28,
         "moments": 32
       },
       "evidence": {
@@ -760,8 +760,8 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 8,
-          "tested": 7,
+          "claims": 15,
+          "tested": 14,
           "use_cases": 3
         }
       ],
@@ -924,6 +924,48 @@
           "claim": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
           "status": "guaranteed",
           "test": "test/cases/45_github_projection.sh"
+        },
+        {
+          "id": "intent-cockpit-pages",
+          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+        },
+        {
+          "id": "intent-criteria-covered",
+          "claim": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-links-resolve",
+          "claim": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        },
+        {
+          "id": "intent-plan-reviewed",
+          "claim": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-preflight-names-the-intent",
+          "claim": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent.rs"
+        },
+        {
+          "id": "intent-realization-held-to-evidence",
+          "claim": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+          "status": "guaranteed",
+          "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+        },
+        {
+          "id": "intent-stage-derived",
+          "claim": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
         },
         {
           "id": "mcp-peers",
@@ -1115,8 +1157,8 @@
       ],
       "counts": {
         "features": 6,
-        "claims": 34,
-        "tested": 33,
+        "claims": 41,
+        "tested": 40,
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
@@ -1125,7 +1167,7 @@
       },
       "evidence": {
         "claims": {
-          "guaranteed": 33,
+          "guaranteed": 40,
           "rejected": 1
         },
         "modules": {}
@@ -1727,8 +1769,8 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 8,
-          "tested": 8,
+          "claims": 12,
+          "tested": 12,
           "use_cases": 0
         },
         {
@@ -1910,10 +1952,22 @@
           "test": "test/cases/33_event_registry.sh"
         },
         {
+          "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+          "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+          "status": "guaranteed",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        },
+        {
           "id": "evidence-a-failure-outranks-an-absence",
           "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
           "status": "guaranteed",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-a-recording-is-a-typed-run",
+          "claim": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         },
         {
           "id": "evidence-a-skip-is-not-run",
@@ -1934,6 +1988,12 @@
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
         },
         {
+          "id": "evidence-local-recording-stays-local",
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        },
+        {
           "id": "evidence-navigates-both-ways",
           "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
           "status": "guaranteed",
@@ -1950,6 +2010,12 @@
           "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
           "status": "guaranteed",
           "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "evidence-tree-is-measured-by-the-run",
+          "claim": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         },
         {
           "id": "evidence-unsupported-guarantee-is-reported",
@@ -2075,17 +2141,17 @@
       ],
       "counts": {
         "features": 5,
-        "claims": 30,
-        "tested": 26,
+        "claims": 34,
+        "tested": 30,
         "use_cases": 4,
         "rules": 13,
         "enforced_rules": 10,
-        "capabilities": 9,
+        "capabilities": 10,
         "moments": 19
       },
       "evidence": {
         "claims": {
-          "guaranteed": 26,
+          "guaranteed": 30,
           "planned": 4
         },
         "modules": {}
@@ -3384,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 222
+          "objects": 237
         }
       ],
       "rule_refs": [
@@ -3657,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 293,
+        "mcp_resources": 308,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 286,
+        "objects": 301,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -6282,6 +6348,51 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
           "capabilities": [
             {
+              "id": "continuity.device",
+              "title": "This device's identity, and its label",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_device",
+              "route": "POST /api/v1/continuity/device",
+              "cli": "majordomus continuity device"
+            },
+            {
+              "id": "continuity.plan",
+              "title": "Whether and how a published handover can be resumed here",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_plan",
+              "route": "GET /api/v1/continuity/plan",
+              "cli": "majordomus continuity plan"
+            },
+            {
+              "id": "continuity.publish",
+              "title": "Publish this checkout's newest handover for another machine",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_publish",
+              "route": "POST /api/v1/continuity/publish",
+              "cli": "majordomus continuity publish"
+            },
+            {
+              "id": "continuity.records",
+              "title": "Every published handover the local store admits",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_records",
+              "route": "GET /api/v1/continuity/records",
+              "cli": "majordomus continuity records"
+            },
+            {
+              "id": "continuity.resume",
+              "title": "Resume a handover another machine published",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_resume",
+              "route": "POST /api/v1/continuity/resume",
+              "cli": "majordomus continuity resume"
+            },
+            {
               "id": "continuity.state",
               "title": "What the lifecycle is holding",
               "kind": "query",
@@ -6289,6 +6400,24 @@
               "tool": "majordomus_continuity",
               "resource": "majordomus://continuity",
               "route": "GET /api/v1/continuity"
+            },
+            {
+              "id": "continuity.status",
+              "title": "Where this device stands in the work published from every device",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_status",
+              "route": "GET /api/v1/continuity/status",
+              "cli": "majordomus continuity status"
+            },
+            {
+              "id": "continuity.sync",
+              "title": "Exchange published handovers with a git remote",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_sync",
+              "route": "POST /api/v1/continuity/sync",
+              "cli": "majordomus continuity sync"
             }
           ]
         },
@@ -6435,7 +6564,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 22
+          "objects": 84
         },
         {
           "name": "prompt",
@@ -6787,13 +6916,13 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
-        "mcp_resources": 31,
-        "http_routes": 9,
-        "cli_paths": 0,
+        "capabilities": 16,
+        "mcp_tools": 16,
+        "mcp_resources": 93,
+        "http_routes": 16,
+        "cli_paths": 7,
         "commands": 7,
-        "objects": 26,
+        "objects": 88,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7011,7 +7140,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 80
+          "objects": 83
         },
         {
           "name": "knowledge",
@@ -7019,7 +7148,7 @@
         },
         {
           "name": "document",
-          "objects": 310
+          "objects": 327
         }
       ],
       "rule_refs": [
@@ -7292,11 +7421,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 394,
+        "mcp_resources": 414,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 391,
+        "objects": 411,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7512,7 +7641,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 159
+          "objects": 163
         }
       ],
       "rule_refs": [
@@ -7888,11 +8017,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 161,
+        "mcp_resources": 165,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 159,
+        "objects": 163,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9413,7 +9542,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 22
+          "objects": 84
         }
       ],
       "rule_refs": [
@@ -9646,11 +9775,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 22,
+        "mcp_resources": 84,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 22,
+        "objects": 84,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -9871,7 +10000,7 @@
         },
         {
           "name": "release-record",
-          "objects": 13
+          "objects": 15
         }
       ],
       "rule_refs": [
@@ -10010,11 +10139,11 @@
       "counts": {
         "capabilities": 8,
         "mcp_tools": 8,
-        "mcp_resources": 15,
+        "mcp_resources": 17,
         "http_routes": 8,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 14,
+        "objects": 16,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -10085,7 +10214,14 @@
         "evidence-gates-done",
         "roadmap-derived",
         "github-projection",
-        "task-dependencies"
+        "task-dependencies",
+        "intent-stage-derived",
+        "intent-links-resolve",
+        "intent-criteria-covered",
+        "intent-plan-reviewed",
+        "intent-realization-held-to-evidence",
+        "intent-preflight-names-the-intent",
+        "intent-cockpit-pages"
       ],
       "use_cases": [
         "plan-the-work-as-data",
@@ -10261,7 +10397,7 @@
         {
           "id": "intents",
           "title": "Intent",
-          "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
+          "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
           "capabilities": [
@@ -10276,7 +10412,7 @@
             },
             {
               "id": "intents.list",
-              "title": "Every intent, with its derived stage",
+              "title": "Every intent, with its derived stage and verdict",
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_intents",
@@ -10286,7 +10422,7 @@
             },
             {
               "id": "intents.preflight",
-              "title": "Which intent a piece of work serves",
+              "title": "Which intent a piece of work serves, or why it may not proceed",
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_intent_preflight",
@@ -10447,6 +10583,48 @@
           "id": "task-dependencies",
           "claim": "A task record has no dependencies; sequencing between sessions is not represented",
           "status": "rejected"
+        },
+        {
+          "id": "intent-stage-derived",
+          "claim": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        },
+        {
+          "id": "intent-links-resolve",
+          "claim": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        },
+        {
+          "id": "intent-criteria-covered",
+          "claim": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-plan-reviewed",
+          "claim": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-realization-held-to-evidence",
+          "claim": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+          "status": "guaranteed",
+          "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+        },
+        {
+          "id": "intent-preflight-names-the-intent",
+          "claim": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent.rs"
+        },
+        {
+          "id": "intent-cockpit-pages",
+          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent_realization.rs"
         }
       ],
       "use_case_refs": [
@@ -10525,13 +10703,13 @@
         "enforced_rules": 3,
         "docs": 2,
         "adrs": 0,
-        "claims": 8,
+        "claims": 15,
         "use_cases": 3,
         "moments": 6
       },
       "evidence": {
         "claims": {
-          "guaranteed": 7,
+          "guaranteed": 14,
           "rejected": 1
         },
         "modules": {
@@ -11329,7 +11507,7 @@
       "kind_refs": [
         {
           "name": "skill",
-          "objects": 6
+          "objects": 7
         }
       ],
       "rule_refs": [
@@ -11390,11 +11568,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 6,
+        "mcp_resources": 7,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 6,
+        "objects": 7,
         "rules": 1,
         "enforced_rules": 1,
         "docs": 1,
@@ -11681,7 +11859,11 @@
         "evidence-unsupported-guarantee-is-reported",
         "evidence-judged-at-the-presented-revision",
         "evidence-a-skip-is-not-run",
-        "evidence-a-failure-outranks-an-absence"
+        "evidence-a-failure-outranks-an-absence",
+        "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "evidence-tree-is-measured-by-the-run",
+        "evidence-a-recording-is-a-typed-run",
+        "evidence-local-recording-stays-local"
       ],
       "use_cases": [],
       "cockpit": [],
@@ -11740,6 +11922,13 @@
               "resource": "majordomus://evidence",
               "route": "GET /api/v1/evidence",
               "cli": "majordomus evidence show"
+            },
+            {
+              "id": "evidence.stamp",
+              "title": "Measure the tree a run left behind",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus evidence stamp"
             },
             {
               "id": "evidence.test",
@@ -11825,6 +12014,30 @@
           "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
           "status": "guaranteed",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+          "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+          "status": "guaranteed",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        },
+        {
+          "id": "evidence-tree-is-measured-by-the-run",
+          "claim": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        },
+        {
+          "id": "evidence-a-recording-is-a-typed-run",
+          "claim": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        },
+        {
+          "id": "evidence-local-recording-stays-local",
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "status": "guaranteed",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       ],
       "use_case_refs": [],
@@ -11835,24 +12048,24 @@
         "economics"
       ],
       "counts": {
-        "capabilities": 4,
+        "capabilities": 5,
         "mcp_tools": 3,
         "mcp_resources": 1,
         "http_routes": 3,
-        "cli_paths": 4,
+        "cli_paths": 5,
         "commands": 1,
         "objects": 0,
         "rules": 0,
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 8,
+        "claims": 12,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 8
+          "guaranteed": 12
         },
         "modules": {
           "behaviorally_verified": 1
@@ -13287,8 +13500,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 7,
-        "claims": 8
+        "proven": 14,
+        "claims": 15
       },
       {
         "id": "context",
@@ -13393,8 +13606,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 8,
-        "claims": 8
+        "proven": 12,
+        "claims": 12
       },
       {
         "id": "benchmarks",
@@ -13669,6 +13882,11 @@
         ]
       },
       {
+        "id": "mcp",
+        "title": "MCP projection",
+        "features": []
+      },
+      {
         "id": "mesh",
         "title": "Mesh",
         "features": [
@@ -13695,6 +13913,11 @@
         "features": [
           "finish-contract"
         ]
+      },
+      {
+        "id": "pack",
+        "title": "Source pack",
+        "features": []
       },
       {
         "id": "peers",
@@ -14057,7 +14280,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (80)",
+        "title": "adr (83)",
         "features": [
           "knowledge"
         ]
@@ -14085,7 +14308,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (222)",
+        "title": "claim (237)",
         "features": [
           "declare-once"
         ]
@@ -14205,14 +14428,14 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (13)",
+        "title": "release-record (15)",
         "features": [
           "install"
         ]
       },
       {
         "id": "rule",
-        "title": "rule (159)",
+        "title": "rule (163)",
         "features": [
           "doctrine"
         ]
@@ -14226,7 +14449,7 @@
       },
       {
         "id": "session",
-        "title": "session (22)",
+        "title": "session (84)",
         "features": [
           "continuity",
           "provenance"
@@ -14234,7 +14457,7 @@
       },
       {
         "id": "skill",
-        "title": "skill (6)",
+        "title": "skill (7)",
         "features": [
           "skills"
         ]
@@ -15065,6 +15288,11 @@
       "route": "/cockpit/intents"
     },
     {
+      "id": "plan",
+      "title": "Plan",
+      "route": "/cockpit/plan"
+    },
+    {
       "id": "worktrees",
       "title": "Worktrees",
       "route": "/cockpit/worktrees"
@@ -15128,32 +15356,37 @@
       "id": "api",
       "title": "API",
       "route": "/cockpit/api"
+    },
+    {
+      "id": "mcp",
+      "title": "MCP",
+      "route": "/cockpit/mcp"
     }
   ],
   "telemetry": {
-    "capabilities": 1913,
-    "builtin": 172,
-    "declarative": 1741,
-    "modules": 51,
-    "mcp_tools": 166,
-    "mcp_resources": 1794,
-    "http_routes": 170,
-    "cli_commands": 178,
+    "capabilities": 2056,
+    "builtin": 183,
+    "declarative": 1873,
+    "modules": 53,
+    "mcp_tools": 176,
+    "mcp_resources": 1927,
+    "http_routes": 180,
+    "cli_commands": 189,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1741,
+    "objects": 1873,
     "by_kind": {
-      "adr": 80,
+      "adr": 83,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 222,
+      "claim": 237,
       "command": 31,
       "context": 36,
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 310,
+      "document": 327,
       "domain": 6,
       "feature": 27,
       "gap": 1,
@@ -15167,13 +15400,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 13,
-      "rule": 159,
+      "release-record": 15,
+      "rule": 163,
       "scope": 1,
-      "session": 22,
-      "skill": 6,
+      "session": 84,
+      "skill": 7,
       "taxonomy": 10,
-      "test": 360,
+      "test": 388,
       "use-case": 48,
       "workspace": 1
     },
@@ -15191,7 +15424,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 206,
+    "declared": 217,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -15566,7 +15799,19 @@
         "label": "not run",
         "supported": false
       },
+      "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "evidence-a-failure-outranks-an-absence": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-a-recording-is-a-typed-run": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -15591,6 +15836,12 @@
         "supported": false
       },
       "evidence-judged-at-the-presented-revision": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-local-recording-stays-local": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -15627,6 +15878,12 @@
         "supported": false
       },
       "evidence-subjects-are-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-tree-is-measured-by-the-run": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -15738,6 +15995,72 @@
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
+        "supported": false
+      },
+      "intent-closes-github-milestones": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-cockpit-pages": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-command-deployment-evidence": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-criteria-covered": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-in-session-context": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-links-resolve": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-plan-reviewed": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-preflight-names-the-intent": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-realization-held-to-evidence": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-refused-at-plan-start": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-stage-derived": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "interfaces-are-projections": {

@@ -1,9 +1,9 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `intents` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.17.0 -->
 # Module `intents` — Intent
 
-What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
+What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
 
 Stability: behaviorally_verified. Capabilities: 5.
 
@@ -27,9 +27,9 @@ Input: none.
 
 Output: `IntentCoverage`.
 
-## `intents.list` — Every intent, with its derived stage
+## `intents.list` — Every intent, with its derived stage and verdict
 
-Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.
+Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, the stage those two derive — declared, planned, executing, verifying or satisfied, or cancelled or superseded when the record says so — and the verdict the criteria alone derive (ADR 0107): satisfied when every criterion is met, unsatisfied when a test or claim criterion is not, unknown when only command or deployment criteria are unmet or none is declared, with the criteria holding it back.
 
 | | |
 |---|---|
@@ -48,9 +48,9 @@ Input: none.
 
 Output: `IntentList`.
 
-## `intents.preflight` — Which intent a piece of work serves
+## `intents.preflight` — Which intent a piece of work serves, or why it may not proceed
 
-Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.
+Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.
 
 | | |
 |---|---|
@@ -73,7 +73,7 @@ Output: `IntentPreflight`.
 
 ## `intents.record` — One intent, with everything derived about it
 
-One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`.
+One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`.
 
 | | |
 |---|---|

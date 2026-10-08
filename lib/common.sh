@@ -445,18 +445,38 @@ mj_phase_end() {
 # mj_count <name>: one unit of a kind of work worth counting (a parse, a git call)
 mj_count() { mj_timing_on || return 0; printf 'count\t%s\t1\n' "$1" >> "$MJ_TIMING_FILE"; }
 # The report: phases ranked by time, counters summed, on stderr so the command's own
-# output is untouched, in the same shape whatever the command was.
+# output is untouched, in the same shape whatever the command was. Under --json it is the
+# same data as one line of JSON (docs/SCHEMAS.md, "The timing report"), so a check can
+# compare one run's breakdown with another's; the text form is for a person reading it.
+# Both forms are read from the one aggregation below, in the one order, so neither can
+# carry a phase or a counter the other lacks.
 mj_timing_report() {
   mj_timing_on || return 0
   [ -n "$MJ_TIMING_FILE" ] && [ -f "$MJ_TIMING_FILE" ] || return 0
-  local tab; tab="$(printf '\t')"
-  {
-    printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$(( $(mj_ms) - MJ_TIMING_T0 ))"
+  local tab total rows
+  tab="$(printf '\t')"
+  total="$(( $(mj_ms) - MJ_TIMING_T0 ))"
+  # kind <TAB> amount <TAB> calls <TAB> name: phases by time, then counters by count
+  rows="$(
     awk -F'\t' '$1=="phase" { t[$2]+=$3; n[$2]++ } END { for (k in t) printf "phase\t%d\t%d\t%s\n", t[k], n[k], k }' "$MJ_TIMING_FILE" \
-      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
-    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
-      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
-  } >&2
+      | LC_ALL=C sort -t "$tab" -k2,2nr -k4,4
+    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t0\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
+      | LC_ALL=C sort -t "$tab" -k2,2nr -k4,4
+  )"
+  if [ "${MJ_JSON:-0}" = 1 ]; then
+    printf '%s\n' "$rows" | awk -F'\t' -v clock="$MJ_TIMING_CLOCK" -v total="$total" '
+      function q(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, "\\t", s); return "\"" s "\"" }
+      $1 == "phase" { p = p (p == "" ? "" : ",") "{\"name\":" q($4) ",\"ms\":" $2 ",\"calls\":" $3 "}" }
+      $1 == "count" { c = c (c == "" ? "" : ",") "{\"name\":" q($4) ",\"count\":" $2 "}" }
+      END { printf "{\"timing\":{\"clock\":%s,\"total_ms\":%d,\"phases\":[%s],\"counters\":[%s]}}\n", q(clock), total, p, c }' >&2
+  else
+    {
+      printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$total"
+      printf '%s\n' "$rows" | awk -F'\t' '
+        $1 == "phase" { printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }
+        $1 == "count" { printf "count  %8d     %s\n", $2, $4 }'
+    } >&2
+  fi
   rm -f "$MJ_TIMING_FILE"
 }
 # The same instant as mj_now, in the form a record's filename uses. It reads the same
@@ -547,8 +567,10 @@ mj_epoch() {
 #   one that validates in five.
 MJ_FLATTEN_AWK='
   function trim(s){ sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
+  # inside single quotes YAML has one escape, a doubled quote for one quote
   function unq(v){
-    if (v ~ /^".*"$/ || v ~ /^\047.*\047$/) return substr(v,2,length(v)-2)
+    if (v ~ /^\047.*\047$/) { v=substr(v,2,length(v)-2); gsub(/\047\047/,"\047",v); return v }
+    if (v ~ /^".*"$/) return substr(v,2,length(v)-2)
     sub(/[ \t]+#.*$/,"",v); return trim(v)
   }
   function join(a,b){ return (a=="" ? b : a "." b) }
@@ -1031,9 +1053,73 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
+# ---------------------------------------------------------------- temporary files
+# Every temporary file a command makes lives under one directory of the process's own, and
+# the exit trap removes that directory. Before this, the trap removed the four files it knew
+# by name while some hundred and fifty `mktemp` call sites made others: the manifest and
+# event flattenings, the session and context-document workspaces, the project model's
+# directory of two hundred and sixty files, and everything made inside a command
+# substitution, whose subshell has no exit trap to run. One session start left 25 entries
+# and 1335 files in TMPDIR; a provider hook runs the tool on every prompt, so the pile grew
+# for as long as the machine stayed up, and on 2026-10-07 macOS spent 7 min 38 s of a login
+# deleting it, because it empties TMPDIR at boot before anything else may start.
+#
+# The call sites are not rewritten. They ask for "${TMPDIR:-/tmp}/<name>", and the function
+# below answers that request under the root instead; a template anywhere else — beside a
+# record about to be published, inside a workspace already under the root, in any directory
+# below TMPDIR rather than in it — is passed through untouched, because that location is the
+# point of it. TMPDIR itself is not moved:
+# a verify command, an editor or a server this process starts inherits the environment and
+# may outlive the directory.
+#
+# The root is made by the entry point, once, before a command runs, and not on first use: a
+# first use inside a command substitution would name a root only that subshell knows. A
+# script that sources this library without asking for a root gets `mktemp` unchanged.
+MJ_TMP_ROOT=""
+mj_tmp_root_init() {
+  local base="${TMPDIR:-/tmp}"
+  MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.$$.XXXXXX")"
+  # A root whose process is gone is removed by the next process to start. The exit trap
+  # cannot be the only remover: a shell that dies of PIPE runs none, and
+  # `majordomus doctor | grep -q OK` — a reader that closes the pipe once it has its
+  # answer — is how half the cases ask a question, so each such command left its root
+  # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
+  # "write error: Broken pipe" line on stderr that was never there. So the root carries its
+  # process id, and here every root of this user's whose process no longer exists goes. A
+  # process id that has been reused keeps a dead root until that process ends too; nothing
+  # living is removed, since `kill -0` answers for a process this user can signal.
+  local stale pid
+  for stale in "${base%/}"/mj.[0-9]*.??????; do
+    [ -d "$stale" ] && [ -O "$stale" ] || continue
+    pid="${stale##*/mj.}"; pid="${pid%.*}"
+    case "$pid" in ''|*[!0-9]*) continue ;; esac
+    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+  done
+}
+mktemp() {
+  [ -n "$MJ_TMP_ROOT" ] || { command mktemp "$@"; return; }
+  local base="${TMPDIR:-/tmp}" a rest; local -a args=()
+  base="${base%/}"
+  for a in "$@"; do
+    # only a name directly in TMPDIR is moved. A path that merely lies below it is somewhere
+    # in particular: a workspace under the root, or a repository that itself lives in /tmp,
+    # as every fixture does on a machine where TMPDIR is unset, and there a template beside
+    # a record was sent to a directory that did not exist.
+    case "$a" in
+      "$base"/*)
+        rest="${a#"$base"/}"; rest="${rest#/}"
+        case "$rest" in */*) ;; *) a="$MJ_TMP_ROOT/$rest" ;; esac ;;
+    esac
+    args+=("$a")
+  done
+  command mktemp "${args[@]+"${args[@]}"}"
+}
+
 mj_cleanup() {
   mj_timing_report
   rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
+  # MJ_REC_TMP above is not under the root: it is made beside the record it becomes.
+  [ -n "${MJ_TMP_ROOT:-}" ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
   # A lock this process is holding goes with it. Releasing here and not only at the end of
   # the critical section is what makes the lock crash-safe for every exit a command has:
   # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
@@ -1125,9 +1211,39 @@ mj_change_set() {
 # The repository, named without naming a disk: the remote's URL when there is one, and a
 # hash of the common git directory when there is not. A shared record carries this; the
 # local records keep mj_git_repo_id, which is a path and is theirs to hold.
+#
+# The URL is written without its credentials. A remote configured as
+# https://x-access-token:<token>@host/o/r.git — which is how a CI clone and many a laptop
+# are configured — used to be copied whole into every shared record, and a shared record
+# is tracked and pushed: the token left the machine in a file nobody thought of as holding
+# one. The identity is the repository's, and a credential is not part of which repository
+# it is.
 mj_repository_id() {
   local remote; remote="$(mj_git config --get remote.origin.url 2>/dev/null)"
-  if [ -n "$remote" ]; then printf '%s' "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+  if [ -n "$remote" ]; then mj_url_public "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+}
+
+# A URL as it may be written down: over HTTP the whole userinfo goes, because a token is as
+# often the user name as the password; over any other scheme only a password does, because
+# `ssh://git@host/...` names a login that is no secret and is part of how the remote is
+# reached. The scp form (`git@host:o/r.git`) has no scheme and carries no password.
+#   mj_url_public <url>
+mj_url_public() {
+  local u="$1" scheme rest authority userinfo
+  case "$u" in
+    *://*)
+      scheme="${u%%://*}"; rest="${u#*://}"; authority="${rest%%/*}"
+      case "$authority" in
+        *@*)
+          userinfo="${authority%@*}"
+          case "$scheme" in
+            http|https) rest="${authority##*@}${rest#"$authority"}" ;;
+            *) rest="${userinfo%%:*}@${authority##*@}${rest#"$authority"}" ;;
+          esac ;;
+      esac
+      printf '%s://%s' "$scheme" "$rest" ;;
+    *) printf '%s' "$u" ;;
+  esac
 }
 
 mj_worktree_id() {
@@ -1250,7 +1366,7 @@ mj_resolve_latest() {
     # A shared record names the repository by its remote, a local one by its git directory;
     # the same repository answers to either (ADR 0014).
     if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ] \
-       || [ "$(mj_yget "$flat" repository_id)" = "$(mj_repository_id)" ]; then
+       || [ "$(mj_url_public "$(mj_yget "$flat" repository_id)")" = "$(mj_repository_id)" ]; then
       # Tier 0 is "this worktree". A local record names it by path; a shared one names it by
       # `worktree_id`, because an absolute path is a fact about a disk and a shared record
       # carries none (ADR 0014). Either identifies the same working copy.

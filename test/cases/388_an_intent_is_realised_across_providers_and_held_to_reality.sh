@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# claims: none
+# claims: intent-realization-held-to-evidence
 # An intent is realised across two providers and a handover, and is satisfied only while
 # reality says so.
 #
@@ -28,6 +28,10 @@ command -v jq >/dev/null 2>&1 || { echo "    jq is required"; exit 1; }
 RB="$(rust_bin)" || { echo "    no executable: install cargo or set MAJORDOMUS_BIN"; exit 1; }
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
+# the runner's report and the declared copy live outside the repository: a file written inside
+# it is a pending change, and the recorder would then stamp every run `dirty`, which is not
+# current evidence of anything
+W="$(mktemp -d "${TMPDIR:-/tmp}/mj388.XXXXXX")"; trap 'rm -rf "$W"' EXIT
 # the suite may itself run inside a provider session; this case drives two of its own
 unset MAJORDOMUS_PROVIDER_SESSION CLAUDE_CODE_SESSION_ID
 
@@ -102,7 +106,7 @@ satisfaction:
     ref: test/cases/02_b.sh
 Y
 commit "declare the intent"
-cp .ai/repo/project/intents/probe.yaml "$T/declared.yaml"
+cp .ai/repo/project/intents/probe.yaml "$W/declared.yaml"
 
 real() { "$RB" intent realization --intent probe --format json; }
 stage() { real | jq -r '.intents[0].stage'; }
@@ -111,8 +115,11 @@ unmet() { real | jq -r '[.intents[0].unmet[] | "\(.id):\(.state)"] | join(",")';
 run() { # <case-name>
   local word=ok
   bash "test/cases/$1.sh" || word=FAIL
-  printf '%s\t%s\t0\tserial\n' "$1" "$word" > "$T/report.tsv"
-  "$RB" evidence record --suite "$T/report.tsv" >/dev/null
+  printf '%s\t%s\t0\tserial\n' "$1" "$word" > "$W/report.tsv"
+  # measured as the run left it, the way a runner stamps its own report: a record with no
+  # stamp carries an unknown tree, and an unknown tree is never current evidence
+  "$RB" evidence stamp --producer suite --report "$W/report.tsv" --out "$W/report.provenance.json" >/dev/null
+  "$RB" evidence record --suite "$W/report.tsv" --provenance "suite=$W/report.provenance.json" >/dev/null
   commit "record $1: $word"
 }
 
@@ -205,6 +212,6 @@ same "repaired reality satisfies it again" "satisfied" "$(stage)"
 expect_exit 0 "$RB" intent realization --intent probe
 
 # nothing about the intent was ever written: every stage above was derived
-cmp -s .ai/repo/project/intents/probe.yaml "$T/declared.yaml" \
+cmp -s .ai/repo/project/intents/probe.yaml "$W/declared.yaml" \
   || { echo "    the intent record changed; a stage was written somewhere"; exit 1; }
 same "the list and the realization agree" "$("$RB" intent list --format json | jq -r '.intents[0].stage')" "$(stage)"

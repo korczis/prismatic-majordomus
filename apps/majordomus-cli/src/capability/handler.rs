@@ -88,6 +88,29 @@ pub enum CapabilityError {
     Internal(String),
 }
 
+impl CapabilityError {
+    /// The category as one word, the same on every transport: the `error.code` of an HTTP
+    /// answer and the `_meta.majordomus.error.code` of an MCP tool result that is an error.
+    /// A caller branches on this and reads the message; it never has to parse the message
+    /// to learn which of the four happened.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityError;
+    /// assert_eq!(CapabilityError::InvalidInput("x".into()).code(), "invalid_input");
+    /// assert_eq!(CapabilityError::NotFound("x".into()).code(), "not_found");
+    /// assert_eq!(CapabilityError::Refused("x".into()).code(), "refused");
+    /// assert_eq!(CapabilityError::Internal("x".into()).code(), "internal");
+    /// ```
+    pub fn code(&self) -> &'static str {
+        match self {
+            CapabilityError::InvalidInput(_) => "invalid_input",
+            CapabilityError::NotFound(_) => "not_found",
+            CapabilityError::Refused(_) => "refused",
+            CapabilityError::Internal(_) => "internal",
+        }
+    }
+}
+
 /// What a handler may read: the index of the repository, the registry it belongs to, the
 /// board of peers attached to this process, and, when the call came through an MCP
 /// session, which peer made it. Index and registry are immutable for the life of a

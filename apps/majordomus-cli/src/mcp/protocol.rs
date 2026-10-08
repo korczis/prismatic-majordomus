@@ -1,7 +1,9 @@
 //! JSON-RPC 2.0 and the MCP methods this server answers, over a [`Surface`]. Transport
-//! agnostic: a message in, zero or one message out. The subset spoken is the read-only
-//! server side of the protocol: `initialize`, `ping`, `resources/list`, `resources/read`,
+//! agnostic: a message in, zero or one message out. The subset spoken is the server side
+//! of the protocol: `initialize`, `ping`, `resources/list`, `resources/read`,
 //! `resources/templates/list`, `tools/list`, `tools/call`. Prompts are not advertised.
+//! Nothing here decides what a tool may change: a tool is a capability, its effect is the
+//! capability's, and its annotations are the capability's classified hints.
 
 use std::sync::Arc;
 
@@ -70,6 +72,22 @@ pub const PROTOCOL_VERSIONS: &[&str] = &["2025-06-18", "2025-03-26", "2024-11-05
 
 /// The `serverInfo.name` this server announces.
 pub const SERVER_NAME: &str = "majordomus";
+
+/// The `serverInfo.title` this server announces.
+pub const SERVER_TITLE: &str = "Majordomus";
+
+/// Every method a request may name. A request naming any other is answered
+/// `method not found` before it is looked at, so this list is what the server serves and
+/// not a description of it; `mcp.projection` renders it.
+pub const METHODS: &[&str] = &[
+    "initialize",
+    "ping",
+    "resources/list",
+    "resources/read",
+    "resources/templates/list",
+    "tools/call",
+    "tools/list",
+];
 
 const PARSE_ERROR: i64 = -32700;
 const INVALID_REQUEST: i64 = -32600;
@@ -221,6 +239,9 @@ impl Server {
     }
 
     fn request(&mut self, method: &str, params: &Value) -> Result<Value, (i64, String)> {
+        if !METHODS.contains(&method) {
+            return Err((METHOD_NOT_FOUND, format!("method not found: {method}")));
+        }
         match method {
             "initialize" => Ok(self.initialize(params)),
             "ping" => Ok(json!({})),
@@ -270,9 +291,14 @@ impl Server {
                             json!({ "content": [{ "type": "text", "text": text }], "structuredContent": value, "isError": false }),
                         )
                     }
-                    Ok(ToolOutcome::Refused(reason)) => Ok(
-                        json!({ "content": [{ "type": "text", "text": reason }], "isError": true }),
-                    ),
+                    // the category travels beside the text, so a client branches on a word
+                    // and never parses a sentence; no structuredContent, because the
+                    // tool's output schema describes a success
+                    Ok(ToolOutcome::Refused { code, reason }) => Ok(json!({
+                        "content": [{ "type": "text", "text": reason }],
+                        "isError": true,
+                        "_meta": { "majordomus": { "error": { "code": code } } }
+                    })),
                     Err(SurfaceError::Internal(e)) => Err((INTERNAL_ERROR, e)),
                     Err(e) => Err((INVALID_PARAMS, e.to_string())),
                 }
@@ -303,7 +329,7 @@ impl Server {
                 "resources": { "subscribe": false, "listChanged": false },
                 "tools": { "listChanged": false }
             },
-            "serverInfo": { "name": SERVER_NAME, "title": "Majordomus", "version": self.version },
+            "serverInfo": { "name": SERVER_NAME, "title": SERVER_TITLE, "version": self.version },
             "instructions": self.instructions(),
         })
     }
@@ -422,8 +448,11 @@ pub(crate) fn tool_json(t: &super::surface::Tool) -> Value {
         "name": t.name, "title": t.title, "description": t.description,
         "inputSchema": t.input_schema,
         "outputSchema": t.output_schema,
-        "_meta": { "majordomus": { "id": t.id } },
-        "annotations": { "readOnlyHint": t.read_only, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
+        "_meta": { "majordomus": { "id": t.id, "effect": t.effect } },
+        "annotations": {
+            "readOnlyHint": t.hints.read_only, "destructiveHint": t.hints.destructive,
+            "idempotentHint": t.hints.idempotent, "openWorldHint": t.hints.open_world
+        }
     })
 }
 
@@ -472,6 +501,64 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// A tool's annotations are what a client reads to decide whether to ask a person
+    /// first, and for most of this server's life three of the four were constants:
+    /// never destructive, always idempotent. The first tool that unlinked files was
+    /// announced as both. They are now the capability's classified hints, and this is the
+    /// assertion that they stay so: every tool of the real registry is rendered, and each
+    /// annotation is compared with the policy of the capability behind it.
+    #[test]
+    fn a_tools_annotations_are_its_capabilitys_hints_and_a_writer_is_never_announced_as_safe() {
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_builtin(crate::capability::builtin::all())
+            .build()
+            .unwrap();
+        let mut writers = 0;
+        for c in registry.iter() {
+            let Some(tool) = super::super::surface::Tool::of(c) else {
+                continue;
+            };
+            let v = tool_json(&tool);
+            let a = &v["annotations"];
+            let h = c.execution.hints();
+            assert_eq!(a["readOnlyHint"], h.read_only, "{}", tool.name);
+            assert_eq!(a["destructiveHint"], h.destructive, "{}", tool.name);
+            assert_eq!(a["idempotentHint"], h.idempotent, "{}", tool.name);
+            assert_eq!(a["openWorldHint"], h.open_world, "{}", tool.name);
+            assert_eq!(
+                v["_meta"]["majordomus"]["effect"],
+                serde_json::to_value(c.execution.effect).unwrap(),
+                "{}",
+                tool.name
+            );
+            if c.execution.effect == crate::capability::model::Effect::RepositoryMutation {
+                writers += 1;
+                assert_eq!(
+                    a["readOnlyHint"], false,
+                    "{} writes the repository",
+                    tool.name
+                );
+                assert_eq!(
+                    a["destructiveHint"], true,
+                    "{} writes the repository",
+                    tool.name
+                );
+                assert_eq!(
+                    a["idempotentHint"], false,
+                    "{} writes the repository",
+                    tool.name
+                );
+            }
+            if a["readOnlyHint"] == true {
+                assert_eq!(c.execution.effect, crate::capability::model::Effect::Read);
+            }
+        }
+        assert!(
+            writers > 0,
+            "the registry exposes no writing tool, so this proved nothing about one"
+        );
     }
 
     /// The sentence over a registry this repository does not happen to hold, so that the

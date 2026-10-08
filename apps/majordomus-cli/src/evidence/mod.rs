@@ -143,18 +143,36 @@ use serde_json::Value;
 
 use crate::index::Index;
 
+pub mod coverage;
 pub mod freshness;
 pub mod ledger;
+pub mod provenance;
 pub mod record;
+pub mod run;
 pub mod subject;
 
+pub use coverage::{
+    CommitId, EvidenceCoverage, EvidenceCoverageCount, EvidenceCoverageDimensions,
+    EvidenceCoverageDomain, EvidenceCoverageFloors,
+};
 pub use freshness::{
-    aggregate, changed_between, compare, freshness, ledger_at, presented_commit, uncommitted,
-    weakened_by, Comparison, Judgement, Presented, Recorded, Supplementary, TreeState,
+    aggregate, changed_between, compare, current, freshness, ledger_at, presented_commit,
+    uncommitted, weakened_by, Comparison, Judgement, Presented, Recorded, Supplementary, TreeState,
     UNCOMMITTED_RUN,
 };
-pub use ledger::{Ledger, LEDGER_PATH};
-pub use record::{parse_crate_binaries, record, RecordOutcome, RecordRequest};
+pub use ledger::{outcome_counts, Ledger, LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};
+pub use provenance::{
+    stamp, EvidenceHost, EvidenceProvenance, EvidenceReportArtifact, EvidenceToolchain,
+    EvidenceToolchainSource, StampRequest,
+};
+pub use record::{
+    parse_crate_binaries, read_crate_output, record, CrateBinary, CrateRead, RecordOutcome,
+    RecordRequest,
+};
+pub use run::{
+    run_id, weaken_by_records, weakened_by_records, EvidenceAbsent, EvidenceDropped,
+    EvidenceProducer, EvidenceRunRecord, EvidenceRunTotals, RUN_RECORD_SCHEMA,
+};
 
 /// Which runner produced a result, and therefore how the test is named and re-run.
 ///
@@ -628,6 +646,18 @@ pub struct Execution {
 /// assert_eq!(run.id, "42");
 /// assert_eq!(run.attempt, 2);
 /// assert_eq!(run.url, "https://github.com/owner/repo/actions/runs/42/attempts/2");
+/// // a run that names neither its pull request's head nor its event still names itself
+/// assert_eq!((run.head_sha, run.event), (None, None));
+///
+/// let head = "0123456789abcdef0123456789abcdef01234567";
+/// let pull = |k: &str| match k {
+///     "MJ_RUN_HEAD_SHA" => Some(head.to_string()),
+///     "GITHUB_EVENT_NAME" => Some("pull_request".to_string()),
+///     _ => actions(k),
+/// };
+/// let run = RunRef::from_env(pull).unwrap();
+/// assert_eq!(run.head_sha.as_deref(), Some(head));
+/// assert_eq!(run.event.as_deref(), Some("pull_request"));
 ///
 /// // outside a run there is nothing to name, and a half-described run is not a run
 /// assert!(RunRef::from_env(|_| None).is_none());
@@ -648,6 +678,15 @@ pub struct RunRef {
     pub job: String,
     /// Where a reader finds the run, as the provider addressed it at the time.
     pub url: String,
+    /// The pull request's head commit when the run was a pull-request run (its `commit` is
+    /// GitHub's merge commit, the tree that ran). Carried beside the commit, never
+    /// substituted for it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head_sha: Option<String>,
+    /// The event that started the run: `push`, `pull_request`, `schedule`,
+    /// `workflow_dispatch`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event: Option<String>,
 }
 
 impl RunRef {
@@ -681,6 +720,8 @@ impl RunRef {
             attempt,
             workflow: var("GITHUB_WORKFLOW")?,
             job: var("GITHUB_JOB")?,
+            head_sha: var("MJ_RUN_HEAD_SHA").filter(|h| coverage::CommitId::parse(h).is_ok()),
+            event: var("GITHUB_EVENT_NAME").filter(|e| !e.is_empty()),
         })
     }
 }
@@ -2417,5 +2458,32 @@ mod tests {
             .as_deref()
             .unwrap()
             .contains("does not contain"));
+    }
+
+    /// A CI run carries the pull request's head and its event when the job states them, and
+    /// drops a head that is not a full commit id rather than recording a guess.
+    #[test]
+    fn a_ci_run_carries_its_head_and_event_when_stated() {
+        let head = "0123456789abcdef0123456789abcdef01234567";
+        let env = |sha: &'static str| {
+            move |k: &str| {
+                let v = match k {
+                    "GITHUB_ACTIONS" => "true",
+                    "GITHUB_SERVER_URL" => "https://github.com",
+                    "GITHUB_REPOSITORY" => "o/r",
+                    "GITHUB_RUN_ID" => "7",
+                    "GITHUB_WORKFLOW" => "validate",
+                    "GITHUB_JOB" => "evidence",
+                    "MJ_RUN_HEAD_SHA" => sha,
+                    "GITHUB_EVENT_NAME" => "pull_request",
+                    _ => return None,
+                };
+                Some(v.to_string())
+            }
+        };
+        let run = RunRef::from_env(env(head)).unwrap();
+        assert_eq!(run.head_sha.as_deref(), Some(head));
+        assert_eq!(run.event.as_deref(), Some("pull_request"));
+        assert_eq!(RunRef::from_env(env("HEAD")).unwrap().head_sha, None);
     }
 }

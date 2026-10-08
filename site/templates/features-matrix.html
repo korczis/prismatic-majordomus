@@ -8,6 +8,7 @@
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 {%- set rows = [r for r in model.matrix.rows if r.status != "draft"] -%}
+{%- set ev = model.evidence -%}
 
 <p class="max-w-3xl text-body">Every mark is derived. A feature is on an interface because a capability module, a shell command or an object kind it names is projected there — a command-line path, an HTTP route, an MCP tool or resource, a Cockpit area, a document. No page and no file says so.</p>
 
@@ -17,14 +18,19 @@
     to reach a 1px box nobody can see. A scroll container contains what it positions. -#}
 <div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm">
-    <caption class="sr-only">Features against the interfaces they are exposed through, and how much of each is proven</caption>
+    <caption class="sr-only">Features against the interfaces they are exposed through, how many of the claims each names are declared guaranteed with a test, and how many a recorded run supports</caption>
     <thead class="bg-neutral-primary-soft">
       <tr>
         <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Feature</th>
         {%- for s in model.surfaces %}
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="{{ base }}{{ s.route }}" class="hover:text-fg-brand hover:underline">{{ s.id }}</a></th>
         {%- endfor %}
-        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle" title="claims this feature names that are guaranteed and name the test that settles them">proven</th>
+        {#- Two columns, two axes, never one word for both. The model's matrix field is named
+            `proven`, but what it counts is declared: guaranteed claims that name a test. A
+            recorded run is the other axis, `majordomus evidence show`'s, and only it may be
+            called supported. -#}
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#declared-with-test" class="hover:text-fg-brand hover:underline">declared + test</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">supported by a run</a></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-default">
@@ -37,15 +43,28 @@
           {%- else %}<span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on {{ s.title }}</span>{% endif -%}
         </td>
         {%- endfor %}
-        <td class="px-3 py-2.5 text-center font-mono text-xs">
-          {%- if r.claims %}<span class="{% if r.proven == r.claims %}text-fg-success-strong{% else %}text-body-subtle{% endif %}" title="{{ r.proven }} of {{ r.claims }} claim(s) guaranteed with a test">{{ r.proven }}/{{ r.claims }}</span>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">
+          {%- if r.claims %}{{ r.proven }}/{{ r.claims }}<span class="sr-only"> claims declared guaranteed with a test</span>
           {%- else %}<span class="text-body-subtle" aria-hidden="true">·</span><span class="sr-only">names no claim</span>{% endif -%}
+        </td>
+        {%- set feature = [x for x in model.features if x.id == r.id] %}
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="{{ r.id }}">
+          {%- if not r.claims %}<span class="text-body-subtle" aria-hidden="true">·</span><span class="sr-only">names no claim</span>
+          {%- elif not ev.available or feature | length == 0 %}unknown<span class="sr-only"> whether a recorded run supports these claims</span>
+          {%- else %}{{ [c for c in feature[0].claims if c in ev.claims and ev.claims[c].supported] | length }}/{{ r.claims }}<span class="sr-only"> claims supported by a recorded run</span>{% endif -%}
         </td>
       </tr>
       {%- endfor %}
     </tbody>
   </table>
 </div>
+
+<dl class="mt-6 grid max-w-3xl gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+  <dt id="declared-with-test" class="font-mono text-xs uppercase tracking-wide text-heading">declared + test</dt>
+  <dd class="text-body">Of the claims a feature names, how many <code>docs/CLAIMS.yaml</code> declares <code>guaranteed</code>, each naming the test that is to prove it. A declaration, not a verdict: nothing here says the test ran.</dd>
+  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">supported by a run</dt>
+  <dd class="text-body">Of the same claims, how many a recorded run supports, as <code>majordomus evidence show</code> derives it from the ledger; <code>unknown</code> when no evidence reached this build. <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">How evidence is recorded</a>.</dd>
+</dl>
 
 {#- ------------------------------------------------------------------- the coverage -#}
 <h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">What every part of the product belongs to</h2>

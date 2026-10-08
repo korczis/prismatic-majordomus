@@ -617,7 +617,9 @@ the rollout's record allows it (see below).
 ## Rollout
 
 1. **Dry run.** `prs refresh && prs status && prs drain --dry-run` against the real
-   repository. The classification was checked on 2026-09-30 against 70 open pull requests.
+   repository. The classification was checked on 2026-09-30 against 70 open pull requests,
+   and stage 1 was taken with the released 0.14.0 on 2026-10-06 against 16, moving nothing
+   ([`INTEGRATION_ROLLOUT.md`](INTEGRATION_ROLLOUT.md)).
 2. **One merge.** `prs drain --max 1` once a pull request is `ready`.
 3. **Bounded.** `prs drain --refresh --max 3`.
 4. **Continuous.** `prs drain --continuous` is refused, with exit 10 and before the lease,

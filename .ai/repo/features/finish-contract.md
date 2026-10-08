@@ -46,4 +46,4 @@ contract's value countable rather than asserted: each refusal later satisfied is
 
 It does not prevent a worker from touching a file outside its scope while it works; it
 detects the file at check and at finish and refuses to accept the work. The regression-test
-line is a path heuristic and says so. Nothing here measures tokens or cost.
+line checks only whether a test-shaped path was touched, not what the test proves. Nothing here measures tokens or cost.

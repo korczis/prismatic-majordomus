@@ -131,6 +131,43 @@
       "route": "/skills/implement/"
     },
     {
+      "id": "pack-for-chatgpt",
+      "uri": "majordomus://skill/pack-for-chatgpt",
+      "title": "Pack the sources for a ChatGPT project",
+      "description": "Turn a committed tree into token-bounded Markdown shards that a ChatGPT project's file search indexes, verified to carry no binary, worktree, link, build output, projection or leaked value, and hand them over with the commit they were cut from.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "review",
+        "archive",
+        "privacy",
+        "chatgpt"
+      ],
+      "related": [
+        "pack-for-review",
+        "report-verification-state"
+      ],
+      "inputs": [
+        "a committed tree at the revision the conversation is about",
+        "the question the ChatGPT conversation is meant to answer"
+      ],
+      "outputs": [
+        "a verified pack directory under tmp/packs/ holding 00-INDEX.md, the shards and pack.json",
+        "the upload list, the commit, the token total and what the profile left out"
+      ],
+      "path": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
+      "sha256": "c26eda4d211cdbf67ab450afaaf49257eee2784ba258e0ca5ac9091cce61d7ad",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
+          "title": "Upload the sources to a ChatGPT project",
+          "body": "\nA design question is to be discussed in the operator's ChatGPT project, which must see the\ncurrent sources and nothing else.\n\n```text\nApply the pack-for-chatgpt skill: commit the change, plan the chatgpt profile and read what\nit leaves out, build the pack, confirm the verifier is clean, and report the commit, the\nfiles to upload and the token total.\n```\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/pack-for-chatgpt/"
+    },
+    {
       "id": "pack-for-review",
       "uri": "majordomus://skill/pack-for-review",
       "title": "Pack the repository for an outside reviewer",
@@ -144,7 +181,8 @@
       ],
       "related": [
         "repo-review",
-        "report-verification-state"
+        "report-verification-state",
+        "pack-for-chatgpt"
       ],
       "inputs": [
         "the question the outside review must answer, and the paths it concerns",
@@ -155,7 +193,7 @@
         "a brief for the reviewer naming the commit, the scope, the questions and what was left out"
       ],
       "path": ".ai/repo/skills/pack-for-review/SKILL.md",
-      "sha256": "da842f9e17303b40624419d6bd817d58df18de6560fec24b468ac33083d4e038",
+      "sha256": "a0dc024c620d675b4130629646436c381cca02bcf1424ceb60bea81025e6bba4",
       "examples": [
         {
           "path": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
@@ -258,7 +296,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 6,
+  "count": 7,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -294,14 +332,20 @@
       "repo-review"
     ],
     "review": [
+      "pack-for-chatgpt",
       "pack-for-review",
       "repo-review"
     ],
     "archive": [
+      "pack-for-chatgpt",
       "pack-for-review"
     ],
     "privacy": [
+      "pack-for-chatgpt",
       "pack-for-review"
+    ],
+    "chatgpt": [
+      "pack-for-chatgpt"
     ],
     "reporting": [
       "report-verification-state"

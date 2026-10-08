@@ -1,6 +1,6 @@
 +++
 title = "Follow a procedure the repository defines, and add another one"
-description = "Read the repository''s skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined."
+description = "Read the repository's skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined."
 weight = 38
 [extra]
 id = "follow-a-skill-the-repository-defines"

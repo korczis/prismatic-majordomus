@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.17.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 172 | 153 | 0 | 19 |
-| http | 170 | 153 | 0 | 17 |
-| mcp | 166 | 149 | 0 | 17 |
+| direct | 183 | 159 | 0 | 24 |
+| http | 180 | 159 | 0 | 21 |
+| mcp | 176 | 155 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 521 | 468 | 0 | 53 |
+| total | 552 | 486 | 0 | 66 |
 
 ## Capabilities
 
@@ -30,7 +30,14 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.plan` | commit | query | — | covered | covered | covered | `default` |
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
+| `continuity.device` | continuity | command | — | waived | waived | waived | — |
+| `continuity.plan` | continuity | query | — | covered | covered | covered | `default`, `by-prefix` |
+| `continuity.publish` | continuity | command | — | waived | waived | waived | — |
+| `continuity.records` | continuity | query | — | covered | covered | covered | `default` |
+| `continuity.resume` | continuity | command | — | waived | waived | waived | — |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `continuity.status` | continuity | query | — | covered | covered | covered | `default` |
+| `continuity.sync` | continuity | command | — | waived | waived | waived | — |
 | `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |
@@ -68,6 +75,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
 | `evidence.record` | evidence | command | — | waived | — | — | — |
 | `evidence.report` | evidence | query | — | covered | covered | covered | `all`, `findings` |
+| `evidence.stamp` | evidence | query | — | waived | — | — | — |
 | `evidence.test` | evidence | query | — | covered | covered | covered | `first-test` |
 | `executions.cancel` | executions | command | — | waived | waived | waived | — |
 | `executions.demonstrate` | executions | query | — | covered | covered | covered | `immediate` |
@@ -103,6 +111,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
@@ -132,6 +141,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
 | `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
+| `pack.plan` | pack | query | — | covered | covered | covered | `default-profile`, `chatgpt` |
+| `pack.verify` | pack | query | — | covered | covered | covered | `absent` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |

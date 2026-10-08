@@ -188,6 +188,91 @@
       "tool": "majordomus_commit_validate"
     },
     {
+      "api_anchor": "/docs/api/continuity/#op-continuity-device",
+      "claims": [],
+      "cli": "majordomus continuity device",
+      "id": "continuity.device",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-device/",
+      "slug": "continuity-device",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "This device's identity, and its label",
+      "tool": "majordomus_continuity_device"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-plan",
+      "claims": [],
+      "cli": "majordomus continuity plan",
+      "id": "continuity.plan",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-plan/",
+      "slug": "continuity-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Whether and how a published handover can be resumed here",
+      "tool": "majordomus_continuity_plan"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-publish",
+      "claims": [],
+      "cli": "majordomus continuity publish",
+      "id": "continuity.publish",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-publish/",
+      "slug": "continuity-publish",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Publish this checkout's newest handover for another machine",
+      "tool": "majordomus_continuity_publish"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-records",
+      "claims": [],
+      "cli": "majordomus continuity records",
+      "id": "continuity.records",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-records/",
+      "slug": "continuity-records",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Every published handover the local store admits",
+      "tool": "majordomus_continuity_records"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-resume",
+      "claims": [],
+      "cli": "majordomus continuity resume",
+      "id": "continuity.resume",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-resume/",
+      "slug": "continuity-resume",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Resume a handover another machine published",
+      "tool": "majordomus_continuity_resume"
+    },
+    {
       "api_anchor": "/docs/api/continuity/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -203,6 +288,40 @@
       "tests": [],
       "title": "What the lifecycle is holding",
       "tool": "majordomus_continuity"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-status",
+      "claims": [],
+      "cli": "majordomus continuity status",
+      "id": "continuity.status",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-status/",
+      "slug": "continuity-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Where this device stands in the work published from every device",
+      "tool": "majordomus_continuity_status"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-sync",
+      "claims": [],
+      "cli": "majordomus continuity sync",
+      "id": "continuity.sync",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-sync/",
+      "slug": "continuity-sync",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Exchange published handovers with a git remote",
+      "tool": "majordomus_continuity_sync"
     },
     {
       "api_anchor": "/docs/api/convergence/#op-convergence-report",
@@ -864,6 +983,33 @@
       "tool": "majordomus_evidence"
     },
     {
+      "api_anchor": null,
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence stamp",
+      "id": "evidence.stamp",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-stamp/",
+      "slug": "evidence-stamp",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "Measure the tree a run left behind",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/evidence/#op-evidence-test",
       "claims": [
         {
@@ -1278,7 +1424,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
       "tests": [],
-      "title": "Every intent, with its derived stage",
+      "title": "Every intent, with its derived stage and verdict",
       "tool": "majordomus_intents"
     },
     {
@@ -1295,7 +1441,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
       "tests": [],
-      "title": "Which intent a piece of work serves",
+      "title": "Which intent a piece of work serves, or why it may not proceed",
       "tool": "majordomus_intent_preflight"
     },
     {
@@ -1547,6 +1693,23 @@
       ],
       "title": "The commit this process is answering about",
       "tool": "majordomus_lifecycle_runtime"
+    },
+    {
+      "api_anchor": "/docs/api/mcp/#op-mcp-projection",
+      "claims": [],
+      "cli": null,
+      "id": "mcp.projection",
+      "kind": "query",
+      "module": "mcp",
+      "module_route": "/registry/modules/mcp/",
+      "resource": "majordomus://mcp",
+      "route": "/registry/capabilities/mcp-projection/",
+      "slug": "mcp-projection",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "tests": [],
+      "title": "The MCP projection of this registry",
+      "tool": "majordomus_mcp"
     },
     {
       "api_anchor": "/docs/api/mesh/#op-mesh-claim",
@@ -2080,6 +2243,40 @@
       "tests": [],
       "title": "Every obligation there is",
       "tool": "majordomus_obligations"
+    },
+    {
+      "api_anchor": "/docs/api/pack/#op-pack-plan",
+      "claims": [],
+      "cli": "majordomus pack plan",
+      "id": "pack.plan",
+      "kind": "query",
+      "module": "pack",
+      "module_route": "/registry/modules/pack/",
+      "resource": null,
+      "route": "/registry/capabilities/pack-plan/",
+      "slug": "pack-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "tests": [],
+      "title": "Plan a source pack",
+      "tool": "majordomus_pack_plan"
+    },
+    {
+      "api_anchor": "/docs/api/pack/#op-pack-verify",
+      "claims": [],
+      "cli": "majordomus pack verify",
+      "id": "pack.verify",
+      "kind": "query",
+      "module": "pack",
+      "module_route": "/registry/modules/pack/",
+      "resource": null,
+      "route": "/registry/capabilities/pack-verify/",
+      "slug": "pack-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "tests": [],
+      "title": "Verify a written source pack",
+      "tool": "majordomus_pack_verify"
     },
     {
       "api_anchor": "/docs/api/peers/#op-peers-announce",
@@ -3141,6 +3338,55 @@
         "test": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "intent-stage-derived",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-stage-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+      },
+      {
+        "id": "intent-links-resolve",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-links-resolve/",
+        "status": "guaranteed",
+        "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+      },
+      {
+        "id": "intent-criteria-covered",
+        "implementation": "apps/majordomus-cli/src/intent_plan.rs",
+        "route": "/guarantees/intent-criteria-covered/",
+        "status": "guaranteed",
+        "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+      },
+      {
+        "id": "intent-plan-reviewed",
+        "implementation": "apps/majordomus-cli/src/intent_review.rs",
+        "route": "/guarantees/intent-plan-reviewed/",
+        "status": "guaranteed",
+        "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+      },
+      {
+        "id": "intent-realization-held-to-evidence",
+        "implementation": "apps/majordomus-cli/src/intent_realization.rs",
+        "route": "/guarantees/intent-realization-held-to-evidence/",
+        "status": "guaranteed",
+        "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+      },
+      {
+        "id": "intent-preflight-names-the-intent",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-preflight-names-the-intent/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/intent.rs"
+      },
+      {
+        "id": "intent-cockpit-pages",
+        "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
+        "route": "/guarantees/intent-cockpit-pages/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/intent_realization.rs"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -3512,6 +3758,34 @@
         "test": "test/cases/274_commit_policy.sh"
       },
       {
+        "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+        "route": "/guarantees/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass/",
+        "status": "guaranteed",
+        "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+      },
+      {
+        "id": "evidence-tree-is-measured-by-the-run",
+        "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+        "route": "/guarantees/evidence-tree-is-measured-by-the-run/",
+        "status": "guaranteed",
+        "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
+        "id": "evidence-a-recording-is-a-typed-run",
+        "implementation": "apps/majordomus-cli/src/evidence/run.rs",
+        "route": "/guarantees/evidence-a-recording-is-a-typed-run/",
+        "status": "guaranteed",
+        "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
+        "id": "evidence-local-recording-stays-local",
+        "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+        "route": "/guarantees/evidence-local-recording-stays-local/",
+        "status": "guaranteed",
+        "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
         "id": "reasoning-works-with-no-advisor",
         "implementation": "apps/majordomus-cli/src/reasoning/policy.rs",
         "route": "/guarantees/reasoning-works-with-no-advisor/",
@@ -3609,11 +3883,11 @@
     ]
   },
   "counts": {
-    "capabilities": 172,
-    "claims": 77,
-    "modules": 51
+    "capabilities": 183,
+    "claims": 88,
+    "modules": 53
   },
-  "generator": "majordomus-cli 0.14.0",
+  "generator": "majordomus-cli 0.17.0",
   "modules": [
     {
       "capabilities": [
@@ -3717,9 +3991,44 @@
     {
       "capabilities": [
         {
+          "id": "continuity.device",
+          "route": "/registry/capabilities/continuity-device/",
+          "slug": "continuity-device"
+        },
+        {
+          "id": "continuity.plan",
+          "route": "/registry/capabilities/continuity-plan/",
+          "slug": "continuity-plan"
+        },
+        {
+          "id": "continuity.publish",
+          "route": "/registry/capabilities/continuity-publish/",
+          "slug": "continuity-publish"
+        },
+        {
+          "id": "continuity.records",
+          "route": "/registry/capabilities/continuity-records/",
+          "slug": "continuity-records"
+        },
+        {
+          "id": "continuity.resume",
+          "route": "/registry/capabilities/continuity-resume/",
+          "slug": "continuity-resume"
+        },
+        {
           "id": "continuity.state",
           "route": "/registry/capabilities/continuity-state/",
           "slug": "continuity-state"
+        },
+        {
+          "id": "continuity.status",
+          "route": "/registry/capabilities/continuity-status/",
+          "slug": "continuity-status"
+        },
+        {
+          "id": "continuity.sync",
+          "route": "/registry/capabilities/continuity-sync/",
+          "slug": "continuity-sync"
         }
       ],
       "claims": [],
@@ -4061,6 +4370,11 @@
           "slug": "evidence-report"
         },
         {
+          "id": "evidence.stamp",
+          "route": "/registry/capabilities/evidence-stamp/",
+          "slug": "evidence-stamp"
+        },
+        {
           "id": "evidence.test",
           "route": "/registry/capabilities/evidence-test/",
           "slug": "evidence-test"
@@ -4370,6 +4684,22 @@
     {
       "capabilities": [
         {
+          "id": "mcp.projection",
+          "route": "/registry/capabilities/mcp-projection/",
+          "slug": "mcp-projection"
+        }
+      ],
+      "claims": [],
+      "id": "mcp",
+      "route": "/registry/modules/mcp/",
+      "slug": "mcp",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mcp.rs",
+      "title": "MCP projection"
+    },
+    {
+      "capabilities": [
+        {
           "id": "mesh.claim",
           "route": "/registry/capabilities/mesh-claim/",
           "slug": "mesh-claim"
@@ -4563,6 +4893,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/obligations.rs",
       "title": "Obligations"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "pack.plan",
+          "route": "/registry/capabilities/pack-plan/",
+          "slug": "pack-plan"
+        },
+        {
+          "id": "pack.verify",
+          "route": "/registry/capabilities/pack-verify/",
+          "slug": "pack-verify"
+        }
+      ],
+      "claims": [],
+      "id": "pack",
+      "route": "/registry/modules/pack/",
+      "slug": "pack",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "title": "Source pack"
     },
     {
       "capabilities": [

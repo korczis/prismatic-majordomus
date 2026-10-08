@@ -49,7 +49,10 @@ function pop() { if (sp > 0) sp-- }
       if (c == "'") { push("'"); continue }
       if (c == "\"") { push("\""); continue }
       if (top == "`" && c == "`") { pop(); continue }
-      if (c2 == "<<" && substr(line, i, 3) != "<<<") { i = heredoc(line, i); continue }
+      # a here-string `<<<` is skipped whole: read from its second `<`, `<<` looked like a
+      # here-document and the scan waited for a delimiter that never came
+      if (substr(line, i, 3) == "<<<") { i += 2; continue }
+      if (c2 == "<<") { i = heredoc(line, i); continue }
       if (top == "(" && c == "(") { push("("); continue }
       if (top == "(" && c == ")") { pop(); continue }
       if (c == "#" && (i == 1 || substr(line, i - 1, 1) ~ /[ \t;]/)) break
@@ -61,7 +64,8 @@ function pop() { if (sp > 0) sp-- }
     if (c2 == "$(") { push("("); word = word "Q"; i++; continue }
     if (c == "`") { push("`"); word = word "Q"; continue }
     if (c == "#" && word == "") { break }
-    if (c2 == "<<" && substr(line, i, 3) != "<<<") { flush(); i = heredoc(line, i); continue }
+    if (substr(line, i, 3) == "<<<") { flush(); i += 2; continue }
+    if (c2 == "<<") { flush(); i = heredoc(line, i); continue }
     if (c == "|") { if (c2 == "||") { flush(); piped = 0; i++; continue } flush(); piped = 1; continue }
     if (c == " " || c == "\t") { flush(); continue }
     if (c == ";" || c == "&" || c == "(" || c == ")" || c == "{" || c == "}") { flush(); piped = 0; continue }

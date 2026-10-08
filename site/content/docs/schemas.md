@@ -8,7 +8,7 @@ source = "docs/SCHEMAS.md"
 
 {% raw %}
 
-As implemented in v0.1. Every field listed here is both written by something and read by
+As implemented. Every field listed here is both written by something and read by
 something. A field that loses one of those is removed, not kept "for later".
 
 Conventions:
@@ -71,7 +71,7 @@ or carries a tracked file, or when pre-.ai project data still sits under `.major
 The one canonical, provider-neutral policy.
 
 ```yaml
-version: 1                               # schema version; only 1 is valid in v0.1
+version: 1                               # schema version; only 1 is valid
 
 context:
   always_loaded_budget_lines: 150        # hard cap on the always-loaded projection
@@ -79,7 +79,7 @@ context:
   recent_decisions: 5                    # decisions offered to a worker, newest first
   max_list_items: 20                     # cap on any list inside the assembled context
   strategy: minimum-sufficient           # documentation of intent; projected into instructions
-  transcript_is_state: false             # projected as a rule; never true in v0.1
+  transcript_is_state: false             # projected as a rule; never true
 
 profiles:
   default: implementation                # must name a file in profiles/
@@ -158,7 +158,7 @@ guessed at. `fingerprints.yaml` records `mode` alongside the hash, and for a reg
 hash covers the region — an edit outside the markers is the repository's business and is
 never reported as drift.
 
-`wired_by` values in v0.1: `git-hook:<name>` (resolved through `core.hooksPath` or
+`wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
@@ -207,7 +207,7 @@ description: reproduce, isolate, fix, and prove a defect fixed
 
 capability: strong            # fast | standard | strong | strongest — projections map this
 effort: high                  # low | medium | high | xhigh | max; omit to inherit the default
-effort_escalation:            # optional; projected as guidance, not enforced in v0.1
+effort_escalation:            # optional; projected as guidance, not enforced
   after_blocked_attempts: 2
   to: xhigh
 verbosity: concise            # terse | concise | detailed
@@ -1579,6 +1579,33 @@ reviewed like any other change. `bench --check` compares a fresh run's p50, p95 
 target and mode against it under the policy's `benchmark.regression` fractions; a baseline
 with another schema is reported as not comparable, never as a number.
 
+## The timing report
+
+With `MJ_TIMING=1` set, a command reports on stderr where its time went: each phase it
+declares, with the milliseconds it took and how often it ran, then each work counter (a
+YAML parse, a git call) summed. stdout stays the command's own. The text form is for a person:
+
+```text
+TIMING clock=epochrealtime total=2640 ms
+phase      2178 ms     1 x  ctxd:cross_check
+count         9     git
+```
+
+Under `--json` the same data is one line of JSON, so a check can compare one run's
+breakdown with another's:
+
+```json
+{"timing":{"clock":"epochrealtime","total_ms":2640,
+ "phases":[{"name":"ctxd:cross_check","ms":2178,"calls":1}],
+ "counters":[{"name":"git","count":9}]}}
+```
+
+Both forms are read from one aggregation in one order (phases by time, counters by count, a
+tie broken by name), so neither carries a phase or a counter the other lacks; case 886 holds
+that. `clock` names the source of the milliseconds (`epochrealtime`, or `seconds` where the
+shell has no `EPOCHREALTIME`), and `total_ms` runs from the first line of the command to
+the report.
+
 ## Projection stamp
 
 Every generated target describes itself; there is no provenance file beside it, so a
@@ -1665,7 +1692,7 @@ can rot.
 
 `finish` accepts `--note <file>`. For `completed` it needs the handover's required
 sections; for `partial`/`blocked` a `# Next Action`; for `no_match`/`failed` a
-`# Reason`. The profile's `output_contract` fields may lead as a YAML block; v0.1 records
+`# Reason`. The profile's `output_contract` fields may lead as a YAML block; `finish` records
 the note but does not validate that block. On success the note is copied to
 `state/completed/<id>.md`.
 

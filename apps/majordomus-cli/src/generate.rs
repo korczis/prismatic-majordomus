@@ -1298,10 +1298,7 @@ pub fn web_topology(ctx: &Context) -> Value {
 /// that what the committed file depends on can be measured over a directory rather than
 /// over a whole index.
 fn web_document(topology: &crate::web::Topology) -> Value {
-    let surfaces: Vec<Value> = topology
-        .surfaces
-        .iter()
-        .filter(|s| !only_where_its_producer_ran(s))
+    let surfaces: Vec<Value> = surfaces_every_checkout_has(topology)
         .map(|s| {
             let mut v = serde_json::to_value(s).unwrap_or(Value::Null);
             // a built revision is a fact of one checkout's artifacts, never of the
@@ -1325,6 +1322,22 @@ fn web_document(topology: &crate::web::Topology) -> Value {
             .collect::<serde_json::Map<String, Value>>(),
         "surfaces": surfaces,
     })
+}
+
+/// The surfaces of a topology that every checkout of the repository has: all of them but
+/// those known only from a declaration a producer wrote in this one.
+///
+/// Every committed number or list of surfaces is read through this, so that the projection
+/// and a count of it cannot disagree: `site/data/registry/product.json` once counted the
+/// whole resolution while `web.json` filtered it, and a worktree that had run
+/// `majordomus web report tests` committed eleven surfaces where a clean checkout derives ten.
+pub(crate) fn surfaces_every_checkout_has(
+    topology: &crate::web::Topology,
+) -> impl Iterator<Item = &crate::web::Surface> {
+    topology
+        .surfaces
+        .iter()
+        .filter(|s| !only_where_its_producer_ran(s))
 }
 
 /// Whether a surface was found only by walking the generated root: its mount, or any other
@@ -1416,11 +1429,9 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
                 .collect(),
         });
     }
-    let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
-        Error::Http {
-            reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),
-        },
-    )?;
+    // whole: the site's entity pages and its catalogue counts are read off this document,
+    // and a prefix of the repository would drop what sorts past MAX_NODES without a word
+    let graph = crate::graph::composed_complete(&ctx.registry, &ctx.index);
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
@@ -2849,6 +2860,19 @@ mod tests {
             "a report on disk reached the committed projection"
         );
         assert!(!after.contains("\"tests\""), "{after}");
+        // and a count of the committed surfaces is the count of the projection, not of the
+        // resolution: the report is served here and counted nowhere
+        let committed = surfaces_every_checkout_has(&topology).count();
+        let projected = serde_json::from_str::<Value>(&after).unwrap()["surfaces"]
+            .as_array()
+            .unwrap()
+            .len();
+        assert_eq!(committed, projected);
+        assert_eq!(
+            committed + 1,
+            topology.surfaces.len(),
+            "the report is in the resolution"
+        );
     }
 
     /// A share directory inside the repository is named relative to it even when the root

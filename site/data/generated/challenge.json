@@ -42,6 +42,7 @@
     }
   ],
   "counts": {
+    "finish_refusals": 2,
     "refusals": 3,
     "steps": 10,
     "worker": 3
@@ -109,6 +110,7 @@
         "--scope",
         "lib"
       ],
+      "checks": [],
       "command": "majordomus start 'refuse tabs in the parser' --scope lib",
       "decision": [
         "started t-<id>  profile=implementation  scope=lib",
@@ -121,7 +123,8 @@
       "outcome": "accepted",
       "output": "started t-<id>  profile=implementation  scope=lib\nINFO overlap     repo-other — claims lib — contains your lib  [reproduce: majordomus check --overlap]\nnext: majordomus context; checkpoint every 15m; majordomus check before claiming anything",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": null
     },
     {
       "actor": "worker",
@@ -130,6 +133,7 @@
         "-c",
         "echo \"tabs are refused\" >> lib/a && echo \"parser notes\" >> docs/d"
       ],
+      "checks": [],
       "command": "echo \"tabs are refused\" >> lib/a && echo \"parser notes\" >> docs/d",
       "decision": [],
       "exit": 0,
@@ -139,12 +143,39 @@
       "outcome": "change",
       "output": "",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": null
     },
     {
       "actor": "tool",
       "argv": [
         "check"
+      ],
+      "checks": [
+        {
+          "name": "knowledge",
+          "pass": true
+        },
+        {
+          "name": "records",
+          "pass": true
+        },
+        {
+          "name": "blockers",
+          "pass": true
+        },
+        {
+          "name": "records",
+          "pass": true
+        },
+        {
+          "name": "scope",
+          "pass": false
+        },
+        {
+          "name": "state",
+          "pass": true
+        }
       ],
       "command": "majordomus check",
       "decision": [
@@ -163,7 +194,8 @@
       "outcome": "refused",
       "output": "OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]\n·    checkpoint  t-<id> — <timed against the checkpoint interval>\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   blockers    t-<id> — none open\nOK   records     decisions.md — every entry is attributable\nFAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]\nOK   state       t-<id> — exact (head <head>)\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned\ncheck: 11 finding(s), 1 failing",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": "check: 11 finding(s), 1 failing"
     },
     {
       "actor": "tool",
@@ -173,6 +205,28 @@
         "completed",
         "--verify-command",
         "sh test/parse.sh"
+      ],
+      "checks": [
+        {
+          "name": "blockers",
+          "pass": true
+        },
+        {
+          "name": "note",
+          "pass": false
+        },
+        {
+          "name": "scope",
+          "pass": false
+        },
+        {
+          "name": "state",
+          "pass": true
+        },
+        {
+          "name": "verification",
+          "pass": false
+        }
       ],
       "command": "majordomus finish --outcome completed --verify-command 'sh test/parse.sh'",
       "decision": [
@@ -190,7 +244,8 @@
       "outcome": "refused",
       "output": "OK   blockers    t-<id> — none open\nFAIL note        t-<id> — no --note file and no handover for this task  [reproduce: majordomus handover < note.md]\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nFAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 3 unmet\nblocking doctrines:\n- majordomus.note-integrity\n- majordomus.scope-integrity\n- majordomus.verification-integrity",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": "finish: refused, 3 unmet"
     },
     {
       "actor": "worker",
@@ -199,6 +254,7 @@
         "-c",
         "git checkout -- docs/d"
       ],
+      "checks": [],
       "command": "git checkout -- docs/d",
       "decision": [],
       "exit": 0,
@@ -208,13 +264,15 @@
       "outcome": "change",
       "output": "",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": null
     },
     {
       "actor": "tool",
       "argv": [
         "handover"
       ],
+      "checks": [],
       "command": "majordomus handover",
       "decision": [
         ".ai/local/state/handovers/<time>--main--<head>--<hash>.md"
@@ -226,13 +284,15 @@
       "outcome": "accepted",
       "output": ".ai/local/state/handovers/<time>--main--<head>--<hash>.md",
       "stdin": "challenge-handover.md",
-      "stdin_source": "test/fixtures/commands/stdin/challenge-handover.md"
+      "stdin_source": "test/fixtures/commands/stdin/challenge-handover.md",
+      "verdict": null
     },
     {
       "actor": "tool",
       "argv": [
         "context"
       ],
+      "checks": [],
       "command": "majordomus context",
       "decision": [
         "# Majordomus context — <time>",
@@ -290,7 +350,8 @@
       "outcome": "accepted",
       "output": "# Majordomus context — <time>\n# a projection of durable state, not a source of truth: validate every line against git\n\n## GIT\nrepository   <repo>\nbranch       main\nhead         <sha>\nworking_tree dirty\ntask_record  exact (recorded head <head>)\n\n## TASK\nid           t-<id>\ntask         refuse tabs in the parser\nprofile      implementation\nowner        <owner>\noutcome      active\nscope        lib\nstarted      <time> (<age> ago)\ncheckpoint   <time> (<age> ago, interval 15m)\n\n## PROFILE implementation\ncapability   standard\neffort       medium\nverbosity    concise\npresentation engineering\nverification verify command\noutput       outcome, changes, verification, blockers, next_action\n\n## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\nlib  ai.layer\n\n## KNOWLEDGE (candidates awaiting review on this branch; majordomus knowledge candidates)\nNo knowledge candidates await review on this branch. That is an answer, not a gap: `majordomus knowledge candidates` lists every branch.\n\n## DECISIONS (5 most recent for this task)\n(none)\n\n## LATEST COMPATIBLE HANDOVER (.ai/local/state/handovers/<time>--main--<head>--<hash>.md)\nmatch        same_worktree_same_branch\ngit state    exact\ncreated      <time> (<age> ago)\ntask         t-<id>\n# Objective\nrefuse tabs in the parser\n# Current State\ntabs are refused; the stray note under docs is reverted; the parser's test still fails\n# Next Action\nmake the message name the column, then run the parser's test again\n\n## FILES TOUCHED IN SCOPE (1)\nlib/a\n\n## EXCLUDED\n- history — profile implementation sets context.recent_history_depth: 0\n\n## BUDGET\n57 of 300 lines",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": null
     },
     {
       "actor": "tool",
@@ -300,6 +361,28 @@
         "completed",
         "--verify-command",
         "sh test/parse.sh"
+      ],
+      "checks": [
+        {
+          "name": "blockers",
+          "pass": true
+        },
+        {
+          "name": "note",
+          "pass": true
+        },
+        {
+          "name": "scope",
+          "pass": true
+        },
+        {
+          "name": "state",
+          "pass": true
+        },
+        {
+          "name": "verification",
+          "pass": false
+        }
       ],
       "command": "majordomus finish --outcome completed --verify-command 'sh test/parse.sh'",
       "decision": [
@@ -313,11 +396,12 @@
       "exit": 10,
       "id": "finish-refuses-a-failing-verification",
       "n": 8,
-      "note": "Scope is clean now, but the repository''s own test still fails. finish runs it and refuses again.",
+      "note": "Scope is clean now, but the repository's own test still fails. finish runs it and refuses again.",
       "outcome": "refused",
       "output": "OK   blockers    t-<id> — none open\nOK   note        t-<id> — <time>--main--<head>--<hash>.md\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nFAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: refused, 1 unmet\nblocking doctrines:\n- majordomus.verification-integrity",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": "finish: refused, 1 unmet"
     },
     {
       "actor": "worker",
@@ -326,6 +410,7 @@
         "-c",
         "echo \"the message names the column\" >> lib/a"
       ],
+      "checks": [],
       "command": "echo \"the message names the column\" >> lib/a",
       "decision": [],
       "exit": 0,
@@ -335,7 +420,8 @@
       "outcome": "change",
       "output": "",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": null
     },
     {
       "actor": "tool",
@@ -345,6 +431,28 @@
         "completed",
         "--verify-command",
         "sh test/parse.sh"
+      ],
+      "checks": [
+        {
+          "name": "blockers",
+          "pass": true
+        },
+        {
+          "name": "note",
+          "pass": true
+        },
+        {
+          "name": "scope",
+          "pass": true
+        },
+        {
+          "name": "state",
+          "pass": true
+        },
+        {
+          "name": "verification",
+          "pass": true
+        }
       ],
       "command": "majordomus finish --outcome completed --verify-command 'sh test/parse.sh'",
       "decision": [
@@ -362,7 +470,8 @@
       "outcome": "accepted",
       "output": "OK   blockers    t-<id> — none open\nOK   note        t-<id> — <time>--main--<head>--<hash>.md\nINFO regression  t-<id> — profile implementation adds no requirement beyond the shared contract\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nINFO continuity  t-<id> — applies to partial and blocked\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nOK   verification t-<id> — sh test/parse.sh — exit 0, <s>s, tree <tree>\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned\nINFO gate        t-<id> — not in verification.finish_requires\nfinish: t-<id> completed",
       "stdin": null,
-      "stdin_source": null
+      "stdin_source": null,
+      "verdict": "finish: t-<id> completed"
     }
   ],
   "use_case": {
@@ -373,7 +482,7 @@
     "setup": "challenge",
     "setup_source": "test/fixtures/commands/setup/challenge.sh",
     "source": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
-    "summary": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+    "summary": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository's own verification passes.",
     "title": "Catch an agent that says it is done when it is not"
   }
 }

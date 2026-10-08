@@ -624,7 +624,7 @@
       "status": "guaranteed",
       "route": "/guarantees/bootstrap-chain/",
       "external": false,
-      "note": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops."
+      "note": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own or names a rule id the effective set does not provide (case 899). A person and a worker reach the same layer by the same two hops."
     },
     {
       "id": "claim:legacy-migration",
@@ -868,6 +868,105 @@
       "route": "/guarantees/github-projection-gated/",
       "external": false,
       "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise."
+    },
+    {
+      "id": "claim:intent-stage-derived",
+      "kind": "claim",
+      "label": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-stage-derived/",
+      "external": false,
+      "note": "Nothing about an intent is stored but its statement. A passing run while a milestone is open meets the criterion and satisfies nothing; closing the milestone satisfies it; changing the test after its run makes the evidence stale and the intent falls back to verifying, and a failing run is not evidence either, with the intent file untouched throughout. `majordomus intent list`, `intent show`, the HTTP API and the MCP tools answer from the same derivation."
+    },
+    {
+      "id": "claim:intent-links-resolve",
+      "kind": "claim",
+      "label": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-links-resolve/",
+      "external": false,
+      "note": "`majordomus intent validate` exits 10 with `unresolved_evidence_ref` naming the intent, and the intent-check gate runs it. A milestone or governance entry that resolves to nothing is refused the same way. A reference to nothing would otherwise read as a planned intent forever."
+    },
+    {
+      "id": "claim:intent-criteria-covered",
+      "kind": "claim",
+      "label": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-criteria-covered/",
+      "external": false,
+      "note": "An issue names the criterion it serves in `serves`; coverage from criterion to issue is derived on every read and `majordomus intent coverage` prints it, with the reason every issue exists. An intent with no work yet is `intent_not_planned`, a warning, because that is where every intent starts."
+    },
+    {
+      "id": "claim:intent-plan-reviewed",
+      "kind": "claim",
+      "label": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-plan-reviewed/",
+      "external": false,
+      "note": "The refusal is `majordomus intent validate` and the intent-check gate, after the start. `plan start` itself succeeds; refusing the start is intent-refused-at-plan-start, which is planned. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together."
+    },
+    {
+      "id": "claim:intent-realization-held-to-evidence",
+      "kind": "claim",
+      "label": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-realization-held-to-evidence/",
+      "external": false,
+      "note": "`majordomus intent realization` exits 10 with `closed_work_contradicted` and the intent-realization gate runs it; `intent explain` says why an intent stands where it stands. Every link says how it is known: declared, observed, derived or inferred. Closed work that is merely unproven, and an issue closed while the criterion it serves is unmet, are warnings rather than refusals."
+    },
+    {
+      "id": "claim:intent-preflight-names-the-intent",
+      "kind": "claim",
+      "label": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-preflight-names-the-intent/",
+      "external": false,
+      "note": "`majordomus intent preflight --issue <id>` (or `--path`) follows the criteria the issue declares in `serves`, never its milestone alone, and judges each link by the coverage `intent validate` reports from. It answers `serves` (exit 0) when every link holds and each intent served has a critique with no blocking finding open, `maintenance` (exit 0) for an issue that serves nothing under a milestone no live intent names, and `refused` (exit 10) naming its cause: unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued or open_blocking_finding. The MCP tool answers the same. It is a question a worker asks, not a step any command takes for it: `plan start` does not run it."
+    },
+    {
+      "id": "claim:intent-cockpit-pages",
+      "kind": "claim",
+      "label": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-cockpit-pages/",
+      "external": false,
+      "note": "Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404."
+    },
+    {
+      "id": "claim:intent-in-session-context",
+      "kind": "claim",
+      "label": "A session will load the intents its task serves when it starts",
+      "status": "planned",
+      "route": "/guarantees/intent-in-session-context/",
+      "external": false,
+      "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it."
+    },
+    {
+      "id": "claim:intent-refused-at-plan-start",
+      "kind": "claim",
+      "label": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+      "status": "planned",
+      "route": "/guarantees/intent-refused-at-plan-start/",
+      "external": false,
+      "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed."
+    },
+    {
+      "id": "claim:intent-closes-github-milestones",
+      "kind": "claim",
+      "label": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+      "status": "planned",
+      "route": "/guarantees/intent-closes-github-milestones/",
+      "external": false,
+      "note": "The GitHub projection closes a milestone from its derived plan status alone and reads no intent. Closed work the evidence contradicts is refused by the intent-realization gate, not by the tracker."
+    },
+    {
+      "id": "claim:intent-command-deployment-evidence",
+      "kind": "claim",
+      "label": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+      "status": "planned",
+      "route": "/guarantees/intent-command-deployment-evidence/",
+      "external": false,
+      "note": "Such a criterion resolves and reads `not_derivable`, and never meets a criterion by itself, because the evidence ledger records runs of tests and claims only. An intent whose criteria are all of these kinds cannot be satisfied today."
     },
     {
       "id": "claim:mcp-stdio-surface",
@@ -1587,7 +1686,7 @@
       "status": "guaranteed",
       "route": "/guarantees/evidence-subject-commands-agree-with-the-command-pages/",
       "external": false,
-      "note": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index."
+      "note": "The case headers had several readers before the index: the site generator's command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module's file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index."
     },
     {
       "id": "claim:rule-exemption-carries-its-reason",
@@ -1605,7 +1704,7 @@
       "status": "guaranteed",
       "route": "/guarantees/rule-state-is-derived-from-what-ran/",
       "external": false,
-      "note": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass."
+      "note": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule's state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass."
     },
     {
       "id": "claim:authored-files-are-english",
@@ -1623,7 +1722,7 @@
       "status": "guaranteed",
       "route": "/guarantees/published-translation-is-declared/",
       "external": false,
-      "note": "project.english-only v2 (ADR 0077) keeps the repository''s own artifacts English with no exceptions and names one population apart: content published for a reader in that reader''s language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding."
+      "note": "project.english-only v2 (ADR 0077) keeps the repository's own artifacts English with no exceptions and names one population apart: content published for a reader in that reader's language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding."
     },
     {
       "id": "claim:a-finding-names-how-to-see-it-again",
@@ -1632,7 +1731,7 @@
       "status": "guaranteed",
       "route": "/guarantees/a-finding-names-how-to-see-it-again/",
       "external": false,
-      "note": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded."
+      "note": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller's business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded."
     },
     {
       "id": "claim:evidence-currency-is-not-collapsed",
@@ -1641,7 +1740,7 @@
       "status": "guaranteed",
       "route": "/guarantees/evidence-currency-is-not-collapsed/",
       "external": false,
-      "note": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate."
+      "note": "`proven` means the diff between the execution's own commit and the working tree is empty, excluding the ledger's own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate."
     },
     {
       "id": "claim:evidence-partial-run-preserves-the-rest",
@@ -1941,6 +2040,42 @@
       "note": "Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data."
     },
     {
+      "id": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "kind": "claim",
+      "label": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass/",
+      "external": false,
+      "note": "The result line of cargo test says ok for a binary that ran nothing, so the recorder reads its counts. A failed count is a failure, a binary that passed nothing or ran a filtered subset is a skip, a line with no count or a binary with no result line is an error, and escape sequences are stripped first. The unit-test binary of the crate, its doctests, binaries outside tests/ and result lines no Running line named are listed in the recording as dropped, with the reason, because no claim can name them until a runner records them one by one."
+    },
+    {
+      "id": "claim:evidence-tree-is-measured-by-the-run",
+      "kind": "claim",
+      "label": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-tree-is-measured-by-the-run/",
+      "external": false,
+      "note": "evidence stamp measures the checkout as the run left it, the evidence ledger ignored and only the run's own untracked outputs excluded; evidence record --provenance carries that measurement into the report's executions and takes the digest of a clean run from the commit. The stamp measures when it is taken, not while the run executed, and a CI job's tree file names no report until CI stamps with its report."
+    },
+    {
+      "id": "claim:evidence-a-recording-is-a-typed-run",
+      "kind": "claim",
+      "label": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-recording-is-a-typed-run/",
+      "external": false,
+      "note": "evidence record returns an EvidenceRunRecord and writes it with --run-record; --coverage binds the scripts/rust-coverage summary to its commit and measured tree with the floors the threshold files state. A run record decides no verdict; it can only withhold proven through the one monotone rule, which no surface applies yet."
+    },
+    {
+      "id": "claim:evidence-local-recording-stays-local",
+      "kind": "claim",
+      "label": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-local-recording-stays-local/",
+      "external": false,
+      "note": "The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from."
+    },
+    {
       "id": "claim:a-skipped-case-is-not-a-proof",
       "kind": "claim",
       "label": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
@@ -2090,6 +2225,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/cockpit/intents.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/cockpit/intents.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/cockpit/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/cockpit/mod.rs",
@@ -2167,6 +2309,20 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/record.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/run.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/run.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/evidence/subject.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/subject.rs",
@@ -2191,6 +2347,34 @@
       "id": "impl:apps/majordomus-cli/src/index.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/index.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent_plan.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_plan.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent_realization.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_realization.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent_review.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_review.rs",
       "route": null,
       "external": false
     },
@@ -3224,6 +3408,20 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/http_serve.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/intent.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/intent.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/intent_realization.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/intent_realization.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent_realization.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/knowledge_base.rs",
@@ -3574,6 +3772,27 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/359_live_scenarios.sh"
     },
     {
+      "id": "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "kind": "test",
+      "label": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/386_a_plan_is_held_to_its_intent.sh"
+    },
+    {
+      "id": "test:test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+      "kind": "test",
+      "label": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+    },
+    {
       "id": "test:test/cases/400_derivation_is_one_graph.sh",
       "kind": "test",
       "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -3719,6 +3938,20 @@
       "label": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+    },
+    {
+      "id": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "kind": "test",
+      "label": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/505_a_recording_carries_what_its_run_measured.sh"
+    },
+    {
+      "id": "test:test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "kind": "test",
+      "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
     },
     {
       "id": "test:test/cases/507_evidence_subjects_are_derived.sh",
@@ -4562,6 +4795,61 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:intent-stage-derived",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-links-resolve",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-criteria-covered",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-plan-reviewed",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-realization-held-to-evidence",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-preflight-names-the-intent",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-cockpit-pages",
+      "target": "source:docs/COCKPIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-in-session-context",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-refused-at-plan-start",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-closes-github-milestones",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-command-deployment-evidence",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mcp-stdio-surface",
       "target": "source:docs/MCP.md",
       "kind": "specified_by"
@@ -5157,6 +5445,26 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-tree-is-measured-by-the-run",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-a-recording-is-a-typed-run",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-local-recording-stays-local",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "source:docs/EVIDENCE.md",
       "kind": "specified_by"
@@ -5624,6 +5932,41 @@
     {
       "source": "claim:github-projection-gated",
       "target": "impl:scripts/ci/github-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-stage-derived",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-links-resolve",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-criteria-covered",
+      "target": "impl:apps/majordomus-cli/src/intent_plan.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-plan-reviewed",
+      "target": "impl:apps/majordomus-cli/src/intent_review.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-realization-held-to-evidence",
+      "target": "impl:apps/majordomus-cli/src/intent_realization.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-preflight-names-the-intent",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-cockpit-pages",
+      "target": "impl:apps/majordomus-cli/src/cockpit/intents.rs",
       "kind": "implemented_by"
     },
     {
@@ -6217,6 +6560,26 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-tree-is-measured-by-the-run",
+      "target": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-a-recording-is-a-typed-run",
+      "target": "impl:apps/majordomus-cli/src/evidence/run.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-local-recording-stays-local",
+      "target": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "impl:test/run.sh",
       "kind": "implemented_by"
@@ -6684,6 +7047,41 @@
     {
       "source": "claim:github-projection-gated",
       "target": "test:test/cases/97_github_gate.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-stage-derived",
+      "target": "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-links-resolve",
+      "target": "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-criteria-covered",
+      "target": "test:test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-plan-reviewed",
+      "target": "test:test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-realization-held-to-evidence",
+      "target": "test:test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-preflight-names-the-intent",
+      "target": "test:apps/majordomus-cli/tests/intent.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-cockpit-pages",
+      "target": "test:apps/majordomus-cli/tests/intent_realization.rs",
       "kind": "proved_by"
     },
     {
@@ -7274,6 +7672,26 @@
     {
       "source": "claim:commit-plan-is-refusable",
       "target": "test:test/cases/274_commit_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "test:test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-tree-is-measured-by-the-run",
+      "target": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-recording-is-a-typed-run",
+      "target": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-local-recording-stays-local",
+      "target": "test:test/cases/505_a_recording_carries_what_its_run_measured.sh",
       "kind": "proved_by"
     },
     {

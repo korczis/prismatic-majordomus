@@ -1,8 +1,15 @@
-{#- flowbite.com/docs/components/breadcrumb/ -#}
+{#- flowbite.com/docs/components/breadcrumb/
+    The caller sets `crumb_title` (the page itself) and either `crumb_parent` (a section, the
+    page's place in the URL tree) or `crumb_trail` (a list of {title, href}, root first, for a
+    page whose place in the product is not its URL: a feature sits under its domain, which
+    the trail is derived from). The trail wins when both are set. -#}
+{%- set crumb_steps = crumb_trail | default(value=[]) -%}
 <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
     <li class="inline-flex items-center"><a href="{{ get_url(path="/", trailing_slash=true) }}" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
-    {% if crumb_parent %}<li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="{{ crumb_parent.permalink }}" class="font-medium text-body hover:text-fg-brand">{{ crumb_parent.title }}</a></li>{% endif %}
+    {%- if crumb_steps | length > 0 %}
+    {%- for c in crumb_steps %}<li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="{{ c.href }}" class="font-medium text-body hover:text-fg-brand">{{ c.title }}</a></li>{% endfor %}
+    {%- elif crumb_parent %}<li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="{{ crumb_parent.permalink }}" class="font-medium text-body hover:text-fg-brand">{{ crumb_parent.title }}</a></li>{% endif %}
     <li aria-hidden="true">/</li>
     <li aria-current="page" class="font-medium text-heading">{{ crumb_title }}</li>
   </ol>

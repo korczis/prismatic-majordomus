@@ -1,6 +1,6 @@
 +++
 title = "Roadmap"
-description = "What comes after v0.1, in the order the milestone graph derives, each version gated by the previous one being accepted rather than by anyone's intention."
+description = "What comes next, in the order the milestone graph derives, each version gated by the previous one being accepted rather than by anyone's intention."
 template = "roadmap.html"
 [extra]
 source = ".majordomus/project/milestones/"

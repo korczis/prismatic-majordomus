@@ -474,6 +474,37 @@ fn the_site_dataset_is_an_allow_listed_public_projection_of_the_same_model() {
     assert_eq!(again[0].content, product.content);
 }
 
+/// The dataset is committed and `generate --check` compares it on a clean checkout, so a
+/// report a producer wrote into the ignored generated root of this one — the test report,
+/// after `majordomus web report tests` — may change no byte of it. The web projection
+/// already left reports out; the telemetry counted the whole resolution, and a worktree
+/// that had run the suite derived one surface more than CI did.
+#[test]
+fn a_report_written_in_one_checkout_changes_no_byte_of_the_dataset() {
+    let f = Fixture::new();
+    let product = |f: &Fixture| {
+        let app = common::load_app(f);
+        let artifacts = majordomus_cli::site::product_artifacts(&app.context).unwrap();
+        let surfaces = app.context.web.surfaces.len();
+        let product = artifacts
+            .into_iter()
+            .find(|a| a.path == "site/data/registry/product.json")
+            .unwrap();
+        (product.content, surfaces)
+    };
+    let (clean, resolved_clean) = product(&f);
+    majordomus_cli::web::report::declare(&f.root(), "tests", "Test results", "test/run.sh")
+        .unwrap();
+    let (after, resolved_after) = product(&f);
+    // the resolution did find it — served where it was built — so the equality below is
+    // not the report going unnoticed
+    assert_eq!(resolved_after, resolved_clean + 1);
+    assert_eq!(
+        clean, after,
+        "a report on disk reached the committed dataset"
+    );
+}
+
 // ---------------------------------------------------------------- the invariant
 
 #[test]

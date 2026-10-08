@@ -97,7 +97,10 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     };
     let (host, port) = match &declared {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
-        None => (args.host.clone(), args.port),
+        None => (
+            crate::cli::local_http_host(args.host.as_deref()).0,
+            args.port,
+        ),
     };
     // The server outlives many commits. It follows the repository rather than freezing
     // the picture it started with: `crate::live` says what that costs and why.

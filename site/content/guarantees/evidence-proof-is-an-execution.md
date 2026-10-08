@@ -1,7 +1,7 @@
 +++
 title = "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves"
 description = "docs/CLAIMS.yaml binds a claim to a test with a path, and a path that resolves proves"
-weight = 185
+weight = 196
 [extra]
 claim_id = "evidence-proof-is-an-execution"
 status = "guaranteed"
@@ -48,10 +48,10 @@ JSON, one entry per test — holds the latest of them. `evidence::report` joins 
 the index holds with the executions the ledger holds, on every read, and decides one of
 seven states per claim: `proven`, `inputs_unchanged`, `stale`, `failing`, `not_run`,
 `unrunnable`, `no_test`. The join is never written down, so there is no second place for a
-proof state to be stored and go stale, and none of the four capabilities caches it.
+proof state to be stored and go stale, and none of the evidence capabilities caches it.
 
 `evidence record` reads what the runs already wrote — the suite's TSV report under
-`MJ_TEST_REPORT`, `cargo test`'s output — and stamps each result with the provenance. It
+`MJ_TEST_REPORT`, `cargo test`'s output — and carries into each result what its run measured. It
 records; it decides nothing. Only a recognised pass proves anything, and a result word
 nobody recognises is `error` rather than silently the good outcome; there is deliberately
 no `not_run` outcome in the model, because that is the absence of an execution rather than
@@ -63,11 +63,11 @@ is a lie in the safe direction and still a lie. A result naming a test this chec
 not have is reported as unknown and recorded for nobody, because it means the runner and
 the matrix have diverged.
 
-The commit is taken when the result is recorded rather than by the runner, because the
-runner executes each case in a disposable temporary repository and genuinely does not know
-which checkout it was invoked from. Recording in the tree the run was made against takes
-the same commit; a dirty tree is recorded as `dirty` for exactly this reason, since that is
-the one case where the commit does not describe what ran.
+The run measures and the recorder carries. A run's own measurement (`evidence stamp`, naming
+its report) gives the commit and the tree the execution is recorded with, so the recorder
+never vouches for a tree it did not see; a report recorded without one carries the tree
+`unknown` and never reads `proven`. The stamp measures the checkout when it is taken, after
+the report was written, and not the tree while the run executed.
 
 ## How to see it
 
@@ -76,7 +76,8 @@ majordomus evidence show                    # every claim, its state, the run be
 majordomus evidence show --state not_run    # the claims nothing has ever run
 majordomus evidence claim distribution-canonical-model
 MJ_TEST_REPORT=suite.tsv bash test/run.sh
-majordomus evidence record --suite suite.tsv --origin local
+majordomus evidence stamp --report suite.tsv --out suite.provenance.json
+majordomus evidence record --suite suite.tsv --provenance suite.provenance.json
 ```
 
 Every command takes `--format json`. A repository that has recorded nothing says so and

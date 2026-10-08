@@ -16,7 +16,7 @@ grep -A2 '^effort_escalation' .ai/repo/profiles/debugging.yaml
 
 ## What it does not cover
 
-**Advisory.** v0.1 records the rule; it does not count attempts or observe the worker's effort. Making escalation an observed event needs telemetry that does not exist yet.
+**Advisory.** The tool records the rule; it does not count attempts or observe the worker's effort. Making escalation an observed event needs telemetry that does not exist yet.
 
 ## Why it exists
 

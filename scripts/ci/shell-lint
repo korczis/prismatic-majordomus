@@ -43,9 +43,16 @@ shellcheck -x -s bash -S warning test/cases/*.sh
 # a clean tree; and a script it cannot read to the end is a failure, not a pass.
 echo "==> no counting call inside a pipeline loop"
 pc_awk=scripts/lib/pipeline-counts.awk; pc_fixture=scripts/lib/pipeline-counts.fixture
-pc_want="5 8 15 17 25 32"
+pc_want="5 8 15 17 25 32 35"
 pc_got="$(LC_ALL=C awk -v FNS=bad -f "$pc_awk" "$pc_fixture" | sed -E 's#^[^:]*:([0-9]+):.*#\1#' | tr '\n' ' ' | sed 's/ $//')"
 [ "$pc_got" = "$pc_want" ] || { echo "shell-lint: $pc_awk found lines [$pc_got] in $pc_fixture, whose answer is [$pc_want]; the scanner is not trustworthy"; exit 1; }
+# The discovery is held to a known answer too: a reporter it stopped finding is a call nothing
+# checks, so a clean tree would prove only that the list was empty. The fixture names the
+# reporters a counter and each shape of flag make, and the functions that are none.
+cf_awk=scripts/lib/counting-functions.awk; cf_fixture=scripts/lib/counting-functions.fixture
+cf_want="$(sed -n 's/^# The known answer for scripts\/lib\/counting-functions.awk is: //p' "$cf_fixture")"
+cf_got="$(LC_ALL=C awk -f "$cf_awk" "$cf_fixture" | tr '\n' ' ' | sed 's/ $//')"
+[ -n "$cf_want" ] && [ "$cf_got" = "$cf_want" ] || { echo "shell-lint: $cf_awk found [$cf_got] in $cf_fixture, whose answer is [$cf_want]; the discovery is not trustworthy"; exit 1; }
 pc_hits=0
 for f in $scripts; do
   fns="$(LC_ALL=C awk -f scripts/lib/counting-functions.awk "$f" | sort -u | tr '\n' '|' | sed 's/|$//')"

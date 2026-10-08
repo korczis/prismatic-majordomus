@@ -1,6 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set graph = load_data(path="data/generated/claims-graph.json") -%}
+{%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set graph_id = "claims" -%}
 {%- set graph_rings = "" -%}
 {%- set graph_label = "Every claim and the evidence attached to it. Evidence nodes are shared, so a file carrying several claims appears once." -%}
@@ -16,24 +17,24 @@
   {%- set short = ci.commit | truncate(length=12, end="") %}
   <p class="mt-3 text-body">
     {%- if ci.state == "current" %}
-    <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-sm font-semibold text-fg-success-strong">CURRENT</span>
+    {%- set status = "current" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %}
     The report below is the tracked ledger's verdict at commit
     <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
     the commit this site was built from, and CI's run of that commit confirms it: every job that
     ran tests measured a clean tree, nothing was absent or refused, and nothing failed.
     {%- elif ci.state == "stale" and ci.behind > 0 %}
-    <span class="rounded bg-warning-soft px-1.5 py-0.5 font-mono text-sm font-semibold text-fg-warning">STALE</span>
+    {%- set status = "stale" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %}
     The newest executions CI recorded are of commit
     <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
     {{ ci.behind }} commit(s) and {{ ci.changed }} changed file(s) before the one this site was built from.
     They say what held there, not what holds here; the site is published again once CI has recorded this commit.
     {%- elif ci.state == "stale" %}
-    <span class="rounded bg-warning-soft px-1.5 py-0.5 font-mono text-sm font-semibold text-fg-warning">STALE</span>
+    {%- set status = "stale" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %}
     CI's run of commit
     <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
     the commit this site was built from, recorded failures, so it does not confirm the report below.
     {%- else %}
-    <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-sm font-semibold text-heading">UNKNOWN</span>
+    {%- set status = "unknown" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %}
     CI ran commit
     <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
     the commit this site was built from, but its run cannot confirm the report below.
@@ -72,7 +73,7 @@
   </div>
   {%- else %}
   <p class="mt-3 text-body">
-    <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-sm font-semibold text-heading">UNKNOWN</span>
+    {%- set status = "unknown" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %}
     No CI evidence reached this build{% if ci and ci.reason %}: {{ ci.reason }}{% endif %}.
     The claims below then show only what the ledger in the repository holds.
   </p>
@@ -80,12 +81,13 @@
 </section>
 {% include "partials/graph.html" %}
 <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  {%- for status, meaning in graph.statuses %}
+  {#- in the order docs/CLAIMS.yaml declares the statuses: a map iterates sorted by key -#}
+  {%- for status in caps.status_order %}
   {%- set of_status = [n for n in graph.nodes if n.kind == "claim" and n.status == status] %}
   <a class="block rounded-base border border-default bg-neutral-primary-soft p-5 hover:border-strong" href="{{ get_url(path='@/guarantees/' ~ status ~ '.md', trailing_slash=true) }}">
     <span class="font-mono text-2xl font-semibold text-heading">{{ of_status | length }}</span>
-    <span class="mt-1 block font-mono text-xs uppercase tracking-wide text-body-subtle">{{ status }}</span>
-    <span class="mt-2 block text-sm text-body">{{ meaning }}</span>
+    <span class="mt-1 block">{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}</span>
+    <span class="mt-2 block text-sm text-body">{{ graph.statuses[status] }}</span>
   </a>
   {%- endfor %}
 </div>

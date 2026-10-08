@@ -728,7 +728,7 @@ pub fn version_of(o: &Object) -> Option<String> {
 ///
 /// let repo = SyntheticRepository::small().unwrap();
 /// let ctx = repo.context().unwrap();
-/// let composed = graph::derive(graph::COMPOSED, &ctx.registry, ctx.index.as_ref()).unwrap();
+/// let composed = graph::composed_complete(&ctx.registry, ctx.index.as_ref());
 ///
 /// // a request that names nothing at all
 /// let empty = Request {

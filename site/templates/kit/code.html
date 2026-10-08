@@ -2,15 +2,15 @@
     button, the tab strip, and the rows of an HTTP API. See templates/kit/base.html for the
     conventions. -#}
 
-{#- A terminal window. Always dark: it carries the theme class, so every role inside it
-    resolves to its dark value whatever the page wears. The body is the session: lines from
-    `term_line`, boxes from `term_box`, or preformatted output. -#}
+{#- A terminal session. Always dark: it carries the theme class, so every role inside it
+    resolves to its dark value whatever the page wears. The bar carries the title and nothing
+    else: a recorded run is not a picture of a window, so it has no window controls. The body
+    is the session: lines from `term_line`, boxes from `term_box`, or preformatted output. -#}
 {% component terminal(title="", label="Terminal session") %}
 <figure class="mj-term dark m-0" aria-label="{{ label }}">
-  <div class="mj-term-bar" aria-hidden="true">
-    {%- for n in [1, 2, 3] %}<svg class="mj-term-dot mj-term-dot--{{ n }}" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/></svg>{% endfor -%}
-    {%- if title %}<span class="mj-term-title">{{ title }}</span>{% endif %}
-  </div>
+  {%- if title %}
+  <div class="mj-term-bar" aria-hidden="true"><span class="mj-term-title">{{ title }}</span></div>
+  {%- endif %}
   <div class="mj-term-body" tabindex="0">{{ body }}</div>
 </figure>
 {%- endcomponent terminal %}
