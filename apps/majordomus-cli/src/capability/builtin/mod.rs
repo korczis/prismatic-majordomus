@@ -62,6 +62,7 @@ pub(crate) mod mesh;
 pub(crate) mod models;
 pub mod objects;
 pub mod obligations;
+pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
@@ -198,6 +199,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         server,
         session_domain,
         shell,
+        pack,
         perf,
         plan,
         recover,
