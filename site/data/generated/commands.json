@@ -1898,7 +1898,8 @@
         ".ai/local/prompts/",
         ".ai/local/session-contexts/",
         ".claude/hooks/majordomus-capture",
-        ".claude/settings.json"
+        ".claude/settings.json",
+        ".claude/skills/majordomus-handover/"
       ],
       "exit_codes": [
         0,
@@ -1910,6 +1911,7 @@
       ],
       "tests": {
         "behaviour": [
+          "1016_the_worker_is_asked_before_compaction",
           "108_entry_converges_on_a_server",
           "111_session_per_provider",
           "130_lifecycle_survives_a_stale_task",
@@ -1930,6 +1932,7 @@
           "710_briefing_names_the_candidates"
         ],
         "negative": [
+          "1016_the_worker_is_asked_before_compaction",
           "111_session_per_provider",
           "140_prompt_continuity",
           "200_generic_mcp_episode",
