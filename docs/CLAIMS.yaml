@@ -1344,6 +1344,15 @@ claims:
     responsibility: finish
     note: The obligation vocabulary is share/obligations.yaml, so a token is added there and not in shell. Evidence is a task.evidence ledger line carrying the hash of the tracked files the obligation names; the validator recomputes that hash and reports both values when they differ, the way the site's own currency check already does. An obligation whose fact is remote is bound to the commit it was taken at instead, and judged with mj_git_label rather than a fifth staleness vocabulary. An outcome other than completed is never refused for owing something.
 
+  - id: completion-is-proved
+    claim: The outcome completed is refused while the completion report says complete is false, naming each question of share/completion.yaml still owed and the command that settles it; the stage a task stands at is derived from the answers and never written; and every surface reads that one report
+    source: docs/COMPLETION.md
+    implementation: lib/gates.sh
+    test: test/cases/880_completion_is_proved.sh
+    status: guaranteed
+    responsibility: finish
+    note: share/completion.yaml is the one definition of done; gates.policy answers it and gates.completion answers each question from the source it names. The policy key verification.completed_means_complete turns the refusal on (this repository) or off (the skeleton, with the reason); with it off the same questions are reported and never refused. `majordomus evidence --run-gates` runs the selected gates through scripts/ci/run-plan and records each exit, and a weaker outcome records the stage it stopped at.
+
   - id: obligation-establishment
     claim: An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it
     source: docs/CLI.md
