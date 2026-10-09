@@ -1,0 +1,37 @@
+id: I2110
+milestone: capability-graph
+title: An entity's relations are drawn as an evidence figure that explains every element
+slug: an-entitys-relations-are-an-evidence-figure
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Render the relation view of every entity page through the evidence-figure component of ADR 0122. What names the entity goes on the left, the entity in the middle with its own evidence as its subtree, and what it names on the right. Each box and line carries a claim in a word and a dash and explains itself when chosen, and the existing tables become the figure's data."
+why: "The capability-graph milestone promises a derived relation view. Until now the entity page listed relations as two tables, so a reader could not see the shape of what an object is joined to, nor tell a declared reference from a derived backlink at a glance."
+current_state: "The entity page's 'What it is joined to' card holds a References table and a Referenced by table, and nothing is drawn."
+desired_state: "The card holds a figure: a box per relation name and direction with the count of its objects, the objects in a native subtree, dashed derived backlinks, solid declared references, grey external ones, a legend that is also a filter, an information box for the chosen element, and the two tables under it as data. Without a script, the page shows the drawing, the subtrees and the tables."
+scope:
+  - apps/majordomus-cli/src/cockpit/figure.rs
+  - apps/majordomus-cli/src/cockpit/pages.rs
+  - apps/majordomus-cli/src/cockpit/mod.rs
+  - share/cockpit/flow.js
+  - share/cockpit/src/cockpit.css
+  - share/cockpit/cockpit.css
+  - share/design/tokens.yaml
+  - test/cases/1010_a_figure_is_a_map_of_its_evidence.sh
+  - scripts/lib/cockpit-probe.mjs
+  - scripts/cockpit-probe
+non_scope:
+  - The Cytoscape graph viewer of /cockpit/graphs/<id>, which serves graphs of hundreds of nodes
+  - The public site's entity pages (I2112)
+acceptance_criteria:
+  - Every rendered entity page with at least one relation carries a figure whose every drawn element has an explanation template
+  - The legend names exactly the claims the figure draws
+  - Backlinks are drawn derived and declared references declared, in word and dash
+  - The page without JavaScript still lists every relation in a table
+validation:
+  - "cargo test --lib cockpit::figure"
+  - bash test/run.sh 1010_a_figure_is_a_map_of_its_evidence
+evidence_required:
+  - entity_relations_figure_explains_every_element
+created_at: 2026-10-09
+updated_at: 2026-10-09

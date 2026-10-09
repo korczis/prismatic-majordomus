@@ -1,9 +1,9 @@
 {
   "schema": "majordomus/design-system/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.18.0",
-  "fingerprint": "944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540",
-  "design": "944a896b2646",
+  "generator": "majordomus-cli 0.19.0",
+  "fingerprint": "a74d99f0d2e1cafe9575d8559a7cdbffe11e054f63b371555daa1244d3ddc84a",
+  "design": "a74d99f0d2e1",
   "source": "share/design/tokens.yaml",
   "projections": [
     "share/design/theme.css",
@@ -21,7 +21,7 @@
     "font": 2,
     "role": 22,
     "status": 5,
-    "state": 105,
+    "state": 108,
     "tone": 6,
     "type": 4,
     "tracking": 2,
@@ -1039,6 +1039,7 @@
       "states": [
         "warn",
         "warning",
+        "estimated",
         "stale",
         "partial",
         "advisory",
@@ -1226,6 +1227,7 @@
       ],
       "states": [
         "info",
+        "derived",
         "running",
         "queued",
         "active",
@@ -1317,6 +1319,7 @@
         "unknown",
         "guaranteed",
         "external",
+        "historical",
         "planned",
         "described",
         "draft",
@@ -1791,6 +1794,24 @@
       "css": [
         ".mj-badge--warning",
         ".mj-status--warning"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "estimated",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--estimated",
+        ".mj-status--estimated"
       ],
       "role": "warn",
       "projections": [
@@ -2469,6 +2490,24 @@
       ]
     },
     {
+      "name": "derived",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--derived",
+        ".mj-status--derived"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
       "name": "running",
       "kind": "state",
       "about": "a state word filed under `info`",
@@ -2835,6 +2874,24 @@
       "css": [
         ".mj-badge--external",
         ".mj-status--external"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "historical",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--historical",
+        ".mj-status--historical"
       ],
       "role": "neutral",
       "projections": [
@@ -5134,6 +5191,7 @@
         "warn": [
           "warn",
           "warning",
+          "estimated",
           "stale",
           "partial",
           "advisory",
@@ -5177,6 +5235,7 @@
         ],
         "info": [
           "info",
+          "derived",
           "running",
           "queued",
           "active",
@@ -5201,6 +5260,7 @@
           "unknown",
           "guaranteed",
           "external",
+          "historical",
           "planned",
           "described",
           "draft",

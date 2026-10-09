@@ -30,7 +30,7 @@ import { chromium } from 'playwright';
 import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
 
 const BASE = process.argv[2];
-const MODE = process.argv[3] || 'full'; // full | quick
+const MODE = process.argv[3] || 'full'; // full | quick | interactions
 // The widths come from the design declaration through `/api/v1/design`, read once the
 // server answers; nothing here holds a width. Until then the sweep has none.
 let WIDTHS = [];
@@ -441,6 +441,100 @@ async function graph(context) {
 }
 
 /**
+ * The evidence figure (ADR 0122): every element it draws explains itself. The page is not
+ * named here: the entity pages the crawl found are read, and the one whose figure draws the
+ * most elements is exercised, so the probe follows the repository as its relations grow.
+ * Each box and line is chosen, by pointer and by keyboard, and must fill the information
+ * box with its own title and a claim badge; the subtree controls must open and close every
+ * subtree; a legend switch must take its claim out of the drawing and bring it back; and
+ * the choice must survive a reload through the URL fragment.
+ */
+async function figure(context, derived) {
+  const entities = Object.values(derived.families)
+    .flat()
+    .filter((r) => /^\/cockpit\/objects\/[^/]+\/[^/]+$/.test(r))
+    .slice(0, 80);
+  let best = null;
+  for (const route of entities) {
+    const html = await (await fetch(BASE + route)).text();
+    if (!html.includes('data-mj-figure=')) continue;
+    const drawn = (html.match(/ data-k="/g) || []).length;
+    if (!best || drawn > best.drawn) best = { route, drawn };
+  }
+  if (!best) {
+    fail('figure', `none of ${entities.length} entity page(s) the crawl found draws a figure`);
+    return;
+  }
+  const page = await context.newPage();
+  watch(page, best.route);
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto(BASE + best.route, { waitUntil: 'networkidle' });
+  const keys = await page.$$eval('[data-mj-figure] svg [data-k]', (els) => els.map((e) => e.dataset.k));
+  const ready = await page.$eval('[data-mj-figure-info]', (e) => !e.hidden).catch(() => false);
+  if (!ready) {
+    fail('figure', `${best.route}: the information box never appeared, so flow.js did not run`);
+    await page.close();
+    return;
+  }
+  let explained = 0;
+  for (const [i, key] of keys.entries()) {
+    const element = page.locator(`[data-mj-figure] svg [data-k="${key}"]`);
+    if (i % 2) {
+      await element.focus();
+      await page.keyboard.press('Enter');
+    } else {
+      await element.click({ force: true });
+    }
+    const said = await page.evaluate((k) => {
+      const info = document.querySelector('[data-mj-figure-info]');
+      const chosen = document.querySelector(`[data-mj-figure] svg [data-k="${CSS.escape(k)}"]`);
+      return {
+        title: info.querySelector('.mj-figure-note-title strong')?.textContent.trim() || '',
+        badge: !!info.querySelector('.mj-badge'),
+        pressed: chosen.getAttribute('aria-pressed'),
+        lit: chosen.classList.contains('is-lit'),
+      };
+    }, key);
+    if (!said.title || !said.badge) fail('figure', `${best.route}: choosing ${key} left the information box without a title and a claim`);
+    else if (said.pressed !== 'true' || !said.lit) fail('figure', `${best.route}: ${key} explained itself but is not marked as the choice`);
+    else explained++;
+  }
+
+  // the choice is an address: a reload restores it
+  const last = keys[keys.length - 1];
+  await page.reload({ waitUntil: 'networkidle' });
+  const restored = await page.$eval(`[data-mj-figure] svg [data-k="${last}"]`, (e) => e.getAttribute('aria-pressed'));
+  if (restored !== 'true') fail('figure', `${best.route}: the fragment did not restore the choice of ${last} after a reload`);
+  await page.keyboard.press('Escape');
+
+  // every subtree, every level, opens and closes from the two controls
+  const subtrees = await page.$$eval('.mj-figure-subtrees details', (d) => d.length);
+  if (subtrees) {
+    await page.click('[data-mj-figure-all="open"]');
+    const open = await page.$$eval('.mj-figure-subtrees details', (d) => d.filter((x) => x.open).length);
+    await page.click('[data-mj-figure-all="close"]');
+    const closed = await page.$$eval('.mj-figure-subtrees details', (d) => d.filter((x) => !x.open).length);
+    if (open !== subtrees || closed !== subtrees) fail('figure', `${best.route}: of ${subtrees} subtree(s), open-all opened ${open} and close-all closed ${closed}`);
+  }
+
+  // a legend switch takes its claim out of the drawing and brings it back
+  const claim = await page.$eval('[data-mj-claim]', (e) => e.dataset.mjClaim);
+  const visible = () => page.$$eval(`[data-mj-figure] svg [data-claim="${claim}"]`, (els) =>
+    els.filter((e) => getComputedStyle(e).display !== 'none').length);
+  const before = await visible();
+  await page.click(`[data-mj-claim="${claim}"]`);
+  const hidden = await visible();
+  await page.click(`[data-mj-claim="${claim}"]`);
+  const back = await visible();
+  if (!before || hidden !== 0 || back !== before) fail('figure', `${best.route}: the ${claim} switch showed ${before}, then ${hidden}, then ${back} element(s)`);
+
+  if (explained === keys.length) {
+    ok('figure', `${best.route}: all ${keys.length} drawn element(s) explain themselves; ${subtrees} subtree(s) open and close; the ${claim} switch and the fragment work`);
+  }
+  await page.close();
+}
+
+/**
  * Which graph is the biggest. Asked, never named: the set of graphs is derived and a probe
  * that hard-codes `composed` stops looking at the largest one the day a larger is derived.
  * `graph.list` describes without deriving, so each is asked for its own metadata.
@@ -559,7 +653,9 @@ try {
       .map((t) => t.name),
   );
   const badgeWords = new Set();
-  const visiting = sample(derived);
+  // the interactions alone visit no page at every width; they are the expensive half's
+  // second part, and a change to one interaction is proved without the whole sweep
+  const visiting = MODE === 'interactions' ? [] : sample(derived);
   ok(
     'routes',
     `${total} route(s) crawled out of the Cockpit in ${derived.fetched} fetch(es), in ${Object.keys(derived.families).length} family(ies), ${derived.navigation.length} of them advertised by the shell; ${visiting.length} visited in a browser at ${WIDTHS.length} widths`,
@@ -603,6 +699,7 @@ try {
     ['interactions', () => interactions(context)],
     ['runner', () => runner(context)],
     ['graph', () => graph(context)],
+    ['figure', () => figure(context, derived)],
     ['graph-scale', async () => graphAtScale(context, await largestGraph())],
     ['framing', () => framing(context)],
   ]) {

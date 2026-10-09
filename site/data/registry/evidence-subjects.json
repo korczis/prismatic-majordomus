@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.18.0"
+    "version": "0.19.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -4153,7 +4153,14 @@
       "members": [
         "command:entity show"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:1010_a_figure_is_a_map_of_its_evidence",
+          "path": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -22264,6 +22271,29 @@
         }
       ],
       "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.figures-are-maps-of-evidence": {
+      "kind": "rule",
+      "id": "project.figures-are-maps-of-evidence",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1010_a_figure_is_a_map_of_its_evidence",
+          "path": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+            ".ai/repo/rules/project/figures-are-maps-of-evidence.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "apps/majordomus-cli/src/cockpit/figure.rs"
+      ],
       "findings": []
     },
     "rule:project.finding-carries-reproduce": {

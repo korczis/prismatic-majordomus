@@ -4465,24 +4465,7 @@ pub fn activity(ctx: &Context) -> Page {
     let phase_rows: Vec<El> = counters
         .get("phases")
         .and_then(Value::as_object)
-        .map(|m| {
-            m.iter()
-                .map(|(k, v)| {
-                    let count = v.get("count").and_then(Value::as_u64).unwrap_or(0);
-                    let nanos = v.get("total_nanos").and_then(Value::as_u64).unwrap_or(0);
-                    row(vec![
-                        cell(mono(k)),
-                        text_cell(count.to_string()),
-                        text_cell(format!("{:.3} ms", nanos as f64 / 1e6)),
-                        text_cell(if count == 0 {
-                            "-".to_string()
-                        } else {
-                            format!("{:.3} ms", nanos as f64 / 1e6 / count as f64)
-                        }),
-                    ])
-                })
-                .collect()
-        })
+        .map(|m| m.iter().map(|(k, v)| phase_row(k, v)).collect())
         .unwrap_or_default();
 
     Page::new(
@@ -7132,21 +7115,29 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
     };
     let references = edge_rows(true);
     let referenced_by = edge_rows(false);
+    let figure = relations_figure(&view);
+    let tables = el("div")
+        .child(el("h3").class("mj-subheading").text("References"))
+        .child(if references.is_empty() {
+            nothing("This entity declares no reference.")
+        } else {
+            table(&["Relation", "Kind", "Target", ""], references)
+        })
+        .child(el("h3").class("mj-subheading").text("Referenced by"))
+        .child(if referenced_by.is_empty() {
+            nothing("Nothing in this layer names it. Backlinks are derived, never declared.")
+        } else {
+            table(&["Relation", "Kind", "Declared by", ""], referenced_by)
+        });
     let relations_card = card(
         "What it is joined to",
-        el("div")
-            .child(el("h3").class("mj-subheading").text("References"))
-            .child(if references.is_empty() {
-                nothing("This entity declares no reference.")
-            } else {
-                table(&["Relation", "Kind", "Target", ""], references)
-            })
-            .child(el("h3").class("mj-subheading").text("Referenced by"))
-            .child(if referenced_by.is_empty() {
-                nothing("Nothing in this layer names it. Backlinks are derived, never declared.")
-            } else {
-                table(&["Relation", "Kind", "Declared by", ""], referenced_by)
-            }),
+        match figure {
+            Some(mut f) => {
+                f.data = Some(tables);
+                f.render()
+            }
+            None => tables,
+        },
     );
 
     let surfaces_card = card(
@@ -7204,11 +7195,351 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
         (&view.kind, Some(&view.kind_route)),
         (&view.identity, None),
     ])
+    .script("flow.js")
+}
+
+/// One phase of the activity counters as a table row: its name, count, total and mean. A
+/// phase the counters did not report a number for is unknown, not zero: an absent count
+/// never renders as "0" or as "0.000 ms" (ADR 0089).
+fn phase_row(name: &str, v: &Value) -> El {
+    let count = v.get("count").and_then(Value::as_u64);
+    let nanos = v.get("total_nanos").and_then(Value::as_u64);
+    let unknown = || "unknown".to_string();
+    row(vec![
+        cell(mono(name)),
+        text_cell(count.map_or_else(unknown, |c| c.to_string())),
+        text_cell(nanos.map_or_else(unknown, |n| format!("{:.3} ms", n as f64 / 1e6))),
+        text_cell(match (count, nanos) {
+            (Some(0), Some(_)) => "-".to_string(),
+            (Some(c), Some(n)) => format!("{:.3} ms", n as f64 / 1e6 / c as f64),
+            _ => unknown(),
+        }),
+    ])
+}
+
+/// The entity's relations as an evidence figure (ADR 0122): what names it on the left,
+/// the entity in the middle, what it names on the right. A box stands for every relation
+/// of one name in one direction, so the drawing stays readable however many objects there
+/// are; the objects are the box's subtree, and the tables under the drawing hold every
+/// edge. An entity joined to nothing gets no figure, only the tables that say so.
+fn relations_figure(
+    view: &crate::capability::builtin::entity::EntityView,
+) -> Option<super::figure::Flow> {
+    use super::figure::{Claim, Column, Flow, FlowEdge, FlowNode, Member};
+    use crate::entity::Direction;
+    use std::collections::BTreeMap;
+
+    if view.relations.is_empty() {
+        return None;
+    }
+    let mut groups: BTreeMap<(bool, &str), Vec<&crate::entity::Edge>> = BTreeMap::new();
+    for e in &view.relations {
+        groups
+            .entry((e.direction == Direction::Outgoing, e.edge.as_str()))
+            .or_default()
+            .push(e);
+    }
+    let kinds = |edges: &[&crate::entity::Edge]| -> String {
+        let mut count: BTreeMap<&str, usize> = BTreeMap::new();
+        for e in edges {
+            *count.entry(e.kind.as_str()).or_default() += 1;
+        }
+        count
+            .iter()
+            .map(|(k, n)| {
+                if *n == 1 {
+                    (*k).to_string()
+                } else {
+                    format!("{k} ×{n}")
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" · ")
+    };
+    let claim_of = |e: &crate::entity::Edge| match (&e.direction, e.external) {
+        (Direction::Incoming, _) => Claim::Derived,
+        (Direction::Outgoing, true) => Claim::External,
+        (Direction::Outgoing, false) => Claim::Declared,
+    };
+
+    let mut named_by = Vec::new();
+    let mut names = Vec::new();
+    let mut lines = Vec::new();
+    for ((outgoing, relation), edges) in &groups {
+        let key = format!("{}-{relation}", if *outgoing { "out" } else { "in" });
+        // a backlink box is derived; a reference box is declared while it holds one object
+        // of the layer, and external only when everything it names is outside the layer
+        let claim = if !*outgoing {
+            Claim::Derived
+        } else if edges.iter().all(|e| e.external) {
+            Claim::External
+        } else {
+            Claim::Declared
+        };
+        let label = match edges.as_slice() {
+            [one] => one.label.clone(),
+            many => match kinds(many) {
+                k if !k.contains(" · ") => k,
+                _ => format!("{} objects", many.len()),
+            },
+        };
+        let note = if *outgoing {
+            format!(
+                "This {} names {} under `{}` in its own front matter. Declared: the reference is written where the object lives.",
+                view.kind,
+                edges.len(),
+                edges[0].field
+            )
+        } else {
+            format!(
+                "{} object(s) of this layer name this one under `{relation}`. Derived: a backlink is read from every other object's references and is never declared.",
+                edges.len()
+            )
+        };
+        let members = edges
+            .iter()
+            .map(|e| {
+                let detail = match &e.title {
+                    Some(t) => format!("{} · {t}", e.kind),
+                    None => e.kind.clone(),
+                };
+                let m = Member::new(&e.label, claim_of(e)).detail(detail);
+                match &e.route {
+                    Some(r) => m.href(r),
+                    None => m,
+                }
+            })
+            .collect();
+        let mut node = FlowNode::new(&key, label, claim)
+            .detail(format!("{relation} · {}", kinds(edges)))
+            .note(note)
+            .members(members);
+        if let [one] = edges.as_slice() {
+            if let Some(route) = &one.route {
+                node = node.href(route);
+            }
+        }
+        if *outgoing {
+            lines.push(
+                FlowEdge::new("self", &key, *relation, claim)
+                    .note(format!("Declared under `{}`.", edges[0].field)),
+            );
+            names.push(node);
+        } else {
+            lines.push(
+                FlowEdge::new(&key, "self", *relation, Claim::Derived)
+                    .note("A backlink: derived from the other object's own declaration."),
+            );
+            named_by.push(node);
+        }
+    }
+
+    use crate::capability::builtin::entity::EvidenceState;
+    let ev = &view.evidence;
+    // the object is in the tree, so it is declared; only artefacts it names and the tree
+    // does not hold make it missing. Naming none is not "could not be read".
+    let subject_claim = match ev.state {
+        EvidenceState::Resolved | EvidenceState::Unclaimed => Claim::Declared,
+        EvidenceState::Dangling => Claim::Missing,
+    };
+    let subject = FlowNode::new("self", &view.identity, subject_claim)
+        .detail(&view.kind)
+        .note(ev.meaning.clone())
+        .members(
+            ev.artifacts
+                .iter()
+                .map(|a| {
+                    Member::new(
+                        &a.path,
+                        if a.present {
+                            Claim::Declared
+                        } else {
+                            Claim::Missing
+                        },
+                    )
+                    .detail(format!("named under {}", a.field))
+                })
+                .collect(),
+        )
+        .focused();
+
+    Some(Flow {
+        id: "relations".into(),
+        question: format!("What names this {}, and what does it name?", view.kind),
+        caption: "Solid lines are references this object declares in its own front matter; dashed lines are backlinks, derived by reading every other object. The middle box carries what can be said about the object's own evidence. A count on a box opens the objects it stands for below the drawing.".into(),
+        columns: vec![
+            Column::new("Named by", named_by),
+            Column::new(format!("This {}", view.kind), vec![subject]),
+            Column::new("Names", names),
+        ],
+        edges: lines,
+        data: None,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn view(relations: Value, evidence: Value) -> crate::capability::builtin::entity::EntityView {
+        serde_json::from_value(json!({
+            "uri": "majordomus://adr/adr-0001", "id": "adr.adr-0001", "kind": "adr",
+            "identity": "adr-0001", "slug": "adr-0001", "route": "/cockpit/objects/adr/adr-0001",
+            "kind_route": "/cockpit/objects/adr", "title": "One",
+            "provenance": { "path": ".ai/repo/adrs/0001-one.md", "directory": ".ai/repo/adrs",
+                "source_class": "adr", "section": "adrs", "bytes": 1 },
+            "metadata": {}, "media_type": "text/markdown", "content": "",
+            "relations": relations, "surfaces": [], "evidence": evidence,
+        }))
+        .expect("an entity view")
+    }
+
+    fn edge(
+        direction: &str,
+        relation: &str,
+        kind: &str,
+        label: &str,
+        route: Option<&str>,
+    ) -> Value {
+        let mut e = json!({ "direction": direction, "edge": relation, "field": "related",
+            "kind": kind, "label": label, "external": route.is_none() });
+        if let Some(r) = route {
+            e["route"] = json!(r);
+            e["title"] = json!(format!("The {label}"));
+            e["uri"] = json!(format!("majordomus://{kind}/{label}"));
+        }
+        e
+    }
+
+    /// ADR 0122 on the entity page: one box per relation name and direction, labelled by
+    /// what it holds; a box of references outside the layer is external and has no page;
+    /// the subject's claim follows its own evidence.
+    #[test]
+    fn the_relations_figure_groups_by_relation_and_draws_the_outside_as_external() {
+        // one reference, outside the layer
+        let lone = relations_figure(&view(
+            json!([edge(
+                "outgoing",
+                "put_in_force",
+                "file",
+                "file:docs/note.md",
+                None
+            )]),
+            json!({ "state": "unclaimed", "meaning": "names nothing" }),
+        ))
+        .expect("a figure")
+        .render()
+        .render();
+        assert!(
+            lone.contains(r#"class="mj-flow-node mj-status--external" data-k="out-put_in_force""#),
+            "{lone}"
+        );
+        assert!(
+            lone.contains(r#"data-claim="external" data-from="self""#),
+            "{lone}"
+        );
+        assert!(lone.contains(
+            r#"class="mj-flow-node mj-status--declared mj-flow-node--focus" data-k="self""#
+        ));
+
+        // three of two kinds under one relation, two of one kind under another, and a
+        // subject whose named artefacts are all in the tree
+        let mixed = relations_figure(&view(
+            json!([
+                edge(
+                    "outgoing",
+                    "put_in_force",
+                    "file",
+                    "file:docs/note.md",
+                    None
+                ),
+                edge(
+                    "outgoing",
+                    "put_in_force",
+                    "rule",
+                    "project.alpha@1",
+                    Some("/cockpit/objects/rule/project-alpha-1")
+                ),
+                edge(
+                    "outgoing",
+                    "put_in_force",
+                    "rule",
+                    "project.beta@1",
+                    Some("/cockpit/objects/rule/project-beta-1")
+                ),
+                edge(
+                    "incoming",
+                    "supersedes",
+                    "adr",
+                    "adr-0002",
+                    Some("/cockpit/objects/adr/adr-0002")
+                ),
+                edge(
+                    "incoming",
+                    "supersedes",
+                    "adr",
+                    "adr-0003",
+                    Some("/cockpit/objects/adr/adr-0003")
+                ),
+            ]),
+            json!({ "state": "resolved", "meaning": "all present",
+                "artifacts": [{ "field": "tests", "path": "test/cases/1.sh", "present": true }] }),
+        ))
+        .expect("a figure")
+        .render()
+        .render();
+        assert!(mixed.contains(">3 objects</text>"), "{mixed}");
+        assert!(mixed.contains("file · rule ×2"), "{mixed}");
+        assert!(mixed.contains(">adr ×2</text>"), "{mixed}");
+        // a mixed box with one object of the layer is declared, not external
+        assert!(
+            mixed.contains(r#"class="mj-flow-node mj-status--declared" data-k="out-put_in_force""#),
+            "{mixed}"
+        );
+        assert!(
+            mixed.contains("test/cases/1.sh"),
+            "the subject's artefacts are its subtree"
+        );
+
+        // a dangling subject is missing; an object joined to nothing has no figure
+        let dangling = relations_figure(&view(
+            json!([edge(
+                "incoming",
+                "depends_on",
+                "rule",
+                "project.x@1",
+                Some("/cockpit/objects/rule/project-x-1")
+            )]),
+            json!({ "state": "dangling", "meaning": "absent",
+                "artifacts": [{ "field": "tests", "path": "test/cases/0.sh", "present": false }] }),
+        ))
+        .expect("a figure")
+        .render()
+        .render();
+        assert!(dangling.contains(
+            r#"class="mj-flow-node mj-status--missing mj-flow-node--focus" data-k="self""#
+        ));
+        assert!(relations_figure(&view(
+            json!([]),
+            json!({ "state": "unclaimed", "meaning": "-" })
+        ))
+        .is_none());
+    }
+
+    /// An absent phase count is unknown, never zero; a zero count has no mean.
+    #[test]
+    fn a_phase_without_a_number_reads_unknown_never_zero() {
+        let absent = phase_row("index", &json!({})).render();
+        assert_eq!(absent.matches("unknown").count(), 3, "{absent}");
+        assert!(!absent.contains(">0<"), "{absent}");
+        let idle = phase_row("index", &json!({ "count": 0, "total_nanos": 0 })).render();
+        assert!(idle.contains("<td>-</td>"), "{idle}");
+        let busy = phase_row("index", &json!({ "count": 2, "total_nanos": 4_000_000 })).render();
+        assert!(
+            busy.contains("4.000 ms") && busy.contains("2.000 ms"),
+            "{busy}"
+        );
+    }
 
     fn command(origin: &str, effect: &str) -> CommandSummary {
         serde_json::from_value(json!({

@@ -374,6 +374,202 @@
     color: var(--mj-muted);
   }
 
+  /* -------------------------------------------------------------------- figure */
+
+  /* The evidence figure (ADR 0122): a drawing whose every box and line is a control that
+     explains itself. The claim an element makes is its status word, so its colour comes
+     from the status declaration through --mj-status-* exactly as a badge's does, and its
+     dash is drawn by the server: a derived line never looks like a declared one, in colour
+     or without it. The drawing keeps its size and scrolls in its frame on a narrow screen;
+     shrinking it would shrink the words below what can be read. */
+  .mj-figure {
+    @apply my-3 flex min-w-0 flex-col gap-2;
+  }
+  .mj-figure-head {
+    @apply text-dense font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-figure-tools {
+    @apply flex min-w-0 flex-wrap items-center gap-2;
+  }
+  .mj-figure-hint {
+    @apply text-meta;
+    color: var(--mj-muted);
+  }
+  .mj-figure-canvas {
+    @apply overflow-x-auto rounded-md;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-flow {
+    @apply block h-auto;
+    min-width: 48rem;
+    max-width: 100%;
+    font-family: var(--font-mono);
+  }
+  .mj-flow-heading {
+    font-size: var(--text-meta);
+    fill: var(--mj-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .mj-flow-node,
+  .mj-flow-edge {
+    cursor: pointer;
+    outline: none;
+  }
+  .mj-flow-box {
+    fill: var(--mj-raised);
+    stroke: var(--mj-status-line, var(--mj-line));
+    stroke-width: 1.5;
+  }
+  .mj-flow-stripe {
+    fill: var(--mj-status-fg, var(--mj-muted));
+  }
+  .mj-flow-node--focus .mj-flow-box {
+    stroke: var(--mj-accent);
+    stroke-width: 2.5;
+  }
+  .mj-flow-label {
+    font-size: var(--text-dense);
+    font-weight: 600;
+    fill: var(--mj-fg);
+  }
+  .mj-flow-detail {
+    font-size: var(--text-label);
+    fill: var(--mj-muted);
+  }
+  .mj-flow-chip rect {
+    fill: var(--mj-bg);
+    stroke: var(--mj-accent);
+  }
+  .mj-flow-chip text {
+    font-size: var(--text-label);
+    fill: var(--mj-accent);
+  }
+  .mj-flow-line {
+    fill: none;
+    stroke: var(--mj-status-fg, var(--mj-muted));
+    stroke-width: 1.5;
+  }
+  .mj-flow-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 16;
+  }
+  .mj-flow-arrow {
+    fill: var(--mj-muted);
+  }
+  .mj-flow-edge-label {
+    font-size: var(--text-label);
+    fill: var(--mj-body);
+    paint-order: stroke;
+    stroke: var(--mj-sunken);
+    stroke-width: 3;
+  }
+  /* an estimate is drawn hollow: it is not a record of anything */
+  .mj-flow-node.mj-status--estimated .mj-flow-box {
+    fill: transparent;
+  }
+  .mj-flow-node.is-off,
+  .mj-flow-edge.is-off {
+    display: none;
+  }
+  .mj-figure-key[role="button"] {
+    @apply cursor-pointer rounded-sm px-1;
+  }
+  .mj-figure-key[aria-pressed="false"] {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+  /* the chosen element and what it is joined to stay; the rest steps back */
+  .mj-figure.has-choice .mj-flow-node:not(.is-lit),
+  .mj-figure.has-choice .mj-flow-edge:not(.is-lit) {
+    opacity: 0.3;
+  }
+  .mj-flow-node[aria-pressed="true"] .mj-flow-box,
+  .mj-flow-node:focus-visible .mj-flow-box {
+    stroke: var(--mj-accent);
+    stroke-width: 3;
+  }
+  .mj-flow-edge[aria-pressed="true"] .mj-flow-line,
+  .mj-flow-edge:focus-visible .mj-flow-line {
+    stroke-width: 3;
+  }
+  .mj-figure-info {
+    @apply rounded-md p-3 text-dense;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-figure-note > p + p {
+    @apply mt-1;
+  }
+  .mj-figure-note-title {
+    @apply flex flex-wrap items-center gap-2;
+  }
+  .mj-figure-note-detail,
+  .mj-figure-meaning {
+    @apply text-label;
+    color: var(--mj-muted);
+  }
+  .mj-figure-legend {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-1;
+  }
+  .mj-figure-key {
+    @apply inline-flex items-center gap-1.5 text-label;
+  }
+  .mj-figure-subtrees {
+    @apply flex flex-col gap-1;
+  }
+  .mj-subtree {
+    @apply rounded-md px-3 py-2;
+    border: 1px solid var(--mj-line);
+  }
+  .mj-subtree > summary {
+    @apply flex cursor-pointer flex-wrap items-baseline gap-2 font-mono text-dense;
+  }
+  .mj-subtree-title {
+    color: var(--mj-fg);
+  }
+  .mj-subtree-count {
+    @apply text-label;
+    color: var(--mj-muted);
+  }
+  .mj-tree {
+    @apply mt-1 flex flex-col gap-1 pl-4;
+    border-left: 1px solid var(--mj-line);
+  }
+  .mj-tree-branch > summary {
+    @apply cursor-pointer;
+  }
+  .mj-tree-row {
+    @apply inline-flex min-w-0 flex-wrap items-center gap-2;
+  }
+  .mj-tree-label {
+    @apply font-mono text-dense break-all;
+  }
+  .mj-tree-detail {
+    @apply text-label;
+    color: var(--mj-muted);
+  }
+  .mj-figure-caption {
+    @apply text-label;
+    color: var(--mj-muted);
+  }
+  .mj-figure-data > summary {
+    @apply cursor-pointer text-label;
+    color: var(--mj-muted);
+  }
+  @media print {
+    .mj-figure-tools,
+    .mj-figure-info {
+      display: none;
+    }
+    .mj-figure-canvas {
+      overflow: visible;
+    }
+  }
+
   /* -------------------------------------------------------------------- canvas */
 
   .mj-graph,

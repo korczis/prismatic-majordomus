@@ -157,6 +157,17 @@ Every extension is one edit to `share/design/tokens.yaml`, then `majordomus gene
 The process never includes editing the site's templates and the Cockpit's stylesheet for the
 same reason. If it does, the architecture has a hole; file it.
 
+## The claims a figure draws
+
+The evidence figure (ADR 122, `docs/COCKPIT.md` "Figures") colours every box and line by the
+claim it makes, and every claim is a state word filed here: `declared` under ok, `derived`
+under info, `estimated` under warn, `external` and `historical` under neutral, `missing`
+under bad, `unknown` under neutral. The figure invents no colour. A claim is a badge, and
+the line's colour comes from the same `--mj-status-*` properties the badge reads. The dash
+is drawn by the server and is not a token, so a claim is still told apart in print and
+without colour vision. Moving a claim to another meaning is one edit to its line under
+`status.states`.
+
 ## The kit
 
 The components the site's product and documentation pages are composed of: a hero and a

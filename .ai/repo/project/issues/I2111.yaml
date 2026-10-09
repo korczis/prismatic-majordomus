@@ -1,0 +1,27 @@
+id: I2111
+milestone: capability-graph
+title: An intent and a milestone are drawn as evidence figures of the work that realises them
+slug: intent-and-milestone-are-evidence-figures
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Draw the intent page (criteria, milestones, issues, tasks) and the milestone page (issues by wave, blockers) with the evidence-figure component. A criterion's evidence state is the claim of its box: declared when its evidence is fresh, missing when it names evidence that does not resolve, and unknown when the ledger could not be read."
+why: "Those two pages answer 'how far is reality from this' with tables and badges. That is the question an evidence figure answers best, and ADR 0122 makes the figure the way this product draws such a question."
+current_state: "/cockpit/intents/<id> and /cockpit/plan/milestones/<id> render tables, lists and badges and draw nothing."
+desired_state: "Both pages carry a figure built by the component from the capability answer they already ask for. Every box explains itself, and the tables stay as its data."
+scope:
+  - apps/majordomus-cli/src/cockpit/intents.rs
+  - apps/majordomus-cli/src/cockpit/plan.rs
+  - test/cases/1010_a_figure_is_a_map_of_its_evidence.sh
+depends_on:
+  - I2110
+acceptance_criteria:
+  - The intent page and the milestone page each render a figure whose every element has an explanation
+  - A criterion whose evidence could not be read is drawn unknown, never declared
+validation:
+  - "cargo test --lib cockpit::"
+  - bash test/run.sh 1010_a_figure_is_a_map_of_its_evidence
+evidence_required:
+  - intent_and_milestone_figures_explain_every_element
+created_at: 2026-10-09
+updated_at: 2026-10-09

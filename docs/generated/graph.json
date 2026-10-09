@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.18.0",
+  "generator": "majordomus-cli 0.19.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -2287,6 +2287,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/cockpit/figure.rs",
+        "kind": "file",
+        "label": "figure.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/figure.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/cockpit/intents.rs",
         "kind": "file",
         "label": "intents.rs",
@@ -3612,6 +3620,14 @@
         "label": "rule.txt",
         "summary": "named by the layer; not an object of this index",
         "source": "share/allow/rule.txt",
+        "external": true
+      },
+      {
+        "id": "file:share/cockpit/flow.js",
+        "kind": "file",
+        "label": "flow.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/cockpit/flow.js",
         "external": true
       },
       {
@@ -6338,6 +6354,36 @@
             "session",
             "handover",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0122",
+        "kind": "adr",
+        "label": "adr-0122",
+        "summary": "A figure is a map of its evidence",
+        "route": "/cockpit/objects/adr/adr-0122",
+        "source": ".ai/repo/adrs/0122-a-figure-is-a-map-of-its-evidence.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md",
+            "rule:project.figures-are-maps-of-evidence",
+            "rule:project.ui-derived-state",
+            "file:apps/majordomus-cli/src/cockpit/figure.rs",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:share/cockpit/flow.js",
+            "file:share/design/tokens.yaml",
+            "file:docs/COCKPIT.md"
+          ],
+          "tags": [
+            "architecture",
+            "cockpit",
+            "ui",
+            "evidence",
+            "design"
           ]
         }
       },
@@ -29998,6 +30044,189 @@
         }
       },
       {
+        "id": "majordomus://issue/I2110",
+        "kind": "issue",
+        "label": "I2110",
+        "summary": "An entity's relations are drawn as an evidence figure that explains every element",
+        "route": "/cockpit/objects/issue/i2110",
+        "source": ".ai/repo/project/issues/I2110.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every rendered entity page with at least one relation carries a figure whose every drawn element has an explanation template",
+            "The legend names exactly the claims the figure draws",
+            "Backlinks are drawn derived and declared references declared, in word and dash",
+            "The page without JavaScript still lists every relation in a table"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The entity page's 'What it is joined to' card holds a References table and a Referenced by table, and nothing is drawn.",
+          "evidence_required": [
+            "entity_relations_figure_explains_every_element"
+          ],
+          "milestone": "capability-graph",
+          "non_scope": [
+            "The Cytoscape graph viewer of /cockpit/graphs/<id>, which serves graphs of hundreds of nodes",
+            "The public site's entity pages (I2112)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit/figure.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "share/cockpit/flow.js",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "share/design/tokens.yaml",
+            "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+            "scripts/lib/cockpit-probe.mjs",
+            "scripts/cockpit-probe"
+          ],
+          "slug": "an-entitys-relations-are-an-evidence-figure",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --lib cockpit::figure",
+            "bash test/run.sh 1010_a_figure_is_a_map_of_its_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2111",
+        "kind": "issue",
+        "label": "I2111",
+        "summary": "An intent and a milestone are drawn as evidence figures of the work that realises them",
+        "route": "/cockpit/objects/issue/i2111",
+        "source": ".ai/repo/project/issues/I2111.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The intent page and the milestone page each render a figure whose every element has an explanation",
+            "A criterion whose evidence could not be read is drawn unknown, never declared"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "/cockpit/intents/<id> and /cockpit/plan/milestones/<id> render tables, lists and badges and draw nothing.",
+          "depends_on": [
+            "I2110"
+          ],
+          "desired_state": "Both pages carry a figure built by the component from the capability answer they already ask for. Every box explains itself, and the tables stay as its data.",
+          "evidence_required": [
+            "intent_and_milestone_figures_explain_every_element"
+          ],
+          "milestone": "capability-graph",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit/intents.rs",
+            "apps/majordomus-cli/src/cockpit/plan.rs",
+            "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh"
+          ],
+          "slug": "intent-and-milestone-are-evidence-figures",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --lib cockpit::",
+            "bash test/run.sh 1010_a_figure_is_a_map_of_its_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2112",
+        "kind": "issue",
+        "label": "I2112",
+        "summary": "The public site draws the same evidence figure the Cockpit does",
+        "route": "/cockpit/objects/issue/i2112",
+        "source": ".ai/repo/project/issues/I2112.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A site object page with relations carries the figure markup the Cockpit renders for the same object",
+            "The homepage weight budget is unchanged"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The site's object pages list relations as text, and the component renders only at request time inside the Cockpit.",
+          "depends_on": [
+            "I2110"
+          ],
+          "evidence_required": [
+            "site_figure_matches_cockpit_figure"
+          ],
+          "milestone": "capability-graph",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "The homepage is within 1.5 KB of its weight budget. The figure styles must load only on object pages.",
+          "scope": [
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/cockpit/figure.rs",
+            "site/templates",
+            "share/design"
+          ],
+          "slug": "the-site-draws-the-same-evidence-figure",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "scripts/site-check"
+          ],
+          "why": "The capability-graph milestone has two projections of one graph, the runtime Cockpit and the static site. A figure grammar that exists on only one of them is a second design waiting to diverge."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2113",
+        "kind": "issue",
+        "label": "I2113",
+        "summary": "A drawing outside the evidence-figure component is refused by a gate",
+        "route": "/cockpit/objects/issue/i2113",
+        "source": ".ai/repo/project/issues/I2113.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A planted el(\"svg\") drawing in a fixture pages.rs is refused with file and line",
+            "The figure component, icons and the brand mark pass"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "scripts/ci/cockpit-projection-check --ui-integrity scans pages.rs for direct reads, healthy literals and count defaults. It does not look at drawings.",
+          "depends_on": [
+            "I2110"
+          ],
+          "desired_state": "A new finding kind, 'drawing-outside-figure', names file and line. Known exceptions are declared once, and the case plants a violation and requires the refusal.",
+          "evidence_required": [
+            "drawing_outside_figure_refused"
+          ],
+          "milestone": "capability-graph",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/cockpit-projection-check",
+            "test/cases/547_the_ui_says_only_what_is_derived.sh",
+            ".ai/repo/rules/project/figures-are-maps-of-evidence.v1.md"
+          ],
+          "slug": "a-drawing-outside-the-figure-component-is-refused",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 547_the_ui_says_only_what_is_derived"
+          ],
+          "why": "The rule admits that a figure drawn outside the component is today only a review finding. A rule a gate cannot see is declared, not enforced."
+        }
+      },
+      {
+        "id": "majordomus://knowledge/evidence-figures",
+        "kind": "knowledge",
+        "label": "evidence-figures",
+        "summary": "What porting the due-diligence figure taught, and the defects it was not allowed to bring along",
+        "route": "/cockpit/objects/knowledge/evidence-figures",
+        "source": ".ai/repo/knowledge/curated/evidence-figures.md",
+        "status": "verified",
+        "facts": {
+          "class": "lesson",
+          "date": "2026-10-09",
+          "epistemics": "observed",
+          "tags": [
+            "ui",
+            "cockpit",
+            "figure",
+            "evidence",
+            "lesson"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -36667,6 +36896,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+        "kind": "rule",
+        "label": "project.figures-are-maps-of-evidence@1",
+        "summary": "A figure is a map of its evidence, and every element on it explains itself",
+        "route": "/cockpit/objects/rule/project-figures-are-maps-of-evidence-1",
+        "source": ".ai/repo/rules/project/figures-are-maps-of-evidence.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-derived-state@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "figure",
+            "evidence",
+            "accessibility",
+            "design"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.finding-carries-reproduce@1",
         "kind": "rule",
         "label": "project.finding-carries-reproduce@1",
@@ -42342,6 +42595,13 @@
         "label": "test/cases/100_execution_plane.sh",
         "route": "/cockpit/objects/test/test-cases-100-execution-plane-sh",
         "source": "test/cases/100_execution_plane.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-1010-a-figure-is-a-map-of-its-evidence-sh",
+        "source": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh"
       },
       {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
@@ -54060,6 +54320,56 @@
       {
         "source": "majordomus://adr/adr-0111",
         "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "file:apps/majordomus-cli/src/cockpit/figure.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "file:share/cockpit/flow.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "file:share/design/tokens.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "majordomus://adr/adr-0089",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0122",
+        "target": "majordomus://rule/project.ui-derived-state@1",
         "kind": "put_in_force"
       },
       {
@@ -65808,6 +66118,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2110",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2110",
+        "target": "majordomus://milestone/capability-graph",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2111",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2111",
+        "target": "majordomus://issue/I2110",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2111",
+        "target": "majordomus://milestone/capability-graph",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2112",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2112",
+        "target": "majordomus://issue/I2110",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2112",
+        "target": "majordomus://milestone/capability-graph",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2113",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2113",
+        "target": "majordomus://issue/I2110",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2113",
+        "target": "majordomus://milestone/capability-graph",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://knowledge/evidence-figures",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -67458,6 +67828,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.finding-carries-reproduce@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -68819,6 +69204,11 @@
       },
       {
         "source": "majordomus://test/test/cases/100_execution_plane.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74534,8 +74924,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2470,
-      "edges": 5407,
+      "nodes": 2480,
+      "edges": 5433,
       "acyclic": false,
       "truncated": false
     }

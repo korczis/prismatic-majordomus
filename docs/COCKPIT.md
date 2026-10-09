@@ -396,6 +396,38 @@ It is also not `majordomus doctor`. The shell tool's doctor decides whether Majo
 *wired into this repository*; these checks decide whether what this process *serves* is
 sound. Different subjects, and the Rust server dispatches no shell.
 
+## Figures
+
+A figure that answers a question about one subject is drawn by `cockpit::figure::Flow`, the
+evidence figure of [ADR 122](../.ai/repo/adrs/0122-a-figure-is-a-map-of-its-evidence.md),
+under the rule `project.figures-are-maps-of-evidence`. The entity page draws one for every
+object joined to something: what names it on the left, the object in the middle, what it
+names on the right. One box stands for each relation name in each direction.
+
+- **The head names the question**, and the caption says what on the figure is recorded and
+  what is inferred.
+- **Every box and line makes a claim**: `declared`, `derived`, `estimated`, `external`,
+  `historical`, `missing` or `unknown`. Each claim is a status word filed in
+  `share/design/tokens.yaml`, so its colour is the design's, and a dash the server draws:
+  solid for a record, dashed for an inference, dash-dot for an estimate, dotted for history
+  and for what was looked for and not found. An estimate's box is hollow. `unknown` means
+  the source could not be read, and is never drawn as clean.
+- **Every element is a control.** A pointer, a finger, Enter or Space chooses it. Its
+  explanation, server-rendered into an inert `<template>`, appears in the information box
+  under the drawing. What it is joined to stays lit and the rest steps back, and the choice
+  becomes the fragment `#<figure>:<key>`, so a reload or a sent link restores it.
+- **Detail lives in subtrees.** A box carries the count of what it stands for, and those
+  objects are a native `<details>` tree under the drawing that opens one level at a time.
+  Two buttons open or close every subtree.
+- **The legend is a filter.** Each claim switches the elements making it out of the drawing,
+  together with any box left with no line.
+- **The data is under the drawing**, open, as the page's own tables.
+
+The layout is the server's: columns, each centred on the tallest, with orthogonal lines from
+the side that faces their target. The SVG is the same bytes for the same answer, and no
+layout library is shipped. The Cytoscape viewer stays for the graphs of hundreds of nodes
+under `/cockpit/graphs/`.
+
 ## The browser layer
 
 Progressive enhancement in the strict sense. Every page is complete HTML before any script
@@ -409,6 +441,7 @@ the same facts are as text.
 | `runner.js` | the generic capability runner | — |
 | `plan.js` | the moves on an issue page: starts `plan.transition` as an execution after a confirmation, follows it on a bounded poll, shows the status it answered or the refusal as it came, and reads the page again | — |
 | `graph.js` | the Cytoscape view: pan, zoom, fit, search, neighbourhood focus, a details drawer | `vendor/cytoscape.min.js` |
+| `flow.js` | the evidence figure: choosing a box or a line explains it, traces what it is joined to, opens its subtree and puts the choice in the URL fragment; the legend switches a claim off and on; Escape clears | — |
 | `topology.js` | the registry graph in three dimensions | `vendor/three.module.min.js` |
 | `activity.js` | a running plot of the execution and cache counters | `vendor/p5.min.js` |
 

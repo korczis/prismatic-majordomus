@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 84,
+      "count": 85,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 163,
+      "count": 164,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 84
+      "count": 85
     },
     {
       "kind": "application",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 262
+      "count": 266
     },
     {
       "kind": "knowledge",
@@ -173,7 +173,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 1
+      "count": 2
     },
     {
       "kind": "mesh-declaration",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 163
+      "count": 164
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 409
+      "count": 410
     },
     {
       "kind": "use-case",
@@ -731,6 +731,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0122",
+          "kind": "adr",
+          "route": "/adrs/adr-0122/",
           "external": false
         }
       ]
@@ -5221,7 +5228,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0122",
+          "kind": "adr",
+          "route": "/adrs/adr-0122/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6344,6 +6359,89 @@
           "label": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0122",
+      "identity": "adr-0122",
+      "slug": "adr-0122",
+      "cockpit": "/cockpit/objects/adr/adr-0122",
+      "title": "A figure is a map of its evidence",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "cockpit",
+        "ui",
+        "evidence",
+        "design"
+      ],
+      "source": ".ai/repo/adrs/0122-a-figure-is-a-map-of-its-evidence.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/figure.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/pages.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/cockpit/flow.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/design/tokens.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.figures-are-maps-of-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-figures-are-maps-of-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         }
       ],
@@ -11119,6 +11217,49 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+      "identity": "project.figures-are-maps-of-evidence@1",
+      "slug": "project-figures-are-maps-of-evidence-1",
+      "cockpit": "/cockpit/objects/rule/project-figures-are-maps-of-evidence-1",
+      "title": "A figure is a map of its evidence, and every element on it explains itself",
+      "status": "active",
+      "tags": [
+        "ui",
+        "cockpit",
+        "figure",
+        "evidence",
+        "accessibility",
+        "design"
+      ],
+      "source": ".ai/repo/rules/project/figures-are-maps-of-evidence.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0122",
+          "kind": "adr",
+          "route": "/adrs/adr-0122/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.finding-carries-reproduce@1",
       "identity": "project.finding-carries-reproduce@1",
       "slug": "project-finding-carries-reproduce-1",
@@ -11627,6 +11768,13 @@
           "label": "project.execution-events-are-typed@1",
           "kind": "rule",
           "route": "/rules/project-execution-events-are-typed-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.figures-are-maps-of-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-figures-are-maps-of-evidence-1/",
           "external": false
         },
         {
@@ -13914,6 +14062,20 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0122",
+          "kind": "adr",
+          "route": "/adrs/adr-0122/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.figures-are-maps-of-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-figures-are-maps-of-evidence-1/",
           "external": false
         }
       ]
