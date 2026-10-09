@@ -16717,7 +16717,7 @@
       "scope": [
         "share/install/install.sh.in",
         "site/static/install.sh",
-        "test/cases/1010_the_installer_installs_what_the_libc_can_load.sh"
+        "test/cases/1017_the_installer_installs_what_the_libc_can_load.sh"
       ],
       "non_scope": [],
       "objective": "Decide the Linux build by what the host can load rather than by which C library it has: after the archive is verified and unpacked, run its native executable; when the glibc build cannot start and the release offers a musl build for the architecture, install that instead and say why, naming the loader's error; when neither starts, install nothing.",
@@ -16725,12 +16725,12 @@
       "current_state": "detect_libc returns gnu whenever a glibc loader is on disk; the version check after unpacking runs bin/majordomus, which is shell; the native executable is first run by the user.",
       "desired_state": "The installer probes libexec/majordomus-cli --version before installing. On Linux a glibc build that does not start is replaced by the release's musl build, downloaded and verified like the first; a build that starts is installed as before; a release none of whose builds start here installs nothing and leaves an existing installation untouched.",
       "acceptance_criteria": [
-        "Case 1010 passes: with uname Linux aarch64 and getconf glibc 2.27, a gnu build that fails as the loader fails is replaced by the musl build, the output names the missing GLIBC symbol; a gnu build that runs is installed with no word about musl; when neither runs nothing is installed",
-        "Case 1010 fails against master's site/static/install.sh, and against this installer with the probe made to answer success",
+        "Case 1017 passes: with uname Linux aarch64 and getconf glibc 2.27, a gnu build that fails as the loader fails is replaced by the musl build, the output names the missing GLIBC symbol; a gnu build that runs is installed with no word about musl; when neither runs nothing is installed",
+        "Case 1017 fails against master's site/static/install.sh, and against this installer with the probe made to answer success",
         "Cases 85 and 86 pass unchanged"
       ],
       "validation": [
-        "bash test/run.sh 1010_the_installer_installs_what_the_libc_can_load",
+        "bash test/run.sh 1017_the_installer_installs_what_the_libc_can_load",
         "bash test/run.sh 85_installer 86_installer_platform"
       ],
       "evidence_required": [
