@@ -97,6 +97,15 @@ printf '# nothing is allowed\n' > "$Z/.ai/repo/source-pin-baseline.txt"
 rc=0; out_zero="$(MJ_ROOT="$Z" "$CHECK" 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    source-pin-check fails on a tree with no link and an empty baseline ($rc): $out_zero"; exit 1; }
 
+# a baseline that cannot be read is a gate that cannot judge, never a baseline that allows nothing
+if [ "$(id -u)" != 0 ]; then
+  chmod 000 "$Z/.ai/repo/source-pin-baseline.txt"
+  rc=0; out_unread="$(MJ_ROOT="$Z" "$CHECK" 2>&1)" || rc=$?
+  chmod 644 "$Z/.ai/repo/source-pin-baseline.txt"
+  [ "$rc" = 12 ] || { echo "    source-pin-check judged against a baseline it cannot read (exit $rc): $out_unread"; exit 1; }
+  case "$out_unread" in *"cannot be read"*) ;; *) echo "    the refusal does not say the baseline cannot be read: $out_unread"; exit 1 ;; esac
+fi
+
 R="$T/ratchet"; mkdir -p "$R/.ai/repo" "$R/site"
 cp -R "$ROOT/site/templates" "$R/site/templates"
 cp "$BASE" "$R/.ai/repo/source-pin-baseline.txt"
