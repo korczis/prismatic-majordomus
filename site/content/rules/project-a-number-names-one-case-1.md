@@ -1,7 +1,7 @@
 +++
 title = "A case number names one case"
 description = "A case number names one case"
-weight = 62
+weight = 63
 [extra]
 kind = "rule"
 slug = "project-a-number-names-one-case-1"

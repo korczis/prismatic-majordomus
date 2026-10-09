@@ -329,11 +329,19 @@ if [ "$FIXTURE" = 1 ]; then
   [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] && cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
   true
 else
+  # A listing that failed is not an empty remote. Read as empty, every record would be
+  # reported missing, the gate would count a ratchet breach where it should say it cannot
+  # read, and an apply would create every issue a second time.
+  unreadable() {
+    echo "github-sync: could not list the $1 of $REPO; nothing was read and nothing was changed (reproduce: gh api repos/$REPO/$1)" >&2
+    exit 12
+  }
   gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
+    || unreadable milestones
   gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
     --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
-    > "$REMOTE_IS" 2>/dev/null || true
+    > "$REMOTE_IS" 2>/dev/null || unreadable issues
 fi
 
 # One resolution for every question about a remote issue. A record is found by the identity
@@ -470,7 +478,8 @@ done
 # cannot be assigned to a milestone the adapter does not know the title of. Re-read.
 if [ "$MODE" = apply ] && [ "$FIXTURE" = 0 ]; then
   gh api --paginate "repos/$REPO/milestones?state=all" \
-    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
+    || { echo "github-sync: could not list the milestones of $REPO again after writing them; no issue was touched (reproduce: gh api repos/$REPO/milestones)" >&2; exit 12; }
 fi
 
 # ---------------------------------------------------------------- issues

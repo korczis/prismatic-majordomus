@@ -1,0 +1,26 @@
+# The known answer for scripts/lib/swallowed-listings.awk is: 5 7 12 26
+# Lines the scanner must report, and the shapes beside them it must not. Not a script: it is
+# read, never run.
+
+gh api --paginate "repos/$REPO/milestones" > "$REMOTE_MS" 2>/dev/null || true
+
+gh api --paginate "repos/$REPO/issues?state=all" \
+  --jq '.[] | select(.n > 0) | @tsv' \
+  > "$REMOTE_IS" 2>/dev/null || true
+
+if true; then
+  curl -fsS "$URL" >> "$OUT" || :
+fi
+
+# a failure that is said is not swallowed
+gh api "repos/$REPO/milestones" > "$REMOTE_MS" 2>/dev/null || { echo "could not list" >&2; exit 12; }
+# an answer in a variable is tested where it is set
+tip="$(gh api "repos/$REPO/commits/master" --jq .sha 2>/dev/null || true)"
+# nothing is kept: both streams are thrown away
+gh auth status >/dev/null 2>&1 || true
+# a jq comparison is not a redirect
+n="$(gh api "repos/$REPO/issues" --jq '[.[] | select(.comments > 3)] | length' || true)"
+# not a remote
+grep -c x "$FILE" > "$COUNT" 2>/dev/null || true
+# a comment that names the shape: gh api x > y || true
+{ curl -fsSL "$URL" > "$PAGE" 2>/dev/null || true; }

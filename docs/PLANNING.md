@@ -519,7 +519,8 @@ disagree with the first.
 record; splitting them lets one be read without the other.
 
 **A mapping file from canonical id to GitHub number.** State that has to be kept in step with
-two systems. The id prefixes the title instead, and matching is a string comparison.
+two systems. An issue carries its id in a marker inside its generated region, a milestone as
+the prefix of its title, and matching is a string comparison.
 
 **Estimates, velocity, burndown.** None of them changes what a worker should do next, which
 is the only question this layer answers.

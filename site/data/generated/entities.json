@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 163,
+      "count": 164,
       "dir": "rules",
       "statuses": [
         "active"
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 163
+      "count": 164
     },
     {
       "kind": "scope",
@@ -9170,6 +9170,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-failed-read-is-not-an-empty-answer@1",
+      "identity": "project.a-failed-read-is-not-an-empty-answer@1",
+      "slug": "project-a-failed-read-is-not-an-empty-answer-1",
+      "cockpit": "/cockpit/objects/rule/project-a-failed-read-is-not-an-empty-answer-1",
+      "title": "A source that did not answer is not a source with nothing in it",
+      "status": "active",
+      "tags": [
+        "projection",
+        "github",
+        "shell",
+        "failure",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/a-failed-read-is-not-an-empty-answer.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.github-projection-gated@1",
+          "kind": "rule",
+          "route": "/rules/project-github-projection-gated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-claim-without-test@1",
+          "kind": "rule",
+          "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-number-names-one-case@1",
       "identity": "project.a-number-names-one-case@1",
       "slug": "project-a-number-names-one-case-1",
@@ -11246,7 +11280,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-failed-read-is-not-an-empty-answer@1",
+          "kind": "rule",
+          "route": "/rules/project-a-failed-read-is-not-an-empty-answer-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -12182,6 +12224,13 @@
           "label": "project.a-brief-is-kept-as-received@1",
           "kind": "rule",
           "route": "/rules/project-a-brief-is-kept-as-received-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-failed-read-is-not-an-empty-answer@1",
+          "kind": "rule",
+          "route": "/rules/project-a-failed-read-is-not-an-empty-answer-1/",
           "external": false
         },
         {
