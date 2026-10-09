@@ -27,7 +27,7 @@
 
 import { readFileSync } from 'node:fs';
 
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
 
@@ -102,7 +102,7 @@ function watch(page, route) {
     const why = r.failure()?.errorText || '';
     // a navigation cancels the requests the previous page had in flight, and the browser
     // reports each as aborted; that is the driver's own doing, not the page's
-    if (why.includes('ERR_ABORTED')) return;
+    if (why.includes('ERR_ABORTED') || why === 'cancelled') return;
     fail('request', `${route}: ${url.replace(BASE, '')} — ${why}`);
   });
 }
@@ -612,7 +612,7 @@ async function drawer(browser) {
     !s.open && !s.role && !s.locked && s.inert === 0 && !s.covered && s.expanded === 'false';
   const describe = (s) => JSON.stringify(s);
 
-  const context = await browser.newContext({ hasTouch: true, isMobile: true });
+  const context = patient(await browser.newContext({ hasTouch: true, isMobile: true }));
   try {
     for (const size of sizes) {
       const at = `@${size.width}x${size.height}`;
@@ -804,9 +804,15 @@ async function drawer(browser) {
       await page.setViewportSize(size);
 
       // --- a link to the sections at a phone's width opens the drawer as the component's,
-      //     not as a :target the component does not know about, and Escape closes it
-      await page.goto(BASE + '/cockpit#mj-nav', { waitUntil: 'networkidle' });
-      await page.waitForFunction(() => !!window.Alpine);
+      //     not as a :target the component does not know about, and Escape closes it. The
+      //     fragment arrives after the page has run (a link, a typed address, history), so
+      //     only the hashchange takeover can answer it. Set on a page loaded afresh rather
+      //     than by navigating to the same fragment twice, which WebKit does not count as
+      //     a change.
+      await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => document.documentElement.hasAttribute('data-mj-nav'));
+      await page.evaluate(() => { location.hash = 'mj-nav'; });
+      await page.waitForTimeout(100);
       const linked = await page.evaluate(() => ({
         open: document.getElementById('mj-nav').hasAttribute('data-open'),
         role: document.getElementById('mj-nav').getAttribute('role'),
@@ -824,7 +830,7 @@ async function drawer(browser) {
       const fresh = await context.newPage();
       await fresh.setViewportSize(size);
       await fresh.goto(BASE + '/cockpit#mj-nav', { waitUntil: 'networkidle' });
-      await fresh.waitForFunction(() => !!window.Alpine);
+      await fresh.waitForFunction(() => document.documentElement.hasAttribute('data-mj-nav'));
       const loaded = await fresh.evaluate(() => ({
         open: document.getElementById('mj-nav').hasAttribute('data-open'),
         role: document.getElementById('mj-nav').getAttribute('role'),
@@ -878,7 +884,7 @@ async function drawer(browser) {
   await drawerWithoutAlpine(browser, narrow[0] || 320);
 
   // --- without the script the trigger still opens it: the stylesheet shows the `:target`
-  const nojs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: narrow[0] || 320, height: 740 } });
+  const nojs = patient(await browser.newContext({ javaScriptEnabled: false, viewport: { width: narrow[0] || 320, height: 740 } }));
   try {
     const page = await nojs.newPage();
     await page.goto(BASE + '/cockpit', { waitUntil: 'load' });
@@ -900,13 +906,26 @@ async function drawer(browser) {
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
 /**
+ * How long a navigation of the drawer and phone checks may take. The landing page answers in
+ * seconds on this repository (I2101: environment.preflight runs every toolchain's --version on
+ * each request), so on a loaded machine Playwright's 30s default turned that latency into a
+ * finding about the drawer. The latency is I2101's to fix and the UI audit's to report; these
+ * checks are about what a person can do once the page is there.
+ */
+const NAVIGATION_MS = 60000;
+const patient = (context) => {
+  context.setDefaultNavigationTimeout(NAVIGATION_MS);
+  return context;
+};
+
+/**
  * The accessibility engine over the drawer and the top bar, closed and open, at a phone's
  * width: the subtree this change added and the one it changed. The page-wide audit is
  * scripts/ui-audit's; this asks only about the controls a phone now navigates with.
  * Evaluated through the debugger, as ui-audit does, so the Cockpit's policy stays on.
  */
 async function drawerAccessibility(browser, width) {
-  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width, height: 740 } });
+  const context = patient(await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width, height: 740 } }));
   try {
     const page = await context.newPage();
     await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
@@ -945,11 +964,13 @@ const REGRESSION_SEEDS = [1017];
  */
 async function phoneSurfaces(browser) {
   const width = Math.min(...WIDTHS);
-  const phone = await browser.newContext({ hasTouch: true, isMobile: true });
+  const phone = patient(await browser.newContext({ hasTouch: true, isMobile: true }));
   try {
     for (const [name, check] of [
       ['runner', () => runner(phone, width)],
       ['graph', () => graph(phone, width)],
+      ['filters', () => filters(phone, width)],
+      ['tokens', () => longestTokens(phone, width)],
     ]) {
       try {
         await check();
@@ -960,6 +981,96 @@ async function phoneSurfaces(browser) {
     }
   } finally {
     await phone.close();
+  }
+}
+
+/**
+ * A listing's filters at a phone's width. The capability listing has a filter per module —
+ * 87 of them when this was written — and wrapped they stood 1,048px tall at 320 and put
+ * the first row of the listing two screens down. At a phone's width they are one row that
+ * scrolls inside itself: one line tall, every filter still a link, the page no wider than
+ * the screen, the filter in force in view, and a filter followed lands where it says.
+ */
+async function filters(context, width) {
+  const page = await context.newPage();
+  watch(page, `filters @${width}px`);
+  await page.setViewportSize({ width, height: 740 });
+  await page.goto(BASE + '/cockpit/capabilities', { waitUntil: 'networkidle', timeout: 60000 });
+  const measure = () =>
+    page.evaluate(() => {
+      const row = document.querySelector('.mj-chips');
+      const chips = [...row.querySelectorAll('.mj-chip')];
+      const r = row.getBoundingClientRect();
+      const tallest = Math.max(...chips.map((c) => c.getBoundingClientRect().height));
+      const current = row.querySelector('.mj-chip--current')?.getBoundingClientRect();
+      return {
+        chips: chips.length,
+        height: Math.round(r.height),
+        tallest: Math.round(tallest),
+        scrolls: row.scrollWidth > row.clientWidth && ['auto', 'scroll'].includes(getComputedStyle(row).overflowX),
+        page: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+        currentInView: !current || (current.left >= r.left - 1 && current.right <= r.right + 1),
+        firstRow: Math.round(document.querySelector('.mj-table tbody tr')?.getBoundingClientRect().top ?? -1),
+      };
+    });
+  const m = await measure();
+  const problems = [];
+  if (m.chips > 1 && m.height > m.tallest * 2) problems.push(`the filters stand ${m.height}px tall over ${m.chips} chips`);
+  if (m.chips > 4 && !m.scrolls) problems.push('the filters neither fit nor scroll inside their row');
+  if (!m.page) problems.push('the listing is wider than the screen');
+  if (!m.currentInView) problems.push('the filter in force is scrolled out of view');
+  // follow a filter from the far end of the row: the one a phone has to scroll to reach
+  const last = page.locator('.mj-chips .mj-chip').last();
+  const href = await last.getAttribute('href');
+  await last.scrollIntoViewIfNeeded();
+  await Promise.all([page.waitForURL((u) => u.href.endsWith(href), { timeout: 60000 }), last.tap()]);
+  await page.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
+  const after = await measure();
+  if (!after.currentInView) problems.push(`after following ${href}, the filter in force is out of view`);
+  for (const p of problems) fail('filters', `@${width}px ${p}`);
+  if (!problems.length) {
+    ok('filters', `@${width}px ${m.chips} filters in one ${m.height}px row that scrolls inside itself; the first listing row at ${m.firstRow}px; the last filter followed and shown in force`);
+  }
+  await page.close();
+}
+
+/**
+ * The pages a narrow screen is hardest on, chosen rather than sampled. The sweep visits one
+ * page per family, and the issue it happened to pick had short strings, so every plan issue
+ * page with a long path, evidence id or command (`bash test/run.sh 962_plan_start_asks_…`)
+ * overflowed at 320 — I2004 to 592px — while the sweep was green. Here every issue page is
+ * fetched as HTML (no browser), the three whose longest unbroken inline token is longest are
+ * found, and those are measured at a phone's width.
+ */
+async function longestTokens(context, width) {
+  const plan = await (await fetch(BASE + '/cockpit/plan')).text();
+  const issues = [...new Set([...plan.matchAll(/href="(\/cockpit\/plan\/issues\/[^"?#]+)"/g)].map((m) => m[1]))];
+  const scored = [];
+  for (const route of issues) {
+    const html = await (await fetch(BASE + route)).text();
+    let longest = 0;
+    for (const m of html.matchAll(/<code class="mj-mono">([^<]*)<\/code>/g)) {
+      for (const word of m[1].split(/\s+/)) longest = Math.max(longest, word.length);
+    }
+    scored.push([longest, route]);
+  }
+  scored.sort((a, b) => b[0] - a[0]);
+  const worst = scored.slice(0, 3);
+  if (!worst.length) {
+    fail('tokens', `@${width}px the plan page links no issue page; nothing was measured`);
+    return;
+  }
+  const page = await context.newPage();
+  watch(page, `tokens @${width}px`);
+  await page.setViewportSize({ width, height: 740 });
+  const before = findings.length;
+  for (const [, route] of worst) {
+    await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 60000 });
+    await overflow(page, route, width);
+  }
+  await page.close();
+  if (findings.length === before) {
+    ok('tokens', `@${width}px the ${worst.length} of ${issues.length} issue pages with the longest unbroken tokens (${worst.map((w) => w[0]).join(', ')} characters) do not overflow`);
   }
 }
 
@@ -1000,7 +1111,7 @@ async function drawerWalks(browser, width) {
   let walked = 0;
   for (const seed of seeds) {
     const rand = seeded(seed);
-    const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: size });
+    const context = patient(await browser.newContext({ hasTouch: true, isMobile: true, viewport: size }));
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -1150,7 +1261,7 @@ async function drawerWalks(browser, width) {
  * control that does nothing.
  */
 async function drawerWithoutAlpine(browser, width) {
-  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width, height: 740 } });
+  const context = patient(await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width, height: 740 } }));
   try {
     await context.route('**/vendor/alpine.csp.min.js*', (route) => route.abort());
     const page = await context.newPage();
@@ -1168,7 +1279,12 @@ async function drawerWithoutAlpine(browser, width) {
   }
 }
 
-const browser = await chromium.launch({ channel: 'chrome' });
+// The engine: the installed Chrome by default, which is what CI's runners carry; WebKit
+// (Safari's engine, the one most phones in this audience use) when COCKPIT_PROBE_ENGINE=webkit,
+// from Playwright's own build. Every finding is the engine's, and the summary names it, so
+// a run in one engine is never read as a run in the other.
+const ENGINE = process.env.COCKPIT_PROBE_ENGINE === 'webkit' ? 'webkit' : 'chrome';
+const browser = ENGINE === 'webkit' ? await webkit.launch() : await chromium.launch({ channel: 'chrome' });
 // the drawer alone: the fast answer to "can a phone reach the sections", for a change that
 // touches the shell and should not wait for the whole sweep
 if (MODE === 'drawer' || MODE === 'phone') {
@@ -1184,7 +1300,7 @@ if (MODE === 'drawer' || MODE === 'phone') {
   }
   for (const line of notes) console.log(line);
   for (const line of findings) console.log(line);
-  console.log(`cockpit-probe: the ${MODE} check found ${findings.length}`);
+  console.log(`cockpit-probe: the ${MODE} check in ${ENGINE} found ${findings.length}`);
   process.exit(findings.length ? 10 : 0);
 }
 try {

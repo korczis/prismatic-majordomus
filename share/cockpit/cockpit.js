@@ -299,6 +299,14 @@ export function component() {
       window.addEventListener('pageshow', (event) => {
         if (event.persisted) this.closeNav(false);
       });
+      // a row of filters that scrolls sideways (a phone's width) starts at the filter in
+      // force, so the reader sees which one it is without hunting for it
+      for (const current of document.querySelectorAll('.mj-chips .mj-chip--current')) {
+        const row = current.closest('.mj-chips');
+        if (row.scrollWidth > row.clientWidth) {
+          row.scrollLeft = current.parentElement.offsetLeft - row.offsetLeft - 8;
+        }
+      }
     },
 
     openNav() {
@@ -324,9 +332,17 @@ export function component() {
 
     openPalette() {
       this.paletteOpen = true;
-      this.$nextTick(() => {
-        if (this.$refs.paletteInput) this.$refs.paletteInput.focus();
-      });
+      // Focus once the palette is on screen, not merely scheduled to be: x-show applies on
+      // Alpine's next tick, and WebKit refuses focus to an element that is still display:none
+      // at that moment, so in Safari's engine Ctrl+K opened a palette nobody could type into.
+      // Asking again on the next frames until it holds costs nothing where the first works.
+      const input = this.$refs.paletteInput;
+      const focus = (tries) => {
+        if (!input || !this.paletteOpen) return;
+        input.focus();
+        if (document.activeElement !== input && tries > 0) requestAnimationFrame(() => focus(tries - 1));
+      };
+      this.$nextTick(() => focus(10));
       window.dispatchEvent(new CustomEvent('mj:palette-open'));
     },
 
