@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.18.0",
+  "generator": "majordomus-cli 0.19.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -3679,6 +3679,14 @@
         "external": true
       },
       {
+        "id": "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
+        "kind": "file",
+        "label": "register.ts",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/mods/claude-code/majordomus-handover/hooks/register.ts",
+        "external": true
+      },
+      {
         "id": "file:share/obligations.yaml",
         "kind": "file",
         "label": "obligations.yaml",
@@ -6338,6 +6346,31 @@
             "session",
             "handover",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0123",
+        "kind": "adr",
+        "label": "adr-0123",
+        "summary": "The worker is asked for a handover before the context window fills, by a provider mod the policy switches",
+        "route": "/cockpit/objects/adr/adr-0123",
+        "source": ".ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
+            "file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:lib/capture.sh",
+            "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
+            "file:docs/claims/session-lifecycle.md",
+            "test:test/cases/1016_the_worker_is_asked_before_compaction.sh"
+          ],
+          "tags": [
+            "session",
+            "handover",
+            "provider"
           ]
         }
       },
@@ -10831,7 +10864,8 @@
             ".ai/local/prompts/",
             ".ai/local/session-contexts/",
             ".claude/hooks/majordomus-capture",
-            ".claude/settings.json"
+            ".claude/settings.json",
+            ".claude/skills/majordomus-handover/"
           ]
         }
       },
@@ -34769,6 +34803,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.19.0",
+        "kind": "release-record",
+        "label": "v0.19.0",
+        "summary": "v0.19.0",
+        "route": "/cockpit/objects/release-record/v0-19-0",
+        "source": ".ai/repo/releases/v0.19.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "3d92c25c1297f70f7b72f16e6cd640950e8f7e45",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.19.0",
+          "published_at": "2026-10-09T19:15:34Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.19.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -42166,6 +42223,47 @@
         }
       },
       {
+        "id": "majordomus://session/s-20261009091659-3ee5",
+        "kind": "session",
+        "label": "s-20261009091659-3ee5",
+        "summary": "Session s-20261009091659-3ee5 on feature/the-worker-is-asked-before-compaction",
+        "route": "/cockpit/objects/session/s-20261009091659-3ee5",
+        "source": ".ai/repo/sessions/20261009T091803Z--s-20261009091659-3ee5--feature-the-worker-is-asked-before-compaction--eb0609b--73ea739f7d4ff750.md",
+        "facts": {
+          "branch": "feature/the-worker-is-asked-before-compaction",
+          "changed_files": [
+            ".ai/repo/policy.yaml",
+            ".claude/skills/",
+            "lib/capture.sh",
+            "share/mods/",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/skeleton/policy.yaml"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-10-09T09:18:01Z",
+          "commits": [],
+          "created_at": "2026-10-09T09:18:01Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "eb0609b12394d4faf92d2daa71e866320cba9c36",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261009091659-3ee5",
+          "start_head": "eb0609b12394d4faf92d2daa71e866320cba9c36",
+          "start_working_tree": "dirty",
+          "started_at": "2026-10-09T09:16:59Z",
+          "task_id": "t-20261009090743-8bb5",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "3adef4010bd6fa7e"
+        }
+      },
+      {
         "id": "majordomus://skill/assess-before-deleting",
         "kind": "skill",
         "label": "assess-before-deleting",
@@ -42569,6 +42667,13 @@
         "label": "test/cases/100_execution_plane.sh",
         "route": "/cockpit/objects/test/test-cases-100-execution-plane-sh",
         "source": "test/cases/100_execution_plane.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "test",
+        "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "route": "/cockpit/objects/test/test-cases-1016-the-worker-is-asked-before-compaction-sh",
+        "source": "test/cases/1016_the_worker_is_asked_before_compaction.sh"
       },
       {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
@@ -54287,6 +54392,41 @@
       {
         "source": "majordomus://adr/adr-0111",
         "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://adr/adr-0015",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://adr/adr-0052",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://document/docs/claims/session-lifecycle.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
         "kind": "put_in_force"
       },
       {
@@ -66580,6 +66720,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.19.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -68910,6 +69055,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://session/s-20261009091659-3ee5",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://skill/assess-before-deleting",
         "target": "kind:skill",
         "kind": "is_a"
@@ -69106,6 +69256,11 @@
       },
       {
         "source": "majordomus://test/test/cases/100_execution_plane.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74821,8 +74976,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2476,
-      "edges": 5419,
+      "nodes": 2481,
+      "edges": 5429,
       "acyclic": false,
       "truncated": false
     }
