@@ -102,7 +102,9 @@ function watch(page, route) {
     const why = r.failure()?.errorText || '';
     // a navigation cancels the requests the previous page had in flight, and the browser
     // reports each as aborted; that is the driver's own doing, not the page's
-    if (why.includes('ERR_ABORTED') || why === 'cancelled') return;
+    // and WebKit says the same in its own words: "cancelled" on macOS, "Load request
+    // cancelled" on Linux
+    if (why.includes('ERR_ABORTED') || /cancelled/i.test(why)) return;
     fail('request', `${route}: ${url.replace(BASE, '')} — ${why}`);
   });
 }
@@ -1175,6 +1177,12 @@ async function drawerWalks(browser, width) {
           const under = await page.evaluate(() => document.getElementById('mj-nav').hasAttribute('data-open'));
           if (under) throw new Error('the palette opened under the open drawer');
           await page.keyboard.press('Escape');
+          // the palette hides through Alpine's x-show, which applies on a later tick; a slow
+          // runner takes longer than the walk's pause, so wait for it, and a palette that
+          // never closes is still the finding it was
+          await page
+            .waitForSelector('.mj-palette-panel', { state: 'hidden', timeout: 3000 })
+            .catch(() => { throw new Error('Escape did not close the palette'); });
           model.open = false;
           break;
         }
