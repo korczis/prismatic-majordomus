@@ -4,7 +4,7 @@
 
 # Prismatic Majordomus
 
-**A lightweight supervisory control layer for AI-assisted work.**
+**A supervisory control layer for AI-assisted work.**
 
 [Website](https://majordomus.dev) ·
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
@@ -17,8 +17,9 @@ AI coding agents do the work. Majordomus decides whether it is done. It holds on
 canonical policy for how AI workers operate in a repository and generates the instruction
 file each tool reads from it; it keeps the task, the paths it may touch and its handover in
 the repository instead of a conversation; it reports when two workers are about to collide;
-and it refuses to call work finished until a contract is met. It runs entirely locally, in
-portable shell, and never invokes a model.
+and it refuses to call work finished until a contract is met. It runs entirely locally, as
+portable shell and one Rust executable, and its core never invokes a model; the optional
+reasoning advisors call one only when a plan selects them ([`docs/REASONING.md`](docs/REASONING.md)).
 
 A recorded run from [the challenge](https://majordomus.dev/challenge/), redacted and
 otherwise untouched: the scope is clean now, but the repository's own test still fails, so a
@@ -399,13 +400,15 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 
 ## What this is not
 
-- not a model, and it never invokes one
+- not a model; its core never invokes one, and the optional reasoning advisors
+  (`scripts/advisor-consult`) call one only when a plan selects them
 - not an agent framework, orchestrator, or runtime
 - not a prompt library or a memory system
 - not a daemon, database, queue, or hosted service; the Rust executable's `mcp` and
-  `serve` are read-only processes a client or a person starts and owns, one shared server
-  per repository on the loopback interface that ends when its last client leaves
-  ([`docs/MCP.md`](docs/MCP.md))
+  `serve` are processes a client or a person starts and owns, one shared server per
+  repository on the loopback interface that ends when its last client leaves. They read
+  the layer, and the few capabilities that write to the repository declare the effect
+  `repository_mutation`, which `majordomus_capabilities` lists ([`docs/MCP.md`](docs/MCP.md))
 - not a slice of any other platform; there is no shared code
 
 ## Limitations
@@ -452,7 +455,7 @@ ordering, the gate and the claim linkage are derived.
 ## Interfaces
 
 The Rust executable under [`apps/majordomus-cli/`](apps/majordomus-cli/) exposes the same
-`.ai/` layer to programs, read-only, through several interfaces that are all derived from
+`.ai/` layer to programs through several interfaces that are all derived from
 one capability registry: a capability is defined once, in a typed descriptor or in a
 declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the Cockpit, the
 command line and the generated reference are projections of it, so nothing is maintained
