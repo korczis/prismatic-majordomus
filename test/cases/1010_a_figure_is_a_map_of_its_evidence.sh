@@ -55,7 +55,7 @@ fail=0
 note() { echo "    $1"; fail=1; }
 
 # ---------------------------------------------------------------- alpha: names base, names a missing test
-curl -s "$U/cockpit/objects/rule/project-alpha-1" > "$S/alpha.html"
+curl -s -m 20 "$U/cockpit/objects/rule/project-alpha-1" > "$S/alpha.html"
 grep -q 'data-mj-figure="relations"' "$S/alpha.html" || { echo "    the entity page of project.alpha draws no figure"; sed -n '1,5p' "$S/alpha.html"; exit 1; }
 
 # 1. every drawn element explains itself
@@ -77,7 +77,7 @@ grep -q 'class="mj-flow-node mj-status--missing mj-flow-node--focus" data-k="sel
   || note "project.alpha names a test the tree does not hold and its box is not drawn missing"
 
 # ---------------------------------------------------------------- base: named by alpha, so a backlink
-curl -s "$U/cockpit/objects/rule/project-base-1" > "$S/base.html"
+curl -s -m 20 "$U/cockpit/objects/rule/project-base-1" > "$S/base.html"
 grep -q 'data-from="in-depends_on" data-to="self"' "$S/base.html" \
   || note "project.base is named by project.alpha and the figure draws no line into it"
 grep -o '<g class="mj-flow-edge mj-status--derived"[^>]*data-from="in-depends_on"[^>]*>' "$S/base.html" | grep -q . \
@@ -91,15 +91,15 @@ grep -q '<details class="mj-figure-data" open>' "$S/alpha.html" || note "the fig
 grep -q '<th scope="col">Relation</th>' "$S/alpha.html" || note "the relations are not also a table"
 js="$(grep -o '/cockpit/assets/flow.js[^"]*' "$S/alpha.html" | head -1)"
 [ -n "$js" ] || note "the page does not load flow.js"
-[ -z "$js" ] || curl -s "$U$js" | grep -q 'data-mj-figure-info' || note "flow.js is not served with the information box's behaviour"
+[ -z "$js" ] || curl -s -m 20 "$U$js" | grep -q 'data-mj-figure-info' || note "flow.js is not served with the information box's behaviour"
 css="$(grep -o '/cockpit/assets/cockpit.css[^"]*' "$S/alpha.html" | head -1)"
-curl -s "$U$css" | grep -q 'mj-flow-box' || note "the stylesheet the page names carries no figure styles"
+curl -s -m 20 "$U$css" | grep -q 'mj-flow-box' || note "the stylesheet the page names carries no figure styles"
 
 # 6. an object joined to nothing draws nothing, and says why in words
 printf -- '---\nid: project.lonely\nversion: 1\nkind: rule\ntitle: Alone\ndescription: Joined to nothing.\nstatement: A fixture MUST be alone.\nstatus: active\nclass: advisory\ndepends_on: []\ntags: [fixture]\n---\n\n# Rationale\n\nAlone.\n' \
   > .ai/repo/rules/project/lonely.v1.md
 git add -A >/dev/null && git commit -qm lonely
-curl -s "$U/cockpit/objects/rule/project-lonely-1" > "$S/lonely.html"
+curl -s -m 20 "$U/cockpit/objects/rule/project-lonely-1" > "$S/lonely.html"
 if grep -q 'data-mj-figure=' "$S/lonely.html"; then note "an object joined to nothing drew a figure"; fi
 grep -q 'This entity declares no reference.' "$S/lonely.html" || note "an object joined to nothing does not say so"
 

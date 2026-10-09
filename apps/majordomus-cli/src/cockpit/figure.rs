@@ -906,24 +906,30 @@ impl Flow {
         el("ul")
             .class("mj-figure-legend")
             .children(used.into_iter().map(|claim| {
+                // the switch is a span inside the item: a script that gives the item
+                // itself a button's role takes it out of the list it belongs to
                 el("li")
                     .class(format!("mj-figure-key mj-status--{}", claim.word()))
-                    .attr("data-mj-claim", claim.word())
                     .child(
-                        el("svg")
-                            .attr("viewBox", "0 0 28 8")
-                            .attr("width", "28")
-                            .attr("height", "8")
-                            .attr("aria-hidden", "true")
+                        el("span")
+                            .class("mj-figure-switch")
+                            .attr("data-mj-claim", claim.word())
                             .child(
-                                el("path")
-                                    .class("mj-flow-line")
-                                    .attr("d", "M0,4 H28")
-                                    .attr_if("stroke-dasharray", claim.dash()),
-                            ),
+                                el("svg")
+                                    .attr("viewBox", "0 0 28 8")
+                                    .attr("width", "28")
+                                    .attr("height", "8")
+                                    .attr("aria-hidden", "true")
+                                    .child(
+                                        el("path")
+                                            .class("mj-flow-line")
+                                            .attr("d", "M0,4 H28")
+                                            .attr_if("stroke-dasharray", claim.dash()),
+                                    ),
+                            )
+                            .child(badge(claim.word(), claim.word()))
+                            .child(el("span").class("mj-figure-meaning").text(claim.meaning())),
                     )
-                    .child(badge(claim.word(), claim.word()))
-                    .child(el("span").class("mj-figure-meaning").text(claim.meaning()))
             }))
     }
 
