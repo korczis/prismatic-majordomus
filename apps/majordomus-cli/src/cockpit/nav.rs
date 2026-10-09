@@ -9,7 +9,7 @@
 //! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Integration, Health, Quality,
+//! Objects, Directories, Graphs, Continuity, Plan, Worktrees, Integration, Health, Quality,
 //! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -53,6 +53,9 @@ pub enum Area {
     Continuity,
     /// What must become true, how far reality is from it, and the work realising it.
     Intents,
+    /// The plan: its milestones and issues, one milestone as a graph of work, one issue as
+    /// a task, and the moves an issue can make.
+    Plan,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
     /// Who else is working in this repository, gathered from every checkout's board.
@@ -77,8 +80,10 @@ pub enum Area {
     Release,
     /// The design system: what every surface of this tool is rendered with.
     Design,
-    /// The HTTP and MCP surfaces.
+    /// The HTTP surface.
     Api,
+    /// The MCP projection: the tools, what each may change, and how a client connects.
+    Mcp,
     /// A page that belongs to no area (search results, an error).
     None,
 }
@@ -168,6 +173,12 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Intents,
         },
         AreaInfo {
+            id: "plan",
+            label: "Plan",
+            href: "/cockpit/plan",
+            area: Area::Plan,
+        },
+        AreaInfo {
             id: "worktrees",
             label: "Worktrees",
             href: "/cockpit/worktrees",
@@ -244,6 +255,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "API",
             href: "/cockpit/api",
             area: Area::Api,
+        },
+        AreaInfo {
+            id: "mcp",
+            label: "MCP",
+            href: "/cockpit/mcp",
+            area: Area::Mcp,
         },
     ]
 }
@@ -351,6 +368,7 @@ fn build_with(
             Area::Objects => Some(held.map_or(Count::Unknown, |h| Count::Known(h.objects))),
             Area::Graphs => Some(Count::Known(graph::ids().len())),
             Area::Api => Some(Count::Known(summary.http_routes)),
+            Area::Mcp => Some(Count::Known(summary.mcp_tools)),
             _ => None,
         }
     };
@@ -458,13 +476,34 @@ fn item(label: &str, href: &str, area: Area, count: Option<Count>, here: &str) -
         area,
         group: None,
         count,
-        current: here == href,
+        // a page under an area's route is in that area: an issue page is the Plan, and a
+        // sidebar that marked nothing there folded itself shut on every detail page. The
+        // overview's route is the prefix of every route, so it marks only itself.
+        current: here == href || (href != super::PREFIX && here.starts_with(&format!("{href}/"))),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_page_under_an_area_marks_that_area_and_the_overview_marks_only_itself() {
+        let plan = |here: &str| item("Plan", "/cockpit/plan", Area::Plan, None, here).current;
+        assert!(plan("/cockpit/plan"));
+        assert!(
+            plan("/cockpit/plan/issues/I0001"),
+            "a detail page is in its area"
+        );
+        assert!(
+            !plan("/cockpit/planet"),
+            "a shared prefix is not a sub-route"
+        );
+        let overview =
+            |here: &str| item("Overview", "/cockpit", Area::Overview, None, here).current;
+        assert!(overview("/cockpit"));
+        assert!(!overview("/cockpit/plan"), "the overview is not every page");
+    }
     use crate::synthetic::SyntheticRepository;
 
     fn repository() -> SyntheticRepository {

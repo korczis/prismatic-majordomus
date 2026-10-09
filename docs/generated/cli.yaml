@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.15.0
+# Generator: majordomus-cli 0.19.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.15.0
-version: "0.15.0"
+generator: majordomus-cli 0.19.0
+version: "0.19.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -125,14 +125,13 @@ cli:
         - name: http_host
           long: http-host
           positional: false
-          help: Interface the shared server binds when this process is the one that starts it
+          help: "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset"
           value_name: HOST
           takes_value: true
           required: false
           global: false
           possible_values: []
-          defaults:
-            - "127.0.0.1"
+          defaults: []
         - name: http_port
           long: http-port
           positional: false
@@ -232,14 +231,13 @@ cli:
         - name: host
           long: host
           positional: false
-          help: Interface to bind; loopback unless you say otherwise
+          help: "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset"
           value_name: HOST
           takes_value: true
           required: false
           global: false
           possible_values: []
-          defaults:
-            - "127.0.0.1"
+          defaults: []
         - name: port
           long: port
           positional: false
@@ -16564,6 +16562,46 @@ cli:
               global: false
               possible_values: []
               defaults: []
+            - name: provenance
+              long: provenance
+              positional: false
+              help: "The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=` when the file names no producer and several reports are given"
+              value_name: "[PRODUCER=]FILE"
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: coverage
+              long: coverage
+              positional: false
+              help: "The summary `scripts/rust-coverage --summary-json` wrote"
+              value_name: COVERAGE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: ledger
+              long: ledger
+              positional: false
+              help: repo (the default) or local
+              value_name: LEDGER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: run_record
+              long: run-record
+              positional: false
+              help: Also write the run record to this file
+              value_name: RUN_RECORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
             - name: repo
               long: repo
               positional: false
@@ -16637,6 +16675,131 @@ cli:
               command: majordomus evidence record --suite target/no-such-run.tsv
               setup: []
               expectation: exits 13
+          subcommands: []
+        - path:
+            - majordomus
+            - evidence
+            - stamp
+          route: /docs/cli/evidence/stamp/
+          executable: true
+          usage: "majordomus evidence stamp [OPTIONS]"
+          about: "Measure the checkout as a run left it, for `record --provenance`"
+          args:
+            - name: producer
+              long: producer
+              positional: false
+              help: "The producer whose run this is: suite, crate or coverage"
+              value_name: PRODUCER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: report
+              long: report
+              positional: false
+              help: The report the run wrote
+              value_name: REPORT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: exclude
+              long: exclude
+              positional: false
+              help: "One of the run's own untracked outputs (a file, or a directory with everything under it)"
+              value_name: EXCLUDE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: out
+              long: out
+              positional: false
+              help: Write the measurement to this file
+              value_name: OUT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: evidence-stamp-json
+              title: "What a run measured, as one document"
+              description: "The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report."
+              argv:
+                - evidence
+                - stamp
+                - "--producer"
+                - suite
+                - "--format"
+                - json
+              command: majordomus evidence stamp --producer suite --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /producer, /commit, /working_tree, /recorder, /host"
           subcommands: []
     - path:
         - majordomus
@@ -19863,6 +20026,373 @@ cli:
           subcommands: []
     - path:
         - majordomus
+        - pack
+      route: /docs/cli/pack/
+      executable: false
+      usage: "majordomus pack [OPTIONS] <COMMAND>"
+      about: "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - pack
+            - plan
+          route: /docs/cli/pack/plan/
+          executable: true
+          usage: "majordomus pack plan [OPTIONS] [PROFILE]"
+          about: "What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read"
+          args:
+            - name: profile
+              positional: true
+              help: "A profile of share/archive.yaml (default: its `default`)"
+              value_name: PROFILE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: pack-plan-chatgpt-json
+              title: "What the ChatGPT profile would pack, before anything is written"
+              description: "The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read."
+              argv:
+                - pack
+                - plan
+                - chatgpt
+                - "--format"
+                - json
+              command: majordomus pack plan chatgpt --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /dropped, /shards, /findings, /passes"
+          subcommands: []
+        - path:
+            - majordomus
+            - pack
+            - build
+          route: /docs/cli/pack/build/
+          executable: true
+          usage: "majordomus pack build [OPTIONS] [PROFILE]"
+          about: "Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one"
+          args:
+            - name: profile
+              positional: true
+              help: "A profile of share/archive.yaml (default: its `default`)"
+              value_name: PROFILE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: out
+              long: out
+              positional: false
+              help: "Write here instead of `tmp/packs/<repo>-<profile>-<commit>`"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: force
+              long: force
+              positional: false
+              help: Replace a pack already at the destination (never a directory that is not a pack)
+              value_name: FORCE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: pack-build-chatgpt
+              title: Write the ChatGPT pack and read it back
+              description: "Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards."
+              argv:
+                - pack
+                - build
+                - chatgpt
+              command: majordomus pack build chatgpt
+              setup: []
+              expectation: "exits 0; prints pack verify: clean"
+          subcommands: []
+        - path:
+            - majordomus
+            - pack
+            - verify
+          route: /docs/cli/pack/verify/
+          executable: true
+          usage: "majordomus pack verify [OPTIONS] <DIR>"
+          about: "Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read"
+          args:
+            - name: dir
+              positional: true
+              help: "The pack's directory, inside the repository"
+              value_name: DIR
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: pack-verify-absent
+              title: A directory that holds no pack
+              description: "A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything."
+              argv:
+                - pack
+                - verify
+                - tmp/packs/absent
+              command: majordomus pack verify tmp/packs/absent
+              setup: []
+              expectation: exits 12
+          subcommands: []
+    - path:
+        - majordomus
         - dashboard
       route: /docs/cli/dashboard/
       executable: false
@@ -20677,4 +21207,722 @@ cli:
               command: majordomus knowledge status --format json
               setup: []
               expectation: "exits 0; prints one JSON document carrying /present, /judged, /stopped_writer, /freshness"
+          subcommands: []
+    - path:
+        - majordomus
+        - continuity
+      route: /docs/cli/continuity/
+      executable: false
+      usage: "majordomus continuity [OPTIONS] <COMMAND>"
+      about: "Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - continuity
+            - status
+          route: /docs/cli/continuity/status/
+          executable: true
+          usage: "majordomus continuity status [OPTIONS]"
+          about: "This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-status-json
+              title: Where this device stands in the work published from every device
+              description: "The same value `GET /api/v1/continuity/status` and the MCP tool `majordomus_continuity_status` return: this repository's identity (a digest of its root commits, the same in every clone), this device, the record this checkout continues on its branch, how the local store stands towards the remote's — read from refs, with no network — and what other devices published that could be resumed here. A repository that has published nothing answers with an empty store, which is an answer and not an error."
+              argv:
+                - continuity
+                - status
+                - "--format"
+                - json
+              command: majordomus continuity status --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /repository, /device/node, /store/sync, /resumable"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - records
+          route: /docs/cli/continuity/records/
+          executable: true
+          usage: "majordomus continuity records [OPTIONS]"
+          about: "Every published handover the local store admits, by line, and every file it refused"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-records-json
+              title: "Every published handover, by line"
+              description: "Every record of refs/majordomus/continuity that passed admission, every line of work with its heads, and a diagnostic for each refused file. Empty in a repository that has published nothing."
+              argv:
+                - continuity
+                - records
+                - "--format"
+                - json
+              command: majordomus continuity records --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /records, /lines, /diagnostics"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - device
+          route: /docs/cli/continuity/device/
+          executable: true
+          usage: "majordomus continuity device [OPTIONS]"
+          about: "This device's identity — the mesh node key, created when absent — and its label; with --label, rename it"
+          args:
+            - name: label
+              long: label
+              positional: false
+              help: "A label for this device (macbook-pro, mac-mini)"
+              value_name: LABEL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-device-json
+              title: "This device, as a published handover names it"
+              description: "The node id and public key of this device's mesh key — created on first use in the user's state directory, never in a repository — and its label. `--label mac-mini` renames it without changing the key."
+              argv:
+                - continuity
+                - device
+                - "--format"
+                - json
+              command: majordomus continuity device --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /device/node, /device/label, /public_key"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - plan
+          route: /docs/cli/continuity/plan/
+          executable: true
+          usage: "majordomus continuity plan [OPTIONS]"
+          about: "Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin"
+          args:
+            - name: record
+              long: record
+              positional: false
+              help: A record id or a unique prefix; the one resumable handover when absent
+              value_name: RECORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-plan-nothing
+              title: A plan with nothing to resume
+              description: "With no handover published from another device, the plan says so — `nothing_to_resume` — and exits 0: absence is an answer. With one, the same command decides trust, lineage and source compatibility and lists the commands that resolve each blocker without running any of them."
+              argv:
+                - continuity
+                - plan
+                - "--format"
+                - json
+              command: majordomus continuity plan --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /status, /blockers, /warnings, /actions"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - publish
+          route: /docs/cli/continuity/publish/
+          executable: true
+          usage: "majordomus continuity publish [OPTIONS]"
+          about: "Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path"
+          args:
+            - name: handover
+              long: handover
+              positional: false
+              help: "A handover record's file name under .ai/local/state/handovers/; the newest when absent"
+              value_name: HANDOVER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: issue
+              long: issue
+              positional: false
+              help: The issue the work belongs to
+              value_name: ISSUE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: milestone
+              long: milestone
+              positional: false
+              help: The milestone it belongs to
+              value_name: MILESTONE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-publish-nothing
+              title: Nothing to publish without a handover
+              description: "A publication reads the newest handover record; a checkout that has written none is told to write one with `majordomus handover` and exits 10, before any device key is created."
+              argv:
+                - continuity
+                - publish
+              command: majordomus continuity publish
+              setup: []
+              expectation: exits 10
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - sync
+          route: /docs/cli/continuity/sync/
+          executable: true
+          usage: "majordomus continuity sync [OPTIONS]"
+          about: "Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending"
+          args:
+            - name: remote
+              long: remote
+              positional: false
+              help: "The git remote; the current branch's, else origin, when absent"
+              value_name: REMOTE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-sync-no-remote
+              title: A repository with no remote keeps its records
+              description: "Sync moves records only through a git remote. A repository with none answers `no_remote` and exits 0: the records stay in this clone, and that is a valid state rather than a failure."
+              argv:
+                - continuity
+                - sync
+                - "--format"
+                - json
+              command: majordomus continuity sync --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /action, /store/sync"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - resume
+          route: /docs/cli/continuity/resume/
+          executable: true
+          usage: "majordomus continuity resume [OPTIONS]"
+          about: "Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line"
+          args:
+            - name: record
+              long: record
+              positional: false
+              help: A record id or a unique prefix; the one resumable handover when absent
+              value_name: RECORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-resume-nothing
+              title: A resume with nothing to resume writes nothing
+              description: "Resume acts only on a ready plan. With no published handover it writes nothing and exits 10, printing the plan that declined."
+              argv:
+                - continuity
+                - resume
+              command: majordomus continuity resume
+              setup: []
+              expectation: exits 10
           subcommands: []

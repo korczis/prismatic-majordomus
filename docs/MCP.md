@@ -44,7 +44,7 @@ registry entry, none declared in the MCP code. The decision is
 | | |
 |---|---|
 | election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
-| port | `--http-port` (default `8741`) on `--http-host` (default `127.0.0.1`); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
+| port | `--http-port` (default `8741`) on `--http-host` (default: the interface `MAJORDOMUS_HTTP_HOST` names on this machine, and `127.0.0.1` when it names none — [below](#the-machine-names-the-interface)); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
@@ -64,7 +64,10 @@ said that two such servers belonged to one repository. Now the index route (`GET
 the git repository the checkout belongs to beside the checkout's own identity:
 `commit` is the commit the executable answering was built from, in full or `unknown`, and
 `dirty` whether its tree carried uncommitted changes (`null` when the build did not know) —
-the same two fields `GET /api/v1/live` and `GET /api/v1/ready` answer;
+the same two fields `GET /api/v1/live` and `GET /api/v1/ready` answer; `stale` is `null`
+while the executable the process was loaded from is still the file on disk, and says why
+once a rebuild has replaced or removed it — the process is then serving code that no longer
+exists, and `GET /api/v1/ready` answers `ready: false` with the same reason (I1502);
 `repository_id` is the checkout's (a digest of its root, what the lease probe compares),
 `git_repository_id` is the repository's (a digest of the git directory every worktree
 shares; absent where git cannot be asked), `linked_worktree` says whether this is the
@@ -133,7 +136,7 @@ next reader does not have to rediscover which one they are looking at.
 | the question | the answer | who asks it |
 |---|---|---|
 | Is a **surface's** producer's output on disk? | `http::Served::ready(surface_id)` — the directory a producer writes into has files in it; a route this executable answers is always ready | the home page (`GET /`), which renders a surface with no output as `not built` rather than serving a 404 |
-| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, and how the layer read. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
+| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, how the layer read, and whether the executable it was loaded from is still on disk — a replaced one makes it not ready, with the reason in `stale`. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
 | Does **anything** accept a connection at the address the lease published? | `environment::ServiceAvailability` — one TCP connect with a hard budget and no name resolution (`environment::probe::reachable`) | the environment snapshot, which runs on a shell prompt (`majordomus env`, `.envrc`) and may not spend an HTTP round trip or reach DNS to say what it knows |
 | Is what answers there **current**? | `ServerStanding` — `server.status`, from `lease::probe` (this checkout's identity, over HTTP) and the version and executable the lease carries | anyone who has to trust what the server says: `serve ensure`, `serve stop`, the `server` check of `health.report`, and the session briefing |
 
@@ -216,6 +219,65 @@ somebody else's — serves the peers it has, and ends with them. The server's ow
 forgets the HTTP sessions that stopped pinging on every path, not only while the owner
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 
+
+### The machine names the interface
+
+A local server binds loopback. That default does not move: the layer, its diagnostics, its
+peers and the two tools that answer about `.ai/local/` are not for every host on the
+network a laptop happens to be on.
+
+One machine may still want to be reached — a second machine attaching over the LAN, a mesh
+peer dialing in, a phone opening the Cockpit — and until 0.14 the only way to say so was
+`majordomus serve --host 0.0.0.0`, typed by hand. That lasted exactly as long as the
+process: `serve ensure`, which is what a session start and a shell entry run, starts a
+server with no host at all, so the next idle stop or the next session put the checkout back
+on loopback without a word, and `serve status` had been reporting `desired 127.0.0.1` the
+whole time.
+
+So the interface is read from one place every starter inherits:
+
+```sh
+export MAJORDOMUS_HTTP_HOST=0.0.0.0     # every interface; or one address of this machine
+```
+
+| who starts the server | what it binds |
+|---|---|
+| `majordomus serve` | `--host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
+| `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
+| `majordomus serve ensure` (session start, shell entry) | it passes no host; the server it starts inherits the variable |
+| `majordomus serve --deployment <id>` | the deployment object's `listen` block, and nothing else: a declared address is not overridden by a machine's environment |
+
+Four things follow from it being a variable and not a setting:
+
+- **It is the machine's, never the repository's.** Nothing tracked can set it. A key in
+  `.ai/repo/policy.yaml` would make every clone of a public repository listen on whatever
+  network it woke up in.
+- **The command line wins**, a blank value is no value, and a value nothing can bind
+  refuses to start, naming the address.
+- **The warning stands.** A bind the variable chose still logs that every host reaching the
+  interface can read the layer; the log line before it says the variable named the address,
+  so a bind is never untraceable. Only a deployment object *declares* an exposure, and only
+  a declared one is silent.
+- **`server.status` answers for the environment it is asked in.** `desired.host` is what a
+  server started from that environment would bind, so the address a server binds and the
+  address the status calls desired are one resolution (`cli::resolve_http_host`) and cannot
+  disagree. A running server answers `serve status`, and it answers for the environment it
+  was started in.
+
+Set it where every starter will see it — the shell's own startup file (`~/.zshenv`,
+`~/.profile`). `.envrc.local` is too late for one of them: `.envrc` evaluates
+`majordomus-env enter`, which ensures the server, *before* it sources `.envrc.local`, so
+the server a first `cd` starts would not have the variable while everything started from
+that shell afterwards would.
+
+A server already running keeps the address it bound. After setting the variable,
+`majordomus serve stop` and the next `serve ensure` — or the next session — brings it up
+on the named interface.
+
+There is no authentication on this surface. Binding beyond loopback hands every reachable
+host the read surface and the commands the registry declares as writing; do it on a
+network you would hand that to, or reach the loopback server through an SSH tunnel
+instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
 
 ### What a contest is judged by
 
@@ -500,6 +562,7 @@ manifest section it falls under, and its size.
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
 | `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
+| `majordomus_mcp` | `mcp.projection` | `effect?` | the projection described (below): server, protocol versions, transports and attached sessions, methods served, every tool with its effect and hints, the writers, the resources, and where each declared client's configuration stands here |
 | `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
 | `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
 | `majordomus_worktree_status` | `worktree.status` | `path?` | one worktree — the repository's own, or the one holding `path` — with its standing, canonical path, uncommitted work and whether it is where it belongs; a path in another repository is refused |
@@ -533,11 +596,59 @@ different question and not a superset: `continuity.state` follows
 `state/session-current.yaml`, and that pointer is a symlink the most recent start event
 re-aims. [`CONTINUITY.md`](CONTINUITY.md) has the model and the whole path.
 
-Every query is read-only and says so in its annotations; `majordomus_announce`, the one
-command, says it is not, and it changes this process's memory and nothing else. Each tool
-carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
-`outputSchema` from the canonical schemas. A refused call is a result with
-`isError: true`; an unknown tool, method or resource is a protocol error.
+### The projection, described
+
+`mcp.projection` — the tool `majordomus_mcp`, the resource `majordomus://mcp`, the route
+`GET /api/v1/mcp`, the Cockpit page `/cockpit/mcp` and the first lines of
+`majordomus mcp --inspect` — answers what this document would otherwise have to list and
+keep true by hand:
+
+```bash
+majordomus mcp --inspect    # its lines beginning server, protocol, effect, writes and client are this answer
+curl -s http://127.0.0.1:8741/api/v1/mcp | jq '{server, protocol_versions, effects, writers, clients}'
+curl -s 'http://127.0.0.1:8741/api/v1/mcp?effect=repository_mutation' | jq '.tools[].name'
+```
+
+| field | what it is | where it comes from |
+|---|---|---|
+| `server`, `protocol_versions` | who answers `initialize`, and with which versions | the constants the server answers with; the version is the executable's |
+| `transports` | `stdio` and `http`, and the sessions attached over each right now | this process's peer board at the moment of asking |
+| `serving` | the methods a request may name; that prompts and notifications are not served | the list the dispatcher consults before looking at a request |
+| `tools`, `tool_count`, `effects`, `writers` | every tool (or those of one `effect`) with its capability, effect and hints | the registry; the effect is the capability's classification |
+| `resources` | how many capabilities answer a URI, how many objects the layer holds, the URI shape | the registry and the index |
+| `clients` | each client the distribution declares a configuration for, and whether the file here is `wired`, `foreign` or `absent` | `share/providers.yaml` and one read of each file |
+| `findings` | a configuration that exists and does not name the launcher; no client configured at all | derived from `clients`, each with its remedy |
+
+Nothing in it is a list of its own, so it cannot disagree with `tools/list`: a capability
+that gains a tool is in the answer, on the Cockpit page and in the generated reference at
+the next request, with no other file edited.
+
+### What a tool may change
+
+A tool's annotations are not written in the MCP code: they are the capability's
+classified hints (`ExecutionPolicy::hints`), which follow from its effect, and the effect
+itself is carried in `_meta.majordomus.effect`.
+
+| effect | what a call changes | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
+|---|---|---|---|---|---|
+| `read` | nothing | `true` | `false` | `true` | `false` |
+| `process_state` | this process's memory and nothing outside it (a peer announcing itself) | `false` | `false` | `false` | `false` |
+| `repository_mutation` | the repository's own files | `false` | `true` | `false` | `false` |
+
+The classification is conservative in the direction a caller can survive: nothing that
+changes something is announced as safe to repeat, because no handler has declared that a
+second call is a no-op, and anything that writes the repository is announced as able to
+overwrite or remove. `openWorldHint` is `false` throughout because no handler reaches
+beyond the machine: observing the forge and consulting an advisor are commands a person
+runs, not capabilities. Which tools write the repository is never a list in this document:
+the `initialize` instructions name them, derived from the registry, and so does
+`majordomus mcp --inspect`. Each tool carries the canonical id in `_meta.majordomus.id` and
+its `inputSchema` and `outputSchema` from the canonical schemas. A refused call is a result with
+`isError: true`, the reason as text, and the category as one word in
+`_meta.majordomus.error.code` — `invalid_input`, `not_found` or `refused`, the same word the
+HTTP route answers as `error.code`, because both read it from the error itself. A
+refused result carries no `structuredContent`: the output schema describes a success. An
+unknown tool, method or resource is a protocol error.
 
 ## Failure behaviour
 
@@ -558,7 +669,8 @@ carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
 | the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
 | the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
 | the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | the lease is removed inside the handler and the process dies of the signal; its bridges elect again on their next message |
-| `--http-host` is not a loopback address | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers |
+| `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so |
+| `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind |
 | an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
 
 Two files of one kind claiming one identity are both excluded and both named, as the
@@ -573,8 +685,12 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
   provider files are served as documents with their directory recorded; nothing merges
   or ranks them, because the repository defines no merge semantics. Recorded in
   [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](../.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
-- **Any mutation of the repository**, subscriptions, list-change notifications, and a
-  server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
+- **A mutation of the repository that is not a capability.** A tool writes the repository
+  only when its capability declares `.writes_repository()`; the handler is the one the
+  HTTP route and the command line reach, so a refusal there is the same refusal here, and
+  MCP adds no writer of its own.
+- **Subscriptions, list-change notifications**, and a server-initiated stream on `/mcp`
+  (this server sends nothing unasked). The HTTP
   projection of the same registry is served by the shared server and by `majordomus
   serve`; see [`CAPABILITIES.md`](CAPABILITIES.md).
 - **Persistent coordination.** A peer board is one process's memory, and the gathered board
@@ -606,7 +722,11 @@ failure table is the rule `project.shared-server-resilience`. `tests/server_stat
 the two-worktree case and the stale-lease case; `tests/health_server.rs` holds the `server`
 check of `health.report` against a real server, a checkout nobody serves and a lease naming
 an address nobody answers at, and asserts that the check and the status say one word about
-one lease. `tests/hot_path.rs` sends
+one lease. `test/cases/992_the_local_bind_is_the_machines_to_name.sh` holds the interface:
+loopback when nothing names one, the variable followed by `serve`, by the server
+`serve ensure` starts and by the one `mcp` elects, the flag winning, a blank value ignored,
+the warning kept, `desired.host` agreeing, and an unbindable address refused without a
+lease; `85_deployment_bind.sh` holds the declared address beside it. `tests/hot_path.rs` sends
 hundreds of frames and requires the startup counters (`majordomus_perf`) unchanged;
 `majordomus bench` times every tool through a real child process
 ([`CAPABILITIES.md`](CAPABILITIES.md)). The claims are in [`CLAIMS.yaml`](CLAIMS.yaml)

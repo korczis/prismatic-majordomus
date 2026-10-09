@@ -1,0 +1,16 @@
+# The known answer for scripts/lib/counting-functions.awk is: counter flagger guarded oneline then_flag
+# shell-lint reads this file with it before it trusts the discovery with any other.
+counter() { echo "$*"; fails=$((fails+1)); }
+flagger() {
+  echo "FAIL $*"
+  fail=1
+}
+guarded() { [ -n "$1" ] && bad=true; }
+oneline() { printf '%s\n' "$*"; seen=yes; }
+then_flag() { if [ -n "$1" ]; then broken=1; fi; }
+kept_local() { local fail=0; fail=1; echo "$fail"; }
+kept_local_counter() { local n=0; n=$((n+1)); }
+quoted() { echo "fail=1 is words"; echo 'bad=true is words too'; }
+exported() { export MJ_FLAG=1; readonly R=1; declare D=1; }
+not_a_flag() { mode=fast; count=2; }
+undo() { redo=0; }

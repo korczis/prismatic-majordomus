@@ -10,6 +10,7 @@
 //! derivation cannot be inspected.
 
 use std::io::Write;
+use std::path::Path;
 
 use serde_json::{json, Value};
 
@@ -90,8 +91,24 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             suite,
             crate_output,
             origin,
+            provenance,
+            coverage,
+            ledger,
+            run_record,
         } => {
             let mut input = json!({});
+            if !provenance.is_empty() {
+                input["provenance"] = json!(provenance);
+            }
+            if let Some(p) = &coverage {
+                input["coverage"] = json!(p.to_string_lossy());
+            }
+            if let Some(l) = &ledger {
+                input["ledger"] = json!(l);
+            }
+            if let Some(p) = &run_record {
+                input["run_record"] = json!(p.to_string_lossy());
+            }
             if let Some(p) = &suite {
                 input["suite"] = json!(p.to_string_lossy());
             }
@@ -105,33 +122,152 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             match args.format {
                 OutputFormat::Json => writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?,
                 OutputFormat::Text => {
-                    writeln!(
-                        out,
-                        "recorded     {} execution(s), {} passing",
-                        v["recorded"], v["passed"]
-                    )
-                    .map_err(Error::Transport)?;
-                    writeln!(
-                        out,
-                        "against      {} ({})",
-                        short(v["commit"].as_str().unwrap_or("?")),
-                        v["working_tree"].as_str().unwrap_or("?")
-                    )
-                    .map_err(Error::Transport)?;
-                    writeln!(out, "ledger       {}", v["ledger"].as_str().unwrap_or("?"))
-                        .map_err(Error::Transport)?;
-                    for u in v["unknown"].as_array().into_iter().flatten() {
-                        writeln!(out, "unknown      {} (no such test here)", u)
-                            .map_err(Error::Transport)?;
-                    }
+                    return record_text(&mut out, &v, run_record.as_deref()).map(|()| 0)
                 }
             }
             Ok(0)
         }
+        EvidenceCommand::Stamp {
+            producer,
+            report,
+            exclude,
+            out: file,
+        } => {
+            let mut input = json!({ "exclude": exclude });
+            if let Some(p) = &producer {
+                input["producer"] = json!(p);
+            }
+            if let Some(p) = &report {
+                input["report"] = json!(p.to_string_lossy());
+            }
+            let v = execute(ctx, &["evidence", "stamp"], input)?;
+            write_stamp(&mut out, &v, file.as_deref(), args.format).map(|()| 0)
+        }
+    }
+}
+
+/// A measurement written to `file` when one is named, then answered on `out` in `format`;
+/// a file or a line that cannot be written is a transport error.
+fn write_stamp(
+    out: &mut impl Write,
+    v: &Value,
+    file: Option<&Path>,
+    format: OutputFormat,
+) -> Result<()> {
+    if let Some(f) = file {
+        // a bare file name's parent is the empty path, which create_dir_all accepts as is
+        f.parent()
+            .map_or(Ok(()), std::fs::create_dir_all)
+            .map_err(Error::Transport)?;
+        std::fs::write(f, format!("{}\n", pretty(v))).map_err(Error::Transport)?;
+    }
+    match format {
+        OutputFormat::Json => writeln!(out, "{}", pretty(v)).map_err(Error::Transport),
+        OutputFormat::Text => stamp_text(out, v, file),
     }
 }
 
 // ---------------------------------------------------------------- text
+
+/// A recording, one line per fact: what reached the ledger, against what, where, what the
+/// reports held that no claim can name yet, and what they named that this repository lacks.
+fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Result<()> {
+    writeln!(
+        out,
+        "recorded     {} execution(s), {} passing",
+        v["recorded"], v["passed"]
+    )
+    .map_err(Error::Transport)?;
+    writeln!(
+        out,
+        "against      {} ({})",
+        short(v["commit"].as_str().unwrap_or("?")),
+        v["working_tree"].as_str().unwrap_or("?")
+    )
+    .map_err(Error::Transport)?;
+    writeln!(out, "ledger       {}", v["ledger"].as_str().unwrap_or("?"))
+        .map_err(Error::Transport)?;
+    let r = &v["run_record"];
+    writeln!(out, "run          {}", r["id"].as_str().unwrap_or("?")).map_err(Error::Transport)?;
+    let measured: Vec<String> = r["provenance"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|p| {
+            let producer = p["producer"].as_str().unwrap_or("?");
+            format!("{producer} ({})", p["working_tree"].as_str().unwrap_or("?"))
+        })
+        .collect();
+    if measured.is_empty() {
+        writeln!(out, "measured     nothing: the tree is recorded as unknown")
+    } else {
+        writeln!(out, "measured     {}", measured.join(", "))
+    }
+    .map_err(Error::Transport)?;
+    for a in r["absent"].as_array().into_iter().flatten() {
+        writeln!(
+            out,
+            "absent       {} ({})",
+            a["producer"].as_str().unwrap_or("?"),
+            a["reason"].as_str().unwrap_or("?")
+        )
+        .map_err(Error::Transport)?;
+    }
+    // what the reports held that no claim can name yet, listed, never hidden
+    for d in v["dropped"].as_array().into_iter().flatten() {
+        writeln!(
+            out,
+            "dropped      {} ({})",
+            d["what"].as_str().unwrap_or("?"),
+            d["reason"].as_str().unwrap_or("?")
+        )
+        .map_err(Error::Transport)?;
+    }
+    for u in v["unknown"].as_array().into_iter().flatten() {
+        writeln!(out, "unknown      {} (no such test here)", u).map_err(Error::Transport)?;
+    }
+    if let Some(p) = run_record {
+        writeln!(out, "run record   {}", p.display()).map_err(Error::Transport)?;
+    }
+    Ok(())
+}
+
+/// A measurement, one line per fact: what was stamped at which commit and tree, what was
+/// excluded, the report it names, and where it was written.
+fn stamp_text(out: &mut impl Write, v: &Value, written: Option<&Path>) -> Result<()> {
+    let commit = v["commit"].as_str().unwrap_or("?");
+    writeln!(
+        out,
+        "stamped      {} at {} ({})",
+        v["producer"].as_str().unwrap_or("a run"),
+        commit.get(..8).unwrap_or(commit),
+        v["working_tree"].as_str().unwrap_or("?")
+    )
+    .map_err(Error::Transport)?;
+    let excluded: Vec<&str> = v["excluded"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect();
+    if !excluded.is_empty() {
+        writeln!(out, "excluded     {}", excluded.join(", ")).map_err(Error::Transport)?;
+    }
+    if let Some(r) = v.get("report") {
+        let digest = r["digest"].as_str().unwrap_or("?");
+        writeln!(
+            out,
+            "report       {} {}",
+            r["path"].as_str().unwrap_or("?"),
+            digest.get(..19).unwrap_or(digest)
+        )
+        .map_err(Error::Transport)?;
+    }
+    if let Some(p) = written {
+        writeln!(out, "written      {}", p.display()).map_err(Error::Transport)?;
+    }
+    Ok(())
+}
 
 fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     let w =
@@ -537,6 +673,190 @@ mod tests {
         );
     }
 
+    /// A recording prints one `dropped` line per entry, with its reason, after the ledger and
+    /// before what the reports named that this repository lacks; one with nothing dropped
+    /// prints no such line.
+    #[test]
+    fn a_recording_lists_what_it_dropped_after_the_ledger() {
+        let render = |v: Value| {
+            let mut buf = Vec::new();
+            record_text(&mut buf, &v, None).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(json!({
+            "recorded": 1,
+            "passed": 1,
+            "commit": "0123456789abcdef0123456789abcdef01234567",
+            "working_tree": "clean",
+            "ledger": ".ai/repo/evidence/ledger.json",
+            "unknown": ["crate:ghost"],
+            "dropped": [
+                { "producer": "crate", "what": "unittests src/lib.rs", "reason": "unit" },
+                { "producer": "crate", "what": "doc-tests majordomus_cli", "reason": "doc" }
+            ],
+            "run_record": {
+                "id": "local:0123456789ab:20260926T120000Z",
+                "provenance": [{ "producer": "crate", "working_tree": "clean" }],
+                "absent": [{ "producer": "suite", "reason": "no suite report was given" }]
+            }
+        }));
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "recorded     1 execution(s), 1 passing",
+                "against      01234567 (clean)",
+                "ledger       .ai/repo/evidence/ledger.json",
+                "run          local:0123456789ab:20260926T120000Z",
+                "measured     crate (clean)",
+                "absent       suite (no suite report was given)",
+                "dropped      unittests src/lib.rs (unit)",
+                "dropped      doc-tests majordomus_cli (doc)",
+                "unknown      \"crate:ghost\" (no such test here)",
+            ]
+        );
+
+        let none = render(json!({ "recorded": 0, "passed": 0, "commit": "c", "ledger": "l" }));
+        assert!(!none.contains("dropped"), "{none}");
+    }
+
+    /// A writer that takes whole lines until it holds `lines` of them, then refuses every
+    /// write, and counts the writes it was asked for after its first refusal.
+    struct ClosesAfter {
+        lines: usize,
+        held: Vec<u8>,
+        refused: usize,
+    }
+
+    impl Write for ClosesAfter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            if self.held.iter().filter(|&&b| b == b'\n').count() >= self.lines {
+                self.refused += 1;
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "the reader went away",
+                ));
+            }
+            self.held.extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// A line that cannot be written ends the recording's output with a transport error at
+    /// that line: nothing after it is attempted, and nothing before it is lost.
+    #[test]
+    fn a_recording_whose_output_cannot_be_written_says_so_at_the_first_line() {
+        let v = json!({
+            "recorded": 1,
+            "passed": 1,
+            "commit": "0123456789abcdef0123456789abcdef01234567",
+            "working_tree": "clean",
+            "ledger": ".ai/repo/evidence/ledger.json",
+            "unknown": ["crate:ghost"],
+            "dropped": [{ "producer": "crate", "what": "doc-tests x", "reason": "doc" }]
+        });
+        let mut all = ClosesAfter {
+            lines: usize::MAX,
+            held: Vec::new(),
+            refused: 0,
+        };
+        record_text(&mut all, &v, Some(Path::new("run.json"))).unwrap();
+        let total = String::from_utf8(all.held).unwrap().lines().count();
+        assert_eq!(
+            total, 8,
+            "recorded, against, ledger, run, measured, one dropped, one unknown, run record"
+        );
+
+        for lines in 0..total {
+            let mut out = ClosesAfter {
+                lines,
+                held: Vec::new(),
+                refused: 0,
+            };
+            let got = record_text(&mut out, &v, Some(Path::new("run.json")));
+            assert!(
+                matches!(got, Err(Error::Transport(_))),
+                "the write of line {} was not reported: {got:?}",
+                lines + 1
+            );
+            assert_eq!(
+                out.refused,
+                1,
+                "a write was attempted after line {} failed",
+                lines + 1
+            );
+            let held = String::from_utf8(out.held).unwrap();
+            assert_eq!(held.lines().count(), lines, "{held}");
+        }
+    }
+
+    /// `evidence record` in its text format runs end to end through the command: the crate
+    /// run's binary is recorded, and the command answers with success.
+    #[test]
+    fn a_text_recording_runs_through_the_command() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        std::fs::create_dir_all(repo.root().join("apps/majordomus-cli/tests")).unwrap();
+        std::fs::write(
+            repo.root().join("apps/majordomus-cli/tests/why.rs"),
+            "// why\n",
+        )
+        .unwrap();
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running tests/why.rs (target/debug/deps/why-1)\n\
+             test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                Doc-tests majordomus_cli\n\
+             test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let args = EvidenceArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.root().to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command: EvidenceCommand::Record {
+                suite: None,
+                crate_output: Some(log),
+                origin: None,
+                provenance: vec![],
+                coverage: None,
+                ledger: None,
+                run_record: None,
+            },
+            format: OutputFormat::Text,
+        };
+        assert_eq!(run(args).unwrap(), 0);
+        let ledger = crate::evidence::Ledger::load(repo.root()).unwrap();
+        let tests: Vec<&str> = ledger.executions.iter().map(|e| e.test.as_str()).collect();
+        assert_eq!(
+            tests,
+            ["crate:why"],
+            "the binary, and nothing the output dropped"
+        );
+    }
+
     /// A claim whose state needs a reason prints it on the line under the claim, and one
     /// whose state says it all prints nothing more.
     #[test]
@@ -544,5 +864,270 @@ mod tests {
         assert_eq!(detail_line(&json!({ "state": "not_run" })), "");
         let d = detail_line(&json!({ "state": "not_run", "detail": "the test declined to run" }));
         assert_eq!(d, "\n                   the test declined to run");
+    }
+
+    /// A measurement prints what was stamped at which commit and tree, what was excluded,
+    /// the report and where it was written; a bare measurement prints only the first line.
+    #[test]
+    fn a_stamp_prints_one_line_per_fact() {
+        let render = |v: Value, written: Option<&Path>| {
+            let mut buf = Vec::new();
+            stamp_text(&mut buf, &v, written).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(
+            json!({
+                "producer": "suite",
+                "commit": "0123456789abcdef0123456789abcdef01234567",
+                "working_tree": "clean",
+                "excluded": ["dist", "suite.tsv"],
+                "report": { "path": "suite.tsv", "digest": "sha256:abcdef0123456789abcdef", "bytes": 3 }
+            }),
+            Some(Path::new("p.json")),
+        );
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "stamped      suite at 01234567 (clean)",
+                "excluded     dist, suite.tsv",
+                "report       suite.tsv sha256:abcdef012345",
+                "written      p.json",
+            ]
+        );
+        let bare = render(json!({ "commit": "0123", "working_tree": "dirty" }), None);
+        assert_eq!(bare, "stamped      a run at 0123 (dirty)\n");
+    }
+
+    /// A small repository holding one crate integration test, committed.
+    fn committed() -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        std::fs::create_dir_all(repo.root().join("apps/majordomus-cli/tests")).unwrap();
+        std::fs::write(
+            repo.root().join("apps/majordomus-cli/tests/why.rs"),
+            "// why\n",
+        )
+        .unwrap();
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+        repo
+    }
+
+    fn evidence(
+        repo: &crate::synthetic::SyntheticRepository,
+        command: EvidenceCommand,
+        format: OutputFormat,
+    ) -> EvidenceArgs {
+        EvidenceArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.root().to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command,
+            format,
+        }
+    }
+
+    fn stamping(
+        producer: Option<&str>,
+        report: Option<&Path>,
+        out: Option<&Path>,
+    ) -> EvidenceCommand {
+        EvidenceCommand::Stamp {
+            producer: producer.map(str::to_string),
+            report: report.map(Path::to_path_buf),
+            exclude: vec![],
+            out: out.map(Path::to_path_buf),
+        }
+    }
+
+    fn recording(crate_output: Option<&Path>, provenance: Vec<String>) -> EvidenceCommand {
+        EvidenceCommand::Record {
+            suite: None,
+            crate_output: crate_output.map(Path::to_path_buf),
+            origin: None,
+            provenance,
+            coverage: None,
+            ledger: None,
+            run_record: None,
+        }
+    }
+
+    /// A stamp written to a file the command creates is carried by `record --provenance`
+    /// into a local ledger and a run record, each written where the command was told.
+    #[test]
+    fn a_stamp_written_by_the_command_is_carried_into_a_recording() {
+        let repo = committed();
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running tests/why.rs (target/debug/deps/why-1)\n\
+             test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let measurement = reports.path().join("deep/p.json");
+
+        let cmd = stamping(None, Some(&log), Some(&measurement));
+        assert_eq!(run(evidence(&repo, cmd, OutputFormat::Text)).unwrap(), 0);
+        let stamped: Value =
+            serde_json::from_str(&std::fs::read_to_string(&measurement).unwrap()).unwrap();
+        assert_eq!(stamped["report"]["path"], "crate.log", "{stamped}");
+        let cmd = stamping(Some("crate"), None, None);
+        assert_eq!(run(evidence(&repo, cmd, OutputFormat::Json)).unwrap(), 0);
+
+        let run_record = reports.path().join("run/run.json");
+        let cmd = EvidenceCommand::Record {
+            suite: None,
+            crate_output: Some(log),
+            origin: None,
+            provenance: vec![format!("crate={}", measurement.display())],
+            coverage: None,
+            ledger: Some("local".into()),
+            run_record: Some(run_record.clone()),
+        };
+        assert_eq!(run(evidence(&repo, cmd, OutputFormat::Json)).unwrap(), 0);
+        let v: Value =
+            serde_json::from_str(&std::fs::read_to_string(&run_record).unwrap()).unwrap();
+        assert_eq!(v["totals"]["executions"], 1, "{v}");
+        assert_eq!(v["provenance"][0]["producer"], "crate", "{v}");
+        assert_eq!(v["ledger"], "local", "{v}");
+        assert!(repo
+            .root()
+            .join(crate::evidence::ledger::LOCAL_LEDGER_PATH)
+            .is_file());
+    }
+
+    /// What the recorder refuses reaches the command as an error: a measurement that cannot
+    /// be read, and a recording of nothing.
+    #[test]
+    fn a_refused_recording_is_an_error_of_the_command() {
+        let repo = committed();
+        let reports = tempfile::tempdir().unwrap();
+        let cmd = EvidenceCommand::Record {
+            suite: None,
+            crate_output: None,
+            origin: None,
+            provenance: vec![reports.path().join("absent.json").display().to_string()],
+            coverage: Some(reports.path().join("coverage.json")),
+            ledger: None,
+            run_record: None,
+        };
+        let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
+        assert!(err.to_string().contains("absent.json"), "{err}");
+
+        let cmd = recording(None, vec![]);
+        let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
+        assert!(err.to_string().contains("nothing to record"), "{err}");
+    }
+
+    /// A stamp the capability refuses, or whose measurement cannot be written where it was
+    /// told, is an error of the command.
+    #[test]
+    fn a_stamp_that_cannot_be_taken_or_written_is_an_error() {
+        let repo = committed();
+        let reports = tempfile::tempdir().unwrap();
+        let pattern = EvidenceCommand::Stamp {
+            producer: None,
+            report: None,
+            exclude: vec!["*".into()],
+            out: None,
+        };
+        assert!(run(evidence(&repo, pattern, OutputFormat::Text)).is_err());
+
+        let blocker = reports.path().join("file");
+        std::fs::write(&blocker, "x").unwrap();
+        for out in [blocker.join("p.json"), reports.path().to_path_buf()] {
+            let cmd = stamping(None, None, Some(&out));
+            let got = run(evidence(&repo, cmd, OutputFormat::Text));
+            assert!(matches!(got, Err(Error::Transport(_))), "{out:?}: {got:?}");
+        }
+    }
+
+    /// A measurement is written to its file, then answered in the
+    /// format asked; an answer that cannot be written, in either format, is a transport error.
+    #[test]
+    fn a_stamp_is_written_then_answered_and_an_unwritable_answer_is_an_error() {
+        let v = json!({ "producer": "suite", "commit": "0123456789ab", "working_tree": "clean" });
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("p.json");
+        let mut text = Vec::new();
+        write_stamp(&mut text, &v, Some(&file), OutputFormat::Text).unwrap();
+        let text = String::from_utf8(text).unwrap();
+        assert!(
+            text.starts_with("stamped      suite at 01234567 (clean)\n"),
+            "{text}"
+        );
+        assert!(text.contains("written      "), "{text}");
+        let back: Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
+        assert_eq!(back, v);
+        let mut json = Vec::new();
+        write_stamp(&mut json, &v, None, OutputFormat::Json).unwrap();
+        assert_eq!(serde_json::from_slice::<Value>(&json).unwrap(), v);
+
+        for format in [OutputFormat::Json, OutputFormat::Text] {
+            let mut closed = ClosesAfter {
+                lines: 0,
+                held: Vec::new(),
+                refused: 0,
+            };
+            let got = write_stamp(&mut closed, &v, None, format);
+            assert!(matches!(got, Err(Error::Transport(_))), "{got:?}");
+        }
+    }
+
+    /// Every line of a measurement and of a recording's absences is written or reported:
+    /// a line that cannot be written ends the output with a transport error at that line.
+    #[test]
+    fn a_stamp_or_an_absence_that_cannot_be_written_says_so_at_its_line() {
+        let stamp = json!({
+            "producer": "suite",
+            "commit": "0123456789abcdef0123456789abcdef01234567",
+            "working_tree": "clean",
+            "excluded": ["dist"],
+            "report": { "path": "suite.tsv", "digest": "sha256:abcdef0123456789abcdef" }
+        });
+        for lines in 0..4 {
+            let mut out = ClosesAfter {
+                lines,
+                held: Vec::new(),
+                refused: 0,
+            };
+            let got = stamp_text(&mut out, &stamp, Some(Path::new("p.json")));
+            assert!(
+                matches!(got, Err(Error::Transport(_))),
+                "line {}",
+                lines + 1
+            );
+        }
+        let recording = json!({
+            "recorded": 0, "passed": 0, "commit": "c", "ledger": "l",
+            "run_record": { "id": "r", "absent": [{ "producer": "suite", "reason": "none" }] }
+        });
+        let mut out = ClosesAfter {
+            lines: 5,
+            held: Vec::new(),
+            refused: 0,
+        };
+        let got = record_text(&mut out, &recording, None);
+        assert!(matches!(got, Err(Error::Transport(_))), "{got:?}");
+        let held = String::from_utf8(out.held).unwrap();
+        assert!(
+            held.ends_with("measured     nothing: the tree is recorded as unknown\n"),
+            "{held}"
+        );
     }
 }

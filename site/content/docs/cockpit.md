@@ -72,9 +72,12 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
-| `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
+| `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers, the other machines — this device, the store against its remote, and the handovers other devices published that could be resumed here — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `continuity.status`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
 | `/cockpit/intents` | every intent with its derived stage, its verdict, the required criteria with current evidence, the work and providers realising it, and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
 | `/cockpit/intents/<id>` | one intent: how far reality is from it; why its verdict is what it is, each reason linked to its row; each criterion with whether it is optional, its evidence state, the run it was judged by and what changed since, a link to the test object it names, the issues serving it and the command that reproduces it; each guard with its standing; the review of its plan — its state against the plan, the disposition, the stamp, every structural and recorded finding with its resolution, and the recorded gap; the invariants, non-goals and governance the record declares; the milestones; every task, session record and peer claim realising it with the provenance of its link, its providers and handovers; and why it stands where it stands | `intent_realization.explain`, `intent_opposition.review` |
+| `/cockpit/plan` | the milestones in derived order with the one that is now and the one after it, the issue the plan hands out next, and every issue filtered by milestone, status or wave | `plan.roadmap`, `plan.next`, `plan.issues` |
+| `/cockpit/plan/milestones/<id>` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
+| `/cockpit/plan/issues/<id>` | one issue as a task: its intent, acceptance criteria and scope, its readiness and what blocks it, its branches and sessions, the external issue it synchronises with, every value with where it came from — and the moves `plan.transition` makes, each started as an execution and each with the command that makes it | `devtask.issue`, `plan.transition`, `executions.start`, `executions.get` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/quality` | the crate's own public surface as the rules hold it, every number and finding from one execution | `quality.report` |
 | `/cockpit/artifacts` | what the generator writes: every document with the encodings it is committed in, every file with its contract and its state against the working tree | `artifacts.list` |
@@ -83,6 +86,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/mesh` | the discovered nodes of this process's runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
 | `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor's credential presence (never a value), and their routing | `models.list` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
+| `/cockpit/mcp` | the MCP projection: server and protocol versions, transports with the sessions attached now, the methods served and what is not, the tools that write the repository, every tool with its effect (narrowed by `?effect=`), the client configurations and where each stands here, and where each executable capability is reachable (command line, HTTP, MCP tool, MCP resource) | `mcp.projection`, `capabilities.projections` |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
@@ -201,6 +205,14 @@ trade.
 the HTTP routes make. It is counted in the same perf counters, answered from the same cache
 and bound by the same validation. `tests/cockpit.rs` asserts that serving every page moves
 none of the counters that must only move at startup.
+
+**One write, and it asks first.** Every capability a page reaches is a query or a command
+that changes this process's own memory, except `plan.transition`, which stamps one field of
+an issue's record and appends one ledger event. The issue page offers it as three buttons
+that are disabled until `plan.js` loads, ask before sending, start the move as an execution
+— so it has an identity and a page of its own — and show the status the capability derived
+from the record afterwards rather than the one the button named. Whether a move is legal is
+the capability's to decide: the page shows its refusal as it came.
 
 **No page reads the index.** The other half of the sentence above, and the one that was
 documentation only until `scripts/ci/cockpit-projection-check` (gate `cockpit-projection`,
@@ -431,6 +443,7 @@ the same facts are as text.
 | `cockpit.js` | the one Alpine component (theme, palette state), the shared helpers | `vendor/alpine.csp.min.js` |
 | `palette.js` | the command palette (`Ctrl`/`Cmd` + `K`), entries from the registry | — |
 | `runner.js` | the generic capability runner | — |
+| `plan.js` | the moves on an issue page: starts `plan.transition` as an execution after a confirmation, follows it on a bounded poll, shows the status it answered or the refusal as it came, and reads the page again | — |
 | `graph.js` | the Cytoscape view: pan, zoom, fit, search, neighbourhood focus, a details drawer | `vendor/cytoscape.min.js` |
 | `topology.js` | the registry graph in three dimensions | `vendor/three.module.min.js` |
 | `activity.js` | a running plot of the execution and cache counters | `vendor/p5.min.js` |
@@ -566,7 +579,10 @@ disposable repository:
 - a state-changing request from another origin is refused and a read is not,
 - the index answers JSON to a client and points a browser at the Cockpit,
 - repository content reaches the page as text and never as markup,
-- serving every page rebuilds nothing canonical.
+- serving every page rebuilds nothing canonical,
+- the plan pages show the statuses the plan capabilities answered, and a move made from an
+  issue page — directly or as an execution — changes the record and then the page
+  (`tests/cockpit_plan.rs`).
 
 The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
 status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and

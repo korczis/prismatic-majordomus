@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `intent_opposition` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.15.0 -->
+     Generator: majordomus-cli 0.19.0 -->
 # Module `intent_opposition` — Opposition
 
 The opposition to an intent's plan, executed (ADR 0112): the structural findings the coverage, the plan and the gap review derive about one intent now, the findings a reviewer recorded with their resolutions, the one disposition both derive, and the revision of the plan a review judges against the stamp its critique carries. Reading is the brief a reviewer works from; recording stamps which plan a review was run over, and writes nothing else.
