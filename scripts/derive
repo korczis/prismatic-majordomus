@@ -25,6 +25,19 @@
 #   MAJORDOMUS_BIN            the Rust executable to use instead of building one
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   CARGO_TARGET_DIR          where cargo builds, when worktrees share one build directory
+#
+# One derive at a time per machine (project.one-derive-at-a-time). Every stage runs under the
+# machine's derive lock, and a stopped derive takes its whole process tree with it:
+#
+#   scripts/derive --locked -- <command>...   run <command> under the same lock instead
+#                                             (a full suite, a repair's own derive wrapper)
+#   scripts/derive --orphans                  the orphans of this checkout's earlier derives
+#                                             that a derive would stop; takes nothing
+#   scripts/derive --preflight                the check a derive makes first: every file is
+#                                             tracked or ignored (project.a-derive-sees-what-
+#                                             the-commit-will); MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
+#                                             lets a derive run past it
+#   (lib/machine_lock.sh lists the MAJORDOMUS_DERIVE_* variables that move or bound them)
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
@@ -49,6 +62,65 @@ RUN_T0="$(now)"; STAGE_T0=0; STAGE=""
 step()     { STAGE="$1"; STAGE_T0="$(now)"; printf '==> derive: %s ...\n' "$1" >&2; }
 step_done() { printf '==> derive: %s: %ss\n' "$STAGE" "$(( $(now) - STAGE_T0 ))" >&2; }
 
+# ---------------------------------------------------------------- one derive at a time
+# The machine's derive lock, its priority marker, and a stop that takes the whole process tree
+# down (project.one-derive-at-a-time). lib/machine_lock.sh says what each decides.
+# shellcheck source=../lib/machine_lock.sh
+. "$ROOT/lib/machine_lock.sh"
+mj_lock_init "$ROOT" derive
+mj_lock_traps
+# The arguments are judged before anything else, so a mistyped flag is a usage error and never
+# a refusal of the tree it happened to be typed in.
+case "${1:-}" in
+  ''|--locked|--orphans|--preflight) ;;
+  *) printf 'usage: scripts/derive [--locked -- <command>... | --orphans | --preflight]\n' >&2; exit 2 ;;
+esac
+if [ "${1:-}" = --orphans ]; then
+  [ $# = 1 ] || { printf 'usage: scripts/derive --orphans\n' >&2; exit 2; }
+  trap - EXIT; mj_lock_orphans; exit 0
+fi
+
+# ---------------------------------------------------------------- what the commit will see
+# A derive projects what git tracks: `majordomus generate` enumerates through the index
+# (`--discovery vcs`, the layer's contract), and so does the site generator. A file the next
+# commit adds is therefore invisible to it. The projections it writes leave that file out,
+# and the commit that adds it is refused by the derived-current gate after the minutes the
+# derive cost. On 2026-10-09 that cost a release two extra derives on a machine at load 40,
+# and a memory note that already said "stage new files before derive" did not prevent it.
+# So the derive refuses before it waits for the lock or builds anything
+# (project.a-derive-sees-what-the-commit-will).
+derive_preflight() {
+  local untracked n
+  untracked="$(git -C "$ROOT" ls-files --others --exclude-standard 2>/dev/null || true)"
+  [ -n "$untracked" ] || return 0
+  n="$(printf '%s\n' "$untracked" | wc -l | tr -d ' ')"
+  if [ "${MAJORDOMUS_DERIVE_ALLOW_UNTRACKED:-}" = 1 ]; then
+    printf '==> derive: %s untracked file(s) are invisible to this derive; going on because MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1\n' "$n" >&2
+    return 0
+  fi
+  printf '==> derive: refused before anything ran: %s untracked file(s) are invisible to a derive,\n' "$n" >&2
+  printf '    which projects only what git tracks, so the commit that adds them would be refused:\n' >&2
+  printf '%s\n' "$untracked" | sed 's/^/      /' >&2
+  printf '    git add each one (or ignore or remove it) and derive again;\n' >&2
+  printf '    MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1 runs anyway\n' >&2
+  exit 10
+}
+if [ "${1:-}" = --preflight ]; then
+  [ $# = 1 ] || { printf 'usage: scripts/derive --preflight\n' >&2; exit 2; }
+  derive_preflight; printf '==> derive: preflight clean; every file is tracked or ignored\n' >&2; exit 0
+fi
+[ "${1:-}" = --locked ] || derive_preflight
+
+mj_lock_acquire
+mj_lock_reap_orphans
+if [ "${1:-}" = --locked ]; then
+  shift; [ "${1:-}" = -- ] && shift
+  [ $# -gt 0 ] || { printf 'usage: scripts/derive --locked -- <command>...\n' >&2; exit 2; }
+  rc=0; mj_lock_run "$@" || rc=$?
+  exit "$rc"
+fi
+[ $# = 0 ] || { printf 'usage: scripts/derive [--locked -- <command>... | --orphans | --preflight]\n' >&2; exit 2; }
+
 # Which executable is about to rewrite every committed artifact, said out loud. A derivation
 # run with a borrowed binary looks exactly like one that built its own, and on 2026-09-10 a
 # borrowed one of an older generation removed 16,625 lines from a pristine origin/master
@@ -65,7 +137,7 @@ else
   mj_rust_space_check "$ROOT" "the build this derivation needs" || exit 12
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
-  RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
+  mj_lock_run env RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
   # ask cargo where it put the result rather than compose it: a run that then spends ten
   # minutes can afford the 80ms, and the composed path is what exits 127 under a shared
   # CARGO_TARGET_DIR — the executable is in the shared directory, not under the worktree
@@ -89,7 +161,7 @@ step "stage A: majordomus generate (code-only projections)"
 # `rc=0; cmd || rc=$?` and not `if ! cmd`: after `!` inverts a pipeline, `$?` inside the
 # branch is the inverted status — 0 — and the script would exit 0 on a refusal.
 rc=0
-"$RB" generate --repo "$ROOT" --strict >/dev/null || rc=$?
+mj_lock_run "$RB" generate --repo "$ROOT" --strict >/dev/null || rc=$?
 if [ "$rc" != 0 ]; then
   # a full `if` and not `[ ... ] && printf`: under `set -e` the failing test would end the
   # script with status 1 before the `exit` below could carry the real code out
@@ -100,15 +172,15 @@ if [ "$rc" != 0 ]; then
 fi
 step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
-"$ROOT/scripts/generate-site-data"
+mj_lock_run "$ROOT/scripts/generate-site-data"
 step_done
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
-"$RB" generate --repo "$ROOT" --strict >/dev/null
+mj_lock_run "$RB" generate --repo "$ROOT" --strict >/dev/null
 step_done
 step "stage D: scripts/gitattributes (the merge policy, from the generators)"
 # Last, because it reads stage A's artifact manifest and stage B's published content tree:
 # the set of files a merge must not try to merge is exactly the set the stages above write,
 # and until this ran it was a hand list that was wrong in both directions.
-"$ROOT/scripts/gitattributes" >/dev/null
+mj_lock_run "$ROOT/scripts/gitattributes" >/dev/null
 step_done
 printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2

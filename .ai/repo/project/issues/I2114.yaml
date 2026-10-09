@@ -1,0 +1,31 @@
+id: I2114
+milestone: development-runtime
+title: "A task's scope admits what its derive writes"
+slug: a-tasks-scope-admits-what-its-derive-writes
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope."
+why: "A derive writes a known set of files: docs/generated/*, site/data/*, site/content/* and, on a version bump, apps/majordomus-cli design tokens, share/version.txt, share/schemas/*, share/sections/* and site/static/*. A task's scope names what the worker means to change, and those projections are almost never in it. On 2026-10-09 the pre-push `finish --check` refused the 0.19.0 release branch (#852) on 30 scope findings, every one a projection of the bump. It refused f7's I2106 the same way, for docs, site/content and site/data. The only route was `handover --close` followed by a new `start` with a wider scope, done three times in one day on two branches. That route is supported but costs a new task id and a handover record each time, and nobody finds it without being told."
+current_state: "`check` and `finish --check` judge every changed path against the active task's declared scope, the derive's projections included. A task's scope cannot change; it can only be closed and a new task started with another."
+desired_state: "A path the derive wrote is admitted when the branch also changes one of that projection's canonical inputs. The set is the one already declared: docs/generated/artifacts.json and the site generator's publish block, which is what scripts/gitattributes reads. A path outside both the scope and that set is still refused. `majordomus scope widen <paths>` adds paths to the active task's scope, records who widened it and why, and leaves the task's id unchanged."
+scope:
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "scripts/gitattributes"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "docs/CLI.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A branch whose task scope names only the canonical input it changed passes `finish --check` with the derive's projections of that input committed beside it"
+  - "A projection committed without any change to its canonical inputs is still refused as outside the scope"
+  - "`majordomus scope widen <paths> --because \"<reason>\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why"
+  - "A path outside both the scope and the declared projection set is refused exactly as before"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "projection_admitted_case"
+  - "scope_widen_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09
