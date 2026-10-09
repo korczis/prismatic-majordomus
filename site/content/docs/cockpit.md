@@ -440,7 +440,7 @@ the same facts are as text.
 
 | File | What it adds | Needs |
 |---|---|---|
-| `cockpit.js` | the one Alpine component (theme, palette state), the shared helpers | `vendor/alpine.csp.min.js` |
+| `cockpit.js` | the one Alpine component (theme, palette state, the navigation drawer), the shared helpers | `vendor/alpine.csp.min.js` |
 | `palette.js` | the command palette (`Ctrl`/`Cmd` + `K`), entries from the registry | — |
 | `runner.js` | the generic capability runner | — |
 | `plan.js` | the moves on an issue page: starts `plan.transition` as an execution after a confirmation, follows it on a bounded poll, shows the status it answered or the refusal as it came, and reads the page again | — |
@@ -455,6 +455,37 @@ If a vendored library is absent the frame says so and the page keeps working. No
 is on the critical path, each is fetched only by the page that uses it, and the two visual
 ones respect `prefers-reduced-motion`, pause when the tab is hidden and dispose what they
 allocate.
+
+### The sections on a narrow screen
+
+The sidebar sits beside the page from Tailwind's `lg` width (64rem) up. Below it the same
+element is a drawer over the page, opened by the **Sections** control at the start of the
+top bar. There is one catalogue and one rendering, placed two ways; nothing about a phone is
+a second navigation, and an entry the registry adds reaches the drawer the moment it reaches
+the sidebar.
+
+- **One owner.** The `cockpit` component in `cockpit.js` holds `navOpen` and is the only
+  thing that opens or closes the drawer. It writes the drawer's state into the page
+  synchronously (`data-open`, the root's `mj-nav-locked`, the trigger's `aria-expanded`),
+  and the stylesheet shows the backdrop from `[data-open] + .mj-nav-backdrop`, so no second
+  piece of state can disagree with it. The Cockpit loads no Flowbite script.
+- **Modal only as a drawer.** Open below `lg`, it is a named `dialog` with `aria-modal`, the
+  rest of the page is `inert`, the page behind it does not scroll, focus starts on the close
+  control and `Tab` stays inside. Beside the page it is a plain `<nav>`: no role, no trap.
+- **Every way out undoes everything.** The close control, the backdrop, `Escape`, following an
+  entry, the back button (a page restored from the back-forward cache is closed), widening
+  the window past `lg`, and `Ctrl`/`Cmd`+`K` opening the palette all go through `closeNav`,
+  which removes the lock, the role and exactly the `inert` it added. Focus returns to the
+  trigger unless the page is leaving or the trigger is no longer shown.
+- **Without the script.** The trigger is a link to `#mj-nav` and the close control a link to
+  `#main`; the stylesheet opens the sidebar while it is the `:target`. That fallback applies
+  only under `:root:not([data-mj-nav])`: once the component runs it marks the root
+  `data-mj-nav="owned"` and takes over every arrival of `#mj-nav` — at load and on
+  `hashchange` — opening the drawer itself and clearing the fragment. Browsers do not
+  re-evaluate `:target` on `history.replaceState`, so a fallback left active would keep a
+  drawer the component had closed on screen.
+- **Touch.** The trigger, the close control and every entry are at least 44 by 44 CSS pixels
+  in the drawer; the drawer keeps clear of the safe-area insets and contains its own scroll.
 
 Why Three.js is there at all: the registry graph is layered — modules compose capabilities,
 capabilities are declared in files and project onto three interfaces — and a flat drawing
@@ -585,8 +616,32 @@ disposable repository:
   (`tests/cockpit_plan.rs`).
 
 The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
-status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
-the navigation being the registry's rather than a list.
+status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, the
+navigation being the registry's rather than a list, and the shell carrying the drawer's
+trigger, close control and backdrop with the sidebar never rendered as a dialog.
+
+`scripts/cockpit-probe` drives the drawer in a real Chrome on a touch screen at every width
+the design declares below `lg` and in landscape (`--drawer` runs that alone): the trigger is
+there and at least 44 by 44, a tap opens a named modal dialog over the page with the
+sidebar's catalogue, focus lands inside and stays there, and the close control, the
+backdrop, `Escape`, an entry followed, the back button and widening the window each leave
+no lock, no `inert` element and nothing covering the page. Repeated taps end in one state.
+With JavaScript disabled, and with Alpine blocked, the trigger still opens the sections
+through `:target`; `/cockpit#mj-nav` opens a drawer the component owns at a phone's width and
+leaves the sidebar non-modal at a desktop's. Run against the shell before the drawer existed,
+it fails with "no visible trigger; the sections are unreachable" at every narrow width.
+
+It is adversarial as well as scripted. A seeded random walk drives the drawer through orders
+nobody wrote down and checks, after every step, that `data-open`, the lock, the dialog role,
+`aria-expanded`, the backdrop, `inert` and focus agree with a model and with each other; a
+failure prints its seed, its path and `COCKPIT_PROBE_SEED=<n> scripts/cockpit-probe --drawer`.
+The seeds change daily, and every seed that ever found a defect is pinned in
+`REGRESSION_SEEDS` (1017 found the focused skip link sitting on the trigger). The
+accessibility engine (axe-core, WCAG 2.0–2.2 A/AA) runs over the drawer and the top bar,
+closed and open. The assertions were themselves tested by mutation: each of 24 deliberate
+defects in `cockpit.js` and the stylesheet was served from its own server over a copy of
+`share/` (`MAJORDOMUS_SHARE`), and an assertion that let one through was rewritten to read
+the effect rather than the class meant to cause it.
 
 ## What it deliberately does not do
 

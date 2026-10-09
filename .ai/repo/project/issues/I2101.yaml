@@ -1,0 +1,24 @@
+id: I2101
+milestone: mobile-first
+title: the worktrees page takes seven to twenty-four seconds to answer
+slug: worktrees-page-latency
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: Find and remove what makes /cockpit/worktrees slow on a repository with many worktrees, and hold its latency in the probe.
+why: On this machine /cockpit/worktrees answered in 24.1s from master's server and 7.4s from the branch's; the Cockpit probe's load timed out on it at 320px. On a phone a page that slow reads as broken.
+current_state: Open. Measured with curl against two servers of the same repository; not caused by the drawer (master is slower).
+desired_state: The page answers within the probe's budget with the topology of a repository that has dozens of worktrees.
+scope:
+- apps/majordomus-cli/src/cockpit
+- share/cockpit/worktrees.js
+depends_on: []
+acceptance_criteria:
+- The cause is named with a measurement
+- The page loads within the probe's timeout at every declared width
+validation:
+- scripts/cockpit-probe
+evidence_required:
+- sections_reachable_on_a_phone
+created_at: '2026-10-09'
+updated_at: '2026-10-09'

@@ -1,0 +1,35 @@
+id: I2097
+milestone: mobile-first
+title: the site phone menu closes on Escape and returns focus to its toggle
+slug: site-menu-closes-on-escape
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: Make Escape close the site's open phone menu when no dropdown is open, set the toggle's aria-expanded back and focus the toggle; extend the nav-collapse spec to assert it.
+why: On majordomus.dev at 320, 390 and 667 wide, Escape left the open phone menu open with aria-expanded=true; the menu is several screens tall, so the only way out was scrolling back to its toggle.
+current_state: site/nav.js and scripts/lib/interaction-specs/nav-collapse.mjs changed on feature/cockpit-mobile-navigation; verified against the live site's own markup with the new script substituted.
+desired_state: Escape closes the phone menu, aria-expanded reads false and focus is on the toggle; a desktop dropdown still closes first and the desktop menu is untouched.
+scope:
+- site/nav.js
+- scripts/lib/interaction-specs/nav-collapse.mjs
+depends_on: []
+acceptance_criteria:
+- The nav-collapse spec fails on the published site and passes on the build
+- Escape with a dropdown open closes the dropdown and leaves the phone menu as it was
+validation:
+- scripts/interaction-probe --spec nav-collapse
+evidence_required:
+- site_menu_operable_on_a_phone
+created_at: '2026-10-09'
+updated_at: 2026-10-08T23:43:45Z
+started_at: 2026-10-08T23:43:25Z
+started_event: sha256:b2354e3a1dcdc6443bf9ab7a9c5e54475b9b0fb102de0a85c27678493f270064
+verified_at: 2026-10-08T23:43:45Z
+verified_event: sha256:560f95a1bc297dd6324a64cc04396066c348c7dea3d2aba2f6922a10816b5bca
+evidence:
+  - covers: site_menu_operable_on_a_phone
+    type: test
+    command: "Playwright at 390x844 against https://majordomus.dev/ with site/nav.js substituted"
+    result: "live script: Escape left the menu open, aria-expanded=true; branch script: closed, aria-expanded=false, focus on the toggle, desktop dropdown still closes first. The interaction-probe run over a site build was NOT RUN (the build needs the rustdoc artifact)."
+    commit: 893a79be6577718eec7e92c6fd79cad1bf169ff8
+    recorded_at: 2026-10-08T23:43:35Z

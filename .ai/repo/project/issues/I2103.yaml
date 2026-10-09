@@ -1,0 +1,26 @@
+id: I2103
+milestone: mobile-first
+title: the Cockpit dense surfaces are audited and operable at a phone width
+slug: cockpit-dense-surfaces-on-a-phone
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: Audit the Cockpit's tables, graphs, runner forms, code and log blocks, filters and pagination at 320 and 390 by interaction, not only by overflow, and fix what a person cannot do there.
+why: The overflow sweep passes on 139 routes at five widths, which says nothing scrolls sideways; it does not say a runner form can be submitted, a graph selected or a table read on a phone.
+current_state: Open. Navigation is fixed (I2096); the surfaces it leads to are unaudited by interaction at narrow widths.
+desired_state: Every family of Cockpit route has an interaction check at a phone width in the probe.
+scope:
+- apps/majordomus-cli/src/cockpit
+- share/cockpit
+- scripts/lib/cockpit-probe.mjs
+depends_on:
+- I2096
+acceptance_criteria:
+- Each route family's primary action is exercised at 390 in the probe
+- Each finding is fixed or filed with its measurement
+validation:
+- scripts/cockpit-probe
+evidence_required:
+- sections_reachable_on_a_phone
+created_at: '2026-10-09'
+updated_at: '2026-10-09'

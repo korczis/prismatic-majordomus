@@ -1,0 +1,35 @@
+id: I2098
+milestone: mobile-first
+title: 'the drawer probe is adversarial: a seeded walk against a model, Alpine blocked, the accessibility engine'
+slug: drawer-probe-is-adversarial
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: Add to the drawer probe a seeded random walk whose every step is checked against a model of the drawer and against the controller's own invariants, a chaos case that blocks Alpine, and the accessibility engine over the drawer and the top bar, closed and open.
+why: 'The scripted transitions are the ones somebody thought of. The first walk found what they missed: after an entry was followed and Tab pressed, the focused skip link sat over the new trigger and swallowed the next tap.'
+current_state: "Implemented in scripts/lib/cockpit-probe.mjs. The walk found the focused skip link over the trigger (seed 1017, now pinned); the strengthened probe found that a #mj-nav arriving after load opened a drawer the component did not own and Escape could not close (fixed: data-mj-nav=owned and a hashchange takeover). 12 walks of 60 steps agree with the model; with Alpine blocked the trigger opens through :target; axe finds nothing on the drawer or the top bar at 320; an injected consumer fixture passes every check."
+desired_state: Every CI run of the Cockpit probe walks seeds that change daily and prints the seed and path of any failure with a replay command.
+scope:
+- scripts/lib/cockpit-probe.mjs
+- scripts/cockpit-probe
+- share/cockpit/src/cockpit.css
+depends_on:
+- I2096
+acceptance_criteria:
+- A failing walk prints its seed, its path and COCKPIT_PROBE_SEED=<n> scripts/cockpit-probe --drawer
+- Seed 1017 fails against the left-aligned skip link and passes against the centred one
+- With Alpine blocked the trigger still opens and closes the sections
+validation:
+- scripts/cockpit-probe --drawer
+- COCKPIT_PROBE_WALKS=12 COCKPIT_PROBE_STEPS=60 scripts/cockpit-probe --drawer
+evidence_required:
+- drawer_agrees_with_its_model
+created_at: '2026-10-09'
+updated_at: 2026-10-08T23:43:38Z
+evidence:
+  - covers: drawer_agrees_with_its_model
+    type: test
+    command: "COCKPIT_PROBE_WALKS=12 COCKPIT_PROBE_STEPS=60 scripts/cockpit-probe --drawer"
+    result: "12 seeds, 720 steps, 0 disagreements after the fix; seed 1017 failed at step 20 before it (focused skip link over the trigger). Alpine blocked: trigger opens and closes through :target. axe-core WCAG 2.0-2.2 A/AA over #mj-nav and .mj-topbar at 320, closed and open: 0 violations."
+    commit: 893a79be6577718eec7e92c6fd79cad1bf169ff8
+    recorded_at: 2026-10-08T23:43:38Z

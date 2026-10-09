@@ -1,0 +1,26 @@
+id: I2102
+milestone: mobile-first
+title: mobile WebKit is exercised, or the run says it was not
+slug: mobile-webkit-is-exercised
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: Run the drawer and the site menu specs in Playwright's WebKit with a phone profile wherever the engine is installed, and report NOT RUN where it is not.
+why: Every browser check here drives Chrome. Locally the installed WebKit build does not match the pinned Playwright, so Safari's engine, the one most phones in the owner's audience use, is never exercised.
+current_state: 'Open. Chrome passes at 320x568, 360x640, 375x667, 390x844, 430x932, 568x320, 667x375 and 768x1024; WebKit: NOT RUN.'
+desired_state: CI runs the drawer probe in WebKit as well as Chrome, and a local run without WebKit says so in its output.
+scope:
+- scripts/lib/cockpit-probe.mjs
+- scripts/lib/browser.mjs
+- .github/workflows
+depends_on:
+- I2098
+acceptance_criteria:
+- A WebKit run of the drawer probe passes in CI
+- A run without WebKit prints NOT RUN for it rather than nothing
+validation:
+- scripts/cockpit-probe --drawer
+evidence_required:
+- mobile_webkit_exercised
+created_at: '2026-10-09'
+updated_at: '2026-10-09'

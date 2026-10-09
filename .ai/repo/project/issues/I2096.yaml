@@ -1,0 +1,48 @@
+id: I2096
+milestone: mobile-first
+title: the Cockpit sections are reachable on a phone through one drawer
+slug: cockpit-sections-on-a-phone
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: 'Below lg, show the sidebar as a drawer opened by a Sections control in the top bar: the same element, catalogue and rendering as the sidebar, its state owned by the cockpit component and written synchronously, a modal dialog only while it is a drawer, and a link to #mj-nav so that it opens through :target without the script.'
+why: The sidebar was `hidden lg:block` with nothing that showed it, so a phone had no section navigation; the overflow sweep at 320 and 390 passed because an empty page does not overflow.
+current_state: 'Implemented on feature/cockpit-mobile-navigation: view.rs renders the trigger, the close control and the backdrop; cockpit.js holds navOpen; cockpit.css places the drawer under max-lg; docs/COCKPIT.md documents it.'
+desired_state: At every width below lg a tap on Sections opens the catalogue as a named modal dialog; the close control, the backdrop, Escape, an entry, back, widening and Ctrl/Cmd+K each close it with no lock, inert element or covering layer left; at lg the sidebar is unchanged.
+scope:
+- apps/majordomus-cli/src/cockpit/view.rs
+- apps/majordomus-cli/src/cockpit/nav.rs
+- share/cockpit/cockpit.js
+- share/cockpit/src/cockpit.css
+- share/cockpit/cockpit.css
+- docs/COCKPIT.md
+depends_on: []
+acceptance_criteria:
+- scripts/cockpit-probe --drawer passes at 320x740, 390x740 and 667x375 on touch and with JavaScript disabled
+- The same check fails against master's shell with 'no visible trigger; the sections are unreachable'
+- cockpit::view unit tests hold the trigger, the close control, the backdrop's position and the sidebar never rendered as a dialog
+validation:
+- scripts/cockpit-probe --drawer
+- cargo test --lib cockpit::view
+- scripts/cockpit-assets --check
+evidence_required:
+- sections_reachable_on_a_phone
+created_at: '2026-10-09'
+updated_at: 2026-10-09T00:51:06Z
+started_at: 2026-10-08T23:43:20Z
+started_event: sha256:2f344281ea2a157d915ae1663bdd1eeac0b844faebc4b75d44b98a7be7c3dc3e
+verified_at: 2026-10-08T23:43:40Z
+verified_event: sha256:accc560a308f6f0ebfd1787398b6987c9205bf13fbeccd60e6b5b4d50929caa0
+evidence:
+  - covers: sections_reachable_on_a_phone
+    type: test
+    command: "scripts/cockpit-probe --drawer"
+    result: "0 findings against the branch at 320x740, 390x740, 667x375 on touch and with JavaScript disabled; against master's shell: FAIL no visible trigger; the sections are unreachable at every narrow width. Chrome emulation also passes 320x568, 360x640, 375x667, 390x844, 430x932, 568x320, 768x1024 and 1280x800 (desktop sidebar). WebKit NOT RUN. cargo test --lib cockpit:: 77 passed."
+    commit: 893a79be6577718eec7e92c6fd79cad1bf169ff8
+    recorded_at: 2026-10-08T23:43:32Z
+  - covers: sections_reachable_on_a_phone
+    type: test
+    command: "majordomus init in a fresh git repository; majordomus serve --repo <fixture> --share <branch>/share; node scripts/lib/cockpit-probe.mjs <fixture-url> drawer"
+    result: "injected consumer fixture: 0 findings; the drawer carries 93 entries derived from the fixture's own registry (118 in this repository), scripted transitions at 320x740, 390x740, 667x375, 5 seeded walks / 200 steps, axe 0 violations, Alpine blocked and JavaScript disabled both open the sections"
+    commit: 893a79be6577718eec7e92c6fd79cad1bf169ff8
+    recorded_at: 2026-10-09T00:51:06Z

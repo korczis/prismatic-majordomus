@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 163,
+      "count": 164,
       "dir": "rules",
       "statuses": [
         "active"
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 262
+      "count": 270
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 25
+      "count": 26
     },
     {
       "kind": "moment",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 163
+      "count": 164
     },
     {
       "kind": "scope",
@@ -10174,6 +10174,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.navigation-reaches-every-width@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-reaches-every-width-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.packs-carry-only-sources@1",
           "kind": "rule",
           "route": "/rules/project-packs-carry-only-sources-1/",
@@ -10896,6 +10903,13 @@
           "label": "adr-0086",
           "kind": "adr",
           "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.navigation-reaches-every-width@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-reaches-every-width-1/",
           "external": false
         },
         {
@@ -12006,8 +12020,57 @@
           "kind": "rule",
           "route": "/rules/project-homepage-tells-a-declared-story-1/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.navigation-reaches-every-width@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-reaches-every-width-1/",
+          "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.navigation-reaches-every-width@1",
+      "identity": "project.navigation-reaches-every-width@1",
+      "slug": "project-navigation-reaches-every-width-1",
+      "cockpit": "/cockpit/objects/rule/project-navigation-reaches-every-width-1",
+      "title": "Every navigation surface is reachable and operable at every width the design declares",
+      "status": "active",
+      "tags": [
+        "cockpit",
+        "site",
+        "navigation",
+        "mobile",
+        "accessibility",
+        "testing"
+      ],
+      "source": ".ai/repo/rules/project/navigation-reaches-every-width.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.navigation-is-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-is-declared-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
