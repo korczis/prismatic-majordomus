@@ -38,8 +38,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    at, events_path, local_master, refresh, EvaluatedAgainst, IntegrationEvidence,
-    IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
+    at, events_path, refresh, EvaluatedAgainst, IntegrationEvidence, IntegrationQueue,
+    PullRequestAssessment, PullRequestDisposition,
 };
 
 /// A lease untouched for this long belongs to a process that is gone.
@@ -1821,6 +1821,74 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
     }
 }
 
+/// Where the verifier keeps the base it fetched after a merge: a ref of its own. Every
+/// session of a repository shares `refs/remotes/origin/<base>`, and any of them may be
+/// fetching it at this moment; a merge that had landed was reported unverified on 2026-10-08
+/// because git could not lock that ref for the verifier while another fetch held it. Nothing
+/// else writes below this prefix, so what is read back is what this fetch brought.
+pub const VERIFY_REF_PREFIX: &str = "refs/majordomus/integration/verify/";
+
+/// The base as `origin` has it once a merge decided against `decided` shows there, fetched
+/// into [`VERIFY_REF_PREFIX`] and read from it. Asked again every `every` for as long as
+/// `within` lasts while the fetch fails or the base is still `decided`: the forge says
+/// "merged" a moment before its branch does, and one read that came too early is not a
+/// landing that did not happen. When the time is up the last answer stands — the base that
+/// has not moved, which [`landing`] then names, or why it could not be fetched.
+pub(crate) fn base_after_merge(
+    root: &Path,
+    base: &str,
+    decided: &str,
+    within: Duration,
+    every: Duration,
+) -> Result<String, String> {
+    let mine = format!("{VERIFY_REF_PREFIX}{base}");
+    let deadline = Instant::now() + within;
+    loop {
+        let fetch = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args([
+                "fetch",
+                "--quiet",
+                "--no-tags",
+                // without this git also updates the remote-tracking ref the configured
+                // refspec names, "opportunistically" — the very ref this is here to avoid
+                "--refmap=",
+                "origin",
+                &format!("+refs/heads/{base}:{mine}"),
+            ])
+            .output();
+        // what git said, or why it could not be asked: one text either way
+        let said = fetch.as_ref().map_or_else(ToString::to_string, |out| {
+            String::from_utf8_lossy(&out.stderr).trim().to_string()
+        });
+        let read = if fetch.is_ok_and(|out| out.status.success()) {
+            Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args([
+                    "rev-parse",
+                    "--verify",
+                    "--quiet",
+                    &format!("{mine}^{{commit}}"),
+                ])
+                .output()
+                .ok()
+                .filter(|out| out.status.success())
+                .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+                .ok_or(String::from("master is unreadable after the merge"))
+        } else {
+            Err(format!(
+                "git fetch of the base failed after the merge: {said}"
+            ))
+        };
+        if read.as_deref().is_ok_and(|master| master != decided) || Instant::now() >= deadline {
+            return read;
+        }
+        std::thread::sleep(every);
+    }
+}
+
 /// What landed on `master`, proved from git alone: the decision's master is on master's
 /// first-parent line, and the commit right after it there is this merge — its first parent
 /// that master and, for a merge commit, its second parent the head that was decided on. A
@@ -2009,32 +2077,13 @@ impl Integrator for ForgeIntegrator<'_> {
         let obs = super::load_observation(self.root)
             .and_then(|obs| obs.ok_or(String::from("no observation to verify against")))
             .map_err(NotLanded::Unproved)?;
-        super::retry::forge(|| {
-            let fetch = Command::new("git")
-                .arg("-C")
-                .arg(self.root)
-                .args([
-                    "fetch",
-                    "--quiet",
-                    "--no-tags",
-                    "origin",
-                    &format!("+refs/heads/{0}:refs/remotes/origin/{0}", obs.base),
-                ])
-                .output()
-                .map_err(|e| e.to_string())?;
-            if fetch.status.success() {
-                Ok(())
-            } else {
-                Err(format!(
-                    "git fetch of the base failed after the merge: {}",
-                    String::from_utf8_lossy(&fetch.stderr).trim()
-                ))
-            }
-        })
-        .and_then(|()| {
-            local_master(self.root, &obs.base)
-                .ok_or(String::from("master is unreadable after the merge"))
-        })
+        base_after_merge(
+            self.root,
+            &obs.base,
+            &at.master_sha,
+            MERGE_VISIBLE_WITHIN,
+            Duration::from_secs(3),
+        )
         .and_then(|master| {
             Ok(Landed {
                 merge_commit: landing(self.root, at, method, &master)?,
