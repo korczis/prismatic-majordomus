@@ -1,0 +1,40 @@
+id: I2202
+milestone: intent-bound-work
+title: "This repository requires every task to name what it serves"
+slug: this-repository-requires-binding
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#start-is-gated
+objective: "Set intent.binding: required in .ai/repo/policy.yaml once the refusal names the three ways through, every bootstrap and the lifecycle workflow say how to start a bound or exempt task, and a measurement of the last week's starts shows which would have been refused and under which exemption class each belongs."
+why: "Both owner packs make 'no executable work without an intent or an explicit typed exemption' the first invariant (closure README 'Hard rule', tight-integration README invariant 13). The mechanism exists (BindingMode::Required, apps/majordomus-cli/src/policy.rs:185-193; lib/start.sh:116-124; plan start, apps/majordomus-cli/src/plan.rs:1733-1736), and this repository runs advisory (.ai/repo/policy.yaml:44), so every task here may start unbound."
+current_state: "binding: advisory; four exemption classes declared (.ai/repo/policy.yaml:45-53); a refused binding is a warning."
+desired_state: "binding: required; start without --issue, --intent or --exempt refuses with exit 10 and names the three ways; .ai/repo/workflows/task-lifecycle.md and the generated bootstrap fragments name them; a decision record carries the measurement."
+scope:
+  - .ai/repo/policy.yaml
+  - .ai/repo/workflows/task-lifecycle.md
+  - .ai/repo/providers
+  - .ai/repo/project
+  - docs
+  - test/cases
+non_scope:
+  - "Changing the default for adopters (the skeleton stays as it is)"
+  - "New exemption classes beyond what the measurement shows is needed"
+depends_on:
+  - I2200
+  - I2216
+  - I2224
+acceptance_criteria:
+  - "majordomus start with only a description and a scope refuses in this repository, naming --issue, --intent and --exempt"
+  - "majordomus start --exempt maintenance --because <reason> starts and the ledger records the class and reason"
+  - "The measurement of recent starts is recorded with the decision"
+validation:
+  - majordomus intent validate
+  - bash test/run.sh 960_a_task_starts_bound_to_what_it_serves
+  - bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines
+evidence_required:
+  - required_binding_refuses_unnamed_start
+  - binding_decision_recorded
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -1,0 +1,41 @@
+id: I2223
+milestone: command-and-deployment-criteria-are-judged
+title: "No unexecuted, stale, deleted, forged or wrong-target evidence meets a criterion, and the claim says so with its case"
+slug: evidence-that-proves-nothing-meets-nothing
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Write one behavioural case that drives the built executable through every way evidence can fail to prove a criterion of each of the four kinds, decide and implement or state what happens to a ledger execution no recorded run carries, and promote the claim intent-command-deployment-evidence to guaranteed with this case as its test."
+why: "The owner's pack asks for proof that no unexecuted run can pass, stale references fail, forged or deleted artifacts cannot count, a command succeeding against the wrong target is insufficient and an unverifiable deployment stays unknown (05-evidence-and-satisfaction-engine.md, issue 05.4; ACCEPTANCE-MATRIX.md rows A12-A14). For test evidence most of this is proved piecemeal (apps/majordomus-cli/tests/intent.rs::a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there, ::a_criterion_is_met_only_by_evidence_current_at_the_working_tree_and_follows_it_both_ways); for command and deployment evidence nothing exists before I2221 and I2222. A ledger line is admitted on its shape and version alone (apps/majordomus-cli/src/evidence/ledger.rs:200-218), so a hand-written passing execution counts; run records exist beside the ledger and can only weaken a judgement (apps/majordomus-cli/src/evidence/run.rs:421-457)."
+current_state: "Negative cases for test evidence exist in Rust tests; none for command or deployment; a forged ledger line is accepted. The claim is planned with no test (docs/CLAIMS.yaml:961-968)."
+desired_state: "A case under test/cases covering: never run, failing, stale by a scope change, the test file deleted (unresolved), a command of another argv, an unreachable and a malformed deployment, and a hand-written passing ledger line; the ADR records whether an execution with no run record reads not_run or stays accepted with the limitation stated in docs/PLANNING.md and the claim note; docs/claims/intent-command-deployment-evidence.md and the case-892 table updated."
+scope:
+  - test/cases
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/tests
+  - .ai/repo/adrs
+  - docs/CLAIMS.yaml
+  - docs/claims/intent-command-deployment-evidence.md
+  - docs/PLANNING.md
+  - site/content/guarantees/intent-command-deployment-evidence.md
+  - test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh
+non_scope:
+  - Signing ledger lines
+  - New evidence kinds beyond the four
+depends_on:
+  - I2221
+  - I2222
+acceptance_criteria:
+  - "Each listed failure leaves its criterion unmet with the state the ADR names, through the built executable, and the case fails if any of them meets the criterion"
+  - "The decision on a ledger execution no run record carries is recorded, and either it reads not_run in the case or the limitation is stated in docs/PLANNING.md and the claim note"
+  - "docs/CLAIMS.yaml declares intent-command-deployment-evidence guaranteed with this case as its test, and case 892 passes"
+  - "A mutation that makes any one refusal pass makes the case fail"
+validation:
+  - "majordomus intent validate"
+  - "bash test/run.sh <the negative-matrix case this issue adds> 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
+evidence_required:
+  - "evidence_negative_matrix_case"
+  - "claim_guaranteed"
+created_at: 2026-10-09
+updated_at: 2026-10-09

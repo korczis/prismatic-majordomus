@@ -1,0 +1,37 @@
+id: a-client-lists-only-the-tools-it-needs
+title: "What an MCP client reads before its first call is measured, budgeted, and proportional to the task"
+slug: a-client-lists-only-the-tools-it-needs
+order: 308
+priority: p1
+problem: "Finding F11, re-measured at master 3d92c25c12: tools/list answers every tool in one prepared reply with no cursor and no selection (apps/majordomus-cli/src/mcp/protocol.rs:214-219, :268-270), and every entry inlines its inputSchema and its outputSchema (apps/majordomus-cli/src/mcp/protocol.rs:446-458). The server reports 177 tools; the 2026-10-09 measurement at 893a79be65 found 1,972,961 bytes, the largest tool 62,994 bytes. Nothing records the size, so nothing refuses its growth."
+outcome: "The size of initialize and tools/list, the largest entry and the tool count are a benchmark with a committed baseline that a regression fails; repeated schemas are not inlined into every entry where the client does not need them; and a client can start from a small default set and reach every capability through a discovery tool or an explicit opt-in."
+current_state: "About 2 MB of listing on every connection, unmeasured."
+desired_state: "A measured listing under a committed budget, and the full surface reachable by discovery."
+scope:
+  - apps/majordomus-cli/src/mcp
+  - apps/majordomus-cli/src/capability
+  - apps/majordomus-cli/src/commands/bench.rs
+  - .ai/repo/benchmarks
+  - docs/MCP.md
+  - test/cases
+non_scope:
+  - Transport reliability, cancellation and bounds; that is mcp-transports-are-reliable (I2145-I2148)
+  - Removing a capability; nothing disappears, it moves behind discovery
+acceptance_criteria:
+  - "bench records tools/list bytes, the largest tool's bytes, initialize bytes and the tool count against a committed baseline, and a growth past the budget fails bench --check"
+  - "A tools/list entry carries no outputSchema that a client can fetch elsewhere, and Claude Code still accepts the listing (every inputSchema has type object)"
+  - "With the small default view, every capability is reachable through the discovery tool, and a test calls one that is not in the default list"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_stdio"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - mcp_listing_budget
+  - schema_dedup_test
+  - discovery_reaches_every_capability_test
+risks:
+  - "Claude Code drops the whole tools/list when one inputSchema is $ref-rooted (memory note mcp-tools-missing-is-a-rejected-tools-list); any schema change is tested against that rule"
+  - "Clients that cache tools may not re-list; the default view stays the full list until the owner switches it"
+depends_on: []
+created_at: 2026-10-09
+updated_at: 2026-10-09

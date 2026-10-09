@@ -1,0 +1,32 @@
+id: I2258
+milestone: a-client-lists-only-the-tools-it-needs
+title: "A client can start from a small tool set and reach every capability through discovery"
+slug: a-small-tool-set-and-discovery
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add a declared default tool view and a discovery tool that lists and invokes any capability by id, selectable by server option, with the full list remaining the default until the owner switches it."
+why: "Pack M09-I02/I04: discovery proportional to the task without a capability disappearing. The server lists 177 tools today with no selection (protocol.rs:214-219)."
+current_state: "All tools always."
+desired_state: "`--tools core` (name decided in the issue) lists the declared core set plus discovery; every capability is reachable through discovery; the full list is unchanged by default."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/capability"
+  - "share/providers"
+  - "docs/MCP.md"
+  - "test/cases"
+non_scope:
+  - "Changing the default view; the owner decides once clients are measured"
+depends_on:
+  - "I2257"
+acceptance_criteria:
+  - "With the core view, a test calls a capability absent from the listing through the discovery tool and gets the same result as the direct tool"
+  - "Without the option, tools/list is byte-identical to before"
+  - "An unknown capability id through discovery is a clear error naming the discovery route"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_shared"
+evidence_required:
+  - "discovery_reaches_every_capability_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

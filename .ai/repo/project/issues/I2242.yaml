@@ -1,0 +1,31 @@
+id: I2242
+milestone: policy-and-scope-read-exactly
+title: "A file touched and reverted is not out of scope, and a final out-of-scope change still is"
+slug: scope-judges-the-net-change
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the scope validator judge the task's net change (base to working tree) instead of every file any commit since the base touched."
+why: "Finding F06, confirmed at master 3d92c25c12: mj_git_touched unions `git log --name-only` over every commit since the task head (lib/common.sh:368), so a file edited and reverted is reported touched and check exits 10 with 'outside claimed scope' (m00 findings F06). The only move left to the worker is to hand-edit current.yaml, which is finding F01's bypass."
+current_state: "Scope is history-based; a reverted edit blocks finish forever."
+desired_state: "Touched means changed between the task base (or the trunk-merge-adjusted base, as today) and the working tree, including staged, unstaged and untracked files, renames on both sides and deletions; a reverted edit is not touched; a final out-of-scope change is."
+scope:
+  - "lib/common.sh"
+  - "lib/check.sh"
+  - "test/cases"
+non_scope:
+  - "Where the scope is stored (I2237)"
+  - "The CI evaluator (I2238) which uses the same rule"
+depends_on: []
+acceptance_criteria:
+  - "Edit then revert an out-of-scope file in two commits: check exits 0"
+  - "Leave an out-of-scope file changed: check exits 10 naming it"
+  - "A rename from in-scope to out-of-scope is refused; a deletion out of scope is refused"
+  - "Cases 108 and 108b (trunk merge and fast-forward) still pass"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 04_start_check 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward <the case this issue adds>"
+evidence_required:
+  - "reverted_edit_scope_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

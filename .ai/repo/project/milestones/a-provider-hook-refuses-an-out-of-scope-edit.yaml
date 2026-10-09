@@ -1,0 +1,41 @@
+id: a-provider-hook-refuses-an-out-of-scope-edit
+title: "A provider that can refuse a tool call refuses an edit outside the task's scope before it is written"
+slug: a-provider-hook-refuses-an-out-of-scope-edit
+order: 310
+priority: p1
+problem: "Finding F12, re-measured at master 3d92c25c12: scope reaches every provider only as prose in the generated bootstraps. The only native artefacts are Claude Code's prompt capture and session lifecycle hooks (lib/capture.sh:249, :286); no PreToolUse hook, permission rule or equivalent exists anywhere in lib/, share/, apps/majordomus-cli/src or .claude/. Codex is declared `unadapted` (share/providers.yaml:127) although its hook system is documented there. A worker learns it strayed only at check, finish or pre-push, after the edit."
+outcome: "share/providers.yaml states for each provider, with a dated source, whether it can refuse a tool call before it runs; for each that can, the tool installs a hook that asks the task's scope and refuses an out-of-scope write, and a Stop-class hook that asks finish --check; for each that cannot, the declaration says so and nothing claims enforcement. The required CI check remains the gate; hooks are defence in depth."
+current_state: "No provider refuses an out-of-scope edit before it happens."
+desired_state: "Claude Code and Codex refuse an out-of-scope edit natively in a tested fixture; every other provider carries a sourced `unsupported` or `unadapted` with no generated configuration pretending otherwise."
+scope:
+  - share/providers.yaml
+  - share/providers
+  - lib/capture.sh
+  - lib/update.sh
+  - lib/check.sh
+  - .claude/hooks
+  - docs/HOW_IT_WORKS.md
+  - test/cases
+non_scope:
+  - Claiming a local hook is tamper-proof; recovery-forge-gate is the gate
+  - Generating client MCP launch configurations; that is I2148
+  - Providers whose hook cannot block; they get a sourced N/A, not an adapter
+acceptance_criteria:
+  - "Every provider in share/providers.yaml carries a tool-call refusal capability with a source and a date, and doctor reports the declared value"
+  - "In a fixture, a Claude Code PreToolUse payload for a write outside the task's scope is answered with a refusal, and one inside scope is allowed"
+  - "In a fixture, the Codex hook payload for the same write is refused where Codex supports it, and its unsupported tool kinds are listed"
+  - "Disabling the hook leaves the required CI check refusing the same change, in the bypass case of recovery-forge-gate"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - provider_refusal_matrix
+  - claude_pretooluse_refusal_case
+  - codex_hook_refusal_case
+risks:
+  - "Provider hook formats change; every adapter fixture is built from a documented payload with its source date, and drift is reported, not assumed"
+  - "A hook on every tool call adds latency to the person's critical path; it must answer from local state without spawning the Rust executable (memory note hook-latency: UserPromptSubmit cost about 4 s)"
+depends_on:
+  - policy-and-scope-read-exactly
+created_at: 2026-10-09
+updated_at: 2026-10-09

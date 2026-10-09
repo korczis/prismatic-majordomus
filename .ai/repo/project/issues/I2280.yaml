@@ -1,0 +1,34 @@
+id: I2280
+milestone: a-release-is-followed-to-its-users
+title: "release-check tells a release record in flight from a lost one"
+slug: a-record-in-flight-is-not-a-lost-record
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Teach scripts/ci/release-check's fifth section to report a v-tag that has no record on the tree as in flight while its record is proposed on origin/release/record-<tag> and the tag is younger than a declared bound. Fail it after the bound, and fail it at once when no record branch exists. Read the bound from the policy, state it in the finding, and decide everything from fetched refs so the structure job stays network-free."
+why: "The section fails every tag without a record (scripts/ci/release-check:207-215). The record is proposed by the publish job and merges only after its own pull request's ci (docs/DISTRIBUTION.md:180-182). The gate runs in every full plan (.ai/repo/ci/gates.yaml:663-666 and :15-16), and every master push is a full plan, with all tags fetched. So between a tag push and its record's merge, a full run on any commit that fetched the new tag reports the release as lost. The gate cannot tell that window from the v0.7.0 failure it was written for (scripts/ci/release-check:145-155). This is derived from the code and has not been observed in a CI log; the first step of this issue is a case that reproduces it."
+current_state: "A tag with no record either fails or is excused in .ai/repo/release-record-baseline.txt. There is no in-flight state and no bound."
+desired_state: "A tag with no record, with origin/release/record-<tag> present and younger than the bound, prints an in-flight line naming the branch and the bound, and does not count as a finding. Past the bound, or with no record branch, it fails as today. The baseline mechanism is unchanged. The case first shows the failure against today's script, then the fix."
+scope:
+  - "scripts/ci/release-check"
+  - ".ai/repo/policy.yaml"
+  - "test/cases"
+  - "docs/DISTRIBUTION.md"
+non_scope:
+  - "Reading the forge. The structure job has no token and no toolchain (scripts/ci/release-check:159-163)."
+  - "The record's ranking in the integration queue (I2060)."
+depends_on: []
+acceptance_criteria:
+  - "A case with a tag, no record and no record branch fails release-check, as today"
+  - "A case with a tag, no record and a fresh origin/release/record-<tag> passes with an in-flight line naming the branch and the bound"
+  - "The same case with the tag older than the bound fails"
+  - "The bound is read from the policy and stated in both the in-flight line and the failure"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the release-check case this issue adds>"
+  - "scripts/ci/release-check"
+evidence_required:
+  - "in_flight_record_case"
+  - "red_before_fix"
+created_at: 2026-10-09
+updated_at: 2026-10-09

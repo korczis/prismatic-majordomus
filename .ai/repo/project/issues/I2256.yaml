@@ -1,0 +1,33 @@
+id: I2256
+milestone: a-client-lists-only-the-tools-it-needs
+title: "What an MCP client reads before its first call is measured and budgeted"
+slug: the-mcp-listing-is-measured
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add bench targets for initialize bytes, tools/list bytes, the largest tool entry and the tool count, commit a baseline, and let bench --check refuse growth beyond a declared budget."
+why: "tools/list answers every tool in one prepared reply (apps/majordomus-cli/src/mcp/protocol.rs:214-219) with inputSchema and outputSchema inlined per entry (protocol.rs:446-458); the m00 measurement at 893a79be65 found 177 tools and 1,972,961 bytes, and nothing records it. Bench targets are derived from commands only (I0823)."
+current_state: "The listing's size is unmeasured and unbounded."
+desired_state: "The four numbers are in the bench baseline, printed by bench, and a regression past the budget fails bench --check in CI."
+scope:
+  - "apps/majordomus-cli/src/commands/bench.rs"
+  - "apps/majordomus-cli/src/mcp"
+  - ".ai/repo/benchmarks"
+  - "docs/MCP.md"
+  - "docs/PERFORMANCE.md"
+  - "test/cases"
+non_scope:
+  - "Reducing the size (I2257, I2258)"
+depends_on: []
+acceptance_criteria:
+  - "bench prints initialize bytes, tools/list bytes, the largest tool and its bytes, and the tool count"
+  - "The baseline is committed and bench --check fails when tools/list grows past the budget in a fixture"
+  - "docs/MCP.md states the measured numbers with the commit"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test bench"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "mcp_listing_budget"
+created_at: 2026-10-09
+updated_at: 2026-10-09

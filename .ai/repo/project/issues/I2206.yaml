@@ -1,0 +1,31 @@
+id: I2206
+milestone: an-outcome-becomes-a-reviewed-plan
+title: "A desired outcome is briefed with what the repository already holds about it"
+slug: an-outcome-is-briefed
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Add intent draft brief --outcome <text> [--path <p>]..., a read-only capability that derives, for an outcome sentence and optional paths, the intents, milestones and open issues whose scope or text the outcome touches, the ADRs and rules context resolve applies to those paths, and each source it read, bounded by a size the caller can set."
+why: "A plan derived from a sentence alone repeats work the repository already planned or contradicts a decision it already made; the owner packs require the planner to reason from current code, ADRs and issues and to record which sources informed it (closure 70_OUTCOME_TO_PLAN_DERIVATION.md section 3; tight-integration 80_DESIRED_OUTCOME_TO_PLAN.md 'context discovery')."
+current_state: "majordomus context resolve <path> resolves the README chain and rules for a path; intents.preflight answers which intent paths serve; nothing joins them for an outcome."
+desired_state: "The brief answers lists of {kind, id, why_matched, source} for intents, milestones, issues, ADRs and rules, ordered deterministically, plus the draft schema the answer is to fill; the draft's gap records the brief's sources when I2207 writes it."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/tests
+non_scope:
+  - "Semantic search; matching is by scope paths and identifiers named in the outcome"
+  - "Calling an advisor"
+depends_on: []
+acceptance_criteria:
+  - "For an outcome naming a path under an existing milestone's scope, the brief lists that milestone, its open issues and the intent that names it, each with its source"
+  - "The same input answers the same brief byte for byte"
+  - "The brief never exceeds the requested bound and says what it left out"
+validation:
+  - cargo test --test intent_draft
+evidence_required:
+  - brief_names_its_sources
+created_at: 2026-10-09
+updated_at: 2026-10-09

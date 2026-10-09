@@ -1,0 +1,41 @@
+id: I2216
+milestone: intent-bound-work
+title: "Two starts of one issue at once: one is refused, in both plan engines"
+slug: a-start-is-checked-and-stamped-as-one-act
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#start-is-gated
+objective: "Make the check and the stamp of a plan transition one act per issue record in both engines: take an exclusive lock on the record, re-read it and re-run the guard against what it says now, write it by replace-on-rename, append the event, release; a second transition that arrives while the first holds the lock waits a bounded time and is then judged against the record the first wrote, so of two concurrent starts exactly one succeeds."
+why: "plan::transition runs check() against the plan built from the index it was handed (apps/majordomus-cli/src/plan.rs:1823), then reads the record, rewrites it with std::fs::write and appends the ledger event (apps/majordomus-cli/src/plan.rs:1824-1850) with no lock and no second look; the plan.transition capability hands it the served index, which may be older than the file (apps/majordomus-cli/src/capability/builtin/plan.rs:869-879). The shell engine does the same: guard at lib/plan.sh:445-480, then three unlocked mj_pj_set_field rewrites (lib/plan.sh:505-507, lib/project.sh:286). Two workers starting the same READY issue both pass the guard, both stamp started_at, and the ledger gets two plan_start events: the duplicate execution the owner's acceptance matrix row A09 forbids, and a hole in the atomic refusal of row A04, because a critique or binding change between the check and the write is never seen. A crash inside std::fs::write can also leave a truncated record."
+current_state: "Guard on a snapshot, then an unlocked, non-atomic rewrite, in both engines."
+desired_state: "A per-record lock (create-exclusive, holder pid and time inside, stale after a declared bound) shared by both engines; the guard re-run under it against a plan rebuilt from the record as it is on disk; the record replaced by write-to-temporary-then-rename in the same directory; a waiter that times out is refused with a sentence naming the holder; the same sentence from both engines."
+scope:
+  - apps/majordomus-cli/src/plan.rs
+  - apps/majordomus-cli/src/capability/builtin/plan.rs
+  - lib/plan.sh
+  - lib/project.sh
+  - apps/majordomus-cli/tests
+  - test/cases
+  - docs/PLANNING.md
+non_scope:
+  - Exclusivity across machines; that is a mesh claim (I2138, I2142)
+  - Changing what the guard checks
+  - A lock over the whole plan; one record is the unit
+depends_on: []
+acceptance_criteria:
+  - "Two plan start calls on one READY issue launched together, through either engine or one through each, leave exactly one started_at and exactly one plan_start event, and the other exits refused naming the issue as ACTIVE"
+  - "A critique made blocking after a start was offered but before the lock was taken refuses that start under policy intent.binding: required"
+  - "Killing the process between the temporary write and the rename leaves the record byte-identical to before"
+  - "A lock older than the declared bound whose holder is gone is taken over, and the takeover is named in the refusal or success text"
+  - "Every changed Rust line has an in-process test"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test plan_transition_race"
+  - "bash test/run.sh 133_plan_transition 962_plan_start_asks_the_binding_in_both_engines <the race case this issue adds>"
+evidence_required:
+  - "concurrent_start_one_wins_case"
+  - "atomic_record_write_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

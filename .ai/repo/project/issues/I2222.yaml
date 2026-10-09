@@ -1,0 +1,44 @@
+id: I2222
+milestone: command-and-deployment-criteria-are-judged
+title: "A command criterion is met only by a recorded passing run of exactly that command, current at the presented revision"
+slug: a-command-criterion-is-judged
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add a third evidence runner, command, whose test identity is derived from the argument vector; let `majordomus evidence record --command '<argv>'` run that vector without a shell under a policy-bounded time, redact its output, and record one execution with commit, working tree, exit status, duration, the names (never values) of an allow-listed set of environment variables and the argument vector; and judge a command criterion through the same freshness function as a test, with the criterion's serving scope as its inputs."
+why: "A command criterion reads not_derivable for any reference (apps/majordomus-cli/src/intent.rs:1135-1139) and the ledger knows two runners only (apps/majordomus-cli/src/evidence/mod.rs:207-212; reference parsing apps/majordomus-cli/src/intent.rs:1183-1193). `evidence record` records runs that happened and runs nothing (apps/majordomus-cli/src/cli.rs:2129-2150). This repository's own intent intent-lifecycle names the command criterion model-is-gated with ref `majordomus intent validate` (.ai/repo/project/intents/intent-lifecycle.yaml), so that intent can never be satisfied (apps/majordomus-cli/src/intent.rs:1424-1433). The owner's pack asks that a command's exit 0 never count for an unrelated outcome (05-evidence-and-satisfaction-engine.md, issue 05.2; ACCEPTANCE-MATRIX.md row A12)."
+current_state: "No command evidence is recorded or judged."
+desired_state: "Runner::Command with prefix command:, an id of the form command:<12 hex of sha256 over the NUL-joined argv>; a recorded execution carries the argv in its command field (apps/majordomus-cli/src/evidence/mod.rs:612) so a reader can match it exactly; criterion_of resolves a command reference to that id and asks ev.test with the serving scope like a test; the criterion's proof and reproduce name the argv; output passes through apps/majordomus-cli/src/redaction.rs; the ADR of I2221 is extended with the command rule."
+scope:
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - apps/majordomus-cli/src/policy.rs
+  - share/schemas/majordomus/policy
+  - apps/majordomus-cli/tests/intent_command_evidence.rs
+  - .ai/repo/adrs
+  - .ai/repo/evidence
+  - docs/PLANNING.md
+  - test/cases
+non_scope:
+  - Running a criterion's command from any read
+  - A shell, pipes or redirection in a recorded command
+  - Recording environment variable values
+depends_on:
+  - I2221
+acceptance_criteria:
+  - "A recorded exit-0 run of the exact argv a command criterion names, at the presented revision, meets it; the same run read after a commit to the criterion's serving scope reads stale"
+  - "A recorded exit-0 run of a different argv, including one differing only in an argument, meets nothing; a non-zero exit reads failing"
+  - "A command exceeding the policy's time bound is killed and recorded as a timeout, and reads failing"
+  - "Recorded output containing a known credential shape is redacted in the ledger, and the recorded environment holds names only"
+  - "intent-lifecycle's model-is-gated is met in this repository after `majordomus evidence record --command 'majordomus intent validate'` on a clean tree"
+validation:
+  - "majordomus intent validate"
+  - "cargo test --test intent_command_evidence --test intent"
+  - "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence 890_an_intent_criterion_is_met_only_by_current_evidence"
+evidence_required:
+  - "command_criterion_judged_test"
+  - "command_redaction_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

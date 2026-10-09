@@ -1,0 +1,38 @@
+id: I2269
+milestone: a-browser-is-a-read-only-peer
+title: "A decision names the local runtime as the owner of browser peers, and says what a browser may and may not do"
+slug: the-browser-peer-has-an-owner
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Record an ADR that makes a browser a peer of one checkout's runtime, reached through a native-messaging host and paired by a key, and not a mesh node. It fixes the first capability set as read-only and approved per request, records the threat model, and lists the Bro-Net claims that are out of scope. Write docs/BROWSER.md as the operator's view of that decision, with nothing marked implemented."
+why: "The owner's pack says 'a browser is a first-class Majordomus mesh peer' and asks for mesh registration and task routing (tmp/owner-packs/bro-net-majordomus-prompt-pack/.../README.md, 03-mesh-registration-and-capabilities.md). The accepted decisions say otherwise. A mesh node is a repository runtime with a node key (docs/MESH.md:66-76). Nothing a peer sends executes anything (.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md:125-128, .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md:57-59). Whoever builds remote operations must bring their own authorization decision (.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md:138-143). Implementation without this decision would either break a blocking rule or build a parallel peer system. The HTTP server also refuses a foreign origin (apps/majordomus-cli/src/http/router.rs:714-744), which rules out the extension calling the server directly and has to be stated as the reason for the native host."
+current_state: "No ADR, document, rule or issue mentions a browser peer. The pack's invariant contradicts ADR 0050 and ADR 0067 as worded."
+desired_state: "An ADR, status proposed until the owner accepts it, decides: the owner is the peer board of one checkout's shared server (apps/majordomus-cli/src/peers.rs:1-5); the bridge is a native-messaging host run by Chrome, not an HTTP origin; pairing is a key held in the user's state directory, trusted by the machine's owner and not committed to the repository, and unpairing revokes it; work sent to a browser is an execution (ADR 0033) of a declared capability; the first set is one read of the active tab after a click; page text is untrusted data. It records a threat model with one row per threat the pack lists in 06-policies-security-and-sandboxing.md, each with its mitigation or its stated limit, and the 2025 Bro-Net claims that are not implemented. docs/BROWSER.md describes the decision and marks every capability planned. docs/MESH.md says in one sentence that a browser is not a mesh node and points to the ADR."
+scope:
+  - ".ai/repo/adrs"
+  - "docs/BROWSER.md"
+  - "docs/MESH.md"
+  - "docs/README.md"
+non_scope:
+  - "Any code."
+  - "Accepting the ADR. Acceptance is the owner's act."
+  - "Changing ADR 0050 or ADR 0067. The new ADR refines them and says so."
+depends_on: []
+acceptance_criteria:
+  - "An ADR under .ai/repo/adrs names the peer board, not the mesh, as the owner of browser peers, and cites ADR 0050, ADR 0067 and ADR 0033"
+  - "The ADR's threat model has a row for every threat listed in the pack's 06-policies-security-and-sandboxing.md, each with a mitigation or a stated limit"
+  - "The ADR lists the first capability set as read-only and approved per request, and lists navigation, clicks, forms, script injection, screenshots and storage as later slices"
+  - "docs/BROWSER.md marks every browser capability as planned and links the ADR"
+  - "majordomus doctor and the ADR and document gates pass on the change"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus doctor"
+  - "scripts/ci/doc-command-check"
+  - "scripts/ci/claim-proof-check"
+evidence_required:
+  - "browser_peer_adr"
+  - "threat_model_rows"
+  - "browser_doc_marks_planned"
+created_at: 2026-10-09
+updated_at: 2026-10-09

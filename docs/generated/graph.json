@@ -32008,6 +32008,2241 @@
         }
       },
       {
+        "id": "majordomus://issue/I2200",
+        "kind": "issue",
+        "label": "I2200",
+        "summary": "check says when what the task is bound to has moved since it started",
+        "route": "/cockpit/objects/issue/i2200",
+        "source": ".ai/repo/project/issues/I2200.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After the served intent's criterion is edited, check on the bound task reports plan_changed",
+            "After a served criterion's evidence changes state, check reports evidence_moved",
+            "A task that named nothing, or a repository whose policy is off, checks exactly as before"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "check judges scope, obligations and gates; it does not read what the task serves.",
+          "depends_on": [],
+          "evidence_required": [
+            "check_reports_binding_drift_case"
+          ],
+          "milestone": "intent-bound-work",
+          "non_scope": [
+            "Refusing a check on drift; drift is information, the finish decides",
+            "Changing what the pins hash"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/check.sh",
+            "lib/intent_binding.sh",
+            "test/cases",
+            "docs"
+          ],
+          "serves": [
+            "intent-bound-work#resume-detects-drift"
+          ],
+          "slug": "check-reports-binding-drift",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bash test/run.sh <the case this issue adds>",
+            "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2201",
+        "kind": "issue",
+        "label": "I2201",
+        "summary": "A continuity record carries what its task was bound to, and resuming it reports drift",
+        "route": "/cockpit/objects/issue/i2201",
+        "source": ".ai/repo/project/issues/I2201.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record published from a bound task carries the named request and both pins, and one from an unbound task carries none",
+            "Resuming a record whose plan_revision differs from the receiving checkout's binding reports plan_changed",
+            "A record written by 0.19.0 without the fields still resumes",
+            "A record carrying the fields is verified by a 0.19.0 reader, or the schema is majordomus-continuity/v2 and a 0.19.0 reader refuses it as too new rather than as malformed"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "TaskRef has no binding fields; continuity.resume reports source state and lineage, not the binding.",
+          "depends_on": [],
+          "evidence_required": [
+            "continuity_record_carries_binding_test"
+          ],
+          "milestone": "intent-bound-work",
+          "non_scope": [
+            "Carrying the intent, its stage or its verdict; only what was named and the pins (rule project.an-intent-outlives-its-sessions)",
+            "The mesh handover transport"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/continuity",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "apps/majordomus-cli/tests",
+            "docs/MESH.md"
+          ],
+          "serves": [
+            "intent-bound-work#resume-detects-drift"
+          ],
+          "slug": "continuity-carries-the-binding",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test continuity",
+            "cargo test --test continuity_transfer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2202",
+        "kind": "issue",
+        "label": "I2202",
+        "summary": "This repository requires every task to name what it serves",
+        "route": "/cockpit/objects/issue/i2202",
+        "source": ".ai/repo/project/issues/I2202.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus start with only a description and a scope refuses in this repository, naming --issue, --intent and --exempt",
+            "majordomus start --exempt maintenance --because <reason> starts and the ledger records the class and reason",
+            "The measurement of recent starts is recorded with the decision"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "binding: advisory; four exemption classes declared (.ai/repo/policy.yaml:45-53); a refused binding is a warning.",
+          "depends_on": [
+            "I2200",
+            "I2216",
+            "I2224"
+          ],
+          "evidence_required": [
+            "required_binding_refuses_unnamed_start",
+            "binding_decision_recorded"
+          ],
+          "milestone": "intent-bound-work",
+          "non_scope": [
+            "Changing the default for adopters (the skeleton stays as it is)",
+            "New exemption classes beyond what the measurement shows is needed"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/policy.yaml",
+            ".ai/repo/workflows/task-lifecycle.md",
+            ".ai/repo/providers",
+            ".ai/repo/project",
+            "docs",
+            "test/cases"
+          ],
+          "serves": [
+            "intent-bound-work#start-is-gated"
+          ],
+          "slug": "this-repository-requires-binding",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2205",
+        "kind": "issue",
+        "label": "I2205",
+        "summary": "A draft plan is judged as if it were written, and nothing is written",
+        "route": "/cockpit/objects/issue/i2205",
+        "source": ".ai/repo/project/issues/I2205.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A draft whose criterion no issue serves fails check with criterion_uncovered",
+            "A draft whose issue under the intent's milestone serves nothing fails with the existing issue-purpose finding",
+            "A draft with a dependency cycle or an unresolved link fails naming it",
+            "A draft that checks clean answers no failure, and the working tree is unchanged after any check",
+            "The command line, HTTP and MCP answer the same check for the same draft"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Intents::derive (apps/majordomus-cli/src/intent.rs:1323) takes records, a plan and an evidence lookup; the plan and the records are loaded from the index only. No draft kind exists.",
+          "depends_on": [],
+          "evidence_required": [
+            "draft_check_writes_nothing"
+          ],
+          "milestone": "an-outcome-becomes-a-reviewed-plan",
+          "non_scope": [
+            "Writing records (I2207)",
+            "Deriving the draft's content (I2206 briefs, I2208 asks an advisor)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/schemas/majordomus",
+            "share/kinds.yaml",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md"
+          ],
+          "slug": "a-draft-is-checked-before-it-is-written",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_draft"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2206",
+        "kind": "issue",
+        "label": "I2206",
+        "summary": "A desired outcome is briefed with what the repository already holds about it",
+        "route": "/cockpit/objects/issue/i2206",
+        "source": ".ai/repo/project/issues/I2206.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "For an outcome naming a path under an existing milestone's scope, the brief lists that milestone, its open issues and the intent that names it, each with its source",
+            "The same input answers the same brief byte for byte",
+            "The brief never exceeds the requested bound and says what it left out"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "majordomus context resolve <path> resolves the README chain and rules for a path; intents.preflight answers which intent paths serve; nothing joins them for an outcome.",
+          "depends_on": [],
+          "evidence_required": [
+            "brief_names_its_sources"
+          ],
+          "milestone": "an-outcome-becomes-a-reviewed-plan",
+          "non_scope": [
+            "Semantic search; matching is by scope paths and identifiers named in the outcome",
+            "Calling an advisor"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "an-outcome-is-briefed",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test intent_draft"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2207",
+        "kind": "issue",
+        "label": "I2207",
+        "summary": "A checked draft is written as records, and an unchecked one is refused",
+        "route": "/cockpit/objects/issue/i2207",
+        "source": ".ai/repo/project/issues/I2207.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "apply writes exactly the records of a draft that checks clean, and intent validate and plan validate pass afterwards",
+            "apply of a draft that fails check writes nothing and exits 10 naming the findings",
+            "Issue ids are above the high-water mark of the tree and of the refs ADR 0053 names",
+            "A second apply of the same draft writes nothing and names the records already written"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The writers are pinned by name in apps/majordomus-cli/src/capability/builtin/mod.rs::the_capabilities_that_write_the_repository_are_these; none writes intent-family records.",
+          "depends_on": [
+            "I2205"
+          ],
+          "evidence_required": [
+            "draft_apply_writes_only_a_checked_draft"
+          ],
+          "milestone": "an-outcome-becomes-a-reviewed-plan",
+          "non_scope": [
+            "Stamping or recording a critique",
+            "Editing records the draft does not name"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md"
+          ],
+          "slug": "a-checked-draft-is-applied",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "majordomus plan validate",
+            "cargo test --test intent_draft",
+            "bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2215",
+        "kind": "issue",
+        "label": "I2215",
+        "summary": "What is said of plan start is what case 962 proves, and the claims check reads every claim page and note",
+        "route": "/cockpit/objects/issue/i2215",
+        "source": ".ai/repo/project/issues/I2215.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Reverting docs/claims/intent-plan-reviewed.md:20 to its current text makes case 892 fail naming the file and intent-refused-at-plan-start",
+            "Reverting the note at docs/CLAIMS.yaml:905 makes case 892 fail naming docs/CLAIMS.yaml",
+            "Case 892 passes on the corrected tree, and its corpus listing includes docs/claims/",
+            "site/content/guarantees/intent-plan-reviewed.md is the derived rendering of the corrected source, with no hand edit"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Two statements contradict a guaranteed claim; the check that exists for exactly this does not read the files they are in.",
+          "depends_on": [],
+          "evidence_required": [
+            "stale_planned_statement_refused_case"
+          ],
+          "milestone": "the-intent-loop-is-proved-end-to-end",
+          "non_scope": [
+            "Changing any claim's status",
+            "Changing the binding policy of this repository (I2202)",
+            "Any change to the intent engine"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "docs/claims/intent-plan-reviewed.md",
+            "docs/CLAIMS.yaml",
+            "site/content/guarantees/intent-plan-reviewed.md",
+            "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh"
+          ],
+          "slug": "what-is-said-of-plan-start-is-what-is-proved",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says",
+            "scripts/derive"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2216",
+        "kind": "issue",
+        "label": "I2216",
+        "summary": "Two starts of one issue at once: one is refused, in both plan engines",
+        "route": "/cockpit/objects/issue/i2216",
+        "source": ".ai/repo/project/issues/I2216.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "current_state": "Guard on a snapshot, then an unlocked, non-atomic rewrite, in both engines.",
+          "depends_on": [],
+          "evidence_required": [
+            "concurrent_start_one_wins_case",
+            "atomic_record_write_test"
+          ],
+          "milestone": "intent-bound-work",
+          "non_scope": [
+            "Exclusivity across machines; that is a mesh claim (I2138, I2142)",
+            "Changing what the guard checks",
+            "A lock over the whole plan; one record is the unit"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "lib/plan.sh",
+            "lib/project.sh",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/PLANNING.md"
+          ],
+          "serves": [
+            "intent-bound-work#start-is-gated"
+          ],
+          "slug": "a-start-is-checked-and-stamped-as-one-act",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test plan_transition_race",
+            "bash test/run.sh 133_plan_transition 962_plan_start_asks_the_binding_in_both_engines <the race case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2217",
+        "kind": "issue",
+        "label": "I2217",
+        "summary": "The evidence half of a gap is drafted from the ledger, and the decision to draft is recorded",
+        "route": "/cockpit/objects/issue/i2217",
+        "source": ".ai/repo/project/issues/I2217.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The printed draft, saved as .ai/repo/project/gaps/<intent>.yaml, passes intent validate with no gap finding in a fresh init fixture and on this repository's own intents",
+            "Each criterion's condition follows the ADR's table, proved by one fixture per evidence state",
+            "Every condition that is not unknown names at least one observation, and each observation's source names the ledger execution, claim or served observation it read",
+            "Two runs on an unchanged tree print identical bytes; a run after a recorded failing execution changes exactly that criterion's condition",
+            "The draft is identical on the command line, HTTP and MCP, and the repository-mutation writer set is unchanged",
+            "intent-planning's non-goal says what Majordomus drafts and what it still does not, and the ADR is recorded as proposed"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No capability drafts a gap. intents.* are all read-only (apps/majordomus-cli/src/capability/builtin/intents.rs:20-21).",
+          "depends_on": [],
+          "evidence_required": [
+            "gap_draft_follows_the_evidence_test",
+            "gap_draft_surfaces_agree_test"
+          ],
+          "milestone": "an-unmet-criterion-is-drafted-into-work",
+          "non_scope": [
+            "Writing the gap file; the command prints and the worker commits",
+            "Drafting observations of code or prose; only evidence the ledger, the claims matrix or a served observation holds",
+            "Drafting work items; that is I2218"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests/intent_draft.rs",
+            ".ai/repo/adrs",
+            ".ai/repo/project/intents",
+            "docs/PLANNING.md",
+            "docs/claims",
+            "docs/CLAIMS.yaml",
+            "test/cases"
+          ],
+          "slug": "the-gap-is-drafted-from-the-evidence",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_draft",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says",
+            "bash test/run.sh <the gap-draft case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2218",
+        "kind": "issue",
+        "label": "I2218",
+        "summary": "Work is drafted for each criterion nothing serves, and a rerun drafts the same work",
+        "route": "/cockpit/objects/issue/i2218",
+        "source": ".ai/repo/project/issues/I2218.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An intent with one uncovered criterion drafts exactly one issue serving it; adding a live issue that serves it drafts none",
+            "A criterion the gap observed satisfied drafts nothing; a gap work item already linked to an issue drafts nothing",
+            "Two runs on an unchanged tree print identical bytes, and editing the intent's statement or another intent leaves every draft key unchanged",
+            "Each draft, written to .ai/repo/project/issues/ with an allocated id, passes plan validate and intent validate with no coverage finding for its criterion",
+            "Case 892 fails on the old sentence of docs/claims/intent-criteria-covered.md:20"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No draft of work exists anywhere; the finding names the criterion and stops.",
+          "depends_on": [
+            "I2217"
+          ],
+          "evidence_required": [
+            "plan_draft_is_idempotent_test",
+            "plan_draft_skips_served_criteria_test"
+          ],
+          "milestone": "an-unmet-criterion-is-drafted-into-work",
+          "non_scope": [
+            "Allocating issue ids or writing issue files",
+            "Dependencies between drafts beyond what the gap's work order states",
+            "Drafting from an outcome statement with no intent; lane A's prompt 80 milestone"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests/intent_draft.rs",
+            ".ai/repo/project/intents",
+            "docs/PLANNING.md",
+            "docs/claims/intent-criteria-covered.md",
+            "docs/CLAIMS.yaml",
+            "test/cases"
+          ],
+          "slug": "work-is-drafted-for-an-uncovered-criterion",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bin/majordomus plan validate",
+            "cargo test --test intent_draft",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says <the draft case this milestone adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2219",
+        "kind": "issue",
+        "label": "I2219",
+        "summary": "The next issue to start is one that serves an unmet criterion and would be bound, and the answer says what it passed over",
+        "route": "/cockpit/objects/issue/i2219",
+        "source": ".ai/repo/project/issues/I2219.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With two READY issues where the first by plan order serves only a current criterion, intent next answers the second and lists the first as serving only met criteria",
+            "Under policy intent.binding: required, an issue of an uncritiqued intent is skipped with intent_not_critiqued; under off it is offered",
+            "The answer is identical on the command line, HTTP and MCP, and Plan::next_ready's answer is unchanged by this issue",
+            "An empty answer names why each READY issue was skipped, and exits non-zero"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "plan next is intent-blind; the binding is asked only when a task starts.",
+          "depends_on": [
+            "I2218"
+          ],
+          "evidence_required": [
+            "intent_next_explains_what_it_passed_over_test"
+          ],
+          "milestone": "an-unmet-criterion-is-drafted-into-work",
+          "non_scope": [
+            "Changing Plan::next_ready, waves or the plan engines",
+            "Claiming the issue for the caller; that is the task and mesh claim",
+            "Peer-aware filtering of issues other workers hold; I2144 links claims to issues first"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests/intent_next.rs",
+            "docs/PLANNING.md"
+          ],
+          "slug": "the-next-issue-serves-an-unmet-criterion",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_next"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2221",
+        "kind": "issue",
+        "label": "I2221",
+        "summary": "A deployment criterion is judged from the recorded observations of that deployment",
+        "route": "/cockpit/objects/issue/i2221",
+        "source": ".ai/repo/project/issues/I2221.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A deployment criterion with an observation that served a build containing its serving scope's newest commit reads current and meets the criterion",
+            "The same observation read after a commit to the serving scope reads stale, naming the commit it lacks",
+            "Unreachable, malformed, dirty and undecided observations each read failing with the observation's reason; no observation reads not_run",
+            "An intent whose only unmet criterion is a deployment with no observation reads unsatisfied, not unknown",
+            "The criterion state is the same on the command line, HTTP and MCP"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Observations are recorded and re-judgeable; no criterion reads them.",
+          "depends_on": [],
+          "evidence_required": [
+            "deployment_criterion_judged_test"
+          ],
+          "milestone": "command-and-deployment-criteria-are-judged",
+          "non_scope": [
+            "Probing a deployment during a read",
+            "Committing observations into the tree",
+            "Command criteria (I2222)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/served.rs",
+            "apps/majordomus-cli/tests/intent.rs",
+            "apps/majordomus-cli/tests/intent_deployment_evidence.rs",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "slug": "a-deployment-criterion-is-judged",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent --test intent_deployment_evidence",
+            "bash test/run.sh 384_a_deployment_is_evidence 367_an_intent_is_satisfied_only_by_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2222",
+        "kind": "issue",
+        "label": "I2222",
+        "summary": "A command criterion is met only by a recorded passing run of exactly that command, current at the presented revision",
+        "route": "/cockpit/objects/issue/i2222",
+        "source": ".ai/repo/project/issues/I2222.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A recorded exit-0 run of the exact argv a command criterion names, at the presented revision, meets it; the same run read after a commit to the criterion's serving scope reads stale",
+            "A recorded exit-0 run of a different argv, including one differing only in an argument, meets nothing; a non-zero exit reads failing",
+            "A command exceeding the policy's time bound is killed and recorded as a timeout, and reads failing",
+            "Recorded output containing a known credential shape is redacted in the ledger, and the recorded environment holds names only",
+            "intent-lifecycle's model-is-gated is met in this repository after `majordomus evidence record --command 'majordomus intent validate'` on a clean tree"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No command evidence is recorded or judged.",
+          "depends_on": [
+            "I2221"
+          ],
+          "evidence_required": [
+            "command_criterion_judged_test",
+            "command_redaction_test"
+          ],
+          "milestone": "command-and-deployment-criteria-are-judged",
+          "non_scope": [
+            "Running a criterion's command from any read",
+            "A shell, pipes or redirection in a recorded command",
+            "Recording environment variable values"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/schemas/majordomus/policy",
+            "apps/majordomus-cli/tests/intent_command_evidence.rs",
+            ".ai/repo/adrs",
+            ".ai/repo/evidence",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "slug": "a-command-criterion-is-judged",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_command_evidence --test intent",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence 890_an_intent_criterion_is_met_only_by_current_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2223",
+        "kind": "issue",
+        "label": "I2223",
+        "summary": "No unexecuted, stale, deleted, forged or wrong-target evidence meets a criterion, and the claim says so with its case",
+        "route": "/cockpit/objects/issue/i2223",
+        "source": ".ai/repo/project/issues/I2223.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each listed failure leaves its criterion unmet with the state the ADR names, through the built executable, and the case fails if any of them meets the criterion",
+            "The decision on a ledger execution no run record carries is recorded, and either it reads not_run in the case or the limitation is stated in docs/PLANNING.md and the claim note",
+            "docs/CLAIMS.yaml declares intent-command-deployment-evidence guaranteed with this case as its test, and case 892 passes",
+            "A mutation that makes any one refusal pass makes the case fail"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Negative cases for test evidence exist in Rust tests; none for command or deployment; a forged ledger line is accepted. The claim is planned with no test (docs/CLAIMS.yaml:961-968).",
+          "depends_on": [
+            "I2221",
+            "I2222"
+          ],
+          "evidence_required": [
+            "evidence_negative_matrix_case",
+            "claim_guaranteed"
+          ],
+          "milestone": "command-and-deployment-criteria-are-judged",
+          "non_scope": [
+            "Signing ledger lines",
+            "New evidence kinds beyond the four"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/adrs",
+            "docs/CLAIMS.yaml",
+            "docs/claims/intent-command-deployment-evidence.md",
+            "docs/PLANNING.md",
+            "site/content/guarantees/intent-command-deployment-evidence.md",
+            "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh"
+          ],
+          "slug": "evidence-that-proves-nothing-meets-nothing",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bash test/run.sh <the negative-matrix case this issue adds> 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2224",
+        "kind": "issue",
+        "label": "I2224",
+        "summary": "Every scenario of the intent acceptance matrix is a claim with its test, or planned with what is missing",
+        "route": "/cockpit/objects/issue/i2224",
+        "source": ".ai/repo/project/issues/I2224.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of A01-A26 is named in exactly one claim note in docs/CLAIMS.yaml",
+            "Every new guaranteed claim names a test that exists in the tree and passes",
+            "A binding naming a cancelled intent and one naming a superseded intent are refused with intent_retired in a test",
+            "A test shows that a mesh claim, review or peer announcement about a criterion leaves its evidence state unchanged",
+            "Case 892 passes with the new claims"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Eleven intent claims (docs/CLAIMS.yaml:871-968); no claim names A17 or A18 behaviour and neither has a test; no claim states the absent rows as planned.",
+          "depends_on": [
+            "I2215"
+          ],
+          "evidence_required": [
+            "acceptance_claims",
+            "retired_intent_refused_test",
+            "peer_result_is_not_evidence_test"
+          ],
+          "milestone": "the-intent-loop-is-proved-end-to-end",
+          "non_scope": [
+            "Implementing absent behaviour; that is the owning milestone's work",
+            "Copying the acceptance matrix into the repository as a file"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "site/content/guarantees",
+            "apps/majordomus-cli/tests/intent_binding.rs",
+            "apps/majordomus-cli/tests/intent.rs",
+            "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh"
+          ],
+          "slug": "every-acceptance-scenario-is-a-claim",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test intent_binding --test intent",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says",
+            "scripts/derive"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2226",
+        "kind": "issue",
+        "label": "I2226",
+        "summary": "The register of duplicated facts is checked against the tree, and the rows the tree has paid are closed",
+        "route": "/cockpit/objects/issue/i2226",
+        "source": ".ai/repo/project/issues/I2226.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Removing a row's witness from its path makes the ledger test fail with the row id in the message",
+            "A fixed row without resolved_by makes the ledger test fail",
+            "site-check-generated-file-list, site-tile-route-list, schema-allowlists and derivable-counts-in-prose are fixed, each with a resolved_by, or left open with a witness the test finds",
+            "Every open row's lines field agrees with where its witness occurs"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "22 rows: 8 fixed with a prose resolved_by, 14 open, and at least 4 of the open ones stale. No row carries anything a program can check except a shell reproduce command.",
+          "depends_on": [],
+          "evidence_required": [
+            "ledger_witness_test",
+            "stale_rows_closed"
+          ],
+          "milestone": "a-fact-is-written-once",
+          "non_scope": [
+            "Paying any open row; that is I2228, I2229 and I2152.",
+            "Running the rows' shell reproduce commands from the test.",
+            "A scanner that finds copies nobody recorded."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "docs/HARDCODING_LEDGER.yaml",
+            "docs/DYNAMICITY.md",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "the-ledger-is-checked",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test hardcoding_ledger"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2227",
+        "kind": "issue",
+        "label": "I2227",
+        "summary": "An object or kind added to a repository reaches the command line, HTTP, MCP and the Cockpit, and leaves all four when removed",
+        "route": "/cockpit/objects/issue/i2227",
+        "source": ".ai/repo/project/issues/I2227.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A rule added to a fixture repository appears in CLI JSON, its HTTP route, the MCP resource list and the Cockpit's index and entity page, with no consumer edit",
+            "After removal, the object is absent from all four and its entity page answers 404",
+            "A kind defined by the fixture appears in the Cockpit's navigation and object index, and its object has an entity page",
+            "No assertion names an /api/v1 path as a literal; routes come from the registry's HTTP exposure"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Addition, removal and a new kind are proved on MCP; the CLI is proved for the kind; HTTP and the Cockpit are unproved.",
+          "depends_on": [],
+          "evidence_required": [
+            "object_reaches_every_surface_test",
+            "removal_leaves_every_surface_test"
+          ],
+          "milestone": "a-fact-is-written-once",
+          "non_scope": [
+            "A synthetic capability (I1027).",
+            "Any change to the Cockpit or the router to make the test pass; a failure here is a defect to file, not to special-case."
+          ],
+          "objective": "Extend the end-to-end extensibility proof from the MCP resource list to every surface that projects the index, in a fixture repository that is not this one, including removal.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests/external_extension.rs",
+            "apps/majordomus-cli/tests/common"
+          ],
+          "slug": "the-extensibility-proof-reaches-every-surface",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test external_extension"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2228",
+        "kind": "issue",
+        "label": "I2228",
+        "summary": "Search's kinds and context's sections are each declared once in the file that uses them",
+        "route": "/cockpit/objects/issue/i2228",
+        "source": ".ai/repo/project/issues/I2228.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A seventh search kind added to the one list is accepted, searched by default and named in the usage text",
+            "A context section added to the one table is ordered, dropped under budget and rendered in JSON",
+            "The ledger test passes with both rows fixed"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Both rows open in docs/HARDCODING_LEDGER.yaml, and both reproduce today.",
+          "depends_on": [
+            "I2226"
+          ],
+          "evidence_required": [
+            "search_kind_added_once_case",
+            "context_section_added_once_case"
+          ],
+          "milestone": "a-fact-is-written-once",
+          "non_scope": [
+            "Moving search or context into Rust.",
+            "A new shell file; ADR 0069 forbids new shell units, and this edits existing ones."
+          ],
+          "objective": "Pay the ledger rows search-kind-vocabulary and context-provider-lists: one list each, with the usage text, defaults, validation and drop order derived from it.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "lib/search.sh",
+            "lib/context.sh",
+            "docs/HARDCODING_LEDGER.yaml",
+            "test/cases"
+          ],
+          "slug": "search-kinds-and-context-sections-declared-once",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test hardcoding_ledger",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2229",
+        "kind": "issue",
+        "label": "I2229",
+        "summary": "The site's command list and exit codes are read from the command registry, not parsed out of help text",
+        "route": "/cockpit/objects/issue/i2229",
+        "source": ".ai/repo/project/issues/I2229.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/generate-site-data contains no sed or grep over bin/majordomus usage text",
+            "An exit code whose meaning differs between share/commands.yaml and docs/CLI.md or bin/majordomus fails a check that names both",
+            "scripts/generate-site-data --check passes and the product data's commands equal the public commands of share/commands.yaml",
+            "The ledger test passes with command-surface-has-no-owner and exit-code-table-in-prose fixed"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "share/commands.yaml exists and feeds commands.json. The product data still parses usage text. Exit-code meanings have no declaration.",
+          "depends_on": [
+            "I2226"
+          ],
+          "evidence_required": [
+            "product_data_from_registry",
+            "exit_code_drift_case"
+          ],
+          "milestone": "a-fact-is-written-once",
+          "non_scope": [
+            "Generating bin/majordomus usage text from the registry; the dispatch table stays authority for what executes.",
+            "The Rust clap tree, which is a measured second declaration (surfaces-never-disagree non_scope)."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/generate-site-data",
+            "share/commands.yaml",
+            "bin/majordomus",
+            "docs/CLI.md",
+            "lib/common.sh",
+            "lib/commands.sh",
+            "docs/HARDCODING_LEDGER.yaml",
+            "site/data/generated",
+            "test/cases"
+          ],
+          "slug": "the-site-reads-the-command-registry",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/generate-site-data --check",
+            "cargo test --test hardcoding_ledger",
+            "MJ_TEST_JOBS=4 bash test/run.sh 28_no_hardcoded_values <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2230",
+        "kind": "issue",
+        "label": "I2230",
+        "summary": "Each Cockpit page declares the capabilities it reads, and which page shows a capability is answered from that declaration",
+        "route": "/cockpit/objects/issue/i2230",
+        "source": ".ai/repo/project/issues/I2230.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page that executes a capability its declaration does not name fails a test naming the route and the capability, and so does a declared capability the page never executes",
+            "A source named in docs/COCKPIT.md's 'Derived from' column that the declaration does not hold fails the build",
+            "capabilities.projections answers the Cockpit routes of a capability identically on the command line, over HTTP and over MCP"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "STATIC_ROUTES pairs a route with an area (apps/majordomus-cli/src/cockpit/mod.rs:83). No route declares its sources. The documented sources are unchecked.",
+          "depends_on": [
+            "I2152"
+          ],
+          "evidence_required": [
+            "page_sources_declared_test",
+            "documented_sources_checked_test",
+            "projection_names_cockpit_routes"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Removing the five direct registry reads of .ai/repo/ui-integrity-baseline.txt:9-13; that is I2152. A page that reads the registry directly declares the registry as its source until then.",
+            "A second hand-written matrix document."
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+            "apps/majordomus-cli/tests/cockpit.rs",
+            "docs/COCKPIT.md",
+            "docs/generated"
+          ],
+          "slug": "a-page-declares-its-sources",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib cockpit::",
+            "cargo test --test cockpit --test properties",
+            "bin/majordomus-cli generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2231",
+        "kind": "issue",
+        "label": "I2231",
+        "summary": "majordomus ui opens this checkout's Cockpit, starting the shared server only when none serves it",
+        "route": "/cockpit/objects/issue/i2231",
+        "source": ".ai/repo/project/issues/I2231.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fixture repository with no server, majordomus ui --no-open --json starts one and prints a URL whose /cockpit answers 200",
+            "Run again, it starts nothing and prints the same URL",
+            "With stdout not a terminal it opens no browser, and a test observes that the opener was not called",
+            "majordomus ui stop leaves serve status reporting no server",
+            "The clap tree and share/commands.yaml agree on the command, and the closure check passes"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A person reaches the Cockpit by running serve or serve ensure and reading the logged address. No command opens it.",
+          "depends_on": [
+            "I2131",
+            "I2153"
+          ],
+          "evidence_required": [
+            "ui_converges_case",
+            "no_browser_without_terminal_test"
+          ],
+          "milestone": "cockpit-control-center",
+          "non_scope": [
+            "A capability for ui; process lifecycle stays CLI-only, as serve ensure and serve stop are by stated design.",
+            "A second server, port policy or readiness probe; the stable derived address is I2131.",
+            "Opening a browser from a non-interactive run, a hook or an agent."
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands",
+            "share/commands.yaml",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/COCKPIT.md",
+            "docs/CLI.md"
+          ],
+          "slug": "majordomus-ui-opens-the-cockpit",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test http_serve",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2242",
+        "kind": "issue",
+        "label": "I2242",
+        "summary": "A file touched and reverted is not out of scope, and a final out-of-scope change still is",
+        "route": "/cockpit/objects/issue/i2242",
+        "source": ".ai/repo/project/issues/I2242.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Edit then revert an out-of-scope file in two commits: check exits 0",
+            "Leave an out-of-scope file changed: check exits 10 naming it",
+            "A rename from in-scope to out-of-scope is refused; a deletion out of scope is refused",
+            "Cases 108 and 108b (trunk merge and fast-forward) still pass"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Scope is history-based; a reverted edit blocks finish forever.",
+          "depends_on": [],
+          "evidence_required": [
+            "reverted_edit_scope_case"
+          ],
+          "milestone": "policy-and-scope-read-exactly",
+          "non_scope": [
+            "Where the scope is stored (I2237)",
+            "The CI evaluator (I2238) which uses the same rule"
+          ],
+          "objective": "Make the scope validator judge the task's net change (base to working tree) instead of every file any commit since the base touched.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/check.sh",
+            "test/cases"
+          ],
+          "slug": "scope-judges-the-net-change",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 04_start_check 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2243",
+        "kind": "issue",
+        "label": "I2243",
+        "summary": "The shell YAML reader refuses what the Rust reader refuses, and both read the same values",
+        "route": "/cockpit/objects/issue/i2243",
+        "source": ".ai/repo/project/issues/I2243.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A corpus with duplicate keys, quoted commas in flow lists, doubled quotes, a trailing comment and a key repeated at different depths is read by both readers with identical verdicts and values",
+            "A duplicated key in .ai/repo/policy.yaml is refused by the shell reader with the line number",
+            "Every tracked .ai record still flattens without error (no record in the tree has a duplicate today, or the case names it)"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "One document can mean two things depending on which reader reads it.",
+          "depends_on": [],
+          "desired_state": "Both readers accept and refuse the same corpus with the same values; doctor names a duplicated key with its line.",
+          "evidence_required": [
+            "yaml_reader_differential_case"
+          ],
+          "milestone": "policy-and-scope-read-exactly",
+          "non_scope": [
+            "Full YAML support; the subset stays the format"
+          ],
+          "objective": "Make the awk flattener refuse duplicated keys and split flow lists only outside quotes, and hold both readers to one differential corpus in a case.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "test/cases",
+            "test/fixtures"
+          ],
+          "slug": "the-two-yaml-readers-agree",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 00_yaml_flatten <the case this issue adds>",
+            "cargo test --lib metadata::yaml"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2244",
+        "kind": "issue",
+        "label": "I2244",
+        "summary": "A scope entry or a path that escapes, aliases or fails normalisation is refused, never compared raw",
+        "route": "/cockpit/objects/issue/i2244",
+        "source": ".ai/repo/project/issues/I2244.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A current.yaml scope entry of ../x, /abs or empty makes check exit 10 naming the entry",
+            "A touched path differing from a scope entry only by case is refused and named as a case alias",
+            "A file reached through an in-scope symlink to an out-of-scope directory is judged by the path git reports"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Normalisation failure degrades to raw comparison; no adversarial fixtures exist.",
+          "depends_on": [],
+          "desired_state": "check refuses a contract entry that does not normalise, compares case exactly with a warning on a case alias, and judges a symlink by its tracked path.",
+          "evidence_required": [
+            "scope_entry_escape_case"
+          ],
+          "milestone": "policy-and-scope-read-exactly",
+          "non_scope": [
+            "Repository read scope (apps/majordomus-cli/src/scope.rs)"
+          ],
+          "objective": "Make mj_path_contains refuse rather than fall back to the raw string, and cover ../, absolute, case-alias and symlinked entries with fixtures.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/check.sh",
+            "test/cases"
+          ],
+          "slug": "a-scope-entry-is-normalised-or-refused",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 93_scope_policy <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2248",
+        "kind": "issue",
+        "label": "I2248",
+        "summary": "doctor reads a hook as wired only when the invocation can run and its exit is kept",
+        "route": "/cockpit/objects/issue/i2248",
+        "source": ".ai/repo/project/issues/I2248.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A pre-commit whose doctor line is commented out fails wiring naming the line",
+            "A pre-commit with `exit 0` before the doctor line fails wiring naming both lines",
+            "The repository's own .githooks still pass doctor"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A neutered hook passes doctor if the invoking text is still present anywhere in it.",
+          "depends_on": [],
+          "evidence_required": [
+            "neutered_hook_refused_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Behavioural proof by running the hook; that is the probe harness of I2160",
+            "CI gate scripts neutered internally; case 138's mutation doctrine covers those"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "test/cases"
+          ],
+          "slug": "a-hook-is-wired-only-when-it-runs",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 14_wiring_dispatcher 14c_wiring_from_a_linked_worktree 18_doctrine_wiring"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2249",
+        "kind": "issue",
+        "label": "I2249",
+        "summary": "The wiring graph is read in both directions: every blocking rule reaches an entry point, and every entry point serves a rule",
+        "route": "/cockpit/objects/issue/i2249",
+        "source": ".ai/repo/project/issues/I2249.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Removing a gate from validate.yml that a blocking rule names makes the graph report the rule as unreached",
+            "Adding a CI gate no rule names is reported as an orphan entry point",
+            "The capability answers alike over CLI, HTTP and MCP"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Each link is checked; the chain is not.",
+          "depends_on": [
+            "I2248",
+            "I2160"
+          ],
+          "desired_state": "A capability lists the chain per blocking rule and every orphan, and a gate fails on a new orphan.",
+          "evidence_required": [
+            "wiring_graph_orphans_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "Whether a proof ran; that is I2160",
+            "Mutation-testing every link; I2248 and case 18 do that per link"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "deep-work",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src",
+            "scripts/ci",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "the-wiring-graph-is-read-both-ways",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli capabilities validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2250",
+        "kind": "issue",
+        "label": "I2250",
+        "summary": "The provider declaration says, with a dated source, which providers can refuse a tool call before it runs",
+        "route": "/cockpit/objects/issue/i2250",
+        "source": ".ai/repo/project/issues/I2250.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every declared provider has the capability with a source and a date, and providers-check fails on a missing one",
+            "docs/generated/providers.md shows the column, regenerated by majordomus generate",
+            "A provider declared unsupported has no generated hook configuration"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No provider declares whether it can refuse a tool call.",
+          "depends_on": [],
+          "desired_state": "Every provider carries the capability with evidence; doctor and the generated provider document show it; adapters read it.",
+          "evidence_required": [
+            "provider_refusal_matrix"
+          ],
+          "milestone": "a-provider-hook-refuses-an-out-of-scope-edit",
+          "non_scope": [
+            "Writing any adapter (I2251, I2252)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/providers.yaml",
+            "share/schemas/majordomus",
+            "apps/majordomus-cli/src/providers.rs",
+            "docs/generated",
+            "scripts/ci/providers-check",
+            "test/cases"
+          ],
+          "slug": "providers-declare-tool-call-refusal",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/providers-check",
+            "bin/majordomus-cli generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2251",
+        "kind": "issue",
+        "label": "I2251",
+        "summary": "Claude Code refuses an edit outside the task's scope before it is written",
+        "route": "/cockpit/objects/issue/i2251",
+        "source": ".ai/repo/project/issues/I2251.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A documented PreToolUse payload for an Edit outside scope is answered with a refusal, and one inside scope is allowed, in a case",
+            "With no active task the hook allows every payload",
+            "The hook's warm latency is recorded in the case output and stays under the declared hook budget",
+            "capture uninstall removes exactly what install added"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No PreToolUse hook exists anywhere (grep of lib/, share/, apps/majordomus-cli/src, .claude/).",
+          "depends_on": [
+            "I2250",
+            "I2242"
+          ],
+          "evidence_required": [
+            "claude_pretooluse_refusal_case"
+          ],
+          "milestone": "a-provider-hook-refuses-an-out-of-scope-edit",
+          "non_scope": [
+            "Bash tool commands that write files; they are reported as a stated limitation, not parsed",
+            "Treating the hook as the gate; CI is the gate"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "lib/check.sh",
+            ".claude/hooks",
+            "share/providers.yaml",
+            "docs/CONTINUITY.md",
+            "test/cases"
+          ],
+          "slug": "claude-code-refuses-an-out-of-scope-edit",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2252",
+        "kind": "issue",
+        "label": "I2252",
+        "summary": "Codex refuses an out-of-scope edit where its hooks can, and the declaration says where they cannot",
+        "route": "/cockpit/objects/issue/i2252",
+        "source": ".ai/repo/project/issues/I2252.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A documented Codex hook payload for an out-of-scope write is refused in a case, and an in-scope one allowed",
+            "share/providers.yaml lists the Codex tool kinds the hook cannot block, with a source"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Codex has no adapter of any kind.",
+          "depends_on": [
+            "I2251"
+          ],
+          "desired_state": "A Codex hook refuses the same out-of-scope write in a case built from its documented payload; unsupported kinds are listed in the declaration.",
+          "evidence_required": [
+            "codex_hook_refusal_case"
+          ],
+          "milestone": "a-provider-hook-refuses-an-out-of-scope-edit",
+          "non_scope": [
+            "Gemini, Cursor, Copilot; each stays a sourced N/A until I2250 records a blocking hook"
+          ],
+          "objective": "Add a Codex adapter for the tool-call hook I2250 recorded as supported, reusing I2251's shim, and declare the tool kinds Codex cannot block.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "share/providers.yaml",
+            ".codex",
+            "docs/generated",
+            "test/cases"
+          ],
+          "slug": "codex-refuses-an-out-of-scope-edit",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/providers-check",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "share/providers.yaml:127-131 declares Codex unadapted although its hook system is documented there; the pack's M06-I03 asks for a Codex projection without invented capabilities."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2253",
+        "kind": "issue",
+        "label": "I2253",
+        "summary": "A new repository's session records are committed, and pushed only when its policy says so",
+        "route": "/cockpit/objects/issue/i2253",
+        "source": ".ai/repo/project/issues/I2253.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A session end in a fresh fixture repository with a remote commits the record and leaves the remote unchanged",
+            "With push_record_on_end: true the same session end pushes",
+            "This repository's effective policy still pushes"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Every adopter pushes session records by default.",
+          "depends_on": [],
+          "desired_state": "A fresh repository commits its record and does not push; the policy key turns push on; this repository keeps push on in .ai/repo/policy.yaml.",
+          "evidence_required": [
+            "push_is_opt_in_case"
+          ],
+          "milestone": "adoption-is-light",
+          "non_scope": [
+            "commit_record_on_end; committing locally is not an external effect",
+            "ensure_server_on_start (share/skeleton/policy.yaml:101), measured in optional-subsystems-are-measured"
+          ],
+          "objective": "Change the skeleton default push_record_on_end to false, keep this repository's own policy pushing, and say so in docs/ADOPTION.md and the release notes.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton/policy.yaml",
+            ".ai/repo/policy.yaml",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "a-new-repository-does-not-push-by-default",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2254",
+        "kind": "issue",
+        "label": "I2254",
+        "summary": "A minimal adoption seeds what the lifecycle needs and references the rule package instead of copying it",
+        "route": "/cockpit/objects/issue/i2254",
+        "source": ".ai/repo/project/issues/I2254.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init --minimal creates the number of files docs/ADOPTION.md states, counted by the case",
+            "doctor, start, check and finish pass in a minimal repository",
+            "The rule package version the minimal layer resolves is named in its manifest"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Every adoption copies about a hundred files.",
+          "depends_on": [
+            "I2255",
+            "I2253"
+          ],
+          "desired_state": "init --minimal creates a counted, documented set; doctor and the lifecycle pass in it; the journey case runs on it and reports the count.",
+          "evidence_required": [
+            "minimal_init_count_case"
+          ],
+          "milestone": "adoption-is-light",
+          "non_scope": [
+            "Changing the default init; minimal is opt-in until the owner decides",
+            "The reconciler of two-folder-integration"
+          ],
+          "objective": "Add init --minimal that writes the manifest, policy, scope and lifecycle directories only, and resolves the vendored rule package from the installed tool by version instead of copying 60 files.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/init.sh",
+            "lib/common.sh",
+            "lib/rules.sh",
+            "share/skeleton",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "a-minimal-adoption-references-the-rules",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the journey case> <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2255",
+        "kind": "issue",
+        "label": "I2255",
+        "summary": "A stranger's first change is a journey CI walks: init, start, stray, refused, repair, finish",
+        "route": "/cockpit/objects/issue/i2255",
+        "source": ".ai/repo/project/issues/I2255.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The case refuses the out-of-scope edit at check with exit 10 and accepts the repaired finish with exit 0",
+            "The first hooked commit after init succeeds, or the case fails naming the refusal",
+            "The case prints the number of files init created and each step's seconds"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The journey is untested; regressions in it are found by adopters.",
+          "depends_on": [],
+          "desired_state": "The case passes in CI on Linux and macOS and its output records the file count and step times.",
+          "evidence_required": [
+            "stranger_journey_case"
+          ],
+          "milestone": "adoption-is-light",
+          "non_scope": [
+            "Reducing the file count (I2254)",
+            "Making doctor fast (I0828)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases",
+            "test/lib.sh",
+            "docs/ADOPTION.md"
+          ],
+          "slug": "a-strangers-first-change-is-a-case",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2256",
+        "kind": "issue",
+        "label": "I2256",
+        "summary": "What an MCP client reads before its first call is measured and budgeted",
+        "route": "/cockpit/objects/issue/i2256",
+        "source": ".ai/repo/project/issues/I2256.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "bench prints initialize bytes, tools/list bytes, the largest tool and its bytes, and the tool count",
+            "The baseline is committed and bench --check fails when tools/list grows past the budget in a fixture",
+            "docs/MCP.md states the measured numbers with the commit"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The listing's size is unmeasured and unbounded.",
+          "depends_on": [],
+          "desired_state": "The four numbers are in the bench baseline, printed by bench, and a regression past the budget fails bench --check in CI.",
+          "evidence_required": [
+            "mcp_listing_budget"
+          ],
+          "milestone": "a-client-lists-only-the-tools-it-needs",
+          "non_scope": [
+            "Reducing the size (I2257, I2258)"
+          ],
+          "objective": "Add bench targets for initialize bytes, tools/list bytes, the largest tool entry and the tool count, commit a baseline, and let bench --check refuse growth beyond a declared budget.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/bench.rs",
+            "apps/majordomus-cli/src/mcp",
+            ".ai/repo/benchmarks",
+            "docs/MCP.md",
+            "docs/PERFORMANCE.md",
+            "test/cases"
+          ],
+          "slug": "the-mcp-listing-is-measured",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test bench",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2257",
+        "kind": "issue",
+        "label": "I2257",
+        "summary": "A tools/list entry does not repeat a schema the client can fetch once",
+        "route": "/cockpit/objects/issue/i2257",
+        "source": ".ai/repo/project/issues/I2257.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "tools/list bytes fall by the measured amount, recorded in the bench baseline",
+            "Every inputSchema in the listing has type object at its root (Claude Code rejects the whole list otherwise)",
+            "The MCP conformance tests pass and a test reads a tool's output schema through its new route"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Every listing carries every output schema.",
+          "depends_on": [
+            "I2256"
+          ],
+          "desired_state": "The listing carries input schemas only, each rooted at type object; output schemas are reachable; I2256's number drops and is re-baselined.",
+          "evidence_required": [
+            "schema_dedup_test"
+          ],
+          "milestone": "a-client-lists-only-the-tools-it-needs",
+          "non_scope": [
+            "Removing structuredContent from tool results"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/capability",
+            "docs/MCP.md",
+            ".ai/repo/benchmarks",
+            "test/cases"
+          ],
+          "slug": "tool-schemas-are-not-repeated",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_conformance_projection --test mcp_stdio"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2258",
+        "kind": "issue",
+        "label": "I2258",
+        "summary": "A client can start from a small tool set and reach every capability through discovery",
+        "route": "/cockpit/objects/issue/i2258",
+        "source": ".ai/repo/project/issues/I2258.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the core view, a test calls a capability absent from the listing through the discovery tool and gets the same result as the direct tool",
+            "Without the option, tools/list is byte-identical to before",
+            "An unknown capability id through discovery is a clear error naming the discovery route"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "All tools always.",
+          "depends_on": [
+            "I2257"
+          ],
+          "desired_state": "`--tools core` (name decided in the issue) lists the declared core set plus discovery; every capability is reachable through discovery; the full list is unchanged by default.",
+          "evidence_required": [
+            "discovery_reaches_every_capability_test"
+          ],
+          "milestone": "a-client-lists-only-the-tools-it-needs",
+          "non_scope": [
+            "Changing the default view; the owner decides once clients are measured"
+          ],
+          "objective": "Add a declared default tool view and a discovery tool that lists and invokes any capability by id, selectable by server option, with the full list remaining the default until the owner switches it.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/capability",
+            "share/providers",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "a-small-tool-set-and-discovery",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_shared"
+          ],
+          "why": "Pack M09-I02/I04: discovery proportional to the task without a capability disappearing. The server lists 177 tools today with no selection (protocol.rs:214-219)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2259",
+        "kind": "issue",
+        "label": "I2259",
+        "summary": "A new guaranteed claim arrives with a recorded passing run of its test, or is refused",
+        "route": "/cockpit/objects/issue/i2259",
+        "source": ".ai/repo/project/issues/I2259.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture pull request adding a guaranteed claim whose test did not run in its CI run is refused by evidence-check",
+            "The same with the test passing in the run is accepted",
+            "The baseline file cannot gain an unsupported line in a pull request; a case shows it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "New unsupported guarantees are reported and admitted.",
+          "depends_on": [
+            "I1949",
+            "I1954"
+          ],
+          "desired_state": "A pull request adding a guarantee must show its test passing in the same CI run; the trunk's baseline stops growing.",
+          "evidence_required": [
+            "new_guarantee_needs_a_run_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Paying the existing 158-line debt; that is test-evidence's recording work (I1949, I1954)",
+            "Tamper-proofing (refused, docs/EVIDENCE.md:816)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "scripts/evidence-check",
+            "scripts/ci/evidence-collect",
+            "apps/majordomus-cli/src/evidence",
+            "docs/EVIDENCE.md",
+            ".ai/repo/ci",
+            "test/cases"
+          ],
+          "slug": "a-new-guarantee-arrives-with-its-run",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 357_ci_records_evidence <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2260",
+        "kind": "issue",
+        "label": "I2260",
+        "summary": "Every writer of a lifecycle record is listed, and a record with two writers gets one owner",
+        "route": "/cockpit/objects/issue/i2260",
+        "source": ".ai/repo/project/issues/I2260.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The table names every writer of each lifecycle record with path:line, generated, not hand-written",
+            "A handover resumed by continuity resume is written by the same function as majordomus handover, shown by a case comparing the two files byte for byte"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No table of writers exists; handovers have two writers.",
+          "depends_on": [
+            "I2141"
+          ],
+          "desired_state": "A generated table lists record, writer and owner; continuity resume writes handovers through the owner's interface; a gate fails a new writer of an owned record.",
+          "evidence_required": [
+            "lifecycle_writer_table",
+            "one_handover_writer_case"
+          ],
+          "milestone": "work-is-coordinated",
+          "non_scope": [
+            "Rewriting the shell lifecycle in Rust",
+            "The YAML reader pair (I2243)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "deep-work",
+          "scope": [
+            "lib/handover.sh",
+            "apps/majordomus-cli/src/continuity",
+            "apps/majordomus-cli/src/capability/builtin",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "every-lifecycle-record-has-one-writer",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib continuity",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2261",
+        "kind": "issue",
+        "label": "I2261",
+        "summary": "A clone of this repository on a machine its trust list does not name opens no mesh socket",
+        "route": "/cockpit/objects/issue/i2261",
+        "source": ".ai/repo/project/issues/I2261.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a test with a declaration that does not list the node's key, no multicast socket is bound and no rendezvous endpoint is dialled",
+            "mesh doctor and serve status name the reason and the command to list the key",
+            "With the key listed, the existing mesh_cooperation tests pass unchanged"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "An unlisted clone activates the mesh the repository declares.",
+          "depends_on": [],
+          "desired_state": "A server whose own key is not listed keeps the mesh closed and says why on serve status and mesh doctor; a listed machine is unchanged.",
+          "evidence_required": [
+            "unlisted_node_stays_closed_test"
+          ],
+          "milestone": "runtime-trust",
+          "non_scope": [
+            "Removing the endpoints from the declaration; the owner decides what this repository publishes",
+            "Trust semantics between listed machines (I2132-I2135)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "an-unlisted-clone-stays-off-the-mesh",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh_cooperation",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2264",
+        "kind": "issue",
+        "label": "I2264",
+        "summary": "A first-run study protocol and a local capture command exist that a stranger can run and opt out of",
+        "route": "/cockpit/objects/issue/i2264",
+        "source": ".ai/repo/project/issues/I2264.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The protocol states task, consent, opt-out, captured fields and success measures",
+            "The capture run in a fixture records every declared field, redacts a seeded token and the home path, and writes only its output file",
+            "Every fixture record carries fixture: true"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No protocol, no capture.",
+          "depends_on": [
+            "I2255"
+          ],
+          "desired_state": "docs carries the protocol; a typed capability writes the observation file; a case runs it in a fixture.",
+          "evidence_required": [
+            "study_protocol",
+            "first_run_capture_case"
+          ],
+          "milestone": "first-runs-by-strangers-are-recorded",
+          "non_scope": [
+            "Contacting anyone",
+            "Sending data anywhere",
+            "Simulated participants presented as real"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/schemas/majordomus",
+            "docs/generated",
+            "test/cases"
+          ],
+          "slug": "a-first-run-can-be-captured-with-consent",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli capabilities validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2265",
+        "kind": "issue",
+        "label": "I2265",
+        "summary": "Observations of first runs are records, and their summary is derived from them",
+        "route": "/cockpit/objects/issue/i2265",
+        "source": ".ai/repo/project/issues/I2265.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The summary of a fixture set equals the hand-computed values in the case",
+            "A summary edited by hand fails generate --check",
+            "A record with fixture: true is excluded and the summary says how many were excluded"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No observation kind or summary.",
+          "depends_on": [
+            "I2264"
+          ],
+          "desired_state": "Observation records validate against their schema; the summary is generated; fixture records are excluded by rule.",
+          "evidence_required": [
+            "observation_summary_case"
+          ],
+          "milestone": "first-runs-by-strangers-are-recorded",
+          "non_scope": [
+            "Any decision from the data; continue/pivot/retire is the owner's"
+          ],
+          "objective": "Give observation files a tracked home and kind, derive a summary (counts, medians, refusals by kind) from them alone, and refuse a hand-written summary or a fixture record counted as real.",
+          "parallel_safe": false,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo",
+            "share/schemas/majordomus",
+            "apps/majordomus-cli/src",
+            "docs/generated",
+            "test/cases"
+          ],
+          "slug": "first-run-observations-are-records",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli generate --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "Pack M12-I03: raw anonymised observations and a derived view from the same source. Nothing reads observations today because none exist."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2266",
+        "kind": "issue",
+        "label": "I2266",
+        "summary": "Each optional subsystem has a measured cost table",
+        "route": "/cockpit/objects/issue/i2266",
+        "source": ".ai/repo/project/issues/I2266.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One command regenerates the table and a case checks its shape",
+            "Each row cites how each number was measured",
+            "The table records commit, machine and load average"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No cost table.",
+          "depends_on": [],
+          "desired_state": "A generated table under .ai/repo/benchmarks or docs, reproducible by one command, stating commit, machine and load average.",
+          "evidence_required": [
+            "subsystem_cost_table"
+          ],
+          "milestone": "optional-subsystems-are-measured",
+          "non_scope": [
+            "Changing any subsystem"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "deep-work",
+          "scope": [
+            "scripts",
+            "apps/majordomus-cli/src/commands/bench.rs",
+            ".ai/repo/benchmarks",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "optional-subsystems-have-a-cost-table",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2267",
+        "kind": "issue",
+        "label": "I2267",
+        "summary": "The task lifecycle runs in a fresh repository with no optional subsystem started",
+        "route": "/cockpit/objects/issue/i2267",
+        "source": ".ai/repo/project/issues/I2267.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The case asserts no listening socket was opened and no lease file written during start, check and finish",
+            "The case asserts no optional registry file was read (by an strace-free method: a sandboxed HOME and a missing optional tree)"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Unknown; untested.",
+          "depends_on": [
+            "I2266"
+          ],
+          "desired_state": "The case passes; any dependency found is removed or declared.",
+          "evidence_required": [
+            "lifecycle_without_optional_subsystems_case"
+          ],
+          "milestone": "optional-subsystems-are-measured",
+          "non_scope": [
+            "Cargo features; only if the case shows a need"
+          ],
+          "objective": "Add a case proving start, check and finish complete in a fresh repository with no listening socket, no server lease, no mesh and no optional registry read, and fix whatever it finds.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib",
+            "test/cases",
+            "docs/ADOPTION.md"
+          ],
+          "slug": "the-lifecycle-needs-no-optional-subsystem",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2268",
+        "kind": "issue",
+        "label": "I2268",
+        "summary": "A proposed ADR states retain, isolate or retire for each optional subsystem from measured cost and observed use",
+        "route": "/cockpit/objects/issue/i2268",
+        "source": ".ai/repo/project/issues/I2268.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each recommendation cites a row of the cost table and the observations, or states that observations are absent",
+            "The ADR's status is proposed"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No decision record.",
+          "depends_on": [
+            "I2266",
+            "I2265"
+          ],
+          "desired_state": "A proposed ADR with per-subsystem recommendations and their evidence.",
+          "evidence_required": [
+            "subsystem_decision_adr"
+          ],
+          "milestone": "optional-subsystems-are-measured",
+          "non_scope": [
+            "Executing any retirement before the owner accepts the ADR"
+          ],
+          "objective": "Write a proposed ADR that cites the cost table and the first-run observations and recommends retain, isolate or retire per subsystem, with migration cost; the owner accepts it.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "deep-work",
+          "scope": [
+            ".ai/repo/adrs",
+            "docs"
+          ],
+          "slug": "a-decision-per-optional-subsystem-is-proposed",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus adr check"
+          ],
+          "why": "Pack M13-I05: no ideological deletion; decisions from evidence. Neither the cost table nor observations exist yet."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2269",
+        "kind": "issue",
+        "label": "I2269",
+        "summary": "A decision names the local runtime as the owner of browser peers, and says what a browser may and may not do",
+        "route": "/cockpit/objects/issue/i2269",
+        "source": ".ai/repo/project/issues/I2269.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An ADR under .ai/repo/adrs names the peer board, not the mesh, as the owner of browser peers, and cites ADR 0050, ADR 0067 and ADR 0033",
+            "The ADR's threat model has a row for every threat listed in the pack's 06-policies-security-and-sandboxing.md, each with a mitigation or a stated limit",
+            "The ADR lists the first capability set as read-only and approved per request, and lists navigation, clicks, forms, script injection, screenshots and storage as later slices",
+            "docs/BROWSER.md marks every browser capability as planned and links the ADR",
+            "majordomus doctor and the ADR and document gates pass on the change"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No ADR, document, rule or issue mentions a browser peer. The pack's invariant contradicts ADR 0050 and ADR 0067 as worded.",
+          "depends_on": [],
+          "evidence_required": [
+            "browser_peer_adr",
+            "threat_model_rows",
+            "browser_doc_marks_planned"
+          ],
+          "milestone": "a-browser-is-a-read-only-peer",
+          "non_scope": [
+            "Any code.",
+            "Accepting the ADR. Acceptance is the owner's act.",
+            "Changing ADR 0050 or ADR 0067. The new ADR refines them and says so."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            ".ai/repo/adrs",
+            "docs/BROWSER.md",
+            "docs/MESH.md",
+            "docs/README.md"
+          ],
+          "slug": "the-browser-peer-has-an-owner",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus doctor",
+            "scripts/ci/doc-command-check",
+            "scripts/ci/claim-proof-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2270",
+        "kind": "issue",
+        "label": "I2270",
+        "summary": "The peer board knows a browser peer: what it is, which protocol it speaks, and what it offers",
+        "route": "/cockpit/objects/issue/i2270",
+        "source": ".ai/repo/project/issues/I2270.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "peers.list over the CLI, HTTP and MCP lists a browser peer attached in a test with its card, and its JSON roundtrips",
+            "A card whose protocol version is unsupported, or whose capability id the registry does not declare, is refused with a typed reason and no peer is added",
+            "Two attaches with one pairing key leave one browser peer on the board",
+            "Advertised capabilities are listed in one order whatever order they were declared in",
+            "A board serialised before this change still deserialises (the sibling-checkout read in apps/majordomus-cli/src/peers.rs:98-101)"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [
+            "I2269"
+          ],
+          "evidence_required": [
+            "browser_card_roundtrip_test",
+            "refused_card_tests",
+            "old_board_parses_test"
+          ],
+          "milestone": "a-browser-is-a-read-only-peer",
+          "non_scope": [
+            "The host, the extension and any transport. This is the model, attached in tests through the board's own API.",
+            "Mesh registration. A browser is not a mesh node (ADR from I2269)."
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/browser",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/tests/",
+            "share/schemas",
+            "docs/BROWSER.md"
+          ],
+          "slug": "the-board-lists-a-browser-peer",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test browser_peer",
+            "cargo test --lib peers",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2279",
+        "kind": "issue",
+        "label": "I2279",
+        "summary": "release.status says which stage the declared and the newest tagged release are at, and what to run next",
+        "route": "/cockpit/objects/issue/i2279",
+        "source": ".ai/repo/project/issues/I2279.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "On a fixture repository with a stubbed observation, release.status walks one release through every stage, and each stage's verdict matches the fixture",
+            "A stage with no observation, or an observation older than the bound, is unknown and never pass",
+            "A version declared on master and untagged beyond the bound is fail, and its next command is the tag step of docs/DISTRIBUTION.md",
+            "Adding a phase to a copy of .ai/repo/ci/release.yaml adds a stage to release.status with no code change",
+            "No HTTP or MCP call of release.status starts a process or opens a socket, proved by a test, and SECURITY.md names release refresh"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "release_status_stage_case",
+            "unknown_is_never_pass_test",
+            "declared_untagged_case",
+            "stages_from_release_model_test",
+            "no_network_in_request_test"
+          ],
+          "milestone": "a-release-is-followed-to-its-users",
+          "non_scope": [
+            "Tagging, merging or re-running anything. The capability reads.",
+            "The before-release audit of documents, claims, coverage and debt (I2070).",
+            "Release provenance (I2165) and installed-archive smoke (I2162)."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "SECURITY.md",
+            "docs/DISTRIBUTION.md",
+            "docs/RELEASE.md",
+            "docs/generated"
+          ],
+          "slug": "a-release-reports-its-stage",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test release_status",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the release.status case this issue adds>",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2280",
+        "kind": "issue",
+        "label": "I2280",
+        "summary": "release-check tells a release record in flight from a lost one",
+        "route": "/cockpit/objects/issue/i2280",
+        "source": ".ai/repo/project/issues/I2280.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case with a tag, no record and no record branch fails release-check, as today",
+            "A case with a tag, no record and a fresh origin/release/record-<tag> passes with an in-flight line naming the branch and the bound",
+            "The same case with the tag older than the bound fails",
+            "The bound is read from the policy and stated in both the in-flight line and the failure"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A tag with no record either fails or is excused in .ai/repo/release-record-baseline.txt. There is no in-flight state and no bound.",
+          "depends_on": [],
+          "evidence_required": [
+            "in_flight_record_case",
+            "red_before_fix"
+          ],
+          "milestone": "a-release-is-followed-to-its-users",
+          "non_scope": [
+            "Reading the forge. The structure job has no token and no toolchain (scripts/ci/release-check:159-163).",
+            "The record's ranking in the integration queue (I2060)."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/release-check",
+            ".ai/repo/policy.yaml",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "a-record-in-flight-is-not-a-lost-record",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the release-check case this issue adds>",
+            "scripts/ci/release-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2281",
+        "kind": "issue",
+        "label": "I2281",
+        "summary": "An agent releases by a workflow that reads release.status, with every wait bounded and every poll logged",
+        "route": "/cockpit/objects/issue/i2281",
+        "source": ".ai/repo/project/issues/I2281.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            ".ai/repo/workflows/release.md exists, is listed in .ai/repo/workflows/README.md, and majordomus context resolve .ai/repo/workflows lists it",
+            "Every command in it is run by doc-command-check or marked with the reason it cannot run here",
+            "Every wait in it names its bound and prints the observed stage on each poll",
+            "It decides that each step is done by release.status and not by reading a log"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Absent. The release pack's prose and session memory are the only agent-facing procedure.",
+          "depends_on": [
+            "I2279",
+            "I2280"
+          ],
+          "evidence_required": [
+            "release_workflow_listed",
+            "release_workflow_commands_checked"
+          ],
+          "milestone": "a-release-is-followed-to-its-users",
+          "non_scope": [
+            "Automating the tag. Tagging stays a person's or an agent's explicit act (docs/RELEASE.md:545-550).",
+            "The before-release audit (I2070). The workflow links to it as a step."
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "deep-work",
+          "scope": [
+            ".ai/repo/workflows/release.md",
+            ".ai/repo/workflows/README.md",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "the-release-has-a-workflow-an-agent-follows",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/doc-command-check",
+            "majordomus doctor"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -32326,6 +34561,282 @@
         }
       },
       {
+        "id": "majordomus://milestone/a-browser-is-a-read-only-peer",
+        "kind": "milestone",
+        "label": "a-browser-is-a-read-only-peer",
+        "summary": "One browser on this machine is a paired peer of the local runtime and answers one read-only request, with provenance, on every surface",
+        "route": "/cockpit/objects/milestone/a-browser-is-a-read-only-peer",
+        "source": ".ai/repo/project/milestones/a-browser-is-a-read-only-peer.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An accepted ADR names the local runtime's peer board, not the mesh, as the owner of browser peers and records the threat model",
+            "After pairing, peers.list on the CLI, HTTP and MCP lists the browser with its extension version, protocol version and advertised capabilities",
+            "A request to read the active page fails with a typed reason when no browser is paired, when the paired browser is offline and when the person does not approve within the timeout",
+            "An approved request returns the origin, the title, sanitized bounded text and a SHA-256 of that text, with the browser peer and the execution id",
+            "After unpairing, the host is refused by the server and the extension shows that it is disconnected",
+            "A real-Chrome case loads the built extension, pairs it, approves one reading and revokes the pairing"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [
+            "runtime-trust"
+          ],
+          "evidence_required": [
+            "accepted_browser_peer_adr",
+            "browser_peer_listed_on_every_surface",
+            "read_only_request_with_provenance",
+            "revocation_case",
+            "real_chrome_case"
+          ],
+          "non_scope": [
+            "Navigation, clicks, form filling, script injection, screenshots and cookie or storage access. These are browsers-act-and-cooperate-under-policy.",
+            "More than one browser peer per checkout and fan-out across browsers. These are browsers-act-and-cooperate-under-policy.",
+            "A browser reached through the mesh from another machine. That needs the remote-operation authorization ADR 0050 asks for and is not planned here.",
+            "Persisting a page reading as evidence beyond the execution store.",
+            "Firefox and Safari. The first slice targets Chromium-based browsers with Manifest V3 native messaging.",
+            "Everything the pack excludes: behavioural manipulation, browsing-history or telemetry collection, CAPTCHA solving, background or distributed compute, a public compute marketplace."
+          ],
+          "order": 316,
+          "priority": "p2",
+          "scope": [
+            ".ai/repo/adrs",
+            "docs/BROWSER.md",
+            "docs/MESH.md",
+            "docs/CLAIMS.yaml",
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/browser",
+            "apps/majordomus-cli/src/commands/browser.rs",
+            "apps/majordomus-cli/src/capability/builtin/browser.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-browser",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            ".ai/repo/ci/gates.yaml"
+          ],
+          "slug": "a-browser-is-a-read-only-peer",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test browser_peer --test browser_page",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the browser cases this milestone adds>",
+            "node --test apps/majordomus-browser/test/"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-client-lists-only-the-tools-it-needs",
+        "kind": "milestone",
+        "label": "a-client-lists-only-the-tools-it-needs",
+        "summary": "What an MCP client reads before its first call is measured, budgeted, and proportional to the task",
+        "route": "/cockpit/objects/milestone/a-client-lists-only-the-tools-it-needs",
+        "source": ".ai/repo/project/milestones/a-client-lists-only-the-tools-it-needs.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "bench records tools/list bytes, the largest tool's bytes, initialize bytes and the tool count against a committed baseline, and a growth past the budget fails bench --check",
+            "A tools/list entry carries no outputSchema that a client can fetch elsewhere, and Claude Code still accepts the listing (every inputSchema has type object)",
+            "With the small default view, every capability is reachable through the discovery tool, and a test calls one that is not in the default list"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "About 2 MB of listing on every connection, unmeasured.",
+          "depends_on": [],
+          "desired_state": "A measured listing under a committed budget, and the full surface reachable by discovery.",
+          "evidence_required": [
+            "mcp_listing_budget",
+            "schema_dedup_test",
+            "discovery_reaches_every_capability_test"
+          ],
+          "non_scope": [
+            "Transport reliability, cancellation and bounds; that is mcp-transports-are-reliable (I2145-I2148)",
+            "Removing a capability; nothing disappears, it moves behind discovery"
+          ],
+          "order": 308,
+          "priority": "p1",
+          "risks": [
+            "Claude Code drops the whole tools/list when one inputSchema is $ref-rooted (memory note mcp-tools-missing-is-a-rejected-tools-list); any schema change is tested against that rule",
+            "Clients that cache tools may not re-list; the default view stays the full list until the owner switches it"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/src/commands/bench.rs",
+            ".ai/repo/benchmarks",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "a-client-lists-only-the-tools-it-needs",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_stdio",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-fact-is-written-once",
+        "kind": "milestone",
+        "label": "a-fact-is-written-once",
+        "summary": "A fact is written once, the register of the copies that remain is checked, and an object added anywhere reaches every surface",
+        "route": "/cockpit/objects/milestone/a-fact-is-written-once",
+        "source": ".ai/repo/project/milestones/a-fact-is-written-once.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A ledger row marked open whose witness no longer occurs in its path fails a test that names the row",
+            "A row marked fixed without a resolution fails the same test",
+            "No open row of docs/HARDCODING_LEDGER.yaml is already paid in the tree",
+            "Adding a kind to the search vocabulary is one edit, and the usage text, default list and validation follow it",
+            "The site's product data reads its command list and exit codes from share/commands.yaml, not from bin/majordomus usage text",
+            "An object added to a fixture repository appears in CLI JSON, an HTTP route, an MCP resource and the Cockpit's object index and entity page, and is absent from each after it is removed"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "ledger_is_checked",
+            "stale_rows_closed",
+            "object_reaches_every_surface",
+            "command_data_has_one_owner"
+          ],
+          "non_scope": [
+            "Consumer catalogues in the Cockpit and the site (lanes, filters, API literals, the site's Cockpit picture), which are I2152 in milestone surfaces-never-disagree.",
+            "Removing the clap tree or cli/local.rs LOCAL, which surfaces-never-disagree records as measured second declarations.",
+            "The synthetic-capability proof, which is I1027 in milestone capability-graph; this milestone proves objects and kinds, not capabilities.",
+            "Generating authored prose, or flagging a primary declaration as a duplicate.",
+            "A new registry that copies lists from the ones that already own them."
+          ],
+          "order": 306,
+          "priority": "p1",
+          "scope": [
+            "docs/HARDCODING_LEDGER.yaml",
+            "docs/DYNAMICITY.md",
+            "apps/majordomus-cli/tests",
+            "lib/search.sh",
+            "lib/context.sh",
+            "scripts/generate-site-data",
+            "share/commands.yaml",
+            "bin/majordomus",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-fact-is-written-once",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test external_extension",
+            "scripts/generate-site-data --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 28_no_hardcoded_values 277_entities_are_routable"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "kind": "milestone",
+        "label": "a-provider-hook-refuses-an-out-of-scope-edit",
+        "summary": "A provider that can refuse a tool call refuses an edit outside the task's scope before it is written",
+        "route": "/cockpit/objects/milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "source": ".ai/repo/project/milestones/a-provider-hook-refuses-an-out-of-scope-edit.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every provider in share/providers.yaml carries a tool-call refusal capability with a source and a date, and doctor reports the declared value",
+            "In a fixture, a Claude Code PreToolUse payload for a write outside the task's scope is answered with a refusal, and one inside scope is allowed",
+            "In a fixture, the Codex hook payload for the same write is refused where Codex supports it, and its unsupported tool kinds are listed",
+            "Disabling the hook leaves the required CI check refusing the same change, in the bypass case of recovery-forge-gate"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No provider refuses an out-of-scope edit before it happens.",
+          "depends_on": [
+            "policy-and-scope-read-exactly"
+          ],
+          "evidence_required": [
+            "provider_refusal_matrix",
+            "claude_pretooluse_refusal_case",
+            "codex_hook_refusal_case"
+          ],
+          "non_scope": [
+            "Claiming a local hook is tamper-proof; recovery-forge-gate is the gate",
+            "Generating client MCP launch configurations; that is I2148",
+            "Providers whose hook cannot block; they get a sourced N/A, not an adapter"
+          ],
+          "order": 310,
+          "priority": "p1",
+          "risks": [
+            "Provider hook formats change; every adapter fixture is built from a documented payload with its source date, and drift is reported, not assumed",
+            "A hook on every tool call adds latency to the person's critical path; it must answer from local state without spawning the Rust executable (memory note hook-latency: UserPromptSubmit cost about 4 s)"
+          ],
+          "scope": [
+            "share/providers.yaml",
+            "share/providers",
+            "lib/capture.sh",
+            "lib/update.sh",
+            "lib/check.sh",
+            ".claude/hooks",
+            "docs/HOW_IT_WORKS.md",
+            "test/cases"
+          ],
+          "slug": "a-provider-hook-refuses-an-out-of-scope-edit",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-release-is-followed-to-its-users",
+        "kind": "milestone",
+        "label": "a-release-is-followed-to-its-users",
+        "summary": "Every surface can tell which stage a release is at, from the bump to the installer that serves it, and a release in flight is not reported as a lost one",
+        "route": "/cockpit/objects/milestone/a-release-is-followed-to-its-users",
+        "source": ".ai/repo/project/milestones/a-release-is-followed-to-its-users.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "release.status reports each stage with pass, pending, fail or unknown, a reason and the next command, and unknown is never reported as pass",
+            "A version declared on master with no tag older than the declared bound is reported failed by release.status",
+            "A tag whose record is proposed on origin/release/record-<tag> is reported in flight by release-check within the bound and failed after it, proved by a case",
+            "The stage list is read from .ai/repo/ci/release.yaml, and a phase added there appears in release.status with no code edit",
+            ".ai/repo/workflows/release.md names every command it uses, and doc-command-check runs them"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "release_status_stage_case",
+            "in_flight_record_case",
+            "declared_untagged_case",
+            "release_workflow_commands_checked"
+          ],
+          "non_scope": [
+            "Tagging or releasing automatically. version.yml proposes and never tags, by design (docs/RELEASE.md:545-550, test/cases/353_the_version_bump_has_an_actor.sh).",
+            "The before-release audit of documents, claims, coverage and debt, which is I2070.",
+            "Release provenance and installed-archive smoke, which are I2165 and I2162.",
+            "Release and deploy latency, which is ci-critical-path."
+          ],
+          "order": 317,
+          "priority": "p2",
+          "scope": [
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/capability/builtin/release.rs",
+            "scripts/ci/release-check",
+            ".ai/repo/ci/release.yaml",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/workflows/release.md",
+            ".ai/repo/workflows/README.md",
+            "docs/DISTRIBUTION.md",
+            "docs/RELEASE.md",
+            "SECURITY.md",
+            "test/cases",
+            "apps/majordomus-cli/tests/"
+          ],
+          "slug": "a-release-is-followed-to-its-users",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test release_status",
+            "MJ_TEST_JOBS=4 bash test/run.sh 362_a_release_follows_the_ci_verdict 996_the_record_pull_request_gets_its_verdict <the cases this milestone adds>",
+            "scripts/ci/release-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/adopter-upgrades",
         "kind": "milestone",
         "label": "adopter-upgrades",
@@ -32364,6 +34875,167 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/adoption-is-light",
+        "kind": "milestone",
+        "label": "adoption-is-light",
+        "summary": "A new repository adopts the lifecycle with few files, no default push, and a journey a test walks",
+        "route": "/cockpit/objects/milestone/adoption-is-light",
+        "source": ".ai/repo/project/milestones/adoption-is-light.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fresh repository's session end commits its record and does not push it unless the policy says push_record_on_end: true",
+            "init --minimal creates a stated number of files, counted by the case, and doctor and the first hooked commit pass in that repository",
+            "The journey case refuses the out-of-scope edit at check with exit 10, accepts the repaired finish, and prints the count and the seconds of each step"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Adoption copies about a hundred files, pushes by default and has no end-to-end journey case.",
+          "depends_on": [],
+          "desired_state": "A minimal adoption has a measured, stated file count; push is opt-in; the journey is a case.",
+          "evidence_required": [
+            "push_is_opt_in_case",
+            "minimal_init_count_case",
+            "stranger_journey_case"
+          ],
+          "non_scope": [
+            "The footprint outside .ai and the reconciler; that is two-folder-integration (I1101-I1112)",
+            "Making doctor itself fast; that is I0828 (M004)",
+            "This repository's own policy, which keeps committing and pushing its records"
+          ],
+          "order": 311,
+          "priority": "p1",
+          "risks": [
+            "A referenced rule package must still be pinned to a version; adopter-upgrades (I1980) decides how a layer names its tool version",
+            "Changing a skeleton default changes every new adopter; the change is announced in the release notes"
+          ],
+          "scope": [
+            "lib/init.sh",
+            "share/skeleton",
+            "share/standard",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "adoption-is-light",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "kind": "milestone",
+        "label": "an-outcome-becomes-a-reviewed-plan",
+        "summary": "A desired outcome becomes a draft plan that is checked before a record is written",
+        "route": "/cockpit/objects/milestone/an-outcome-becomes-a-reviewed-plan",
+        "source": ".ai/repo/project/milestones/an-outcome-becomes-a-reviewed-plan.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent draft check refuses a draft whose criterion no issue serves, whose issue serves nothing, whose dependencies cycle or whose link does not resolve, naming each finding, and writes nothing",
+            "intent draft apply writes exactly the records of a checked draft with identities above the high-water mark, and refuses a draft that does not check",
+            "intent draft brief lists the intents, milestones, issues, ADRs and rules the outcome touches, each with the source it was read from",
+            "An advisor-written draft that does not parse is refused with the reason, and a refused draft's findings are handed back at most the policy's bound of rounds",
+            "The command line, HTTP and MCP answer the same check and the same brief"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "draft_check_writes_nothing",
+            "draft_apply_writes_only_a_checked_draft",
+            "brief_names_its_sources",
+            "malformed_advisor_draft_refused"
+          ],
+          "non_scope": [
+            "Executing a draft; a written draft is planned work held to the binding and the opposition like any other",
+            "A Cockpit wizard; the Cockpit may show a draft check's answer and owns no planning logic",
+            "Requiring an advisor; drafting by hand enters the same check",
+            "Rewriting records a draft does not name"
+          ],
+          "order": 301,
+          "priority": "p2",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/reasoning",
+            "scripts/lib/advisors",
+            "share/schemas/majordomus",
+            "share/kinds.yaml",
+            "share/allow",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs/PLANNING.md"
+          ],
+          "slug": "an-outcome-becomes-a-reviewed-plan",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "majordomus plan validate",
+            "cargo test --test intent_draft",
+            "bash test/run.sh <the case I2207 adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "kind": "milestone",
+        "label": "an-unmet-criterion-is-drafted-into-work",
+        "summary": "An unmet criterion is drafted into work from the evidence, and the draft is the same on every run",
+        "route": "/cockpit/objects/milestone/an-unmet-criterion-is-drafted-into-work",
+        "source": ".ai/repo/project/milestones/an-unmet-criterion-is-drafted-into-work.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "gap_draft_follows_the_evidence_test",
+            "plan_draft_is_idempotent_test",
+            "intent_next_explains_what_it_passed_over_test",
+            "stalled_intent_case"
+          ],
+          "non_scope": [
+            "Drafting an intent, a criterion or an invariant from an outcome statement; that is the outcome-to-plan pipeline of the intent-tight-integration pack (prompt 80), which lane A audits",
+            "Writing a gap, an issue or a critique; every draft is printed and the worker commits it",
+            "Calling a model or an advisor; the drafts are derived from records alone and an advisor is reached only through the existing reasoning plan",
+            "Changing the ranking of plan next or the plan engines; intents.next filters and explains, it does not reorder the plan"
+          ],
+          "order": 304,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent_draft.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests",
+            ".ai/repo/project/intents",
+            ".ai/repo/project/gaps",
+            ".ai/repo/project/critiques",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "test/cases"
+          ],
+          "slug": "an-unmet-criterion-is-drafted-into-work",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bin/majordomus plan validate",
+            "cargo test --test intent_draft",
+            "cargo test --test intent_next",
+            "bash test/run.sh <the draft case this milestone adds>"
           ]
         }
       },
@@ -32423,6 +35095,57 @@
             "bin/majordomus plan validate",
             "scripts/ci/core-check",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/browsers-act-and-cooperate-under-policy",
+        "kind": "milestone",
+        "label": "browsers-act-and-cooperate-under-policy",
+        "summary": "Paired browsers act only inside a declared origin policy, several of them answer one request, and what they read can be kept as evidence",
+        "route": "/cockpit/objects/milestone/browsers-act-and-cooperate-under-policy",
+        "source": ".ai/repo/project/milestones/browsers-act-and-cooperate-under-policy.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request for an origin or capability outside the declared browser policy is refused with a typed reason and never reaches the browser",
+            "A capability or origin removed from the policy is refused on the next request with no restart",
+            "A replayed or forged task frame is refused by the host and counted",
+            "browser.navigate runs only to a declared origin, and the extension shows that it is running",
+            "A fan-out request to two browsers where one fails returns one result, one typed failure and a deterministic order",
+            "A reading recorded as evidence names the revision, the browser peer and the content digest"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Absent. It depends on the first slice, which is absent too. Unpairing is the only revocation the first slice provides.",
+          "depends_on": [
+            "a-browser-is-a-read-only-peer",
+            "test-evidence"
+          ],
+          "evidence_required": [
+            "policy_refusal_cases",
+            "replay_and_forgery_cases",
+            "navigate_under_policy_case",
+            "fanout_partial_failure_test",
+            "browser_evidence_record_test"
+          ],
+          "order": 318,
+          "priority": "p3",
+          "scope": [
+            ".ai/repo/policy.yaml",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/browser",
+            "apps/majordomus-cli/src/capability/builtin/browser.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-browser",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/BROWSER.md"
+          ],
+          "slug": "browsers-act-and-cooperate-under-policy",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test browser_policy --test browser_fanout",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases this milestone adds>"
           ]
         }
       },
@@ -32540,6 +35263,58 @@
             "bin/majordomus plan validate",
             "cargo test --test cockpit",
             "MJ_TEST_JOBS=4 bash test/run.sh 389_cockpit_projection 547_the_ui_says_only_what_is_derived"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/command-and-deployment-criteria-are-judged",
+        "kind": "milestone",
+        "label": "command-and-deployment-criteria-are-judged",
+        "summary": "A command or deployment criterion is met by a recorded run of exactly that command, or an observation of exactly that deployment, current at the presented revision",
+        "route": "/cockpit/objects/milestone/command-and-deployment-criteria-are-judged",
+        "source": ".ai/repo/project/milestones/command-and-deployment-criteria-are-judged.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "deployment_criterion_judged_test",
+            "command_criterion_judged_test",
+            "evidence_negative_matrix_case",
+            "claim_guaranteed"
+          ],
+          "non_scope": [
+            "Deploying anything; a criterion reads what was observed and records nothing on its own",
+            "Running a command from an intent read; a read never executes a criterion's command",
+            "Probing a deployment from inside intent show; observation stays `majordomus served observe`",
+            "Authenticating ledger lines cryptographically; the decision on forged lines is recorded and its limitation stated if not implemented",
+            "The finish contract, which is finish-reads-what-its-work-serves"
+          ],
+          "order": 305,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/served.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/intent",
+            ".ai/repo/project/intents",
+            ".ai/repo/adrs",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "site/content/guarantees",
+            "test/cases"
+          ],
+          "slug": "command-and-deployment-criteria-are-judged",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent",
+            "cargo test --test intent_command_evidence",
+            "bash test/run.sh 384_a_deployment_is_evidence",
+            "bash test/run.sh <the negative-matrix case this milestone adds>",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
           ]
         }
       },
@@ -32835,6 +35610,54 @@
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/first-runs-by-strangers-are-recorded",
+        "kind": "milestone",
+        "label": "first-runs-by-strangers-are-recorded",
+        "summary": "A stranger's first run can be observed with consent, recorded, and summarised from the same records",
+        "route": "/cockpit/objects/milestone/first-runs-by-strangers-are-recorded",
+        "source": ".ai/repo/project/milestones/first-runs-by-strangers-are-recorded.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The protocol states the task, the consent, the opt-out, the fields captured and the success measures",
+            "The capture command run in a fixture records every declared field, redacts a seeded secret and a home path, and writes nothing outside its output file",
+            "The summary of a fixture set of observation records is derived by a command, and a hand-edited summary fails a check"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No protocol, capture or record format.",
+          "depends_on": [
+            "adoption-is-light"
+          ],
+          "desired_state": "Five observations can be recorded and summarised the day five people agree to run it.",
+          "evidence_required": [
+            "study_protocol",
+            "first_run_capture_case",
+            "observation_summary_case"
+          ],
+          "non_scope": [
+            "Recruiting participants or contacting anyone",
+            "Inventing, simulating or backfilling an observation",
+            "Sending any data off the participant's machine; the participant hands the record over"
+          ],
+          "order": 312,
+          "priority": "p2",
+          "risks": [
+            "Fixture observations could be mistaken for real ones; every fixture record carries fixture: true and the summary refuses to count it"
+          ],
+          "scope": [
+            "docs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/schemas/majordomus",
+            "test/cases"
+          ],
+          "slug": "first-runs-by-strangers-are-recorded",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
           ]
         }
@@ -33199,6 +36022,96 @@
             "cargo test --lib mesh",
             "cargo test --test mesh_cooperation --test mesh_compaction --test mesh",
             "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/optional-subsystems-are-measured",
+        "kind": "milestone",
+        "label": "optional-subsystems-are-measured",
+        "summary": "Each optional subsystem has a measured cost, and the task lifecycle needs none of them",
+        "route": "/cockpit/objects/milestone/optional-subsystems-are-measured",
+        "source": ".ai/repo/project/milestones/optional-subsystems-are-measured.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A command or script writes the cost table from measurement, and the table names the commit and the machine",
+            "In a fresh repository, start, check and finish complete with no listening socket opened and no server lease written, asserted by the case",
+            "A proposed ADR cites the table and the observation records; its status is proposed until the owner accepts it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No cost table, no isolation proof, no decision record.",
+          "depends_on": [],
+          "desired_state": "Costs measured and published; the lifecycle proved independent; a decision proposed for the owner.",
+          "evidence_required": [
+            "subsystem_cost_table",
+            "lifecycle_without_optional_subsystems_case",
+            "subsystem_decision_adr"
+          ],
+          "non_scope": [
+            "Deleting a subsystem; a retirement is executed only after the owner accepts the ADR",
+            "The Cockpit's content; that is cockpit-control-center",
+            "Mesh trust and defaults; that is runtime-trust"
+          ],
+          "order": 313,
+          "priority": "p2",
+          "risks": [
+            "Measured on a loaded machine the numbers lie; the table records the load average (memory note nine-sessions-make-the-machine-the-bottleneck)"
+          ],
+          "scope": [
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/src",
+            ".ai/repo/benchmarks",
+            ".ai/repo/adrs",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "optional-subsystems-are-measured",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/policy-and-scope-read-exactly",
+        "kind": "milestone",
+        "label": "policy-and-scope-read-exactly",
+        "summary": "Every reader of a record reads the same values, and scope judges the change a task leaves",
+        "route": "/cockpit/objects/milestone/policy-and-scope-read-exactly",
+        "source": ".ai/repo/project/milestones/policy-and-scope-read-exactly.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "current_state": "Two readers of one format disagree; scope is history-based; normalisation failure falls back to the raw string.",
+          "desired_state": "One differential corpus is read by both readers in a case; scope uses the net diff; path judgments are normalised or refused.",
+          "evidence_required": [
+            "yaml_reader_differential_case",
+            "reverted_edit_scope_case",
+            "scope_entry_escape_case"
+          ],
+          "non_scope": [
+            "Replacing the YAML subset with full YAML; the subset is the format (memory note the-yaml-subset-is-a-subset)",
+            "Where the accepted scope lives; that is recovery-acceptance-contract"
+          ],
+          "order": 314,
+          "priority": "p0",
+          "risks": [
+            "Refusing duplicates in the shell reader may refuse records adopters already commit; doctor names each before any command refuses it",
+            "Net-diff scope must not forgive a change merged in from the trunk that the task then edits; case 108 holds that"
+          ],
+          "scope": [
+            "lib/common.sh",
+            "lib/check.sh",
+            "lib/start.sh",
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "test/cases",
+            "test/fixtures"
+          ],
+          "slug": "policy-and-scope-read-exactly",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 00_yaml_flatten 93_scope_policy 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward"
           ]
         }
       },
@@ -33696,6 +36609,64 @@
             "cargo test --workspace --all-features",
             "majordomus generate --check",
             "scripts/ci/pages-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
+        "kind": "milestone",
+        "label": "the-intent-loop-is-proved-end-to-end",
+        "summary": "The intent loop is proved end to end, and the plan and the documents say what it does",
+        "route": "/cockpit/objects/milestone/the-intent-loop-is-proved-end-to-end",
+        "source": ".ai/repo/project/milestones/the-intent-loop-is-proved-end-to-end.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every scenario A01 to A26 of the intent-outcome acceptance matrix is named by a claim in docs/CLAIMS.yaml, guaranteed with a test that exists or planned with a note saying what is missing",
+            "The claims-matrix case fails when a claim's note or its guarantee page calls another claim planned while that claim is guaranteed",
+            "One test fails if the command line, HTTP, MCP or the Cockpit page disagree about one intent's verdict, criteria, binding, disposition or remains",
+            "One test tries each named bypass and fails if any passes",
+            "One case runs from a desired outcome to a reopened and re-satisfied intent with documented commands only",
+            "No sentence of docs/HOW_IT_WORKS.md, docs/PLANNING.md or docs/CLAIMS.yaml describes the intent loop as it was before these milestones"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Shipped per piece, proved per piece; no whole-loop case; the closest is the unpushed case 983 of an-adopter-runs-the-intent-loop.",
+          "depends_on": [],
+          "desired_state": "one parity test; one bypass test; one end-to-end case extending case 983; HOW_IT_WORKS, PLANNING and the claims matrix rewritten to the shipped state.",
+          "evidence_required": [
+            "acceptance_matrix_claimed",
+            "one_intent_reads_alike_everywhere",
+            "every_bypass_refused",
+            "loop_runs_end_to_end",
+            "documents_match_the_loop"
+          ],
+          "non_scope": [
+            "New behaviour; every behaviour proved here is built by another milestone",
+            "Releasing or deploying; that is the release lander's"
+          ],
+          "order": 303,
+          "priority": "p1",
+          "risks": [
+            "Most issues here wait for six branch milestones to land; I2215 and the acceptance-matrix claims are executable now.",
+            "A parity test that compares rendered HTML to JSON compares formats, not facts; compare the capability answers the page asks and the words the page prints from them.",
+            "An end-to-end case that builds every subsystem in one fixture is slow and fragile; keep it offline, fixture-only and within the case time budget, and let unit tests carry the edge cases."
+          ],
+          "scope": [
+            ".ai/repo/project",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/HOW_IT_WORKS.md",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "site"
+          ],
+          "slug": "the-intent-loop-is-proved-end-to-end",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "cargo test --test intent_loop_surfaces --test intent_loop_bypass",
+            "bash test/run.sh <the case I2213 adds>"
           ]
         }
       },
@@ -68931,6 +71902,661 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2200",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2200",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2201",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2201",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2202",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2202",
+        "target": "majordomus://issue/I2200",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2202",
+        "target": "majordomus://issue/I2216",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2202",
+        "target": "majordomus://issue/I2224",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2202",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2205",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2205",
+        "target": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2206",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2206",
+        "target": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2207",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2207",
+        "target": "majordomus://issue/I2205",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2207",
+        "target": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2215",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2215",
+        "target": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2216",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2216",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2217",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2217",
+        "target": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2218",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2218",
+        "target": "majordomus://issue/I2217",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2218",
+        "target": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2219",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2219",
+        "target": "majordomus://issue/I2218",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2219",
+        "target": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2221",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2221",
+        "target": "majordomus://milestone/command-and-deployment-criteria-are-judged",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2222",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2222",
+        "target": "majordomus://issue/I2221",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2222",
+        "target": "majordomus://milestone/command-and-deployment-criteria-are-judged",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2223",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2223",
+        "target": "majordomus://issue/I2221",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2223",
+        "target": "majordomus://issue/I2222",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2223",
+        "target": "majordomus://milestone/command-and-deployment-criteria-are-judged",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2224",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2224",
+        "target": "majordomus://issue/I2215",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2224",
+        "target": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2226",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2226",
+        "target": "majordomus://milestone/a-fact-is-written-once",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2227",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2227",
+        "target": "majordomus://milestone/a-fact-is-written-once",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2228",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2228",
+        "target": "majordomus://issue/I2226",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2228",
+        "target": "majordomus://milestone/a-fact-is-written-once",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2229",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2229",
+        "target": "majordomus://issue/I2226",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2229",
+        "target": "majordomus://milestone/a-fact-is-written-once",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2230",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2230",
+        "target": "majordomus://issue/I2152",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2230",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2231",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2231",
+        "target": "majordomus://issue/I2131",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2231",
+        "target": "majordomus://issue/I2153",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2231",
+        "target": "majordomus://milestone/cockpit-control-center",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2242",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2242",
+        "target": "majordomus://milestone/policy-and-scope-read-exactly",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2243",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2243",
+        "target": "majordomus://milestone/policy-and-scope-read-exactly",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2244",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2244",
+        "target": "majordomus://milestone/policy-and-scope-read-exactly",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2248",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2248",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2249",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2249",
+        "target": "majordomus://issue/I2160",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2249",
+        "target": "majordomus://issue/I2248",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2249",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2250",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2250",
+        "target": "majordomus://milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2251",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2251",
+        "target": "majordomus://issue/I2242",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2251",
+        "target": "majordomus://issue/I2250",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2251",
+        "target": "majordomus://milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2252",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2252",
+        "target": "majordomus://issue/I2251",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2252",
+        "target": "majordomus://milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2253",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2253",
+        "target": "majordomus://milestone/adoption-is-light",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2254",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2254",
+        "target": "majordomus://issue/I2253",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2254",
+        "target": "majordomus://issue/I2255",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2254",
+        "target": "majordomus://milestone/adoption-is-light",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2255",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2255",
+        "target": "majordomus://milestone/adoption-is-light",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2256",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2256",
+        "target": "majordomus://milestone/a-client-lists-only-the-tools-it-needs",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2257",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2257",
+        "target": "majordomus://issue/I2256",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2257",
+        "target": "majordomus://milestone/a-client-lists-only-the-tools-it-needs",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2258",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2258",
+        "target": "majordomus://issue/I2257",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2258",
+        "target": "majordomus://milestone/a-client-lists-only-the-tools-it-needs",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2259",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2259",
+        "target": "majordomus://issue/I1949",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2259",
+        "target": "majordomus://issue/I1954",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2259",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2260",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2260",
+        "target": "majordomus://issue/I2141",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2260",
+        "target": "majordomus://milestone/work-is-coordinated",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2261",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2261",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2264",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2264",
+        "target": "majordomus://issue/I2255",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2264",
+        "target": "majordomus://milestone/first-runs-by-strangers-are-recorded",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2265",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2265",
+        "target": "majordomus://issue/I2264",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2265",
+        "target": "majordomus://milestone/first-runs-by-strangers-are-recorded",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2266",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2266",
+        "target": "majordomus://milestone/optional-subsystems-are-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2267",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2267",
+        "target": "majordomus://issue/I2266",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2267",
+        "target": "majordomus://milestone/optional-subsystems-are-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2268",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2268",
+        "target": "majordomus://issue/I2265",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2268",
+        "target": "majordomus://issue/I2266",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2268",
+        "target": "majordomus://milestone/optional-subsystems-are-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2269",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2269",
+        "target": "majordomus://milestone/a-browser-is-a-read-only-peer",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2270",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2270",
+        "target": "majordomus://issue/I2269",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2270",
+        "target": "majordomus://milestone/a-browser-is-a-read-only-peer",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2279",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2279",
+        "target": "majordomus://milestone/a-release-is-followed-to-its-users",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2280",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2280",
+        "target": "majordomus://milestone/a-release-is-followed-to-its-users",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2281",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2281",
+        "target": "majordomus://issue/I2279",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2281",
+        "target": "majordomus://issue/I2280",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2281",
+        "target": "majordomus://milestone/a-release-is-followed-to-its-users",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -68966,7 +72592,57 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/a-browser-is-a-read-only-peer",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-browser-is-a-read-only-peer",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/a-client-lists-only-the-tools-it-needs",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-fact-is-written-once",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-provider-hook-refuses-an-out-of-scope-edit",
+        "target": "majordomus://milestone/policy-and-scope-read-exactly",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/a-release-is-followed-to-its-users",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/adopter-upgrades",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/adoption-is-light",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/an-outcome-becomes-a-reviewed-plan",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/an-unmet-criterion-is-drafted-into-work",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -68976,12 +72652,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/browsers-act-and-cooperate-under-policy",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/browsers-act-and-cooperate-under-policy",
+        "target": "majordomus://milestone/a-browser-is-a-read-only-peer",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/browsers-act-and-cooperate-under-policy",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://milestone/capability-graph",
         "target": "kind:milestone",
         "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/cockpit-control-center",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/command-and-deployment-criteria-are-judged",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -69036,6 +72732,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/first-runs-by-strangers-are-recorded",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/first-runs-by-strangers-are-recorded",
+        "target": "majordomus://milestone/adoption-is-light",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://milestone/fly-deployment",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -69077,6 +72783,16 @@
       },
       {
         "source": "majordomus://milestone/mesh-journal-converges",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/optional-subsystems-are-measured",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/policy-and-scope-read-exactly",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -69152,6 +72868,11 @@
       },
       {
         "source": "majordomus://milestone/test-evidence",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -77717,8 +81438,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2531,
-      "edges": 5523,
+      "nodes": 2593,
+      "edges": 5673,
       "acyclic": false,
       "truncated": false
     }

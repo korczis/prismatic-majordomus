@@ -1,0 +1,31 @@
+id: I2227
+milestone: a-fact-is-written-once
+title: "An object or kind added to a repository reaches the command line, HTTP, MCP and the Cockpit, and leaves all four when removed"
+slug: the-extensibility-proof-reaches-every-surface
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Extend the end-to-end extensibility proof from the MCP resource list to every surface that projects the index, in a fixture repository that is not this one, including removal."
+why: "apps/majordomus-cli/tests/external_extension.rs:55 (an_object_added_to_the_repository_appears_disappears_and_a_broken_one_is_named) asserts addition, removal and a broken object on the MCP resource list only. :165 (a_repository_defines_a_new_kind_with_its_schema_and_it_is_served_without_a_rust_change) adds a kind and checks MCP and `capabilities describe`, but no HTTP route and no Cockpit page. docs/COCKPIT.md:98-104 claims that a file added under .ai/ gets an index row, a page and backlinks 'without an edit anywhere in the Cockpit', and nothing executes that claim in a foreign repository or for removal. Owner pack 02A §9 makes this proof mandatory, in a consumer repository and including removal. I1027 proves a synthetic capability and is BLOCKED behind I1018 and I1019; objects and kinds are a different path and need no capability."
+current_state: "Addition, removal and a new kind are proved on MCP; the CLI is proved for the kind; HTTP and the Cockpit are unproved."
+desired_state: "The two tests, or a sibling in the same file, also ask the built server over HTTP for the object (its /api/v1 route as the registry projects it, never a literal path) and render /cockpit/objects/<kind> and /cockpit/objects/<kind>/<slug>. They assert that the object and the new kind appear in all of them and in the navigation's kind catalogue, and that after removal each answers without it and the entity route answers 404."
+scope:
+  - "apps/majordomus-cli/tests/external_extension.rs"
+  - "apps/majordomus-cli/tests/common"
+non_scope:
+  - "A synthetic capability (I1027)."
+  - "Any change to the Cockpit or the router to make the test pass; a failure here is a defect to file, not to special-case."
+depends_on: []
+acceptance_criteria:
+  - "A rule added to a fixture repository appears in CLI JSON, its HTTP route, the MCP resource list and the Cockpit's index and entity page, with no consumer edit"
+  - "After removal, the object is absent from all four and its entity page answers 404"
+  - "A kind defined by the fixture appears in the Cockpit's navigation and object index, and its object has an entity page"
+  - "No assertion names an /api/v1 path as a literal; routes come from the registry's HTTP exposure"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test external_extension"
+evidence_required:
+  - "object_reaches_every_surface_test"
+  - "removal_leaves_every_surface_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

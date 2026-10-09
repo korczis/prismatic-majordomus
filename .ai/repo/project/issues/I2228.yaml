@@ -1,0 +1,34 @@
+id: I2228
+milestone: a-fact-is-written-once
+title: "Search's kinds and context's sections are each declared once in the file that uses them"
+slug: search-kinds-and-context-sections-declared-once
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Pay the ledger rows search-kind-vocabulary and context-provider-lists: one list each, with the usage text, defaults, validation and drop order derived from it."
+why: "lib/search.sh writes the same six kinds four times: in the usage string (:21), the default list (:35), the validation case (:37) and the error message (:38). A kind added to one and not the others is rejected or never searched. lib/context.sh keeps the section order and the drop order as two parallel lists (:399-400), plus a JSON re-listing (ledger row context-provider-lists). A section added to one list is assembled and never dropped, or dropped and never rendered."
+current_state: "Both rows open in docs/HARDCODING_LEDGER.yaml, and both reproduce today."
+desired_state: "lib/search.sh holds one kinds list, and the usage line, default and validation read it. lib/context.sh holds one table of sections (id, order, drop rank, JSON key), and each loop reads it. Both rows are fixed with resolved_by, and their witnesses are removed."
+scope:
+  - "lib/search.sh"
+  - "lib/context.sh"
+  - "docs/HARDCODING_LEDGER.yaml"
+  - "test/cases"
+non_scope:
+  - "Moving search or context into Rust."
+  - "A new shell file; ADR 0069 forbids new shell units, and this edits existing ones."
+depends_on:
+  - "I2226"
+acceptance_criteria:
+  - "A seventh search kind added to the one list is accepted, searched by default and named in the usage text"
+  - "A context section added to the one table is ordered, dropped under budget and rendered in JSON"
+  - "The ledger test passes with both rows fixed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test hardcoding_ledger"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "search_kind_added_once_case"
+  - "context_section_added_once_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

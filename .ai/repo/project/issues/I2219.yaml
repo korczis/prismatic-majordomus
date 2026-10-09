@@ -1,0 +1,36 @@
+id: I2219
+milestone: an-unmet-criterion-is-drafted-into-work
+title: "The next issue to start is one that serves an unmet criterion and would be bound, and the answer says what it passed over"
+slug: the-next-issue-serves-an-unmet-criterion
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add the read-only capability intents.next and `majordomus-cli intent next [--intent <id>]`: walk the plan's READY issues in the plan's own order, skip each whose served criteria are all met or whose binding would be refused under the policy in force, and answer the first remaining issue with the criteria it serves; list every skipped issue with the reason."
+why: "Plan::next_ready ranks READY issues by wave, priority and id and nothing else (apps/majordomus-cli/src/plan.rs:531-543), so the next issue offered may serve only criteria that are already current, or may be one that start would then refuse for a missing critique (apps/majordomus-cli/src/intent_binding.rs:121-140, 648-683). The owner's pack asks for intent-aware dispatch from the dependency graph (04-execution-engine-sessions-and-mesh.md, issue 04.1). The plan engines must stay identical and must not judge serves (.ai/repo/project/intents/intent-planning.yaml, invariant 1), so the filter belongs to the intent engine and the plan's order is kept."
+current_state: "plan next is intent-blind; the binding is asked only when a task starts."
+desired_state: "intent_draft.rs (or intent_binding.rs) gains next(), which calls Plan's ready order and the binding's bind() for each candidate without a second derivation; the answer names the issue, its milestone, the criteria it serves with their evidence state, and each skipped issue with the binding refusal cause or 'serves only met criteria'; maintenance issues (no intent) are offered only when no intent issue qualifies, and say so."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests/intent_next.rs
+  - docs/PLANNING.md
+non_scope:
+  - Changing Plan::next_ready, waves or the plan engines
+  - Claiming the issue for the caller; that is the task and mesh claim
+  - Peer-aware filtering of issues other workers hold; I2144 links claims to issues first
+depends_on:
+  - I2218
+acceptance_criteria:
+  - "With two READY issues where the first by plan order serves only a current criterion, intent next answers the second and lists the first as serving only met criteria"
+  - "Under policy intent.binding: required, an issue of an uncritiqued intent is skipped with intent_not_critiqued; under off it is offered"
+  - "The answer is identical on the command line, HTTP and MCP, and Plan::next_ready's answer is unchanged by this issue"
+  - "An empty answer names why each READY issue was skipped, and exits non-zero"
+validation:
+  - "majordomus intent validate"
+  - "cargo test --test intent_next"
+evidence_required:
+  - "intent_next_explains_what_it_passed_over_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

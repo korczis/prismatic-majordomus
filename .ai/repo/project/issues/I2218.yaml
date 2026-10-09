@@ -1,0 +1,43 @@
+id: I2218
+milestone: an-unmet-criterion-is-drafted-into-work
+title: "Work is drafted for each criterion nothing serves, and a rerun drafts the same work"
+slug: work-is-drafted-for-an-uncovered-criterion
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the read-only capability intents.draft_plan and `majordomus-cli intent draft plan <intent>`, which print one issue draft per criterion of the intent that no live issue serves and that the recorded gap did not observe satisfied, plus one per gap work item that names no issue, each with serves set, a slug and a draft key derived from the intent and criterion ids, and the scope of the criterion's evidence reference; nothing for a criterion already served."
+why: "Coverage already refuses a criterion no live issue serves (criterion_uncovered, apps/majordomus-cli/src/intent_plan.rs:522; apps/majordomus-cli/tests/intent_plan.rs::a_criterion_no_work_serves_is_refused_once_the_intent_has_work) and a gap may suggest work with serves and a later issue link (share/schemas/majordomus/gap/gap.v1.schema.json, work[].serves, work[].issue). From that finding to an issue file a worker writes by hand, so reruns and parallel workers produce different plans. The owner's pack asks for synthesis with stable identities and no duplicates (03-intent-to-plan-and-opposition.md, issue 03.1; ACCEPTANCE-MATRIX.md rows A07 and A26), and the 2026-09-16 pack the same (03_INTENT_COMPILER_AND_PLANNING.md, tests 1, 2, 6 and 8). docs/claims/intent-criteria-covered.md:20 says 'Nothing derives the issues from the criteria: a worker writes them', which becomes half false here."
+current_state: "No draft of work exists anywhere; the finding names the criterion and stops."
+desired_state: "intent_draft.rs gains draft_plan, pure over IntentView, the plan, the gap and the critique; each draft carries milestone (the intent's first milestone that is not DONE or retired), title from the criterion, serves, scope from the criterion's reference, acceptance_criteria naming the criterion and its evidence reference, validation naming the reproduce command the engine already derives, and a draft key '<intent>#<criterion>'; issue ids are left for the worker to allocate on the board; docs/claims/intent-criteria-covered.md and case 892's table say what is drafted and what a worker still writes."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests/intent_draft.rs
+  - .ai/repo/project/intents
+  - docs/PLANNING.md
+  - docs/claims/intent-criteria-covered.md
+  - docs/CLAIMS.yaml
+  - test/cases
+non_scope:
+  - Allocating issue ids or writing issue files
+  - Dependencies between drafts beyond what the gap's work order states
+  - Drafting from an outcome statement with no intent; lane A's prompt 80 milestone
+depends_on:
+  - I2217
+acceptance_criteria:
+  - "An intent with one uncovered criterion drafts exactly one issue serving it; adding a live issue that serves it drafts none"
+  - "A criterion the gap observed satisfied drafts nothing; a gap work item already linked to an issue drafts nothing"
+  - "Two runs on an unchanged tree print identical bytes, and editing the intent's statement or another intent leaves every draft key unchanged"
+  - "Each draft, written to .ai/repo/project/issues/ with an allocated id, passes plan validate and intent validate with no coverage finding for its criterion"
+  - "Case 892 fails on the old sentence of docs/claims/intent-criteria-covered.md:20"
+validation:
+  - "majordomus intent validate"
+  - "bin/majordomus plan validate"
+  - "cargo test --test intent_draft"
+  - "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says <the draft case this milestone adds>"
+evidence_required:
+  - "plan_draft_is_idempotent_test"
+  - "plan_draft_skips_served_criteria_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

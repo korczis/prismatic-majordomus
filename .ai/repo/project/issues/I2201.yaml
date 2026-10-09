@@ -1,0 +1,34 @@
+id: I2201
+milestone: intent-bound-work
+title: "A continuity record carries what its task was bound to, and resuming it reports drift"
+slug: continuity-carries-the-binding
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-bound-work#resume-detects-drift
+objective: "Add the task's named request (issue, intent, exemption with reason) and its two pins to the task reference of a continuity record, and make continuity resume compare them with intents.binding on the receiving checkout and report the drift word (plan_changed, evidence_moved, unchanged), as handover --resolve does locally."
+why: "A handover published to another machine (ADR 0105) carries a TaskRef of id, title, profile, scope and outcome only (apps/majordomus-cli/src/continuity/record.rs:102-115). The local handover front matter carries bound_issue, bound_intent and the pins (lib/handover.sh:61-62), so a worker resuming on the same machine is told the intent moved and a worker resuming on another is not."
+current_state: "TaskRef has no binding fields; continuity.resume reports source state and lineage, not the binding."
+desired_state: "TaskRef gains optional issue, intent, exemption, because, plan_revision and evidence_standing, absent when the task named nothing; the fields are optional, so a majordomus-continuity/v1 record without them still reads; because a record's id is the digest of the record (apps/majordomus-cli/src/continuity/record.rs:140-141) and TaskRef does not deny unknown fields while Record does (:142), whether a 0.19.0 reader verifies a record carrying them is measured, and the schema moves to v2 if it does not; continuity.resume reports the drift word, and a record without them resumes as before."
+scope:
+  - apps/majordomus-cli/src/continuity
+  - apps/majordomus-cli/src/capability/builtin/continuity.rs
+  - apps/majordomus-cli/tests
+  - docs/MESH.md
+non_scope:
+  - "Carrying the intent, its stage or its verdict; only what was named and the pins (rule project.an-intent-outlives-its-sessions)"
+  - "The mesh handover transport"
+depends_on: []
+acceptance_criteria:
+  - "A record published from a bound task carries the named request and both pins, and one from an unbound task carries none"
+  - "Resuming a record whose plan_revision differs from the receiving checkout's binding reports plan_changed"
+  - "A record written by 0.19.0 without the fields still resumes"
+  - "A record carrying the fields is verified by a 0.19.0 reader, or the schema is majordomus-continuity/v2 and a 0.19.0 reader refuses it as too new rather than as malformed"
+validation:
+  - "cargo test --test continuity"
+  - "cargo test --test continuity_transfer"
+evidence_required:
+  - continuity_record_carries_binding_test
+created_at: 2026-10-09
+updated_at: 2026-10-09

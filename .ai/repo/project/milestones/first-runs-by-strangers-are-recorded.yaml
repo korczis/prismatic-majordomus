@@ -1,0 +1,35 @@
+id: first-runs-by-strangers-are-recorded
+title: "A stranger's first run can be observed with consent, recorded, and summarised from the same records"
+slug: first-runs-by-strangers-are-recorded
+order: 312
+priority: p2
+problem: "Finding F14: the repository names no external adopter. Its only adoption measurement is a fixture install (docs/ADOPTION_FIRST_RUN.md), and nothing exists to observe a real person's first run: no protocol, no consent text, no capture command, no record format and no summary. Recruiting people is outside the repository; preparing to observe them is not."
+outcome: "A study protocol with a 10-15 minute task, consent and opt-out, a local capture command that records OS, install result, files created, time to the first accepted change, refusals and hook latency with redaction, a record format for observations, and a summary derived from those records alone. Recruitment and the continue-pivot-retire decision stay the owner's acts."
+current_state: "No protocol, capture or record format."
+desired_state: "Five observations can be recorded and summarised the day five people agree to run it."
+scope:
+  - docs
+  - apps/majordomus-cli/src/capability/builtin
+  - share/schemas/majordomus
+  - test/cases
+non_scope:
+  - Recruiting participants or contacting anyone
+  - Inventing, simulating or backfilling an observation
+  - Sending any data off the participant's machine; the participant hands the record over
+acceptance_criteria:
+  - "The protocol states the task, the consent, the opt-out, the fields captured and the success measures"
+  - "The capture command run in a fixture records every declared field, redacts a seeded secret and a home path, and writes nothing outside its output file"
+  - "The summary of a fixture set of observation records is derived by a command, and a hand-edited summary fails a check"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - study_protocol
+  - first_run_capture_case
+  - observation_summary_case
+risks:
+  - "Fixture observations could be mistaken for real ones; every fixture record carries fixture: true and the summary refuses to count it"
+depends_on:
+  - adoption-is-light
+created_at: 2026-10-09
+updated_at: 2026-10-09
