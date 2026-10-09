@@ -7386,7 +7386,7 @@ mod tests {
             "uri": "majordomus://adr/adr-0001", "id": "adr.adr-0001", "kind": "adr",
             "identity": "adr-0001", "slug": "adr-0001", "route": "/cockpit/objects/adr/adr-0001",
             "kind_route": "/cockpit/objects/adr", "title": "One",
-            "provenance": { "path": ".ai/repo/adrs/0001-one.md", "directory": ".ai/repo/adrs",
+            "provenance": { "path": "fixture/0001-one.md", "directory": "fixture",
                 "source_class": "adr", "section": "adrs", "bytes": 1 },
             "metadata": {}, "media_type": "text/markdown", "content": "",
             "relations": relations, "surfaces": [], "evidence": evidence,
