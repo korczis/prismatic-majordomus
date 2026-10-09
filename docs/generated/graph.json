@@ -6342,6 +6342,36 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0118",
+        "kind": "adr",
+        "label": "adr-0118",
+        "summary": "A session leaves what it observed, and the boundary keeps one routed candidate per defect",
+        "route": "/cockpit/objects/adr/adr-0118",
+        "source": ".ai/repo/adrs/0118-a-session-leaves-what-it-observed-and-one-candidate-per-defect-is-routed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
+            "rule:project.never-store-transcripts",
+            "rule:project.no-new-nouns",
+            "rule:project.no-network-no-eval",
+            "file:lib/knowledge.sh",
+            "file:share/events.yaml",
+            "file:share/schemas/majordomus/knowledge/knowledge.v1.proto",
+            "file:.ai/repo/project/intents/a-session-leaves-what-it-observed.yaml",
+            "test:test/cases/980_a_session_records_what_it_observed.sh",
+            "test:test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+            "test:test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+          ],
+          "tags": [
+            "knowledge",
+            "sessions",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -6901,6 +6931,21 @@
         }
       },
       {
+        "id": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
+        "kind": "claim",
+        "label": "a-candidate-is-routed-by-what-it-is-about",
+        "summary": "Every candidate derived from an observation carries a route — platform, enforcement, generator, documentation or project — derived from its subject's structure and never from its wording, and in a repository that adopted the tool its own share/ routes project",
+        "route": "/cockpit/objects/claim/a-candidate-is-routed-by-what-it-is-about",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "layer",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/a-finding-names-how-to-see-it-again",
         "kind": "claim",
         "label": "a-finding-names-how-to-see-it-again",
@@ -6914,6 +6959,21 @@
           "responsibility": "none",
           "source": "docs/DOCTRINE.md",
           "test": "test/cases/138_governance_gates.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/a-session-records-what-it-observed",
+        "kind": "claim",
+        "label": "a-session-records-what-it-observed",
+        "summary": "knowledge observe records one observation.recorded ledger line with its kind, subject, statement and typed evidence references, inside an open episode, inside a task or outside one, and refuses any other shape, or the absence of an episode, without writing",
+        "route": "/cockpit/objects/claim/a-session-records-what-it-observed",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "layer",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/980_a_session_records_what_it_observed.sh"
         }
       },
       {
@@ -7073,6 +7133,21 @@
           "responsibility": "layer",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/01_init.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/an-observation-becomes-a-grouped-candidate",
+        "kind": "claim",
+        "label": "an-observation-becomes-a-grouped-candidate",
+        "summary": "Each observation an episode recorded becomes, at that episode's end and with no model, a candidate of its own that says what it is about, and knowledge candidates groups the records about one subject with the episodes behind them; an episode that observed nothing records that it found nothing",
+        "route": "/cockpit/objects/claim/an-observation-becomes-a-grouped-candidate",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/knowledge.sh",
+          "responsibility": "layer",
+          "source": "docs/KNOWLEDGE.md",
+          "test": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
         }
       },
       {
@@ -12680,6 +12755,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-session-leaves-what-it-observed",
+        "kind": "critique",
+        "label": "a-session-leaves-what-it-observed",
+        "summary": "a-session-leaves-what-it-observed",
+        "route": "/cockpit/objects/critique/a-session-leaves-what-it-observed",
+        "source": ".ai/repo/project/critiques/a-session-leaves-what-it-observed.yaml",
+        "facts": {
+          "intent": "a-session-leaves-what-it-observed",
+          "reviewed_at": "893a79be65"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-bound-work",
         "kind": "critique",
         "label": "intent-bound-work",
@@ -13446,12 +13533,28 @@
         "source": "docs/WORKTREES.md"
       },
       {
+        "id": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
+        "kind": "document",
+        "label": "docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
+        "summary": "Every observation candidate is routed by the structure of what it is about",
+        "route": "/cockpit/objects/document/docs-claims-a-candidate-is-routed-by-what-it-is-about-md",
+        "source": "docs/claims/a-candidate-is-routed-by-what-it-is-about.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
         "kind": "document",
         "label": "docs/claims/a-finding-names-how-to-see-it-again.md",
         "summary": "Every finding a command reports names the command that reproduces it",
         "route": "/cockpit/objects/document/docs-claims-a-finding-names-how-to-see-it-again-md",
         "source": "docs/claims/a-finding-names-how-to-see-it-again.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/a-session-records-what-it-observed.md",
+        "kind": "document",
+        "label": "docs/claims/a-session-records-what-it-observed.md",
+        "summary": "knowledge observe records one observation.recorded line of a fixed shape, and refuses any other",
+        "route": "/cockpit/objects/document/docs-claims-a-session-records-what-it-observed-md",
+        "source": "docs/claims/a-session-records-what-it-observed.md"
       },
       {
         "id": "majordomus://document/docs/claims/a-skipped-case-is-not-a-proof.md",
@@ -13532,6 +13635,14 @@
         "summary": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
         "route": "/cockpit/objects/document/docs-claims-ai-layer-manifest-md",
         "source": "docs/claims/ai-layer-manifest.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/an-observation-becomes-a-grouped-candidate.md",
+        "kind": "document",
+        "label": "docs/claims/an-observation-becomes-a-grouped-candidate.md",
+        "summary": "Each observation becomes a candidate of its own at its episode's end, and reading groups them by subject",
+        "route": "/cockpit/objects/document/docs-claims-an-observation-becomes-a-grouped-candidate-md",
+        "source": "docs/claims/an-observation-becomes-a-grouped-candidate.md"
       },
       {
         "id": "majordomus://document/docs/claims/archive-fidelity.md",
@@ -17176,6 +17287,24 @@
         }
       },
       {
+        "id": "majordomus://gap/a-session-leaves-what-it-observed",
+        "kind": "gap",
+        "label": "a-session-leaves-what-it-observed",
+        "summary": "a-session-leaves-what-it-observed",
+        "route": "/cockpit/objects/gap/a-session-leaves-what-it-observed",
+        "source": ".ai/repo/project/gaps/a-session-leaves-what-it-observed.yaml",
+        "facts": {
+          "intent": "a-session-leaves-what-it-observed",
+          "observed_at": "893a79be65",
+          "recorded_at": "2026-10-09",
+          "recorded_by": "claude-code (session fa, worktree feature/a-session-leaves-what-it-observed; read-only audit of the knowledge pipeline, lifecycle hooks and ledger vocabulary at master)",
+          "risks": [
+            "ADR 0091 says the deriver implements exactly its table; ADR 0118 supersedes that sentence for the observation row and nothing else",
+            "Tracked candidates on a PR-only trunk (I1984)"
+          ]
+        }
+      },
+      {
         "id": "majordomus://gap/intent-bound-work",
         "kind": "gap",
         "label": "intent-bound-work",
@@ -17563,6 +17692,38 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/objects/implementation/lib-watch-sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/a-session-leaves-what-it-observed",
+        "kind": "intent",
+        "label": "a-session-leaves-what-it-observed",
+        "summary": "Every managed session leaves what it observed, and the repository groups and routes it without being asked",
+        "route": "/cockpit/objects/intent/a-session-leaves-what-it-observed",
+        "source": ".ai/repo/project/intents/a-session-leaves-what-it-observed.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.never-store-transcripts",
+            "rule:project.no-new-nouns",
+            "rule:project.no-network-no-eval",
+            "adr:adr-0010",
+            "adr:adr-0091",
+            "adr:adr-0118"
+          ],
+          "milestones": [
+            "a-session-leaves-what-it-observed"
+          ],
+          "non_goals": [
+            "Creating issues, rules, ADRs or pull requests from a candidate; acting on a route is a later milestone and an act",
+            "Deriving friction from task.refused or task.gate; which of those lines are friction rather than the tool working needs its own measurement",
+            "Sending a candidate to another repository; nothing leaves the checkout",
+            "Classifying by an LLM; an agent may record observations and act on routes, and the core needs none",
+            "Codex and Gemini lifecycle hooks; an observation needs an open episode, which any provider opens with session start or an MCP attach",
+            "Where candidates are written on a trunk that accepts only pull requests (I1984); grouping on read holds wherever they are"
+          ],
+          "updated_at": "2026-10-09"
+        }
       },
       {
         "id": "majordomus://intent/intent-bound-work",
@@ -30225,6 +30386,155 @@
         }
       },
       {
+        "id": "majordomus://issue/I2073",
+        "kind": "issue",
+        "label": "I2073",
+        "summary": "A worker records an observation in one command",
+        "route": "/cockpit/objects/issue/i2073",
+        "source": ".ai/repo/project/issues/I2073.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An observation inside an episode writes one line with kind, subject, statement, each evidence reference and the active task or none",
+            "An unknown kind, a malformed subject or evidence reference, a multi-line statement or a transcript marker is refused with exit 2 and no line",
+            "A subject is a repository path or capability:, rule:, command:, gate: followed by an identifier, and anything else is refused",
+            "With no open episode the observation is refused with exit 10 naming session start, and nothing is written"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No observation event or command exists; workers keep friction in private memory files.",
+          "depends_on": [],
+          "desired_state": "One command any provider can run inside an episode; one typed ledger line per observation.",
+          "evidence_required": [
+            "observation_recorded"
+          ],
+          "milestone": "a-session-leaves-what-it-observed",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "share/events.yaml",
+            "share/commands.yaml",
+            "docs/CLI.md",
+            "docs/KNOWLEDGE.md",
+            "docs/SCHEMAS.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "docs/CONCEPTS.md",
+            ".ai/repo/adrs",
+            "test/cases/980_a_session_records_what_it_observed.sh"
+          ],
+          "serves": [
+            "a-session-leaves-what-it-observed#an-observation-is-recorded"
+          ],
+          "slug": "a-worker-records-an-observation",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 980_a_session_records_what_it_observed",
+            "bash test/run.sh 33_event_registry"
+          ],
+          "why": "Friction is noticed by workers and written nowhere the repository reads; decision add is the precedent for one typed line per act."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2074",
+        "kind": "issue",
+        "label": "I2074",
+        "summary": "An observation becomes a candidate that says what it is about, and reading groups recurrence",
+        "route": "/cockpit/objects/issue/i2074",
+        "source": ".ai/repo/project/issues/I2074.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An episode with two observations derives two candidates, each with about set to its subject",
+            "Two episodes observing one subject write two files and candidates lists one group naming both episodes, the shell and the Rust reader alike",
+            "A rejected candidate stays superseded after the second episode, which adds a new candidate to the same group",
+            "An episode with no observation writes no candidate and still appends knowledge.derived with written 0",
+            "Cases 563, 564, 565, 707, 709, 710 and 711 still pass"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Four events map to candidates; no record says what it is about; candidates is a flat list.",
+          "depends_on": [
+            "I2073"
+          ],
+          "desired_state": "Observation candidates carry about; both readers group by it; a second derivation is byte-identical; an empty episode still records knowledge.derived with written 0.",
+          "evidence_required": [
+            "observation_becomes_grouped_candidate"
+          ],
+          "milestone": "a-session-leaves-what-it-observed",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "share/schemas/majordomus/knowledge",
+            "share/allow",
+            "share/sections",
+            ".ai/repo/knowledge/candidates/README.md",
+            "share/skeleton/ai/repo/knowledge",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "apps/majordomus-cli/tests/knowledge_base.rs",
+            "docs/KNOWLEDGE.md",
+            "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+          ],
+          "serves": [
+            "a-session-leaves-what-it-observed#an-observation-becomes-a-candidate",
+            "a-session-leaves-what-it-observed#recurrence-is-grouped"
+          ],
+          "slug": "an-observation-becomes-a-candidate",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
+            "bash test/run.sh 563_knowledge_is_derived_at_the_boundary",
+            "bash test/run.sh 564_knowledge_derivation_is_idempotent",
+            "cargo test --test knowledge_base"
+          ],
+          "why": "The same defect seen by several sessions must read as one thing without any episode writing another's file."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2075",
+        "kind": "issue",
+        "label": "I2075",
+        "summary": "A candidate is routed by what it is about",
+        "route": "/cockpit/objects/issue/i2075",
+        "source": ".ai/repo/project/issues/I2075.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In this repository each of the five routes is reached by a subject of its kind",
+            "In a freshly initialised repository with its own share/, a path under it routes project, and command:, capability: and rule:majordomus.* route platform",
+            "Two observations with different statements about one subject carry the same route",
+            "The derivation emits no event it reads"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "No candidate carries an owner.",
+          "depends_on": [
+            "I2074"
+          ],
+          "desired_state": "Every observation candidate names its route, adopter-correct, and candidates shows it per group.",
+          "evidence_required": [
+            "candidate_routed"
+          ],
+          "milestone": "a-session-leaves-what-it-observed",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "lib/changed.sh",
+            "docs/KNOWLEDGE.md",
+            "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+          ],
+          "serves": [
+            "a-session-leaves-what-it-observed#route-is-structural"
+          ],
+          "slug": "a-candidate-is-routed",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about"
+          ],
+          "why": "A candidate with no owner is read by nobody, and the route must come from structure because ADR 0091 rejected classifying by wording; in an adopter, the project's own share/ is not the tool."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30539,6 +30849,61 @@
             "bin/majordomus bench --check",
             "scripts/generate-site-data --check",
             "shellcheck -x -s bash bin/majordomus lib/*.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "kind": "milestone",
+        "label": "a-session-leaves-what-it-observed",
+        "summary": "A session leaves what it observed, and the repository routes it",
+        "route": "/cockpit/objects/milestone/a-session-leaves-what-it-observed",
+        "source": ".ai/repo/project/milestones/a-session-leaves-what-it-observed.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "knowledge observe writes one typed line inside an episode and refuses malformed input without writing",
+            "The boundary derives one per-episode candidate per observation with about and route, with no model",
+            "candidates groups by about on the command line and in the Rust reader",
+            "Every observation candidate carries a structural route, adopter-correct"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "share/events.yaml has no observation event. mj_knowledge_evidence maps four events. Candidate ids are <episode>-<digest>. No candidate carries a route.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Acting on a route automatically",
+            "Upstream transport"
+          ],
+          "order": 130,
+          "priority": "p1",
+          "scope": [
+            "lib/knowledge.sh",
+            "share/events.yaml",
+            "share/commands.yaml",
+            "share/schemas/majordomus/knowledge",
+            "share/allow",
+            "share/skeleton/ai/repo/knowledge",
+            "share/sections",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "apps/majordomus-cli/tests/knowledge_base.rs",
+            "docs/CONCEPTS.md",
+            "docs/SCHEMAS.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            "docs/KNOWLEDGE.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-session-leaves-what-it-observed",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "majordomus intent validate",
+            "bash test/run.sh 980_a_session_records_what_it_observed",
+            "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
+            "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about",
+            "bash test/run.sh 564_knowledge_derivation_is_idempotent"
           ]
         }
       },
@@ -45259,6 +45624,27 @@
         "source": "test/cases/97_vendor_evidence.sh"
       },
       {
+        "id": "majordomus://test/test/cases/980_a_session_records_what_it_observed.sh",
+        "kind": "test",
+        "label": "test/cases/980_a_session_records_what_it_observed.sh",
+        "route": "/cockpit/objects/test/test-cases-980-a-session-records-what-it-observed-sh",
+        "source": "test/cases/980_a_session_records_what_it_observed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+        "kind": "test",
+        "label": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+        "route": "/cockpit/objects/test/test-cases-981-an-observation-becomes-a-grouped-candidate-sh",
+        "source": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "kind": "test",
+        "label": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "route": "/cockpit/objects/test/test-cases-982-a-candidate-is-routed-by-what-it-is-about-sh",
+        "source": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/98_cli_reference.sh",
         "kind": "test",
         "label": "test/cases/98_cli_reference.sh",
@@ -54290,6 +54676,66 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0118",
+        "target": "file:share/events.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "file:share/schemas/majordomus/knowledge/knowledge.v1.proto",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://adr/adr-0091",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://intent/a-session-leaves-what-it-observed",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://rule/project.never-store-transcripts@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://rule/project.no-network-no-eval@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://test/test/cases/980_a_session_records_what_it_observed.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://test/test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0118",
+        "target": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -54475,6 +54921,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
+        "target": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/a-finding-names-how-to-see-it-again",
         "target": "file:scripts/ci/finding-reproduce-check",
         "kind": "implemented_by"
@@ -54492,6 +54958,26 @@
       {
         "source": "majordomus://claim/a-finding-names-how-to-see-it-again",
         "target": "majordomus://test/test/cases/138_governance_gates.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/a-session-records-what-it-observed",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-session-records-what-it-observed",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/a-session-records-what-it-observed",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/a-session-records-what-it-observed",
+        "target": "majordomus://test/test/cases/980_a_session_records_what_it_observed.sh",
         "kind": "tested_by"
       },
       {
@@ -54692,6 +55178,26 @@
       {
         "source": "majordomus://claim/ai-layer-manifest",
         "target": "majordomus://test/test/cases/01_init.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/an-observation-becomes-a-grouped-candidate",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/an-observation-becomes-a-grouped-candidate",
+        "target": "majordomus://document/docs/KNOWLEDGE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/an-observation-becomes-a-grouped-candidate",
+        "target": "majordomus://implementation/lib/knowledge.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/an-observation-becomes-a-grouped-candidate",
+        "target": "majordomus://test/test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
         "kind": "tested_by"
       },
       {
@@ -59700,6 +60206,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-session-leaves-what-it-observed",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-bound-work",
         "target": "kind:critique",
         "kind": "is_a"
@@ -60170,7 +60681,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/a-session-records-what-it-observed.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -60221,6 +60742,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/ai-layer-manifest.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/an-observation-becomes-a-grouped-candidate.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -61520,6 +62046,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/a-session-leaves-what-it-observed",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-bound-work",
         "target": "kind:gap",
         "kind": "is_a"
@@ -61782,6 +62313,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-session-leaves-what-it-observed",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -66095,6 +66631,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2073",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2073",
+        "target": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2074",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2074",
+        "target": "majordomus://issue/I2073",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2074",
+        "target": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2075",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2075",
+        "target": "majordomus://issue/I2074",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2075",
+        "target": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66126,6 +66702,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-session-leaves-what-it-observed",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -71030,6 +71611,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/980_a_session_records_what_it_observed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/98_cli_reference.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -74821,8 +75417,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2476,
-      "edges": 5419,
+      "nodes": 2493,
+      "edges": 5461,
       "acyclic": false,
       "truncated": false
     }

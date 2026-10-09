@@ -1,0 +1,56 @@
+intent: a-session-leaves-what-it-observed
+observed_at: 893a79be65
+recorded_by: claude-code (session fa, worktree feature/a-session-leaves-what-it-observed; read-only audit of the knowledge pipeline, lifecycle hooks and ledger vocabulary at master)
+recorded_at: 2026-10-09
+observations:
+  - id: no-observation-event
+    statement: share/events.yaml registers no event for friction, a workaround or a defect a worker met; the closest acts are decision.recorded and question.resolved
+    source: file:share/events.yaml
+  - id: closed-evidence-table
+    statement: mj_knowledge_evidence maps exactly four events — decision.recorded, question.resolved, task.finished blocked/failed/no_match, task.finished completed with a verify command — and nothing else
+    source: file:lib/knowledge.sh
+  - id: friction-written-and-unread
+    statement: task.refused is written by finish and read only by history; a failing task.gate is read by nothing that derives
+    source: file:lib/finish.sh
+  - id: id-is-episode-scoped
+    statement: A candidate id is the episode id plus a digest of its evidence, so one fact observed in two episodes is two files and no record counts recurrence
+    source: file:lib/knowledge.sh
+  - id: no-route
+    statement: knowledge/v1 has a class a person sets at promotion and no field saying which owner should act; promotion only moves a record to curated/
+    source: file:share/schemas/majordomus/knowledge/knowledge.v1.proto
+  - id: candidates-never-tracked-here
+    statement: .ai/repo/knowledge/candidates/ on master holds only its README; no candidate has ever been committed in this repository
+    source: file:.ai/repo/knowledge/candidates/README.md
+conditions:
+  - criterion: an-observation-is-recorded
+    state: missing
+    because: there is no event or command to record one
+    observations: [no-observation-event]
+  - criterion: an-observation-becomes-a-candidate
+    state: missing
+    because: the deriver's table is closed to four events, none an observation
+    observations: [closed-evidence-table]
+  - criterion: recurrence-is-grouped
+    state: missing
+    because: the id carries the episode, which is right, and nothing reads candidates by what they are about
+    observations: [id-is-episode-scoped, friction-written-and-unread]
+  - criterion: route-is-structural
+    state: missing
+    because: no field carries an owner, and the record has no derivation of one
+    observations: [no-route, candidates-never-tracked-here]
+risks:
+  - ADR 0091 says the deriver implements exactly its table; ADR 0118 supersedes that sentence for the observation row and nothing else
+  - Tracked candidates on a PR-only trunk (I1984)
+work:
+  - id: observe
+    title: A worker records an observation in one command
+    serves: [an-observation-is-recorded]
+    issue: I2073
+  - id: derive
+    title: An observation becomes a candidate that says what it is about, and reading groups recurrence
+    serves: [an-observation-becomes-a-candidate, recurrence-is-grouped]
+    issue: I2074
+  - id: route
+    title: A candidate is routed by what it is about
+    serves: [route-is-structural]
+    issue: I2075

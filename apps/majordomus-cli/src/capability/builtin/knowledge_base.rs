@@ -165,6 +165,42 @@ pub struct KnowledgeCandidate {
     pub freshness_reason: String,
     /// Where the wait was read from.
     pub age_source: AgeSource,
+    /// What the observation it was derived from is about (ADR 0118); empty for a record
+    /// derived from anything else.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
+    /// Which owner should look first, derived from `about`'s structure; empty without one.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub route: String,
+}
+
+/// The records under one subject: every candidate awaiting review and every rejected one,
+/// with the episodes behind them (ADR 0118). Recurrence is read here, never written: each
+/// record stays one episode's own file, and a group is how several of them read as one thing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;
+/// let g: KnowledgeGroup = serde_json::from_str(
+///     r#"{"about":"lib/a.sh","route":"project","candidates":["e1-a","e2-b"],"episodes":["e1","e2"]}"#,
+/// ).unwrap();
+/// assert_eq!(g.episodes.len(), 2, "two episodes observed it");
+/// assert!(g.rejected.is_empty(), "and nobody rejected it");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KnowledgeGroup {
+    /// The subject, as written.
+    pub about: String,
+    /// The route of its records.
+    pub route: String,
+    /// The candidates awaiting review, by id.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub candidates: Vec<String>,
+    /// The records rejected and kept, by id.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rejected: Vec<String>,
+    /// The episodes behind all of them, each once, in order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub episodes: Vec<String>,
 }
 
 /// The queue orders by id, which the deriver makes total: the episode, then a digest of the
@@ -198,6 +234,10 @@ pub struct KnowledgeCandidates {
     /// Every candidate, in canonical order of id.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub candidates: Vec<KnowledgeCandidate>,
+    /// The candidates and rejected records derived from observations, grouped by what they
+    /// are about, in order of subject.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<KnowledgeGroup>,
     /// `knowledge.candidates_max_files`, when the policy declares it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cap: Option<usize>,
@@ -681,6 +721,42 @@ fn candidate_objects(ctx: &Context) -> Vec<&Object> {
         .collect()
 }
 
+/// Every record under the candidates class that says what it is about, awaiting review or
+/// rejected, grouped by that subject: one pass over the index, ordered by subject and by id.
+fn groups_of(ctx: &Context) -> Vec<KnowledgeGroup> {
+    let mut by: BTreeMap<String, KnowledgeGroup> = BTreeMap::new();
+    let mut records: Vec<&Object> = ctx
+        .index
+        .objects
+        .iter()
+        .filter(|o| o.kind == KIND && o.provenance.source_class == CANDIDATES_CLASS)
+        .filter(|o| !field(o, "about").is_empty())
+        .collect();
+    records.sort_by(|a, b| a.identity.cmp(&b.identity));
+    for o in records {
+        let about = field(o, "about");
+        let group = by.entry(about.clone()).or_insert_with(|| KnowledgeGroup {
+            about,
+            route: field(o, "route"),
+            candidates: Vec::new(),
+            rejected: Vec::new(),
+            episodes: Vec::new(),
+        });
+        match field(o, "status").as_str() {
+            "candidate" => group.candidates.push(o.identity.clone()),
+            "superseded" => group.rejected.push(o.identity.clone()),
+            _ => continue,
+        }
+        let episode = episode_of(&derived_from_of(o));
+        if !episode.is_empty() && !group.episodes.contains(&episode) {
+            group.episodes.push(episode);
+        }
+    }
+    by.into_values()
+        .filter(|g| !(g.candidates.is_empty() && g.rejected.is_empty()))
+        .collect()
+}
+
 /// The candidates of this checkout, judged. Shared by `candidates` and `status`, which
 /// count the same queue; one derivation so the two cannot disagree about its size.
 fn candidates_of(ctx: &Context, events: &[Value], now: i64) -> KnowledgeCandidates {
@@ -739,10 +815,13 @@ fn candidates_of(ctx: &Context, events: &[Value], now: i64) -> KnowledgeCandidat
                 age_minutes,
                 freshness_reason,
                 age_source,
+                about: field(o, "about"),
+                route: field(o, "route"),
             }
         })
         .collect();
     crate::order::canonical(&mut candidates);
+    let groups = groups_of(ctx);
 
     let total = candidates.len();
     let on_this_branch = candidates
@@ -784,6 +863,7 @@ fn candidates_of(ctx: &Context, events: &[Value], now: i64) -> KnowledgeCandidat
         unattributed,
         branch,
         candidates,
+        groups,
         cap,
         over_cap,
         findings,
@@ -1802,6 +1882,65 @@ mod tests {
     /// added it, else at its own date, and a candidate with none of the three has no age.
     /// One whose episode this checkout does not know is unattributed, and a queue longer
     /// than the policy's cap is a finding; the list is in the canonical order.
+    #[test]
+    /// ADR 0118: records derived from observations are grouped by what they are about —
+    /// candidates and rejected records alike, each episode once, in order of subject — and a
+    /// record that says nothing about what it is about, or is verified, belongs to no group.
+    fn observations_are_grouped_by_what_they_are_about() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let dir = ".ai/repo/knowledge/candidates";
+        let record = |id: &str, status: &str, about: &str, episode: &str| {
+            let mut meta = json!({ "status": status, "class": "lesson",
+                                   "provenance": { "derived_from": [format!("session:{episode}")] } });
+            if !about.is_empty() {
+                meta["about"] = json!(about);
+                meta["route"] = json!("project");
+            }
+            let mut o = object(KIND, id, &format!("{dir}/{id}.md"), meta);
+            o.provenance.source_class = CANDIDATES_CLASS.into();
+            o
+        };
+        let ctx = context_with(
+            &repo,
+            vec![
+                record("e2-b", "candidate", "lib/a.sh", "e2"),
+                record("e1-a", "superseded", "lib/a.sh", "e1"),
+                record("e3-c", "candidate", "lib/a.sh", "e2"),
+                record("e1-d", "candidate", "docs/x.md", "e1"),
+                record("e1-e", "candidate", "", "e1"),
+                record("e1-f", "verified", "zzz", "e1"),
+            ],
+        );
+        let q = candidates_of(&ctx, &[], NOW);
+        let groups: Vec<(&str, usize, usize, usize)> = q
+            .groups
+            .iter()
+            .map(|g| {
+                (
+                    g.about.as_str(),
+                    g.candidates.len(),
+                    g.rejected.len(),
+                    g.episodes.len(),
+                )
+            })
+            .collect();
+        assert_eq!(groups, [("docs/x.md", 1, 0, 1), ("lib/a.sh", 2, 1, 2)]);
+        let a = &q.groups[1];
+        assert_eq!(a.rejected, ["e1-a"], "the rejection stays in the group");
+        assert_eq!(a.episodes, ["e1", "e2"], "each episode once, in order");
+        assert_eq!(a.route, "project");
+        let carried = q.candidates.iter().find(|c| c.id == "e2-b").unwrap();
+        assert_eq!(
+            (carried.about.as_str(), carried.route.as_str()),
+            ("lib/a.sh", "project")
+        );
+        let plain = q.candidates.iter().find(|c| c.id == "e1-e").unwrap();
+        assert!(
+            plain.about.is_empty() && plain.route.is_empty(),
+            "nothing said, nothing carried"
+        );
+    }
+
     #[test]
     fn a_candidate_is_aged_from_the_best_evidence_there_is_and_the_queue_is_held_to_its_cap() {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();

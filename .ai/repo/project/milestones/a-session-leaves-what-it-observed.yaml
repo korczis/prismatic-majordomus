@@ -1,0 +1,49 @@
+id: a-session-leaves-what-it-observed
+title: A session leaves what it observed, and the repository routes it
+slug: a-session-leaves-what-it-observed
+order: 130
+priority: p1
+problem: "What a session learns about the tool reaches the repository only when a person writes it up by hand: on 2026-10-08 four sessions produced thirty-six observations of friction (a fast-forward tripping the scope check, a stale rustdoc surface, a gate passing on zero support, a number taken in an uncommitted worktree), and every one lives in an agent's private memory or a chat message. The knowledge pipeline of ADR 0091 already derives candidates at the episode boundary without a model, but from four acts only (a decision, a resolved question, a finished task), keyed by episode, so the same defect seen twice is two files, and with no route to the owner that should act. The friction the ledger records — task.refused, a failing task.gate — is written and never read."
+outcome: "Any worker records an observation in one command; the episode boundary derives a candidate that says what it is about and who should look; reading groups recurrence by subject; an episode with nothing to say records that it found nothing."
+current_state: "share/events.yaml has no observation event. mj_knowledge_evidence maps four events. Candidate ids are <episode>-<digest>. No candidate carries a route."
+desired_state: "observation.recorded is registered and written by knowledge observe; the deriver maps it to a per-episode candidate carrying about and route; candidates groups by about on every surface; ADR 0118 supersedes two sentences of ADR 0091."
+scope:
+  - lib/knowledge.sh
+  - share/events.yaml
+  - share/commands.yaml
+  - share/schemas/majordomus/knowledge
+  - share/allow
+  - share/skeleton/ai/repo/knowledge
+  - share/sections
+  - apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - apps/majordomus-cli/tests/knowledge_base.rs
+  - docs/CONCEPTS.md
+  - docs/SCHEMAS.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/adrs
+  - .ai/repo/project
+  - docs/KNOWLEDGE.md
+  - docs/CLI.md
+  - test/cases
+non_scope:
+  - Acting on a route automatically
+  - Upstream transport
+acceptance_criteria:
+  - "knowledge observe writes one typed line inside an episode and refuses malformed input without writing"
+  - "The boundary derives one per-episode candidate per observation with about and route, with no model"
+  - "candidates groups by about on the command line and in the Rust reader"
+  - "Every observation candidate carries a structural route, adopter-correct"
+validation:
+  - majordomus intent validate
+  - bash test/run.sh 980_a_session_records_what_it_observed
+  - bash test/run.sh 981_an_observation_becomes_a_grouped_candidate
+  - bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about
+  - bash test/run.sh 564_knowledge_derivation_is_idempotent
+evidence_required: []
+depends_on: []
+risks:
+  - "Candidates on a PR-only trunk (I1984): observations add candidates where a worker states them, not on every refusal or gate run; grouping on read holds whether candidates end up tracked or under .ai/local."
+  - "share/events.yaml is touched by the opposition branch (#807); the new event lands as a textual neighbour and needs one merge."
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -1,7 +1,7 @@
 +++
 title = "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence"
 description = "Consultation reduces repeated reasoning instead of multiplying it. A later session reads"
-weight = 249
+weight = 252
 [extra]
 claim_id = "reasoning-survives-the-session"
 status = "guaranteed"

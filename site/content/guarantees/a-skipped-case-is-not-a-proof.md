@@ -1,7 +1,7 @@
 +++
 title = "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names"
 description = "A case in test/cases/ may be unable to run where it finds itself: no jq, no zola, no"
-weight = 244
+weight = 247
 [extra]
 claim_id = "a-skipped-case-is-not-a-proof"
 status = "guaranteed"

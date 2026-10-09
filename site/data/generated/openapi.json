@@ -616,6 +616,7 @@
     "schema-KindRef": "docs/api/product/",
     "schema-KnowledgeCandidate": "docs/api/knowledge-base/",
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
+    "schema-KnowledgeGroup": "docs/api/knowledge-base/",
     "schema-KnowledgeRecord": "docs/api/knowledge-base/",
     "schema-KnowledgeStatus": "docs/api/knowledge-base/",
     "schema-LabelEffect": "docs/api/integration/",
@@ -1131,7 +1132,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 181,
-    "schemas": 893,
+    "schemas": 894,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1837,6 +1838,7 @@
     "KindRef": "product",
     "KnowledgeCandidate": "knowledge-base",
     "KnowledgeCandidates": "knowledge-base",
+    "KnowledgeGroup": "knowledge-base",
     "KnowledgeRecord": "knowledge-base",
     "KnowledgeStatus": "knowledge-base",
     "LabelEffect": "integration",
@@ -26545,6 +26547,20 @@
           ],
           "required": true,
           "type": "AgeSource"
+        },
+        {
+          "description": "What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else.",
+          "name": "about",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Which owner should look first, derived from `about`'s structure; empty without one.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
         }
       ],
       "type": "object",
@@ -26599,6 +26615,15 @@
           "type": "array of KnowledgeCandidate"
         },
         {
+          "description": "The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject.",
+          "name": "groups",
+          "refs": [
+            "KnowledgeGroup"
+          ],
+          "required": false,
+          "type": "array of KnowledgeGroup"
+        },
+        {
           "description": "`knowledge.candidates_max_files`, when the policy declares it.",
           "name": "cap",
           "refs": [],
@@ -26625,6 +26650,56 @@
         "knowledge_base.candidates"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode's own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\"{\"about\":\"lib/a.sh\",\"route\":\"project\",\"candidates\":[\"e1-a\",\"e2-b\"],\"episodes\":[\"e1\",\"e2\"]}\"#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \"two episodes observed it\");\nassert!(g.rejected.is_empty(), \"and nobody rejected it\");\n```",
+      "home": "knowledge-base",
+      "is_enum": false,
+      "name": "KnowledgeGroup",
+      "properties": [
+        {
+          "description": "The subject, as written.",
+          "name": "about",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The route of its records.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The candidates awaiting review, by id.",
+          "name": "candidates",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The records rejected and kept, by id.",
+          "name": "rejected",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The episodes behind all of them, each once, in order.",
+          "name": "episodes",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KnowledgeCandidates"
+      ],
       "values": [],
       "variants": []
     },
@@ -55952,7 +56027,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "evidence claim",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/claim?claim=a-finding-names-how-to-see-it-again\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/claim?claim=a-candidate-is-routed-by-what-it-is-about\"",
           "description": "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give.",
           "home": "evidence",
           "id": "evidence.claim",
@@ -55966,7 +56041,7 @@
               "examples": [
                 {
                   "case": "first-claim",
-                  "value": "\"a-finding-names-how-to-see-it-again\""
+                  "value": "\"a-candidate-is-routed-by-what-it-is-about\""
                 }
               ],
               "name": "claim",
@@ -56019,7 +56094,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "evidence proves",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/test?test=suite%3A138_governance_gates\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/evidence/test?test=suite%3A982_a_candidate_is_routed_by_what_it_is_about\"",
           "description": "One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.",
           "home": "evidence",
           "id": "evidence.test",
@@ -56033,7 +56108,7 @@
               "examples": [
                 {
                   "case": "first-test",
-                  "value": "\"suite:138_governance_gates\""
+                  "value": "\"suite:982_a_candidate_is_routed_by_what_it_is_about\""
                 }
               ],
               "name": "test",
@@ -57370,7 +57445,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent explain",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/explain?id=intent-bound-work\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/explain?id=a-session-leaves-what-it-observed\"",
           "description": "One intent explained from the derivations alone: a sentence for its stage naming each milestone's derived status, a sentence per criterion naming its evidence state, the plan's coverage of it and the command that reproduces it, a sentence for the work and providers realising it, and each drift finding; beside them the derived intent, the coverage of its criteria, its realization and the work linked to it.",
           "home": "intent-realization",
           "id": "intent_realization.explain",
@@ -57384,7 +57459,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"intent-bound-work\""
+                  "value": "\"a-session-leaves-what-it-observed\""
                 }
               ],
               "name": "id",
@@ -57437,7 +57512,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent realization",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/realization?intent=intent-bound-work\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/realization?intent=a-session-leaves-what-it-observed\"",
           "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning.",
           "home": "intent-realization",
           "id": "intent_realization.work",
@@ -57451,7 +57526,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"intent-bound-work\""
+                  "value": "\"a-session-leaves-what-it-observed\""
                 }
               ],
               "name": "intent",
@@ -57801,7 +57876,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent show",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/record?id=intent-bound-work\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/record?id=a-session-leaves-what-it-observed\"",
           "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`.",
           "home": "intents",
           "id": "intents.record",
@@ -57815,7 +57890,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"intent-bound-work\""
+                  "value": "\"a-session-leaves-what-it-observed\""
                 }
               ],
               "name": "id",

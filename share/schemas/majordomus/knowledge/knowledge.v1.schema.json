@@ -106,6 +106,21 @@
           "items": {
             "$ref": "#/$defs/Relation"
           }
+        },
+        "about": {
+          "description": "What an observation is about, as the worker wrote its subject: a repository path, or `capability:`, `rule:`, `command:`, `gate:` with an identifier. Never resolved as a reference, so a path renamed or deleted since leaves the record valid. Present on the candidates derived from `observation.recorded`; `knowledge candidates` groups by it, so the same thing observed in several episodes reads as one group (ADR 0118).",
+          "type": "string",
+          "pattern": "^((capability|rule|command|gate):[A-Za-z0-9][A-Za-z0-9._/@-]*|[A-Za-z0-9._][A-Za-z0-9._/-]*)$"
+        },
+        "route": {
+          "description": "Which owner should look first, derived from `about`'s structure and never from the wording (ADR 0118). It decides nothing.",
+          "enum": [
+            "platform",
+            "enforcement",
+            "generator",
+            "documentation",
+            "project"
+          ]
         }
       }
     },

@@ -1,0 +1,38 @@
+id: I2073
+milestone: a-session-leaves-what-it-observed
+title: A worker records an observation in one command
+slug: a-worker-records-an-observation
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-session-leaves-what-it-observed#an-observation-is-recorded
+objective: "Register observation.recorded in share/events.yaml (emitted_by knowledge; requires task_id, kind, subject, statement, evidence) and add `knowledge observe --kind <friction|workaround|defect|drift|repetition> --subject <ref> [--evidence <ref>]... <statement>` to lib/knowledge.sh, writing one ledger line, refusing malformed input without writing, inside or outside a task, and only inside an open episode; write ADR 0118."
+why: "Friction is noticed by workers and written nowhere the repository reads; decision add is the precedent for one typed line per act."
+current_state: "No observation event or command exists; workers keep friction in private memory files."
+desired_state: "One command any provider can run inside an episode; one typed ledger line per observation."
+scope:
+  - lib/knowledge.sh
+  - share/events.yaml
+  - share/commands.yaml
+  - docs/CLI.md
+  - docs/KNOWLEDGE.md
+  - docs/SCHEMAS.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - docs/CONCEPTS.md
+  - .ai/repo/adrs
+  - test/cases/980_a_session_records_what_it_observed.sh
+depends_on: []
+acceptance_criteria:
+  - An observation inside an episode writes one line with kind, subject, statement, each evidence reference and the active task or none
+  - An unknown kind, a malformed subject or evidence reference, a multi-line statement or a transcript marker is refused with exit 2 and no line
+  - A subject is a repository path or capability:, rule:, command:, gate: followed by an identifier, and anything else is refused
+  - With no open episode the observation is refused with exit 10 naming session start, and nothing is written
+validation:
+  - bash test/run.sh 980_a_session_records_what_it_observed
+  - bash test/run.sh 33_event_registry
+evidence_required:
+  - observation_recorded
+created_at: 2026-10-09
+updated_at: 2026-10-09

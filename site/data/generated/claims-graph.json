@@ -1977,6 +1977,33 @@
       "note": "An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary."
     },
     {
+      "id": "claim:a-session-records-what-it-observed",
+      "kind": "claim",
+      "label": "knowledge observe records one observation.recorded ledger line with its kind, subject, statement and typed evidence references, inside an open episode, inside a task or outside one, and refuses any other shape, or the absence of an episode, without writing",
+      "status": "guaranteed",
+      "route": "/guarantees/a-session-records-what-it-observed/",
+      "external": false,
+      "note": "The kinds are friction, workaround, defect, drift and repetition. A subject is a repository-relative path without '..' or capability:, rule:, command:, gate: followed by an identifier; an evidence reference is file:, test:, commit:, issue: or claim: followed by what it names. A statement that spans lines or opens like a turn of a conversation is refused. A malformed observation exits 2; one recorded with no open episode exits 10, naming session start, because the deriver selects lines by their episode stamp. Every refusal leaves the ledger as it was. The observation is derived into a candidate at the episode boundary (ADR 0118)."
+    },
+    {
+      "id": "claim:an-observation-becomes-a-grouped-candidate",
+      "kind": "claim",
+      "label": "Each observation an episode recorded becomes, at that episode's end and with no model, a candidate of its own that says what it is about, and knowledge candidates groups the records about one subject with the episodes behind them; an episode that observed nothing records that it found nothing",
+      "status": "guaranteed",
+      "route": "/guarantees/an-observation-becomes-a-grouped-candidate/",
+      "external": false,
+      "note": "The id is ADR 0091's, the episode followed by a digest of the kind, the subject and the statement, so every file is one episode's own and nothing is read, merged and written back. A rejected record stays rejected and a later observation of its subject is a new candidate listed beside it in the same group. The Rust reader knowledge_base.candidates answers the same groups. ADR 0118."
+    },
+    {
+      "id": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "kind": "claim",
+      "label": "Every candidate derived from an observation carries a route — platform, enforcement, generator, documentation or project — derived from its subject's structure and never from its wording, and in a repository that adopted the tool its own share/ routes project",
+      "status": "guaranteed",
+      "route": "/guarantees/a-candidate-is-routed-by-what-it-is-about/",
+      "external": false,
+      "note": "platform is a command:, capability: or rule:majordomus.* subject, a path under the vendored rules, or the tool's own share/ only when it lies inside the repository; enforcement is another rule: or a gate:; generator a path the scope declares generated or .gitattributes marks merge=derived; documentation a path under docs/; anything else is project. The route decides nothing; promotion and rejection stay acts. ADR 0118."
+    },
+    {
       "id": "claim:briefing-names-candidates",
       "kind": "claim",
       "label": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
@@ -4339,6 +4366,27 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_product_features.sh"
     },
     {
+      "id": "test:test/cases/980_a_session_records_what_it_observed.sh",
+      "kind": "test",
+      "label": "test/cases/980_a_session_records_what_it_observed.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/980_a_session_records_what_it_observed.sh"
+    },
+    {
+      "id": "test:test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+      "kind": "test",
+      "label": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+    },
+    {
+      "id": "test:test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+      "kind": "test",
+      "label": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+    },
+    {
       "id": "test:test/cases/99_adr.sh",
       "kind": "test",
       "label": "test/cases/99_adr.sh",
@@ -5434,6 +5482,21 @@
     },
     {
       "source": "claim:knowledge-promotion-is-an-act",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-session-records-what-it-observed",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:an-observation-becomes-a-grouped-candidate",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-candidate-is-routed-by-what-it-is-about",
       "target": "source:docs/KNOWLEDGE.md",
       "kind": "specified_by"
     },
@@ -6563,6 +6626,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:a-session-records-what-it-observed",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:an-observation-becomes-a-grouped-candidate",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:briefing-names-candidates",
       "target": "impl:lib/derive.sh",
       "kind": "implemented_by"
@@ -7685,6 +7763,21 @@
     {
       "source": "claim:knowledge-promotion-is-an-act",
       "target": "test:test/cases/709_knowledge_promotion_is_an_act.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-session-records-what-it-observed",
+      "target": "test:test/cases/980_a_session_records_what_it_observed.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:an-observation-becomes-a-grouped-candidate",
+      "target": "test:test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "target": "test:test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
       "kind": "proved_by"
     },
     {

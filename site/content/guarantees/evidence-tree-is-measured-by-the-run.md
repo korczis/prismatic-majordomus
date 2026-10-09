@@ -1,7 +1,7 @@
 +++
 title = "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven"
 description = "The recorder does not measure its own checkout. The run does, when it ends, with"
-weight = 241
+weight = 244
 [extra]
 claim_id = "evidence-tree-is-measured-by-the-run"
 status = "guaranteed"
