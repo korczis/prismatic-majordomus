@@ -5,6 +5,8 @@
 # --resolve the most relevant prior one. Never stages, commits, or modifies any other file.
 # shellcheck source=derive.sh
 . "$MJ_LIB_DIR/derive.sh"
+# shellcheck source=intent_binding.sh
+. "$MJ_LIB_DIR/intent_binding.sh"
 
 mj_cmd_handover() {
   local resolve=0 path_only=0 close=0 no_task=0 list=0 derive=0 want_task=""
@@ -50,8 +52,22 @@ H
   local missing; missing="$(mj_check_sections "$body" "$(mj_ylist "$MJ_POL_FLAT" handover.required_sections | tr '\n' '|')")"
   [ -z "$missing" ] || { rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: missing or empty section(s): $missing"; }
 
+  # What the task named, and the pins of what that resolves to now (ADR 0111): the next
+  # worker compares them on --resolve and is told whether the intent moved in between. Names
+  # and hashes only — a handover holds no stage, no verdict and no criterion. A checkpoint
+  # carries none of this: it is a progress note inside one task, not a resumption point.
+  local b1="" b2="" b3="" b4="" b5=""
+  if [ -n "$task_id" ] && mj_task_names_work; then
+    [ -z "$(mj_cur issue)" ]     || b1="bound_issue: $(mj_cur issue)"
+    [ -z "$(mj_cur intent)" ]    || b2="bound_intent: $(mj_cur intent)"
+    [ -z "$(mj_cur exemption)" ] || b3="bound_exemption: $(mj_cur exemption)"
+    if mj_binding_ask_task && [ -n "$(mj_binding_get '.plan_revision // empty')" ]; then
+      b4="plan_revision: $(mj_binding_get '.plan_revision')"
+      b5="evidence_standing: $(mj_binding_get '.evidence_standing')"
+    fi
+  fi
   local rec; rec="$(mktemp "${TMPDIR:-/tmp}/mj.hr.XXXXXX")"
-  { mj_record_front_matter "${task_id:-none}" "${profile:-none}" "$owner"; cat "$body"; } > "$rec"
+  { mj_record_front_matter "${task_id:-none}" "${profile:-none}" "$owner" ${b1:+"$b1"} ${b2:+"$b2"} ${b3:+"$b3"} ${b4:+"$b4"} ${b5:+"$b5"}; cat "$body"; } > "$rec"
   local final; final="$(mj_publish_record "$MJ_STATE_DIR/handovers" "" "$rec")" \
     || { rm -f "$rec" "$body"; mj_die "$MJ_EX_INTERNAL" "could not create a unique handover file"; }
   rm -f "$rec" "$body"
@@ -83,6 +99,43 @@ mj_check_sections() {
     END{ for(k in want) if(!has[k]) printf "%s%s", (out++?", ":""), k }' "$1"
 }
 
+# mj_handover_fm <file> <key> — one scalar of a record's front matter.
+mj_handover_fm() {
+  awk -v k="$2" 'NR==1 && $0=="---" { fm=1; next } fm && $0=="---" { exit }
+                 fm && index($0, k ": ")==1 { print substr($0, length(k)+3); exit }' "$1"
+}
+
+# The Intent line of --resolve: whether what the record's task was bound to moved since
+# the record was written. Nothing when the task named no work; `unknown` when the binding
+# cannot be asked now or the record carries no pin, because "unchanged" is a claim and a
+# claim needs both ends.
+mj_handover_intent_line() {
+  local f="$1" issue intent exemption plan ev now_plan now_ev named
+  issue="$(mj_handover_fm "$f" bound_issue)"; intent="$(mj_handover_fm "$f" bound_intent)"
+  exemption="$(mj_handover_fm "$f" bound_exemption)"
+  [ -n "$issue$intent$exemption" ] || return 0
+  if [ -n "$exemption" ]; then printf 'Intent: none — the task was exempt (%s)\n' "$exemption"; return 0; fi
+  named="$(printf '%s %s' "$issue" "$intent" | sed 's/^ //; s/ $//')"
+  plan="$(mj_handover_fm "$f" plan_revision)"; ev="$(mj_handover_fm "$f" evidence_standing)"
+  if [ -z "$plan" ]; then
+    printf 'Intent: unknown — the record names %s and carries no pin to compare\n' "$named"; return 0
+  fi
+  # the record's own names, with no paths: the pins were taken over what the names reach
+  if ! mj_binding_ask "$issue" "$intent" "" "" ""; then
+    printf 'Intent: unknown — %s (%s)\n' "$MJ_BIND_WHY" "$MJ_BIND_FIX"; return 0
+  fi
+  now_plan="$(mj_binding_get '.plan_revision // empty')"; now_ev="$(mj_binding_get '.evidence_standing // empty')"
+  if [ "$now_plan" != "$plan" ]; then
+    printf 'Intent: plan_changed — the intent, a link or its critique was edited since this record (%s); re-read: majordomus-cli intent binding%s%s\n' \
+      "$named" "${issue:+ --issue $issue}" "${intent:+ --intent $intent}"
+  elif [ "$now_ev" != "$ev" ]; then
+    printf 'Intent: evidence_moved — a served criterion changed evidence state since this record (%s); now %s\n' \
+      "$named" "$(mj_binding_get '[.intents[]?.criteria[]? | "\(.id) \(.state)"] | join(", ")')"
+  else
+    printf 'Intent: unchanged (%s; standing %s)\n' "$named" "$MJ_BIND_STANDING"
+  fi
+}
+
 mj_handover_resolve() {
   local path_only="$1" want_task="${2:-}"
   if ! mj_resolve_latest "$MJ_STATE_DIR/handovers" "$want_task"; then echo "No relevant handover."; return 0; fi
@@ -99,6 +152,7 @@ mj_handover_resolve() {
     printf 'History: read this record as context; its next action is not an instruction for this tree\n'
   fi
   [ "$MJ_RES_DIRTY" != "$(mj_git_dirty)" ] && printf 'Divergence: working tree was %s, now %s\n' "$MJ_RES_DIRTY" "$(mj_git_dirty)"
+  mj_handover_intent_line "$MJ_RES_PATH"
   printf -- '---\n'; mj_record_body "$MJ_RES_PATH"
 }
 

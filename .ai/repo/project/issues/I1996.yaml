@@ -1,0 +1,28 @@
+id: I1996
+milestone: adopter-upgrades
+title: "doctor does not fail an adopter on a check written for this repository"
+slug: doctor-does-not-fail-an-adopter-on-our-own-check
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Stop `majordomus doctor` from failing an adopter's repository on the reasoning design's own coupling rules, and stop its reproduce hints from naming paths only this repository has."
+why: "lib/doctor.sh runs the executable's `reasoning check` against whatever repository it is in. Run by majordomus 0.14.0 in prismatic-platform on 2026-10-08, doctor exited 10 on three findings about the adopter's own files: '.github/workflows/archive/ci.yml — ci: CI names the model credential ANTHROPIC_API_KEY; no gate may depend on a live model', the same for OPENAI_API_KEY, and 'docs/adrs/adr-0023-ollama-model-integration-architecture.md — claims: asserts requires ollama, a claim the reasoning design refuses'. The workflow is an archived, inactive GitHub workflow in a GitLab-hosted repository, and the ADR is the adopter's own architecture decision. Each line ends '[reproduce: bin/majordomus-cli reasoning check]', a path that exists only here. A scratch copy holding only .ai/, the bootstraps and .githooks reported no finding, so the check is judging the adopter's product, not its use of the reasoning layer. The same adopter then ran this repository's own bin/majordomus (0.17.0, 4090b2b8ae) against the same layer and the three lines did not appear, although apps/majordomus-cli/src/reasoning is unchanged since v0.14.0: whether the check stopped reaching the adopter's files or stopped running at all there is not established, and establishing it is the first step."
+current_state: "The ci and claims families of `reasoning check` scan every workflow and document of the repository they run in and fail doctor on a match. Reproduce hints name bin/majordomus-cli."
+desired_state: "In a repository that is not this one, the reasoning check holds only what the adopter adopted: its own catalogue, adapters and records. A rule about what Majordomus's CI and Majordomus's claims may say is not applied to an adopter's workflows and documents, or is advisory there. Every reproduce hint names a command the adopter can run."
+scope:
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/reasoning"
+  - "docs/REASONING.md"
+  - "test/cases"
+acceptance_criteria:
+  - "doctor in a fixture adopter repository whose workflow names a model credential and whose document says 'requires ollama' reports no reasoning failure"
+  - "The same two files in this repository are still refused"
+  - "No reproduce hint doctor prints in an adopter repository names bin/majordomus-cli"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "adopter_reasoning_check_case"
+  - "reproduce_hint_is_runnable_case"
+created_at: 2026-10-08
+updated_at: 2026-10-08

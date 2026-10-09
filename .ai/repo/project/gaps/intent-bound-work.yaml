@@ -1,0 +1,72 @@
+intent: intent-bound-work
+observed_at: f7b9d6d4c8
+recorded_by: claude-code (session fcbeae95, primary checkout; three read-only audit agents over int/batch-intent)
+recorded_at: 2026-10-07
+observations:
+  - id: preflight-has-no-caller
+    statement: intents.preflight is called by its own capability and its tests only; no hook, start, session start or plan transition asks it
+    source: file:apps/majordomus-cli/src/capability/builtin/intents.rs
+  - id: start-names-no-work
+    statement: start accepts --scope, --requires, --profile and --owner, and the task record it writes has no issue, intent or exemption field
+    source: file:lib/start.sh
+  - id: preflight-takes-no-intent
+    statement: The preflight input is an issue or paths; an intent cannot be named, and several intents reached by paths are each judged with none called ambiguous
+    source: file:apps/majordomus-cli/src/intent.rs
+  - id: no-exemption-class
+    statement: Maintenance is derived from a milestone no intent names; no policy, profile or schema declares an exemption a worker can give with a reason
+    source: file:.ai/repo/policy.yaml
+  - id: context-reads-no-intent
+    statement: majordomus context composes git, peers, integration, task, profile and continuity sections and reads no intent, issue or criterion
+    source: file:lib/context.sh
+  - id: handover-pins-a-commit-only
+    statement: A handover's front matter carries task, branch, head and working tree; nothing computes or stores a revision of an intent, its links or its critique
+    source: file:lib/common.sh
+  - id: continuity-has-no-link
+    statement: continuity.state reports the active task's id, scope and requires and nothing of what it serves
+    source: file:apps/majordomus-cli/src/capability/builtin/continuity.rs
+conditions:
+  - criterion: binding-is-resolved
+    state: missing
+    because: the join exists for an issue or paths, without an intent input, an ambiguity refusal or a revision
+    observations: [preflight-takes-no-intent, handover-pins-a-commit-only]
+  - criterion: exemption-is-typed
+    state: missing
+    because: no exemption class is declared anywhere, so issue-less work is either derived maintenance or refused
+    observations: [no-exemption-class]
+  - criterion: start-is-gated
+    state: missing
+    because: start asks nothing and records nothing about what the task serves
+    observations: [preflight-has-no-caller, start-names-no-work, continuity-has-no-link]
+  - criterion: worker-is-briefed
+    state: missing
+    because: the briefing never opens an intent
+    observations: [context-reads-no-intent]
+  - criterion: resume-detects-drift
+    state: missing
+    because: there is no revision to pin and nothing to compare on resolve
+    observations: [handover-pins-a-commit-only]
+risks:
+  - The task lifecycle is shell and the intent engine is Rust; the shell must ask the built executable and treat an unreadable answer as unknown, never as a pass (the completion-gates validator is the precedent)
+  - Requiring binding in this repository changes what every concurrent session types to start a task
+  - The rule project.an-intent-outlives-its-sessions forbids intent state in a session; only names and a pin may be stored
+work:
+  - id: binding-derivation
+    title: What a piece of work serves is one derivation, with a revision
+    serves: [binding-is-resolved, exemption-is-typed]
+    issue: I2000
+  - id: start-gate
+    title: start asks what the task serves and refuses a refused binding where the policy requires it
+    serves: [start-is-gated]
+    issue: I2001
+  - id: context-section
+    title: The context of a bound task says what the intent asks of this work
+    serves: [worker-is-briefed]
+    issue: I2002
+  - id: handover-pin
+    title: A handover pins the binding it was written under, and resolving it reports drift
+    serves: [resume-detects-drift]
+    issue: I2003
+  - id: transition-gate
+    title: plan start refuses an issue whose binding is refused, in both engines
+    serves: [start-is-gated]
+    issue: I2004

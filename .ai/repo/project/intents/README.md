@@ -32,4 +32,5 @@ majordomus-cli intent list                    # every intent, with its derived s
 majordomus-cli intent show <id>               # one intent, milestones and evidence
 majordomus-cli intent validate                # exit 10 on a failure
 majordomus-cli intent preflight --issue I0001 # which intent the work serves, or why none
+majordomus-cli intent binding --issue I0001   # what a task naming it is bound to, with its pins
 ```

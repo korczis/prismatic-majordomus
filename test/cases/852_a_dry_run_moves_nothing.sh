@@ -41,7 +41,7 @@ printf '[%s,%s]\n' "$(pr 1 "$H1" feature/1 2026-09-01T00:00:00Z)" "$(pr 2 "$H2" 
 # listing move origin, which is what a forge changing under the proof looks like.
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
-echo "\$*" >> "$STATE/log"
+[ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
 case "\$1 \$2" in
   "repo view") echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
@@ -54,6 +54,11 @@ case "\$1 \$2" in
       git -C "$ORIGIN" update-ref refs/heads/intruder "\$(git -C "$ORIGIN" rev-parse master)"
     fi
     cat "$STATE/prs.json" ;;
+  # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
+  # this repository, and no pull request mentions it. The list is this forge's own, unlogged
+  "api graphql")
+    nodes="\$(DECLARATIONS=1 "\$0" pr list --state open | grep -o '"number":[0-9]*' | sed 's/.*/{&,"authorAssociation":"OWNER","isCrossRepository":false,"timelineItems":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[]}}/' | paste -sd, -)"
+    printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[%s]}}}}\n' "\$nodes" ;;
   *) echo "WRITE-OR-UNEXPECTED" >> "$STATE/log"; exit 1 ;;
 esac
 EOF

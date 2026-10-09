@@ -31,8 +31,10 @@ majordomus intent preflight --issue I9999   # exit 10, unknown_issue: the issue 
 
 ## What it does not cover
 
-It is a question, not a step: `plan start` does not run it, and a session does not load the
-intent it names (`intent-in-session-context`).
+The preflight itself is a question and takes no step. The commands that ask it are
+`majordomus start` and `plan start`, through `intents.binding` (ADR 0111): what a task is
+briefed with is `intent-in-session-context`, and what a start refuses is
+`intent-refused-at-plan-start`.
 
 ## Why it exists
 
