@@ -563,17 +563,13 @@ pub(crate) fn complete(
 /// before the first commit. What a deployment target is expected to serve when nothing
 /// names another revision.
 pub(crate) fn head_of(root: &Path) -> Option<String> {
-    let out = std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
+    crate::git::read_only(root)
         .args(["rev-parse", "HEAD"])
         .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    let head = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    (!head.is_empty()).then_some(head)
+        .ok()
+        .filter(|out| out.status.success())
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+        .filter(|head| !head.is_empty())
 }
 
 /// Where this checkout's ledger is.
@@ -917,5 +913,78 @@ classes:
         assert!(!c.present);
         assert_eq!(c.tallies.get("pass"), None);
         assert!(c.unverified.contains(&"build".to_string()));
+    }
+
+    #[test]
+    fn an_active_deployment_the_change_reaches_owes_a_deployment_and_names_it() {
+        use crate::deploy::targets::{DeploymentIdentity, DeploymentTarget, TargetKind};
+        let plan = DeploymentPlan {
+            targets: vec![DeploymentTarget {
+                id: "majordomus".into(),
+                kind: TargetKind::Application,
+                url: Some("https://app.test".into()),
+                identity_url: None,
+                applicable: true,
+                reason: "r".into(),
+                expected: DeploymentIdentity::default(),
+                inputs: vec![],
+                because: vec![],
+            }],
+            findings: vec![],
+        };
+        // nothing in the token's own inputs is touched, and the task declared nothing
+        let i = implied(&vocabulary(), &["site/x.html".into()], None, &plan);
+        let deploy = i.iter().find(|o| o.id == "deploy").unwrap();
+        assert!(deploy.applicable && !deploy.declared);
+        assert_eq!(
+            deploy.reason,
+            "the deployment plan says the change reaches an active deployment (majordomus)"
+        );
+    }
+
+    #[test]
+    fn a_version_summary_is_ok_only_under_the_word_ok() {
+        let summary = |status: &str| VersionSummary {
+            baseline: "0.5.0".into(),
+            declared: "0.6.0".into(),
+            required: "0.6.0".into(),
+            impact: "minor".into(),
+            status: status.into(),
+            breaking: false,
+            changes: 1,
+        };
+        assert!(summary("ok").ok());
+        assert!(!summary("blocked").ok());
+    }
+
+    /// The head is git's own word for it, and a directory git cannot answer for has none.
+    #[test]
+    fn the_head_is_the_commit_git_states_and_nothing_where_there_is_none() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(head_of(dir.path()), None, "not a repository");
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .env("GIT_CONFIG_GLOBAL", "/dev/null")
+                .env("GIT_CONFIG_NOSYSTEM", "1")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .output()
+                .expect("git runs");
+            assert!(out.status.success(), "git {args:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "main"]);
+        assert_eq!(head_of(dir.path()), None, "a repository with no commit");
+        git(&["config", "user.name", "A Worker"]);
+        git(&["config", "user.email", "worker@example.test"]);
+        git(&["config", "commit.gpgsign", "false"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "the first commit"]);
+        let head = head_of(dir.path()).expect("a commit");
+        assert_eq!(head, git(&["rev-parse", "HEAD"]));
+        assert_eq!(head.len(), 40);
     }
 }

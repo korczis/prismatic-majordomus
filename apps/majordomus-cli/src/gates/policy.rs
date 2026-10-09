@@ -713,4 +713,127 @@ mod tests {
             .lines()
             .all(|l| l.starts_with("- ") && !l.starts_with("- **")));
     }
+
+    const ONE_QUESTION: &str = "version: 1\nstages:\n  - id: a\n    title: A\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: x\n    source: gates\n    remediation: r\n";
+
+    /// A source is carried as text and printed back as the text it was parsed from, so the
+    /// policy file, the report and the site state one spelling.
+    #[test]
+    fn a_source_prints_as_the_text_it_was_parsed_from() {
+        for text in [
+            "obligation:tests",
+            "gates",
+            "gate:release-check",
+            "change:test-path",
+            "release:impact",
+            "task:issue",
+            "session:handover",
+            "convergence",
+            "elsewhere:majordomus doctor",
+        ] {
+            let parsed = QuestionSource::parse(text).unwrap_or_else(|e| panic!("{text}: {e}"));
+            assert_eq!(parsed.to_string(), text);
+        }
+        assert_eq!(
+            QuestionSource::parse("  gate:  release-check ")
+                .unwrap()
+                .to_string(),
+            "gate:release-check",
+            "whitespace is not part of a name"
+        );
+    }
+
+    #[test]
+    fn a_source_nothing_answers_is_refused_with_what_would_have_been_accepted() {
+        let err = QuestionSource::parse("oracle").unwrap_err();
+        assert!(
+            err.starts_with("source 'oracle' is not one this executable answers"),
+            "{err}"
+        );
+        for form in [
+            "obligation:<token>",
+            "gate:<id>",
+            "elsewhere:<command>",
+            "convergence",
+        ] {
+            assert!(err.contains(form), "{form} is not offered: {err}");
+        }
+        for (text, kind) in [
+            ("obligation:", "obligation"),
+            ("gate:  ", "gate"),
+            ("elsewhere:", "elsewhere"),
+        ] {
+            assert_eq!(
+                QuestionSource::parse(text).unwrap_err(),
+                format!("source '{kind}:' names nothing")
+            );
+        }
+
+        // a declaration built by hand around such a text is answered by nothing, by name
+        let decl = QuestionDecl {
+            id: "q".into(),
+            stage: "a".into(),
+            question: "x".into(),
+            source: "oracle".into(),
+            remediation: "r".into(),
+        };
+        assert_eq!(decl.kind(), QuestionSource::Elsewhere("oracle".into()));
+    }
+
+    /// Every refusal names the file it is about, and the ones about a question name the
+    /// question, so the repair is one edit.
+    #[test]
+    fn a_policy_that_cannot_be_read_or_judged_against_is_refused_by_name() {
+        let refused = |text: &str| CompletionPolicy::parse(text, "t").unwrap_err();
+
+        assert!(
+            refused("version: [1\n").starts_with("t: "),
+            "not the YAML subset"
+        );
+        let err = refused(&ONE_QUESTION.replace("source: gates", "source: oracle"));
+        assert!(err.starts_with("t: question 'q': source 'oracle'"), "{err}");
+
+        let twice = ONE_QUESTION.replace(
+            "questions:",
+            "  - id: a\n    title: Again\n    summary: s\nquestions:",
+        );
+        assert!(refused(&twice).contains("stage 'a' is declared twice"));
+
+        for hollow in [
+            ONE_QUESTION.replace("question: x", "question: \"  \""),
+            ONE_QUESTION.replace("remediation: r", "remediation: \"\""),
+        ] {
+            assert!(
+                refused(&hollow).contains("question 'q' must carry a question and a remediation"),
+                "{}",
+                refused(&hollow)
+            );
+        }
+
+        assert_eq!(
+            refused("version: 1\nstages: []\nquestions: []\n"),
+            "t: the policy declares no question"
+        );
+
+        let nowhere = tempfile::tempdir().unwrap();
+        let err = CompletionPolicy::load(nowhere.path()).unwrap_err();
+        assert!(
+            err.contains(POLICY_FILE),
+            "the missing file is named: {err}"
+        );
+    }
+
+    #[test]
+    fn a_token_the_vocabulary_lacks_is_a_problem_named_by_question() {
+        let p = CompletionPolicy::parse(
+            &ONE_QUESTION.replace("source: gates", "source: obligation:tests"),
+            "t",
+        )
+        .unwrap();
+        assert!(p.validate(&["tests".into()]).is_empty());
+        assert_eq!(
+            p.validate(&["docs".into()]),
+            ["question 'q' is answered by obligation 'tests', which share/obligations.yaml does not declare"]
+        );
+    }
 }

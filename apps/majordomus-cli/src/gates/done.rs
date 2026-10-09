@@ -889,4 +889,47 @@ mod tests {
         assert_eq!(q[0].status, GateStatus::Unknown);
         assert!(q[0].evidence.contains("majordomus doctor"));
     }
+
+    /// The closure's word is translated once, and a word this report was never taught is
+    /// unknown rather than guessed at.
+    #[test]
+    fn a_standing_this_report_does_not_know_is_unknown_and_keeps_the_closures_sentence() {
+        let mut fx = Fx::new();
+        fx.standing
+            .insert("tests".to_string(), standing("undeclared"));
+        let tested = fx.by("tested");
+        assert_eq!(tested.status, GateStatus::Unknown);
+        assert_eq!(tested.evidence, "the closure said undeclared");
+    }
+
+    #[test]
+    fn an_obligation_nothing_judged_is_answered_from_what_the_change_implies_or_not_at_all() {
+        let mut fx = Fx::new();
+        // not applicable, whoever declared it: the reason is the derivation's own
+        fx.implied = vec![implied_of("tests", false, true)];
+        let tested = fx.by("tested");
+        assert_eq!(tested.status, GateStatus::Exempt);
+        assert_eq!(tested.evidence, "because");
+        assert!(tested.source.contains("derived from its own inputs"));
+
+        // nothing judged it and nothing derived it: the vocabulary holds no such token
+        fx.implied.clear();
+        let tested = fx.by("tested");
+        assert_eq!(tested.status, GateStatus::Unknown);
+        assert!(
+            tested.evidence.contains("declares no token 'tests'"),
+            "{}",
+            tested.evidence
+        );
+
+        // and when the closure itself could not be read, that is what is said
+        fx.reachable = false;
+        let tested = fx.by("tested");
+        assert_eq!(tested.status, GateStatus::Unknown);
+        assert!(
+            tested.evidence.contains("closure could not be read"),
+            "{}",
+            tested.evidence
+        );
+    }
 }
