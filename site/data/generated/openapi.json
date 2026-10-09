@@ -36719,6 +36719,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough.",
+          "name": "reasons",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",

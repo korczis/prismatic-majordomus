@@ -30259,6 +30259,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2157",
+        "kind": "issue",
+        "label": "I2157",
+        "summary": "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready",
+        "route": "/cockpit/objects/issue/i2157",
+        "source": ".ai/repo/project/issues/I2157.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server that lost its lease answers /api/v1/ready with ready false and the reason lease_lost",
+            "A degraded index is reported on /api/v1/ready with its reason, and docs/MCP.md says whether that is ready",
+            "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled",
+            "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A server that lost its lease, or serves a degraded index, answers /api/v1/ready with ready true.",
+          "depends_on": [],
+          "evidence_required": [
+            "ready_false_on_lease_loss_test",
+            "health_mesh_check_test"
+          ],
+          "milestone": "failure-is-visible",
+          "objective": "Fold lease loss and a degraded index into readiness with a named reason, add a mesh check to health.report, and make majordomus doctor report the runtime or say that it does not.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "lib/doctor.sh",
+            "apps/majordomus-cli/tests/health_server.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "ready-means-ready",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test health_server --test lease_lost"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30921,6 +30964,62 @@
             "bin/majordomus doctor",
             "cargo test --workspace --all-features",
             "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/failure-is-visible",
+        "kind": "milestone",
+        "label": "failure-is-visible",
+        "summary": "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports",
+        "route": "/cockpit/objects/milestone/failure-is-visible",
+        "source": ".ai/repo/project/milestones/failure-is-visible.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/api/v1/ready reports false with a named reason after a lease loss",
+            "health.report carries a mesh check when the mesh is enabled",
+            "Slow clients hold no worker past the declared deadline",
+            "Every failure class in the published table names a CI test or a stated limitation"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "readiness_reflects_state",
+            "request_deadline_test",
+            "failure_class_table"
+          ],
+          "non_scope": [
+            "Circuit breakers; the audit found no evidence one is justified.",
+            "A metrics stack or log shipping; the runtime reports through its own capabilities.",
+            "Journal durability, which is I2137 (mesh-journal-converges)."
+          ],
+          "order": 142,
+          "priority": "p1",
+          "risks": [
+            "Making readiness stricter can make deploy health checks fail where they passed; the fly-deployment health block reads /api/v1/live and must keep doing so.",
+            "A deadline on request reads that is too short breaks slow links; it must be declared and measured."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "lib/doctor.sh",
+            "lib/common.sh",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            "docs/MCP.md"
+          ],
+          "slug": "failure-is-visible",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
           ]
         }
       },
@@ -66235,6 +66334,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2157",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2157",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66321,6 +66430,11 @@
       },
       {
         "source": "majordomus://milestone/external-workspaces",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/failure-is-visible",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -74976,8 +75090,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2483,
+      "edges": 5432,
       "acyclic": false,
       "truncated": false
     }

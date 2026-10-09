@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "cfbccc9cb81ac6778fa768984fd7219a0d5010ac5856ac90b0a055782ed66ddb",
+    "fingerprint": "e4cf6f81623363b87ffde19372775b0ab593739a0a26eae59da0d50b4ee6da02",
     "summary": {
-      "total": 2100,
+      "total": 2102,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1918,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1918
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1926
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1972,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -29775,6 +29775,13 @@
                   "null"
                 ],
                 "description": "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502)."
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
               }
             },
             "required": [
@@ -75526,7 +75533,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75646,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76158,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c769dd6103e5168ec7146335bc133243c7ce921177e7b0e9a38ffd10b8664993",
+    "fingerprint": "2cdaaf6c7c70cb83c2b568fad5d44a8bfd82fbc86e20410c9931667fe068b387",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76197,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81616,7 +81623,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58533
+        "bytes": 59000
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81670,7 +81677,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 120745
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87925,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2157",
+        "kind": "issue",
+        "identity": "I2157",
+        "title": "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready",
+        "description": "Fold lease loss and a degraded index into readiness with a named reason, add a mesh check to health.report, and make majordomus doctor report the runtime or say that it does not.",
+        "path": ".ai/repo/project/issues/I2157.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3215
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88071,6 +88089,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 6152
+      },
+      {
+        "uri": "majordomus://milestone/failure-is-visible",
+        "kind": "milestone",
+        "identity": "failure-is-visible",
+        "title": "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports",
+        "description": "A client can tell running from ready from mesh-healthy from degraded on one endpoint; no client can hold a worker past a declared deadline; each failure class in a published table names its test or its stated limitation.",
+        "path": ".ai/repo/project/milestones/failure-is-visible.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3805
       },
       {
         "uri": "majordomus://milestone/fly-deployment",
@@ -96863,7 +96892,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96922,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",

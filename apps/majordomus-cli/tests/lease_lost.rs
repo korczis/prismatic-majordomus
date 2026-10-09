@@ -53,6 +53,20 @@ fn index(url: &str) -> Value {
     serde_json::from_str(&reply.body).expect("the index is JSON")
 }
 
+/// `GET /api/v1/ready` of a running server, parsed.
+fn readiness(url: &str) -> Value {
+    let reply = majordomus_cli::mcp::bridge::request(
+        url,
+        "GET",
+        "/api/v1/ready",
+        &[],
+        None,
+        std::time::Duration::from_secs(5),
+    )
+    .expect("the server answers its readiness");
+    serde_json::from_str(&reply.body).expect("readiness is JSON")
+}
+
 /// POST an `initialize` with no session header, and hand back the status and the body.
 fn open_session(url: &str) -> (u16, Value) {
     let body = init().to_string();
@@ -93,6 +107,8 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
         lease::probe(&url, repo.root()),
         "the probe accepts the server it is looking for"
     );
+    let ready = readiness(&url);
+    assert_eq!(ready["ready"], json!(true), "{ready}");
 
     // a client that arrives now is served, and its session is the board's
     let (status, reply) = open_session(&url);
@@ -124,6 +140,19 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
     assert!(
         !lease::probe(&url, repo.root()),
         "a client with a remembered address is not answered as though this were the one"
+    );
+    // and its readiness says it is not ready, and why (I2157)
+    let ready = readiness(&url);
+    assert_eq!(
+        ready["ready"],
+        json!(false),
+        "a lost lease is not ready: {ready}"
+    );
+    assert!(
+        ready["reasons"].as_array().is_some_and(|r| r
+            .iter()
+            .any(|x| x.as_str().is_some_and(|x| x.starts_with("lease_lost")))),
+        "the reason is named: {ready}"
     );
 
     // its health says that what the server check describes is another process

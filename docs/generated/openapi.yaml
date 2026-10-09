@@ -30712,6 +30712,11 @@ components:
             - string
             - "null"
           description: "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502)."
+        reasons:
+          type: array
+          items:
+            type: string
+          description: "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
       required:
         - ready
         - version

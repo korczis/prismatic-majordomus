@@ -369,6 +369,28 @@ fn declared(declaration: &Option<Result<MeshConfig, MeshError>>) -> Declared {
 /// active (a degraded one names its failed providers, and fails only when no provider
 /// runs at all), off as declared, off because there is nothing to activate, or — the one
 /// failure — off under an enabled declaration, carrying the server's reason.
+/// The `runtime` verdict alone: what a server decided about the declaration, judged as
+/// `mesh doctor` judges it. Health reads this one check rather than running the doctor's
+/// probes, which open sockets.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::runtime_verdict;
+/// use majordomus_cli::mesh::manager::MeshRuntime;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
+///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true })).unwrap();
+/// let server = MeshRuntime::new();
+/// server.decline("the node identity did not load");
+/// assert!(!runtime_verdict(Some(Ok(enabled)), Some(&server.status())).ok);
+/// assert!(runtime_verdict(None, Some(&server.status())).ok, "no declaration, nothing owed");
+/// ```
+pub fn runtime_verdict(
+    declaration: Option<Result<MeshConfig, MeshError>>,
+    runtime: Option<&MeshStatus>,
+) -> DoctorCheck {
+    runtime_check(declared(&declaration), runtime)
+}
+
 fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorCheck {
     let Some(status) = runtime else {
         return DoctorCheck::pass(

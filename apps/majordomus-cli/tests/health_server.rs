@@ -223,3 +223,22 @@ fn the_check_and_the_status_read_the_lease_through_one_function() {
         .unwrap()
         .starts_with(standing.as_str()));
 }
+
+#[test]
+fn the_mesh_is_a_dimension_of_health_and_unknown_where_no_server_decided_it() {
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let report = app
+        .context
+        .execute("health.report", serde_json::json!({}))
+        .expect("health.report answers");
+    let mesh = report["checks"]
+        .as_array()
+        .expect("checks")
+        .iter()
+        .find(|c| c["id"] == "mesh")
+        .cloned()
+        .expect("a mesh check (I2157)");
+    // a command-line process activates no mesh: unknown, never a guessed ok
+    assert_eq!(mesh["status"], serde_json::json!("unknown"), "{mesh}");
+}
