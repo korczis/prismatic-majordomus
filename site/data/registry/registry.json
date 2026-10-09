@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "fc64183d0217791212cb3c3e88485b2004a109caf11f4d6c14955e765bedae23",
+    "fingerprint": "d430fc6d5c01da41bfec8c170553f6a7c6970e258b30d79f743e52d469075d2a",
     "summary": {
-      "total": 2099,
+      "total": 2103,
       "builtin": 184,
-      "declarative": 1915,
+      "declarative": 1919,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1915
+        "resource": 1919
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1923
+        "implemented": 1927
       },
       "mcp_tools": 177,
-      "mcp_resources": 1969,
+      "mcp_resources": 1973,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -1011,6 +1011,10 @@
                   "concurrency": {
                     "$ref": "#/$defs/ExecutionConcurrency",
                     "description": "Whether two of them may overlap."
+                  },
+                  "signed_input": {
+                    "type": "boolean",
+                    "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
                   }
                 },
                 "required": [
@@ -25433,7 +25437,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -26436,7 +26440,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -26718,7 +26722,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -27361,7 +27365,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -28110,7 +28114,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -28423,7 +28427,7 @@
           "policy": "disabled"
         },
         "execution": {
-          "effect": "process_state",
+          "effect": "repository_mutation",
           "cancellable": false,
           "concurrency": "serial"
         },
@@ -42971,7 +42975,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -43182,7 +43187,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -45399,7 +45405,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -74952,7 +74959,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75526,7 +75533,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75646,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76061,7 +76068,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 410,
+        "capabilities": 411,
         "capability_ids": []
       },
       {
@@ -76151,7 +76158,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b62b9049c7e3fd97b5b5430183ded6dd1e661f41118b4ff79ae9e043f5a54e52",
+    "fingerprint": "ebd98c737842027be376c9e1a9224c874766fa51e9b70016a64b5367ead9959f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76181,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76190,10 +76197,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -76204,7 +76211,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 410,
+      "test": 411,
       "use-case": 48,
       "workspace": 1
     },
@@ -77609,6 +77616,23 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0126",
+        "kind": "adr",
+        "identity": "adr-0126",
+        "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "description": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "path": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6458,
+        "tags": [
+          "security",
+          "mesh",
+          "mcp",
+          "http"
         ]
       },
       {
@@ -81292,7 +81316,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 44346
+        "bytes": 44447
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -81616,7 +81640,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58533
+        "bytes": 59195
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81625,7 +81649,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 42560
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +81694,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 122725
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87942,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2123",
+        "kind": "issue",
+        "identity": "I2123",
+        "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "description": "Refuse every capability that changes something to a request from an address that is not loopback, unless the capability's input is a signed message its handler verifies, on the HTTP routes and on MCP over HTTP alike.",
+        "path": ".ai/repo/project/issues/I2123.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2661
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88159,6 +88194,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -92984,6 +93030,14 @@
         "bytes": 12197
       },
       {
+        "uri": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "identity": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "path": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "source_class": "case",
+        "bytes": 3603
+      },
+      {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "identity": "test/cases/102_completion_shell.sh",
@@ -96700,7 +96754,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96853,7 +96907,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96883,7 +96937,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",
@@ -97005,7 +97059,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 410
+      "objects": 411
     },
     {
       "name": "use-case",
@@ -127383,10 +127437,10 @@
         "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
         "kind": "command",
         "read_only": false,
-        "effect": "process_state",
+        "effect": "repository_mutation",
         "hints": {
           "read_only": false,
-          "destructive": false,
+          "destructive": true,
           "idempotent": false,
           "open_world": false
         },

@@ -2751,6 +2751,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mcp/surface.rs",
+        "kind": "file",
+        "label": "surface.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mcp/surface.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
         "kind": "file",
         "label": "cooperation.rs",
@@ -6371,6 +6379,35 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0126",
+        "kind": "adr",
+        "label": "adr-0126",
+        "summary": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "route": "/cockpit/objects/adr/adr-0126",
+        "source": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "rule:project.mesh-cooperation-is-authenticated",
+            "file:apps/majordomus-cli/src/capability/model.rs",
+            "file:apps/majordomus-cli/src/http/router.rs",
+            "file:apps/majordomus-cli/src/mcp/surface.rs",
+            "test:apps/majordomus-cli/tests/remote_callers.rs",
+            "test:test/cases/1022_a_remote_caller_cannot_write.sh"
+          ],
+          "tags": [
+            "security",
+            "mesh",
+            "mcp",
+            "http"
           ]
         }
       },
@@ -30259,6 +30296,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2123",
+        "kind": "issue",
+        "label": "I2123",
+        "summary": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "route": "/cockpit/objects/issue/i2123",
+        "source": ".ai/repo/project/issues/I2123.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every HTTP route of a capability that does not admit a remote caller answers 403 forbidden to a request from a non-loopback address, before its handler runs",
+            "A remote MCP message calling a tool that changes something is refused with error code forbidden, and the same session's next message from loopback is not",
+            "A real server bound to 0.0.0.0 refuses plan/transition, executions/start, mesh/claims, mesh/handovers/consume and peers/announce from this machine's LAN address and still answers a read",
+            "The three signed mesh capabilities reach their handlers from a remote address",
+            "executions.start declares repository_mutation, so a local client is told it can write before it runs a writer through it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A remote request is admitted by any route whose browser Origin check it passes; the bind warning says a remote host can only read.",
+          "evidence_required": [
+            "remote_callers_tests",
+            "case_1022_red_on_0_18_0_green_on_branch"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/tests/remote_callers.rs",
+            "test/cases/1022_a_remote_caller_cannot_write.sh",
+            "docs/MCP.md",
+            "docs/MESH.md"
+          ],
+          "slug": "a-remote-caller-cannot-write",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test remote_callers",
+            "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1022_a_remote_caller_cannot_write"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31335,6 +31415,52 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "label": "runtime-trust",
+        "summary": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "route": "/cockpit/objects/milestone/runtime-trust",
+        "source": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request from an address that is not loopback runs only a capability that reads or whose input is a signed message, on every transport that knows the caller's address",
+            "Every event the journal holds passed the trust policy in force, whether it arrived over a link or was reloaded from disk",
+            "A trusted key cannot order its claim before claims already admitted, and an expired claim does not return as live",
+            "Every bound the security model names is enforced on the input it names, with a test that sends one more"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "remote_write_refused",
+            "reload_is_trust_checked"
+          ],
+          "non_scope": [
+            "Encrypting the transport. ADR 0032 decided no TLS dependency; confidentiality stays the network's.",
+            "Accounts or a login. A remote writer, when one is needed, is admitted by a key the trust policy names."
+          ],
+          "order": 135,
+          "priority": "p0",
+          "risks": [
+            "A remote MCP client loses writes it used to have (announce, mesh sessions). The route that remains is a tunnel that ends on loopback."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability",
+            "docs/MESH.md",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "runtime-trust",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test remote_callers --test mesh_cooperation"
           ]
         }
       },
@@ -42660,6 +42786,13 @@
         "source": "test/cases/101_command_graph.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "route": "/cockpit/objects/test/test-cases-1022-a-remote-caller-cannot-write-sh",
+        "source": "test/cases/1022_a_remote_caller_cannot_write.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "label": "test/cases/102_completion_shell.sh",
@@ -47802,6 +47935,14 @@
         "label": "product.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/product.rs",
+        "external": true
+      },
+      {
+        "id": "test:apps/majordomus-cli/tests/remote_callers.rs",
+        "kind": "test",
+        "label": "remote_callers.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/remote_callers.rs",
         "external": true
       }
     ],
@@ -54404,6 +54545,56 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/capability/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/http/router.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/mcp/surface.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0040",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "test:apps/majordomus-cli/tests/remote_callers.rs",
         "kind": "put_in_force"
       },
       {
@@ -66212,6 +66403,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2123",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2123",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66370,6 +66571,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/runtime-trust",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -69238,6 +69444,11 @@
       },
       {
         "source": "majordomus://test/test/cases/101_command_graph.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74948,8 +75159,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2480,
-      "edges": 5428,
+      "nodes": 2486,
+      "edges": 5442,
       "acyclic": false,
       "truncated": false
     }

@@ -307,10 +307,17 @@ A server already running keeps the address it bound. After setting the variable,
 `majordomus serve stop` and the next `serve ensure` — or the next session — brings it up
 on the named interface.
 
-There is no authentication on this surface. Binding beyond loopback hands every reachable
-host the read surface and the commands the registry declares as writing; do it on a
-network you would hand that to, or reach the loopback server through an SSH tunnel
-instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
+There are no accounts and no tokens on this surface, so a request is judged by where it
+came from (ADR 0126). Binding beyond loopback hands every reachable host the read surface
+and nothing else: a request from an address that is not loopback runs a capability only
+when the capability reads (`effect: read`) or when its input is a signed message the
+handler verifies against the trust policy — the mesh's `link.hello`, `link.sync` and
+`register`. Every other route, and every MCP tool that changes something, answers that
+caller `forbidden` (HTTP 403) before its handler runs, including `executions.start`, which
+would otherwise run any capability. The decision is per request, not per session: an MCP
+session id is a name, not a proof. Reads are still served to the whole network, unencrypted;
+to write from another machine, reach the loopback server through an SSH tunnel
+(`ssh -L 8741:127.0.0.1:8741 <machine>`), whose requests arrive from loopback.
 
 ### What a contest is judged by
 
@@ -739,7 +746,7 @@ the `initialize` instructions name them, derived from the registry, and so does
 `majordomus mcp --inspect`. Each tool carries the canonical id in `_meta.majordomus.id` and
 its `inputSchema` and `outputSchema` from the canonical schemas. A refused call is a result with
 `isError: true`, the reason as text, and the category as one word in
-`_meta.majordomus.error.code` — `invalid_input`, `not_found` or `refused`, the same word the
+`_meta.majordomus.error.code` — `invalid_input`, `not_found`, `refused` or `forbidden`, the same word the
 HTTP route answers as `error.code`, because both read it from the error itself. A
 refused result carries no `structuredContent`: the output schema describes a success. An
 unknown tool, method or resource is a protocol error.
