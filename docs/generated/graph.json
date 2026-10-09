@@ -29571,7 +29571,7 @@
             "test/cases"
           ],
           "slug": "vendored-rules-are-adopter-neutral",
-          "updated_at": "2026-10-04",
+          "updated_at": "2026-10-08",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -29761,6 +29761,195 @@
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
           ],
           "why": "OSCILLA db62a1f: a comment-only edit of policy.yaml moved the policy hash (ca779e02f878 to 9535da72e6a6) and rewrote all three bootstraps."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1995",
+        "kind": "issue",
+        "label": "I1995",
+        "summary": "Work a session left uncommitted in a worktree is named, not found by luck",
+        "route": "/cockpit/objects/issue/i1995",
+        "source": ".ai/repo/project/issues/I1995.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worktree with staged files and no active session is named by doctor with its path, the number of paths and the age of the oldest",
+            "A worktree with uncommitted work and an active task or attached session is listed and not warned about",
+            "The reading writes nothing: `git status` of every worktree is the same before and after it"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "abandoned_index_named_case",
+            "reading_is_read_only_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "uncommitted-work-in-a-worktree-is-named",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1996",
+        "kind": "issue",
+        "label": "I1996",
+        "summary": "doctor does not fail an adopter on a check written for this repository",
+        "route": "/cockpit/objects/issue/i1996",
+        "source": ".ai/repo/project/issues/I1996.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "doctor in a fixture adopter repository whose workflow names a model credential and whose document says 'requires ollama' reports no reasoning failure",
+            "The same two files in this repository are still refused",
+            "No reproduce hint doctor prints in an adopter repository names bin/majordomus-cli"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The ci and claims families of `reasoning check` scan every workflow and document of the repository they run in and fail doctor on a match. Reproduce hints name bin/majordomus-cli.",
+          "evidence_required": [
+            "adopter_reasoning_check_case",
+            "reproduce_hint_is_runnable_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Stop `majordomus doctor` from failing an adopter's repository on the reasoning design's own coupling rules, and stop its reproduce hints from naming paths only this repository has.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "apps/majordomus-cli/src/reasoning",
+            "docs/REASONING.md",
+            "test/cases"
+          ],
+          "slug": "doctor-does-not-fail-an-adopter-on-our-own-check",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1997",
+        "kind": "issue",
+        "label": "I1997",
+        "summary": "The peer board can be read from the command line",
+        "route": "/cockpit/objects/issue/i1997",
+        "source": ".ai/repo/project/issues/I1997.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`majordomus peers` lists a peer announced over MCP by another client of the same repository, with its worktree and claimed paths",
+            "The command is a projection of the registry's capability: no board logic is written a second time for the command line",
+            "With no server running it reports that no board could be asked and does not exit 0"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "cli_peers_lists_an_mcp_peer_case",
+            "cli_peers_without_server_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Project the peers capability onto the command line, so that a worker with no MCP tools can still ask who else is working in this repository and on which paths.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "the-peer-board-can-be-read-from-the-command-line",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1998",
+        "kind": "issue",
+        "label": "I1998",
+        "summary": "A health command in an unsupervised repository does not exit 0",
+        "route": "/cockpit/objects/issue/i1998",
+        "source": ".ai/repo/project/issues/I1998.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "doctor and session list in a git repository with no .ai/manifest.yaml exit 12 and name the missing file",
+            "init, version and help in the same repository exit 0",
+            "The shell tool and the Rust executable exit with the same code for the same missing layer"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The shell tool's read-only commands print the missing-manifest line and exit 0 outside a supervised repository.",
+          "desired_state": "Outside a supervised repository every command that reports on the layer exits 12 with the line it prints today. Commands whose purpose is to work there — init, version, help — are unchanged.",
+          "evidence_required": [
+            "unsupervised_exit_code_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus",
+            "lib",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-health-command-in-an-unsupervised-repository-does-not-exit-0",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1999",
+        "kind": "issue",
+        "label": "I1999",
+        "summary": "A tracked file a hook regenerates does not refuse a task that never touched it",
+        "route": "/cockpit/objects/issue/i1999",
+        "source": ".ai/repo/project/issues/I1999.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A repository that declares a regenerated path passes `check` on a task whose scope does not name it, and the report names the path and the declaration that covers it",
+            "A change to an undeclared path outside the scope still fails `check`, and the finding names both remedies",
+            "A declaration without a reason is refused",
+            "Whatever `finish --outcome completed` refuses over a note or a handover, `check` reports as failing beforehand with the command that settles it",
+            "The shell tool and the Rust executable give the same verdict for the same tree"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "regenerated_paths_scope_case",
+            "check_reports_what_finish_refuses_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus",
+            "lib",
+            "apps/majordomus-cli/src",
+            "share/skeleton",
+            "docs/CLI.md",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "a-tracked-file-a-hook-regenerates-does-not-refuse-a-task-that-never-touched-it",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
         }
       },
       {
@@ -29994,6 +30183,44 @@
             "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines",
             "bash test/run.sh 133_plan_transition",
             "bash test/run.sh 582_the_done_guard_holds_in_both_engines"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2059",
+        "kind": "issue",
+        "label": "I2059",
+        "summary": "A rebuild never replaces the executable a live lease names",
+        "route": "/cockpit/objects/issue/i2059",
+        "source": ".ai/repo/project/issues/I2059.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build run in a checkout whose server is ready leaves `serve status` reporting that server ready on the address it had before the build",
+            "A successor started after a supersession binds the host and port the superseded lease published, or `serve status` names both addresses and why they differ",
+            "A server bound through MAJORDOMUS_HTTP_HOST or --host is not replaced by a loopback server without a line in server.log saying so"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "rebuild_keeps_server_ready_case",
+            "successor_address_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus-cli",
+            "lib/rust_bin.sh",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "a-rebuild-never-replaces-a-leased-executable",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
           ]
         }
       },
@@ -65761,6 +65988,56 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1995",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1995",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1996",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1996",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1997",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1997",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1998",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1998",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1999",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1999",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2000",
         "target": "kind:issue",
         "kind": "is_a"
@@ -65828,6 +66105,16 @@
       {
         "source": "majordomus://issue/I2004",
         "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2059",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2059",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -74572,8 +74859,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2471,
-      "edges": 5410,
+      "nodes": 2477,
+      "edges": 5422,
       "acyclic": false,
       "truncated": false
     }
