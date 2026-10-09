@@ -1,0 +1,28 @@
+intent: acceptance-is-independent-of-the-worker
+observed_at: 893a79be65
+recorded_by: "claude-code (session 66); the findings were re-measured by a read-only subagent in a disposable clone"
+recorded_at: 2026-10-09
+observations:
+  - id: f01
+    statement: "confirmed at 893a79be65: The scope is read from MJ_CUR_FLAT (current.yaml) every time; the task.started ledger line that also records the scope is in the same gitignored .ai/local/state and is not cross-checked. No workflow mentions scope; the pre-push hook (finish --check) is the only enforcement point."
+    source: "command:majordomus start 'fix src' --scope src/   (in fx1)"
+  - id: f02
+    statement: "changed at 893a79be65: Partly fixed since the audit: a denylist refuses true, :, exit 0, return 0, echo, printf. Any other command (ls, test -d .) passes. Output still goes to /dev/null (finish.sh:192); the ledger keeps command/exit/seconds/worktree tree id, but in gitignored local state, and the task was completed with the work uncommitted (head in the record = base commit), so the result is bound to a tree hash, not to a commit."
+    source: "command:majordomus finish --outcome completed --verify-command 'true' --note note.md"
+  - id: f03
+    statement: "confirmed at 893a79be65: Partially mitigated: master requires the `ci` status check (validate.yml `ci` job aggregating 102 declared gates), and the commit-msg policy is re-run in CI. Not re-checked anywhere independent: the finish contract and task scope (pre-push), doctor's wiring checks (pre-commit), and the worktree guard. enforce_admins=false means the owner (the only account seen) can merge past the required check; no review is required."
+    source: "command:git commit -q --no-verify --allow-empty -m nv   (fx1, hooks installed)"
+  - id: f04
+    statement: "changed at 893a79be65: Narrower than claimed: doctor now catches `|| exit 0` / `|| true` on the hook line, but an early `exit 0` before the invocation passes because doctor only greps for the line. A neutered CI gate script is not noticed by doctor or rule-proof-check; it is caught only by the behavioural suite (case 138), i.e. in CI, not locally by doctor. Mutations were reverted in the clone afterwards."
+    source: "command:fx1: pre-commit rewritten to '#!/bin/sh\\nexit 0\\n<majordomus> doctor || exit $?'; majordomus doctor"
+conditions:
+  - criterion: scope-is-not-the-workers-file
+    state: conflicting
+    because: "the accepted scope is a git-ignored file the worker can widen, and check then passes"
+    observations: [f01]
+  - criterion: the-forge-holds-the-gate
+    state: missing
+    because: "branch protection requires only ci, not strict, administrators excluded, no review"
+    observations: [f03, f04, f02]
+risks:
+  - "F02 (a vacuous verifier) and F04 (doctor misses a neutered gate) belong to M02 and M04, also unassigned"
