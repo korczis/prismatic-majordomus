@@ -1462,6 +1462,56 @@ fn governance_resolves(g: &str, ev: &dyn EvidenceLookup) -> bool {
     }
 }
 
+/// `gap_observation_contradicted` (ADR 0117): a required criterion of a live intent that a gap
+/// observed satisfied, that no live issue serves — so coverage counts it `observed` and owes no
+/// work for it — and whose evidence now fails. The one answer of what remains that no other
+/// finding reports; a warning, because the change that broke the test is not the change that
+/// planned around it.
+///
+/// ```
+/// use majordomus_cli::intent::{contradicted_observations, Intents};
+/// use majordomus_cli::intent_plan::IntentCoverage;
+/// let none = Intents { intents: vec![], findings: vec![] };
+/// let coverage = IntentCoverage { criteria: vec![], issues: vec![], findings: vec![] };
+/// assert!(contradicted_observations(&none, &coverage).is_empty());
+/// ```
+pub fn contradicted_observations(
+    intents: &Intents,
+    coverage: &crate::intent_plan::IntentCoverage,
+) -> Vec<IntentFinding> {
+    use crate::intent_remains::{remains, Basis, Remains};
+    let mut out = Vec::new();
+    for view in &intents.intents {
+        if matches!(view.stage, IntentStage::Cancelled | IntentStage::Superseded) {
+            continue;
+        }
+        for c in view.satisfaction.iter().filter(|c| !c.met && !c.optional) {
+            let Some(entry) = coverage
+                .criteria
+                .iter()
+                .find(|e| e.intent == view.id && e.criterion == c.id)
+            else {
+                continue;
+            };
+            if remains(c.state, &entry.issues, entry.strength)
+                == (Remains::Failed, Basis::GapObservation)
+            {
+                finding(
+                    &mut out,
+                    WARN,
+                    "gap_observation_contradicted",
+                    &format!("{}#{}", view.id, c.id),
+                    "a gap observed it satisfied, so no issue serves it, and its evidence now \
+                     fails: the plan rests on an observation that no longer holds; plan an issue \
+                     that serves it"
+                        .into(),
+                );
+            }
+        }
+    }
+    out
+}
+
 /// What the planning half needs of each record: its criteria, its milestones, whether it is
 /// retired, and the criteria its recorded gap observed already satisfied.
 ///
@@ -1521,7 +1571,10 @@ impl Intents {
         let critiques = CritiqueRecord::all(index);
         let outlines = outlines(&records, &gaps);
         let mut out = Intents::derive(records, plan, ev);
-        out.findings.extend(coverage(&outlines, plan).findings);
+        let covered = coverage(&outlines, plan);
+        let contradicted = contradicted_observations(&out, &covered);
+        out.findings.extend(covered.findings);
+        out.findings.extend(contradicted);
         out.findings
             .extend(review(&outlines, plan, &gaps, &critiques));
         // the stamp of each critique against the plan as it now stands (ADR 0112): a review

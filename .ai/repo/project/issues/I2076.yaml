@@ -1,0 +1,35 @@
+id: I2076
+milestone: intent-reassessment
+title: Each unmet criterion and each intent carry what remains, why, and the next justified action
+slug: what-remains-by-the-table
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - what-remains-of-an-intent#remains-and-outcome
+objective: "Accept ADR 0117 as written in this change. In intent_remains.rs, one pure function answers remains and basis for an unmet criterion by the ADR's table from its evidence state and its coverage entry (strength and covering issues, as intent_plan computes them), one the intent's outcome by the ADR's order, one the next action as data. The realization capability computes coverage with the function intent validate uses and passes it to realize, which carries remains, basis and next on IntentUnmetCriterion and outcome on IntentRealizationView, beside the existing fields, and none for a retired intent. tests/intent_remains.rs checks every combination of the five unmet evidence states, open, blocked, closed or no covering work and observed or not against an independent predicate per row, and the outcome order with optional criteria, a violated guard and an intent with nothing required unmet. Regenerate the projections."
+why: "A reader assembles what still prevents an intent from four findings and two lists, and no read says what to do next."
+current_state: "IntentUnmetCriterion carries id, criterion, evidence, state, reproduce and issues; the view carries stage, counts, unmet, work and findings."
+desired_state: "One function per answer, every combination tested, every surface reading them."
+scope:
+  - .ai/repo/adrs/0117-what-remains-of-an-intent-is-derived-on-every-read.md
+  - apps/majordomus-cli/src/intent_remains.rs
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/capability/builtin/intent_realization.rs
+  - apps/majordomus-cli/tests/intent_remains.rs
+  - docs/generated
+  - site/data/registry
+  - site/data/generated
+depends_on: []
+acceptance_criteria:
+  - Every combination is checked against an independent predicate per row, not only against the function's own order
+  - An intent with a violated guard is failed whatever its criteria; an optional criterion never decides the outcome; a retired intent carries no remains
+  - Each remains has its next action, and unknown names why none is derivable
+validation:
+  - cargo test --doc intent_remains
+  - cargo test --test intent_remains
+evidence_required:
+  - every_combination_meets_one_row
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -7325,6 +7325,37 @@
             "examples": {
               "first-intent": {
                 "value": "intent-bound-work"
+              },
+              "since-a-reading": {
+                "value": "intent-bound-work"
+              }
+            }
+          },
+          {
+            "name": "since_review_revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The `review_revision` of an earlier reading of that intent. Given with\n`since_remains_digest`, the answer says how this reading differs (ADR 0117); refused\nwithout `intent`, because one pair cannot describe several intents.",
+            "examples": {
+              "since-a-reading": {
+                "value": "an-earlier-review-revision"
+              }
+            }
+          },
+          {
+            "name": "since_remains_digest",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The `remains_digest` of that earlier reading; given with `since_review_revision`.",
+            "examples": {
+              "since-a-reading": {
+                "value": "an-earlier-remains-digest"
               }
             }
           }
@@ -18890,6 +18921,51 @@
           "note"
         ],
         "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.\n\nThe sign matters and the two directions mean opposite things. Positive `unaccounted` is\nthe outage: episodes that started, are not open, and produced no closed record — work\nthat happened and left nothing behind. Negative is ordinary bookkeeping: the ledger was\nrotated, or a record was committed from a checkout whose ledger lines are not in this\none, so there are more records than started lines to account for them.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Balance;\nuse serde_json::json;\n\nlet of = |started, closed, open, unaccounted, agrees| -> Balance {\n    serde_json::from_value(json!({\n        \"started\": started, \"closed\": closed, \"open\": open,\n        \"unaccounted\": unaccounted, \"agrees\": agrees, \"note\": \"as measured\",\n    })).unwrap()\n};\n\n// the good case: every episode that started either closed or is still open\nlet sound = of(40, 37, 3, 0, true);\nassert_eq!(sound.started as i64 - sound.closed as i64 - sound.open as i64, sound.unaccounted);\nassert!(sound.agrees);\n\n// the outage ADR 0052 describes: four closes that were never recorded\nlet lost = of(40, 33, 3, 4, false);\nassert!(lost.unaccounted > 0 && !lost.agrees);\n\n// and a rotated ledger, which is not a fault in either half\nlet rotated = of(2, 37, 3, -38, false);\nassert!(rotated.unaccounted < 0, \"more records than lines to account for them\");\n```"
+      },
+      "Basis": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "work_blocked",
+            "description": "Every open covering issue is blocked."
+          },
+          {
+            "type": "string",
+            "const": "work_open_failing",
+            "description": "An open issue serves it and its evidence fails."
+          },
+          {
+            "type": "string",
+            "const": "work_open",
+            "description": "An open issue serves it."
+          },
+          {
+            "type": "string",
+            "const": "not_derivable",
+            "description": "The evidence is of a kind the ledger cannot derive."
+          },
+          {
+            "type": "string",
+            "const": "closed_work",
+            "description": "Issues served it and every one of them is done."
+          },
+          {
+            "type": "string",
+            "const": "gap_observation",
+            "description": "No issue serves it, and a gap observed it satisfied."
+          },
+          {
+            "type": "string",
+            "const": "passed_before",
+            "description": "Its evidence passed once and is stale now; nothing serves it."
+          },
+          {
+            "type": "string",
+            "const": "no_work",
+            "description": "No issue serves it and nothing observed it."
+          }
+        ],
+        "description": "Why a criterion's `Remains` is what it is: which row of the table decided it.\n\n```\nuse majordomus_cli::intent_remains::Basis;\nassert_eq!(serde_json::to_string(&Basis::GapObservation).unwrap(), \"\\\"gap_observation\\\"\");\n```"
       },
       "BenchmarkPolicy": {
         "oneOf": [
@@ -34286,6 +34362,26 @@
         ],
         "description": "What a piece of work is bound to: its standing, what was named, the issues and intents\nit resolved to with what each intent asks of the worker, the two pins, and every refusal.\n\n```\nuse majordomus_cli::intent::Intents;\nuse majordomus_cli::intent_binding::{\n    bind, BindingCause, BindingRequest, BindingStanding, IntentBinding,\n};\nuse majordomus_cli::plan::Plan;\nuse majordomus_cli::policy::IntentPolicy;\n# let plan: Plan = serde_json::from_value(serde_json::json!({\n#     \"project\": {\"name\": \"p\", \"repository\": \"o/p\", \"default_branch\": \"master\",\n#                 \"active_milestone\": \"\"},\n#     \"statuses\": {\"issue\": [], \"milestone\": []},\n#     \"milestones\": [], \"issues\": [], \"waves\": [], \"edges\": [],\n#     \"milestone_edges\": [], \"findings\": []})).unwrap();\nlet intents = Intents { intents: vec![], findings: vec![] };\nlet nothing: IntentBinding =\n    bind(&intents, &plan, &[], &[], &IntentPolicy::default(), BindingRequest::default());\nassert_eq!(nothing.standing, BindingStanding::Refused);\nassert_eq!(nothing.refusals[0].cause, BindingCause::NothingNamed);\n// nothing was reached, so there is nothing to pin\nassert!(nothing.plan_revision.is_empty() && nothing.evidence_standing.is_empty());\n```"
       },
+      "IntentChange": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "unchanged",
+            "description": "Neither value moved."
+          },
+          {
+            "type": "string",
+            "const": "remains_moved",
+            "description": "What remains moved — a run was recorded, a serving issue closed — and the plan did not."
+          },
+          {
+            "type": "string",
+            "const": "plan_changed",
+            "description": "The plan a review judges changed; outranks a move of what remains, because a reader\nwhose criteria were rewritten must read them again first."
+          }
+        ],
+        "description": "How a reading differs from an earlier one.\n\n```\nuse majordomus_cli::intent_remains::IntentChange;\nassert_eq!(serde_json::to_string(&IntentChange::RemainsMoved).unwrap(), \"\\\"remains_moved\\\"\");\n```"
+      },
       "IntentCoverage": {
         "type": "object",
         "properties": {
@@ -34885,6 +34981,46 @@
         ],
         "description": "The opposition to one intent's plan: the brief a reviewer works from, and the verdict\nderived from what is found.\n\n```\nuse majordomus_cli::intent::Intents;\nuse majordomus_cli::intent_opposition::{oppose, IntentOpposition};\nuse majordomus_cli::plan::Plan;\n# let plan: Plan = serde_json::from_value(serde_json::json!({\n#     \"project\": {\"name\": \"p\", \"repository\": \"o/p\", \"default_branch\": \"master\",\n#                 \"active_milestone\": \"\"},\n#     \"statuses\": {\"issue\": [], \"milestone\": []},\n#     \"milestones\": [], \"issues\": [], \"waves\": [], \"edges\": [],\n#     \"milestone_edges\": [], \"findings\": []})).unwrap();\nlet intents = Intents { intents: vec![], findings: vec![] };\n// an intent this repository does not hold has no opposition to derive\nlet none: Option<IntentOpposition> = oppose(&intents, &plan, &[], &[], \"absent\");\nassert!(none.is_none());\n```"
       },
+      "IntentOutcome": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "satisfied",
+            "description": "The verdict is satisfied."
+          },
+          {
+            "type": "string",
+            "const": "failed",
+            "description": "A guard is violated, or a required criterion is `Remains::Failed`."
+          },
+          {
+            "type": "string",
+            "const": "exhausted",
+            "description": "A required criterion has no path to proof."
+          },
+          {
+            "type": "string",
+            "const": "needs_evidence",
+            "description": "A required criterion's work is done and its evidence is not current."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "A required criterion cannot be judged, or nothing required is unmet and the verdict is\nnot satisfied; the verdict says why."
+          },
+          {
+            "type": "string",
+            "const": "progressing",
+            "description": "Work is moving on the remaining required criteria."
+          },
+          {
+            "type": "string",
+            "const": "blocked",
+            "description": "The only work on the remaining required criteria is blocked."
+          }
+        ],
+        "description": "One intent's outcome.\n\n```\nuse majordomus_cli::intent_remains::IntentOutcome;\nassert_eq!(\n    serde_json::to_string(&IntentOutcome::NeedsEvidence).unwrap(),\n    \"\\\"needs_evidence\\\"\",\n);\n```"
+      },
       "IntentPreflight": {
         "type": "object",
         "properties": {
@@ -35357,6 +35493,42 @@
               "$ref": "#/components/schemas/IntentFinding"
             },
             "description": "Drift between the plan's closure and the evidence."
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntentOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What remains of the intent as one word (ADR 0117); absent for a retired intent."
+          },
+          "review_revision": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The revision a review of this intent is stamped with (ADR 0112); a later reading that\ndiffers means the plan changed."
+          },
+          "remains_digest": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A digest of the outcome and of each unmet criterion's evidence state, remains and\nbasis; a later reading that differs means what remains moved."
+          },
+          "change": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntentChange"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How this reading differs from the one the caller passed as `since`; absent without one."
           }
         },
         "required": [
@@ -35370,7 +35542,7 @@
           "providers",
           "findings"
         ],
-        "description": "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```"
+        "description": "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n    outcome: None, review_revision: None, remains_digest: None, change: None,\n};\nassert!(v.met < v.criteria);\n```"
       },
       "IntentRealizedWork": {
         "type": "object",
@@ -35472,6 +35644,43 @@
               "type": "string"
             },
             "description": "The issues declaring they serve it, in plan order."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "Whether the intent declares it optional: shown, and deciding nothing of the outcome."
+          },
+          "remains": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Remains"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What is in the way of it (ADR 0117); absent for a retired intent."
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Basis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Which row of ADR 0117's table decided `remains`."
+          },
+          "next": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextAction"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The action `remains` justifies, as data; nothing performs it."
           }
         },
         "required": [
@@ -35480,7 +35689,7 @@
           "evidence",
           "state"
         ],
-        "description": "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
+        "description": "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n    optional: false, remains: None, basis: None, next: None,\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
       },
       "IntentValidation": {
         "type": "object",
@@ -38940,6 +39149,129 @@
           "line"
         ],
         "description": "One line that differs between the two snapshots."
+      },
+      "NextAction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CoveringIssue"
+                },
+                "description": "The open issues, each with its status."
+              },
+              "action": {
+                "type": "string",
+                "const": "work"
+              }
+            },
+            "required": [
+              "action",
+              "issues"
+            ],
+            "description": "Carry on with the open issues serving it."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The blocked issues."
+              },
+              "action": {
+                "type": "string",
+                "const": "unblock"
+              }
+            },
+            "required": [
+              "action",
+              "issues"
+            ],
+            "description": "Unblock the issues serving it."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reproduce": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The command that produces its evidence, when one is known."
+              },
+              "action": {
+                "type": "string",
+                "const": "record_evidence"
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "description": "Run its evidence on a clean tree, stamp the tree the run left and record the run\n(`majordomus evidence stamp`, then `majordomus evidence record`)."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reproduce": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The command that reproduces the failure, when one is known."
+              },
+              "action": {
+                "type": "string",
+                "const": "repair"
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "description": "Find why the evidence of work that closed fails, from the failing run."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "serves": {
+                "type": "string",
+                "description": "The criterion, as an issue's `serves` names it."
+              },
+              "action": {
+                "type": "string",
+                "const": "plan_work"
+              }
+            },
+            "required": [
+              "action",
+              "serves"
+            ],
+            "description": "Plan an issue that serves it; nothing in the plan will make it true."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "because": {
+                "type": "string",
+                "description": "Why."
+              },
+              "action": {
+                "type": "string",
+                "const": "none"
+              }
+            },
+            "required": [
+              "action",
+              "because"
+            ],
+            "description": "No action can be derived."
+          }
+        ],
+        "description": "The next action a criterion's `Remains` justifies, as data. Nothing performs it.\n\n```\nuse majordomus_cli::intent_remains::NextAction;\nlet n = NextAction::PlanWork { serves: \"x#a\".into() };\nassert!(serde_json::to_string(&n).unwrap().contains(\"plan_work\"));\n```"
       },
       "Node": {
         "type": "object",
@@ -46896,6 +47228,41 @@
           "releases"
         ],
         "description": "The releases this repository recorded, and the one an unpinned installation resolves to."
+      },
+      "Remains": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "failed",
+            "description": "Its evidence fails and no open work serves it."
+          },
+          {
+            "type": "string",
+            "const": "exhausted",
+            "description": "Nothing serves it, nothing observed it, and it never passed: no path to proof."
+          },
+          {
+            "type": "string",
+            "const": "needs_evidence",
+            "description": "No open work serves it and its evidence is not current."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "Its evidence is of a kind the ledger cannot derive, and no open work serves it."
+          },
+          {
+            "type": "string",
+            "const": "progressing",
+            "description": "Open work serves it."
+          },
+          {
+            "type": "string",
+            "const": "blocked",
+            "description": "Every open issue serving it is blocked."
+          }
+        ],
+        "description": "What is in the way of one unmet criterion. Declared in the order an intent's outcome reads\nthem: the first one a required criterion carries decides it.\n\n```\nuse majordomus_cli::intent_remains::Remains;\nassert_eq!(serde_json::to_string(&Remains::NeedsEvidence).unwrap(), \"\\\"needs_evidence\\\"\");\nassert!(Remains::Progressing < Remains::Blocked, \"moving work outranks blocked work\");\n```"
       },
       "RepositoryEnvironment": {
         "type": "object",

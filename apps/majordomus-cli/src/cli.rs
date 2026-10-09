@@ -221,6 +221,12 @@ pub enum IntentCommand {
         /// Only this intent and the work linked to it
         #[arg(long)]
         intent: Option<String>,
+        /// The `review_revision` of an earlier reading of that intent (with --since-remains-digest)
+        #[arg(long, requires_all = ["intent", "since_remains_digest"])]
+        since_review_revision: Option<String>,
+        /// The `remains_digest` of an earlier reading of that intent (with --since-review-revision)
+        #[arg(long, requires_all = ["intent", "since_review_revision"])]
+        since_remains_digest: Option<String>,
     },
     /// Why an intent stands where it stands: its stage, each criterion, the work realising it
     Explain {

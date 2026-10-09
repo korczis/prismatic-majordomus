@@ -1,0 +1,36 @@
+id: I2078
+milestone: intent-reassessment
+title: intent validate names a gap observation the evidence now contradicts
+slug: a-contradicted-observation-is-named
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - what-remains-of-an-intent#contradicted-is-warned
+depends_on:
+  - I2076
+objective: "Emit the warning gap_observation_contradicted from Intents::build, which holds the gaps, the coverage and the evaluated criteria, one per required criterion whose remains is failed on gap_observation, through intent_remains::remains; it changes neither the exit nor the failure count, and reaches intent oppose as an advisory structural finding. Case 969 builds a fixture whose gap observed a criterion satisfied with no serving issue, records a failing run, and asserts the warning, the unchanged exit, the advisory finding and a byte-identical tree. Document the outcome table beside stage, verdict and evidence state in docs/PLANNING.md and the fields in docs/CLI.md, add the claim and its page, and measure this repository's own intents in the pull request."
+why: "Coverage takes a gap's satisfied observation as served, and when the evidence later fails nothing says the plan rests on a broken observation."
+current_state: "Nothing compares a gap's satisfied observation with the evidence."
+desired_state: "One warning, for the one fact nothing else reports."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_remains.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh
+  - docs/PLANNING.md
+  - docs/CLI.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - site
+acceptance_criteria:
+  - The warning is listed per contradicted criterion and validate's exit and failure count are the same with and without it
+  - intent oppose shows it as an advisory finding
+  - docs/PLANNING.md has one table of the four vocabularies, and the claim names case 969
+validation:
+  - majordomus intent validate
+  - bash test/run.sh 969_a_gap_observation_the_evidence_contradicts_is_named
+evidence_required:
+  - a_contradicted_observation_is_a_warning
+created_at: 2026-10-09
+updated_at: 2026-10-09

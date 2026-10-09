@@ -1838,6 +1838,8 @@ majordomus intent binding --issue <id>     what a task naming that issue is boun
 majordomus intent oppose <id>              the opposition to an intent's plan, and a reviewer's brief
 majordomus intent stamp <id>               stamp its critique with the plan revision reviewed
 majordomus intent realization              which work realises which intent, and whether reality agrees
+majordomus intent realization --intent <id> --since-review-revision <r> --since-remains-digest <d>
+                                           what remains of one intent, and what changed since a reading
 majordomus intent explain <id>             why an intent stands where it stands
 ```
 

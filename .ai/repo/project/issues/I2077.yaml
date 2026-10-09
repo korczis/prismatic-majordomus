@@ -1,0 +1,37 @@
+id: I2077
+milestone: intent-reassessment
+title: The realization answers the same on every surface, and what changed since a reading the caller holds of one intent
+slug: what-changed-since-a-reading
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - what-remains-of-an-intent#surfaces-agree-and-repeat
+  - what-remains-of-an-intent#what-changed
+depends_on:
+  - I2076
+objective: "Add review_revision (intent_opposition::revision_of) and remains_digest (a digest of the outcome and each unmet criterion's id, evidence state, remains and basis) to each intent of the realization view, and an optional since input (both values) to intent_realization.work, refused without an intent and answered unchanged, remains_moved or plan_changed; print outcome, remains, basis and next in intent realization's text; run majordomus generate. tests/intent_remains_surfaces.rs asks the command line, HTTP and MCP for one fixture and asks twice; tests/intent_remains_since.rs records a run and edits a criterion between readings."
+why: "A machine consumer must tell what changed since its last reading without anything being stored."
+current_state: "The realization input names an intent or none; nothing in the view lets a caller compare two readings."
+desired_state: "Two pins on every intent, one optional input, the comparison a resumed task already uses."
+scope:
+  - apps/majordomus-cli/src/intent_remains.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/capability/builtin/intent_realization.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/tests/intent_remains_surfaces.rs
+  - apps/majordomus-cli/tests/intent_remains_since.rs
+  - docs/generated
+  - site/data/registry
+  - site/data/generated
+acceptance_criteria:
+  - The three surfaces answer identical JSON for one tree, and two reads are identical
+  - A reading followed by a recorded run answers remains_moved, by an edit of a criterion plan_changed, and a since without an intent is refused
+validation:
+  - cargo test --test intent_remains_surfaces
+  - cargo test --test intent_remains_since
+evidence_required:
+  - a_reading_is_compared_through_its_pins
+created_at: 2026-10-09
+updated_at: 2026-10-09

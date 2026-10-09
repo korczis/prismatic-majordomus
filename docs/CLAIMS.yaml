@@ -913,6 +913,15 @@ claims:
     responsibility: plan
     note: "`majordomus intent realization` exits 10 with `closed_work_contradicted` and the intent-realization gate runs it; `intent explain` says why an intent stands where it stands. Every link says how it is known: declared, observed, derived or inferred. Closed work that is merely unproven, and an issue closed while the criterion it serves is unmet, are warnings rather than refusals."
 
+  - id: intent-remains-derived
+    claim: Each unmet criterion of an intent carries what stands in its way and the action that justifies, each intent one outcome, and a gap observation the evidence now contradicts is named, all derived on every read with nothing written
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent_remains.rs
+    test: test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh
+    status: guaranteed
+    responsibility: plan
+    note: "`majordomus intent realization` (HTTP and MCP alike) answers remains, basis and next per unmet criterion and outcome, review_revision and remains_digest per intent; passing an earlier reading's two values answers unchanged, remains_moved or plan_changed. `intent validate` warns gap_observation_contradicted. Who may act and whether a plan keeps failing are not answered (ADR 0117)."
+
   - id: intent-preflight-names-the-intent
     claim: Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause
     source: docs/PLANNING.md

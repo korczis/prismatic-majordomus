@@ -5429,6 +5429,8 @@ majordomus intent realization [OPTIONS]
 | argument | value | default | description |
 |---|---|---|---|
 | `--intent` | `<INTENT>` | — | Only this intent and the work linked to it |
+| `--since-review-revision` | `<SINCE_REVIEW_REVISION>` | — | The `review_revision` of an earlier reading of that intent (with --since-remains-digest) |
+| `--since-remains-digest` | `<SINCE_REMAINS_DIGEST>` | — | The `remains_digest` of an earlier reading of that intent (with --since-review-revision) |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

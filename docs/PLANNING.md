@@ -434,6 +434,57 @@ and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, l
 object it names and to the issues serving it, and each unit of work with the provenance of its
 link. Both pages render the capabilities above and decide nothing themselves.
 
+### What remains, and what to do next
+
+The realization also answers what still stands between each intent and its criteria, in one word
+per unmet criterion and one per intent, with the action each justifies (ADR 0117). It is
+derived from two things already derived — the criterion's evidence state and its coverage (the
+live issues serving it and the strength) — and stored nowhere.
+
+| `remains` | when (first match) | `next` |
+|---|---|---|
+| `blocked` | every open issue serving it is `BLOCKED` | `unblock` |
+| `progressing` | an open issue serves it (`work_open_failing` when its evidence fails) | `work` |
+| `unknown` | its evidence is of a kind the ledger cannot derive | `none` |
+| `failed` | its evidence fails: after the work closed, on a gap's observation, or with no work | `repair`, or `plan_work` |
+| `needs_evidence` | the work closed, a gap observed it, or it passed before and is stale | `record_evidence` |
+| `exhausted` | nothing serves it, nothing observed it, it never passed | `plan_work` |
+
+An intent's `outcome` is `satisfied` when its verdict is, `failed` when a guard is violated, and
+otherwise the first of `failed`, `exhausted`, `needs_evidence`, `unknown`, `progressing`,
+`blocked` that a required criterion carries; optional criteria decide nothing, and an intent with
+nothing required unmet whose verdict is not satisfied is `unknown`. A cancelled or superseded
+intent carries none of it.
+
+Four vocabularies describe an intent, and each answers a different question:
+
+| word | question | values |
+|---|---|---|
+| stage | where the plan has taken it | `declared`, `planned`, `executing`, `verifying`, `satisfied`, `cancelled`, `superseded` |
+| verdict | whether the evidence says it is true | `satisfied`, `unsatisfied`, `unknown` |
+| evidence state | what one criterion's evidence says now | `current`, `stale`, `failing`, `not_run`, `not_derivable`, `unresolved` |
+| outcome | what stands in the way, and so what to do | `satisfied`, `failed`, `exhausted`, `needs_evidence`, `unknown`, `progressing`, `blocked` |
+
+A reader that keeps an intent's `review_revision` and `remains_digest` from one reading may pass
+them back and is told `unchanged`, `remains_moved` (a run was recorded, a serving issue closed) or
+`plan_changed` (the plan a review judges was edited, which outranks the other); nothing records
+a reading.
+
+```console
+$ majordomus intent realization --intent <id> --since-review-revision <r> --since-remains-digest <d>
+```
+
+One answer is reported by nothing else. A criterion that a gap observed satisfied is served by no
+issue — coverage counts it `observed` — so when its evidence later fails, the plan owes no work
+for a criterion that has broken. `intent validate` warns `gap_observation_contradicted` for it,
+and `intent oppose` shows the warning as an advisory finding. The gap is not rewritten; the
+remedy is an issue that serves the criterion. `test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh`
+proves the warning and that no answer writes anything; the claim is
+[`intent-remains-derived`](claims/intent-remains-derived.md).
+
+What none of this answers: who may act (issues carry no actor), and whether a plan keeps failing
+or oscillates (no history of readings is kept).
+
 `test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
 to end: declared, realised across two providers and a handover, closed while one case fails,
 fixed, satisfied, broken again and repaired — with the intent file byte-identical throughout.

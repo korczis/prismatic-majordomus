@@ -536,6 +536,7 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
 ///     id: "surfaces-agree".into(), criterion: "the surfaces agree".into(),
 ///     evidence: "test".into(), state: IntentEvidenceState::Stale,
 ///     reproduce: None, issues: vec!["I1900".into()],
+///     optional: false, remains: None, basis: None, next: None,
 /// };
 /// assert_eq!(c.state, IntentEvidenceState::Stale);
 /// ```
@@ -555,6 +556,18 @@ pub struct IntentUnmetCriterion {
     /// The issues declaring they serve it, in plan order.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub issues: Vec<String>,
+    /// Whether the intent declares it optional: shown, and deciding nothing of the outcome.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optional: bool,
+    /// What is in the way of it (ADR 0117); absent for a retired intent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remains: Option<crate::intent_remains::Remains>,
+    /// Which row of ADR 0117's table decided `remains`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basis: Option<crate::intent_remains::Basis>,
+    /// The action `remains` justifies, as data; nothing performs it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next: Option<crate::intent_remains::NextAction>,
 }
 
 /// A unit of work as one intent sees it: which record, how it stands, and the strongest link.
@@ -603,6 +616,7 @@ impl Ordered for IntentWorkRef {
 /// let v = IntentRealizationView {
 ///     intent: "x".into(), title: "X".into(), stage: IntentStage::Verifying,
 ///     criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],
+///     outcome: None, review_revision: None, remains_digest: None, change: None,
 /// };
 /// assert!(v.met < v.criteria);
 /// ```
@@ -626,6 +640,20 @@ pub struct IntentRealizationView {
     pub providers: Vec<String>,
     /// Drift between the plan's closure and the evidence.
     pub findings: Vec<IntentFinding>,
+    /// What remains of the intent as one word (ADR 0117); absent for a retired intent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<crate::intent_remains::IntentOutcome>,
+    /// The revision a review of this intent is stamped with (ADR 0112); a later reading that
+    /// differs means the plan changed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review_revision: Option<String>,
+    /// A digest of the outcome and of each unmet criterion's evidence state, remains and
+    /// basis; a later reading that differs means what remains moved.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remains_digest: Option<String>,
+    /// How this reading differs from the one the caller passed as `since`; absent without one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub change: Option<crate::intent_remains::IntentChange>,
 }
 
 fn warn(out: &mut Vec<IntentFinding>, code: &str, subject: &str, message: String) {
@@ -906,6 +934,10 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
                         .filter(|i| i.serves.contains(&key))
                         .map(|i| i.id.clone())
                         .collect(),
+                    optional: c.optional,
+                    remains: None,
+                    basis: None,
+                    next: None,
                 }
             })
             .collect();
@@ -921,6 +953,10 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
             work: refs,
             providers,
             findings: drifted,
+            outcome: None,
+            review_revision: None,
+            remains_digest: None,
+            change: None,
         });
     }
     let mut orphans = 0;
@@ -1151,6 +1187,10 @@ pub fn explain(
             work: Vec::new(),
             providers: Vec::new(),
             findings: Vec::new(),
+            outcome: None,
+            review_revision: None,
+            remains_digest: None,
+            change: None,
         });
     because.push(if rv.work.is_empty() {
         "no recorded task, session or live claim realises it".to_string()

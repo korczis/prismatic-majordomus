@@ -1,0 +1,44 @@
+id: what-remains-of-an-intent
+title: What remains of an intent is derived on every read, with the action it justifies, and a gap is never rewritten
+statement: "A reader who asks what still prevents an intent is answered, on every read and every surface, one outcome per unmet criterion — progressing, blocked, needs evidence, failed, exhausted or unknown — with its basis and the next action it justifies, one outcome for the intent, and whether anything changed since a reading the reader holds; a gap observation the evidence now contradicts is named by intent validate; and nothing is stored, performed or rewritten."
+invariants:
+  - The outcome, the basis and the next action are derived on every read from the criterion's evidence state and its coverage entry; nothing stores them
+  - Serving means what coverage means; no second predicate decides which issues serve a criterion
+  - No command writes, appends to or supersedes a gap record
+  - The engine's evidence state, the verdict, the stage and the coverage strength are read, never recomputed, and none of them reads the outcome
+  - An outcome that cannot be decided is unknown, never progressing or satisfied
+  - No action is performed; the next action is data
+milestones:
+  - intent-reassessment
+satisfaction:
+  - id: remains-and-outcome
+    criterion: For each of the five unmet evidence states with open, blocked, closed or no covering work and an observed or unobserved gap, remains and basis are those of the first matching row of ADR 0117's table, checked against each row's own predicate; an intent's outcome follows the ADR's order, ignores optional criteria, is failed under a violated guard and unknown when nothing required is unmet and the verdict is not satisfied; a retired intent carries none; and every remains has its next action
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_remains.rs
+  - id: surfaces-agree-and-repeat
+    criterion: The command line, HTTP and MCP answer the same remains, outcomes and next actions for one tree, and two reads of an unchanged tree answer the same
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_remains_surfaces.rs
+  - id: what-changed
+    criterion: Given the review_revision and remains_digest of an earlier reading of one intent, the realization answers unchanged, remains_moved after a run is recorded, and plan_changed after a criterion is edited, which outranks a move; a since given without an intent is refused
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_remains_since.rs
+  - id: contradicted-is-warned
+    criterion: A required criterion a gap observed satisfied, served by no issue, whose evidence now fails, is warned gap_observation_contradicted by intent validate and shown as advisory by intent oppose; validate's exit, its failure count and the binding are unchanged; and the working tree is byte-identical afterwards
+    evidence: test
+    ref: test/cases/969_a_gap_observation_the_evidence_contradicts_is_named.sh
+governance:
+  - rule:project.derived-once
+  - rule:project.completion-never-decides-satisfaction
+  - adr:adr-0107
+  - adr:adr-0111
+  - adr:adr-0112
+  - adr:adr-0113
+  - adr:adr-0117
+non_goals:
+  - Drafting an issue or a plan from an exhausted criterion; that is the desired-outcome milestone
+  - Saying which actor may act; issues carry no actor
+  - Detecting loops or lack of progress; no history of readings is kept
+  - Showing the outcome in the Cockpit or the session briefing; the capability carries it and the pages follow
+created_at: 2026-10-09
+updated_at: 2026-10-09
