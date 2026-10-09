@@ -6,7 +6,7 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::capability::Context;
 use crate::error::Result;
@@ -18,6 +18,12 @@ use crate::lease::{Lease, LeaseFile};
 /// How often the server looks for expired sessions while it waits for peers to leave.
 pub const REAP_INTERVAL: Duration = Duration::from_millis(500);
 
+/// How long a server asked to stop by a signal waits for its peers to leave before it closes
+/// their sessions itself: long enough for a request in flight to be answered, short enough
+/// that the whole ordered stop sits well inside `serve stop`'s default wait and the
+/// [`crate::lease::STOP_BOUND`] after which the process is ended anyway.
+pub(crate) const STOP_PEER_GRACE: Duration = Duration::from_secs(2);
+
 /// A running shared server.
 pub struct SharedServer {
     running: Running,
@@ -27,6 +33,12 @@ pub struct SharedServer {
     stopping: Arc<AtomicBool>,
     /// The mesh runtime this server activated (or left inactive, with the reason).
     mesh: Arc<crate::mesh::MeshRuntime>,
+    /// Set by whichever of the two stoppers runs the ordered stop first — [`SharedServer::stop`]
+    /// on the owner's thread, or the reader thread answering a signal — so that it runs once.
+    claimed: Arc<AtomicBool>,
+    /// Set by [`SharedServer::take_stop_requests`]: the owner's loop answers a stop signal
+    /// itself, and the reader thread leaves it to it.
+    owner_answers: Arc<AtomicBool>,
 }
 
 /// Activate the mesh from the repository's declaration, when there is one and it is
@@ -187,10 +199,20 @@ impl SharedServer {
         // that the lease is still its own. A lease another process took over is that
         // process's to remove; this one stops claiming it, serves the peers it has, and
         // ends with them.
+        //
+        // It is also the stopper of last resort. A signal asking this process to stop is only
+        // recorded by its handler (`crate::lease` says why); when the owner's loop does not
+        // answer it — `majordomus mcp`, whose main thread is its client's stdio session — this
+        // thread runs the ordered stop and then ends the process with that signal.
         let stopping = Arc::new(AtomicBool::new(false));
+        let claimed = Arc::new(AtomicBool::new(false));
+        let owner_answers = Arc::new(AtomicBool::new(false));
         {
             let endpoint = Arc::clone(&endpoint);
             let stopping = Arc::clone(&stopping);
+            let claimed = Arc::clone(&claimed);
+            let owner_answers = Arc::clone(&owner_answers);
+            let mesh = ctx_for_mesh.mesh.clone();
             let path = lease.path().to_path_buf();
             let token = lease.token().to_string();
             let _ = std::thread::Builder::new()
@@ -199,6 +221,22 @@ impl SharedServer {
                     let mut lost = false;
                     while !stopping.load(Ordering::SeqCst) {
                         std::thread::sleep(REAP_INTERVAL);
+                        if let Some(signal) = crate::lease::stop_requested() {
+                            if !owner_answers.load(Ordering::SeqCst)
+                                && !claimed.swap(true, Ordering::SeqCst)
+                            {
+                                tracing::info!(
+                                    signal,
+                                    "asked to stop by signal {signal}; stopping in order"
+                                );
+                                mesh.begin_stop();
+                                endpoint.close_all();
+                                crate::lease::release_held();
+                                mesh.stop();
+                                tracing::info!("shared server stopped");
+                                crate::lease::end_by_signal(signal);
+                            }
+                        }
                         let gone = endpoint.reap();
                         if !gone.is_empty() {
                             tracing::info!(peers = ?gone, "peer(s) expired: no message within the idle timeout");
@@ -227,12 +265,15 @@ impl SharedServer {
             // thing a person reads when a client starts one (ADR 0044).
             "shared server listening on {url} — {surfaces}; the one server of this checkout: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
+        crate::lease::answer_stop_requests();
         Ok(SharedServer {
             running,
             endpoint,
             lease,
             stopping,
             mesh: ctx_for_mesh.mesh.clone(),
+            claimed,
+            owner_answers,
         })
     }
 
@@ -252,13 +293,48 @@ impl SharedServer {
         self.endpoint.active()
     }
 
-    /// Block until no HTTP session remains.
+    /// Block until no HTTP session remains, or a signal asks this process to stop: a server
+    /// lingering for its peers is still a server that `serve stop` must be able to end in
+    /// order.
     pub fn wait_until_peers_leave(&self) {
+        self.wait_for_peers(None);
+    }
+
+    /// The owner's loop answers a stop signal itself: it polls
+    /// [`crate::lease::stop_requested`] and calls [`SharedServer::stop_within`], so that the
+    /// process ends by returning from `main`. Without this, the server's reader thread answers
+    /// the signal (see [`SharedServer::start`]).
+    pub(crate) fn take_stop_requests(&self) {
+        self.owner_answers.store(true, Ordering::SeqCst);
+    }
+
+    /// The ordered stop a signal asks for: wait up to `grace` for the attached peers to leave,
+    /// then [`SharedServer::stop`], which closes whatever sessions and episodes remain.
+    pub(crate) fn stop_within(self, grace: Duration) {
+        self.wait_for_peers(Some(Instant::now() + grace));
+        self.stop();
+    }
+
+    /// Wait until no HTTP session remains: until `deadline` when there is one, and otherwise
+    /// until a stop signal arrives.
+    fn wait_for_peers(&self, deadline: Option<Instant>) {
         let mut announced = false;
         loop {
             let n = self.peers_attached();
             if n == 0 {
                 break;
+            }
+            match deadline {
+                Some(deadline) if Instant::now() >= deadline => {
+                    tracing::info!(
+                        peers = n,
+                        "closing the sessions of the peers still attached"
+                    );
+                    break;
+                }
+                Some(_) => {}
+                None if crate::lease::stop_requested().is_some() => break,
+                None => {}
             }
             if !announced {
                 tracing::info!(
@@ -271,15 +347,29 @@ impl SharedServer {
         }
     }
 
-    /// Stop serving and release the lease.
+    /// Stop serving and release the lease. This is the ordered stop: the owner's session
+    /// ending runs it, and so does `serve stop` — its `SIGTERM` is answered by the `serve`
+    /// loop through `SharedServer::stop_within`, or, in a process whose loop does not
+    /// answer it, by the reader thread [`SharedServer::start`] spawns, which runs the same
+    /// steps short of joining the listeners and then ends the process with the signal.
     ///
     /// The order is what matters. Telling the mesh to stop is immediate, but draining its
     /// link table needs a lock a worker can hold across a dial that waits out the link
     /// timeout — several seconds. Everything a waiting `serve stop` measures happens before
-    /// that: the listeners close and the lease is released, and only then does the mesh
+    /// that: every session and every episode is closed, the listeners close (an answer in
+    /// flight is finished first) and the lease is released — only if the file is still this
+    /// server's, checked under the lock a take-over takes — and only then does the mesh
     /// drain. A lease released late is read by the next process as a server still holding
-    /// the port, which is what `serve stop` answers 10 for.
+    /// the port, which is what `serve stop` answers 10 for; `serve stop` then waits for the
+    /// process to exit, which is after the drain.
     pub fn stop(self) {
+        if self.claimed.swap(true, Ordering::SeqCst) {
+            // the reader thread is running this stop for a signal and ends the process when
+            // it is done; there is nothing left for this thread to do but not interfere
+            loop {
+                std::thread::sleep(REAP_INTERVAL);
+            }
+        }
         self.mesh.begin_stop();
         self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();

@@ -233,7 +233,10 @@ pub struct Desired {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct LeaseView {
-    /// The server's process id. Informational: nothing decides liveness from it.
+    /// The server's process id. Not proof of a live server — only a probe that is answered
+    /// is — but decisions are made from it: a live pid earns a server that does not answer
+    /// the election's busy wait before its lease is taken over, and `serve ensure`'s patience
+    /// before it starts another; `serve stop` sends its `SIGTERM` to this pid.
     pub pid: u32,
     /// The address, once bound.
     #[serde(skip_serializing_if = "Option::is_none")]

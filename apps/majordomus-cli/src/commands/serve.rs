@@ -10,6 +10,13 @@
 //! `--idle`, until no peer has been attached for that long. There is no daemon mode either
 //! way: whoever started the process owns it.
 //!
+//! Stopped means stopped in order. `SIGTERM` (which `serve stop` sends), `SIGINT` and
+//! `SIGHUP` are recorded by the lease's handler and polled here: the loop gives attached
+//! peers `shared::STOP_PEER_GRACE` to leave, runs `SharedServer::stop_within` —
+//! sessions and episodes closed, listeners closed, the lease released only if it is still
+//! this process's — and `serve` returns 0. A second signal, or an ordered stop that has not
+//! finished within `lease::STOP_BOUND`, still ends the process.
+//!
 //! # `status`, `ensure`, `stop`
 //!
 //! Three subcommands make the server's lifecycle something a person or a hook can converge
@@ -30,6 +37,8 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
@@ -118,13 +127,32 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         lease,
         Some(app.share.dir()),
     )?;
-    if stdin_is_a_pipe() {
+    // this loop answers a stop signal itself, so that the process ends by its own return
+    shared.take_stop_requests();
+    let asked = if stdin_is_a_pipe() {
         tracing::info!(
             "stdin is a pipe; the server stops when it closes and the last peer has left"
         );
-        let mut sink = Vec::new();
-        let _ = std::io::stdin().lock().read_to_end(&mut sink);
-        tracing::info!("stdin closed; stopping");
+        // read on a thread of its own, so that this loop can also answer a stop signal
+        let closed = Arc::new(AtomicBool::new(false));
+        {
+            let closed = Arc::clone(&closed);
+            std::thread::spawn(move || {
+                let mut sink = Vec::new();
+                let _ = std::io::stdin().lock().read_to_end(&mut sink);
+                closed.store(true, Ordering::SeqCst);
+            });
+        }
+        loop {
+            if let Some(signal) = lease::stop_requested() {
+                break Some(signal);
+            }
+            if closed.load(Ordering::SeqCst) {
+                tracing::info!("stdin closed; stopping");
+                break None;
+            }
+            std::thread::sleep(STOP_POLL);
+        }
     } else if args.idle > 0 {
         let idle = Duration::from_secs(args.idle);
         tracing::info!(
@@ -133,8 +161,16 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             args.idle
         );
         let mut idle_since = Instant::now();
+        let mut counted = Instant::now();
         loop {
-            std::thread::sleep(Duration::from_secs(1));
+            std::thread::sleep(STOP_POLL);
+            if let Some(signal) = lease::stop_requested() {
+                break Some(signal);
+            }
+            if counted.elapsed() < Duration::from_secs(1) {
+                continue;
+            }
+            counted = Instant::now();
             if shared.peers_attached() > 0 {
                 idle_since = Instant::now();
             } else if idle_since.elapsed() >= idle {
@@ -142,20 +178,43 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
                     "no peer for {} second(s); stopping",
                     idle_since.elapsed().as_secs()
                 );
-                break;
+                break None;
             }
         }
     } else {
         tracing::info!("stdin is not a pipe; the server runs until the process is stopped");
+        let mut reaped = Instant::now();
         loop {
-            std::thread::sleep(Duration::from_secs(1));
-            shared.endpoint().reap();
+            std::thread::sleep(STOP_POLL);
+            if let Some(signal) = lease::stop_requested() {
+                break Some(signal);
+            }
+            if reaped.elapsed() >= Duration::from_secs(1) {
+                reaped = Instant::now();
+                shared.endpoint().reap();
+            }
+        }
+    };
+    match asked {
+        Some(signal) => {
+            tracing::info!(
+                signal,
+                "asked to stop by signal {signal}; stopping in order"
+            );
+            shared.stop_within(crate::shared::STOP_PEER_GRACE);
+        }
+        // the owner's end: wait for the peers, which a stop signal cuts short
+        None => {
+            shared.wait_until_peers_leave();
+            shared.stop();
         }
     }
-    shared.wait_until_peers_leave();
-    shared.stop();
     Ok(0)
 }
+
+/// How often the serve loop looks for a stop signal: well inside the
+/// [`crate::shared::STOP_PEER_GRACE`] it then gives the peers.
+const STOP_POLL: Duration = Duration::from_millis(100);
 
 /// `serve status`: the projection of `server.status`, asked of the running server when
 /// there is one — so that the answer carries the lease that process holds — and answered
@@ -889,7 +948,7 @@ fn exited_by(pid: u32, deadline: Instant) -> bool {
 #[cfg(unix)]
 fn signal_stop(pid: u32) -> Result<()> {
     // SAFETY: kill(2) with a pid this process read from the lease of its own checkout and
-    // the signal the server removes its lease on; no memory is touched.
+    // the signal the server answers with its ordered stop; no memory is touched.
     let rc = unsafe { libc::kill(pid as libc::pid_t, libc::SIGTERM) };
     if rc != 0 {
         return Err(Error::Lease {

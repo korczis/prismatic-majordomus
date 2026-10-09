@@ -49,7 +49,7 @@ registry entry, none declared in the MCP code. The decision is
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
 | freshness | the server follows the repository it serves: before a request is answered it compares a fingerprint of the git control files (`HEAD`, the staging index, `packed-refs`, the reflog, the merge and rebase markers — one `stat` each) with the one its current reading was built at, and the request that finds them different rebuilds the layer. A commit made while the server runs is visible through the API, through MCP and in the Cockpit with no restart; a client attached before the commit keeps its session and its place on the peer board. No poll, no thread, no watcher. `project.the-server-sees-the-current-tree` |
-| signals | `SIGTERM`, `SIGINT` or `SIGHUP` (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; `kill -9` cannot be caught, and the next process takes the stale lease over |
+| signals | `SIGTERM`, `SIGINT` or `SIGHUP` (`serve stop`, a client killing its server, Ctrl-C in a terminal) asks the server to stop in order: the handler only records the request, and the server closes its sessions and episodes, closes its listeners and releases the lease — only while the file is still its own — before it ends. A `serve` returns 0; a `majordomus mcp` serving its own client then dies of the signal, because its client's stdio session was cut. A second signal, or an ordered stop that has not finished within eight seconds, ends the process at once; `kill -9` cannot be caught, and the next process takes the stale lease over |
 | takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence |
 | options | the server's `--discovery` and `--strict` apply to every session it serves; a bridge inherits them and the log says which server it attached to |
 | `--standalone` | the first version's behaviour: this client alone, no port, no lease, no peers, nothing written anywhere |
@@ -182,7 +182,15 @@ does not keep one.
 
 `serve stop` signals the server the lease names, when that server answers for this
 checkout, and waits for *that server's* lease to go — the document it read, by its token,
-not merely the path. A `serve ensure` still waiting in the election takes the freed path
+not merely the path — and then for the process to exit. The `SIGTERM` it sends is the
+ordered stop and not a kill: the server gives attached peers two seconds to leave, closes
+their sessions and the episodes they carried, closes its listeners (an answer in flight is
+finished first), releases its lease and drains the mesh. Only the process whose token the
+file still carries removes it: every removal and every rewrite of the lease re-reads it
+under the lock beside it (`.ai/local/state/mcp/server.lock`), so a server that is stopped
+just after its lease was taken over leaves its successor's lease alone. A `serve` then
+exits 0 by its own return; a stop that does not finish within eight seconds, or a second
+`SIGTERM`, still ends it. A `serve ensure` still waiting in the election takes the freed path
 within milliseconds, so waiting for the path would report a server that would not stop
 when it had already stopped; the take-over is named in the answer instead. A lease that
 names a server of another checkout, or one that does not answer, is left alone and said
@@ -212,10 +220,13 @@ process is the server and restarts.
 **What the election now guards against.** An owner keeps its lease young while the layer
 loads (`Lease::keep_alive`), so a cold start slower than the bind grace is never taken for
 an abandoned one; a take-over removes only the file it judged, never one that arrived in the
-meantime; an owner whose lease was taken over while it was binding refuses to publish and
-degrades, rather than writing over the winner's address; and a server whose lease is taken
-over later stops claiming it — its signal handler no longer unlinks the file, which is
-somebody else's — serves the peers it has, and ends with them. The server's own reader also
+meantime, and two electors that judged one lease stale end with exactly one lease, because
+each re-reads the file under the lock beside it before removing it; an owner whose lease was
+taken over while it was binding refuses to publish and degrades, rather than writing over the
+winner's address, and it publishes through a temporary file of its own, synced before the
+rename; and a server whose lease is taken over later stops claiming it — nothing it does on
+its way out touches the file, which is somebody else's — serves the peers it has, and ends
+with them. The server's own reader also
 forgets the HTTP sessions that stopped pinging on every path, not only while the owner
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 
@@ -668,7 +679,7 @@ unknown tool, method or resource is a protocol error.
 | a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open |
 | the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
 | the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
-| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | the lease is removed inside the handler and the process dies of the signal; its bridges elect again on their next message |
+| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | it stops in order: sessions and episodes closed, listeners closed, the lease released if it is still the server's own; `serve` exits `0`, a `majordomus mcp` then dies of the signal; a second signal or eight seconds end it at once; its bridges elect again on their next message |
 | `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so |
 | `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind |
 | an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
@@ -715,7 +726,9 @@ stdout, non-mutation, the add–remove–break sequence of external extension, a
 bridge, `/mcp` sessions, the fallback port, `serve` deferring, `--standalone`, the takeover
 after a kill, the re-attachment, the refusal when the taker cannot serve, a corrupt, foreign,
 empty or abandoned lease being taken over, two clients starting in the same instant, an
-unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
+unwritable lease directory degrading to a standalone session, `SIGTERM` stopping the server in
+order and leaving no lease behind (`tests/lease_holder.rs`: a signal after a takeover sparing
+the successor's lease, and `serve stop` closing the server's episodes and exiting `0`),
 malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
 restarted server answer byte for byte what the first server did. The doctrine behind the
 failure table is the rule `project.shared-server-resilience`. `tests/server_status.rs` holds
