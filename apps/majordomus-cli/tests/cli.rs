@@ -587,3 +587,103 @@ fn release_version_and_bump_fail_when_nobody_reads_what_they_print() {
         "nothing is written: {manifest}"
     );
 }
+
+/// What an inspection prints about the projection is the capability's account of it, one
+/// line each: who answers, with which protocol versions, how many tools carry each effect,
+/// the tools that write the repository, where each declared client's configuration stands
+/// in this repository, and what that leaves to be done.
+#[test]
+fn an_inspection_states_the_projection_and_where_each_client_stands() {
+    let f = Fixture::new();
+    // a client configuration that exists and starts something else
+    f.write(".mcp.json", r#"{"mcpServers":{"other":{"command":"x"}}}"#);
+    let (code, out, err) = run_in(&f.root(), &["mcp", "--inspect"], "");
+    assert_eq!(code, 0, "{err}");
+    let line = |prefix: &str| {
+        out.lines()
+            .find(|l| l.starts_with(prefix))
+            .unwrap_or_else(|| panic!("no line begins {prefix:?} in:\n{out}"))
+            .to_string()
+    };
+    assert!(line("server      ").ends_with(majordomus_cli::VERSION));
+    assert!(line("protocol    ").len() > "protocol    ".len());
+    assert!(line("effect      read").ends_with("tool(s)"));
+    assert!(line("effect      repository_mutation").ends_with("tool(s)"));
+    assert!(line("writes      ").starts_with("writes      majordomus_"));
+    assert!(line("client      .mcp.json").ends_with("foreign"));
+    let finding = line("WARN mcp_client_config_foreign");
+    assert!(finding.contains(".mcp.json"), "{finding}");
+    // and the lines an inspection has always had are still around them, in order
+    let at = |needle: &str| {
+        out.find(needle)
+            .unwrap_or_else(|| panic!("no {needle:?} in:\n{out}"))
+    };
+    assert!(at("repository  ") < at("capabilities "));
+    assert!(at("capabilities ") < at("server      "));
+    assert!(at("server      ") < at("resource    "));
+    assert!(at("resource    ") < at("tool        "));
+}
+
+/// An inspection that cannot be written is a failure of the transport and never a success:
+/// the text is collected and written once, so it is printed whole or not at all.
+#[test]
+fn an_inspection_that_cannot_be_written_is_a_transport_failure() {
+    use std::process::Stdio;
+    let f = Fixture::new();
+    // The writing end of a pipe whose only reader has exited: the stdin std made for a
+    // process that is gone. `std::io::pipe` is newer than the crate's rust-version.
+    let mut gone = Command::new(BIN)
+        .arg("--version")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let writer = gone.stdin.take().unwrap();
+    assert!(gone.wait().unwrap().success());
+    let child = Command::new(BIN)
+        .args(["mcp", "--inspect"])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(Stdio::from(writer))
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    assert_eq!(
+        out.status.code(),
+        Some(13),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}
+
+/// A defect of the layer is a line of the inspection, introduced by its verdict word and
+/// naming the file, and it is the exit status: two rules claiming one identity are an
+/// error, so the inspection ends 10 and still prints everything else.
+#[test]
+fn an_inspection_names_each_diagnostic_and_ends_10_on_an_error() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/rules/project/alpha-copy.v1.md",
+        &common::rule("project.alpha", 1, "Alpha again"),
+    );
+    f.commit("two rules, one identity");
+    let (code, out, err) = run_in(&f.root(), &["mcp", "--inspect"], "");
+    assert_eq!(code, 10, "{err}");
+    let named: Vec<&str> = out
+        .lines()
+        .filter(|l| l.starts_with("FAIL duplicate_identity"))
+        .collect();
+    assert!(
+        !named.is_empty(),
+        "no FAIL duplicate_identity line in:\n{out}"
+    );
+    assert!(
+        named.iter().any(|l| l.contains("alpha-copy.v1.md")),
+        "{named:?}"
+    );
+    // the rest of the inspection is still there, before the diagnostics
+    assert!(out.find("server      ").unwrap() < out.find("FAIL duplicate_identity").unwrap());
+}

@@ -9,8 +9,8 @@
 # before anything else may start.
 #
 # What is held here: a command that succeeds, one that is refused, one that dies of a usage
-# error and one that is terminated each leave TMPDIR as they found it; one whose reader
-# closed the pipe or that was killed leaves a root the next command removes; the process a command
+# error each leave TMPDIR as they found it; one that is terminated, killed or whose reader
+# closed the pipe leaves at most a root that a following command removes; the process a command
 # starts still sees the caller's TMPDIR; and a script that sources the library without asking
 # for a root gets `mktemp` as it was.
 . "$ROOT/test/lib.sh"
@@ -62,28 +62,45 @@ clean "finish with a verify command"
 [ "$(cat "$SEEN")" = "$PROBE/" ] \
   || { echo "    a verify command saw TMPDIR=$(cat "$SEEN"), not the caller's $PROBE/"; exit 1; }
 
-# one that is terminated. `doctor` is long enough to be caught mid-run; whether the signal
-# lands before or after it finishes, nothing may remain
-# (started without `probed`: a function in the background is a subshell, and its pid is
-# not the tool's)
+# A shell that ends on a signal does not take what it was waiting for with it. The awk, the
+# sort or the subshell it had started runs on as an orphan and goes on writing under the
+# root, for as long as that work takes, so "nothing is left the moment the shell is gone"
+# is a claim about scheduling and not about the tool: on a loaded runner a doctor
+# terminated after one second had its root back, four entries deep, when this case looked
+# (PR #800, suite shard 1). What the tool does promise is that a root whose process is gone
+# is removed by a command that starts after its last writer has stopped. So the question
+# is asked the way the promise is made: a command is run, and again, until TMPDIR is empty
+# or two minutes have gone, and only then is what remains a failure.
+settled() {
+  local tries=0
+  while :; do
+    probed "$MJ" context >/dev/null
+    [ "$(left)" = 0 ] && return 0
+    tries=$((tries + 1)); [ "$tries" -ge 40 ] && break
+    sleep 3
+  done
+  clean "$1"
+}
+
+# one that is terminated. `doctor` is long enough to be caught mid-run, wherever in it the
+# signal lands (started without `probed`: a function in the background is a subshell, and
+# its pid is not the tool's)
 for after in 0.1 0.3 0.6 1; do
   TMPDIR="$PROBE/" "$MJ" doctor >/dev/null 2>&1 & pid=$!
   sleep "$after"; kill -TERM "$pid" 2>/dev/null || true
   st=0; wait "$pid" 2>/dev/null || st=$?
-  clean "a doctor terminated after ${after}s (status $st)"
+  settled "what follows a doctor terminated after ${after}s (status $st)"
 done
 
-# one whose reader left, and one that was killed: neither runs an exit trap, so the root
-# stays — and the next command to start removes it, because its process is gone. What is
-# refused is a root that outlives the next command, not one that outlives its own.
+# one whose reader left, and one that was killed: neither runs an exit trap at all, so the
+# root stays whole until the next command
 TMPDIR="$PROBE/" "$MJ" doctor 2>&1 | grep -q . || true
-probed "$MJ" context >/dev/null; clean "the command after a reader left"
+settled "what follows a doctor whose reader left"
 TMPDIR="$PROBE/" "$MJ" doctor >/dev/null 2>&1 & pid=$!
 sleep 0.3; kill -KILL "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
 [ "$(find "$PROBE" -mindepth 1 -maxdepth 1 -name "mj.$pid.*" | wc -l | tr -d ' ')" = 1 ] \
   || { echo "    a killed doctor left no root named for its process, so the sweep below proves nothing"; exit 1; }
-sleep 1   # what the killed shell was waiting for may still be writing; let it finish
-probed "$MJ" context >/dev/null; clean "the command after a kill"
+settled "what follows a killed doctor"
 # a root whose process is alive is not touched: this shell's own id stands in for one
 mkdir "$PROBE/mj.$$.living"
 probed "$MJ" context >/dev/null

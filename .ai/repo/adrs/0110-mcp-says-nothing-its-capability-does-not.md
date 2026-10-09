@@ -1,0 +1,163 @@
+---
+schema: adr/v1
+id: adr-0110
+kind: adr
+title: MCP says nothing its capability does not
+status: proposed
+date: 2026-10-07
+tags:
+  - architecture
+  - mcp
+  - projections
+  - capabilities
+  - safety
+related:
+  - file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md
+  - file:.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+  - rule:project.interfaces-are-projections
+  - rule:project.operation-transport-parity
+  - file:apps/majordomus-cli/src/capability/model.rs
+  - file:apps/majordomus-cli/src/capability/builtin/mcp.rs
+  - file:apps/majordomus-cli/src/mcp/protocol.rs
+  - file:apps/majordomus-cli/src/cockpit/mcp.rs
+  - test:apps/majordomus-cli/tests/mcp_prose.rs
+  - file:docs/MCP.md
+provenance:
+  origin: authored
+---
+
+# 110. MCP says nothing its capability does not
+
+## Context
+
+ADR 0004 made every interface a projection of one registry, and for the two things an MCP
+client lists it held by construction: `tools/list` and `resources/list` are built by
+walking the registry, so a tool cannot exist without a capability and a capability that
+declares a tool cannot fail to have one. `tools/call`, the HTTP route and the command line
+reach one executor and one handler; there is no branch that only MCP takes.
+
+What the projection *said about* a tool was a different matter. Measured on the tree this
+decision was written against (v0.14.0, 166 tools):
+
+- Three of a tool's four annotations were constants in the protocol code:
+  `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`. They were true
+  of every tool on the day they were written. Since ADR 0040 three tools write the
+  repository — one of them unlinks files — and each was still announced to every client as
+  unable to destroy anything and safe to repeat. The `initialize` instructions were made
+  to derive their sentence about writers; the annotations beside them were not.
+- A refusal reached an MCP client as a sentence. The HTTP projection of the same handler
+  answered `invalid_input`, `not_found` or `refused` as a word; the MCP client had to parse
+  the text to learn which.
+- The manual, a module comment, a doc comment on the tool type and a site template each
+  still stated that no tool writes the repository.
+- Nothing answered "what is the MCP projection here" as one value. The protocol versions
+  were in `initialize`, the effect of each tool in an annotation, the declared clients in
+  `share/providers.yaml`, and whether a client's configuration starts this repository's
+  server in a shell function. The Cockpit had no page for any of it.
+
+## Decision
+
+**A tool's safety is its capability's.** `ExecutionPolicy::hints` classifies what a caller
+may assume from the effect the capability already carries, and MCP's annotations are that
+value: a read is read-only and idempotent; a change to this process's memory is neither
+and destroys nothing; a write to the repository is destructive and not idempotent. The
+classification is conservative in the direction a caller survives — no handler has
+declared that a second call is a no-op, so none is announced as one. Nothing reaches
+beyond the machine from a handler, so `openWorldHint` is false, and it is false by the
+same classification rather than by a constant. The effect itself travels in
+`_meta.majordomus.effect`.
+
+**A refusal's category is the error's.** `CapabilityError::code` is one word per variant,
+and both transports read it: the HTTP `error.code` field and `_meta.majordomus.error.code` on a
+tool result with `isError: true`. A refused result carries no `structuredContent`, because
+the output schema describes a success.
+
+**The methods served are a list the dispatcher reads.** `protocol::METHODS` is consulted
+before a request is looked at, so the list is what is served and not a description of it.
+
+**The projection is described by a capability.** `mcp.projection` answers, as one typed
+value, who answers `initialize`, the protocol versions, the transports and the sessions
+attached over each, the methods served and what is not, every tool with its effect and
+hints, the tools that write the repository, the resources, and where each declared client's
+configuration stands in this repository. The Cockpit's MCP page, the HTTP route, the tool,
+the resource and `majordomus mcp --inspect` render it. It lists nothing of its own.
+
+**A tool's name stays declared.** It is declared once, on the capability, and the registry
+refuses a duplicate or a malformed one. It is not derived from the capability's id: 89 of
+the 166 names differ from what a derivation would give (`capabilities.list` is
+`majordomus_capabilities`), every one is held by clients and by the release's measured
+surface, and a derivation would be a breaking rename of half the surface for no caller's
+benefit. What is checked instead is the one place a name is written a second time: prose.
+`tests/mcp_prose.rs` reads the authored documents, the bootstrap files, the provider
+templates and the site templates, and fails on a tool-shaped name the registry does not
+project.
+
+**Prompts stay unserved, and the description says so.** The repository's prompt assets
+render checkout-local context the shell tool owns; served unrendered they would read as
+finished. They remain resources. `mcp.projection` states `prompts: false` rather than
+leaving a client to discover it from a `-32601`.
+
+**Client configurations stay bootstrap files.** `.mcp.json`, `.codex/config.toml` and the
+Gemini settings file are each one entry naming the launcher, in three formats owned by
+three clients, and a client reads them before any server exists to generate them. They are
+not generated. Their standing is measured — `wired`, `foreign` or `absent`, read from the
+file — and a configuration that exists without naming the launcher is a finding with its
+remedy.
+
+## What this does not change
+
+No tool is added that writes, and no write path is added to MCP. A capability writes the
+repository only by declaring `.writes_repository()`; the handler is the one every
+transport reaches, so what it refuses over HTTP it refuses over MCP in the same words.
+MCP is not given an authorisation layer of its own: the server is loopback-only, a
+state-changing request from a foreign browser origin is refused before any handler, and
+the decision about whether to make a call that changes something remains the client's,
+which is exactly what the annotations exist to inform.
+
+## Alternatives rejected
+
+- **Declaring `idempotent` and `destructive` per capability.** It would be more precise
+  for a handler that only appends, and it is a second place a declaration can disagree
+  with itself. The effect is already declared; the hints follow it. A handler-level
+  declaration can be added when a caller is shown to need the distinction.
+- **Deriving tool names from capability ids.** Rejected above: a rename of 89 tools.
+- **Serving skills or workflows as MCP prompts.** They are already resources with stable
+  URIs. A second protocol surface for the same text would need a rule for which one a
+  client should prefer, and nothing has asked for it.
+- **Generating the client configurations.** The file a client reads to find the server
+  cannot be owed to the server.
+
+## What the proof found, and what it left
+
+The conformance suite written beside this decision (`tests/mcp_conformance.rs`) swept every
+resource and every read tool for a secret planted in the environment and the repository.
+One reached a client: a credential embedded in the `origin` remote's URL was answered
+verbatim by `session_domain.identity`, over MCP and over HTTP, and the shell tool wrote the same
+string as the repository's identity into shared records, which are tracked and pushed.
+That is fixed where it was made and not here: on its own branch
+(`fix/a-remote-url-is-published-without-its-credential`, `test/cases/941`), ahead of this
+decision, because a credential does not wait for an architecture. Until that branch is in
+the history this one is merged with, the suite's test
+`no_secret_in_the_environment_or_the_repository_reaches_a_client` fails here, and is left
+failing rather than ignored.
+
+It also measured a gap this decision does not close. The registry cannot say that a
+capability's answer is a function of its input and the repository alone: `properties.rs`
+names three exceptions by id, and the cross-process parity test had to exclude by tag and
+by measurement (`environment.preflight`, `mesh.doctor`, `executions.list`, `health.report`,
+`server.status` and `dashboard.overview` answer differently per process). A declared
+classification would let parity be scoped by the model rather than by a list; it touches
+every declaration and is left as debt, named here so that it is not rediscovered.
+
+## Consequences
+
+- Three tools are now announced as destructive and not idempotent, and every command tool
+  as not idempotent. A client that asks a person before a destructive call will now ask
+  before these three. That is the intended change.
+- `capabilities.projections` carries `effect` on every row and the registry gains
+  `mcp.projection`. The public surface widened, which the release engine measures as a
+  minor version.
+- A client may branch on `_meta.majordomus.error.code`. The text is unchanged.
+- Adding a capability that declares a tool puts it on the Cockpit's MCP page, in the
+  generated capability reference, in the OpenAPI document and in `tools/list` with
+  annotations that are true of it, with no file edited but its declaration.

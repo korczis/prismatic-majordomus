@@ -191,10 +191,11 @@ mj_archive_list() {
 # selection that can only be believed is not evidence.
 mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCHIVE_DROPPED
   local flat="$1" idx="$2" out="$3"
-  local derived binary tmpd
+  local derived binary artifacts tmpd
 
   derived="$(mj_yget "$flat" "profiles.$idx.derived")"
   binary="$(mj_yget "$flat" "profiles.$idx.binary")"
+  artifacts="$(mj_yget "$flat" "profiles.$idx.artifacts")"
 
   # Named here rather than copied into the exported name at the end of the function: the
   # scan that proves no recursive delete leaves a temporary directory trusts a name only
@@ -217,9 +218,20 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
       | sed -n 's/: merge: derived$//p' > "$tmpd/derived" || true
   fi
 
-  # binary: by extension, from the registry's one list
+  # binary: by extension, from the registry's one list, and by content as git itself
+  # judges the index's blob (`i/-text`: a NUL byte or a lone CR), so a binary with a text
+  # name or none is not archived as text
   : > "$tmpd/binext"
-  [ "$binary" = drop ] && mj_ylist "$MJ_ARCHIVE_FLAT" binary_extensions > "$tmpd/binext"
+  : > "$tmpd/bincontent"
+  if [ "$binary" = drop ]; then
+    mj_ylist "$MJ_ARCHIVE_FLAT" binary_extensions > "$tmpd/binext"
+    mj_git ls-files --eol 2>/dev/null | awk -F"\t" '$1 ~ /^i\/-text / { print $2 }' > "$tmpd/bincontent" || true
+  fi
+
+  # artifacts: build output, caches, worktree containers and links, from the registry's one
+  # list; never re-admitted by an include, as `majordomus pack` refuses it too
+  : > "$tmpd/artifact"
+  [ "$artifacts" = drop ] && mj_ylist "$MJ_ARCHIVE_FLAT" artifact_paths > "$tmpd/artifact"
 
   mj_ylist "$flat" "profiles.$idx.exclude" > "$tmpd/exclude"
   mj_ylist "$flat" "profiles.$idx.include" > "$tmpd/include"
@@ -230,6 +242,7 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
   # running it — and a check nobody runs is not a check.
   awk -F"\t" -v D="$tmpd/derived" -v B="$tmpd/binext" \
              -v E="$tmpd/exclude" -v I="$tmpd/include" \
+             -v A="$tmpd/artifact" -v ART="$artifacts" -v BC="$tmpd/bincontent" \
              -v KEEP="$out" -v DROP="$tmpd/dropped" '
     # a shell glob as an anchored regular expression: * and ? only, everything else
     # literal. * matches / as well, so "apps/**" and "apps/*" select the same subtree.
@@ -248,12 +261,18 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
     FILENAME == B { bex[$0] = 1; nbex++; next }
     FILENAME == E { exc[++ne] = globre($0); next }
     FILENAME == I { inc[++ni] = globre($0); next }
+    FILENAME == A { art[++na] = globre($0); next }
+    FILENAME == BC { bcon[$0] = 1; next }
     {
-      mode = $1; path = $2; drop = ""
+      mode = $1; path = $2; drop = ""; hard = ""
+      if (ART == "drop" && mode == "120000") hard = "link"
+      if (hard == "") for (i = 1; i <= na; i++) if (path ~ art[i]) { hard = "artifact"; break }
+      if (hard != "") { printf "%s\t%s\n", hard, path >> DROP; next }
       if (path in der) drop = "derived"
       if (drop == "" && nbex && match(path, /\.[^.\/]+$/)) {
         if (substr(path, RSTART + 1) in bex) drop = "binary"
       }
+      if (drop == "" && (path in bcon)) drop = "binary"
       if (drop == "") {
         for (i = 1; i <= ne; i++) if (path ~ exc[i]) { drop = "excluded"; break }
       }
@@ -262,7 +281,7 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
       }
       if (drop != "") printf "%s\t%s\n", drop, path >> DROP
       else printf "%s\t%s\n", mode, path >> KEEP
-    }' "$tmpd/derived" "$tmpd/binext" "$tmpd/exclude" "$tmpd/include" "$tmpd/all"
+    }' "$tmpd/derived" "$tmpd/binext" "$tmpd/exclude" "$tmpd/include" "$tmpd/artifact" "$tmpd/bincontent" "$tmpd/all"
   # awk creates neither output file when it writes no line to it
   [ -f "$out" ] || : > "$out"
   [ -f "$MJ_ARCHIVE_DROPPED" ] || : > "$MJ_ARCHIVE_DROPPED"
@@ -357,7 +376,7 @@ mj_archive_furnish() { # stage profile flat idx sel n missing
     printf 'commit:     %s\n' "$(mj_git rev-parse HEAD 2>/dev/null || echo unknown)"
     printf 'branch:     %s\n' "$(mj_git_branch)"
     printf 'tree:       %s\n' "$(mj_git_dirty)"
-    printf 'remote:     %s\n' "$(mj_git remote get-url origin 2>/dev/null || echo none)"
+    printf 'remote:     %s\n' "$(mj_url_public "$(mj_git remote get-url origin 2>/dev/null || echo none)")"
     printf 'profile:    %s\n' "$profile"
     printf 'taken:      %s\n' "$(mj_now)"
     printf 'tool:       majordomus %s\n' "$MJ_VERSION"

@@ -934,6 +934,8 @@ mod tests {
             ("regression_risk", CritiqueClass::RegressionRisk),
             ("surface_missing", CritiqueClass::SurfaceMissing),
             ("delivery_verification", CritiqueClass::DeliveryVerification),
+            ("invariant_conflict", CritiqueClass::InvariantConflict),
+            ("dependency_order", CritiqueClass::DependencyOrder),
         ] {
             assert_eq!(CritiqueClass::parse(word), Some(class), "{word}");
         }

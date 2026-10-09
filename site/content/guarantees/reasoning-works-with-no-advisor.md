@@ -1,7 +1,7 @@
 +++
 title = "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review"
 description = "With none of the declared advisors installed, configured or reachable, a session still"
-weight = 241
+weight = 245
 [extra]
 claim_id = "reasoning-works-with-no-advisor"
 status = "guaranteed"

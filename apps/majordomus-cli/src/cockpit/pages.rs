@@ -87,7 +87,7 @@ impl Page {
             .collect();
         self
     }
-    fn script(mut self, name: &'static str) -> Self {
+    pub(crate) fn script(mut self, name: &'static str) -> Self {
         self.scripts.push(name);
         self
     }
@@ -100,7 +100,7 @@ impl Page {
 /// The word a serde enum serialises to (`behaviorally_verified`, `repository`), for a
 /// page that shows a variant. `{:?}` would show the Rust spelling, which is not the
 /// vocabulary anything else in this repository uses.
-fn word<T: serde::Serialize>(value: &T) -> String {
+pub(crate) fn word<T: serde::Serialize>(value: &T) -> String {
     serde_json::to_value(value)
         .ok()
         .and_then(|v| v.as_str().map(str::to_string))
@@ -832,7 +832,12 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     ])
 }
 
-fn select(name: &str, label: &str, current: Option<&str>, options: Vec<(String, String)>) -> El {
+pub(crate) fn select(
+    name: &str,
+    label: &str,
+    current: Option<&str>,
+    options: Vec<(String, String)>,
+) -> El {
     let mut field = el("select").class("mj-select").attr("name", name).child(
         el("option")
             .attr("value", "")
@@ -2376,6 +2381,89 @@ fn closed_card(c: &ClosedSessions) -> El {
 /// The continuity page asks six capabilities now. Failing the whole page because one of them
 /// could not answer would hide the five that could, and the one a reader most needs is the
 /// one most likely to fail: a store nothing has written yet.
+/// The cross-machine half: this device, the record this checkout continues, the store
+/// against its remote, and the handovers other devices published that could be resumed
+/// here. Every value is `continuity.status`'s; nothing is decided in this card — a diverged
+/// line is shown because the status reports it, and the action is the command that acts.
+fn machines_card(s: &crate::continuity::Status) -> El {
+    let short = |id: &str| id[..12.min(id.len())].to_string();
+    let diverged = s
+        .lines
+        .iter()
+        .filter(|l| l.state == crate::continuity::lineage::LineState::Diverged)
+        .count();
+    let status = if diverged > 0 {
+        badge("fail", format!("{diverged} diverged"))
+    } else if s.resumable.is_empty() {
+        badge("ok", "nothing waiting")
+    } else {
+        badge("info", format!("{} resumable", s.resumable.len()))
+    };
+    let sync = serde_json::to_value(s.store.sync)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default();
+    let rows: Vec<El> = s
+        .resumable
+        .iter()
+        .map(|r| {
+            el("tr")
+                .child(el("td").child(mono(short(&r.id))))
+                .child(el("td").text(&r.device.label))
+                .child(el("td").child(mono(r.branch.clone().unwrap_or_else(|| "DETACHED".into()))))
+                .child(el("td").text(r.task.as_deref().unwrap_or("")))
+                .child(el("td").text(r.issue.as_deref().unwrap_or("")))
+                .child(el("td").text(&r.published_at))
+        })
+        .collect();
+    card_with(
+        "Other machines",
+        status,
+        el("div")
+            .child(facts(vec![
+                (
+                    "This device",
+                    Node::Element(el("span").text(format!(
+                        "{} ({})",
+                        s.device.label,
+                        short(&s.device.node)
+                    ))),
+                ),
+                (
+                    "Continues",
+                    Node::Element(match &s.position {
+                        Some(p) => mono(short(&p.record)),
+                        None => el("span").text("nothing yet on this branch"),
+                    }),
+                ),
+                (
+                    "Store",
+                    Node::Element(el("span").text(format!(
+                        "{} record(s) · {} · {}",
+                        s.store.records,
+                        s.store.remote.as_deref().unwrap_or("no remote"),
+                        sync
+                    ))),
+                ),
+            ]))
+            .child(if rows.is_empty() {
+                nothing("No other device has published a handover this checkout has not resumed, as of the last sync.")
+            } else {
+                table(&["Record", "Device", "Branch", "Intent", "Issue", "Published"], rows)
+            })
+            .children(
+                s.diagnostics
+                    .iter()
+                    .filter(|d| d.severity != crate::model::Severity::Info)
+                    .map(|d| alert("warn", format!("{}: {}", d.code, d.message)))
+                    .collect::<Vec<_>>(),
+            )
+            .child(el("p").class("mj-prose").text(
+                "A handover published on another machine reaches this one through a sync with the git remote, and is resumed only on a plan that checked its signer, its lineage and this checkout's source.",
+            )),
+    )
+}
+
 fn section_error(title: &str, e: String) -> El {
     card(title, alert("fail", e))
 }
@@ -2532,6 +2620,12 @@ pub fn continuity(ctx: &Context) -> Page {
                 "No checkpoint resolves here yet.",
             ))
             .child(blockers)
+            .child(
+                match ask::<crate::continuity::Status>(ctx, "continuity.status", json!({})) {
+                    Ok(s) => machines_card(&s),
+                    Err(e) => section_error("Other machines", e),
+                },
+            )
             .child(match ask::<Episodes>(ctx, "lifecycle.episodes", json!({})) {
                 Ok(e) => episodes_card(&e),
                 Err(e) => section_error("Every open episode", e),
@@ -6073,7 +6167,7 @@ fn effect_status(effect: &str) -> &'static str {
 }
 
 /// One query parameter, when it carries something.
-fn param(query: &[(String, String)], key: &str) -> Option<String> {
+pub(crate) fn param(query: &[(String, String)], key: &str) -> Option<String> {
     query
         .iter()
         .find(|(k, _)| k == key)
@@ -7392,6 +7486,8 @@ mod tests {
             cross_repository: false,
             latest_reviews: Vec::new(),
             review_requests: Vec::new(),
+            author_association: "OWNER".into(),
+            cross_references: crate::integration::CrossReferenceRead::Whole,
         }
     }
 
@@ -7579,6 +7675,13 @@ mod tests {
                 merged: true,
                 head_sha: sha.clone(),
                 body: String::new(),
+                merge_commit: String::new(),
+                author: "someone".into(),
+                author_association: "OWNER".into(),
+                cross_repository: false,
+                base_ref: "master".into(),
+                changed_files: 1,
+                whole: true,
             };
             store_observation(
                 &root,
@@ -7864,5 +7967,71 @@ mod titled_tests {
         assert_eq!(titled(&a), "change 1 · I0810");
         a.milestone = Some("M003".into());
         assert_eq!(titled(&a), "change 1 · I0810 (M003)");
+    }
+    /// The card about other machines says what `continuity.status` says and nothing else:
+    /// nothing waiting on the machine that published, the handover another device left on
+    /// the one that fetched it, a diverged line as a failure, a refused file as a warning,
+    /// and a clone with no remote as one.
+    #[test]
+    fn the_other_machines_card_shows_the_status_it_is_given() {
+        use crate::continuity::tests_support::{body, handover, machine, World};
+        use crate::continuity::{self as domain, PublishRequest};
+        let w = World::new();
+        let a_root = w.root("a");
+        let a = machine(&a_root, w.identity("a", "macbook-pro"), None);
+        handover(&a_root, "20261003T120000Z", &body("o", "s", "n"), None);
+        let published = domain::publish(
+            &a,
+            &PublishRequest {
+                issue: Some("I-1842".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        domain::sync(&a, None).unwrap();
+
+        // the machine that published: it continues its own record, and nothing waits
+        let here = machines_card(&domain::status(&a).unwrap()).render();
+        assert!(here.contains("nothing waiting"), "{here}");
+        assert!(here.contains(&published.record.id[..12]), "{here}");
+        assert!(
+            here.contains("No other device has published a handover"),
+            "{here}"
+        );
+        assert!(here.contains("macbook-pro ("), "{here}");
+
+        // the machine that fetched it: one row, with the device, the branch and the issue
+        let b_root = w.clone_as("b");
+        let b = machine(&b_root, w.identity("b", "mac-mini"), None);
+        domain::sync(&b, None).unwrap();
+        let status = domain::status(&b).unwrap();
+        let there = machines_card(&status).render();
+        assert!(there.contains("1 resumable"), "{there}");
+        assert!(there.contains("nothing yet on this branch"), "{there}");
+        assert!(there.contains("<td>macbook-pro</td>"), "{there}");
+        assert!(there.contains("feature/x"), "{there}");
+        assert!(there.contains("<td>I-1842</td>"), "{there}");
+        assert!(there.contains("origin"), "{there}");
+
+        // a record that names no branch is shown as detached, and a diverged line fails
+        let mut value = serde_json::to_value(&status).unwrap();
+        value["resumable"][0]["branch"] = serde_json::Value::Null;
+        value["lines"][0]["state"] = json!("diverged");
+        let diverged: domain::Status = serde_json::from_value(value).unwrap();
+        let card = machines_card(&diverged).render();
+        assert!(card.contains("1 diverged"), "{card}");
+        assert!(card.contains("DETACHED"), "{card}");
+
+        // a file the store refused is a warning on the card
+        crate::continuity::store::add(&b_root, &[("stray".into(), b"{}".to_vec())], "x\n").unwrap();
+        let refused = domain::status(&b).unwrap();
+        let card = machines_card(&refused).render();
+        assert!(card.contains("continuity.stray_file: "), "{card}");
+
+        // and a store that names no remote says so in the remote's place
+        let mut value = serde_json::to_value(&refused).unwrap();
+        value["store"].as_object_mut().unwrap().remove("remote");
+        let alone: domain::Status = serde_json::from_value(value).unwrap();
+        assert!(machines_card(&alone).render().contains("no remote"));
     }
 }

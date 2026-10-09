@@ -204,7 +204,8 @@ planned work — it reads `observed` — while remaining *met* only by evidence.
 A **critique**, one per intent under `.ai/repo/project/critiques/`, is the adversarial pass
 over the plan: findings classed by the question asked — `missed_requirement`,
 `unproven_assumption`, `insufficient_work`, `unnecessary_work`, `regression_risk`,
-`surface_missing`, `delivery_verification` — each `blocking` or not, and each resolved `open`,
+`surface_missing`, `delivery_verification`, `invariant_conflict`, `dependency_order` — each
+`blocking` or not, and each resolved `open`,
 `planned` into an issue that serves the intent, or `rejected` with a reason. A dismissal
 nobody can read is not a resolution.
 
