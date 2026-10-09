@@ -1,0 +1,29 @@
+id: github-agrees-with-the-intent
+title: What GitHub shows of an issue says what the issue serves, and GitHub decides nothing about an intent
+statement: "The body GitHub shows for an issue names the criteria the issue declares it serves, generated from the record like the rest of the body, so that a changed mapping is drift the existing gate refuses. Where a criterion stands is not projected: it is the intent engine's answer, asked for by a command. A milestone closes on GitHub when the plan says it is done; that an intent it realises is not yet satisfied is reported here, by the intent engine, and GitHub is never read to decide it."
+invariants:
+  - GitHub is a projection and never a source; nothing read from it is written into a canonical record, a criterion, a verdict or the plan
+  - No GitHub number is stored, and no mapping file relates a canonical id to a remote object
+  - No criterion state and no verdict is put into a generated body; a body moves when a record moves and never because evidence went stale
+  - The state GitHub should show for a milestone or an issue follows the plan's derived status and nothing else
+  - Applying the projection stays a deliberate act on the trunk; a gate proves agreement and creates nothing
+milestones:
+  - github-agrees-with-the-intent
+satisfaction:
+  - id: a-body-names-what-the-issue-serves
+    criterion: The projected body of an issue lists what the record declares it serves, the same on the command line and in the projection, states no criterion state, and a change of the mapping moves the body's hash and reads behind
+    evidence: test
+    ref: test/cases/968_an_issue_body_names_what_it_serves.sh
+governance:
+  - rule:project.github-projection-gated
+  - rule:project.derived-once
+  - adr:adr-0107
+  - adr:adr-0070
+non_goals:
+  - Closing or reopening a milestone on GitHub from an intent's verdict; ADR 0116 says why it was measured against and not built
+  - A rename-safe identity for milestones; they are matched by the id that prefixes their title
+  - Pushing a canonical title change, or reporting a title edited on GitHub; the adapter matches an issue by the marker in its body and does neither today
+  - Reporting a milestone that exists on GitHub and in no record
+  - Typed output for the adapter's findings; they stay the words the gate counts
+created_at: 2026-10-08
+updated_at: 2026-10-08

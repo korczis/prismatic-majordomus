@@ -949,6 +949,15 @@ claims:
     responsibility: none      # planned; no responsibility implements it yet
     note: Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed.
 
+  - id: issue-body-names-what-it-serves
+    claim: The body GitHub shows for an issue lists what the record declares the issue serves, generated with the rest of the body, and states nothing of where a criterion stands
+    source: docs/PLANNING.md
+    implementation: lib/plan.sh
+    test: test/cases/968_an_issue_body_names_what_it_serves.sh
+    status: guaranteed
+    responsibility: plan
+    note: "`majordomus plan body <issue>` and the projection print a `Serves` section for an issue whose record declares `serves`, and none for one that does not. It is inside the generated region, so a changed mapping moves the body's hash and reads `behind` and a hand edit reads `edited`. Where a criterion stands is the intent engine's answer and is named as a command, never printed (ADR 0116)."
+
   - id: intent-closes-github-milestones
     claim: A milestone will be closed on GitHub only once the intents it realises are satisfied
     source: docs/PLANNING.md

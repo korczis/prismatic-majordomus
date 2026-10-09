@@ -1,0 +1,153 @@
+intent: github-agrees-with-the-intent
+reviewed_at: dba5422820
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records, the requirement, the rules and ADRs that bind it and the adapter, and none of the author's reasoning; same model and operator session as the author. Disposition given: accept with required changes, eight findings blocking. The plan was cut to a quarter of itself after it."
+findings:
+  - id: criteria-name-tests-that-pass-today
+    class: unproven_assumption
+    subject: github-agrees-with-the-intent
+    finding: "All five criteria named existing passing files; one clean recorded run of each would have read the intent satisfied with no work done."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2064
+      because: "The intent has one criterion and it names a case written for it, 968, that fails without the work."
+  - id: derivation-proof-is-not-the-named-evidence
+    class: delivery_verification
+    subject: github-agrees-with-the-intent
+    finding: "The capability would have been proved by a unit test the ledger cannot record, while the criterion named another file."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "The capability is not built; ADR 0116 says why."
+  - id: decides-nothing-recorded-satisfied-on-a-plan-only-hash
+    class: unproven_assumption
+    subject: github-agrees-with-the-intent
+    finding: "The gap recorded a criterion satisfied on a case that hashes the plan only."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2064
+      because: "That GitHub decides nothing is an invariant, not a criterion; the adapter still asks no engine, and case 968 holds the canonical model unchanged across a check."
+  - id: an-unknown-verdict-never-closes
+    class: missed_requirement
+    subject: github-agrees-with-the-intent
+    finding: "An intent with a command or deployment criterion can at best read unknown, so its milestone could never close on GitHub."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2067
+      because: "A milestone on GitHub follows the plan; ADR 0116 records this finding as the first reason."
+  - id: the-gate-has-no-executable-where-it-runs
+    class: surface_missing
+    subject: github-agrees-with-the-intent
+    finding: "The projection gate runs in the structure job, which builds no executable, so an adapter that must ask the engine would report cannot run on every pull request."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2067
+      because: "The adapter and the gate are unchanged; ADR 0116 records the finding."
+  - id: shell-fixtures-lose-the-adapter
+    class: regression_risk
+    subject: github-agrees-with-the-intent
+    finding: "Four cases drive the adapter in fixtures with no executable."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2064
+      because: "The adapter asks no executable; cases 45 and 602 pass with the changed body."
+  - id: the-serves-section-reddens-every-branch
+    class: delivery_verification
+    subject: I2064
+    finding: "A changed body reads behind, which the gate refuses, and a branch cannot apply; the plan named the risk with no procedure."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2064
+      because: "Measured: the four issues that declare serves are in sync today. I2064 names them and the procedure: red on the projection gate alone, applied from the trunk by the integrating session right after the merge."
+  - id: evidence-moves-the-remote-state-and-scopes-are-wide
+    class: regression_risk
+    subject: github-agrees-with-the-intent
+    finding: "A milestone wanted closed only with its intents would flip to wanted open after almost any commit, a refused finding no branch can clear."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2067
+      because: "Not built; ADR 0116 records it as the second reason. The two remaining issues name files, not directories."
+  - id: the-comparison-is-reachable-only-from-tests
+    class: unnecessary_work
+    subject: github-agrees-with-the-intent
+    finding: "The typed comparison had no caller, and an observation of hundreds of issues does not fit an argument."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Cut. The findings stay the words the gate counts, and the intent says so among its non-goals."
+  - id: the-description-is-never-compared
+    class: insufficient_work
+    subject: github-agrees-with-the-intent
+    finding: "A check reads a milestone's number, title and state only, so a description naming an intent would go stale unseen."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "No description is changed."
+  - id: the-executable-does-call-the-network
+    class: unproven_assumption
+    subject: github-agrees-with-the-intent
+    finding: "The invariant that the executable makes no network call is false: the integration executor runs the forge client."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2067
+      because: "The invariant is removed; nothing in this change concerns it."
+  - id: title-ownership-contradicts-the-adapter
+    class: missed_requirement
+    subject: github-agrees-with-the-intent
+    finding: "The plan called a title a person's while the adapter says the record owns it, and several states the requirement names were dropped without saying so."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2067
+      because: "ADR 0116 carries the ownership table as the adapter behaves, and each dropped state is a non-goal of the intent with its reason."
+  - id: the-listed-tests-are-not-mapped
+    class: delivery_verification
+    subject: github-agrees-with-the-intent
+    finding: "The requirement lists ten tests and the plan named two."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2067
+      because: "ADR 0116 maps each to the case that holds it or says it is not held."
+  - id: the-verdict-is-being-rewritten-elsewhere
+    class: regression_risk
+    subject: github-agrees-with-the-intent
+    finding: "The verdict the capability would read is changed by a branch not yet on the trunk."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Nothing here reads a verdict."
+  - id: the-claim-flips-two-prs-late
+    class: delivery_verification
+    subject: I2067
+    finding: "The decision was planned after the code it decides, and the claim would have been false for two pull requests."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2067
+      because: "The decision is the first issue and the code depends on it; the planned claim stays planned and its page says what is proposed."
+  - id: a-second-milestone-for-a-promised-slice
+    class: unnecessary_work
+    subject: github-agrees-with-the-intent
+    finding: "The intent-lifecycle milestone already promises that a milestone closes on GitHub only when its intents are satisfied."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2067
+      because: "ADR 0116 proposes that it not be built as written; correcting that milestone's outcome belongs to the review of intent-lifecycle, which is recorded as owed."
+  - id: derived-files-not-regenerated
+    class: delivery_verification
+    subject: github-agrees-with-the-intent
+    finding: "The derived plan status and site pages did not carry the staged records."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2064
+      because: "The commit derives."

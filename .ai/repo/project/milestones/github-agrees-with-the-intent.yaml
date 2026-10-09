@@ -1,0 +1,29 @@
+id: github-agrees-with-the-intent
+title: GitHub says what an issue serves
+slug: github-agrees-with-the-intent
+order: 145
+priority: p2
+problem: "The GitHub projection is generated from the plan and reads no intent. An issue there does not say which criterion it serves. A first plan went further, closing a milestone on GitHub only when its intents are satisfied, and an independent review found it unsound before it was built."
+outcome: "An issue's body names what it serves, and a recorded decision says what of an intent reaches GitHub, what does not, and why a milestone's state there follows the plan."
+current_state: "scripts/github-sync and lib/plan.sh contain no reference to what an issue serves. No ADR decides the reconciliation."
+desired_state: "ADR 0116 proposed; the Serves section in the generated body, proved by case 968 and applied to GitHub."
+scope:
+  - lib/plan.sh
+  - test/cases
+  - .ai/repo
+  - docs
+non_scope:
+  - Closing a milestone from an intent's verdict
+  - Any change to scripts/github-sync or scripts/ci/github-check
+  - A capability for the projection
+acceptance_criteria:
+  - "An issue body lists what the issue serves"
+  - "The decision is recorded as proposed, with what was measured"
+validation:
+  - bash test/run.sh 968_an_issue_body_names_what_it_serves
+evidence_required: []
+depends_on: []
+risks:
+  - "Every issue that declares serves reads behind on every branch from the merge until the projection is applied from the trunk."
+created_at: 2026-10-08
+updated_at: 2026-10-08

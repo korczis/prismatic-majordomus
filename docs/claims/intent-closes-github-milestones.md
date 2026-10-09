@@ -6,6 +6,8 @@
 
 The intended shape is that the GitHub projection reads the intents a milestone realises, and keeps the milestone open on GitHub while any of them is not satisfied.
 
+A first plan for that shape was reviewed and found unsound before it was built: an intent whose evidence the ledger cannot derive would never let its milestone close, and a closed milestone would be wanted open again whenever a run went stale. ADR 0116 proposes that a milestone on GitHub keep following the plan, and that the disagreement stay a finding of `majordomus intent realization`. Whether to withdraw this claim or build it differently is the owner's decision; until then it stays planned.
+
 ## How it works today
 
 `scripts/github-sync` projects each milestone from its derived plan status alone and reads no intent. Closed work the evidence contradicts is refused by the `intent-realization` gate in this repository (`intent-realization-held-to-evidence`), not by the tracker.
