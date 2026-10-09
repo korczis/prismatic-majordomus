@@ -29798,6 +29798,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I1992",
+        "kind": "issue",
+        "label": "I1992",
+        "summary": "A rebuild that fails consumes no change: the next request retries it",
+        "route": "/cockpit/objects/issue/i1992",
+        "source": ".ai/repo/project/issues/I1992.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A load that fails and then would succeed, with no further repository move, is retried after the interval and the next answer carries the new head",
+            "A load that keeps failing is attempted at most once per interval, not once per request",
+            "Case 545 still passes; with the retry removed, the new test fails"
+          ],
+          "created_at": "2026-10-06",
+          "current_state": "A failed App::load sets the generation's stamp to the stamp it was taken under: the change is consumed, and no request retries the load until the git control files move again.",
+          "evidence_required": [
+            "failed_load_is_retried_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The stamp's watched files (WORKTREE_FILES, COMMON_FILES)",
+            "The mid-rebuild rule: a request arriving during a rebuild is still served the existing generation"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/live.rs",
+            "apps/majordomus-cli/tests",
+            "test/cases"
+          ],
+          "slug": "a-failed-rebuild-consumes-no-change",
+          "updated_at": "2026-10-06",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib live::",
+            "MJ_TEST_JOBS=4 bash test/run.sh 545_every_answer_says_when_it_was_observed"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I1995",
         "kind": "issue",
         "label": "I1995",
@@ -66105,6 +66145,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1992",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1992",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1995",
         "target": "kind:issue",
         "kind": "is_a"
@@ -74976,8 +75026,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2482,
+      "edges": 5431,
       "acyclic": false,
       "truncated": false
     }

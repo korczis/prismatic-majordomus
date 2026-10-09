@@ -9,10 +9,6 @@ Current version: **0.19.1**
 
 ## v0.19.0 — 2026-10-09
 
-### Decisions
-
-- **ADR-0123** The worker is asked for a handover before the context window fills, by a provider mod the policy switches _(proposed)_
-
 ### Added
 
 - **capture**: the worker is asked for a handover before the window fills (`81ce30338`)
@@ -43,10 +39,6 @@ Current version: **0.19.1**
 
 
 ## v0.18.0 — 2026-10-09
-
-### Decisions
-
-- **ADR-0111** A task names what it serves, and the binding is derived, pinned and never stored _(proposed)_
 
 ### Added
 
