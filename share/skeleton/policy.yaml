@@ -79,11 +79,13 @@ session:
   # ledger where it did not. A section named here with no writer in lib/derive.sh is a
   # configuration error reported by name, never a silently empty heading.
   record_sections: [What Happened, Progress Notes, Decisions, Open Questions, Outcome]
-  # The lifecycle commits the record it writes. A record nobody committed reaches no
-  # surface — not the site, not the Rust index, not `session list` in another clone — so
-  # leaving it in the working tree is the same as not writing it.
-  commit_record_on_end: true
-  push_record_on_end: true
+  # Whether the lifecycle commits the record it writes, and pushes that commit. A record
+  # nobody committed reaches no surface — not the site, not the Rust index, not `session
+  # list` in another clone. But the commit is made with plumbing and runs none of this
+  # repository's commit hooks, so it is opt-in: set both to true only if a commit that skips
+  # your hooks is acceptable here. An absent key reads as false.
+  commit_record_on_end: false
+  push_record_on_end: false
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true            # also the checkpoint the close records, for the
                                          # same reason: both are moments at which what the

@@ -1813,7 +1813,10 @@ mj_capture_session_end() {
 mj_capture_publish_record() {
   local abs="$1" rel idx tree parent new msg
   [ -n "$abs" ] && [ -f "$abs" ] || return 0
-  [ "$(mj_pol session.commit_record_on_end)" != false ] || return 0
+  # Only a policy that says `true` commits. An absent key is not consent: the commit runs no
+  # hook, and in a repository whose hooks enforce its own rules (an issue reference, doctrine
+  # checks) a commit made past them by default broke rules nobody chose to waive.
+  [ "$(mj_pol session.commit_record_on_end)" = true ] || return 0
   rel="$(mj_rel "$abs")"
   case "$rel" in /*) return 0 ;; esac          # outside the repository: not ours to commit
 
@@ -1858,7 +1861,7 @@ the working tree reaches no surface that reads session records.
 # strictly behind it, never forced, never a hook, and never a failure that surfaces.
 mj_capture_push_record() {
   local new="$1" branch remote upstream
-  [ "$(mj_pol session.push_record_on_end)" != false ] || return 0
+  [ "$(mj_pol session.push_record_on_end)" = true ] || return 0
   branch="$(mj_git branch --show-current 2>/dev/null)" || return 0
   [ -n "$branch" ] || return 0                 # detached: nothing to publish onto
   remote="$(mj_git config "branch.$branch.remote" 2>/dev/null)" || remote=""
