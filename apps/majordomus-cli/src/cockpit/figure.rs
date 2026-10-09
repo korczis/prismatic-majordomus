@@ -594,21 +594,18 @@ impl Flow {
                 None,
             ));
         }
-        for column in &self.columns {
-            for n in &column.nodes {
-                let Some(p) = placed_of(&placed, &n.key) else {
-                    continue;
-                };
-                svg = svg.child(self.node(n, p));
-                notes.push(note(
-                    &n.key,
-                    &n.label,
-                    &n.detail,
-                    n.claim,
-                    &n.note,
-                    n.href.as_deref(),
-                ));
-            }
+        // `place` lists every box once, in the order the columns hold them
+        let boxes = self.columns.iter().flat_map(|c| c.nodes.iter());
+        for (n, (_, p)) in boxes.zip(placed.iter()) {
+            svg = svg.child(self.node(n, *p));
+            notes.push(note(
+                &n.key,
+                &n.label,
+                &n.detail,
+                n.claim,
+                &n.note,
+                n.href.as_deref(),
+            ));
         }
 
         let subtrees: Vec<El> = self
@@ -1132,6 +1129,42 @@ mod tests {
         );
         // and is cut to the run it sits on, saying so
         assert!(html.contains("…</text>"));
+    }
+
+    #[test]
+    fn a_line_back_to_a_box_alone_carries_its_words_on_its_last_run() {
+        let f = two_columns(vec![FlowEdge::new("c", "a", "back", Claim::Historical)]);
+        let html = f.render().render();
+        // the last run of a line from c back to a ends at a's right side
+        let x = PAD + BOX_W + 2 + 6;
+        assert!(
+            html.contains(&format!(r#"class="mj-flow-edge-label" x="{x}""#)),
+            "{html}"
+        );
+        // history is dotted and named
+        assert!(html.contains(r#"stroke-dasharray="1 5""#));
+        assert!(html.contains(r#"data-mj-claim="historical""#));
+    }
+
+    #[test]
+    fn a_subtree_counts_its_members_in_words() {
+        let f = Flow {
+            id: "m".into(),
+            question: "Q".into(),
+            caption: "C".into(),
+            columns: vec![Column::new(
+                "Only",
+                vec![FlowNode::new("a", "A", Claim::Declared).members(vec![
+                    Member::new("one", Claim::Declared),
+                    Member::new("two", Claim::Estimated),
+                ])],
+            )],
+            edges: Vec::new(),
+            data: None,
+        };
+        let html = f.render().render();
+        assert!(html.contains("2 members"));
+        assert!(html.contains(r#"class="mj-badge mj-badge--estimated""#));
     }
 
     #[test]

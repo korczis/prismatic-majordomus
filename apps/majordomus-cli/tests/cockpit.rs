@@ -1017,7 +1017,10 @@ fn an_entity_page_draws_its_relations_as_a_figure_that_explains_every_element() 
     let (status, beta) = html(&s, "/cockpit/objects/rule/project-beta-1");
     assert_eq!(status, 200);
     assert!(beta.contains(r#"data-mj-figure="relations""#), "{beta}");
-    assert!(beta.contains("flow.js"), "a page that draws a figure loads its script");
+    assert!(
+        beta.contains("flow.js"),
+        "a page that draws a figure loads its script"
+    );
     // the declared reference is a solid declared line out of the subject
     assert!(
         beta.contains(r#"data-claim="declared" data-from="self" data-to="out-depends_on""#),
@@ -1025,7 +1028,9 @@ fn an_entity_page_draws_its_relations_as_a_figure_that_explains_every_element() 
     );
     // the subject names an artefact the tree does not hold: missing, not declared
     assert!(
-        beta.contains(r#"class="mj-flow-node mj-status--missing mj-flow-node--focus" data-k="self""#),
+        beta.contains(
+            r#"class="mj-flow-node mj-status--missing mj-flow-node--focus" data-k="self""#
+        ),
         "{beta}"
     );
     // every drawn element carries its explanation, and the relations stay a table
@@ -1045,5 +1050,8 @@ fn an_entity_page_draws_its_relations_as_a_figure_that_explains_every_element() 
         "{alpha}"
     );
     assert!(alpha.contains(r#"stroke-dasharray="6 4""#));
-    assert!(alpha.contains(r#"data-mj-claim="derived""#), "the legend names the backlink's claim");
+    assert!(
+        alpha.contains(r#"data-mj-claim="derived""#),
+        "the legend names the backlink's claim"
+    );
 }

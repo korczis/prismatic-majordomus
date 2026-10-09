@@ -4465,27 +4465,7 @@ pub fn activity(ctx: &Context) -> Page {
     let phase_rows: Vec<El> = counters
         .get("phases")
         .and_then(Value::as_object)
-        .map(|m| {
-            m.iter()
-                .map(|(k, v)| {
-                    // a phase the counters did not report a number for is unknown, not
-                    // zero: the absent count never renders as "0" or as "0.000 ms"
-                    let count = v.get("count").and_then(Value::as_u64);
-                    let nanos = v.get("total_nanos").and_then(Value::as_u64);
-                    let ms = |n: u64| format!("{:.3} ms", n as f64 / 1e6);
-                    row(vec![
-                        cell(mono(k)),
-                        text_cell(count.map_or_else(|| "unknown".to_string(), |c| c.to_string())),
-                        text_cell(nanos.map_or_else(|| "unknown".to_string(), ms)),
-                        text_cell(match (count, nanos) {
-                            (Some(0), Some(_)) => "-".to_string(),
-                            (Some(c), Some(n)) => format!("{:.3} ms", n as f64 / 1e6 / c as f64),
-                            _ => "unknown".to_string(),
-                        }),
-                    ])
-                })
-                .collect()
-        })
+        .map(|m| m.iter().map(|(k, v)| phase_row(k, v)).collect())
         .unwrap_or_default();
 
     Page::new(
@@ -7218,6 +7198,25 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
     .script("flow.js")
 }
 
+/// One phase of the activity counters as a table row: its name, count, total and mean. A
+/// phase the counters did not report a number for is unknown, not zero: an absent count
+/// never renders as "0" or as "0.000 ms" (ADR 0089).
+fn phase_row(name: &str, v: &Value) -> El {
+    let count = v.get("count").and_then(Value::as_u64);
+    let nanos = v.get("total_nanos").and_then(Value::as_u64);
+    let unknown = || "unknown".to_string();
+    row(vec![
+        cell(mono(name)),
+        text_cell(count.map_or_else(unknown, |c| c.to_string())),
+        text_cell(nanos.map_or_else(unknown, |n| format!("{:.3} ms", n as f64 / 1e6))),
+        text_cell(match (count, nanos) {
+            (Some(0), Some(_)) => "-".to_string(),
+            (Some(c), Some(n)) => format!("{:.3} ms", n as f64 / 1e6 / c as f64),
+            _ => unknown(),
+        }),
+    ])
+}
+
 /// The entity's relations as an evidence figure (ADR 0122): what names it on the left,
 /// the entity in the middle, what it names on the right. A box stands for every relation
 /// of one name in one direction, so the drawing stays readable however many objects there
@@ -7381,6 +7380,166 @@ fn relations_figure(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn view(relations: Value, evidence: Value) -> crate::capability::builtin::entity::EntityView {
+        serde_json::from_value(json!({
+            "uri": "majordomus://adr/adr-0001", "id": "adr.adr-0001", "kind": "adr",
+            "identity": "adr-0001", "slug": "adr-0001", "route": "/cockpit/objects/adr/adr-0001",
+            "kind_route": "/cockpit/objects/adr", "title": "One",
+            "provenance": { "path": ".ai/repo/adrs/0001-one.md", "directory": ".ai/repo/adrs",
+                "source_class": "adr", "section": "adrs", "bytes": 1 },
+            "metadata": {}, "media_type": "text/markdown", "content": "",
+            "relations": relations, "surfaces": [], "evidence": evidence,
+        }))
+        .expect("an entity view")
+    }
+
+    fn edge(
+        direction: &str,
+        relation: &str,
+        kind: &str,
+        label: &str,
+        route: Option<&str>,
+    ) -> Value {
+        let mut e = json!({ "direction": direction, "edge": relation, "field": "related",
+            "kind": kind, "label": label, "external": route.is_none() });
+        if let Some(r) = route {
+            e["route"] = json!(r);
+            e["title"] = json!(format!("The {label}"));
+            e["uri"] = json!(format!("majordomus://{kind}/{label}"));
+        }
+        e
+    }
+
+    /// ADR 0122 on the entity page: one box per relation name and direction, labelled by
+    /// what it holds; a box of references outside the layer is external and has no page;
+    /// the subject's claim follows its own evidence.
+    #[test]
+    fn the_relations_figure_groups_by_relation_and_draws_the_outside_as_external() {
+        // one reference, outside the layer
+        let lone = relations_figure(&view(
+            json!([edge(
+                "outgoing",
+                "put_in_force",
+                "file",
+                "file:docs/note.md",
+                None
+            )]),
+            json!({ "state": "unclaimed", "meaning": "names nothing" }),
+        ))
+        .expect("a figure")
+        .render()
+        .render();
+        assert!(
+            lone.contains(r#"class="mj-flow-node mj-status--external" data-k="out-put_in_force""#),
+            "{lone}"
+        );
+        assert!(
+            lone.contains(r#"data-claim="external" data-from="self""#),
+            "{lone}"
+        );
+        assert!(lone.contains(
+            r#"class="mj-flow-node mj-status--declared mj-flow-node--focus" data-k="self""#
+        ));
+
+        // three of two kinds under one relation, two of one kind under another, and a
+        // subject whose named artefacts are all in the tree
+        let mixed = relations_figure(&view(
+            json!([
+                edge(
+                    "outgoing",
+                    "put_in_force",
+                    "file",
+                    "file:docs/note.md",
+                    None
+                ),
+                edge(
+                    "outgoing",
+                    "put_in_force",
+                    "rule",
+                    "project.alpha@1",
+                    Some("/cockpit/objects/rule/project-alpha-1")
+                ),
+                edge(
+                    "outgoing",
+                    "put_in_force",
+                    "rule",
+                    "project.beta@1",
+                    Some("/cockpit/objects/rule/project-beta-1")
+                ),
+                edge(
+                    "incoming",
+                    "supersedes",
+                    "adr",
+                    "adr-0002",
+                    Some("/cockpit/objects/adr/adr-0002")
+                ),
+                edge(
+                    "incoming",
+                    "supersedes",
+                    "adr",
+                    "adr-0003",
+                    Some("/cockpit/objects/adr/adr-0003")
+                ),
+            ]),
+            json!({ "state": "resolved", "meaning": "all present",
+                "artifacts": [{ "field": "tests", "path": "test/cases/1.sh", "present": true }] }),
+        ))
+        .expect("a figure")
+        .render()
+        .render();
+        assert!(mixed.contains(">3 objects</text>"), "{mixed}");
+        assert!(mixed.contains("file · rule ×2"), "{mixed}");
+        assert!(mixed.contains(">adr ×2</text>"), "{mixed}");
+        // a mixed box with one object of the layer is declared, not external
+        assert!(
+            mixed.contains(r#"class="mj-flow-node mj-status--declared" data-k="out-put_in_force""#),
+            "{mixed}"
+        );
+        assert!(
+            mixed.contains("test/cases/1.sh"),
+            "the subject's artefacts are its subtree"
+        );
+
+        // a dangling subject is missing; an object joined to nothing has no figure
+        let dangling = relations_figure(&view(
+            json!([edge(
+                "incoming",
+                "depends_on",
+                "rule",
+                "project.x@1",
+                Some("/cockpit/objects/rule/project-x-1")
+            )]),
+            json!({ "state": "dangling", "meaning": "absent",
+                "artifacts": [{ "field": "tests", "path": "test/cases/0.sh", "present": false }] }),
+        ))
+        .expect("a figure")
+        .render()
+        .render();
+        assert!(dangling.contains(
+            r#"class="mj-flow-node mj-status--missing mj-flow-node--focus" data-k="self""#
+        ));
+        assert!(relations_figure(&view(
+            json!([]),
+            json!({ "state": "unclaimed", "meaning": "-" })
+        ))
+        .is_none());
+    }
+
+    /// An absent phase count is unknown, never zero; a zero count has no mean.
+    #[test]
+    fn a_phase_without_a_number_reads_unknown_never_zero() {
+        let absent = phase_row("index", &json!({})).render();
+        assert_eq!(absent.matches("unknown").count(), 3, "{absent}");
+        assert!(!absent.contains(">0<"), "{absent}");
+        let idle = phase_row("index", &json!({ "count": 0, "total_nanos": 0 })).render();
+        assert!(idle.contains("<td>-</td>"), "{idle}");
+        let busy = phase_row("index", &json!({ "count": 2, "total_nanos": 4_000_000 })).render();
+        assert!(
+            busy.contains("4.000 ms") && busy.contains("2.000 ms"),
+            "{busy}"
+        );
+    }
 
     fn command(origin: &str, effect: &str) -> CommandSummary {
         serde_json::from_value(json!({
