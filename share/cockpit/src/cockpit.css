@@ -62,8 +62,11 @@
     @apply min-h-screen;
   }
 
+  /* Centred, not at the left edge: focused, it slides over the top bar, and at the left it
+     sat on the Sections trigger, so a tap meant for the sections followed the skip link
+     instead (found by the drawer's random walk: an entry followed, then Tab, then a tap). */
   .mj-skip {
-    @apply absolute left-2 top-2 z-50 -translate-y-16 rounded-md px-3 py-2 focus:translate-y-0;
+    @apply absolute left-1/2 top-2 z-50 -translate-x-1/2 -translate-y-16 whitespace-nowrap rounded-md px-3 py-2 focus:translate-y-0;
     background: var(--mj-raised);
     color: var(--mj-fg);
     border: 1px solid var(--mj-line);
@@ -135,6 +138,83 @@
     top: calc(var(--mj-topbar) + 0.25rem);
     max-height: calc(100vh - var(--mj-topbar) - 0.75rem);
   }
+
+  /* Below `lg` the sidebar does not sit beside the page, and until this rule it was not
+     anywhere: `hidden` with no way to show it, so a phone had no section navigation at all.
+     It is the same element there, placed as a drawer over the page. It opens when the
+     component marks it open, and also while it is the `:target` on a page where the
+     component never started (no script, or Alpine failed to load), which is how the trigger
+     works there. Once the component runs it marks the root `data-mj-nav` and owns the state
+     alone: browsers do not re-evaluate `:target` on history.replaceState, so a fallback left
+     active would keep a drawer the component had closed on screen. Every rule here is under `max-lg`, so the
+     sidebar at `lg` is exactly what it was. */
+  .mj-sidebar[data-open],
+  :root:not([data-mj-nav]) .mj-sidebar:target {
+    @apply max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:block max-lg:w-[min(20rem,85vw)] max-lg:px-3 max-lg:pt-0;
+    @apply max-lg:max-h-none max-lg:overscroll-contain;
+    background: var(--mj-raised);
+    border-right: 1px solid var(--mj-line);
+    /* the drawer reaches the screen's edges, so it keeps clear of a notch and a home bar */
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+  @media (min-width: 64rem) {
+    .mj-sidebar[data-open],
+    :root:not([data-mj-nav]) .mj-sidebar:target {
+      background: none;
+      border-right: 0;
+      padding-left: 0;
+    }
+  }
+  .mj-nav-drawer-head {
+    @apply sticky top-0 z-10 -mx-3 mb-3 flex items-center justify-between gap-2 px-3 py-2 lg:hidden;
+    background: var(--mj-raised);
+    border-bottom: 1px solid var(--mj-line);
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  .mj-nav-drawer-title {
+    @apply text-small font-semibold;
+    color: var(--mj-fg);
+  }
+  /* 44 by 44: a target a thumb finds (WCAG 2.5.8 asks 24; the drawer's controls are the
+     ones a phone uses most, so they take the larger size). */
+  .mj-nav-close {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-md text-xl leading-none no-underline;
+    color: var(--mj-muted);
+  }
+  .mj-nav-close:hover {
+    background: var(--mj-sunken);
+    color: var(--mj-fg);
+  }
+  /* Shown exactly while the drawer it follows is open, by the stylesheet rather than by a
+     second piece of state, so the two cannot disagree. */
+  .mj-nav-backdrop {
+    @apply fixed inset-0 z-40 hidden;
+    background: color-mix(in oklch, var(--mj-fg) 45%, transparent);
+  }
+  .mj-sidebar[data-open] + .mj-nav-backdrop {
+    @apply max-lg:block;
+  }
+  .mj-nav-open {
+    @apply -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 rounded-md px-2 text-small no-underline lg:hidden;
+    color: var(--mj-fg);
+  }
+  .mj-nav-open:hover {
+    background: var(--mj-sunken);
+  }
+  .mj-nav-open-icon {
+    @apply inline-flex h-5 w-5 shrink-0;
+  }
+  /* the label goes at the narrowest widths, where the brand needs the room; the control
+     keeps its accessible name from the text, which stays in the tree */
+  .mj-nav-open-label {
+    @apply max-sm:sr-only;
+  }
+  /* The page behind an open drawer does not scroll under the finger. The component sets
+     this on the root while the drawer is open, and removes it on every way it closes. */
+  html.mj-nav-locked {
+    @apply overflow-hidden;
+  }
   .mj-nav-section {
     @apply mb-5;
   }
@@ -152,8 +232,10 @@
     @apply mt-3 mb-0.5 px-2 text-meta font-medium uppercase tracking-caps first:mt-0;
     color: var(--mj-faint);
   }
+  /* In the drawer an entry is a thumb's target, so it is taller there; beside the page it
+     keeps the density a pointer reads comfortably. */
   .mj-nav-link {
-    @apply flex items-center justify-between gap-2 rounded-sm px-2 py-1 no-underline;
+    @apply flex items-center justify-between gap-2 rounded-sm px-2 py-1 no-underline max-lg:min-h-11 max-lg:py-2;
     color: var(--mj-muted);
   }
   .mj-nav-link:hover {
@@ -182,7 +264,7 @@
   /* A catalogue too long to sit open folds. The marker is the summary's own, turned to
      face the way the section will move. */
   .mj-nav-section--foldable > .mj-nav-summary {
-    @apply flex cursor-pointer list-none items-center justify-between gap-2 rounded-sm px-2 py-1;
+    @apply flex cursor-pointer list-none items-center justify-between gap-2 rounded-sm px-2 py-1 max-lg:min-h-11;
   }
   .mj-nav-section--foldable > .mj-nav-summary::-webkit-details-marker {
     display: none;

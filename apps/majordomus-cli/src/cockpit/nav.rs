@@ -316,6 +316,15 @@ impl Navigation {
     pub fn sections(&self) -> &[Section] {
         &self.sections
     }
+
+    /// A navigation with no sections: what a test of the shell renders around, when the
+    /// shell and not the catalogue is the subject.
+    #[cfg(test)]
+    pub(crate) fn empty() -> Self {
+        Navigation {
+            sections: Vec::new(),
+        }
+    }
 }
 
 /// What the layer holds, as `repository.info` answers it: the object count and the kinds

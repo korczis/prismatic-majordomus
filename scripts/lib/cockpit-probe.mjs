@@ -25,12 +25,14 @@
 // Playwright drives the Chrome that is already installed (`channel: 'chrome'`); nothing is
 // downloaded. The caller decides whether a missing browser is a skip.
 
+import { readFileSync } from 'node:fs';
+
 import { chromium } from 'playwright';
 
 import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
 
 const BASE = process.argv[2];
-const MODE = process.argv[3] || 'full'; // full | quick
+const MODE = process.argv[3] || 'full'; // full | quick | drawer
 // The widths come from the design declaration through `/api/v1/design`, read once the
 // server answers; nothing here holds a width. Until then the sweep has none.
 let WIDTHS = [];
@@ -545,7 +547,588 @@ async function framing(context) {
   await page.close();
 }
 
+/**
+ * The sidebar as a drawer, below the width where it sits beside the page. Until the drawer
+ * existed the sidebar was `hidden` there with no way to show it: a phone had no section
+ * navigation at all, and the overflow sweep passed, because a page with nothing on it does
+ * not overflow. So this asserts what a person does, on a touch screen, at every width the
+ * design declares below `lg` and in landscape: the trigger is there and large enough to
+ * tap, the drawer opens over the page as a modal dialog carrying the same catalogue as the
+ * sidebar, and every way out (the close control, the backdrop, Escape, an entry followed,
+ * the back button, widening the window) leaves no lock, no inert page and no layer behind.
+ */
+async function drawer(browser) {
+  const narrow = WIDTHS.filter((w) => w < 1024);
+  const sizes = [...narrow.map((w) => ({ width: w, height: 740 })), { width: 667, height: 375 }];
+  // what a page must look like whenever the drawer is closed, whatever closed it
+  const closedState = (page) =>
+    page.evaluate(() => {
+      const nav = document.getElementById('mj-nav');
+      const vw = document.documentElement.clientWidth;
+      const vh = window.innerHeight;
+      const top = document.elementFromPoint(vw / 2, vh / 2);
+      return {
+        open: nav.hasAttribute('data-open'),
+        role: nav.getAttribute('role'),
+        locked: document.documentElement.classList.contains('mj-nav-locked'),
+        inert: document.querySelectorAll('[inert]').length,
+        covered: !!(top && top.closest('.mj-nav-backdrop, #mj-nav')),
+        expanded: document.querySelector('.mj-nav-open').getAttribute('aria-expanded'),
+      };
+    });
+  const leftClosed = (s) =>
+    !s.open && !s.role && !s.locked && s.inert === 0 && !s.covered && s.expanded === 'false';
+  const describe = (s) => JSON.stringify(s);
+
+  const context = await browser.newContext({ hasTouch: true, isMobile: true });
+  try {
+    for (const size of sizes) {
+      const at = `@${size.width}x${size.height}`;
+      const page = await context.newPage();
+      watch(page, `drawer ${at}`);
+      await page.setViewportSize(size);
+      await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => !!window.Alpine);
+
+      // --- closed at first, and the trigger is there to be tapped
+      const trigger = (await page.locator('.mj-nav-open').count())
+        ? await page.locator('.mj-nav-open').boundingBox()
+        : null;
+      if (!trigger) {
+        fail('drawer', `${at}: no visible trigger; the sections are unreachable`);
+        await page.close();
+        continue;
+      }
+      if (trigger.width < 44 || trigger.height < 44) {
+        fail('drawer', `${at}: the trigger is ${trigger.width}x${trigger.height}, under 44x44`);
+      }
+      if (!leftClosed(await closedState(page))) {
+        fail('drawer', `${at}: not closed on arrival: ${describe(await closedState(page))}`);
+      }
+
+      // --- a tap opens it as a modal dialog over the page, with the sidebar's catalogue
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { state: 'visible', timeout: 3000 });
+      const opened = await page.evaluate(() => {
+        const nav = document.getElementById('mj-nav');
+        const box = nav.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth;
+        return {
+          role: nav.getAttribute('role'),
+          modal: nav.getAttribute('aria-modal'),
+          name: nav.getAttribute('aria-label'),
+          focus: document.activeElement && document.activeElement.className,
+          locked: document.documentElement.classList.contains('mj-nav-locked'),
+          // the effect, not the class: a class whose rule went missing locks nothing
+          lockedStyle: getComputedStyle(document.documentElement).overflow === 'hidden',
+          contained: getComputedStyle(nav).overscrollBehaviorY === 'contain',
+          mainInert: document.getElementById('main').inert,
+          topbarInert: document.querySelector('.mj-topbar').inert,
+          entries: nav.querySelectorAll('a.mj-nav-link').length,
+          fits: box.left >= 0 && box.right <= vw + 1 && box.top >= 0,
+          scrolls: nav.scrollHeight <= nav.clientHeight || getComputedStyle(nav).overflowY === 'auto',
+          small: [...nav.querySelectorAll('a.mj-nav-link, .mj-nav-close')]
+            .filter((a) => a.getClientRects().length)
+            .filter((a) => a.getBoundingClientRect().height < 44).length,
+          sw: document.documentElement.scrollWidth,
+          vw,
+        };
+      });
+      const problems = [];
+      if (opened.role !== 'dialog' || opened.modal !== 'true' || !opened.name) problems.push('not a named modal dialog');
+      if (!String(opened.focus).includes('mj-nav-close')) problems.push(`focus on "${opened.focus}", not the close control`);
+      if (!opened.locked || !opened.lockedStyle) problems.push('the page behind still scrolls');
+      if (!opened.contained) problems.push("scrolling past the drawer's end scrolls the page");
+      if (!opened.mainInert || !opened.topbarInert) problems.push('the page behind is still reachable');
+      if (!opened.entries) problems.push('it carries no entries');
+      if (!opened.fits) problems.push('it does not fit the viewport');
+      if (!opened.scrolls) problems.push('its content cannot scroll');
+      if (opened.small) problems.push(`${opened.small} control(s) under 44px tall`);
+      if (opened.sw > opened.vw + 1) problems.push(`the page overflows: ${opened.sw} > ${opened.vw}`);
+      if (problems.length) fail('drawer', `${at}: open, ${problems.join('; ')}`);
+
+      // --- Tab stays inside: backwards from the first control lands on the last
+      await page.keyboard.press('Shift+Tab');
+      const wrapped = await page.evaluate(() => !!document.activeElement.closest('#mj-nav'));
+      if (!wrapped) fail('drawer', `${at}: Shift+Tab left the open drawer`);
+
+      // --- Escape closes, and focus goes back to the trigger
+      await page.keyboard.press('Escape');
+      let s = await closedState(page);
+      const back = await page.evaluate(() => document.activeElement.classList.contains('mj-nav-open'));
+      if (!leftClosed(s) || !back) fail('drawer', `${at}: Escape left ${describe(s)}, focus back: ${back}`);
+
+      // --- the backdrop closes it, tapped beside the drawer
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      const box = await page.locator('#mj-nav').boundingBox();
+      await page.touchscreen.tap(Math.min(size.width - 8, box.x + box.width + 20), size.height / 2);
+      s = await closedState(page);
+      if (!leftClosed(s)) fail('drawer', `${at}: the backdrop left ${describe(s)}`);
+
+      // --- the close control closes it
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      await page.tap('.mj-nav-close');
+      s = await closedState(page);
+      if (!leftClosed(s)) fail('drawer', `${at}: the close control left ${describe(s)}`);
+
+      // --- Ctrl/Cmd+K over the open drawer: the palette must not open under a modal drawer
+      //     whose inert page would hold it, so the drawer closes first and the palette's
+      //     field has the focus before anything else is pressed
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      await page.keyboard.press('Control+k');
+      await page.waitForSelector('.mj-palette-panel', { state: 'visible', timeout: 4000 });
+      const palette = await page.evaluate(() => ({
+        drawer: document.getElementById('mj-nav').hasAttribute('data-open'),
+        focus: document.activeElement && document.activeElement.classList.contains('mj-palette-input'),
+        inert: !!document.querySelector('.mj-palette').closest('[inert]'),
+      }));
+      if (palette.drawer || !palette.focus || palette.inert) {
+        fail('drawer', `${at}: Ctrl+K over the open drawer left ${JSON.stringify(palette)}`);
+      }
+      await page.keyboard.press('Escape');
+
+      // --- tapped fast and often, it ends in one state and not a mixture of two
+      for (let i = 0; i < 5; i++) {
+        await page.locator('.mj-nav-open').dispatchEvent('click').catch(() => {});
+      }
+      const settled = await page.evaluate(() => {
+        const nav = document.getElementById('mj-nav');
+        const open = nav.hasAttribute('data-open');
+        const lock = document.documentElement.classList.contains('mj-nav-locked');
+        return { open, consistent: open === lock && open === (nav.getAttribute('role') === 'dialog'), backdrops: document.querySelectorAll('.mj-nav-backdrop').length };
+      });
+      if (!settled.consistent || settled.backdrops !== 1) fail('drawer', `${at}: repeated taps left ${JSON.stringify(settled)}`);
+      if (settled.open) await page.keyboard.press('Escape');
+
+      // --- an entry followed leaves the page with the drawer closed, and back restores a
+      //     page that is closed too, not the cached one with the drawer still over it
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      const from = page.url();
+      const entry = page.locator('#mj-nav a.mj-nav-link:not(.mj-nav-link--current)').first();
+      await entry.scrollIntoViewIfNeeded();
+      await Promise.all([page.waitForURL((u) => u.href !== from, { timeout: 10000 }), entry.tap()]);
+      await page.waitForLoadState('networkidle');
+      s = await closedState(page);
+      if (!leftClosed(s)) fail('drawer', `${at}: after following an entry, ${describe(s)}`);
+      await page.goBack({ waitUntil: 'networkidle' });
+      s = await closedState(page);
+      if (!leftClosed(s)) fail('drawer', `${at}: after going back, ${describe(s)}`);
+
+      // --- open, then forward and back (a phone's back gesture with the drawer open): the
+      //     page back restores, from the back-forward cache when the browser keeps one,
+      //     must not come back with the drawer over it
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      await page.goForward({ waitUntil: 'networkidle' });
+      await page.goBack({ waitUntil: 'networkidle' });
+      s = await closedState(page);
+      const cached = await page.evaluate(() => performance.getEntriesByType('navigation')[0]?.type);
+      if (!leftClosed(s)) fail('drawer', `${at}: forward then back with the drawer open (${cached}), ${describe(s)}`);
+      // A browser driven by Playwright reloads on back rather than restoring from the
+      // back-forward cache (measured: no page state survives, notRestoredReasons is null), so
+      // the restore a phone performs is delivered here as the event it fires: a `pageshow`
+      // whose `persisted` is true, over a page with the drawer open.
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+      s = await closedState(page);
+      if (!leftClosed(s)) fail('drawer', `${at}: a page restored from the back-forward cache kept the drawer, ${describe(s)}`);
+
+      // --- widened past `lg` while open, it becomes the sidebar again: beside the page,
+      //     not modal, and the page neither locked nor inert
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(100);
+      const wide = await page.evaluate(() => {
+        const nav = document.getElementById('mj-nav');
+        return {
+          open: nav.hasAttribute('data-open'),
+          role: nav.getAttribute('role'),
+          locked: document.documentElement.classList.contains('mj-nav-locked'),
+          inert: document.querySelectorAll('[inert]').length,
+          position: getComputedStyle(nav).position,
+          visible: nav.getClientRects().length > 0,
+          trigger: document.querySelector('.mj-nav-open').getClientRects().length > 0,
+        };
+      });
+      if (wide.open || wide.role || wide.locked || wide.inert || wide.position !== 'sticky' || !wide.visible || wide.trigger) {
+        fail('drawer', `${at}: widened to 1280 while open, ${JSON.stringify(wide)}`);
+      }
+
+      // --- a link to the sections at desktop width is the sidebar, never a modal one
+      await page.goto(BASE + '/cockpit#mj-nav', { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => !!window.Alpine);
+      const deep = await page.evaluate(() => ({
+        role: document.getElementById('mj-nav').getAttribute('role'),
+        locked: document.documentElement.classList.contains('mj-nav-locked'),
+        inert: document.querySelectorAll('[inert]').length,
+      }));
+      if (deep.role || deep.locked || deep.inert) fail('drawer', `${at}: /cockpit#mj-nav at 1280 made the sidebar modal, ${JSON.stringify(deep)}`);
+      await page.setViewportSize(size);
+
+      // --- a link to the sections at a phone's width opens the drawer as the component's,
+      //     not as a :target the component does not know about, and Escape closes it
+      await page.goto(BASE + '/cockpit#mj-nav', { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => !!window.Alpine);
+      const linked = await page.evaluate(() => ({
+        open: document.getElementById('mj-nav').hasAttribute('data-open'),
+        role: document.getElementById('mj-nav').getAttribute('role'),
+        hash: location.hash,
+      }));
+      await page.keyboard.press('Escape');
+      const linkedClosed = !(await page.locator('#mj-nav').isVisible());
+      if (!linked.open || linked.role !== 'dialog' || linked.hash || !linkedClosed) {
+        fail('drawer', `${at}: /cockpit#mj-nav opened ${JSON.stringify(linked)}, Escape closed it: ${linkedClosed}`);
+      }
+
+      // --- the same link loaded fresh, in a page of its own: the goto above stays in one
+      //     document (a fragment change, so `hashchange`); this is a load with the fragment
+      //     already in the address, which only the takeover at start-up can answer
+      const fresh = await context.newPage();
+      await fresh.setViewportSize(size);
+      await fresh.goto(BASE + '/cockpit#mj-nav', { waitUntil: 'networkidle' });
+      await fresh.waitForFunction(() => !!window.Alpine);
+      const loaded = await fresh.evaluate(() => ({
+        open: document.getElementById('mj-nav').hasAttribute('data-open'),
+        role: document.getElementById('mj-nav').getAttribute('role'),
+        hash: location.hash,
+      }));
+      await fresh.keyboard.press('Escape');
+      const loadedClosed = !(await fresh.locator('#mj-nav').isVisible());
+      if (!loaded.open || loaded.role !== 'dialog' || loaded.hash || !loadedClosed) {
+        fail('drawer', `${at}: /cockpit#mj-nav loaded fresh opened ${JSON.stringify(loaded)}, Escape closed it: ${loadedClosed}`);
+      }
+      await fresh.close();
+
+      // --- an entry followed closes the drawer at once, not when the next page arrives:
+      //     a page that takes seconds must not leave the drawer over a page that is leaving.
+      //     Read in the same turn as the click, before the navigation can commit.
+      await page.tap('.mj-nav-open');
+      await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+      const leaving = await page.evaluate(() => {
+        const nav = document.getElementById('mj-nav');
+        nav.querySelector('a.mj-nav-link:not(.mj-nav-link--current)').click();
+        return nav.hasAttribute('data-open');
+      });
+      if (leaving) fail('drawer', `${at}: an entry followed left the drawer open while the next page loaded`);
+      await page.waitForLoadState('networkidle');
+
+      // --- the focused skip link does not sit on the trigger (the walk's seed 1017 found it)
+      await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => !!window.Alpine);
+      await page.keyboard.press('Tab');
+      const hit = await page.evaluate(() => {
+        const r = document.querySelector('.mj-nav-open').getBoundingClientRect();
+        const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return { skip: document.activeElement.classList.contains('mj-skip'), on: top && top.closest('.mj-nav-open') ? 'trigger' : top && top.className };
+      });
+      if (hit.skip && hit.on !== 'trigger') fail('drawer', `${at}: the focused skip link covers the trigger (a tap lands on "${hit.on}")`);
+      await page.close();
+    }
+    if (!findings.some((f) => f.includes(' drawer '))) {
+      ok(
+        'drawer',
+        `on touch at ${sizes.map((s) => `${s.width}x${s.height}`).join(', ')}: opens as a modal dialog with the sidebar's catalogue; the close control, the backdrop, Escape, an entry, back and widening each leave the page unlocked and reachable`,
+      );
+    }
+  } finally {
+    await context.close();
+  }
+
+  // --- a random walk against a model of the drawer, and the script failing to arrive
+  await drawerWalks(browser, narrow[0] || 320);
+  await drawerAccessibility(browser, narrow[0] || 320);
+  await drawerWithoutAlpine(browser, narrow[0] || 320);
+
+  // --- without the script the trigger still opens it: the stylesheet shows the `:target`
+  const nojs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: narrow[0] || 320, height: 740 } });
+  try {
+    const page = await nojs.newPage();
+    await page.goto(BASE + '/cockpit', { waitUntil: 'load' });
+    await page.click('.mj-nav-open');
+    const shown = await page.locator('#mj-nav').isVisible();
+    const entries = await page.locator('#mj-nav a.mj-nav-link').count();
+    await page.click('.mj-nav-close');
+    const hidden = !(await page.locator('#mj-nav').isVisible());
+    if (!shown || !entries || !hidden) {
+      fail('drawer', `without JavaScript: shown ${shown}, ${entries} entries, closed again ${hidden}`);
+    } else {
+      ok('drawer', `without JavaScript the trigger opens the sections through :target (${entries} entries) and the close link shuts them`);
+    }
+  } finally {
+    await nojs.close();
+  }
+}
+
+const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
+
+/**
+ * The accessibility engine over the drawer and the top bar, closed and open, at a phone's
+ * width: the subtree this change added and the one it changed. The page-wide audit is
+ * scripts/ui-audit's; this asks only about the controls a phone now navigates with.
+ * Evaluated through the debugger, as ui-audit does, so the Cockpit's policy stays on.
+ */
+async function drawerAccessibility(browser, width) {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width, height: 740 } });
+  try {
+    const page = await context.newPage();
+    await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !!window.Alpine);
+    await page.evaluate(readFileSync(AXE, 'utf8'));
+    const audit = (state) =>
+      page.evaluate(async (state) => {
+        // eslint-disable-next-line no-undef
+        const r = await axe.run(
+          { include: [['#mj-nav'], ['.mj-topbar']] },
+          { resultTypes: ['violations'], runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } },
+        );
+        return r.violations.map((v) => `${state}: ${v.id} (${v.impact}) on ${v.nodes.slice(0, 2).map((n) => n.target.join(' ')).join(', ')}`);
+      }, state);
+    const found = [...(await audit('closed'))];
+    await page.tap('.mj-nav-open');
+    await page.waitForSelector('#mj-nav[data-open]', { timeout: 3000 });
+    found.push(...(await audit('open')));
+    for (const v of found) fail('drawer', `@${width}px accessibility, ${v}`);
+    if (!found.length) ok('drawer', `@${width}px the accessibility engine (WCAG 2.0-2.2 A/AA) finds nothing on the drawer or the top bar, closed or open`);
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * Walks that found a defect, kept so the defect stays found: 1017 put the focused skip link
+ * over the trigger after an entry was followed and Tab pressed.
+ */
+const REGRESSION_SEEDS = [1017];
+
+/** A small seeded generator (mulberry32): the same seed walks the same path. */
+function seeded(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * The drawer driven by a seeded random walk and checked, after every step, against a model
+ * of what it should be. The scripted sequence above covers the transitions a person is
+ * expected to make; this covers the orders nobody wrote down: Escape on a closed drawer, a
+ * resize between two opens, Ctrl+K over an open drawer, back after a resize, Tab after a
+ * close. The invariants are the controller's own (share/cockpit/cockpit.js): one state,
+ * written into the page in one place, so every one of its marks must agree with the model
+ * and with each other at all times.
+ *
+ *   COCKPIT_PROBE_SEED=N     walk that one seed (what a failure prints, to replay it)
+ *   COCKPIT_PROBE_WALKS=N    how many seeds (default 4), COCKPIT_PROBE_STEPS=N per walk (40)
+ */
+async function drawerWalks(browser, width) {
+  const steps = Number(process.env.COCKPIT_PROBE_STEPS || 40);
+  const seeds = process.env.COCKPIT_PROBE_SEED
+    ? [Number(process.env.COCKPIT_PROBE_SEED)]
+    : [
+        // seeds that once found a defect walk every run, whatever the day
+        ...REGRESSION_SEEDS,
+        ...Array.from({ length: Number(process.env.COCKPIT_PROBE_WALKS || 4) }, (_, i) => 1009 * (i + 1) + new Date().getUTCDate()),
+      ];
+  const size = { width, height: 740 };
+  let walked = 0;
+  for (const seed of seeds) {
+    const rand = seeded(seed);
+    const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: size });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !!window.Alpine);
+    const model = { open: false, wide: false, navigated: 0 };
+    const trace = [];
+    let broken = null;
+    for (let step = 0; step < steps && !broken; step++) {
+      // only actions a person could take in the model's state
+      const actions = model.wide
+        ? ['narrow', 'escape', 'ctrl-k', 'tab']
+        : model.open
+          ? ['backdrop', 'close', 'escape', 'tab', 'shift-tab', 'wide', 'ctrl-k', 'entry', 'escape-twice']
+          : ['open', 'open', 'escape', 'tab', 'wide', 'ctrl-k', ...(model.navigated ? ['back'] : [])];
+      const action = actions[Math.floor(rand() * actions.length)];
+      trace.push(action);
+      try {
+      switch (action) {
+        case 'open':
+          await page.tap('.mj-nav-open', { timeout: 5000 });
+          model.open = true;
+          break;
+        case 'backdrop': {
+          const box = await page.locator('#mj-nav').boundingBox();
+          await page.touchscreen.tap(Math.min(size.width - 6, box.x + box.width + 12), size.height / 2);
+          model.open = false;
+          break;
+        }
+        case 'close':
+          await page.tap('.mj-nav-close', { timeout: 5000 });
+          model.open = false;
+          break;
+        case 'escape':
+          await page.keyboard.press('Escape');
+          model.open = false;
+          break;
+        case 'escape-twice':
+          await page.keyboard.press('Escape');
+          await page.keyboard.press('Escape');
+          model.open = false;
+          break;
+        case 'tab':
+          await page.keyboard.press('Tab');
+          break;
+        case 'shift-tab':
+          await page.keyboard.press('Shift+Tab');
+          break;
+        case 'wide':
+          await page.setViewportSize({ width: 1280, height: 800 });
+          model.wide = true;
+          model.open = false;
+          break;
+        case 'narrow':
+          await page.setViewportSize(size);
+          model.wide = false;
+          break;
+        case 'ctrl-k': {
+          await page.keyboard.press('Control+k');
+          await page.waitForSelector('.mj-palette-panel', { state: 'visible', timeout: 4000 });
+          const under = await page.evaluate(() => document.getElementById('mj-nav').hasAttribute('data-open'));
+          if (under) throw new Error('the palette opened under the open drawer');
+          await page.keyboard.press('Escape');
+          model.open = false;
+          break;
+        }
+        case 'entry': {
+          const from = page.url();
+          const entry = page.locator('#mj-nav a.mj-nav-link:not(.mj-nav-link--current)').nth(Math.floor(rand() * 5));
+          await entry.scrollIntoViewIfNeeded();
+          await Promise.all([page.waitForURL((u) => u.href !== from, { timeout: 15000 }), entry.tap()]);
+          await page.waitForLoadState('networkidle');
+          await page.waitForFunction(() => !!window.Alpine);
+          model.open = false;
+          model.navigated++;
+          break;
+        }
+        case 'back':
+          await page.goBack({ waitUntil: 'networkidle' });
+          model.navigated--;
+          model.open = false;
+          break;
+      }
+      } catch (e) {
+        // an action a person could take and the page did not let them: that is the finding
+        broken = `step ${step + 1} (${action}) could not be done: ${String(e.message || e).split('\n')[0].slice(0, 100)}`;
+        break;
+      }
+      await page.waitForTimeout(30);
+      const seen = await page.evaluate(() => {
+        const nav = document.getElementById('mj-nav');
+        const trigger = document.querySelector('.mj-nav-open');
+        const backdrops = document.querySelectorAll('.mj-nav-backdrop');
+        const vw = document.documentElement.clientWidth;
+        const top = document.elementFromPoint(vw - 4, window.innerHeight / 2);
+        const active = document.activeElement;
+        return {
+          open: nav.hasAttribute('data-open'),
+          locked: document.documentElement.classList.contains('mj-nav-locked'),
+          dialog: nav.getAttribute('role') === 'dialog' && nav.getAttribute('aria-modal') === 'true',
+          expanded: trigger.getAttribute('aria-expanded') === 'true',
+          inert: document.querySelectorAll('[inert]').length,
+          mainInert: document.getElementById('main').inert,
+          backdrops: backdrops.length,
+          backdropShown: backdrops[0] && getComputedStyle(backdrops[0]).display !== 'none',
+          edgeCovered: !!(top && top.closest('.mj-nav-backdrop')),
+          focusInside: !!(active && active.closest('#mj-nav')),
+          navShown: nav.getClientRects().length > 0,
+          sticky: getComputedStyle(nav).position === 'sticky',
+          triggerShown: trigger.getClientRects().length > 0,
+          overflow: document.documentElement.scrollWidth > vw + 1,
+          palette: !!document.querySelector('.mj-palette-panel') && document.querySelector('.mj-palette-panel').getClientRects().length > 0,
+        };
+      });
+      const broke = [];
+      if (seen.open !== model.open) broke.push(`open is ${seen.open}, the model says ${model.open}`);
+      if (new Set([seen.open, seen.locked, seen.dialog, seen.expanded, !!seen.backdropShown]).size !== 1) {
+        broke.push('open, lock, dialog role, aria-expanded and backdrop disagree');
+      }
+      if (!seen.open && seen.inert) broke.push(`${seen.inert} element(s) inert while closed`);
+      if (seen.open && !seen.mainInert) broke.push('main reachable while open');
+      if (seen.backdrops !== 1) broke.push(`${seen.backdrops} backdrops`);
+      if (!seen.open && seen.edgeCovered) broke.push('a layer covers the page while closed');
+      if (seen.open && !seen.focusInside) broke.push('focus outside the open drawer');
+      if (model.wide && (!seen.navShown || !seen.sticky || seen.triggerShown || seen.dialog)) broke.push('not a plain sidebar at desktop width');
+      if (!model.wide && !seen.triggerShown) broke.push('no trigger at phone width');
+      if (seen.overflow) broke.push('horizontal overflow');
+      if (seen.palette) broke.push('the palette stayed open');
+      if (errors.length) broke.push(`page error: ${errors[0].slice(0, 80)}`);
+      if (broke.length) broken = `step ${step + 1} (${action}): ${broke.join('; ')}`;
+      walked++;
+    }
+    if (broken) {
+      fail('drawer', `walk seed ${seed}: ${broken}; path ${trace.join(' > ')} — replay: COCKPIT_PROBE_SEED=${seed} scripts/cockpit-probe --drawer`);
+    }
+    await context.close();
+  }
+  if (!findings.some((f) => f.includes('walk seed'))) {
+    ok('drawer', `${seeds.length} seeded walk(s) (${seeds.join(', ')}), ${walked} step(s): the drawer agreed with its model and with itself after every one`);
+  }
+}
+
+/**
+ * The script arrives but Alpine does not (blocked, failed, a stale vendor directory): the
+ * component never binds, so the trigger's click is never prevented and it is the link it
+ * is. The sections must still open, through `:target`, rather than the page having a
+ * control that does nothing.
+ */
+async function drawerWithoutAlpine(browser, width) {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width, height: 740 } });
+  try {
+    await context.route('**/vendor/alpine.csp.min.js*', (route) => route.abort());
+    const page = await context.newPage();
+    await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
+    const alpine = await page.evaluate(() => !!window.Alpine);
+    await page.tap('.mj-nav-open');
+    const shown = await page.locator('#mj-nav').isVisible();
+    await page.tap('.mj-nav-close');
+    const hidden = !(await page.locator('#mj-nav').isVisible());
+    if (alpine) fail('drawer', 'Alpine started although its file was blocked; the chaos case proved nothing');
+    else if (!shown || !hidden) fail('drawer', `Alpine blocked: the trigger opened ${shown}, the close link closed ${hidden}`);
+    else ok('drawer', 'with Alpine blocked the trigger still opens the sections and the close link shuts them');
+  } finally {
+    await context.close();
+  }
+}
+
 const browser = await chromium.launch({ channel: 'chrome' });
+// the drawer alone: the fast answer to "can a phone reach the sections", for a change that
+// touches the shell and should not wait for the whole sweep
+if (MODE === 'drawer') {
+  try {
+    DESIGN = await api('/api/v1/design');
+    WIDTHS = DESIGN.viewports;
+    await drawer(browser);
+  } catch (e) {
+    fail('drawer', String(e.message || e).split('\n').filter((l) => l.trim()).slice(0, 3).join(' — ').slice(0, 260));
+  } finally {
+    await browser.close();
+  }
+  for (const line of notes) console.log(line);
+  for (const line of findings) console.log(line);
+  console.log(`cockpit-probe: the drawer check found ${findings.length}`);
+  process.exit(findings.length ? 10 : 0);
+}
 try {
   const derived = await routes();
   const total = derived.routes.length;
@@ -601,6 +1184,7 @@ try {
   // others, and a stack trace is not a finding
   for (const [name, check] of [
     ['interactions', () => interactions(context)],
+    ['drawer', () => drawer(browser)],
     ['runner', () => runner(context)],
     ['graph', () => graph(context)],
     ['graph-scale', async () => graphAtScale(context, await largestGraph())],

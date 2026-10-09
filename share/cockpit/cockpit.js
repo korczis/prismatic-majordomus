@@ -173,6 +173,70 @@ function storeTheme(value) {
   }
 }
 
+// The width at which the sidebar sits beside the page rather than over it: Tailwind's `lg`,
+// the breakpoint the stylesheet's `lg:block` and `max-lg:` rules are written against.
+const DESKTOP = window.matchMedia('(min-width: 64rem)');
+
+// What the open drawer made inert, so closing it gives back exactly that and never clears
+// an `inert` something else set.
+let madeInert = [];
+
+/**
+ * Put the sidebar into its drawer state or take it out. While open it is a modal dialog:
+ * named, the rest of the page inert (unreachable by pointer, keyboard and assistive
+ * technology alike), the page behind it not scrolling, the trigger saying it is expanded.
+ * Closed, every one of those is undone, which is what keeps a closed drawer from leaving
+ * an invisible layer or a locked page behind.
+ */
+function setDrawer(nav, trigger, open) {
+  // written here, synchronously, and not bound reactively: the page is in its final state
+  // when the tap's handler returns, so a second tap, a test or a screen reader never sees
+  // the drawer half open
+  nav.toggleAttribute('data-open', open);
+  document.documentElement.classList.toggle('mj-nav-locked', open);
+  if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    nav.setAttribute('role', 'dialog');
+    nav.setAttribute('aria-modal', 'true');
+    // every sibling on the way up to <body>, except the backdrop that closes the drawer
+    for (let node = nav; node && node !== document.body; node = node.parentElement) {
+      for (const sibling of node.parentElement.children) {
+        if (sibling === node || sibling.inert) continue;
+        if (sibling.classList.contains('mj-nav-backdrop')) continue;
+        if (sibling.tagName === 'SCRIPT') continue;
+        sibling.inert = true;
+        madeInert.push(sibling);
+      }
+    }
+  } else {
+    nav.removeAttribute('role');
+    nav.removeAttribute('aria-modal');
+    for (const node of madeInert) node.inert = false;
+    madeInert = [];
+  }
+}
+
+/**
+ * Keep Tab inside the open drawer: past the last control it returns to the first, and
+ * before the first to the last. The rest of the page is inert already; this only stops
+ * focus leaving for the browser's own chrome mid-list.
+ */
+function wrapFocus(event, container) {
+  if (!container) return;
+  const focusable = [...container.querySelectorAll('a[href], button, summary, [tabindex]')]
+    .filter((el) => !el.closest('[inert]') && el.getClientRects().length > 0);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 /**
  * The one Alpine component. Everything the markup names is a property or a method here,
  * because the CSP build evaluates nothing.
@@ -184,15 +248,73 @@ export function component() {
     // the palette's backdrop covering the page. The browser probe holds this shut.
     paletteOpen: false,
     paletteQuery: '',
+    // the sidebar as a drawer, below the width where it sits beside the page; this is the
+    // one place its state lives, and every way of closing it goes through closeNav
+    navOpen: false,
 
     init() {
       window.addEventListener('keydown', (event) => {
         const combo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
         if (combo) {
           event.preventDefault();
+          this.closeNav(false);
           this.openPalette();
+          return;
+        }
+        if (!this.navOpen) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          this.closeNav(true);
+        } else if (event.key === 'Tab') {
+          wrapFocus(event, this.$refs.nav);
         }
       });
+      // the sections reached by their fragment are opened by `:target` — through the trigger
+      // before the script ran, or later by a link, a typed address or history. The component
+      // takes each of them over, so there is one state and not two: a drawer the stylesheet
+      // shows and the component does not know is one Escape cannot close.
+      // the stylesheet's `:target` fallback is for a page this component never started on;
+      // once it runs, it owns the drawer, and `:target` (which browsers do not re-evaluate
+      // on history.replaceState) must not keep a closed drawer on screen
+      document.documentElement.setAttribute('data-mj-nav', 'owned');
+      const takeOver = () => {
+        if (!this.$refs.nav || location.hash !== '#' + this.$refs.nav.id) return;
+        history.replaceState(null, '', location.pathname + location.search);
+        this.openNav();
+      };
+      takeOver();
+      window.addEventListener('hashchange', takeOver);
+      // widening past the drawer's width puts the sidebar beside the page, where it is not
+      // modal; a drawer left open there would keep the page inert and locked
+      DESKTOP.addEventListener('change', (event) => {
+        if (event.matches) this.closeNav(false);
+      });
+      // following an entry leaves the page; the drawer closes first, so the page the back
+      // button restores from the cache is not one with the drawer still over it
+      if (this.$refs.nav) {
+        this.$refs.nav.addEventListener('click', (event) => {
+          if (event.target.closest('a.mj-nav-link')) this.closeNav(false);
+        });
+      }
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) this.closeNav(false);
+      });
+    },
+
+    openNav() {
+      if (this.navOpen || DESKTOP.matches || !this.$refs.nav) return;
+      this.navOpen = true;
+      setDrawer(this.$refs.nav, this.$refs.navOpen, true);
+      if (this.$refs.navClose) this.$refs.navClose.focus();
+    },
+
+    // `restoreFocus` is false when the page is leaving or the drawer stops being one: the
+    // trigger is then hidden or about to be gone, and focus belongs elsewhere
+    closeNav(restoreFocus) {
+      if (!this.navOpen) return;
+      this.navOpen = false;
+      setDrawer(this.$refs.nav, this.$refs.navOpen, false);
+      if (restoreFocus !== false && this.$refs.navOpen) this.$refs.navOpen.focus();
     },
 
     toggleTheme() {
