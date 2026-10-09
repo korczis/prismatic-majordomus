@@ -43,7 +43,8 @@ use serde::{Deserialize, Serialize};
 use crate::capability::builtin::continuity::{document, read_task};
 use crate::index::Index;
 use crate::intent::{
-    IntentEvidenceState, IntentFinding, IntentStage, IntentVerdictState, IntentView, Intents, WARN,
+    IntentEvidenceState, IntentFinding, IntentGuardStanding, IntentStage, IntentVerdictState,
+    IntentView, Intents, WARN,
 };
 use crate::intent_plan::{CoverageStrength, CriterionCoverage, IntentCoverage};
 use crate::ledger::Entry;
@@ -602,9 +603,11 @@ impl Ordered for IntentWorkRef {
 /// use majordomus_cli::intent_realization::IntentRealizationView;
 /// let v = IntentRealizationView {
 ///     intent: "x".into(), title: "X".into(), stage: IntentStage::Verifying,
+///     verdict: majordomus_cli::intent::IntentVerdictState::Unsatisfied,
 ///     criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],
 /// };
 /// assert!(v.met < v.criteria);
+/// assert_eq!(serde_json::to_value(&v).unwrap()["verdict"], "unsatisfied");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentRealizationView {
@@ -614,7 +617,10 @@ pub struct IntentRealizationView {
     pub title: String,
     /// Its derived stage.
     pub stage: IntentStage,
-    /// How many criteria it declares.
+    /// What the evidence alone says, as the intent's own verdict says it: a list can show
+    /// it beside the stage without asking a second capability.
+    pub verdict: IntentVerdictState,
+    /// How many criteria it requires.
     pub criteria: usize,
     /// How many have current evidence.
     pub met: usize,
@@ -687,10 +693,10 @@ fn state_words(state: IntentEvidenceState) -> &'static str {
 /// let satisfaction = vec![IntentCriterion {
 ///     id: "c".into(), criterion: "c".into(), evidence: "test".into(),
 ///     reference: "t".into(), state: IntentEvidenceState::Failing, met: false,
-///     proof: None, reproduce: None }];
+///     proof: None, reproduce: None, optional: false, evaluation: None }];
 /// let view = IntentView {
 ///     id: "x".into(), title: "X".into(), statement: String::new(), invariants: vec![],
-///     stage: IntentStage::Verifying, milestones: vec![], met: 0,
+///     stage: IntentStage::Verifying, milestones: vec![], met: 0, optional: 0, guards: vec![],
 ///     verdict: verdict(&satisfaction), satisfaction,
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
@@ -824,8 +830,15 @@ fn verdict_drift(view: &IntentView, out: &mut Vec<IntentFinding>) {
 ///
 /// ```
 /// use majordomus_cli::intent_realization::IntentRealization;
-/// let r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };
+/// let r = IntentRealization {
+///     intents: vec![], work: vec![], orphans: 0, issues_without_current_evidence: 0,
+///     unproven_issues: vec![], findings: vec![],
+/// };
 /// assert_eq!(r.orphans, 0);
+/// // the figure is absent from an answer written before it existed, and reads as none
+/// let old: IntentRealization = serde_json::from_str(
+///     r#"{"intents": [], "work": [], "orphans": 0, "findings": []}"#).unwrap();
+/// assert_eq!(old.issues_without_current_evidence, 0);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentRealization {
@@ -835,8 +848,50 @@ pub struct IntentRealization {
     pub work: Vec<IntentRealizedWork>,
     /// How many units of work realise no intent.
     pub orphans: usize,
+    /// How many issues declare what they serve while a required criterion they serve has
+    /// no current evidence: the distance between what the plan says is served and what the
+    /// evidence proves (ADR 0115). A figure to report and to drive down, refused by nothing.
+    #[serde(default)]
+    pub issues_without_current_evidence: usize,
+    /// Those issues, in id order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unproven_issues: Vec<String>,
     /// Every finding: each intent's drift, then the live work that serves no intent.
     pub findings: Vec<IntentFinding>,
+}
+
+/// The issues that declare what they serve and are not held up by it yet: a live issue is
+/// one of them when any required criterion it names has no current evidence. An entry that
+/// names no criterion this repository holds is another finding's to report, not this one's.
+///
+/// ```
+/// use majordomus_cli::intent::Intents;
+/// use majordomus_cli::intent_realization::unproven_issues;
+/// # let plan: majordomus_cli::plan::Plan = serde_json::from_value(serde_json::json!({
+/// #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+/// #                 "active_milestone": ""},
+/// #     "statuses": {"issue": [], "milestone": []},
+/// #     "milestones": [], "issues": [], "waves": [], "edges": [],
+/// #     "milestone_edges": [], "findings": []})).unwrap();
+/// let intents = Intents { intents: vec![], findings: vec![] };
+/// assert!(unproven_issues(&intents, &plan).is_empty(), "no issue serves anything");
+/// ```
+pub fn unproven_issues(intents: &Intents, plan: &Plan) -> Vec<String> {
+    let unmet = |entry: &String| {
+        entry.split_once('#').is_some_and(|(intent, criterion)| {
+            intents
+                .intents
+                .iter()
+                .filter(|view| view.id == intent)
+                .flat_map(|view| view.satisfaction.iter())
+                .any(|c| c.id == criterion && !c.optional && !c.met)
+        })
+    };
+    plan.issues
+        .iter()
+        .filter(|issue| issue.status != "CANCELLED" && issue.serves.iter().any(unmet))
+        .map(|issue| issue.id.clone())
+        .collect()
 }
 
 /// Join every unit of work to every intent. Pure: the records are already read.
@@ -915,7 +970,8 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
             intent: view.id.clone(),
             title: view.title.clone(),
             stage: view.stage,
-            criteria: view.satisfaction.len(),
+            verdict: view.verdict.state,
+            criteria: view.satisfaction.len() - view.optional,
             met: view.met,
             unmet,
             work: refs,
@@ -946,10 +1002,13 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
             );
         }
     }
+    let unproven = unproven_issues(intents, plan);
     IntentRealization {
         intents: views,
         work,
         orphans,
+        issues_without_current_evidence: unproven.len(),
+        unproven_issues: unproven,
         findings,
     }
 }
@@ -988,6 +1047,22 @@ fn strength_words(s: CoverageStrength) -> &'static str {
     }
 }
 
+/// The run an evaluation names, in words: its outcome, where and when it was recorded, the
+/// inputs that changed since, and the evidence module's own sentence.
+fn judged_words(e: &crate::intent::IntentEvaluation) -> String {
+    let mut s = format!(
+        "judged by the run recorded at {} ({} tree, {}, {})",
+        e.commit, e.working_tree, e.outcome, e.at
+    );
+    if !e.changed.is_empty() {
+        s.push_str(&format!("; changed since: {}", e.changed.join(", ")));
+    }
+    if let Some(detail) = &e.detail {
+        s.push_str(&format!("; {detail}"));
+    }
+    s
+}
+
 /// Explain one intent out of the derivations already made.
 ///
 /// ```
@@ -1003,7 +1078,7 @@ fn strength_words(s: CoverageStrength) -> &'static str {
 /// let view = IntentView {
 ///     id: "x".into(), title: "X".into(), statement: String::new(), invariants: vec![],
 ///     stage: IntentStage::Declared, milestones: vec![], met: 0, satisfaction: vec![],
-///     verdict: verdict(&[]),
+///     optional: 0, guards: vec![], verdict: verdict(&[]),
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
 /// let intents = Intents { intents: vec![view.clone()], findings: vec![] };
@@ -1026,7 +1101,8 @@ pub fn explain(
             None => format!("{} does not resolve", m.id),
         })
         .collect();
-    let total = view.satisfaction.len();
+    // met is counted over the required criteria, so the total it is of is theirs
+    let total = view.satisfaction.len() - view.optional;
     because.push(match view.stage {
         IntentStage::Declared if view.milestones.is_empty() => {
             "declared: it names no milestone, so no work realises it".to_string()
@@ -1080,10 +1156,42 @@ pub fn explain(
                 s.push_str(&format!(" ({})", ids.join(", ")));
             }
         }
+        if c.optional {
+            s.push_str("; optional, so it holds nothing back");
+        }
+        if let Some(e) = &c.evaluation {
+            s.push_str(&format!("; {}", judged_words(e)));
+        }
         if !c.met {
             if let Some(r) = &c.reproduce {
                 s.push_str(&format!("; reproduce: {r}"));
             }
+        }
+        because.push(s);
+    }
+    // the guards: what must stay true, judged — violated only by a failing run
+    for g in &view.guards {
+        let mut s = if g.standing == IntentGuardStanding::Violated {
+            format!(
+                "guard `{}` is violated: its {} `{}` is failing, so the intent is not satisfied whatever its criteria say",
+                g.id, g.evidence, g.reference
+            )
+        } else if g.standing == IntentGuardStanding::Holds {
+            format!(
+                "guard `{}` holds: its {} `{}` has current evidence",
+                g.id, g.evidence, g.reference
+            )
+        } else {
+            format!(
+                "guard `{}` is not judged: its {} `{}` has {}, and only a failing run violates a guard",
+                g.id,
+                g.evidence,
+                g.reference,
+                state_words(g.state)
+            )
+        };
+        if let Some(e) = &g.evaluation {
+            s.push_str(&format!("; {}", judged_words(e)));
         }
         because.push(s);
     }
@@ -1096,6 +1204,7 @@ pub fn explain(
             intent: view.id.clone(),
             title: view.title.clone(),
             stage: view.stage,
+            verdict: view.verdict.state,
             criteria: total,
             met: view.met,
             unmet: Vec::new(),
@@ -1486,6 +1595,8 @@ mod tests {
             met: state == IntentEvidenceState::Current,
             proof: None,
             reproduce: None,
+            optional: false,
+            evaluation: None,
         }
     }
 
@@ -1506,6 +1617,8 @@ mod tests {
                 .collect(),
             satisfaction: vec![],
             met: 0,
+            optional: 0,
+            guards: vec![],
             verdict: crate::intent::verdict(&[]),
             governance: vec![],
             non_goals: vec![],
@@ -1901,12 +2014,95 @@ mod tests {
         assert_eq!(x.providers, ["claude-code", "codex"]);
     }
 
+    /// ADR 0113: explain says of each criterion what judged it and whether it is optional,
+    /// and of each guard whether it is violated, holds or is not judged.
+    #[test]
+    fn explain_names_the_run_the_optional_criteria_and_every_guard() {
+        use crate::intent::{IntentEvaluation, IntentGuard};
+        let judged = IntentEvaluation {
+            commit: "c0ffee".into(),
+            working_tree: "clean".into(),
+            outcome: "pass".into(),
+            at: "2026-10-08T00:00:00Z".into(),
+            changed: vec!["lib/a.sh".into()],
+            detail: Some("an input changed since the run".into()),
+        };
+        let guard = |id: &str, state: IntentEvidenceState| IntentGuard {
+            id: id.into(),
+            invariant: format!("{id} stays true"),
+            evidence: "test".into(),
+            reference: format!("suite:{id}"),
+            state,
+            violated: state == IntentEvidenceState::Failing,
+            standing: crate::intent::IntentGuardStanding::of(state),
+            reproduce: None,
+            evaluation: (id == "broken").then(|| IntentEvaluation {
+                outcome: "fail".into(),
+                changed: vec![],
+                detail: None,
+                ..judged.clone()
+            }),
+        };
+        let mut v = view("x", IntentStage::Verifying, &[]);
+        v.satisfaction = vec![
+            IntentCriterion {
+                optional: true,
+                evaluation: Some(judged.clone()),
+                ..criterion("nice", IntentEvidenceState::Stale)
+            },
+            criterion("must", IntentEvidenceState::Current),
+        ];
+        v.optional = 1;
+        v.met = 1;
+        v.guards = vec![
+            guard("broken", IntentEvidenceState::Failing),
+            guard("fine", IntentEvidenceState::Current),
+            guard("idle", IntentEvidenceState::Stale),
+        ];
+        let r = IntentRealization {
+            intents: vec![],
+            work: vec![],
+            orphans: 0,
+            issues_without_current_evidence: 0,
+            unproven_issues: vec![],
+            findings: vec![],
+        };
+        let none = IntentCoverage {
+            criteria: vec![],
+            issues: vec![],
+            findings: vec![],
+        };
+        let e = explain(&v, &none, &r);
+        let said = |needle: &str| {
+            assert!(
+                e.because.iter().any(|l| l.contains(needle)),
+                "{needle:?} missing from {:#?}",
+                e.because
+            )
+        };
+        said("`nice` is not met");
+        said("optional, so it holds nothing back");
+        said("judged by the run recorded at c0ffee (clean tree, pass, 2026-10-08T00:00:00Z); changed since: lib/a.sh; an input changed since the run");
+        said("guard `broken` is violated: its test `suite:broken` is failing");
+        said("judged by the run recorded at c0ffee (clean tree, fail, 2026-10-08T00:00:00Z)");
+        said("guard `fine` holds: its test `suite:fine` has current evidence");
+        said("guard `idle` is not judged");
+        // met is counted over what is required
+        assert!(
+            e.because.iter().any(|l| l.contains("1 of 1")),
+            "{:#?}",
+            e.because
+        );
+    }
+
     #[test]
     fn explain_gives_one_sentence_per_fact_for_every_stage() {
         let r = IntentRealization {
             intents: vec![],
             work: vec![],
             orphans: 0,
+            issues_without_current_evidence: 0,
+            unproven_issues: vec![],
             findings: vec![],
         };
         let none = IntentCoverage {
@@ -2273,5 +2469,44 @@ mod tests {
         assert_eq!(unit("p2/work").outcome, "departed");
         assert!(unit("p2/work").branches.is_empty());
         assert!(unit("p3/work").branches.is_empty());
+    }
+
+    /// The repository figure of ADR 0115: an issue that declares what it serves counts
+    /// while a required criterion it serves has no current evidence, and stops counting
+    /// when the criterion is optional, the issue is cancelled, or it serves nothing.
+    #[test]
+    fn an_issue_serving_a_criterion_without_current_evidence_is_counted() {
+        let repo = crate::intent_binding::tests::planned();
+        let ctx = repo.context().unwrap();
+        let answer = |ctx: &crate::capability::handler::Context| -> IntentRealization {
+            serde_json::from_value(
+                ctx.execute("intent_realization.work", serde_json::json!({}))
+                    .unwrap(),
+            )
+            .unwrap()
+        };
+        // I0001 serves x#case, which nothing ran; I0002 is maintenance and serves nothing
+        let r = answer(&ctx);
+        assert_eq!(r.issues_without_current_evidence, 1);
+        assert_eq!(r.unproven_issues, ["I0001"]);
+
+        // the same criterion made optional holds nothing, so nothing is counted
+        let intent = repo.root().join(".ai/repo/project/intents/x.yaml");
+        let record = std::fs::read_to_string(&intent).unwrap();
+        std::fs::write(&intent, format!("{record}    optional: true\n  - id: other\n    criterion: Another\n    evidence: test\n    ref: test/cases/01_x.sh\n")).unwrap();
+        let r = answer(&repo.context().unwrap());
+        assert_eq!(
+            r.issues_without_current_evidence, 0,
+            "{:?}",
+            r.unproven_issues
+        );
+        assert!(r.unproven_issues.is_empty());
+        // and an entry naming a criterion nobody declares is not this figure's to count
+        let none = Intents {
+            intents: vec![],
+            findings: vec![],
+        };
+        let index = repo.index().unwrap();
+        assert!(unproven_issues(&none, &Plan::build(&index)).is_empty());
     }
 }

@@ -902,7 +902,7 @@ claims:
     test: test/cases/386_a_plan_is_held_to_its_intent.sh
     status: guaranteed
     responsibility: plan
-    note: The refusal is `majordomus intent validate` and the intent-check gate, after the start. `plan start` itself succeeds; refusing the start is intent-refused-at-plan-start, which is planned. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together.
+    note: The refusal is `majordomus intent validate` and the intent-check gate, after the start. Whether the start itself is refused is the policy's choice, and that half is intent-refused-at-plan-start. A reviewer writes the findings; `majordomus-cli intent stamp` writes only the stamp of which plan was reviewed, and a critique stamped against another plan refuses the binding (ADR 0112). A worker observes and criticises, and the repository refuses what does not hold together.
 
   - id: intent-realization-held-to-evidence
     claim: The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion
@@ -923,13 +923,40 @@ claims:
     note: "`majordomus intent preflight --issue <id>` (or `--path`) follows the criteria the issue declares in `serves`, never its milestone alone, and judges each link by the coverage `intent validate` reports from. It answers `serves` (exit 0) when every link holds and each intent served has a critique with no blocking finding open, `maintenance` (exit 0) for an issue that serves nothing under a milestone no live intent names, and `refused` (exit 10) naming its cause: unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued or open_blocking_finding. The MCP tool answers the same. `majordomus start` and `plan start` ask the same join through `intents.binding` (intent-in-session-context, intent-refused-at-plan-start)."
 
   - id: intent-cockpit-pages
-    claim: The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>
+    claim: The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>
     source: docs/COCKPIT.md
     implementation: apps/majordomus-cli/src/cockpit/intents.rs
-    test: apps/majordomus-cli/tests/intent_realization.rs
+    test: apps/majordomus-cli/tests/cockpit_intents.rs
     status: guaranteed
     responsibility: plan
-    note: Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.
+    note: Both pages render what `intent_realization` and `intent_opposition.review` answer and decide nothing themselves; the test compares the words on the served page with the command line's answer on one repository. Each criterion links the test object it names and the issue serving it, each reason of the verdict links its row, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.
+
+  - id: finish-reads-what-its-work-serves
+    claim: A finish asks the intent engine what stands for the work the task named — the required criteria its issue serves and the guards of the intents it serves — reports it in every mode, refuses `completed` on it only where the policy holds it, and writes nothing about any intent
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/gates/done.rs
+    test: test/cases/966_a_finish_reads_what_its_work_serves.sh
+    status: guaranteed
+    responsibility: finish
+    note: "Two questions of share/completion.yaml, `criteria-served` and `guards-hold`, are answered from `intents.binding` (ADR 0115). `intent.completion` says whether an owed answer is held: off, the questions are not asked; advisory, a verdict that would be owed is reported with the status it would have had (`withheld`) and refuses nothing; required, it is owed, and where verification.completed_means_complete is true it refuses `completed` while a partial finish stays available. A binding that could not be asked is unknown in every mode. A task that names nothing, an exemption and maintenance are exempt; a task naming only an intent is held to its guards. Nothing is asked in a repository with no CI model."
+
+  - id: intent-guard-is-judged
+    claim: An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent.rs
+    test: test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh
+    status: guaranteed
+    responsibility: plan
+    note: "`guards:` on an intent record lists invariants with an evidence kind and a reference. A guard whose evidence is failing is violated: the verdict is `unsatisfied` and names it in `verdict.guards`, and the stage is not `satisfied`, although every criterion is met and every milestone is DONE. A guard whose evidence is stale, was never run or does not resolve is not judged and violates nothing, so an unrelated commit never turns a satisfied intent unsatisfied. A plain-text invariant is still judged by nothing. A violated guard does not refuse work from starting (ADR 0113)."
+
+  - id: intent-evaluation-explained
+    claim: A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back
+    source: docs/PLANNING.md
+    implementation: apps/majordomus-cli/src/intent.rs
+    test: apps/majordomus-cli/tests/intent_satisfaction.rs
+    status: guaranteed
+    responsibility: plan
+    note: "`intent show`, `intent explain`, `GET /api/v1/intents/record` and `majordomus_intent_record` answer, for a criterion whose test or claim ran, the latest recorded run — commit, working tree, outcome, time — the inputs that changed since, and the evidence module's sentence. A criterion nothing ran for carries none. `optional: true` on a criterion keeps it out of the verdict, of `met` and of the satisfied stage, and makes it a warning rather than a refusal when no work covers it; an intent with no required criterion is refused (`intent_without_required_criterion`). `command` and `deployment` criteria are still not derivable (ADR 0113)."
 
   - id: intent-in-session-context
     claim: A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved

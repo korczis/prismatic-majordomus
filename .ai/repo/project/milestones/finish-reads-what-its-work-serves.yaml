@@ -1,0 +1,39 @@
+id: finish-reads-what-its-work-serves
+title: A finish reads what its work serves
+slug: finish-reads-what-its-work-serves
+order: 140
+priority: p1
+problem: "A task now starts bound to the issue and the intent it serves, and the intent engine says which criteria are met and which guards are violated. Finish asks neither. A worker can finish completed while the criterion the work exists for has no evidence."
+outcome: "The completion policy asks the intent engine what stands for the work a task named, refuses completed while a served criterion is unmet or a guard is violated where the policy says completed means complete, and decides nothing about any intent."
+current_state: "The completion policy and finish semantics are pull request 821; the binding, the opposition, the verdict with guards and evaluations are the intent stack. The two meet in no line of code."
+desired_state: "ADR 0115 records the decision and its measurement; a policy key says whether an owed answer refuses; two questions of the completion policy are answered from intents.binding; the documents and the claim say what finish asks."
+scope:
+  - apps/majordomus-cli/src/gates
+  - apps/majordomus-cli/src/capability/builtin/gates.rs
+  - apps/majordomus-cli/tests
+  - share/completion.yaml
+  - lib/gates.sh
+  - test/cases
+  - .ai/repo
+  - docs
+  - site
+non_scope:
+  - Any change to how a criterion, a guard or a verdict is derived
+  - Recording evidence at finish
+acceptance_criteria:
+  - "Where the policy requires it, finish with the outcome completed is refused while a served required criterion is unmet or a guard is violated"
+  - "A partial finish is always available and the refusal says so"
+  - "No intent record, stage or verdict is written by any finish"
+validation:
+  - bash test/run.sh 966_a_finish_reads_what_its_work_serves
+  - bash test/run.sh 895_a_finished_task_does_not_satisfy_an_intent
+evidence_required: []
+depends_on:
+  - intent-bound-work
+  - intent-satisfaction
+risks:
+  - "Evidence is current only for a recorded passing run at a commit in history. Measured: none of the 22 serving issues here has it for every served criterion, so the policy is advisory until recording a run is part of how work is finished."
+  - "Several issues can serve one criterion, and each is held to it until the last."
+  - "A criterion of a kind the ledger cannot derive reads unknown and keeps completed out of reach for the issues serving it."
+created_at: 2026-10-08
+updated_at: 2026-10-08

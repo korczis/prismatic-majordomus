@@ -1,0 +1,204 @@
+intent: finish-reads-what-its-work-serves
+reviewed_at: "47f018fd3e"
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records, the requirement, ADR 0107, 0111, 0113 and the rule, and none of the author's reasoning; same model and operator session as the author. Disposition given: accept with required changes, seven findings blocking. The plan was rewritten after it."
+reviewed_revision: 10ebbacaae51f4d88767013328e76d7bf6f4b6bd3a6be8e40402a9c3a4bd0c25
+reviewed_with: "majordomus-cli 0.18.0"
+findings:
+  - id: completed-unreachable-in-this-repository
+    class: unproven_assumption
+    subject: finish-reads-what-its-work-serves#completed-waits-for-served-criteria
+    finding: "With completed meaning complete and almost no recorded runs in the ledger, nearly every issue-bound task would be refused completed; the plan named the risk and had no lever."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2055
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Measured with the engine: none of 22 serving issues has every served criterion current. ADR 0115 decides a policy key, advisory or required, advisory here, as intent.binding is and for the same kind of reason."
+  - id: remediation-does-not-make-evidence-current
+    class: insufficient_work
+    subject: I2057
+    finding: "The refusal named the reproduce command, which only runs the test; current evidence needs a recorded run on the committed clean tree."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The remediation names the steps - commit, run on the clean tree, evidence record, commit the ledger - and case 966 reaches acceptance by exactly that path."
+  - id: decision-and-measurement-after-the-implementation
+    class: dependency_order
+    subject: I2055
+    finding: "The decision record and its measurement depended on the issue that ships the refusal."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2055
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "I2055 is the decision, the measurement and the policy key, and everything else depends on it."
+  - id: criteria-point-at-a-test-that-cannot-prove-them
+    class: delivery_verification
+    subject: finish-reads-what-its-work-serves#a-scoped-finish-stays-open
+    finding: "Two criteria about the behaviour of finish named a Rust test that cannot run the shell finish."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Finish behaviours are proved by case 966; the Rust test proves the parity of the answer across the executable run, HTTP and MCP, which is a criterion of its own."
+  - id: mapping-undefined-for-refused-and-empty-bindings
+    class: insufficient_work
+    subject: I2056
+    finding: "A refused binding that reached no intent, or a link coverage filtered out, would have read as exempt or pass."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2056
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A binding refused before it reaches an intent is unknown with its cause, never exempt or pass; one refused late still has its criteria read; each has an in-process test."
+  - id: intent-only-and-scope-only-tasks-unmodelled
+    class: missed_requirement
+    subject: finish-reads-what-its-work-serves
+    finding: "A task naming only an intent would be held to every open issue's criteria, and whether the task scope is sent as paths was unstated."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2056
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A task naming only an intent is held to that intent's guards and to no criterion; a task naming nothing is exempt without the engine being asked; scope is never sent as paths."
+  - id: records-fail-intent-check-until-tests-exist
+    class: dependency_order
+    subject: finish-reads-what-its-work-serves
+    finding: "The criteria name two test files that do not exist and no critique was recorded under a policy that requires one."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The plan records, both test files and this critique, stamped, land in one commit."
+  - id: stage-reads-blocked-for-work-in-progress
+    class: regression_risk
+    subject: I2057
+    finding: "Failing and stale are refusing statuses, so a task whose served test fails because the work is unfinished shows blocked in every check."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The questions are in the validation stage. Under the advisory policy they are exempt and block nothing; under required a failing served criterion blocks, which is what required means."
+  - id: aggregation-and-edge-statuses-unspecified
+    class: insufficient_work
+    subject: I2056
+    finding: "No precedence was given for mixed states and no status for the empty cases; unresolved was mapped to an owed run."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2056
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Precedence is fail, stale, queued, unknown; unresolved fails; only optional criteria served is exempt; no guard declared is exempt; guards declared and none violated pass."
+  - id: prompt-tests-dropped-silently
+    class: missed_requirement
+    subject: finish-reads-what-its-work-serves#completed-waits-for-served-criteria
+    finding: "A subset-of-criteria issue, stale evidence end to end and the final criterion were in no acceptance item."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Case 966 has a criterion the issue does not serve that holds nothing back, and reaches acceptance by recording the run; the milestone is named among the non-goals as the plan's to derive."
+  - id: shared-and-not-derivable-left-undecided
+    class: insufficient_work
+    subject: I2055
+    finding: "Several issues serving one criterion and criteria the ledger cannot derive were risk sentences only."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2055
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "ADR 0115 decides both: every issue serving a shared criterion is held to it, and evidence the ledger cannot derive reads unknown."
+  - id: adr-0107-consequence-not-reconciled
+    class: unproven_assumption
+    subject: I2055
+    finding: "ADR 0107 ends by placing evidence-first acceptance with the plan, not with completion."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2055
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "ADR 0115 quotes the sentence and says how a question that withholds the word completed differs from accepting an issue."
+  - id: verdict-wording-and-stored-stage
+    class: unproven_assumption
+    subject: finish-reads-what-its-work-serves#finish-writes-nothing-about-an-intent
+    finding: "For an issue serving every required criterion a pass coincides with the verdict, and the invariant said no stage is stored while the task event stores the completion stage."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The invariant says no intent stage; the question and evidence texts never say satisfied, and a test asserts it."
+  - id: rule-version-unstated
+    class: insufficient_work
+    subject: I2061
+    finding: "Revise did not say a new version or in place."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2061
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Version 3, because the required behaviour changes."
+  - id: question-count-and-surfaces
+    class: surface_missing
+    subject: I2061
+    finding: "The policy has nineteen questions, not twenty, and the places the count and the sources are written were not listed."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2061
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The records say nineteen; I2061 lists the places and keeps the two sentences that stay true."
+  - id: wrong-case-name-and-narrow-scopes
+    class: delivery_verification
+    subject: finish-reads-what-its-work-serves
+    finding: "The milestone named a case that does not exist, and two issues served a criterion whose test only a third could touch."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2057
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The case name is corrected, serves follows scope, and the milestone declares what it depends on."
+  - id: binding-cost-on-every-check
+    class: unproven_assumption
+    subject: I2056
+    finding: "The completion answer is uncached and would now derive the intents and the evidence on every check."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2056
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "An acceptance item measures check before and after; a task that names nothing does not ask the engine at all."
+  - id: no-ci-model-means-never-asked
+    class: unproven_assumption
+    subject: finish-reads-what-its-work-serves
+    finding: "A repository with intents and no CI model is asked nothing at finish."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2055
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "ADR 0115 and the claim page say so; case 966 declares a model."

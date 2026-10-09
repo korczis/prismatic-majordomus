@@ -1,0 +1,35 @@
+id: I2055
+milestone: finish-reads-what-its-work-serves
+title: The decision is recorded with its measurement, and a policy says whether it refuses
+slug: the-finish-decision-and-its-policy
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - finish-reads-what-its-work-serves#advisory-reports-and-refuses-nothing
+objective: "Write ADR 0115 as proposed before any question exists. It records the measurement - of this repository's 22 issues that declare what they serve, none has current evidence for every required criterion it serves, 15 of them because no run was ever recorded - and decides: the questions always answer; a policy key intent.completion - off, advisory or required, absent meaning off - says whether the questions are asked and whether an owed answer holds completed back; this repository is advisory, as intent.binding is and for the same kind of reason, and the skeleton is off. Under advisory a verdict that was reached is reported with the status it would have had and is not held. It reconciles the last consequence of ADR 0107, decides that every issue serving a shared criterion is held to it, that evidence the ledger cannot derive reads unknown, that a failing guard holds every task under its intent, and says what a repository without a CI model gets."
+why: "ADR 0111 and ADR 0113 each end by saying that what a finish may claim when the criteria it served are unmet is the next decision, and the measurement shows that the plain reading of the requirement would put completed out of reach for every issue-bound task here."
+current_state: "No ADR decides it. Measured on 2026-10-08 with intent binding over every issue that declares serves: 22 issues, none with every served required criterion current; states seen: not_run for 15, stale, unresolved and not_derivable for the rest. verification.completed_means_complete is true in this repository."
+desired_state: "ADR 0115 exists as proposed with the measurement and the alternatives rejected; the policy key is in the skeleton, the schema and the allow-list, read by the executable, with this repository set to advisory."
+scope:
+  - .ai/repo/adrs
+  - .ai/repo/policy.yaml
+  - share/skeleton/policy.yaml
+  - share/schemas/majordomus/policy
+  - share/allow
+  - apps/majordomus-cli/src/policy.rs
+  - docs
+  - site
+  - test/cases/966_a_finish_reads_what_its_work_serves.sh
+depends_on: []
+acceptance_criteria:
+  - ADR 0115 is proposed, states the measurement and how it was taken, and quotes and reconciles the sentence of ADR 0107 about evidence-first acceptance
+  - The policy key parses as off, advisory or required, absent meaning off, and anything else is refused
+  - The repository's own policy says advisory, with the measurement as the reason
+validation:
+  - cd apps/majordomus-cli && cargo test --lib policy::
+  - bash test/run.sh 966_a_finish_reads_what_its_work_serves
+evidence_required:
+  - the_decision_and_its_policy_exist
+created_at: 2026-10-08
+updated_at: 2026-10-08

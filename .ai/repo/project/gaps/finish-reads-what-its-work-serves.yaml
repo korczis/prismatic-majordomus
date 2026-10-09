@@ -1,0 +1,71 @@
+intent: finish-reads-what-its-work-serves
+observed_at: 47f018fd3e
+recorded_by: claude-code (session fcbeae95; first-hand read of gates/policy.rs, gates/done.rs and capability/builtin/gates.rs on pull request 821, and a read-only survey of both branches by a subagent)
+recorded_at: 2026-10-08
+observations:
+  - id: no-source-about-an-intent
+    statement: The completion policy's sources are nine kinds, none of which reads what a task serves
+    source: file:apps/majordomus-cli/src/gates/policy.rs
+  - id: no-question-about-an-intent
+    statement: share/completion.yaml declares nineteen questions and none asks about a criterion or a guard
+    source: file:share/completion.yaml
+  - id: finish-calls-no-binding
+    statement: The binding is asked by start, the briefing, the handover and plan start, and by nothing on the finish path
+    source: file:lib/intent_binding.sh
+  - id: refusal-exists
+    statement: With verification.completed_means_complete true, finish refuses completed while any question is neither pass nor exempt, and prints each with its remediation
+    source: file:lib/gates.sh
+  - id: finish-writes-no-intent
+    statement: A finish writes the task record, the note and the local ledger, and case 895 holds every intent record unchanged across it
+    source: test:test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh
+  - id: decision-left-open
+    statement: ADR 0111 and ADR 0113 each say that what a finish may claim when the criteria it served are unmet is a later decision
+    source: file:.ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md
+  - id: measured-nothing-current
+    statement: Asked of intent binding on 2026-10-08, none of the 22 issues that declare what they serve has current evidence for every required criterion it serves; 15 read not run
+    source: file:.ai/repo/evidence/ledger.json
+conditions:
+  - criterion: completed-waits-for-served-criteria
+    state: missing
+    because: the refusal exists and no question reads a served criterion
+    observations: [no-source-about-an-intent, no-question-about-an-intent, refusal-exists]
+  - criterion: a-violated-guard-refuses-completed
+    state: missing
+    because: no question reads a guard
+    observations: [no-question-about-an-intent, finish-calls-no-binding]
+  - criterion: a-scoped-finish-stays-open
+    state: missing
+    because: a weaker outcome is not refused today, and nothing distinguishes an optional criterion, an exemption or an unnamed task at finish because nothing is asked
+    observations: [refusal-exists, finish-calls-no-binding]
+  - criterion: advisory-reports-and-refuses-nothing
+    state: missing
+    because: no policy says whether an owed answer about an intent refuses, and the measurement shows a plain refusal would hold every issue-bound task back
+    observations: [measured-nothing-current, decision-left-open]
+  - criterion: finish-writes-nothing-about-an-intent
+    state: satisfied
+    because: finish writes no intent today and case 895 holds it; it must still hold once finish reads one, which case 966 will show
+    observations: [finish-writes-no-intent]
+  - criterion: the-answer-is-the-engines
+    state: missing
+    because: nothing on the finish path asks the engine
+    observations: [finish-calls-no-binding, no-source-about-an-intent]
+risks:
+  - The completion gates are skipped entirely in a repository without a CI model
+  - A squash merge puts the commit a run was recorded at outside history, and its evidence then reads stale
+work:
+  - id: the-decision
+    title: The decision is recorded with its measurement, and a policy says whether it refuses
+    serves: [advisory-reports-and-refuses-nothing]
+    issue: I2055
+  - id: the-source
+    title: The completion policy can ask the intent engine
+    serves: [the-answer-is-the-engines]
+    issue: I2056
+  - id: the-questions
+    title: Two questions hold completed to what the work serves
+    serves: [completed-waits-for-served-criteria, a-violated-guard-refuses-completed, a-scoped-finish-stays-open, finish-writes-nothing-about-an-intent]
+    issue: I2057
+  - id: the-documents
+    title: The rule, the claim and the documents say what finish asks
+    serves: [finish-writes-nothing-about-an-intent]
+    issue: I2061

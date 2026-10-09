@@ -85,5 +85,6 @@ intent-in-session-context	planned	session does not load (the |an )?intents?
 intent-closes-github-milestones	guaranteed	GitHub milestones are reconciled against intents
 intent-closes-github-milestones	planned	closes a milestone without reading|GitHub milestones are not reconciled|milestones close without reading
 intent-command-deployment-evidence	planned	`command` or `deployment` criterion is never met
+finish-reads-what-its-work-serves	planned	finish does not ask the intent(;|\.|"|$| and)
 EOF
 [ "$fails" -eq 0 ] || { echo "    $fails sentence(s) contradict $C"; exit 1; }

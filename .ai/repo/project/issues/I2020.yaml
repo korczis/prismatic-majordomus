@@ -1,0 +1,35 @@
+id: I2020
+milestone: intent-satisfaction
+title: A judged criterion carries the evaluation that decided it
+slug: a-criterion-carries-its-evaluation
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-satisfaction#evaluation-is-explained
+objective: "Write ADR 0113 with the decisions of this milestone first. Then carry the evidence module's own judgement to the criterion as one optional evaluation object, skipped when nothing was judged: the latest recorded run's commit, working tree, outcome and time, the inputs that changed since it, and the judgement's detail — from the test's judgement for a test criterion and from the claim's proof for a claim. Considered means the latest run and no other. No rule name or policy version is invented: the proof word the criterion already carries names the judgement. Print it in intent show and intent explain, and regenerate the projections."
+why: "The engine knows which run it judged and which inputs changed and reports one word, so a reader told a criterion is stale re-derives why by hand."
+current_state: "TestStanding and ClaimStanding keep state and proof and drop the run, the changed inputs and the detail the evidence module already computed."
+desired_state: "A stale criterion names what changed, a failing one the failing run, and a criterion nothing ran for carries no evaluation; the same on every surface."
+scope:
+  - .ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests/intent_satisfaction.rs
+  - docs
+  - site
+depends_on: []
+acceptance_criteria:
+  - ADR 0113 states what violates a guard, why guards are a key of their own, what optional means for coverage, the gap and the counts, and that the stage reads the verdict
+  - Unit tests in intent.rs over the in-memory table cover a current, a stale, a failing and a never-run test criterion and a claim criterion, and repeated evaluation of one state is identical
+  - A stale criterion names the inputs that changed since the run it was judged by, and becomes current again when the test is run and recorded
+  - The command line, HTTP and MCP answer the same evaluation, and intent show and intent explain print it
+validation:
+  - cargo test --lib intent
+  - cargo test --test intent_satisfaction
+evidence_required:
+  - an_evaluation_names_the_run_and_the_inputs
+created_at: 2026-10-08
+updated_at: 2026-10-08

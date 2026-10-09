@@ -18,6 +18,9 @@
 #   release:impact       the structural version analysis (`release.analysis`, ADR 0051)
 #   task:issue           the task record's own `issue` field, resolved against the plan
 #   session:handover     a continuation record for this task under .ai/local/state/handovers/
+#   intent:<aspect>      what stands for the work the task named, as `intents.binding` answers
+#                        it (ADR 0115): `criteria`, the required criteria its issue serves, or
+#                        `guards`, the guards of the intents it serves; read, never judged here
 #   elsewhere:<command>  nothing reachable from the completion report; the command that answers
 #
 # A question whose source has not spoken is `queued` or `unknown`, never `pass`; one the
@@ -81,6 +84,16 @@ questions:
     question: Does the change touch a test of its own?
     source: change:test-path
     remediation: add a case under test/cases/ or a test beside the code
+  - id: criteria-served
+    stage: validation
+    question: Does every required criterion this task's issue serves have current evidence?
+    source: intent:criteria
+    remediation: commit the work; run the criterion's test on the clean tree; stamp the tree the run left (majordomus evidence stamp --producer suite); record the run with that stamp (majordomus evidence record --suite <report> --provenance suite=<stamp>); commit the ledger - or finish with --outcome partial
+  - id: guards-hold
+    stage: validation
+    question: Is a guard of an intent this task serves violated?
+    source: intent:guards
+    remediation: repair what the guard's failing test names; then, on the committed clean tree, run it, stamp the tree (majordomus evidence stamp --producer suite) and record the passing run with that stamp (majordomus evidence record --suite <report> --provenance suite=<stamp>) - or finish with --outcome partial
   - id: documented
     stage: documentation
     question: Were the documents a reader needs updated?

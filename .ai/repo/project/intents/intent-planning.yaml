@@ -5,7 +5,12 @@ invariants:
   - The plan engines stay identical; `serves` is data the plan carries, and only the intent engine judges it
   - No coverage, gap or critique status is stored; every finding is derived on read
   - Work under a milestone no intent names stays valid maintenance work and is never assigned an invented intent
-  - Majordomus judges the records; it does not generate a plan or a critique itself
+  - Majordomus judges the records and derives the structural half of a review from them; it authors no semantic finding and derives no plan (ADR 0112)
+guards:
+  - id: engines-stay-identical
+    invariant: The awk plan engine and the Rust plan engine report the same findings over the same plan
+    evidence: test
+    ref: test/cases/99_plan_capabilities.sh
 milestones:
   - intent-planning
 satisfaction:
@@ -28,9 +33,11 @@ satisfaction:
 governance:
   - adr:adr-0073
   - adr:adr-0070
+  - adr:adr-0112
+  - adr:adr-0113
   - rule:project.work-serves-a-declared-intent
 non_goals:
-  - Generating issues or a critique from an intent automatically
+  - Generating issues, or the findings a reviewer makes, from an intent automatically
   - Judging whether a criterion is met; that is the evidence's question (ADR 0070)
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-07

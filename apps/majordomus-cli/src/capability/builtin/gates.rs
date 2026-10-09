@@ -575,6 +575,165 @@ fn gates_model(ctx: &Context, _: Empty) -> Result<GateModelReport, CapabilityErr
     })
 }
 
+/// The run the engine judged a criterion or a guard by, as a clause; nothing when no run was.
+fn judged(evaluation: Option<&crate::intent::IntentEvaluation>) -> String {
+    evaluation
+        .map(|e| {
+            format!(
+                ", judged by the run at {} ({} tree, {})",
+                e.commit, e.working_tree, e.outcome
+            )
+        })
+        .unwrap_or_default()
+}
+
+/// Where a guard stands, as the verb a sentence about it takes.
+fn stands(standing: crate::intent::IntentGuardStanding) -> &'static str {
+    match standing {
+        crate::intent::IntentGuardStanding::Violated => "is violated",
+        crate::intent::IntentGuardStanding::Holds => "holds",
+        crate::intent::IntentGuardStanding::NotJudged => "is not judged",
+    }
+}
+
+/// The command that runs the evidence, as a clause; nothing when there is none.
+fn reproduced(command: Option<&str>) -> String {
+    command
+        .map(|r| format!("; reproduce: {r}"))
+        .unwrap_or_default()
+}
+
+/// What stands for the work the active task named, asked of `intents.binding` through the
+/// executor every surface uses, so the completion answer cannot disagree with `intent
+/// binding` about what a task serves or where a criterion stands (ADR 0115). Nothing is
+/// judged here: the engine's state of each served criterion and guard comes back and is
+/// carried with the sentence a person is told.
+///
+/// The engine is not asked at all when the policy is off, and not for a task that names
+/// neither an issue nor an intent — the `issue` question says what such a task owes. The
+/// task's scope is never sent as paths: a finish is held to what the task said it serves,
+/// not to what its paths happen to touch. A binding that cannot be executed or read, or
+/// that is refused before it reaches an intent, is unknown.
+fn served_work(
+    ctx: &Context,
+    task: Option<&super::continuity::ActiveTask>,
+    findings: &mut Vec<String>,
+) -> gates::ServedWork {
+    use crate::intent_binding::{BindingStanding, IntentBinding};
+    use gates::{ServedItem, ServedWork};
+    let mode = crate::intent_binding::policy_of(&ctx.index).completion;
+    if !mode.asks() {
+        return ServedWork::NotAsked(
+            "intent.completion is off: the policy does not ask what the task's work serves".into(),
+        );
+    }
+    let Some(task) = task else {
+        return ServedWork::Unknown("no active task in this checkout".into());
+    };
+    if task.issue.is_empty() && task.intent.is_empty() {
+        return ServedWork::NotAsked(if task.exemption.is_empty() {
+            "the task names no issue and no intent, so it is held to no criterion and no \
+             guard; the issue question says what it owes"
+                .into()
+        } else {
+            format!(
+                "the task is exempt as {}: {}",
+                task.exemption, task.exemption_because
+            )
+        });
+    }
+    let mut input = serde_json::Map::new();
+    if !task.issue.is_empty() {
+        input.insert("issue".into(), task.issue.clone().into());
+    }
+    if !task.intent.is_empty() {
+        input.insert("intent".into(), task.intent.clone().into());
+    }
+    let unknown = |findings: &mut Vec<String>, why: String| {
+        findings.push(format!(
+            "{why}, so what the task's work serves is unknown rather than passing"
+        ));
+        ServedWork::Unknown(why)
+    };
+    let binding = match ctx
+        .execute("intents.binding", serde_json::Value::Object(input))
+        .map_err(|e| format!("intents.binding could not be executed: {e}"))
+        .and_then(|value| {
+            serde_json::from_value::<IntentBinding>(value).map_err(|e| {
+                format!("intents.binding answered something this report cannot read: {e}")
+            })
+        }) {
+        Ok(binding) => binding,
+        Err(why) => return unknown(findings, why),
+    };
+    if matches!(
+        binding.standing,
+        BindingStanding::Exempt | BindingStanding::Maintenance
+    ) {
+        return ServedWork::NotAsked(format!(
+            "the work the task names stands as {}: no intent holds it to a criterion",
+            binding.standing.as_str()
+        ));
+    }
+    if binding.intents.is_empty() {
+        let cause = binding
+            .refusals
+            .first()
+            .map_or("it reached no intent", |r| r.message.as_str());
+        return unknown(findings, format!("the binding was refused: {cause}"));
+    }
+    let criteria = (!task.issue.is_empty()).then(|| {
+        binding
+            .intents
+            .iter()
+            .flat_map(|i| {
+                i.criteria
+                    .iter()
+                    .filter(|c| !c.optional)
+                    .map(|c| ServedItem {
+                        subject: format!("{}#{}", i.id, c.id),
+                        state: c.state,
+                        said: format!(
+                            "{}#{} ({} {}) is {}{}{}",
+                            i.id,
+                            c.id,
+                            c.evidence,
+                            c.reference,
+                            c.state.as_str(),
+                            judged(c.evaluation.as_ref()),
+                            reproduced(c.reproduce.as_deref())
+                        ),
+                    })
+            })
+            .collect()
+    });
+    let guards = binding
+        .intents
+        .iter()
+        .flat_map(|i| {
+            i.guards.iter().map(|g| ServedItem {
+                subject: format!("{}!{}", i.id, g.id),
+                state: g.state,
+                said: format!(
+                    "guard {}!{} ({} {}) {}{}{}",
+                    i.id,
+                    g.id,
+                    g.evidence,
+                    g.reference,
+                    stands(g.standing),
+                    judged(g.evaluation.as_ref()),
+                    reproduced(g.reproduce.as_deref())
+                ),
+            })
+        })
+        .collect();
+    ServedWork::Bound {
+        criteria,
+        guards,
+        advisory: !mode.holds(),
+    }
+}
+
 fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let mut findings: Vec<String> = Vec::new();
@@ -730,6 +889,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
     let (release, version) = release_standing(ctx);
     let issue = issue_standing(ctx, task.as_ref());
     let handover = handover_standing(&root, task.as_ref());
+    let served = served_work(ctx, task.as_ref(), &mut findings);
     let head = gates::head_of(&root);
     let deployment = deployment_plan(ctx, Some(&m), &changed, head, false);
     let sources = gates::Sources {
@@ -742,6 +902,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         handover,
         deployment,
         convergence: convergence.as_ref(),
+        served,
     };
 
     Ok(gates::complete(
@@ -969,5 +1130,250 @@ mod tests {
             unreadable.findings
         );
         assert_eq!(stale(&unreadable), crate::gates::GateStatus::Unknown);
+    }
+
+    fn named(issue: &str, intent: &str, exemption: &str) -> super::super::continuity::ActiveTask {
+        super::super::continuity::ActiveTask {
+            id: "t-1".into(),
+            task: "work".into(),
+            profile: "implementation".into(),
+            outcome: "active".into(),
+            scope: vec!["lib".into()],
+            requires: vec![],
+            started_at: "2026-10-08T00:00:00Z".into(),
+            head: "0123456789ab".into(),
+            issue: issue.into(),
+            intent: intent.into(),
+            exemption: exemption.into(),
+            exemption_because: if exemption.is_empty() {
+                String::new()
+            } else {
+                "a typo".into()
+            },
+            binding: String::new(),
+            plan_revision: String::new(),
+            evidence_standing: String::new(),
+        }
+    }
+
+    /// The planned fixture — one intent `x` with criterion `case`, issue I0001 serving it,
+    /// issue I0002 under a milestone no intent names — with `intent.completion` set, and an
+    /// optional criterion and a guard added to the intent.
+    fn served_fixture(mode: &str) -> crate::synthetic::SyntheticRepository {
+        let repo = crate::intent_binding::tests::planned();
+        let root = repo.root().to_path_buf();
+        let mut policy = std::fs::read_to_string(root.join(".ai/repo/policy.yaml")).unwrap();
+        if !mode.is_empty() {
+            policy.push_str(&format!("  completion: {mode}\n"));
+        }
+        std::fs::write(root.join(".ai/repo/policy.yaml"), policy).unwrap();
+        std::fs::write(root.join("test/cases/02_g.sh"), "true\n").unwrap();
+        let intent = root.join(".ai/repo/project/intents/x.yaml");
+        let mut record = std::fs::read_to_string(&intent).unwrap();
+        record.push_str(
+            "  - id: nice\n    criterion: It would be nice\n    evidence: test\n    ref: test/cases/01_x.sh\n    optional: true\nguards:\n  - id: holds\n    invariant: It stays true\n    evidence: test\n    ref: test/cases/02_g.sh\n",
+        );
+        std::fs::write(intent, record).unwrap();
+        repo
+    }
+
+    /// What a task's work serves is `intents.binding`'s answer, carried in its words: the
+    /// required criteria of the issue it names, the guards of the intent, and nothing the
+    /// task did not name. Who is not asked and who could not be asked are never confused.
+    #[test]
+    fn what_a_task_serves_is_the_bindings_answer_and_only_for_what_it_named() {
+        use crate::gates::ServedWork;
+        use crate::intent::IntentEvidenceState as E;
+        let ask = |mode: &str, task: Option<super::super::continuity::ActiveTask>| {
+            let repo = served_fixture(mode);
+            let ctx = repo.context().unwrap();
+            let mut findings = Vec::new();
+            let work = served_work(&ctx, task.as_ref(), &mut findings);
+            (work, findings)
+        };
+
+        // the policy does not ask: nothing is asked of anyone, and the engine is not called
+        let (off, findings) = ask("", Some(named("I0001", "", "")));
+        assert!(
+            matches!(&off, ServedWork::NotAsked(said) if said.starts_with("intent.completion is off")),
+            "{off:?}"
+        );
+        assert!(findings.is_empty());
+
+        // no task is not an exemption
+        let (none, _) = ask("required", None);
+        assert_eq!(
+            none,
+            ServedWork::Unknown("no active task in this checkout".into())
+        );
+
+        // a task that names nothing, and one started under an exemption, say so themselves
+        let (nothing, _) = ask("required", Some(named("", "", "")));
+        assert!(
+            matches!(&nothing, ServedWork::NotAsked(said) if said.contains("names no issue and no intent")),
+            "{nothing:?}"
+        );
+        let (exempt, _) = ask("required", Some(named("", "", "maintenance")));
+        assert_eq!(
+            exempt,
+            ServedWork::NotAsked("the task is exempt as maintenance: a typo".into())
+        );
+
+        // an issue serving a criterion: that criterion, required only, and the intent's guard
+        for (mode, advisory) in [("required", false), ("advisory", true)] {
+            let (bound, findings) = ask(mode, Some(named("I0001", "", "")));
+            let ServedWork::Bound {
+                criteria: Some(criteria),
+                guards,
+                advisory: said,
+            } = bound
+            else {
+                panic!("{mode}: not bound: {findings:?}")
+            };
+            assert_eq!(said, advisory, "{mode}");
+            assert_eq!(
+                criteria.len(),
+                1,
+                "the optional criterion is not asked: {criteria:?}"
+            );
+            assert_eq!(criteria[0].subject, "x#case");
+            assert_eq!(criteria[0].state, E::NotRun);
+            assert!(
+                criteria[0]
+                    .said
+                    .starts_with("x#case (test test/cases/01_x.sh) is not_run; reproduce: "),
+                "{}",
+                criteria[0].said
+            );
+            assert_eq!(guards.len(), 1);
+            assert_eq!(guards[0].subject, "x!holds");
+            assert!(
+                guards[0]
+                    .said
+                    .starts_with("guard x!holds (test test/cases/02_g.sh) is not judged"),
+                "{}",
+                guards[0].said
+            );
+        }
+
+        // naming the intent and no issue: no criterion is the task's, the guards are asked
+        let (intent_only, _) = ask("required", Some(named("", "x", "")));
+        assert!(
+            matches!(&intent_only, ServedWork::Bound { criteria: None, guards, .. } if guards.len() == 1),
+            "{intent_only:?}"
+        );
+
+        // work under a milestone no intent names is maintenance: nothing holds it
+        let (maintenance, _) = ask("required", Some(named("I0002", "", "")));
+        assert!(
+            matches!(&maintenance, ServedWork::NotAsked(said) if said.contains("stands as maintenance")),
+            "{maintenance:?}"
+        );
+
+        // an issue the plan does not hold: refused before any intent is reached — unknown,
+        // with the engine's own reason, and a finding that says it is not a pass
+        let (refused, findings) = ask("required", Some(named("I9999", "", "")));
+        assert!(
+            matches!(&refused, ServedWork::Unknown(why) if why.starts_with("the binding was refused: ")),
+            "{refused:?}"
+        );
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.contains("unknown rather than passing")),
+            "{findings:?}"
+        );
+    }
+
+    #[test]
+    fn a_run_and_a_command_are_said_when_there_is_one() {
+        assert_eq!(judged(None), "");
+        assert_eq!(reproduced(None), "");
+        use crate::intent::IntentGuardStanding as G;
+        assert_eq!(
+            [G::Violated, G::Holds, G::NotJudged].map(stands),
+            ["is violated", "holds", "is not judged"]
+        );
+        let run = crate::intent::IntentEvaluation {
+            commit: "c0ffee".into(),
+            working_tree: "clean".into(),
+            outcome: "fail".into(),
+            at: "2026-10-08T00:00:00Z".into(),
+            changed: vec![],
+            detail: None,
+        };
+        assert_eq!(
+            judged(Some(&run)),
+            ", judged by the run at c0ffee (clean tree, fail)"
+        );
+        assert_eq!(
+            reproduced(Some("bash test/run.sh 01_x")),
+            "; reproduce: bash test/run.sh 01_x"
+        );
+    }
+
+    fn not_a_binding(
+        _: &Context,
+        _: super::super::intents::IntentBindingInput,
+    ) -> Result<NotAVerdict, CapabilityError> {
+        Ok(NotAVerdict {
+            converged: "perhaps".into(),
+        })
+    }
+
+    /// A binding that cannot be executed, and one that answers in a shape this report cannot
+    /// read, are unknown with a finding that says which — in advisory mode as well.
+    #[test]
+    fn a_binding_that_cannot_be_had_or_read_is_unknown_in_every_mode() {
+        use crate::gates::ServedWork;
+        let ask = |modules: Vec<crate::capability::module::ModuleDescriptor>| {
+            let repo = served_fixture("advisory");
+            let index = repo.index().unwrap();
+            let registry = crate::capability::CapabilityRegistry::builder()
+                .with_modules(modules)
+                .with_index(&index)
+                .build()
+                .expect("the registry builds");
+            let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+            let mut findings = Vec::new();
+            let work = served_work(&ctx, Some(&named("I0001", "", "")), &mut findings);
+            (work, findings)
+        };
+        let without = || -> Vec<crate::capability::module::ModuleDescriptor> {
+            super::super::modules()
+                .into_iter()
+                .filter(|m| m.id.as_str() != "intents")
+                .collect()
+        };
+        let (absent, findings) = ask(without());
+        assert!(
+            matches!(&absent, ServedWork::Unknown(why) if why.starts_with("intents.binding could not be executed")),
+            "{absent:?}"
+        );
+        assert_eq!(findings.len(), 1, "{findings:?}");
+
+        let impostor = crate::module! {
+            id: "intents",
+            title: "Intents",
+            description: "Answers in a shape the completion report cannot read.",
+            stability: Stability::Experimental,
+            capabilities: [
+                crate::capability! {
+                    id: "intents.binding", title: "Not a binding",
+                    description: "Something else.",
+                    input: super::super::intents::IntentBindingInput, output: NotAVerdict,
+                    stability: Stability::Experimental,
+                    exposure: crate::capability::model::Exposure::default(), tags: [],
+                    handler: not_a_binding,
+                },
+            ],
+        };
+        let mut modules = without();
+        modules.push(impostor);
+        let (unreadable, findings) = ask(modules);
+        assert!(
+            matches!(&unreadable, ServedWork::Unknown(why) if why.starts_with("intents.binding answered something this report cannot read")),
+            "{unreadable:?} {findings:?}"
+        );
     }
 }

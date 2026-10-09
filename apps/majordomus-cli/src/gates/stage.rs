@@ -24,6 +24,7 @@
 //! let q = |id: &str, status: GateStatus| DoneQuestion {
 //!     id: id.into(), stage: if id == "committed" { "build".into() } else { "ship".into() },
 //!     question: id.into(), status, evidence: "e".into(), source: "s".into(), remediation: "r".into(),
+//!     withheld: None,
 //! };
 //!
 //! // committed passes, ci never reported: the task stands at Ship, pending
@@ -144,6 +145,7 @@ pub struct StageReport {
 /// let owed = DoneQuestion {
 ///     id: "committed".into(), stage: "build".into(), question: "Is it committed?".into(),
 ///     status: GateStatus::Queued, evidence: "owed".into(), source: "s".into(), remediation: "git commit".into(),
+///     withheld: None,
 /// };
 /// let stage: LifecycleStage = derive_stage(&stages, &[owed]);
 /// assert_eq!((stage.id.as_str(), stage.state), ("build", StageState::Pending));
@@ -182,6 +184,7 @@ pub struct LifecycleStage {
 /// let q = |id: &str, stage: &str, status: GateStatus| DoneQuestion {
 ///     id: id.into(), stage: stage.into(), question: id.into(), status,
 ///     evidence: "e".into(), source: "s".into(), remediation: "r".into(),
+///     withheld: None,
 /// };
 ///
 /// // a later stage that refuses is where the task is, even behind an earlier pending one
@@ -276,6 +279,7 @@ mod tests {
             evidence: "e".into(),
             source: "s".into(),
             remediation: "r".into(),
+            withheld: None,
         }
     }
 

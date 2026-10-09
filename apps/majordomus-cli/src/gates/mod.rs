@@ -73,6 +73,7 @@ use crate::discovery::glob::Glob;
 
 pub use done::{
     DoneInputs, DoneQuestion, HandoverStanding, IssueStanding, ObligationStanding, ReleaseStanding,
+    ServedItem, ServedWork,
 };
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
@@ -141,6 +142,8 @@ pub(crate) struct Sources<'a> {
     /// `convergence.report`'s verdict over the repository's holdings, when it could be read:
     /// the answer to whether a branch, worktree or pull request is left behind.
     pub convergence: Option<&'a crate::convergence::ConvergenceReport>,
+    /// What stands for the work the task named, as `intents.binding` answered it.
+    pub served: ServedWork,
 }
 
 /// The local half of the layer, relative to the repository root. The same constant
@@ -527,6 +530,7 @@ pub(crate) fn complete(
             issue: sources.issue.clone(),
             handover: sources.handover.clone(),
             convergence: sources.convergence,
+            served: sources.served.clone(),
         },
     );
     let stage = derive_stage(&sources.policy.stages, &questions);
@@ -669,6 +673,7 @@ classes:
             handover: HandoverStanding::Unknown("no store".into()),
             deployment: DeploymentPlan::default(),
             convergence: None,
+            served: ServedWork::NotAsked("not asked".into()),
         }
     }
 

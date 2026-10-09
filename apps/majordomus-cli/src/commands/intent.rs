@@ -89,6 +89,30 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 })
             })
         }
+        IntentCommand::Oppose { id } => {
+            call(&app.context, &["intent", "oppose"], json!({ "intent": id })).and_then(|v| {
+                emit(format, &v, opposition_text).map(|()| {
+                    if v["disposition"] == "reject" {
+                        EXIT_INVALID
+                    } else {
+                        0
+                    }
+                })
+            })
+        }
+        IntentCommand::Stamp {
+            id,
+            check,
+            reviewed_by,
+        } => {
+            let mut input = json!({ "intent": id, "check": check });
+            if let Some(by) = reviewed_by {
+                input["reviewed_by"] = json!(by);
+            }
+            call(&app.context, &["intent", "stamp"], input)
+                .and_then(|v| emit(format, &v, stamp_text))
+                .map(|()| 0)
+        }
         IntentCommand::Realization { intent } => {
             let mut input = json!({});
             if let Some(intent) = intent {
@@ -258,7 +282,9 @@ fn list_text(v: &Value) -> String {
         "ID", "STAGE", "VERDICT", "MET"
     )];
     for i in &intents {
-        let total = i["satisfaction"].as_array().map_or(0, Vec::len);
+        // met is counted over the required criteria, so the total it is of is theirs
+        let total = i["satisfaction"].as_array().map_or(0, Vec::len)
+            - i["optional"].as_u64().unwrap_or(0) as usize;
         out.push(format!(
             "{:<width$}  {:<10}  {:<11}  {:<7}  {}",
             s(i, "id"),
@@ -330,6 +356,10 @@ fn show_text(v: &Value) -> String {
     for inv in v["invariants"].as_array().into_iter().flatten() {
         out.push(format!("  invariant   {}", inv.as_str().unwrap_or("")));
     }
+    for g in v["guards"].as_array().into_iter().flatten() {
+        out.push(guard_line("  ", g));
+        evaluation_line(&mut out, "  ", &g["evaluation"]);
+    }
     for m in v["milestones"].as_array().into_iter().flatten() {
         out.push(format!(
             "  milestone   {}  {}",
@@ -355,6 +385,10 @@ fn show_text(v: &Value) -> String {
                 .map(|r| format!("  [reproduce: {r}]"))
                 .unwrap_or_default()
         ));
+        if c["optional"] == true {
+            out.push("              optional: holds neither the verdict nor the stage back".into());
+        }
+        evaluation_line(&mut out, "  ", &c["evaluation"]);
     }
     for r in v["verdict"]["reasons"].as_array().into_iter().flatten() {
         out.push(format!(
@@ -364,10 +398,55 @@ fn show_text(v: &Value) -> String {
             s(r, "state"),
         ));
     }
+    for g in v["verdict"]["guards"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "  violated    {}  {} {}",
+            s(g, "guard"),
+            s(g, "evidence"),
+            s(g, "state"),
+        ));
+    }
     for g in v["governance"].as_array().into_iter().flatten() {
         out.push(format!("  governance  {}", g.as_str().unwrap_or("")));
     }
     out.join("\n")
+}
+
+/// One guard: what must stay true, the state of its evidence, and whether it is violated,
+/// holds, or is not judged.
+fn guard_line(indent: &str, g: &Value) -> String {
+    format!(
+        "{indent}guard       {}  {}  {} {}  — {}",
+        s(g, "id"),
+        s(g, "standing").replace('_', " "),
+        s(g, "evidence"),
+        s(g, "state"),
+        s(g, "invariant"),
+    )
+}
+
+/// The run a criterion or a guard was judged by, when one was: nothing for evidence that
+/// never ran.
+fn evaluation_line(out: &mut Vec<String>, indent: &str, e: &Value) {
+    if e.is_object() {
+        let changed = words(&e["changed"]);
+        out.push(format!(
+            "{indent}            judged by the run at {} ({} tree, {}, {}){}{}",
+            s(e, "commit"),
+            s(e, "working_tree"),
+            s(e, "outcome"),
+            s(e, "at"),
+            if changed.is_empty() {
+                String::new()
+            } else {
+                format!("; changed since: {}", changed.join(", "))
+            },
+            e["detail"]
+                .as_str()
+                .map(|d| format!("; {d}"))
+                .unwrap_or_default(),
+        ));
+    }
 }
 
 fn findings_text(out: &mut Vec<String>, findings: &Value) {
@@ -408,6 +487,86 @@ fn words(v: &Value) -> Vec<&str> {
         .collect()
 }
 
+/// What a stamp wrote, or would write: the record, the plan revision, the commit and the
+/// tool, and the disposition derived at that moment.
+fn stamp_text(v: &Value) -> String {
+    format!(
+        "{}  {}  {}\nrevision    {}\nat          {}  with {}\ndisposition {}",
+        if v["written"] == true {
+            "stamped"
+        } else {
+            "would stamp"
+        },
+        s(v, "intent"),
+        s(v, "source"),
+        s(v, "reviewed_revision"),
+        s(v, "reviewed_at"),
+        s(v, "reviewed_with"),
+        s(v, "disposition"),
+    )
+}
+
+/// The disposition first, then the review's stamp, then every finding of either half: the
+/// blocking ones a reader must answer, then the advisory ones.
+fn opposition_text(v: &Value) -> String {
+    let review = &v["review"];
+    let mut out = vec![
+        format!("disposition {}  {}", s(v, "disposition"), s(v, "intent")),
+        format!("plan        {}", s(v, "reviewed_plan")),
+        format!(
+            "review      {}{}",
+            s(review, "state"),
+            if s(review, "reviewed_revision").is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "  stamped {} at {} with {}",
+                    s(review, "reviewed_revision")
+                        .chars()
+                        .take(12)
+                        .collect::<String>(),
+                    s(review, "reviewed_at"),
+                    s(review, "reviewed_with")
+                )
+            }
+        ),
+    ];
+    for i in v["issues"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "issue       {}  {}  serves {}",
+            s(i, "id"),
+            s(i, "status"),
+            words(&i["serves"]).join(" ")
+        ));
+    }
+    for key in ["structural", "recorded"] {
+        for f in v[key].as_array().into_iter().flatten() {
+            let resolution = s(f, "resolution");
+            out.push(format!(
+                "{:<11} {}  {}  {}{}  {}",
+                key,
+                if f["blocking"] == true {
+                    "blocking"
+                } else {
+                    "advisory"
+                },
+                s(f, "id"),
+                s(f, "subject"),
+                if resolution.is_empty() {
+                    String::new()
+                } else {
+                    format!("  [{resolution}]")
+                },
+                s(f, "finding")
+            ));
+        }
+    }
+    for r in words(&v["rejecting"]) {
+        out.push(format!("rejects     {r}"));
+    }
+    out.join("\n")
+}
+
 /// The standing, what was named, then what the preflight prints for the same issues and
 /// intents, the pins, the notes and every refusal with its cause.
 fn binding_text(v: &Value) -> String {
@@ -430,6 +589,14 @@ fn binding_text(v: &Value) -> String {
     if !s(v, "plan_revision").is_empty() {
         out.push(format!("plan        {}", s(v, "plan_revision")));
         out.push(format!("evidence    {}", s(v, "evidence_standing")));
+    }
+    for r in v["reviews"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "review      {}  {}  {}",
+            s(r, "intent"),
+            s(r, "state"),
+            s(r, "disposition")
+        ));
     }
     for n in words(&v["notes"]) {
         out.push(format!("note        {n}"));
@@ -477,6 +644,9 @@ fn held_text(v: &Value, out: &mut Vec<String>) {
         }
         for inv in words(&i["invariants"]) {
             out.push(format!("  invariant   {inv}"));
+        }
+        for g in i["guards"].as_array().into_iter().flatten() {
+            out.push(guard_line("  ", g));
         }
         for n in words(&i["non_goals"]) {
             out.push(format!("  non-goal    {n}"));
@@ -590,6 +760,115 @@ mod tests {
         assert!(text
             .lines()
             .any(|l| l.ends_with("milestone m") && l.contains("I2")));
+    }
+
+    /// The opposition's text: the verdict, where the stamp stands, the serving issues, then
+    /// every finding of either half with whether it blocks and how it was resolved.
+    #[test]
+    fn the_opposition_and_the_stamp_say_every_part_of_the_answer() {
+        let answer = json!({
+            "intent": "x",
+            "disposition": "reject",
+            "reviewed_plan": "aaaa",
+            "review": {"state": "stale", "reviewed_revision": "0123456789abcdef",
+                       "reviewed_at": "c0ffee", "reviewed_with": "majordomus-cli 0.0.0"},
+            "issues": [{"id": "I1", "status": "READY", "serves": ["x#case"]}],
+            "structural": [{"id": "criterion_uncovered", "subject": "x#other",
+                            "finding": "no work", "blocking": true}],
+            "recorded": [
+                {"id": "thin", "subject": "x#case", "finding": "one case", "blocking": true,
+                 "resolution": "open"},
+                {"id": "note", "subject": "x", "finding": "a remark", "blocking": false,
+                 "resolution": "rejected"}
+            ],
+            "rejecting": ["structural criterion_uncovered x#other", "recorded thin x#case"]
+        });
+        let text = opposition_text(&answer);
+        for line in [
+            "disposition reject  x",
+            "plan        aaaa",
+            "review      stale  stamped 0123456789ab at c0ffee with majordomus-cli 0.0.0",
+            "issue       I1  READY  serves x#case",
+            "structural  blocking  criterion_uncovered  x#other  no work",
+            "recorded    blocking  thin  x#case  [open]  one case",
+            "recorded    advisory  note  x  [rejected]  a remark",
+            "rejects     structural criterion_uncovered x#other",
+            "rejects     recorded thin x#case",
+        ] {
+            assert!(
+                text.lines().any(|l| l == line),
+                "{line:?} missing from\n{text}"
+            );
+        }
+        // a review nobody stamped says its state and nothing it does not have
+        let unstamped = json!({"intent": "x", "disposition": "accept", "reviewed_plan": "aaaa",
+            "review": {"state": "none"}, "issues": [], "structural": [], "recorded": [],
+            "rejecting": []});
+        assert!(opposition_text(&unstamped)
+            .lines()
+            .any(|l| l == "review      none"));
+
+        let stamp = json!({"intent": "x", "source": "c/x.yaml", "reviewed_revision": "aaaa",
+            "reviewed_at": "c0ffee", "reviewed_with": "majordomus-cli 0.0.0",
+            "disposition": "accept", "written": true});
+        assert!(stamp_text(&stamp).starts_with("stamped  x  c/x.yaml\nrevision    aaaa\n"));
+        let mut check = stamp.clone();
+        check["written"] = json!(false);
+        assert!(stamp_text(&check).starts_with("would stamp  x  c/x.yaml"));
+    }
+
+    /// The two commands through the command line's own entry: the exit follows the
+    /// disposition, and a stamp is refused or made as the capability says.
+    #[test]
+    fn oppose_exits_by_the_disposition_and_stamp_reaches_its_capability() {
+        let repo = crate::intent_binding::tests::planned();
+        let root = repo.root().to_string_lossy().into_owned();
+        let share = crate::synthetic::crate_share()
+            .to_string_lossy()
+            .into_owned();
+        let run = |args: &[&str]| {
+            let mut argv = vec!["majordomus", "intent"];
+            argv.extend(args);
+            argv.extend([
+                "--repo",
+                &root,
+                "--discovery",
+                "filesystem",
+                "--share",
+                &share,
+            ]);
+            argv.extend(["--format", "json"]);
+            crate::commands::run(<crate::cli::Cli as clap::Parser>::parse_from(argv))
+        };
+        // nothing recorded and nothing structural: accepted
+        assert_eq!(run(&["oppose", "x"]).unwrap(), 0);
+        // an open blocking finding rejects the plan
+        std::fs::create_dir_all(repo.root().join(".ai/repo/project/critiques")).unwrap();
+        std::fs::write(
+            repo.root().join(".ai/repo/project/critiques/x.yaml"),
+            "intent: x\nreviewed_at: old\nreviewed_by: a reviewer\nfindings:\n  - id: thin\n    class: insufficient_work\n    subject: x#case\n    finding: Thin\n    blocking: true\n    resolution:\n      state: open\n",
+        )
+        .unwrap();
+        assert_eq!(run(&["oppose", "x"]).unwrap(), EXIT_INVALID);
+        // a directory that is not a git checkout has no commit to stamp a review with
+        assert!(run(&["stamp", "x", "--check"]).is_err());
+        // in a checkout with a commit, a check answers what would be stamped
+        let git = |args: &[&str]| {
+            assert!(std::process::Command::new("git")
+                .args(["-c", "user.name=t", "-c", "user.email=t@example.com"])
+                .args(args)
+                .current_dir(repo.root())
+                .output()
+                .unwrap()
+                .status
+                .success());
+        };
+        git(&["init", "-q", "."]);
+        git(&["commit", "-q", "--allow-empty", "-m", "init"]);
+        assert_eq!(
+            run(&["stamp", "x", "--check", "--by", "a reviewer"]).unwrap(),
+            0
+        );
     }
 
     /// A binding says its standing first, then what was named, the exemption, the pins, the
@@ -745,6 +1024,69 @@ mod tests {
         assert!(
             show.contains("  held back   b  command not_derivable"),
             "{show}"
+        );
+    }
+
+    /// ADR 0113: show prints the run a criterion was judged by, says which are optional,
+    /// lists every guard as violated, holding or not judged, and names the violated ones
+    /// under the verdict; the list counts met over the required criteria.
+    #[test]
+    fn show_prints_evaluations_optional_criteria_and_guards() {
+        let run = json!({"commit": "c0ffee", "working_tree": "clean", "outcome": "pass",
+                         "at": "2026-10-08T00:00:00Z", "changed": ["lib/a.sh"],
+                         "detail": "an input changed since the run"});
+        let intent = json!({
+            "id": "probe", "title": "Probe", "statement": "True.", "stage": "verifying",
+            "source": "s.yaml", "met": 1, "optional": 1,
+            "invariants": ["plain text"],
+            "guards": [
+                {"id": "broken", "invariant": "It stays true", "evidence": "test",
+                 "ref": "t", "state": "failing", "violated": true,
+                 "standing": "violated",
+                 "evaluation": {"commit": "c0ffee", "working_tree": "dirty",
+                                "outcome": "fail", "at": "2026-10-08T00:00:00Z"}},
+                {"id": "fine", "invariant": "It holds", "evidence": "test", "ref": "t",
+                 "state": "current", "violated": false, "standing": "holds"},
+                {"id": "idle", "invariant": "Nobody ran it", "evidence": "claim", "ref": "c",
+                 "state": "not_run", "violated": false, "standing": "not_judged"}
+            ],
+            "satisfaction": [
+                {"id": "a", "state": "current", "met": true, "evidence": "test", "ref": "t"},
+                {"id": "b", "state": "stale", "met": false, "evidence": "test", "ref": "u",
+                 "optional": true, "evaluation": run}
+            ],
+            "verdict": {"state": "unsatisfied", "reasons": [],
+                        "guards": [{"guard": "broken", "evidence": "test",
+                                    "state": "failing"}]},
+        });
+        let show = show_text(&intent);
+        for line in [
+            "  guard       broken  violated  test failing  — It stays true",
+            "              judged by the run at c0ffee (dirty tree, fail, 2026-10-08T00:00:00Z)",
+            "  guard       fine  holds  test current  — It holds",
+            "  guard       idle  not judged  claim not_run  — Nobody ran it",
+            "              optional: holds neither the verdict nor the stage back",
+            "              judged by the run at c0ffee (clean tree, pass, 2026-10-08T00:00:00Z); changed since: lib/a.sh; an input changed since the run",
+            "  violated    broken  test failing",
+        ] {
+            assert!(show.lines().any(|l| l == line), "{line:?} missing from\n{show}");
+        }
+        // one required criterion, met: 1/1, whatever the optional one says
+        let list = list_text(&json!({ "count": 1, "intents": [intent.clone()] }));
+        assert!(list.lines().nth(1).unwrap().contains("1/1"), "{list}");
+        // the binding and the preflight print a served intent's guards under its invariants
+        let held = preflight_text(&json!({
+            "verdict": "serves", "issues": [],
+            "intents": [{"id": "probe", "stage": "verifying", "title": "Probe",
+                         "statement": "True.", "criteria": [], "invariants": ["plain text"],
+                         "guards": intent["guards"].clone(), "non_goals": [],
+                         "critique": null, "gap": null}],
+            "governance": [], "refusals": []
+        }));
+        assert!(
+            held.lines()
+                .any(|l| l == "  guard       broken  violated  test failing  — It stays true"),
+            "{held}"
         );
     }
 

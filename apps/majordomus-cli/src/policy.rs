@@ -250,6 +250,108 @@ pub struct IntentPolicy {
     /// `intent.exemptions:` — the classes a worker may give instead of naming work.
     #[serde(default)]
     pub exemptions: Vec<ExemptionClass>,
+    /// `intent.opposition:` — whether a critique must have been stamped by the tool
+    /// (ADR 0112). Absent is `off`: a critique written before stamps existed keeps
+    /// authorising work, and `intent validate` says it carries none.
+    #[serde(default)]
+    pub opposition: OppositionMode,
+    /// `intent.completion:` — whether a finish is held to what its work serves (ADR 0115).
+    /// Absent is `off`: the completion policy's questions about an intent are not asked.
+    #[serde(default)]
+    pub completion: CompletionMode,
+}
+
+/// Whether the completion policy holds a task to the criteria its issue serves and the
+/// guards of the intents it serves (ADR 0115).
+///
+/// ```
+/// use majordomus_cli::policy::{CompletionMode, IntentPolicy};
+/// assert_eq!(CompletionMode::default(), CompletionMode::Off);
+/// let p: IntentPolicy = serde_json::from_str(r#"{"completion": "advisory"}"#).unwrap();
+/// assert_eq!(p.completion, CompletionMode::Advisory);
+/// assert!(p.completion.asks() && !p.completion.holds());
+/// assert!(serde_json::from_str::<IntentPolicy>(r#"{"completion": "sometimes"}"#).is_err());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CompletionMode {
+    /// The questions are not asked.
+    #[default]
+    Off,
+    /// They are answered; what would be owed is reported and withheld, and refuses nothing.
+    Advisory,
+    /// What is owed is owed, and refuses `completed` where the policy says completed means
+    /// complete.
+    Required,
+}
+
+impl CompletionMode {
+    /// The word the policy file spells and a surface prints.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::CompletionMode;
+    /// assert_eq!(CompletionMode::Required.as_str(), "required");
+    /// assert_eq!(CompletionMode::Off.as_str(), "off");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CompletionMode::Off => "off",
+            CompletionMode::Advisory => "advisory",
+            CompletionMode::Required => "required",
+        }
+    }
+
+    /// Whether the intent engine is asked at all.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::CompletionMode;
+    /// assert!(!CompletionMode::Off.asks());
+    /// assert!(CompletionMode::Advisory.asks() && CompletionMode::Required.asks());
+    /// ```
+    pub fn asks(self) -> bool {
+        self != CompletionMode::Off
+    }
+
+    /// Whether an answer that is owed is held against the task, rather than withheld.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::CompletionMode;
+    /// assert!(CompletionMode::Required.holds());
+    /// assert!(!CompletionMode::Advisory.holds());
+    /// ```
+    pub fn holds(self) -> bool {
+        self == CompletionMode::Required
+    }
+}
+
+/// Whether a review must have been executed and stamped.
+///
+/// ```
+/// use majordomus_cli::policy::OppositionMode;
+/// assert_eq!(OppositionMode::default(), OppositionMode::Off);
+/// let m: OppositionMode = serde_json::from_str("\"required\"").unwrap();
+/// assert!(m.is_required());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OppositionMode {
+    /// An unstamped critique is a warning, and a stale one refuses the binding only.
+    #[default]
+    Off,
+    /// An unstamped or stale critique fails `intent validate` and refuses the binding.
+    Required,
+}
+
+impl OppositionMode {
+    /// Whether the policy asks for a stamped review.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::OppositionMode;
+    /// assert!(!OppositionMode::Off.is_required());
+    /// ```
+    pub fn is_required(self) -> bool {
+        self == OppositionMode::Required
+    }
 }
 
 impl IntentPolicy {
@@ -443,6 +545,28 @@ pub fn is_safe_relative(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `intent.completion` is one of three words; absent is off, and a fourth is refused.
+    #[test]
+    fn the_completion_mode_is_off_advisory_or_required() {
+        let absent: Policy = yaml::parse_into("version: 1\n").expect("a policy");
+        assert_eq!(absent.intent.completion, CompletionMode::Off);
+        for (word, mode, asks, holds) in [
+            ("off", CompletionMode::Off, false, false),
+            ("advisory", CompletionMode::Advisory, true, false),
+            ("required", CompletionMode::Required, true, true),
+        ] {
+            let p: Policy =
+                yaml::parse_into(&format!("version: 1\nintent:\n  completion: {word}\n"))
+                    .expect("a policy with a completion mode");
+            assert_eq!(p.intent.completion, mode);
+            assert_eq!(mode.as_str(), word);
+            assert_eq!((mode.asks(), mode.holds()), (asks, holds), "{word}");
+        }
+        assert!(
+            yaml::parse_into::<Policy>("version: 1\nintent:\n  completion: sometimes\n").is_err()
+        );
+    }
 
     #[test]
     fn the_intent_block_is_read_from_the_policy_file_and_absent_means_off() {

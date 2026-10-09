@@ -117,7 +117,7 @@ expect_exit 0 "$MJ" check
 for id in implemented tested regression-tested committed pushed ci integrated handover; do
   [ "$(q "$id")" = pass ] || { echo "    $id is $(q "$id") on a tree where it should pass"; exit 1; }
 done
-for id in documented generated openapi parity version changelog published deployed deployment-verified issue; do
+for id in documented generated openapi parity version changelog published deployed deployment-verified issue criteria-served guards-hold; do
   [ "$(q "$id")" = exempt ] || { echo "    $id is $(q "$id"); this change does not reach it"; exit 1; }
 done
 [ "$(completion | jq -r .complete)" = true ] || { echo "    every question passes or is exempt and the report is not complete: $(completion | jq -c '[.questions[] | select(.status != "pass" and .status != "exempt") | .id]')"; exit 1; }

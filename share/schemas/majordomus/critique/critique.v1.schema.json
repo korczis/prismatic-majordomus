@@ -26,6 +26,15 @@
     "reviewed_by": {
       "type": "string"
     },
+    "reviewed_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "The revision of the intent's plan this review was stamped against: written by `majordomus-cli intent oppose <intent> --record`, never by hand (ADR 0112). Absent in a critique nobody stamped. Work is refused while it differs from the plan's current revision."
+    },
+    "reviewed_with": {
+      "type": "string",
+      "description": "The tool that stamped the review, with its version. Written with reviewed_revision."
+    },
     "findings": {
       "type": "array",
       "items": {
@@ -53,7 +62,9 @@
               "unnecessary_work",
               "regression_risk",
               "surface_missing",
-              "delivery_verification"
+              "delivery_verification",
+              "invariant_conflict",
+              "dependency_order"
             ]
           },
           "subject": {
@@ -86,8 +97,16 @@
               },
               "because": {
                 "type": "string"
+              },
+              "resolved_by": {
+                "type": "string",
+                "description": "Who resolved the finding. Required of every resolution that is not open where the policy says intent.opposition: required."
               }
             }
+          },
+          "source": {
+            "type": "string",
+            "description": "Who or what found it: a session, a person, an advisor. Optional; a finding without one is read as the reviewer's (reviewed_by)."
           }
         }
       }

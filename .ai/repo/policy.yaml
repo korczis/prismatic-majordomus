@@ -45,8 +45,23 @@ checkpoint:
 # "<reason>") and recorded in the task record and the ledger. The absence of an intent is
 # never an exemption by itself: derived maintenance is work under a milestone no intent
 # names, and everything else either serves a criterion or says why it serves none.
+# `opposition` says whether a critique must have been stamped by the tool (ADR 0112):
+#   off        (or absent) an unstamped critique is a warning; a stale one refuses the binding
+#   required   an unstamped or stale critique fails `intent validate` and refuses the binding
+# A stamp names the revision of the plan the review was run over: `majordomus-cli intent
+# oppose <intent>` is the review's brief and verdict, `intent stamp <intent>` records it.
+# `completion` says whether a finish is held to what its work serves (ADR 0115):
+#   off        (or absent) the two questions about served criteria and guards are not asked
+#   advisory   they are answered, and what would be owed is reported and withheld
+#   required   a served required criterion without current evidence, or a violated guard,
+#              is a question owed and refuses `completed` (completed_means_complete above)
+# Advisory here because it was measured: on 2026-10-08 none of the 22 issues that declare
+# what they serve had current evidence for every required criterion it serves, 15 of them
+# because no run was ever recorded. The count of withheld answers is what has to fall.
 intent:
   binding: advisory
+  opposition: required
+  completion: advisory
   exemptions:
     - id: maintenance
       description: Upkeep no issue covers — dependency bumps, regenerated projections, repairs to the tool's own records

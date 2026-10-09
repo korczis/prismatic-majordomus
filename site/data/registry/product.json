@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.18.0"
   },
-  "fingerprint": "cfed26c051006c538e01f2e1045ac1366a0d17838ebb2bf29db3e8c078df7730",
+  "fingerprint": "dc207b9c8387ecc46b614ee3bad16972e799f0c433e84e4d47a6130dd4a84bde",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 53,
+    "modules": 54,
     "modules_covered": 42,
     "commands": 30,
     "commands_covered": 30,
@@ -927,9 +927,9 @@
         },
         {
           "id": "intent-cockpit-pages",
-          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "claim": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
           "status": "guaranteed",
-          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+          "test": "apps/majordomus-cli/tests/cockpit_intents.rs"
         },
         {
           "id": "intent-criteria-covered",
@@ -3450,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 237
+          "objects": 240
         }
       ],
       "rule_refs": [
@@ -3723,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 308,
+        "mcp_resources": 311,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 301,
+        "objects": 304,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -7140,7 +7140,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 84
+          "objects": 87
         },
         {
           "name": "knowledge",
@@ -7148,7 +7148,7 @@
         },
         {
           "name": "document",
-          "objects": 327
+          "objects": 330
         }
       ],
       "rule_refs": [
@@ -7421,11 +7421,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 415,
+        "mcp_resources": 421,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 412,
+        "objects": 418,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -10506,15 +10506,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 25
+          "objects": 29
         },
         {
           "name": "issue",
-          "objects": 262
+          "objects": 276
         },
         {
           "name": "intent",
-          "objects": 3
+          "objects": 7
         }
       ],
       "rule_refs": [
@@ -10640,9 +10640,9 @@
         },
         {
           "id": "intent-cockpit-pages",
-          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "claim": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
           "status": "guaranteed",
-          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+          "test": "apps/majordomus-cli/tests/cockpit_intents.rs"
         }
       ],
       "use_case_refs": [
@@ -10712,11 +10712,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 293,
+        "mcp_resources": 315,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 290,
+        "objects": 312,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -13872,6 +13872,11 @@
         ]
       },
       {
+        "id": "intent_opposition",
+        "title": "Opposition",
+        "features": []
+      },
+      {
         "id": "intent_realization",
         "title": "Intent realization",
         "features": [
@@ -14298,7 +14303,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (84)",
+        "title": "adr (87)",
         "features": [
           "knowledge"
         ]
@@ -14326,7 +14331,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (237)",
+        "title": "claim (240)",
         "features": [
           "declare-once"
         ]
@@ -14347,7 +14352,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (2)",
+        "title": "critique (6)",
         "features": []
       },
       {
@@ -14378,19 +14383,19 @@
       },
       {
         "id": "gap",
-        "title": "gap (2)",
+        "title": "gap (6)",
         "features": []
       },
       {
         "id": "intent",
-        "title": "intent (3)",
+        "title": "intent (7)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (262)",
+        "title": "issue (276)",
         "features": [
           "planning"
         ]
@@ -14411,7 +14416,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (25)",
+        "title": "milestone (29)",
         "features": [
           "planning"
         ]
@@ -15382,38 +15387,38 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2088,
-    "builtin": 185,
-    "declarative": 1903,
-    "modules": 53,
-    "mcp_tools": 178,
-    "mcp_resources": 1958,
-    "http_routes": 182,
-    "cli_commands": 190,
+    "capabilities": 2133,
+    "builtin": 187,
+    "declarative": 1946,
+    "modules": 54,
+    "mcp_tools": 180,
+    "mcp_resources": 2001,
+    "http_routes": 184,
+    "cli_commands": 192,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1903,
+    "objects": 1946,
     "by_kind": {
-      "adr": 84,
+      "adr": 87,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 237,
+      "claim": 240,
       "command": 31,
       "context": 36,
-      "critique": 2,
+      "critique": 6,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 330,
       "domain": 6,
       "feature": 27,
-      "gap": 2,
+      "gap": 6,
       "implementation": 51,
-      "intent": 3,
-      "issue": 262,
+      "intent": 7,
+      "issue": 276,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 29,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -15424,7 +15429,7 @@
       "session": 84,
       "skill": 7,
       "taxonomy": 10,
-      "test": 408,
+      "test": 412,
       "use-case": 48,
       "workspace": 1
     },
@@ -15442,7 +15447,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 219,
+    "declared": 222,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -15943,6 +15948,12 @@
         "label": "not run",
         "supported": false
       },
+      "finish-reads-what-its-work-serves": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "finish-refusal-is-recorded": {
         "status": "guaranteed",
         "state": "not-run",
@@ -16023,8 +16034,8 @@
       },
       "intent-cockpit-pages": {
         "status": "guaranteed",
-        "state": "stale",
-        "label": "stale",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "intent-command-deployment-evidence": {
@@ -16037,6 +16048,18 @@
         "status": "guaranteed",
         "state": "stale",
         "label": "stale",
+        "supported": false
+      },
+      "intent-evaluation-explained": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "intent-guard-is-judged": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "intent-in-session-context": {

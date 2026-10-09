@@ -1,0 +1,33 @@
+id: I2056
+milestone: finish-reads-what-its-work-serves
+title: The completion policy can ask the intent engine
+slug: completion-can-ask-the-intent-engine
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - finish-reads-what-its-work-serves#the-answer-is-the-engines
+objective: "Add one kind of source to the completion policy, intent:<aspect> with the aspects criteria and guards, answered inside gates.completion by executing intents.binding with the issue, the intent and the exemption the active task names - never its scope as paths. The answer is reduced to a standing that carries the engine's words. No active task is unknown. A task that names nothing is exempt without the engine being asked. An exemption and maintenance are exempt. A binding refused before it reaches an intent is unknown with the refusal's cause; one refused after still has its criteria read. Failing or unresolved evidence fails, stale is stale, never run is queued, not derivable is unknown, in that order of precedence; only optional criteria served is exempt. A violated guard fails; guards declared and none violated pass, naming the ones not judged; none declared is exempt. A task naming only an intent is exempt from the criteria and held to the guards. Under an advisory policy every status but pass becomes exempt, its evidence saying what stands."
+why: "The completion policy has the refusal and the intent engine has the standing, and nothing joins them."
+current_state: "QuestionSource has nine kinds, none about an intent; gates.completion executes obligations.closure and convergence.report; intents.binding answers the served criteria and the guards of the intents a task names, and keeps them when it refuses late."
+desired_state: "A question whose source is intent:criteria or intent:guards is answered as above; an aspect nothing answers is refused when the policy is parsed."
+scope:
+  - apps/majordomus-cli/src/gates
+  - apps/majordomus-cli/src/capability/builtin/gates.rs
+  - apps/majordomus-cli/tests/completion_intent.rs
+  - share/completion.yaml
+  - docs
+  - site
+depends_on: [I2055]
+acceptance_criteria:
+  - QuestionSource parses and prints both aspects and refuses any other by name
+  - Each standing and each arm of the mapping has a test that runs in the process, including a binding that could not be executed and one that answered something unreadable
+  - The new standing type adds no name to the OpenAPI document
+  - MJ_TIMING=1 majordomus check is measured before and after and the figures are in the commit message
+validation:
+  - cd apps/majordomus-cli && cargo test --lib gates::
+  - cd apps/majordomus-cli && cargo test --test completion_intent
+evidence_required:
+  - completion_asks_the_intent_engine
+created_at: 2026-10-08
+updated_at: 2026-10-08

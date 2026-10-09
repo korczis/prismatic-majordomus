@@ -1,0 +1,35 @@
+id: I2030
+milestone: intent-in-the-cockpit
+title: The page of one intent says why its verdict is what it is
+slug: the-intent-page-explains-the-verdict
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-in-the-cockpit#verdict-is-explained-on-the-page
+objective: "On the page of one intent, from intent_realization.explain alone: a card for the verdict listing each required criterion holding it back with its evidence state and each violated guard; in the criteria table, whether a criterion is optional and the run it was judged by with what changed since; a card for the guards with each in the standing the engine answers, its evidence linked like a criterion's; the invariants, non-goals and governance the record declares. The standing of a guard becomes one word the engine answers (IntentGuard.standing), read by the command line, the briefing and the page alike. Each card is a function of the typed answer, tested by constructing it."
+why: "The page shows a verdict badge and nothing of what it rests on, so a person told unsatisfied still has to ask the command line why."
+current_state: "The detail page renders stage, verdict badge, criteria with evidence badges, milestones, work and the because lines."
+desired_state: "A person reads the verdict's reasons, the guards and the judged runs on the page; an intent with no guard and no optional criterion renders as it did, with no empty card."
+scope:
+  - apps/majordomus-cli/src
+  - apps/majordomus-cli/tests
+  - lib/intent_binding.sh
+  - .ai/repo/project
+  - docs
+  - site
+depends_on: []
+acceptance_criteria:
+  - A violated guard is named under the verdict and in the guards card with the word violated, a holding one with holds, one not judged with not judged, and no surface computes that word but the engine
+  - Each reason of the verdict links to the row of its criterion or guard
+  - An optional criterion is marked optional and is not among the reasons
+  - A judged criterion shows the commit and outcome of its run and the inputs that changed since
+  - An intent without guards shows no guards card
+  - Unit tests in cockpit/intents.rs cover each branch in process
+validation:
+  - cargo test --lib cockpit::intents
+  - cargo test --test cockpit_intents
+evidence_required:
+  - the_intent_page_explains_the_verdict
+created_at: 2026-10-08
+updated_at: 2026-10-08

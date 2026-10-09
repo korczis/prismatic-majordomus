@@ -264,6 +264,18 @@ mj_validate_completion_gates() {
   complete="$(printf '%s' "$out" | jq -r 'if has("complete") then (.complete | tostring) else "false" end' 2>/dev/null)"
   [ -z "$stage" ] || mj_info stage "$id" "$stage — $stage_state${stage_owing:+ (owing: $stage_owing)}" \
     "$bin run gates.completion --input '{}' --format json | jq '.output.stage'"
+  # what was reached and not held. Under `intent.completion: advisory` a question about what
+  # the task's work serves answers `exempt` and carries the verdict it would have been in
+  # `withheld`; an exemption that hides a failing criterion reads like one that hides nothing
+  # unless it is printed. Read from the answer already held: nothing is asked twice.
+  local wq wstatus
+  while IFS=$'\t' read -r wq wstatus; do
+    [ -n "$wq" ] || continue
+    mj_info "done" "$wq" "withheld (would be $wstatus): $(printf '%s' "$out" | jq -r --arg q "$wq" '.questions[] | select(.id == $q) | .evidence' 2>/dev/null)" \
+      "$bin run gates.completion --input '{}' --format json | jq '.output.questions'"
+  done <<EOF
+$(printf '%s' "$out" | jq -r '(.questions // [])[] | select(.withheld != null) | "\(.id)\t\(.withheld)"' 2>/dev/null)
+EOF
   # for the finish record: where the task stood when the outcome was taken, so that a task
   # closed short of completed carries the stage it stopped at and not only the word
   MJ_COMPLETION_STAGE="$(printf '%s' "$out" | jq -r '.stage.id // empty' 2>/dev/null)"
@@ -296,9 +308,9 @@ mj_validate_completion_gates() {
       "majordomus start --requires $ob"
   done
 
-  # the done invariant, in one line rather than nineteen: what a reader must still settle,
+  # the done invariant, in one line rather than twenty-one: what a reader must still settle,
   # each question with the source that would answer it. `check` is read routinely and a
-  # nineteen-line block would be scrolled past; the whole set is in the JSON.
+  # twenty-one-line block would be scrolled past; the whole set is in the JSON.
   local owing
   owing="$(printf '%s' "$out" | jq -r '[(.questions // [])[] | select(.status != "pass" and .status != "exempt") | "\(.id)=\(.status)"] | join(" ")' 2>/dev/null)"
   [ -z "$owing" ] || mj_doctrine_skip "done" "$id" "the done invariant is not yet answered: $owing" \

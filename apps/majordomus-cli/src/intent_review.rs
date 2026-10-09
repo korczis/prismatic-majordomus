@@ -238,6 +238,10 @@ pub enum CritiqueClass {
     SurfaceMissing,
     /// Which deployment or runtime verification is required?
     DeliveryVerification,
+    /// Which invariant of the intent would the plan break? (ADR 0112)
+    InvariantConflict,
+    /// Which work is ordered wrongly, or depends on what it should not? (ADR 0112)
+    DependencyOrder,
 }
 
 impl CritiqueClass {
@@ -250,6 +254,8 @@ impl CritiqueClass {
             "regression_risk" => Self::RegressionRisk,
             "surface_missing" => Self::SurfaceMissing,
             "delivery_verification" => Self::DeliveryVerification,
+            "invariant_conflict" => Self::InvariantConflict,
+            "dependency_order" => Self::DependencyOrder,
             _ => return None,
         })
     }
@@ -323,6 +329,13 @@ pub struct CritiqueFinding {
     pub issue: String,
     /// Why, when rejected.
     pub because: String,
+    /// Who or what found it, when the record says (ADR 0112); empty in a record written
+    /// before findings named their source.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub source: String,
+    /// Who resolved it, when the record says; empty when it does not.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub resolved_by: String,
 }
 
 /// A critique record: the adversarial pass over one intent's plan, at the commit it was
@@ -346,6 +359,13 @@ pub struct CritiqueRecord {
     pub reviewed_at: String,
     /// Who or what reviewed it.
     pub reviewed_by: String,
+    /// The revision of the intent's plan the review was stamped against
+    /// ([`crate::intent_opposition`]); empty in a record nobody stamped.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub reviewed_revision: String,
+    /// The tool that stamped it, with its version; empty in a record nobody stamped.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub reviewed_with: String,
     /// The findings.
     pub findings: Vec<CritiqueFinding>,
 }
@@ -487,6 +507,8 @@ impl CritiqueRecord {
             source: source.to_string(),
             reviewed_at: text(meta, "reviewed_at"),
             reviewed_by: text(meta, "reviewed_by"),
+            reviewed_revision: text(meta, "reviewed_revision"),
+            reviewed_with: text(meta, "reviewed_with"),
             findings: items(meta, "findings")
                 .map(|f| {
                     let res = f.get("resolution").cloned().unwrap_or(Value::Null);
@@ -501,6 +523,8 @@ impl CritiqueRecord {
                         resolution_text: text(&res, "state"),
                         issue: text(&res, "issue"),
                         because: text(&res, "because"),
+                        source: text(f, "source"),
+                        resolved_by: text(&res, "resolved_by"),
                     }
                 })
                 .collect(),
@@ -816,6 +840,16 @@ pub fn review(
                             ),
                         )
                     }
+                    Some(i) if i.status == "CANCELLED" => f.push(
+                        FAIL,
+                        "planned_into_cancelled_issue",
+                        &subject,
+                        format!(
+                            "is planned into {}, which is cancelled: work nobody will do \
+                             resolves nothing",
+                            x.issue
+                        ),
+                    ),
                     Some(_) => {}
                 },
             }

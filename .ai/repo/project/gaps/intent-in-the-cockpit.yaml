@@ -1,0 +1,47 @@
+intent: intent-in-the-cockpit
+observed_at: 8993bbf173
+recorded_by: claude-code (session fcbeae95; first-hand read of cockpit/intents.rs and an earlier read-only audit of the Cockpit's conventions)
+recorded_at: 2026-10-08
+observations:
+  - id: page-shows-a-badge-only
+    statement: The page of one intent shows the verdict as a badge and renders neither its reasons nor any guard
+    source: file:apps/majordomus-cli/src/cockpit/intents.rs
+  - id: no-evaluation-on-the-page
+    statement: The criteria table shows an evidence badge, the test, the serving issues and the reproduce command, and nothing of the run that was judged
+    source: file:apps/majordomus-cli/src/cockpit/intents.rs
+  - id: no-review-on-the-page
+    statement: Neither page asks intent_opposition.review; no critique, disposition, stamp or gap is rendered anywhere in the Cockpit
+    source: file:apps/majordomus-cli/src/cockpit/intents.rs
+  - id: list-has-no-verdict
+    statement: The list renders intent_realization.work, whose view carries the stage and the counts and no verdict
+    source: file:apps/majordomus-cli/src/intent_realization.rs
+conditions:
+  - criterion: verdict-is-explained-on-the-page
+    state: missing
+    because: the page has the data in the answer it already asks for and renders none of it
+    observations: [page-shows-a-badge-only, no-evaluation-on-the-page]
+  - criterion: review-is-on-the-page
+    state: missing
+    because: the capability exists and no page asks it
+    observations: [no-review-on-the-page]
+  - criterion: list-says-the-verdict
+    state: missing
+    because: the list's one answer carries no verdict
+    observations: [list-has-no-verdict]
+risks:
+  - The Cockpit may not read the index and may not derive; every new fact needs a capability that already answers it
+  - Asking a second capability per page costs a second derivation of the intent model
+  - The word for a guard's standing is worked out by the command line and by the briefing script, each for itself
+work:
+  - id: verdict-on-the-page
+    title: The page of one intent says why its verdict is what it is
+    serves: [verdict-is-explained-on-the-page]
+    issue: I2030
+  - id: review-on-the-page
+    title: The page of one intent shows the review of its plan and the gap
+    serves: [review-is-on-the-page]
+    issue: I2031
+  - id: verdict-in-the-list
+    title: The list shows the verdict, and the documents say what the pages show
+    serves: [list-says-the-verdict]
+    issue: I2032

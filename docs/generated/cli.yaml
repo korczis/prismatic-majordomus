@@ -18178,6 +18178,216 @@ cli:
         - path:
             - majordomus
             - intent
+            - oppose
+          route: /docs/cli/intent/oppose/
+          executable: true
+          usage: "majordomus intent oppose [OPTIONS] <ID>"
+          about: "The opposition to one intent's plan: what the derivations find about it now, what a reviewer recorded, the disposition both derive and where the critique's stamp stands; also the brief a reviewer works from; exit 10 when the disposition is reject"
+          args:
+            - name: id
+              positional: true
+              help: "The intent's id"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-oppose
+              title: "The opposition to an intent's plan"
+              description: "Every finding the intent engine and the plan derive about one intent now, every finding a reviewer recorded with its resolution, the disposition both derive, and whether the critique was stamped against the plan as it stands. The same answer is the brief a reviewing session works from. Exit 10 when the disposition is `reject`."
+              argv:
+                - intent
+                - oppose
+                - fixture-intent
+                - "--format"
+                - json
+              command: majordomus intent oppose fixture-intent --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /disposition, /reviewed_plan, /review/state, /structural"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - stamp
+          route: /docs/cli/intent/stamp/
+          executable: true
+          usage: "majordomus intent stamp [OPTIONS] <ID>"
+          about: "Stamp the critique of an intent's plan with the plan revision the review was run over, the commit and the tool; writes three lines and no finding"
+          args:
+            - name: id
+              positional: true
+              help: "The intent's id"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: check
+              long: check
+              positional: false
+              help: Say what would be stamped and write nothing
+              value_name: CHECK
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: reviewed_by
+              long: by
+              positional: false
+              help: "Who reviewed, for a critique this creates"
+              value_name: REVIEWED_BY
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-stamp-check
+              title: What stamping a review would write
+              description: "The plan revision, the commit and the tool a stamp would name, and the disposition derived now, with nothing written. Without `--check` the three lines are written to the critique record and `opposition.recorded` is appended to the ledger."
+              argv:
+                - intent
+                - stamp
+                - fixture-intent
+                - "--check"
+                - "--by"
+                - a reviewer
+                - "--format"
+                - json
+              command: "majordomus intent stamp fixture-intent --check --by 'a reviewer' --format json"
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /reviewed_revision, /disposition, /written"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
             - realization
           route: /docs/cli/intent/realization/
           executable: true

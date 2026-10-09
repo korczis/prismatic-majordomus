@@ -199,6 +199,25 @@ pub enum IntentCommand {
         #[arg(long)]
         because: Option<String>,
     },
+    /// The opposition to one intent's plan: what the derivations find about it now, what a
+    /// reviewer recorded, the disposition both derive and where the critique's stamp stands;
+    /// also the brief a reviewer works from; exit 10 when the disposition is reject
+    Oppose {
+        /// The intent's id
+        id: String,
+    },
+    /// Stamp the critique of an intent's plan with the plan revision the review was run
+    /// over, the commit and the tool; writes three lines and no finding
+    Stamp {
+        /// The intent's id
+        id: String,
+        /// Say what would be stamped and write nothing
+        #[arg(long)]
+        check: bool,
+        /// Who reviewed, for a critique this creates
+        #[arg(long = "by")]
+        reviewed_by: Option<String>,
+    },
     /// Which work realises which intent — tasks, episodes, providers, handovers, peer claims —
     /// each link with its provenance, and each intent's unmet criteria and drift; exit 10 when
     /// an intent whose milestones are all DONE is contradicted by its evidence
@@ -5657,6 +5676,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["intent", "binding", "--issue", "I0001"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "intent oppose",
+        examples: &[ExampleDoc {
+            id: "intent-oppose",
+            title: "The opposition to an intent's plan",
+            description: "Every finding the intent engine and the plan derive about one intent now, every finding a reviewer recorded with its resolution, the disposition both derive, and whether the critique was stamped against the plan as it stands. The same answer is the brief a reviewing session works from. Exit 10 when the disposition is `reject`.",
+            argv: &["intent", "oppose", "fixture-intent", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/disposition", "/reviewed_plan", "/review/state", "/structural"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent stamp",
+        examples: &[ExampleDoc {
+            id: "intent-stamp-check",
+            title: "What stamping a review would write",
+            description: "The plan revision, the commit and the tool a stamp would name, and the disposition derived now, with nothing written. Without `--check` the three lines are written to the critique record and `opposition.recorded` is appended to the ledger.",
+            argv: &["intent", "stamp", "fixture-intent", "--check", "--by", "a reviewer", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/reviewed_revision", "/disposition", "/written"]),
         }],
     },
     CommandExamples {

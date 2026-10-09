@@ -60,6 +60,7 @@ use crate::convergence::ConvergenceReport;
 ///     evidence: "the obligation is owed".into(),
 ///     source: "obligation push (obligations.closure)".into(),
 ///     remediation: "git push".into(),
+///     withheld: None,
 /// };
 /// // every question names what answered it and what would settle it: a question with
 /// // neither is a checklist line, which is the artifact this type exists instead of
@@ -83,6 +84,12 @@ pub struct DoneQuestion {
     pub source: String,
     /// What would settle it, as a command.
     pub remediation: String,
+    /// The status this question would have had, where the policy asked for it to be
+    /// reported and not held against the task (`intent.completion: advisory`, ADR 0115):
+    /// the answer was reached and withheld, which is not the same as not applying. Absent
+    /// everywhere else.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub withheld: Option<GateStatus>,
 }
 
 /// ```
@@ -212,6 +219,7 @@ pub enum HandoverStanding {
 /// use std::collections::BTreeMap;
 /// use majordomus_cli::gates::{
 ///     DoneInputs, HandoverStanding, IssueStanding, ObligationStanding, ReleaseStanding,
+///     ServedWork,
 /// };
 ///
 /// let mut standing = BTreeMap::new();
@@ -229,6 +237,7 @@ pub enum HandoverStanding {
 ///     issue: IssueStanding::DeclaredNone("exempt as chore".into()),
 ///     handover: HandoverStanding::Absent,
 ///     convergence: None,
+///     served: ServedWork::NotAsked("the task names no issue and no intent".into()),
 /// };
 /// // the closure's word is carried verbatim, and a change set with no test path is visible as such
 /// assert_eq!(inputs.standing["commit"].state, "discharged");
@@ -254,6 +263,67 @@ pub struct DoneInputs<'a> {
     pub handover: HandoverStanding,
     /// [`crate::convergence`]'s verdict over the repository's holdings, when it could be read.
     pub convergence: Option<&'a ConvergenceReport>,
+    /// What stands for the work the task named, as the intent engine answered it.
+    pub served: ServedWork,
+}
+
+/// One criterion a task's issue serves, or one guard of an intent it serves, in the intent
+/// engine's own words: which, and the sentence that says where it stands and how to
+/// reproduce it. Nothing here is judged again.
+///
+/// ```
+/// use majordomus_cli::gates::ServedItem;
+/// use majordomus_cli::intent::IntentEvidenceState;
+///
+/// let c = ServedItem {
+///     subject: "x#case".into(),
+///     state: IntentEvidenceState::NotRun,
+///     said: "x#case (test test/cases/01_x.sh) has no recorded run".into(),
+/// };
+/// assert_eq!(c.state.as_str(), "not_run");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ServedItem {
+    /// `<intent>#<criterion>` or `<intent>!<guard>`.
+    pub subject: String,
+    /// The state of its evidence, as the engine reports it.
+    pub state: crate::intent::IntentEvidenceState,
+    /// What a person is told about it.
+    pub said: String,
+}
+
+/// What stands for the work a task named, reduced from `intents.binding` (ADR 0115). The
+/// completion questions about an intent are answered from this and from nothing else.
+///
+/// ```
+/// use majordomus_cli::gates::ServedWork;
+///
+/// // could not ask is never the same finding as nothing to ask
+/// assert_ne!(
+///     ServedWork::Unknown("the binding could not be read".into()),
+///     ServedWork::NotAsked("exempt as maintenance".into()),
+/// );
+/// let bound = ServedWork::Bound { criteria: None, guards: vec![], advisory: true };
+/// assert!(matches!(bound, ServedWork::Bound { criteria: None, .. }));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ServedWork {
+    /// No task is active, the binding could not be read, or it was refused before it
+    /// reached an intent; why. Never exempt and never a pass, whatever the policy.
+    Unknown(String),
+    /// Nothing is asked of this task, in the record's or the policy's own words: it names
+    /// no work, it was started under an exemption, it is maintenance, or the policy is off.
+    NotAsked(String),
+    /// The task names work that reaches an intent.
+    Bound {
+        /// The required criteria its issue serves; `None` when the task names an intent
+        /// and no issue, which holds it to no criterion.
+        criteria: Option<Vec<ServedItem>>,
+        /// The guards of the intents it serves.
+        guards: Vec<ServedItem>,
+        /// Whether the policy reports what is owed and withholds it.
+        advisory: bool,
+    },
 }
 
 /// Answer the invariant: every question of the policy, in the policy's order.
@@ -262,7 +332,13 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
         .questions
         .iter()
         .map(|decl| {
+            let mut withheld = None;
             let (status, evidence, source) = match &decl.kind() {
+                QuestionSource::Intent(aspect) => {
+                    let (status, evidence, held) = served(aspect, &inputs.served);
+                    withheld = held;
+                    (status, evidence, "intents.binding (ADR 0115)".to_string())
+                }
                 QuestionSource::Obligation(token) => obligation(token, inputs),
                 QuestionSource::Gates => gates(inputs.gates),
                 QuestionSource::Gate(gate) => match inputs.gates.iter().find(|g| &g.id == gate) {
@@ -402,9 +478,115 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
                 evidence,
                 source,
                 remediation: decl.remediation.clone(),
+                withheld,
             }
         })
         .collect()
+}
+
+/// The answer to a question about what the task's work serves. The engine's states are
+/// translated once — failing and unresolved fail, stale is stale, never run is owed, and
+/// evidence the ledger cannot derive is unknown, the worst deciding — and under an advisory
+/// policy a verdict that was reached is reported and withheld. A binding that could not be
+/// asked is unknown in every mode.
+fn served(aspect: &str, work: &ServedWork) -> (GateStatus, String, Option<GateStatus>) {
+    use crate::intent::IntentEvidenceState as E;
+    let (criteria, guards, advisory) = match work {
+        ServedWork::Unknown(why) => return (GateStatus::Unknown, why.clone(), None),
+        ServedWork::NotAsked(said) => return (GateStatus::Exempt, said.clone(), None),
+        ServedWork::Bound {
+            criteria,
+            guards,
+            advisory,
+        } => (criteria, guards, *advisory),
+    };
+    let (status, evidence) = if aspect == "guards" {
+        let violated: Vec<&str> = guards
+            .iter()
+            .filter(|g| g.state == E::Failing)
+            .map(|g| g.said.as_str())
+            .collect();
+        if guards.is_empty() {
+            (
+                GateStatus::Exempt,
+                "the intents this task serves declare no guard".to_string(),
+            )
+        } else if violated.is_empty() {
+            (
+                GateStatus::Pass,
+                format!(
+                    "no guard is violated: {}",
+                    guards
+                        .iter()
+                        .map(|g| g.said.as_str())
+                        .collect::<Vec<_>>()
+                        .join("; ")
+                ),
+            )
+        } else {
+            (GateStatus::Fail, violated.join("; "))
+        }
+    } else {
+        match criteria {
+            None => (
+                GateStatus::Exempt,
+                "the task names an intent and no issue, so no criterion is its to prove; \
+                 the guards of that intent are asked"
+                    .to_string(),
+            ),
+            Some(served) if served.is_empty() => (
+                GateStatus::Exempt,
+                "the task's issue serves no required criterion".to_string(),
+            ),
+            Some(served) => {
+                let rank = |s: E| match s {
+                    E::Failing | E::Unresolved => 0,
+                    E::Stale => 1,
+                    E::NotRun => 2,
+                    E::NotDerivable => 3,
+                    E::Current => 4,
+                };
+                let worst = served.iter().map(|c| rank(c.state)).min().unwrap_or(4);
+                let status = match worst {
+                    0 => GateStatus::Fail,
+                    1 => GateStatus::Stale,
+                    2 => GateStatus::Queued,
+                    3 => GateStatus::Unknown,
+                    _ => GateStatus::Pass,
+                };
+                let owed: Vec<&str> = served
+                    .iter()
+                    .filter(|c| c.state != E::Current)
+                    .map(|c| c.said.as_str())
+                    .collect();
+                let evidence = if owed.is_empty() {
+                    format!(
+                        "{} served criterion(s) have current evidence: {}",
+                        served.len(),
+                        served
+                            .iter()
+                            .map(|c| c.subject.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                } else {
+                    owed.join("; ")
+                };
+                (status, evidence)
+            }
+        }
+    };
+    if advisory && !matches!(status, GateStatus::Pass | GateStatus::Exempt) {
+        return (
+            GateStatus::Exempt,
+            format!(
+                "reported and not held (intent.completion: advisory); it would be {}: {evidence}",
+                status.as_str()
+            ),
+            Some(status),
+        );
+    }
+    (status, evidence, None)
 }
 
 fn obligation(token: &str, inputs: &DoneInputs<'_>) -> (GateStatus, String, String) {
@@ -585,6 +767,7 @@ mod tests {
         issue: IssueStanding,
         handover: HandoverStanding,
         reachable: bool,
+        served: ServedWork,
     }
 
     impl Fx {
@@ -598,6 +781,7 @@ mod tests {
                 issue: IssueStanding::Unknown("no task".into()),
                 handover: HandoverStanding::Unknown("no store".into()),
                 reachable: true,
+                served: ServedWork::NotAsked("not asked".into()),
             }
         }
         fn answer(&self) -> Vec<DoneQuestion> {
@@ -619,11 +803,148 @@ mod tests {
                     issue: self.issue.clone(),
                     handover: self.handover.clone(),
                     convergence,
+                    served: self.served.clone(),
                 },
             )
         }
         fn by(&self, id: &str) -> DoneQuestion {
             self.answer().into_iter().find(|q| q.id == id).unwrap()
+        }
+    }
+
+    fn item(subject: &str, state: crate::intent::IntentEvidenceState) -> ServedItem {
+        ServedItem {
+            subject: subject.into(),
+            state,
+            said: format!("{subject} is {}", state.as_str()),
+        }
+    }
+
+    /// The two questions about what a task's work serves (ADR 0115): the engine's state
+    /// of each served criterion is translated once, the worst deciding, and nothing is
+    /// judged here.
+    #[test]
+    fn a_served_criterion_is_answered_in_the_engines_state_and_the_worst_decides() {
+        use crate::intent::IntentEvidenceState as E;
+        let ask = |criteria: Option<Vec<ServedItem>>, advisory: bool| {
+            let mut fx = Fx::new();
+            fx.served = ServedWork::Bound {
+                criteria,
+                guards: vec![],
+                advisory,
+            };
+            fx.by("criteria-served")
+        };
+        for (states, status) in [
+            (vec![E::Current, E::Current], GateStatus::Pass),
+            (vec![E::Current, E::NotDerivable], GateStatus::Unknown),
+            (vec![E::NotDerivable, E::NotRun], GateStatus::Queued),
+            (vec![E::NotRun, E::Stale, E::Current], GateStatus::Stale),
+            (vec![E::Stale, E::Failing], GateStatus::Fail),
+            (vec![E::NotRun, E::Unresolved], GateStatus::Fail),
+        ] {
+            let served: Vec<ServedItem> = states
+                .iter()
+                .enumerate()
+                .map(|(n, s)| item(&format!("x#c{n}"), *s))
+                .collect();
+            let q = ask(Some(served.clone()), false);
+            assert_eq!(q.status, status, "{states:?}");
+            assert_eq!(q.withheld, None, "required holds what it finds");
+            assert_eq!(q.source, "intents.binding (ADR 0115)");
+            assert!(!q.evidence.contains("satisfied"), "{}", q.evidence);
+            // every criterion that is not current is named, and one that is, is not blamed
+            for c in &served {
+                assert_eq!(
+                    q.evidence.contains(&c.said),
+                    c.state != E::Current && status != GateStatus::Pass,
+                    "{}",
+                    q.evidence
+                );
+            }
+            // advisory: the same verdict, reported and withheld, and nothing is held
+            let a = ask(Some(served), true);
+            if status == GateStatus::Pass {
+                assert_eq!((a.status, a.withheld), (GateStatus::Pass, None));
+            } else {
+                assert_eq!(a.status, GateStatus::Exempt, "{states:?}");
+                assert_eq!(a.withheld, Some(status));
+                assert!(
+                    a.evidence
+                        .contains(&format!("it would be {}", status.as_str())),
+                    "{}",
+                    a.evidence
+                );
+            }
+        }
+        // a pass says which criteria it read
+        let q = ask(Some(vec![item("x#a", E::Current)]), false);
+        assert!(q
+            .evidence
+            .contains("1 served criterion(s) have current evidence: x#a"));
+        // nothing required served, and a task that names an intent and no issue: exempt
+        let none = ask(Some(vec![]), false);
+        assert_eq!(none.status, GateStatus::Exempt);
+        assert!(none.evidence.contains("serves no required criterion"));
+        let intent_only = ask(None, false);
+        assert_eq!(intent_only.status, GateStatus::Exempt);
+        assert!(intent_only
+            .evidence
+            .contains("names an intent and no issue"));
+    }
+
+    #[test]
+    fn a_violated_guard_fails_and_one_that_is_not_judged_refuses_nothing() {
+        use crate::intent::IntentEvidenceState as E;
+        let ask = |guards: Vec<ServedItem>, advisory: bool| {
+            let mut fx = Fx::new();
+            fx.served = ServedWork::Bound {
+                criteria: Some(vec![]),
+                guards,
+                advisory,
+            };
+            fx.by("guards-hold")
+        };
+        let none = ask(vec![], false);
+        assert_eq!(none.status, GateStatus::Exempt);
+        assert!(none.evidence.contains("declare no guard"));
+        let held = ask(vec![item("x!g", E::Current), item("x!h", E::Stale)], false);
+        assert_eq!(held.status, GateStatus::Pass, "stale is not judged");
+        assert!(held.evidence.contains("x!g is current") && held.evidence.contains("x!h is stale"));
+        let violated = ask(
+            vec![item("x!g", E::Failing), item("x!h", E::Current)],
+            false,
+        );
+        assert_eq!(violated.status, GateStatus::Fail);
+        assert!(violated.evidence.contains("x!g is failing"));
+        assert!(!violated.evidence.contains("x!h"), "{}", violated.evidence);
+        let advisory = ask(vec![item("x!g", E::Failing)], true);
+        assert_eq!(advisory.status, GateStatus::Exempt);
+        assert_eq!(advisory.withheld, Some(GateStatus::Fail));
+    }
+
+    #[test]
+    fn work_that_could_not_be_asked_is_unknown_and_work_not_asked_is_exempt() {
+        for id in ["criteria-served", "guards-hold"] {
+            let mut fx = Fx::new();
+            fx.served = ServedWork::Unknown("the binding was refused: no such issue".into());
+            let q = fx.by(id);
+            assert_eq!(q.status, GateStatus::Unknown, "{id}");
+            assert_eq!(q.evidence, "the binding was refused: no such issue");
+            assert_eq!(
+                q.withheld, None,
+                "nothing was reached, so nothing is withheld"
+            );
+            fx.served = ServedWork::NotAsked("the task is exempt as maintenance: a typo".into());
+            let q = fx.by(id);
+            assert_eq!(q.status, GateStatus::Exempt, "{id}");
+            assert_eq!(q.evidence, "the task is exempt as maintenance: a typo");
+            assert_eq!(q.stage, "validation");
+            assert!(
+                q.remediation.contains("--outcome partial"),
+                "{}",
+                q.remediation
+            );
         }
     }
 
@@ -884,6 +1205,7 @@ mod tests {
                 issue: fx.issue.clone(),
                 handover: fx.handover.clone(),
                 convergence: None,
+                served: fx.served.clone(),
             },
         );
         assert_eq!(q[0].status, GateStatus::Unknown);

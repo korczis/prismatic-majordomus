@@ -336,6 +336,23 @@
               }
             }
           }
+        },
+        "opposition": {
+          "type": "string",
+          "enum": [
+            "off",
+            "required"
+          ],
+          "description": "Whether a critique must have been stamped by `majordomus-cli intent stamp` (ADR 0112). off, or absent: an unstamped critique is a warning of intent validate and keeps authorising work; a stale one refuses the binding. required: an unstamped or stale critique fails intent validate and refuses the binding."
+        },
+        "completion": {
+          "type": "string",
+          "enum": [
+            "off",
+            "advisory",
+            "required"
+          ],
+          "description": "Whether the completion policy holds a task to what its work serves (ADR 0115). off, or absent: the two questions about served criteria and guards are not asked. advisory: they are answered and what would be owed is reported and withheld, refusing nothing. required: a served required criterion without current evidence, or a violated guard, is a question owed, and where verification.completed_means_complete is true it refuses the outcome completed."
         }
       }
     },

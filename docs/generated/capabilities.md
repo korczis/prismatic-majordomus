@@ -33,6 +33,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `integration` | Pull-request integration | experimental | 5 | [`modules/integration.md`](modules/integration.md) |
+| `intent_opposition` | Opposition | behaviorally_verified | 2 | [`modules/intent_opposition.md`](modules/intent_opposition.md) |
 | `intent_realization` | Intent realization | behaviorally_verified | 2 | [`modules/intent_realization.md`](modules/intent_realization.md) |
 | `intents` | Intent | behaviorally_verified | 6 | [`modules/intents.md`](modules/intents.md) |
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
@@ -145,6 +146,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `integration.explain` | `integration` | query | experimental | `majordomus_pull_request_explain` | — | `GET /api/v1/pull-requests/explain` | `majordomus prs explain` | — | required |
 | `integration.prove_dry_run` | `integration` | query | experimental | `majordomus_pull_requests_prove_dry_run` | — | `GET /api/v1/pull-requests/prove-dry-run` | `majordomus prs prove-dry-run` | — | waived (external_dependency) |
 | `integration.queue` | `integration` | query | experimental | `majordomus_pull_requests` | — | `GET /api/v1/pull-requests` | `majordomus prs status` | — | required |
+| `intent_opposition.record` | `intent_opposition` | command | behaviorally_verified | `majordomus_intent_opposition_record` | — | `POST /api/v1/intents/opposition/record` | `majordomus intent stamp` | — | required |
+| `intent_opposition.review` | `intent_opposition` | query | behaviorally_verified | `majordomus_intent_opposition` | — | `GET /api/v1/intents/opposition` | `majordomus intent oppose` | — | required |
 | `intent_realization.explain` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_explain` | — | `GET /api/v1/intents/explain` | `majordomus intent explain` | — | required |
 | `intent_realization.work` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_realization` | — | `GET /api/v1/intents/realization` | `majordomus intent realization` | — | required |
 | `intents.binding` | `intents` | query | behaviorally_verified | `majordomus_intent_binding` | — | `GET /api/v1/intents/binding` | `majordomus intent binding` | — | required |

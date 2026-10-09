@@ -15,6 +15,13 @@
 # policy what unknown costs it. That is the rule the completion-gates validator already
 # follows for the same reason — a gate that reads silence as consent is not a gate.
 
+# mj_ledger_append-writes: opposition.recorded
+#
+# The line above is read by test/cases/33_event_registry.sh, which holds every declared event
+# to something that writes it. No shell writes this one: `majordomus-cli intent stamp` appends
+# it from the Rust executable (capability intent_opposition.record, ADR 0112), and this file
+# is the shell's side of that executable's intent engine, so the declaration lives here.
+
 # mj_binding_mode — `off`, `advisory` or `required`: the policy's `intent.binding`, with
 # anything else (absent, misspelt) read as `off`, which is what a policy that predates the
 # key means. doctor reports a misspelt value; start must not guess a stricter one.
@@ -118,6 +125,7 @@ mj_binding_section() {
             "statement    \(.statement)",
             (.criteria[]? | crit),
             (.invariants[]? | "invariant    \(.)"),
+            (.guards[]? | "guard        \(.id)  \(.standing | gsub("_"; " "))  \(.state)  — \(.invariant)"),
             (if .critique then
                "critique     reviewed at \(.critique.reviewed_at); open blocking: \(
                  if (.critique.open_blocking | length) == 0 then "none"
@@ -126,6 +134,8 @@ mj_binding_section() {
             (if withgap and .gap then
                (.gap.conditions[]? | "gap          \(.criterion) \(.state_text // .state)")
              else empty end) ) ]
+      + [ .reviews[]? | "review       \(.intent)  \(.state)  \(.disposition)\(
+            if (.reviewed_revision // "") != "" then "  stamped \(.reviewed_revision[0:12])" else "" end)" ]
       + [ .notes[]? | "note         \(.)" ]
       + [ .refusals[]? | "refusal      \(.cause)  \(.message)" ]
       + (if (.plan_revision // "") != "" then

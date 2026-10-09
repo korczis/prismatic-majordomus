@@ -1,0 +1,50 @@
+id: finish-reads-what-its-work-serves
+title: A task is not finished as completed while the criteria it served are unmet or a guard it works under is violated
+statement: "When a task finishes with the outcome completed, the completion policy asks the intent engine what stands for the work the task named: each required criterion its issue serves and each guard of the intents it serves. What is not met or is violated is a question owed, named with its evidence state, the run that judged it and the steps that make it current. Where the policy requires it and completed means complete, the finish is refused; a weaker outcome is always available. Finish reads that standing and decides nothing about any intent."
+invariants:
+  - Whether a criterion is met, a guard violated or an intent satisfied is decided by the intent engine alone; completion translates the engine's word once and computes none of its own
+  - A finish, with any outcome, writes no intent record and stores no intent stage, verdict, criterion state or evidence state, in any file or ledger event
+  - The questions are about the criteria the task's issue serves and never about whether an intent is satisfied; neither their text nor their evidence says so
+  - A task that names nothing, or is started under an exemption, is held to no criterion and no guard; a task that names only an intent is held to that intent's guards and to no criterion
+  - A binding that cannot be read, or that is refused before it reaches an intent, is unknown; it is never exempt and never a pass
+  - A finish that is refused completed can always finish partial, and the refusal says so
+milestones:
+  - finish-reads-what-its-work-serves
+satisfaction:
+  - id: completed-waits-for-served-criteria
+    criterion: Where the policy requires it, a task whose issue serves a required criterion without current evidence is refused the outcome completed, the refusal naming the criterion, its state and the steps that make its evidence current, and is accepted once a recorded run on the committed tree is in the ledger; a criterion the issue does not serve holds nothing back
+    evidence: test
+    ref: test/cases/966_a_finish_reads_what_its_work_serves.sh
+  - id: a-violated-guard-refuses-completed
+    criterion: Where the policy requires it, a task under an intent whose guard is violated is refused completed whatever its criteria say, and a guard that is not judged refuses nothing
+    evidence: test
+    ref: test/cases/966_a_finish_reads_what_its_work_serves.sh
+  - id: a-scoped-finish-stays-open
+    criterion: The same task finishes partial while a question is owed; an optional criterion, a task under an exemption, a task that names nothing and a task that names only an intent owe no criterion
+    evidence: test
+    ref: test/cases/966_a_finish_reads_what_its_work_serves.sh
+  - id: advisory-reports-and-refuses-nothing
+    criterion: Where the policy is advisory, both questions say what stands in the same words and refuse nothing
+    evidence: test
+    ref: test/cases/966_a_finish_reads_what_its_work_serves.sh
+  - id: finish-writes-nothing-about-an-intent
+    criterion: After a refused and after an accepted finish every intent record is byte for byte what it was and intent show answers as it did
+    evidence: test
+    ref: test/cases/966_a_finish_reads_what_its_work_serves.sh
+  - id: the-answer-is-the-engines
+    criterion: The completion answer carries the criterion states and guard standings intents.binding answers, the same through the executable run of gates.completion, HTTP and MCP, and a binding that cannot be read or reaches nothing is unknown and never a pass
+    evidence: test
+    ref: apps/majordomus-cli/tests/completion_intent.rs
+governance:
+  - adr:adr-0107
+  - adr:adr-0111
+  - adr:adr-0113
+  - rule:project.completion-never-decides-satisfaction
+  - rule:project.derived-once
+non_goals:
+  - Recording criterion evidence as a side effect of finish; the run that produced it records it, and the refusal names that step
+  - Asking at finish whether the review of the plan is current; start asks that
+  - Holding a repository with no CI model to these questions; the completion gates are not judged there at all, and the decision record says so
+  - Deciding when a milestone is complete; the plan derives that
+created_at: 2026-10-08
+updated_at: 2026-10-08

@@ -99,6 +99,10 @@ pub struct StageDecl {
 /// assert_eq!(QuestionSource::parse("release:impact").unwrap(), QuestionSource::ReleaseImpact);
 /// assert!(QuestionSource::parse("magic").is_err(), "a source nothing answers is refused");
 /// assert_eq!(QuestionSource::Elsewhere("x y".into()).to_string(), "elsewhere:x y");
+/// // the intent engine is asked for one of two things, and for nothing else
+/// assert_eq!(QuestionSource::parse("intent:criteria").unwrap().to_string(), "intent:criteria");
+/// assert_eq!(QuestionSource::parse("intent: guards").unwrap(), QuestionSource::Intent("guards".into()));
+/// assert!(QuestionSource::parse("intent:verdict").unwrap_err().contains("intent:criteria, intent:guards"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", content = "name", rename_all = "kebab-case")]
@@ -120,6 +124,10 @@ pub enum QuestionSource {
     /// `convergence.report`: whether any branch, worktree or pull request is held where its
     /// work can be lost.
     Convergence,
+    /// What stands for the work the task named, as `intents.binding` answers it (ADR 0115):
+    /// `criteria` — the required criteria its issue serves — or `guards` — the guards of the
+    /// intents it serves. Read, never judged here.
+    Intent(String),
     /// Nothing reachable from the report; the command that answers it.
     Elsewhere(String),
 }
@@ -150,6 +158,15 @@ impl QuestionSource {
         if let Some(rest) = text.strip_prefix("elsewhere:") {
             return Self::named(rest, "elsewhere").map(Self::Elsewhere);
         }
+        if let Some(rest) = text.strip_prefix("intent:") {
+            return Self::named(rest, "intent").and_then(|aspect| match aspect.as_str() {
+                "criteria" | "guards" => Ok(Self::Intent(aspect)),
+                other => Err(format!(
+                    "source 'intent:{other}' asks the intent engine for something it does not \
+                     answer here (intent:criteria, intent:guards)"
+                )),
+            });
+        }
         match text {
             "gates" => Ok(Self::Gates),
             "change:test-path" => Ok(Self::ChangeTestPath),
@@ -160,7 +177,8 @@ impl QuestionSource {
             other => Err(format!(
                 "source '{other}' is not one this executable answers (obligation:<token>, \
                  gates, gate:<id>, change:test-path, release:impact, task:issue, \
-                 session:handover, convergence, elsewhere:<command>)"
+                 session:handover, convergence, intent:criteria, intent:guards, \
+                 elsewhere:<command>)"
             )),
         }
     }
@@ -185,6 +203,7 @@ impl std::fmt::Display for QuestionSource {
             Self::TaskIssue => write!(f, "task:issue"),
             Self::SessionHandover => write!(f, "session:handover"),
             Self::Convergence => write!(f, "convergence"),
+            Self::Intent(a) => write!(f, "intent:{a}"),
             Self::Elsewhere(c) => write!(f, "elsewhere:{c}"),
         }
     }
@@ -636,6 +655,29 @@ mod tests {
             "an absolute source: {}",
             p.source
         );
+    }
+
+    /// The intent engine is asked for one of two things; a third is refused by name, and
+    /// the source prints as it is written.
+    #[test]
+    fn the_intent_source_names_one_of_two_aspects() {
+        for aspect in ["criteria", "guards"] {
+            let parsed = QuestionSource::parse(&format!("intent: {aspect} ")).unwrap();
+            assert_eq!(parsed, QuestionSource::Intent(aspect.into()));
+            assert_eq!(parsed.to_string(), format!("intent:{aspect}"));
+        }
+        let refused = QuestionSource::parse("intent:verdict").unwrap_err();
+        assert!(refused.contains("'intent:verdict'"), "{refused}");
+        assert!(
+            refused.contains("intent:criteria, intent:guards"),
+            "{refused}"
+        );
+        assert!(QuestionSource::parse("intent:")
+            .unwrap_err()
+            .contains("names nothing"));
+        assert!(QuestionSource::parse("magic")
+            .unwrap_err()
+            .contains("intent:criteria, intent:guards"));
     }
 
     #[test]

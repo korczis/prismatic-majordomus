@@ -1,0 +1,35 @@
+id: I2061
+milestone: finish-reads-what-its-work-serves
+title: The rule, the claim and the documents say what finish asks
+slug: the-documents-say-what-finish-asks
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - finish-reads-what-its-work-serves#finish-writes-nothing-about-an-intent
+objective: "Add version 3 of rule project.completion-never-decides-satisfaction, whose required behaviour names the two questions as readings and keeps the prohibition, proved by case 895 and case 966. Add the claim with its page. Change the sentence in site/data/manifesto.toml that says finish does not ask the intent, and leave the sentences that say finish does not ask whether an intent is satisfied, which stay true. Say twenty-one questions where nineteen is written (docs/CLI.md, the comments of lib/gates.sh), add intent:<aspect> to the header of share/completion.yaml and to the description of gates.policy, name the new refusal in docs/GUIDE.md, and regenerate."
+why: "The site says finish does not ask the intent, and the count of questions is written in three places."
+current_state: "Rule v2 names case 895 only; no claim says what finish reads; the manifesto says finish does not ask the intent."
+desired_state: "A reader of the rule, the claim and the guide finds one account of what finish reads and what it never decides."
+scope:
+  - .ai/repo/rules/project
+  - docs
+  - site
+  - lib/gates.sh
+  - share/completion.yaml
+  - .ai/repo/features
+  - apps/majordomus-cli/src/capability/builtin/gates.rs
+  - test/cases
+depends_on: [I2057]
+acceptance_criteria:
+  - Rule v3 exists and names both cases; v2 is superseded as the repository does it
+  - The claim is guaranteed, its page has the five sections and case 966 names it back
+  - Case 892 holds; the two sentences that say finish does not ask whether an intent is satisfied are still there
+validation:
+  - bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says
+  - scripts/ci/claim-proof-check --strict
+  - scripts/ci/rule-proof-check
+evidence_required:
+  - the_documents_say_what_finish_asks
+created_at: 2026-10-08
+updated_at: 2026-10-08

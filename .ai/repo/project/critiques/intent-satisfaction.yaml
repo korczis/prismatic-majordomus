@@ -1,0 +1,204 @@
+intent: intent-satisfaction
+reviewed_at: "503146f66b"
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records and the two requirement documents and none of the author's reasoning; same model and operator session as the author. Disposition given: accept with required changes; findings 1, 2, 3, 4, 5, 7, 12 and 14 were required. The plan was rewritten after it."
+reviewed_revision: cfbc9c5bd03330fe8428d521976a453e7132e39bbdc4ae0d3423f054e3775646
+reviewed_with: "majordomus-cli 0.15.0"
+findings:
+  - id: stale-invariant-flips-on-any-commit
+    class: regression_risk
+    subject: I2022
+    finding: "No issue serves an invariant, so its evidence has no declared inputs and goes stale after any change; with stale counted as violated, every satisfied intent with an evidenced invariant would turn unsatisfied on the next unrelated commit."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Only a failing run violates a guard; stale, never run and unresolved are named as not judged."
+  - id: mixed-list-breaks-allowlist-generator
+    class: unproven_assumption
+    subject: I2022
+    finding: "The allowlist generator emits either the scalar pattern or the object walk for a list, so a list holding strings and records would leave the record keys unknown."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Guards are a key of their own, a list of records; invariants stay strings and no reader or generator changes."
+  - id: review-hash-blind-to-new-keys
+    class: invariant_conflict
+    subject: I2021
+    finding: "The review revision and the plan revision hash criterion text, evidence and reference and the invariant strings; flipping a criterion to optional or changing a guard would leave a stamped review standing."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2021
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Both hashes take optional and guards in where a record declares them, so existing stamps keep their revision."
+  - id: verdict-reason-shape-pinned
+    class: regression_risk
+    subject: I2022
+    finding: "A verdict reason is criterion, evidence and state, compared by exact JSON in tests and read by the drift findings; an invariant reason would break them or put a guard's id in a field named criterion."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Failing guards are carried in verdict.guards, a field of its own that is absent when empty."
+  - id: stage-and-verdict-are-two-derivations
+    class: insufficient_work
+    subject: I2021
+    finding: "The stage computes whether every criterion is met separately from the verdict, and the plan did not say how the counts change."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2021
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The stage reads the verdict; met is over required criteria and the optional count is carried apart."
+  - id: all-optional-should-be-a-finding
+    class: invariant_conflict
+    subject: intent-satisfaction#optional-criterion-does-not-block
+    finding: "An intent with no criterion is already refused, and ADR 0107 defines unknown only for unsettleable kinds or none declared."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2021
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "An intent with no required criterion is the failure intent_without_required_criterion, and ADR 0113 states how that extends ADR 0107's unknown."
+  - id: optional-vs-coverage-and-gap
+    class: missed_requirement
+    subject: I2021
+    finding: "Coverage fails every uncovered criterion and a gap must answer every criterion; the plan was silent on optional ones."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2021
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "An uncovered optional criterion is a warning and a gap still answers it, each with a test."
+  - id: invariant-id-namespace
+    class: unproven_assumption
+    subject: I2022
+    finding: "serves, gap conditions and critique subjects resolve against criteria only; whether a guard shares that namespace was undefined."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A guard id may not repeat a criterion's, and an issue may not serve a guard."
+  - id: policy-version-is-invented
+    class: unproven_assumption
+    subject: intent-satisfaction#evaluation-is-explained
+    finding: "The judgement carries a state, the changed inputs and a detail, and no rule or version constant exists, so a rule applied would be a new table in the intent engine."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "No rule name is invented; the proof word the criterion already carries names the judgement."
+  - id: claim-evaluation-undefined
+    class: insufficient_work
+    subject: I2020
+    finding: "A claim's standing copies state and proof although the claim's proof already has its execution, the changed inputs and a detail."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A claim's evaluation is its proof's execution, changed inputs and detail, and considered means the latest run only."
+  - id: evaluation-partly-restates
+    class: unnecessary_work
+    subject: I2020
+    finding: "State, proof and reproduce already exist on the criterion; only the run and what changed are new."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "One optional evaluation object with exactly those facts, absent when nothing was judged."
+  - id: surfaces-out-of-issue-scope
+    class: surface_missing
+    subject: I2022
+    finding: "The binding, the opposition and the briefing print or hash invariants and were in no issue's scope, and the evidence standing ignores invariants."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Those files are in scope and the evidence standing takes guard states in; the Cockpit page is named a non-goal, as the Cockpit milestone's."
+  - id: generated-projections-unscoped
+    class: delivery_verification
+    subject: I2020
+    finding: "The criterion's schema is projected into the generated OpenAPI, registry and site data, which no issue scoped."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "docs and site are in each issue's scope and regeneration in its validation."
+  - id: adr-lands-last
+    class: dependency_order
+    subject: I2022
+    finding: "The intent cites adr-0113, which was scoped to the last issue, so the first two would implement decisions before they were recorded."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "ADR 0113 is the first deliverable of I2020; the milestone lands as one pull request."
+  - id: coverage-needs-named-unit-tests
+    class: delivery_verification
+    subject: I2020
+    finding: "The integration tests drive the built binary and the case is shell; neither covers the engine in process as the coverage gate requires."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Each issue's acceptance names its in-process unit tests."
+  - id: requirement-tests-missing
+    class: missed_requirement
+    subject: intent-satisfaction#evaluation-is-explained
+    finding: "The requirement asks for repeat evaluation, restored-current evidence, a revision change, the no-required-criteria edge and a failing invariant."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2020
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Each is an acceptance criterion of the issue it belongs to."
+  - id: claims-and-docs-unplanned
+    class: insufficient_work
+    subject: I2022
+    finding: "No claim was planned and case 892 holds intent prose to the claims matrix."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The claims and the prose are in I2022."
+  - id: no-migration-decision
+    class: insufficient_work
+    subject: I2022
+    finding: "Existing invariants could name evidence and the plan converted none, so the feature would ship used only by fixtures."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2022
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "intent-planning guards that the plan engines stay identical with the case that proves it."

@@ -90,6 +90,9 @@ pub struct IntentOutline {
     /// The criteria its recorded gap observed already satisfied, with observations behind
     /// them (`intent_review::observed_satisfied`): no work is asked of these.
     pub observed_satisfied: Vec<String>,
+    /// The criteria the intent declares optional: one of these with no work is a warning,
+    /// where a required one is a failure (ADR 0113).
+    pub optional: Vec<String>,
 }
 
 /// How well a criterion is carried by the plan: whether work exists for it, whether that work
@@ -517,6 +520,13 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
             };
             match strength {
                 // Only once work exists under the intent: see `intent_not_planned` above.
+                // an optional criterion holds nothing back, so work for it is not owed
+                CoverageStrength::Uncovered if planned && intent.optional.contains(cid) => f.push(
+                    WARN,
+                    "optional_criterion_uncovered",
+                    &subject,
+                    "no live issue serves it; it is optional, so nothing is refused".into(),
+                ),
                 CoverageStrength::Uncovered if planned => f.push(
                     FAIL,
                     "criterion_uncovered",
@@ -713,6 +723,21 @@ mod tests {
         assert_eq!(
             c.criterion("x", "b").unwrap().strength,
             CoverageStrength::Uncovered
+        );
+    }
+
+    /// ADR 0113: an optional criterion holds nothing back, so work for it is not owed.
+    #[test]
+    fn an_optional_criterion_nothing_serves_is_a_warning() {
+        let mut x = intent("x", &["a", "b"], &["m1"]);
+        x.optional = vec!["b".into()];
+        let c = coverage(&[x], &plan(vec![issue("I1", "m1", &["x#a"], &["src"], 1)]));
+        assert_eq!(codes(&c), [("optional_criterion_uncovered", "x#b")]);
+        assert_eq!(c.failures(), 0, "a warning refuses nothing");
+        assert_eq!(
+            c.criterion("x", "b").unwrap().strength,
+            CoverageStrength::Uncovered,
+            "it is still uncovered, and said to be"
         );
     }
 

@@ -771,6 +771,24 @@
         "status": "query"
       },
       {
+        "id": "capability:intent_opposition.record",
+        "kind": "capability",
+        "label": "intent_opposition.record",
+        "summary": "Stamp the review of an intent's plan with the plan it was run over",
+        "route": "/cockpit/capabilities/intent_opposition.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:intent_opposition.review",
+        "kind": "capability",
+        "label": "intent_opposition.review",
+        "summary": "The opposition to one intent's plan, and the brief a reviewer works from",
+        "route": "/cockpit/capabilities/intent_opposition.review",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:intent_realization.explain",
         "kind": "capability",
         "label": "intent_realization.explain",
@@ -2136,6 +2154,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "kind": "file",
+        "label": "intent_opposition.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
         "kind": "file",
         "label": "intent_realization.rs",
@@ -2568,6 +2594,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "file",
+        "label": "done.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/gates/done.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/generate.rs",
         "kind": "file",
         "label": "generate.rs",
@@ -2717,6 +2751,14 @@
         "label": "intent_binding.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/intent_binding.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/intent_opposition.rs",
+        "kind": "file",
+        "label": "intent_opposition.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_opposition.rs",
         "external": true
       },
       {
@@ -3136,6 +3178,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/cockpit_intents.rs",
+        "kind": "file",
+        "label": "cockpit_intents.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/cockpit_intents.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/executor.rs",
         "kind": "file",
         "label": "executor.rs",
@@ -3160,11 +3210,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/tests/intent_realization.rs",
+        "id": "file:apps/majordomus-cli/tests/intent_satisfaction.rs",
         "kind": "file",
-        "label": "intent_realization.rs",
+        "label": "intent_satisfaction.rs",
         "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/intent_realization.rs",
+        "source": "apps/majordomus-cli/tests/intent_satisfaction.rs",
         "external": true
       },
       {
@@ -3629,6 +3679,14 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
+        "external": true
+      },
+      {
+        "id": "file:share/completion.yaml",
+        "kind": "file",
+        "label": "completion.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/completion.yaml",
         "external": true
       },
       {
@@ -6351,6 +6409,93 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0112",
+        "kind": "adr",
+        "label": "adr-0112",
+        "summary": "The opposition to a plan is executed by the tool, and a review authorises only the plan it reviewed",
+        "route": "/cockpit/objects/adr/adr-0112",
+        "source": ".ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-07",
+          "related": [
+            "file:.ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent_opposition.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+            "file:.ai/repo/project/intents/intent-opposition.yaml",
+            "test:test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+            "test:test/cases/964_a_review_of_another_plan_authorises_nothing.sh"
+          ],
+          "tags": [
+            "intent",
+            "planning",
+            "critique",
+            "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0113",
+        "kind": "adr",
+        "label": "adr-0113",
+        "summary": "Satisfaction is explained by the run that was judged, an optional criterion holds nothing back, and a failing guard keeps an intent unsatisfied",
+        "route": "/cockpit/objects/adr/adr-0113",
+        "source": ".ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-08",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+            "file:.ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+            "rule:project.derived-once",
+            "rule:project.completion-never-decides-satisfaction",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:.ai/repo/project/intents/intent-satisfaction.yaml",
+            "test:test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
+          ],
+          "tags": [
+            "intent",
+            "evidence",
+            "satisfaction",
+            "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0115",
+        "kind": "adr",
+        "label": "adr-0115",
+        "summary": "A finish reads what its work serves, reports it in every mode, and refuses only where the policy has chosen to",
+        "route": "/cockpit/objects/adr/adr-0115",
+        "source": ".ai/repo/adrs/0115-a-finish-reads-what-its-work-serves-and-a-policy-says-whether-that-refuses.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-08",
+          "related": [
+            "file:.ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+            "file:.ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+            "file:.ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+            "rule:project.completion-never-decides-satisfaction",
+            "rule:project.derived-once",
+            "file:share/completion.yaml",
+            "file:apps/majordomus-cli/src/gates/done.rs",
+            "file:.ai/repo/project/intents/finish-reads-what-its-work-serves.yaml",
+            "test:test/cases/966_a_finish_reads_what_its_work_serves.sh"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -8242,6 +8387,21 @@
         }
       },
       {
+        "id": "majordomus://claim/finish-reads-what-its-work-serves",
+        "kind": "claim",
+        "label": "finish-reads-what-its-work-serves",
+        "summary": "A finish asks the intent engine what stands for the work the task named — the required criteria its issue serves and the guards of the intents it serves — reports it in every mode, refuses `completed` on it only where the policy holds it, and writes nothing about any intent",
+        "route": "/cockpit/objects/claim/finish-reads-what-its-work-serves",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/gates/done.rs",
+          "responsibility": "finish",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/966_a_finish_reads_what_its_work_serves.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/finish-refusal-is-recorded",
         "kind": "claim",
         "label": "finish-refusal-is-recorded",
@@ -8458,16 +8618,15 @@
         "id": "majordomus://claim/intent-cockpit-pages",
         "kind": "claim",
         "label": "intent-cockpit-pages",
-        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "summary": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
         "route": "/cockpit/objects/claim/intent-cockpit-pages",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
           "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
           "responsibility": "plan",
           "source": "docs/COCKPIT.md",
-          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+          "test": "apps/majordomus-cli/tests/cockpit_intents.rs"
         }
       },
       {
@@ -8500,6 +8659,38 @@
           "responsibility": "plan",
           "source": "docs/PLANNING.md",
           "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-evaluation-explained",
+        "kind": "claim",
+        "label": "intent-evaluation-explained",
+        "summary": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+        "route": "/cockpit/objects/claim/intent-evaluation-explained",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "apps/majordomus-cli/tests/intent_satisfaction.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-guard-is-judged",
+        "kind": "claim",
+        "label": "intent-guard-is-judged",
+        "summary": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+        "route": "/cockpit/objects/claim/intent-guard-is-judged",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
         }
       },
       {
@@ -12690,6 +12881,18 @@
         }
       },
       {
+        "id": "majordomus://critique/finish-reads-what-its-work-serves",
+        "kind": "critique",
+        "label": "finish-reads-what-its-work-serves",
+        "summary": "finish-reads-what-its-work-serves",
+        "route": "/cockpit/objects/critique/finish-reads-what-its-work-serves",
+        "source": ".ai/repo/project/critiques/finish-reads-what-its-work-serves.yaml",
+        "facts": {
+          "intent": "finish-reads-what-its-work-serves",
+          "reviewed_at": "47f018fd3e"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-bound-work",
         "kind": "critique",
         "label": "intent-bound-work",
@@ -12698,7 +12901,37 @@
         "source": ".ai/repo/project/critiques/intent-bound-work.yaml",
         "facts": {
           "intent": "intent-bound-work",
-          "reviewed_at": "f7b9d6d4c8"
+          "reviewed_at": "4f4136ea60",
+          "reviewed_revision": "e62d18758a90f48b81019f36c8b9fd86721fb17140b672231da22ff217d49f00",
+          "reviewed_with": "majordomus-cli 0.15.0"
+        }
+      },
+      {
+        "id": "majordomus://critique/intent-in-the-cockpit",
+        "kind": "critique",
+        "label": "intent-in-the-cockpit",
+        "summary": "intent-in-the-cockpit",
+        "route": "/cockpit/objects/critique/intent-in-the-cockpit",
+        "source": ".ai/repo/project/critiques/intent-in-the-cockpit.yaml",
+        "facts": {
+          "intent": "intent-in-the-cockpit",
+          "reviewed_at": "8993bbf173",
+          "reviewed_revision": "b6b1c2fd0bcc803ddd52ba7c462813b10e2673ce836b9f412ab50eed3f5123ab",
+          "reviewed_with": "majordomus-cli 0.15.0"
+        }
+      },
+      {
+        "id": "majordomus://critique/intent-opposition",
+        "kind": "critique",
+        "label": "intent-opposition",
+        "summary": "intent-opposition",
+        "route": "/cockpit/objects/critique/intent-opposition",
+        "source": ".ai/repo/project/critiques/intent-opposition.yaml",
+        "facts": {
+          "intent": "intent-opposition",
+          "reviewed_at": "4f4136ea60",
+          "reviewed_revision": "329293e23aab801a5d739392db58bbcaea3089d0a3333e13eb38b14eee61d5d6",
+          "reviewed_with": "majordomus-cli 0.15.0"
         }
       },
       {
@@ -12710,7 +12943,23 @@
         "source": ".ai/repo/project/critiques/intent-planning.yaml",
         "facts": {
           "intent": "intent-planning",
-          "reviewed_at": "1d11762cb"
+          "reviewed_at": "503146f66b",
+          "reviewed_revision": "94c79e9134373c82795bbfe5f77c0a3696528db827276ae57e7142484c0efc2b",
+          "reviewed_with": "majordomus-cli 0.15.0"
+        }
+      },
+      {
+        "id": "majordomus://critique/intent-satisfaction",
+        "kind": "critique",
+        "label": "intent-satisfaction",
+        "summary": "intent-satisfaction",
+        "route": "/cockpit/objects/critique/intent-satisfaction",
+        "source": ".ai/repo/project/critiques/intent-satisfaction.yaml",
+        "facts": {
+          "intent": "intent-satisfaction",
+          "reviewed_at": "503146f66b",
+          "reviewed_revision": "cfbc9c5bd03330fe8428d521976a453e7132e39bbdc4ae0d3423f054e3775646",
+          "reviewed_with": "majordomus-cli 0.15.0"
         }
       },
       {
@@ -14120,6 +14369,14 @@
         "source": "docs/claims/finish-contract.md"
       },
       {
+        "id": "majordomus://document/docs/claims/finish-reads-what-its-work-serves.md",
+        "kind": "document",
+        "label": "docs/claims/finish-reads-what-its-work-serves.md",
+        "summary": "A finish asks the intent engine what stands for the work the task named — the required criteria its issue serves and the guards of the intents it serves — reports it in every mode, refuses `completed` on it only where the policy holds it, and writes nothing about any intent",
+        "route": "/cockpit/objects/document/docs-claims-finish-reads-what-its-work-serves-md",
+        "source": "docs/claims/finish-reads-what-its-work-serves.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/finish-refusal-is-recorded.md",
         "kind": "document",
         "label": "docs/claims/finish-refusal-is-recorded.md",
@@ -14227,7 +14484,7 @@
         "id": "majordomus://document/docs/claims/intent-cockpit-pages.md",
         "kind": "document",
         "label": "docs/claims/intent-cockpit-pages.md",
-        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "summary": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
         "route": "/cockpit/objects/document/docs-claims-intent-cockpit-pages-md",
         "source": "docs/claims/intent-cockpit-pages.md"
       },
@@ -14246,6 +14503,22 @@
         "summary": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
         "route": "/cockpit/objects/document/docs-claims-intent-criteria-covered-md",
         "source": "docs/claims/intent-criteria-covered.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-evaluation-explained.md",
+        "kind": "document",
+        "label": "docs/claims/intent-evaluation-explained.md",
+        "summary": "A criterion whose evidence was judged carries the run that decided it and what changed since, and a criterion declared optional holds neither the verdict nor the satisfied stage back",
+        "route": "/cockpit/objects/document/docs-claims-intent-evaluation-explained-md",
+        "source": "docs/claims/intent-evaluation-explained.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-guard-is-judged.md",
+        "kind": "document",
+        "label": "docs/claims/intent-guard-is-judged.md",
+        "summary": "An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say",
+        "route": "/cockpit/objects/document/docs-claims-intent-guard-is-judged-md",
+        "source": "docs/claims/intent-guard-is-judged.md"
       },
       {
         "id": "majordomus://document/docs/claims/intent-in-session-context.md",
@@ -17186,6 +17459,24 @@
         }
       },
       {
+        "id": "majordomus://gap/finish-reads-what-its-work-serves",
+        "kind": "gap",
+        "label": "finish-reads-what-its-work-serves",
+        "summary": "finish-reads-what-its-work-serves",
+        "route": "/cockpit/objects/gap/finish-reads-what-its-work-serves",
+        "source": ".ai/repo/project/gaps/finish-reads-what-its-work-serves.yaml",
+        "facts": {
+          "intent": "finish-reads-what-its-work-serves",
+          "observed_at": "47f018fd3e",
+          "recorded_at": "2026-10-08",
+          "recorded_by": "claude-code (session fcbeae95; first-hand read of gates/policy.rs, gates/done.rs and capability/builtin/gates.rs on pull request 821, and a read-only survey of both branches by a subagent)",
+          "risks": [
+            "The completion gates are skipped entirely in a repository without a CI model",
+            "A squash merge puts the commit a run was recorded at outside history, and its evidence then reads stale"
+          ]
+        }
+      },
+      {
         "id": "majordomus://gap/intent-bound-work",
         "kind": "gap",
         "label": "intent-bound-work",
@@ -17197,6 +17488,39 @@
           "observed_at": "f7b9d6d4c8",
           "recorded_at": "2026-10-07",
           "recorded_by": "claude-code (session fcbeae95, primary checkout; three read-only audit agents over int/batch-intent)"
+        }
+      },
+      {
+        "id": "majordomus://gap/intent-in-the-cockpit",
+        "kind": "gap",
+        "label": "intent-in-the-cockpit",
+        "summary": "intent-in-the-cockpit",
+        "route": "/cockpit/objects/gap/intent-in-the-cockpit",
+        "source": ".ai/repo/project/gaps/intent-in-the-cockpit.yaml",
+        "facts": {
+          "intent": "intent-in-the-cockpit",
+          "observed_at": "8993bbf173",
+          "recorded_at": "2026-10-08",
+          "recorded_by": "claude-code (session fcbeae95; first-hand read of cockpit/intents.rs and an earlier read-only audit of the Cockpit's conventions)",
+          "risks": [
+            "The Cockpit may not read the index and may not derive; every new fact needs a capability that already answers it",
+            "Asking a second capability per page costs a second derivation of the intent model",
+            "The word for a guard's standing is worked out by the command line and by the briefing script, each for itself"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://gap/intent-opposition",
+        "kind": "gap",
+        "label": "intent-opposition",
+        "summary": "intent-opposition",
+        "route": "/cockpit/objects/gap/intent-opposition",
+        "source": ".ai/repo/project/gaps/intent-opposition.yaml",
+        "facts": {
+          "intent": "intent-opposition",
+          "observed_at": "4f4136ea60",
+          "recorded_at": "2026-10-07",
+          "recorded_by": "claude-code (session fcbeae95; a read-only audit agent over int/batch-intent, then first-hand reads of intent_review.rs and intent.rs)"
         }
       },
       {
@@ -17214,6 +17538,25 @@
           "risks": [
             "Adding a finding to plan.rs alone would fork the two plan engines (observation engines-held-identical); coverage must live in the intent engine",
             "An uncovered-criterion failure makes an intent declared ahead of its issues invalid, including intent-lifecycle, whose issue is authored in the same change"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://gap/intent-satisfaction",
+        "kind": "gap",
+        "label": "intent-satisfaction",
+        "summary": "intent-satisfaction",
+        "route": "/cockpit/objects/gap/intent-satisfaction",
+        "source": ".ai/repo/project/gaps/intent-satisfaction.yaml",
+        "facts": {
+          "intent": "intent-satisfaction",
+          "observed_at": "503146f66b",
+          "recorded_at": "2026-10-08",
+          "recorded_by": "claude-code (session fcbeae95; a read-only audit agent over int/batch-intent and first-hand reads of intent.rs and evidence/freshness.rs)",
+          "risks": [
+            "IntentView.invariants is read as a list of strings by the binding, the opposition, the briefing and the Cockpit; its shape must not change under them",
+            "The shell flattener and the awk plan engine read intent records only as far as their milestones, but the allowlist and the schema must admit both invariant forms",
+            "A stored reason would be a second copy of the evidence; the evaluation must be derived with the state it explains"
           ]
         }
       },
@@ -17575,6 +17918,42 @@
         "source": "lib/watch.sh"
       },
       {
+        "id": "majordomus://intent/finish-reads-what-its-work-serves",
+        "kind": "intent",
+        "label": "finish-reads-what-its-work-serves",
+        "summary": "A task is not finished as completed while the criteria it served are unmet or a guard it works under is violated",
+        "route": "/cockpit/objects/intent/finish-reads-what-its-work-serves",
+        "source": ".ai/repo/project/intents/finish-reads-what-its-work-serves.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "governance": [
+            "adr:adr-0107",
+            "adr:adr-0111",
+            "adr:adr-0113",
+            "rule:project.completion-never-decides-satisfaction",
+            "rule:project.derived-once"
+          ],
+          "invariants": [
+            "Whether a criterion is met, a guard violated or an intent satisfied is decided by the intent engine alone; completion translates the engine's word once and computes none of its own",
+            "A finish, with any outcome, writes no intent record and stores no intent stage, verdict, criterion state or evidence state, in any file or ledger event",
+            "The questions are about the criteria the task's issue serves and never about whether an intent is satisfied; neither their text nor their evidence says so",
+            "A task that names nothing, or is started under an exemption, is held to no criterion and no guard; a task that names only an intent is held to that intent's guards and to no criterion",
+            "A binding that cannot be read, or that is refused before it reaches an intent, is unknown; it is never exempt and never a pass",
+            "A finish that is refused completed can always finish partial, and the refusal says so"
+          ],
+          "milestones": [
+            "finish-reads-what-its-work-serves"
+          ],
+          "non_goals": [
+            "Recording criterion evidence as a side effect of finish; the run that produced it records it, and the refusal names that step",
+            "Asking at finish whether the review of the plan is current; start asks that",
+            "Holding a repository with no CI model to these questions; the completion gates are not judged there at all, and the decision record says so",
+            "Deciding when a milestone is complete; the plan derives that"
+          ],
+          "updated_at": "2026-10-08"
+        }
+      },
+      {
         "id": "majordomus://intent/intent-bound-work",
         "kind": "intent",
         "label": "intent-bound-work",
@@ -17595,6 +17974,39 @@
             "intent-bound-work"
           ],
           "updated_at": "2026-10-07"
+        }
+      },
+      {
+        "id": "majordomus://intent/intent-in-the-cockpit",
+        "kind": "intent",
+        "label": "intent-in-the-cockpit",
+        "summary": "A person reading the Cockpit sees why an intent stands where it does, without opening a record",
+        "route": "/cockpit/objects/intent/intent-in-the-cockpit",
+        "source": ".ai/repo/project/intents/intent-in-the-cockpit.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "governance": [
+            "rule:project.derived-once",
+            "adr:adr-0107",
+            "adr:adr-0112",
+            "adr:adr-0113"
+          ],
+          "invariants": [
+            "The Cockpit derives no stage, verdict, guard standing, disposition, review state or evidence state; it renders the word a capability answered and chooses only the colour it is read in",
+            "An accepting disposition is never drawn as healthy unless the review it belongs to is current",
+            "No page reads the index directly, and no figure is shown that a capability did not answer",
+            "No control on these pages marks a criterion, a guard or an intent satisfied",
+            "A status is never told by colour alone; every badge carries its word"
+          ],
+          "milestones": [
+            "intent-in-the-cockpit"
+          ],
+          "non_goals": [
+            "Showing how an intent's plan is projected to GitHub; that is the reconciliation milestone",
+            "Running or stamping a review from the page; the page reads",
+            "A graph of the plan; the plan pages are another pull request's"
+          ],
+          "updated_at": "2026-10-08"
         }
       },
       {
@@ -17629,6 +18041,41 @@
         }
       },
       {
+        "id": "majordomus://intent/intent-opposition",
+        "kind": "intent",
+        "label": "intent-opposition",
+        "summary": "The opposition to a plan is executed by the tool, names the plan it reviewed, and stops authorising work when that plan changes",
+        "route": "/cockpit/objects/intent/intent-opposition",
+        "source": ".ai/repo/project/intents/intent-opposition.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "adr:adr-0073",
+            "adr:adr-0070",
+            "adr:adr-0111",
+            "adr:adr-0112"
+          ],
+          "invariants": [
+            "The opposition's verdict over what the records can decide is deterministic and needs no provider, model or network; an advisor adds findings and never replaces a check",
+            "One critique record per intent remains the only record of a review, with git as its history; it stores what a reviewer found and how each finding was resolved, and the stamp of what was reviewed",
+            "No structural finding and no disposition is stored: both are derived on every read by one function that calls the coverage, the plan findings and the gap review and re-derives none of them",
+            "The stamp is written by one declared writing capability with a ledger event; reading capabilities stay read-only, and a seal is evidence of tampering, never proof of execution",
+            "A critique recorded before this intent keeps its meaning where the policy does not require opposition"
+          ],
+          "milestones": [
+            "intent-opposition"
+          ],
+          "non_goals": [
+            "Requiring any advisor, model or second session for the opposition to run or for work to start",
+            "Deriving the plan or its issues; the opposition judges a plan somebody wrote",
+            "Judging whether a criterion is met; that stays with the evidence"
+          ],
+          "updated_at": "2026-10-07"
+        }
+      },
+      {
         "id": "majordomus://intent/intent-planning",
         "kind": "intent",
         "label": "intent-planning",
@@ -17640,22 +18087,61 @@
           "governance": [
             "adr:adr-0073",
             "adr:adr-0070",
+            "adr:adr-0112",
+            "adr:adr-0113",
             "rule:project.work-serves-a-declared-intent"
           ],
           "invariants": [
             "The plan engines stay identical; `serves` is data the plan carries, and only the intent engine judges it",
             "No coverage, gap or critique status is stored; every finding is derived on read",
             "Work under a milestone no intent names stays valid maintenance work and is never assigned an invented intent",
-            "Majordomus judges the records; it does not generate a plan or a critique itself"
+            "Majordomus judges the records and derives the structural half of a review from them; it authors no semantic finding and derives no plan (ADR 0112)"
           ],
           "milestones": [
             "intent-planning"
           ],
           "non_goals": [
-            "Generating issues or a critique from an intent automatically",
+            "Generating issues, or the findings a reviewer makes, from an intent automatically",
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
-          "updated_at": "2026-09-15"
+          "updated_at": "2026-10-07"
+        }
+      },
+      {
+        "id": "majordomus://intent/intent-satisfaction",
+        "kind": "intent",
+        "label": "intent-satisfaction",
+        "summary": "Whether an intent is satisfied is explained by the evidence that was judged, and held to what must stay true",
+        "route": "/cockpit/objects/intent/intent-satisfaction",
+        "source": ".ai/repo/project/intents/intent-satisfaction.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "governance": [
+            "rule:project.derived-once",
+            "rule:project.completion-never-decides-satisfaction",
+            "adr:adr-0070",
+            "adr:adr-0107",
+            "adr:adr-0113"
+          ],
+          "invariants": [
+            "One engine decides a criterion's state, an invariant's state and the verdict; every surface reads its answer and none recomputes it",
+            "Nothing about satisfaction is stored; an evaluation is derived on every read from the evidence ledger and the tree",
+            "The freshness judgement stays the evidence module's; the intent engine reports it and adds no second table",
+            "A plain-text invariant and a criterion without the new keys mean exactly what they meant, and an intent record written before this intent reads exactly as it did",
+            "The stage takes whether the evidence is satisfied from the one verdict; nothing derives it a second time",
+            "A review stamped before a criterion became optional or a guard changed does not stand: both are part of the plan a review judges"
+          ],
+          "milestones": [
+            "intent-satisfaction"
+          ],
+          "non_goals": [
+            "Settling a command or deployment criterion; the ledger records runs of tests and claims, and that claim stays planned",
+            "Deciding at finish whether a task may be called completed; that is the completion milestone",
+            "Evaluating a plain-text invariant; prose names no evidence, and is judged only once it is written as a guard",
+            "Showing evaluations and guards in the Cockpit; the capabilities carry them, and the page is the Cockpit milestone's",
+            "Letting an issue serve a guard, or declaring a guard's inputs; a guard is violated by a failing run and by nothing else"
+          ],
+          "updated_at": "2026-10-08"
         }
       },
       {
@@ -30008,6 +30494,683 @@
         }
       },
       {
+        "id": "majordomus://issue/I2010",
+        "kind": "issue",
+        "label": "I2010",
+        "summary": "The opposition is one derivation: structural findings, recorded findings, one disposition",
+        "route": "/cockpit/objects/issue/i2010",
+        "source": ".ai/repo/project/issues/I2010.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "current_state": "Coverage, plan findings and gap findings are derived separately. The only revision is the binding's, which hashes what one task reaches and includes the critique.",
+          "depends_on": [],
+          "evidence_required": [
+            "the_opposition_runs_without_an_advisor",
+            "the_reviewed_plan_moves_only_with_the_plan"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/intent_opposition.rs"
+          ],
+          "serves": [
+            "intent-opposition#opposition-is-run"
+          ],
+          "slug": "the-opposition-is-one-derivation",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "cargo test --lib intent_opposition",
+            "cargo test --test intent_opposition"
+          ],
+          "why": "Every structural challenge to a plan is computed by three commands and none of them is the review of one intent, none says which plan it was asked about, and a reviewer is handed no bounded input."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2011",
+        "kind": "issue",
+        "label": "I2011",
+        "summary": "A recorded finding is held to its class, its subject and who resolved it",
+        "route": "/cockpit/objects/issue/i2011",
+        "source": ".ai/repo/project/issues/I2011.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A planned resolution into a cancelled issue fails intent validate, and into a DONE issue does not",
+            "invariant_conflict and dependency_order are accepted classes and an unknown one is still refused",
+            "A finding's source and a resolution's resolved_by are read, shown by the opposition and required of a resolution only under required opposition",
+            "The two critiques this repository holds carry both fields"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "A finding has id, class, subject, finding, blocking and a resolution of state, issue and because. Seven classes. A planned resolution is checked to name an issue that exists and serves the intent.",
+          "depends_on": [
+            "I2010"
+          ],
+          "evidence_required": [
+            "a_resolution_names_who_resolved_it"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_review.rs",
+            "share/schemas/majordomus/critique",
+            "share/allow",
+            "apps/majordomus-cli/tests/intent_opposition.rs",
+            ".ai/repo/project/critiques"
+          ],
+          "serves": [
+            "intent-opposition#findings-are-admitted-typed"
+          ],
+          "slug": "a-recorded-finding-is-held",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "cargo test --lib intent_review",
+            "cargo test --test intent_opposition"
+          ],
+          "why": "A worker can reject its own blocking finding with any sentence and the record keeps no trace of who did, and two things a review is asked to find have no class to be written under."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2012",
+        "kind": "issue",
+        "label": "I2012",
+        "summary": "Recording a review stamps the plan it reviewed, through one writing capability",
+        "route": "/cockpit/objects/issue/i2012",
+        "source": ".ai/repo/project/issues/I2012.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent stamp stamps an existing critique and leaves every line of its findings unchanged, on the command line and over MCP",
+            "With no critique it writes one with no findings and the stamp, which both the Rust reader and the shell flattener read",
+            "A critique whose findings do not validate is refused and nothing is written",
+            "The ledger carries opposition.recorded with the intent, the revision and the disposition derived at that moment, and share/events.yaml declares it",
+            "The writer set is the three it was and intent_opposition.record, in the pin, the module tests, about, the documents and the generated registry",
+            "ADR 0112 is proposed, names what it supersedes in ADR 0073, and says a seal or a stamp is evidence of tampering and of a run, not proof against a determined author"
+          ],
+          "created_at": "2026-10-07",
+          "depends_on": [
+            "I2011"
+          ],
+          "desired_state": "A stamped critique names the plan revision reviewed, the commit, the actor and the tool; the ledger carries the event; the record's findings are byte-identical before and after a stamp.",
+          "evidence_required": [
+            "a_review_is_stamped_and_its_findings_are_untouched"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/about.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/critique",
+            "share/allow",
+            "share/events.yaml",
+            ".ai/repo/project/critiques",
+            ".ai/repo/project/intents/intent-planning.yaml",
+            ".ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+            "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+            "docs"
+          ],
+          "serves": [
+            "intent-opposition#review-names-what-it-reviewed"
+          ],
+          "slug": "recording-a-review-stamps-the-plan",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 963_an_opposition_is_executed_and_names_the_plan_it_reviewed",
+            "cargo test --lib capability",
+            "bash test/run.sh 33_event_registry"
+          ],
+          "why": "A review says nothing of which plan it read, so a critique of last month's plan cannot be told from one of today's, and nothing in the ledger says a review was ever run."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2013",
+        "kind": "issue",
+        "label": "I2013",
+        "summary": "A stale review, a rejected plan and an unexecuted record authorise nothing",
+        "route": "/cockpit/objects/issue/i2013",
+        "source": ".ai/repo/project/issues/I2013.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "depends_on": [
+            "I2012"
+          ],
+          "evidence_required": [
+            "a_stale_review_refuses_and_a_title_edit_does_not"
+          ],
+          "milestone": "intent-opposition",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/schemas/majordomus/policy",
+            "share/skeleton",
+            "share/allow",
+            "lib/intent_binding.sh",
+            ".ai/repo/policy.yaml",
+            "test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-opposition#stale-review-authorises-nothing",
+            "intent-opposition#disposition-gates-execution"
+          ],
+          "slug": "a-review-of-another-plan-authorises-nothing",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 964_a_review_of_another_plan_authorises_nothing",
+            "bash test/run.sh 386_a_plan_is_held_to_its_intent",
+            "bash test/run.sh 893_preflight_follows_what_an_issue_serves",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
+          ],
+          "why": "A critique of an earlier plan authorises the current one, and a record with an empty findings list that nobody ran anything over reads the same as a review."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2020",
+        "kind": "issue",
+        "label": "I2020",
+        "summary": "A judged criterion carries the evaluation that decided it",
+        "route": "/cockpit/objects/issue/i2020",
+        "source": ".ai/repo/project/issues/I2020.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0113 states what violates a guard, why guards are a key of their own, what optional means for coverage, the gap and the counts, and that the stage reads the verdict",
+            "Unit tests in intent.rs over the in-memory table cover a current, a stale, a failing and a never-run test criterion and a claim criterion, and repeated evaluation of one state is identical",
+            "A stale criterion names the inputs that changed since the run it was judged by, and becomes current again when the test is run and recorded",
+            "The command line, HTTP and MCP answer the same evaluation, and intent show and intent explain print it"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "TestStanding and ClaimStanding keep state and proof and drop the run, the changed inputs and the detail the evidence module already computed.",
+          "depends_on": [],
+          "desired_state": "A stale criterion names what changed, a failing one the failing run, and a criterion nothing ran for carries no evaluation; the same on every surface.",
+          "evidence_required": [
+            "an_evaluation_names_the_run_and_the_inputs"
+          ],
+          "milestone": "intent-satisfaction",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests/intent_satisfaction.rs",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-satisfaction#evaluation-is-explained"
+          ],
+          "slug": "a-criterion-carries-its-evaluation",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib intent",
+            "cargo test --test intent_satisfaction"
+          ],
+          "why": "The engine knows which run it judged and which inputs changed and reports one word, so a reader told a criterion is stale re-derives why by hand."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2021",
+        "kind": "issue",
+        "label": "I2021",
+        "summary": "A criterion may be optional, and an optional one holds nothing back",
+        "route": "/cockpit/objects/issue/i2021",
+        "source": ".ai/repo/project/issues/I2021.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An intent whose required criteria are met and whose optional one is not reads satisfied at stage satisfied, with met counted over the required ones",
+            "An intent with only optional criteria fails intent validate as intent_without_required_criterion and reads unknown",
+            "An uncovered optional criterion is a warning, an uncovered required one still a failure, and a gap that leaves an optional criterion unanswered is still refused",
+            "Marking a criterion optional moves the review revision and the plan revision, and a record that never says optional keeps the revisions it had",
+            "Unit tests in intent.rs, intent_plan.rs and intent_opposition.rs cover each of these in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "Every criterion is required. The stage computes whether all are met separately from the verdict. Coverage fails any uncovered criterion.",
+          "depends_on": [
+            "I2020"
+          ],
+          "desired_state": "The verdict's reasons name only required criteria; flipping a criterion to optional makes a stamped review stale; a record without the key reads as before.",
+          "evidence_required": [
+            "an_optional_criterion_blocks_nothing"
+          ],
+          "milestone": "intent-satisfaction",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "share/schemas/majordomus/intent",
+            "share/allow",
+            "apps/majordomus-cli/tests/intent_satisfaction.rs",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-satisfaction#optional-criterion-does-not-block"
+          ],
+          "slug": "a-criterion-may-be-optional",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib intent",
+            "cargo test --test intent_satisfaction",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+          ],
+          "why": "An intent that wants to record a nice-to-have has to leave it out or let it block the verdict forever."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2022",
+        "kind": "issue",
+        "label": "I2022",
+        "summary": "A guard is judged, and a failing one keeps the intent unsatisfied",
+        "route": "/cockpit/objects/issue/i2022",
+        "source": ".ai/repo/project/issues/I2022.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With every criterion met and every milestone DONE, an intent whose guard's test fails reads unsatisfied naming the guard, and satisfied again once the test passes and is recorded",
+            "A guard whose evidence is stale, never run or unresolved is listed as not judged and changes no verdict, so an unrelated commit never turns a satisfied intent unsatisfied",
+            "A guard id that repeats a criterion's, and an issue serving a guard, are each refused by intent validate",
+            "Adding or changing a guard moves the review revision; a record with no guards keeps the revision it had; the evidence standing moves when a guard starts or stops failing",
+            "docs/CLAIMS.yaml carries the claims this makes true, the prose case 892 pins agrees, and intent-planning guards that the plan engines stay identical with the case that proves it",
+            "Unit tests in intent.rs, intent_realization.rs and commands/intent.rs cover each branch in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "IntentRecord.invariants is a list of strings copied to every view. The verdict's reasons are criteria, and their JSON shape is pinned by tests.",
+          "depends_on": [
+            "I2021"
+          ],
+          "desired_state": "A failing guard is named in verdict.guards with its evidence and state; every reader of the invariant statements still gets the statements; a resumed task is told when a guard's standing moved.",
+          "evidence_required": [
+            "a_failing_guard_keeps_the_intent_unsatisfied"
+          ],
+          "milestone": "intent-satisfaction",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "share/schemas/majordomus/intent",
+            "share/allow",
+            "lib/intent_binding.sh",
+            ".ai/repo/project/intents",
+            ".ai/repo/project/critiques",
+            "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-satisfaction#guard-is-judged"
+          ],
+          "slug": "a-guard-is-judged",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 965_a_failing_guard_keeps_an_intent_unsatisfied",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence",
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says",
+            "bash test/run.sh 99_plan_capabilities"
+          ],
+          "why": "The invariants are printed to the worker and judged by nothing, so what an intent said must stay true can stop being true while the intent reads satisfied."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2030",
+        "kind": "issue",
+        "label": "I2030",
+        "summary": "The page of one intent says why its verdict is what it is",
+        "route": "/cockpit/objects/issue/i2030",
+        "source": ".ai/repo/project/issues/I2030.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A violated guard is named under the verdict and in the guards card with the word violated, a holding one with holds, one not judged with not judged, and no surface computes that word but the engine",
+            "Each reason of the verdict links to the row of its criterion or guard",
+            "An optional criterion is marked optional and is not among the reasons",
+            "A judged criterion shows the commit and outcome of its run and the inputs that changed since",
+            "An intent without guards shows no guards card",
+            "Unit tests in cockpit/intents.rs cover each branch in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The detail page renders stage, verdict badge, criteria with evidence badges, milestones, work and the because lines.",
+          "depends_on": [],
+          "desired_state": "A person reads the verdict's reasons, the guards and the judged runs on the page; an intent with no guard and no optional criterion renders as it did, with no empty card.",
+          "evidence_required": [
+            "the_intent_page_explains_the_verdict"
+          ],
+          "milestone": "intent-in-the-cockpit",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-in-the-cockpit#verdict-is-explained-on-the-page"
+          ],
+          "slug": "the-intent-page-explains-the-verdict",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib cockpit::intents",
+            "cargo test --test cockpit_intents"
+          ],
+          "why": "The page shows a verdict badge and nothing of what it rests on, so a person told unsatisfied still has to ask the command line why."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2031",
+        "kind": "issue",
+        "label": "I2031",
+        "summary": "The page of one intent shows the review of its plan and the gap",
+        "route": "/cockpit/objects/issue/i2031",
+        "source": ".ai/repo/project/issues/I2031.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stale review, a current one, an unstamped one and none are each shown by their word",
+            "A blocking open finding is shown as blocking and open, and the disposition as reject",
+            "A failure of the opposition capability is an alert in that card and the cards after it still render",
+            "No review beside accept is never drawn in green",
+            "Unit tests cover each state in process"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The page asks intent_realization.explain and shows no critique, no disposition and no gap.",
+          "depends_on": [
+            "I2030"
+          ],
+          "desired_state": "A person sees whether the plan was reviewed as it stands, what was found, and what remains open.",
+          "evidence_required": [
+            "the_intent_page_shows_the_review"
+          ],
+          "milestone": "intent-in-the-cockpit",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-in-the-cockpit#review-is-on-the-page"
+          ],
+          "slug": "the-intent-page-shows-the-review",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib cockpit::intents",
+            "cargo test --test cockpit_intents"
+          ],
+          "why": "The review of a plan and what it found exist only on the command line, and they are the reason work may or may not start."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2032",
+        "kind": "issue",
+        "label": "I2032",
+        "summary": "The list shows the verdict, and the documents say what the pages show",
+        "route": "/cockpit/objects/issue/i2032",
+        "source": ".ai/repo/project/issues/I2032.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each row shows its intent's verdict by word, from intent_realization.work",
+            "The verdict, each criterion state and each guard standing on the page are the ones intent explain answers on the same fixture",
+            "docs/COCKPIT.md and the claim say what the pages show, and the Cockpit's gates pass",
+            "The generated OpenAPI and the derived copies of the claim are regenerated"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The list renders intent_realization.work: stage, met, work, providers, findings, title.",
+          "depends_on": [
+            "I2031"
+          ],
+          "desired_state": "Each row carries the verdict's word from the answer the list already has; one test compares the page's words with the command line's answer on one fixture.",
+          "evidence_required": [
+            "the_intent_list_shows_the_verdict"
+          ],
+          "milestone": "intent-in-the-cockpit",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "intent-in-the-cockpit#list-says-the-verdict"
+          ],
+          "slug": "the-intent-list-shows-the-verdict",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --lib cockpit::intents",
+            "cargo test --test cockpit_intents"
+          ],
+          "why": "The list shows a stage and a count, and an intent can be at stage verifying because a guard is failing while the count reads complete."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2055",
+        "kind": "issue",
+        "label": "I2055",
+        "summary": "The decision is recorded with its measurement, and a policy says whether it refuses",
+        "route": "/cockpit/objects/issue/i2055",
+        "source": ".ai/repo/project/issues/I2055.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0115 is proposed, states the measurement and how it was taken, and quotes and reconciles the sentence of ADR 0107 about evidence-first acceptance",
+            "The policy key parses as off, advisory or required, absent meaning off, and anything else is refused",
+            "The repository's own policy says advisory, with the measurement as the reason"
+          ],
+          "created_at": "2026-10-08",
+          "depends_on": [],
+          "evidence_required": [
+            "the_decision_and_its_policy_exist"
+          ],
+          "milestone": "finish-reads-what-its-work-serves",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs",
+            ".ai/repo/policy.yaml",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "share/allow",
+            "apps/majordomus-cli/src/policy.rs",
+            "docs",
+            "site",
+            "test/cases/966_a_finish_reads_what_its_work_serves.sh"
+          ],
+          "serves": [
+            "finish-reads-what-its-work-serves#advisory-reports-and-refuses-nothing"
+          ],
+          "slug": "the-finish-decision-and-its-policy",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib policy::",
+            "bash test/run.sh 966_a_finish_reads_what_its_work_serves"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2056",
+        "kind": "issue",
+        "label": "I2056",
+        "summary": "The completion policy can ask the intent engine",
+        "route": "/cockpit/objects/issue/i2056",
+        "source": ".ai/repo/project/issues/I2056.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "QuestionSource parses and prints both aspects and refuses any other by name",
+            "Each standing and each arm of the mapping has a test that runs in the process, including a binding that could not be executed and one that answered something unreadable",
+            "The new standing type adds no name to the OpenAPI document",
+            "MJ_TIMING=1 majordomus check is measured before and after and the figures are in the commit message"
+          ],
+          "created_at": "2026-10-08",
+          "depends_on": [
+            "I2055"
+          ],
+          "desired_state": "A question whose source is intent:criteria or intent:guards is answered as above; an aspect nothing answers is refused when the policy is parsed.",
+          "evidence_required": [
+            "completion_asks_the_intent_engine"
+          ],
+          "milestone": "finish-reads-what-its-work-serves",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/gates",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "apps/majordomus-cli/tests/completion_intent.rs",
+            "share/completion.yaml",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "finish-reads-what-its-work-serves#the-answer-is-the-engines"
+          ],
+          "slug": "completion-can-ask-the-intent-engine",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib gates::",
+            "cd apps/majordomus-cli && cargo test --test completion_intent"
+          ],
+          "why": "The completion policy has the refusal and the intent engine has the standing, and nothing joins them."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2057",
+        "kind": "issue",
+        "label": "I2057",
+        "summary": "Two questions hold completed to what the work serves",
+        "route": "/cockpit/objects/issue/i2057",
+        "source": ".ai/repo/project/issues/I2057.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "depends_on": [
+            "I2056"
+          ],
+          "desired_state": "With the policy required, finish with the outcome completed is refused while either question is owed and accepted once it is not; with it advisory both are reported and refuse nothing.",
+          "evidence_required": [
+            "completed_is_held_to_what_the_work_serves"
+          ],
+          "milestone": "finish-reads-what-its-work-serves",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/completion.yaml",
+            "apps/majordomus-cli/src/gates",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "test/cases/966_a_finish_reads_what_its_work_serves.sh",
+            "test/cases/880_completion_is_proved.sh",
+            "lib/gates.sh",
+            "docs",
+            "site"
+          ],
+          "serves": [
+            "finish-reads-what-its-work-serves#completed-waits-for-served-criteria",
+            "finish-reads-what-its-work-serves#a-violated-guard-refuses-completed",
+            "finish-reads-what-its-work-serves#a-scoped-finish-stays-open",
+            "finish-reads-what-its-work-serves#finish-writes-nothing-about-an-intent"
+          ],
+          "slug": "completed-is-held-to-what-the-work-serves",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 966_a_finish_reads_what_its_work_serves",
+            "bash test/run.sh 895_a_finished_task_does_not_satisfy_an_intent",
+            "bash test/run.sh 880_completion_is_proved"
+          ],
+          "why": "A task bound to an issue can finish completed while the criterion that issue exists to make true has no evidence, or while a guard of its intent is failing."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2061",
+        "kind": "issue",
+        "label": "I2061",
+        "summary": "The rule, the claim and the documents say what finish asks",
+        "route": "/cockpit/objects/issue/i2061",
+        "source": ".ai/repo/project/issues/I2061.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Rule v3 exists and names both cases; v2 is superseded as the repository does it",
+            "The claim is guaranteed, its page has the five sections and case 966 names it back",
+            "Case 892 holds; the two sentences that say finish does not ask whether an intent is satisfied are still there"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "Rule v2 names case 895 only; no claim says what finish reads; the manifesto says finish does not ask the intent.",
+          "depends_on": [
+            "I2057"
+          ],
+          "desired_state": "A reader of the rule, the claim and the guide finds one account of what finish reads and what it never decides.",
+          "evidence_required": [
+            "the_documents_say_what_finish_asks"
+          ],
+          "milestone": "finish-reads-what-its-work-serves",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project",
+            "docs",
+            "site",
+            "lib/gates.sh",
+            "share/completion.yaml",
+            ".ai/repo/features",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "test/cases"
+          ],
+          "serves": [
+            "finish-reads-what-its-work-serves#finish-writes-nothing-about-an-intent"
+          ],
+          "slug": "the-documents-say-what-finish-asks",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says",
+            "scripts/ci/claim-proof-check --strict",
+            "scripts/ci/rule-proof-check"
+          ],
+          "why": "The site says finish does not ask the intent, and the count of questions is written in three places."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30674,6 +31837,51 @@
         }
       },
       {
+        "id": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "milestone",
+        "label": "finish-reads-what-its-work-serves",
+        "summary": "A finish reads what its work serves",
+        "route": "/cockpit/objects/milestone/finish-reads-what-its-work-serves",
+        "source": ".ai/repo/project/milestones/finish-reads-what-its-work-serves.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Where the policy requires it, finish with the outcome completed is refused while a served required criterion is unmet or a guard is violated",
+            "A partial finish is always available and the refusal says so",
+            "No intent record, stage or verdict is written by any finish"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The completion policy and finish semantics are pull request 821; the binding, the opposition, the verdict with guards and evaluations are the intent stack. The two meet in no line of code.",
+          "depends_on": [
+            "intent-bound-work",
+            "intent-satisfaction"
+          ],
+          "evidence_required": [],
+          "non_scope": [
+            "Any change to how a criterion, a guard or a verdict is derived",
+            "Recording evidence at finish"
+          ],
+          "order": 140,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/gates",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "apps/majordomus-cli/tests",
+            "share/completion.yaml",
+            "lib/gates.sh",
+            "test/cases",
+            ".ai/repo",
+            "docs",
+            "site"
+          ],
+          "slug": "finish-reads-what-its-work-serves",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 966_a_finish_reads_what_its_work_serves",
+            "bash test/run.sh 895_a_finished_task_does_not_satisfy_an_intent"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/fly-deployment",
         "kind": "milestone",
         "label": "fly-deployment",
@@ -30843,6 +32051,52 @@
         }
       },
       {
+        "id": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "milestone",
+        "label": "intent-in-the-cockpit",
+        "summary": "The Cockpit shows the intent loop",
+        "route": "/cockpit/objects/milestone/intent-in-the-cockpit",
+        "source": ".ai/repo/project/milestones/intent-in-the-cockpit.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The page of one intent shows the verdict's reasons, the guards, the evaluations and the review",
+            "The list shows the verdict",
+            "No state, standing, verdict or disposition is derived in the Cockpit, and the Cockpit's gates pass"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "cockpit/intents.rs renders intent_realization.work and intent_realization.explain: stage, a verdict badge, criteria with evidence state, milestones, work, the because lines and findings.",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "New components or styles",
+            "A new capability or route; two answers gain one field each"
+          ],
+          "order": 135,
+          "outcome": "The page of one intent answers why it stands where it does; the list shows the verdict beside the stage.",
+          "priority": "p2",
+          "risks": [
+            "A second capability asked on the page of one intent derives the intent model a second time; the list asks one.",
+            "Every changed line owes an in-process test, and the Cockpit's own gates (projection, ui-integrity, design, accessibility) hold the markup.",
+            "The records and the tests they name land in one pull request."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src",
+            "apps/majordomus-cli/tests",
+            "lib/intent_binding.sh",
+            ".ai/repo/project",
+            "docs",
+            "site"
+          ],
+          "slug": "intent-in-the-cockpit",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cargo test --test cockpit_intents",
+            "cargo test --lib cockpit::intents",
+            "scripts/ci/cockpit-projection-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/intent-lifecycle",
         "kind": "milestone",
         "label": "intent-lifecycle",
@@ -30878,6 +32132,62 @@
             "majordomus intent validate",
             "cargo test --test intent",
             "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-opposition",
+        "kind": "milestone",
+        "label": "intent-opposition",
+        "summary": "The opposition to a plan is executed",
+        "route": "/cockpit/objects/milestone/intent-opposition",
+        "source": ".ai/repo/project/milestones/intent-opposition.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent oppose runs with no advisor and answers the same value on every surface",
+            "A stamped review carries the plan revision reviewed and who stamped it; nothing structural and no disposition is stored",
+            "A stale or rejected review refuses the binding of work that serves the intent",
+            "The critiques this repository holds are stamped through the capability, and intent validate is green on the trunk at every commit"
+          ],
+          "created_at": "2026-10-07",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Deriving a plan from an outcome",
+            "A provider adapter of its own; advisors are reached through the existing reasoning plan",
+            "Moving gap records"
+          ],
+          "order": 125,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/critique",
+            "share/schemas/majordomus/policy",
+            "share/skeleton",
+            "share/allow",
+            "lib/intent_binding.sh",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            ".ai/repo/rules/project",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-opposition",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_opposition",
+            "bash test/run.sh 963_an_opposition_is_executed_and_names_the_plan_it_reviewed",
+            "bash test/run.sh 964_a_review_of_another_plan_authorises_nothing"
           ]
         }
       },
@@ -30927,6 +32237,62 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-satisfaction",
+        "kind": "milestone",
+        "label": "intent-satisfaction",
+        "summary": "Satisfaction is explained, and held to the invariants",
+        "route": "/cockpit/objects/milestone/intent-satisfaction",
+        "source": ".ai/repo/project/milestones/intent-satisfaction.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every criterion carries its evaluation on every surface",
+            "An optional criterion does not hold the verdict back",
+            "A failing guard makes the verdict unsatisfied, and one not judged violates nothing"
+          ],
+          "created_at": "2026-10-08",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "Command and deployment evidence",
+            "The finish contract"
+          ],
+          "order": 130,
+          "priority": "p1",
+          "risks": [
+            "IntentView is read by the binding, the opposition, the Cockpit and the realization; a changed field shape breaks every reader at once, so new facts are added beside what exists.",
+            "The records, the ADR and the tests they name land in one pull request and one commit to the trunk.",
+            "Every changed line owes an in-process test (project.new-code-is-covered)."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/intent_opposition.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "site",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/intent",
+            "share/allow",
+            "lib",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-satisfaction",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_satisfaction",
+            "bash test/run.sh 965_a_failing_guard_keeps_an_intent_unsatisfied"
           ]
         }
       },
@@ -36165,12 +37531,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "id": "majordomus://rule/project.completion-never-decides-satisfaction@3",
         "kind": "rule",
-        "label": "project.completion-never-decides-satisfaction@2",
+        "label": "project.completion-never-decides-satisfaction@3",
         "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
-        "route": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-2",
-        "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md",
+        "route": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-3",
+        "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -44933,6 +46299,34 @@
         "source": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
       },
       {
+        "id": "majordomus://test/test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "kind": "test",
+        "label": "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "route": "/cockpit/objects/test/test-cases-963-an-opposition-is-executed-and-names-the-plan-it-reviewed-sh",
+        "source": "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-964-a-review-of-another-plan-authorises-nothing-sh",
+        "source": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "kind": "test",
+        "label": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "route": "/cockpit/objects/test/test-cases-965-a-failing-guard-keeps-an-intent-unsatisfied-sh",
+        "source": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/966_a_finish_reads_what_its_work_serves.sh",
+        "kind": "test",
+        "label": "test/cases/966_a_finish_reads_what_its_work_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-966-a-finish-reads-what-its-work-serves-sh",
+        "source": "test/cases/966_a_finish_reads_what_its_work_serves.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "kind": "test",
         "label": "test/cases/96_rust_public_api_quality.sh",
@@ -47236,6 +48630,11 @@
         "label": "integration"
       },
       {
+        "id": "module:intent_opposition",
+        "kind": "module",
+        "label": "intent_opposition"
+      },
+      {
         "id": "module:intent_realization",
         "kind": "module",
         "label": "intent_realization"
@@ -48836,6 +50235,46 @@
       },
       {
         "source": "capability:integration.queue",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.record",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_opposition.review",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -53891,7 +55330,7 @@
       },
       {
         "source": "majordomus://adr/adr-0107",
-        "target": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@3",
         "kind": "put_in_force"
       },
       {
@@ -54032,6 +55471,156 @@
       {
         "source": "majordomus://adr/adr-0111",
         "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "file:apps/majordomus-cli/src/intent_opposition.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://adr/adr-0073",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://adr/adr-0111",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://intent/intent-opposition",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://test/test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0112",
+        "target": "majordomus://test/test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://adr/adr-0107",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://adr/adr-0112",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://intent/intent-satisfaction",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0113",
+        "target": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "file:share/completion.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://adr/adr-0107",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://adr/adr-0111",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://adr/adr-0113",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://intent/finish-reads-what-its-work-serves",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0115",
+        "target": "majordomus://test/test/cases/966_a_finish_reads_what_its_work_serves.sh",
         "kind": "put_in_force"
       },
       {
@@ -55860,6 +57449,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/finish-reads-what-its-work-serves",
+        "target": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/finish-reads-what-its-work-serves",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/finish-reads-what-its-work-serves",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/finish-reads-what-its-work-serves",
+        "target": "majordomus://test/test/cases/966_a_finish_reads_what_its_work_serves.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/finish-refusal-is-recorded",
         "target": "file:share/events.yaml",
         "kind": "defined_in"
@@ -56116,7 +57725,7 @@
       },
       {
         "source": "majordomus://claim/intent-cockpit-pages",
-        "target": "file:apps/majordomus-cli/tests/intent_realization.rs",
+        "target": "file:apps/majordomus-cli/tests/cockpit_intents.rs",
         "kind": "tested_by"
       },
       {
@@ -56157,6 +57766,46 @@
       {
         "source": "majordomus://claim/intent-criteria-covered",
         "target": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "file:apps/majordomus-cli/tests/intent_satisfaction.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-evaluation-explained",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-guard-is-judged",
+        "target": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
         "kind": "tested_by"
       },
       {
@@ -59445,12 +61094,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/finish-reads-what-its-work-serves",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-bound-work",
         "target": "kind:critique",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-in-the-cockpit",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://critique/intent-opposition",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-planning",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://critique/intent-satisfaction",
         "target": "kind:critique",
         "kind": "is_a"
       },
@@ -60330,6 +61999,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/finish-reads-what-its-work-serves.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/finish-refusal-is-recorded.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -60406,6 +62080,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/intent-criteria-covered.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-evaluation-explained.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-guard-is-judged.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -61265,12 +62949,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/finish-reads-what-its-work-serves",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-bound-work",
         "target": "kind:gap",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/intent-in-the-cockpit",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://gap/intent-opposition",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-planning",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://gap/intent-satisfaction",
         "target": "kind:gap",
         "kind": "is_a"
       },
@@ -61530,7 +63234,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/finish-reads-what-its-work-serves",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/intent-bound-work",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-in-the-cockpit",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -61540,7 +63254,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/intent-opposition",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/intent-planning",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-satisfaction",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -65780,6 +67504,196 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2010",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2010",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2011",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2011",
+        "target": "majordomus://issue/I2010",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2011",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2012",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2012",
+        "target": "majordomus://issue/I2011",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2012",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2013",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2013",
+        "target": "majordomus://issue/I2012",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2013",
+        "target": "majordomus://milestone/intent-opposition",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2020",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2020",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2021",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2021",
+        "target": "majordomus://issue/I2020",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2021",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2022",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2022",
+        "target": "majordomus://issue/I2021",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2022",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2030",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2030",
+        "target": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2031",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2031",
+        "target": "majordomus://issue/I2030",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2031",
+        "target": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2032",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2032",
+        "target": "majordomus://issue/I2031",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2032",
+        "target": "majordomus://milestone/intent-in-the-cockpit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2055",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2055",
+        "target": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2056",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2056",
+        "target": "majordomus://issue/I2055",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2056",
+        "target": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2057",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2057",
+        "target": "majordomus://issue/I2056",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2057",
+        "target": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2061",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2061",
+        "target": "majordomus://issue/I2057",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2061",
+        "target": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -65870,6 +67784,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/finish-reads-what-its-work-serves",
+        "target": "majordomus://milestone/intent-satisfaction",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://milestone/fly-deployment",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -65890,7 +67819,17 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://milestone/intent-in-the-cockpit",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/intent-lifecycle",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-opposition",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -65903,6 +67842,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/intent-satisfaction",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -67100,17 +69044,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@3",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@3",
         "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
@@ -70660,6 +72604,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/966_a_finish_reads_what_its_work_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -73960,6 +75924,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:intent_opposition",
+        "target": "capability:intent_opposition.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intent_opposition",
+        "target": "capability:intent_opposition.review",
+        "kind": "composes"
+      },
+      {
         "source": "module:intent_realization",
         "target": "capability:intent_realization.explain",
         "kind": "composes"
@@ -74496,8 +76470,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2468,
-      "edges": 5408,
+      "nodes": 2519,
+      "edges": 5523,
       "acyclic": false,
       "truncated": false
     }

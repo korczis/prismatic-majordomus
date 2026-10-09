@@ -189,6 +189,53 @@ intent — legitimate operational work, stated as such and never given an invent
 and warns on `intent_not_planned` (no live issue under any milestone it names — where every
 intent starts), `criterion_weakly_covered`, `duplicate_work` and `milestone_contributes_nothing`.
 
+### Satisfaction: explained, optional criteria, and guards
+
+Three things sit beside the verdict (ADR 0113), each derived on every read and stored nowhere.
+
+**The evaluation.** A criterion whose test or claim has a recorded run carries the run that
+decided it — commit, working tree, outcome, time — the inputs that changed since, and the
+evidence module's own sentence. `intent show` prints it under the criterion and `intent
+explain` says it in a sentence. A criterion nothing ran for carries none.
+
+**Optional criteria.** `optional: true` on a criterion keeps it out of the verdict, out of
+`met` and out of the `satisfied` stage; the intent's `optional` says how many there are.
+
+| | required | optional |
+|---|---|---|
+| the verdict and its reasons | counted | not counted |
+| no work serves it | `criterion_uncovered`, a failure | `optional_criterion_uncovered`, a warning |
+| a recorded gap | must answer it | must answer it |
+
+An intent whose criteria are all optional requires nothing, and is refused:
+`intent_without_required_criterion`.
+
+**Guards.** An invariant is a sentence; a guard is an invariant that names its evidence:
+
+```yaml
+guards:
+  - id: engines-stay-identical
+    invariant: The awk plan engine and the Rust plan engine report the same findings
+    evidence: test
+    ref: test/cases/99_plan_capabilities.sh
+```
+
+| the guard's evidence is | the guard |
+|---|---|
+| `failing` | is violated: the verdict is `unsatisfied` and names it in `verdict.guards`, whatever the criteria and the milestones say |
+| `current` | holds |
+| stale, never run, unresolved | is not judged, and violates nothing |
+
+Each guard carries that standing as one word, `standing` — `violated`, `holds` or
+`not_judged` — which the engine derives and the command line, the briefing and the Cockpit
+print without working it out again.
+
+Only a failing run violates a guard, because nothing serves a guard and its evidence would
+read stale after any unrelated change. A guard's id may not repeat a criterion's. A violated
+guard does not refuse work from starting: the work that starts may be the repair. A review
+(below) covers both — making a criterion optional, or adding or changing a guard, makes a
+stamped critique stale.
+
 ### The gap and the critique
 
 Planning starts from two records rather than from a prompt, so that what a worker observed and
@@ -215,9 +262,55 @@ and while a blocking finding is open, `executing_with_open_blocker`. Both are fa
 policy's choice (`intent.binding`, under [Binding](#binding-what-a-task-serves-asked-before-it-starts)
 below): where it is `required`, the issue never becomes `ACTIVE`.
 
-**Majordomus judges these records; it does not write them.** A person or a worker — Claude,
-Codex, Gemini — does the observing and the criticising, and the repository refuses the result
-when it does not hold together. Nothing here derives a plan from an intent automatically.
+**A reviewer writes the findings; Majordomus runs the structural half and stamps the review.**
+A person or a worker does the observing and the criticising, and the
+repository refuses the result when it does not hold together. Nothing here derives a plan from
+an intent automatically.
+
+### Opposition: the review is run, and it is of one plan
+
+`majordomus-cli intent oppose <intent>` is the review as something the tool does (ADR 0112),
+and the brief a reviewing session works from; `intent_opposition.review` answers the same
+value over HTTP and MCP. It carries the plan a reviewer reads — statement, invariants,
+non-goals, criteria with the state of their evidence, every live issue serving the intent with
+its links, dependencies, scope and required evidence, the gap's conditions — and two kinds of
+finding:
+
+| | where it comes from | stored |
+|---|---|---|
+| `structural` | every finding the coverage, the plan and the gap review derive about this intent now: blocking where that derivation calls it a failure, advisory where a warning | nowhere; derived on every call |
+| `recorded` | what a reviewer wrote in the critique, each with its resolution, and optionally its `source` and who resolved it (`resolved_by`) | the critique record |
+
+One disposition is derived from both and written to no record: `reject` while a structural
+finding is blocking or a recorded blocking finding is `open`; `accept_with_required_changes`
+when recorded blocking findings are each `planned` into live work or `rejected` with a reason;
+`accept` otherwise. The command exits `10` on `reject`. No advisor, model or network is
+involved.
+
+`majordomus-cli intent stamp <intent>` records that the review was run: it writes
+`reviewed_revision`, `reviewed_at` and `reviewed_with` into the critique — three lines, and
+every line of the findings is left as the reviewer wrote it — and appends
+`opposition.recorded` to the ledger. The revision is the one the executable derives at that
+moment over what a review judges: the statement, the invariants, the non-goals, each criterion
+with its evidence kind and reference, each serving issue's own milestone, links, dependencies,
+scope and required evidence, and the gap's conditions. A title, an objective, an issue's
+status and a file elsewhere in the repository are not in it. An intent with no critique gets a
+record with no findings, which needs `--by`; a critique whose own findings do not hold is not
+stamped, and a file that is not a readable critique is never replaced.
+
+| the critique is | `intent validate` | the binding |
+|---|---|---|
+| stamped against the plan as it stands | — | binds |
+| stamped against another plan | `critique_stale` | refused, `critique_stale` |
+| not stamped | `critique_not_stamped` | binds, unless opposition is required: `opposition_not_executed` |
+| current, and a structural finding is blocking | that finding | refused, `plan_rejected` |
+
+The two findings of `intent validate` are warnings, and failures where the policy says
+`intent.opposition: required`; there a `planned` or `rejected` resolution that names no
+resolver fails too (`resolution_names_no_resolver`). A stamp is evidence that the command ran
+and that the stamp was not edited carelessly afterwards. It is a hash of public content and
+proves nothing against an author determined to forge it; what makes the review executed is
+that the structural half is derived again at every ask.
 
 ### Preflight: may this work proceed, and what is it held to
 
@@ -300,6 +393,44 @@ the binding on every call, and `majordomus handover --resolve` prints `Intent: u
 `evidence_moved`, `plan_changed` or `unknown`. The issue a task named is a `declared` link in
 the realization below.
 
+### Finish: what the work serves, asked at the end
+
+A task that named what it serves is asked about it again when it finishes (ADR 0115). The
+completion report carries two questions answered from `intents.binding` and from nothing else:
+`criteria-served` — does every required criterion the task's issue serves have current
+evidence — and `guards-hold` — is a guard of an intent the task serves violated. The answer
+names each criterion with the state of its evidence, the run that judged it and the command
+that reproduces it. Finish reads that standing; it writes no intent record and decides
+nothing about any intent.
+
+| a served required criterion's evidence is | the question |
+|---|---|
+| failing, or the record names evidence that does not exist | fails |
+| stale | is stale |
+| never run | is owed |
+| of a kind the ledger cannot derive | is unknown |
+| current, all of them | passes |
+
+Whether an owed answer is held against the task is the policy's `intent.completion`:
+
+| value | the two questions |
+|---|---|
+| absent or `off` | are not asked |
+| `advisory` | are answered; a verdict that would be owed is reported with the status it would have had, and refuses nothing |
+| `required` | are held: where `verification.completed_means_complete` is true, an owed answer refuses `finish --outcome completed` |
+
+A partial finish is always available, and the refusal says so. What makes a criterion's
+evidence current is a run recorded on the committed tree, with its stamp: commit the work,
+run the test, `majordomus evidence stamp`, `majordomus evidence record` with that stamp, commit
+the ledger. Record it before the gates are run, since the ledger is part of the tree their
+evidence describes, and expect the change to owe `generated` afterwards: the ledger is an
+input of the derived data. A finish records no evidence itself.
+
+A task that names nothing, one started under an exemption and maintenance are asked nothing; a
+task that names only an intent is held to that intent's guards and to no criterion. A binding
+that could not be asked is *unknown* in every mode, never an exemption. A repository with no CI
+model is asked none of this, because the completion gates are not judged there.
+
 ### Realization: who is making it true, and whether reality agrees
 
 An intent belongs to the project, not to the session working on it. Which work realises it is
@@ -340,10 +471,15 @@ verdict is `satisfied` while the stage is `planned` or `executing`) and
 `closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
 the criteria holding it back).
 
-In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
-and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
-object it names and to the issues serving it, and each unit of work with the provenance of its
-link. Both pages render the capabilities above and decide nothing themselves.
+In the Cockpit, `/cockpit/intents` lists every intent with its stage, its verdict and the work
+realising it, and `/cockpit/intents/<id>` shows one: why its verdict is what it is — each required
+criterion holding it back and each violated guard, linked to its row — each criterion with
+whether it is optional, its evidence state and the run it was judged by, linked to the test
+object it names and to the issues serving it; each guard with its standing; the review of its
+plan with its state against the plan, the disposition, the stamp, every finding of both halves
+and the recorded gap; and each unit of work with the provenance of its link. Both pages render
+the capabilities above and decide nothing themselves: the page chooses the colour a word is
+read in, and an accepting disposition is coloured only under a review that is current.
 
 `test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
 to end: declared, realised across two providers and a handover, closed while one case fails,

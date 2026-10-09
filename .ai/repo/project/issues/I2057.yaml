@@ -1,0 +1,38 @@
+id: I2057
+milestone: finish-reads-what-its-work-serves
+title: Two questions hold completed to what the work serves
+slug: completed-is-held-to-what-the-work-serves
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - finish-reads-what-its-work-serves#completed-waits-for-served-criteria
+  - finish-reads-what-its-work-serves#a-violated-guard-refuses-completed
+  - finish-reads-what-its-work-serves#a-scoped-finish-stays-open
+  - finish-reads-what-its-work-serves#finish-writes-nothing-about-an-intent
+objective: "Declare two questions in the validation stage of share/completion.yaml: whether every required criterion the task's issue serves has current evidence, and whether a guard of an intent the task serves is violated. The evidence text names each criterion with its state, the run that judged it and its reproduce command; the remediation names the steps that make evidence current - commit the work, run the test on the clean tree, majordomus evidence record, commit the ledger - and says a partial finish is available. Neither text uses the word satisfied."
+why: "A task bound to an issue can finish completed while the criterion that issue exists to make true has no evidence, or while a guard of its intent is failing."
+current_state: "share/completion.yaml declares nineteen questions, none about what the task serves; lib/gates.sh prints every question that is not pass or exempt and refuses completed where verification.completed_means_complete is true."
+desired_state: "With the policy required, finish with the outcome completed is refused while either question is owed and accepted once it is not; with it advisory both are reported and refuse nothing."
+scope:
+  - share/completion.yaml
+  - apps/majordomus-cli/src/gates
+  - apps/majordomus-cli/src/capability/builtin/gates.rs
+  - test/cases/966_a_finish_reads_what_its_work_serves.sh
+  - test/cases/880_completion_is_proved.sh
+  - lib/gates.sh
+  - docs
+  - site
+depends_on: [I2056]
+acceptance_criteria:
+  - Case 966, in a fixture with a CI model and the policy required, shows the refusal for an unmet served criterion and for a violated guard, the partial finish in between, and the acceptance reached by recording a run on the committed tree
+  - The same case shows that a criterion the issue does not serve, an optional criterion, a guard that is not judged, an exemption, a task naming nothing and a task naming only an intent each hold nothing back, that advisory refuses nothing, and that every intent record is unchanged
+  - Case 880 and case 895 still pass, and case 880 lists the two new questions among those a task naming nothing is exempt from
+validation:
+  - bash test/run.sh 966_a_finish_reads_what_its_work_serves
+  - bash test/run.sh 895_a_finished_task_does_not_satisfy_an_intent
+  - bash test/run.sh 880_completion_is_proved
+evidence_required:
+  - completed_is_held_to_what_the_work_serves
+created_at: 2026-10-08
+updated_at: 2026-10-08

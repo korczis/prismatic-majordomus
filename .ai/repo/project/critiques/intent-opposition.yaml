@@ -1,0 +1,175 @@
+intent: intent-opposition
+reviewed_at: 4f4136ea60
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records and the two requirement documents and none of the author's reasoning; same model and operator session as the author. Disposition: accept with required changes; findings 1 to 7, 9 and 14 were required. The plan was rewritten after it: structural findings and the disposition are derived and never stored, and the tool writes a stamp and no finding."
+reviewed_revision: 329293e23aab801a5d739392db58bbcaea3089d0a3333e13eb38b14eee61d5d6
+reviewed_with: "majordomus-cli 0.15.0"
+findings:
+  - id: stored-checks-go-stale-under-a-fixed-revision
+    class: unproven_assumption
+    subject: intent-opposition#stale-review-authorises-nothing
+    finding: "The first plan stored the structural findings and hashed less than they depend on (evidence_required, scope, whether a reference resolves), so a recorded accept could outlive a plan the checks would now reject."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2013
+      because: "Nothing structural is stored: the binding derives the structural half at every ask, and the reviewed-plan revision hashes each serving issue's scope and required evidence as well."
+  - id: seal-is-recomputable
+    class: unproven_assumption
+    subject: intent-opposition#review-names-what-it-reviewed
+    finding: "A SHA-256 over public fields with no secret can be computed by anyone writing the file by hand, so a seal cannot make a hand-written record different from an executed one."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2012
+      because: "No seal is claimed as proof. Executed means the structural half is re-derived at the gate and the stamp is written by the capability with a ledger event; ADR 0112 says a stamp is evidence of a run and of tampering, not proof against a determined author."
+  - id: milestone-is-blocked-by-unstamped-predecessor
+    class: delivery_verification
+    subject: I2010
+    finding: "The milestone depended on intent-bound-work, whose issues carry no stamp, which blocks every issue here and reports a started one as premature."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2010
+      because: "The milestone dependency is dropped and the reason recorded in its risks; the binding milestone's issues are closed with their evidence in its own pull request."
+  - id: validate-red-between-issues
+    class: delivery_verification
+    subject: I2012
+    finding: "The intent cites an ADR, a test file and two cases that do not exist until the last issue, each a failing reference, while the plan decomposed the work into four landings."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2012
+      because: "The milestone states one pull request and one commit to the trunk; the four issues order the work inside it."
+  - id: no-yaml-writer-exists
+    class: insufficient_work
+    subject: I2012
+    finding: "The crate has no YAML emitter; plan.transition replaces top-level scalar lines, and rewriting nested findings with free text would need an emitter that round-trips through the Rust reader and the shell flattener."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2012
+      because: "The capability writes only top-level scalars by the same line replacement, and a new record from a fixed template with no findings; findings stay authored, and their bytes are asserted unchanged by a stamp."
+  - id: advisor-path-is-hand-waved
+    class: missed_requirement
+    subject: I2011
+    finding: "A consultation record has no class or subject and lives untracked, nothing turns an advisor's answer into a finding, and nothing produced the bounded input a review is asked to work from."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2010
+      because: "intent_opposition.review is the bounded brief, emitted on every surface. The criterion is reduced to findings a reviewing session records, held typed; mapping an advisor's consultation into findings is left to whoever transcribes it and is named as not built."
+  - id: self-resolution-unchanged
+    class: missed_requirement
+    subject: intent-opposition#disposition-gates-execution
+    finding: "A worker can reject its own blocking finding with any sentence, the record keeps no trace of who resolved it, and a planned resolution is not checked against the issue being cancelled."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2011
+      because: "A resolution names resolved_by, required under required opposition; a planned resolution into a cancelled issue is refused. That the resolver may be the author is stated as a limit: the record makes it visible and no rule forbids it."
+  - id: gate-is-advisory-here
+    class: unproven_assumption
+    subject: I2013
+    finding: "The refusals reach start and plan start only under intent.binding required, and this repository is advisory, so the new causes refuse nothing here."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2013
+      because: "The planning guide states the matrix of the two keys; the causes are refusals of the binding everywhere and failures or warnings of intent validate by policy, which is the gate this repository runs."
+  - id: legacy-records-fail-or-warn-is-ambiguous
+    class: regression_risk
+    subject: I2012
+    finding: "One issue said validation names a record lacking a field and another that it is a warning; as a failure, every critique written before this change turns the intent gate red."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2013
+      because: "Severity is fixed per policy state: an unstamped critique is the warning critique_not_stamped unless intent.opposition is required, where it refuses as opposition_not_executed."
+  - id: revision-includes-wave
+    class: unproven_assumption
+    subject: I2010
+    finding: "A wave is the longest dependency path, so a new dependency of an unrelated upstream issue would move the revision."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2010
+      because: "The revision hashes each serving issue's own depends_on, serves, milestone, scope and required evidence, and no wave and no status."
+  - id: two-hashes-one-name
+    class: regression_risk
+    subject: I2010
+    finding: "The binding's plan_revision hashes the critique's reviewed_at, so every re-recording flips plan_changed on pinned tasks and handovers, and two different hashes would carry one name."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2010
+      because: "The new hash is the reviewed-plan revision and excludes the critique; the binding's pin stops hashing the stamp and keeps the findings, with a test that a re-stamp moves neither."
+  - id: opposition-restates-red-gate
+    class: unnecessary_work
+    subject: I2010
+    finding: "Most structural checks are already failures of intent validate or plan validate; only weak coverage is not, and its severity was unspecified."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2010
+      because: "The function calls coverage, the plan's findings and the gap review and re-derives none; a failure there is blocking and a warning advisory, which is what makes it the review of one intent rather than a fourth list."
+  - id: classes-do-not-cover-requirement-categories
+    class: missed_requirement
+    subject: I2011
+    finding: "The seven classes have no home for a dependency or order problem or for a conflict with an invariant."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2011
+      because: "Two classes are added, and the ADR maps every category a review is asked for to a class."
+  - id: adr-0073-and-stored-status
+    class: missed_requirement
+    subject: I2012
+    finding: "ADR 0073 itself says Majordomus does not reason about the gap or the plan, and intent-planning also forbids storing any critique status, which a stored disposition would contradict."
+    blocking: true
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2012
+      because: "No disposition and no structural finding is stored, so that invariant holds unchanged; ADR 0112 names the sentences of ADR 0073 it supersedes and intent-planning's first sentence is amended. Both ADRs are proposed, and acceptance is the owner's."
+  - id: writer-set-pins-incomplete
+    class: surface_missing
+    subject: I2012
+    finding: "The writer set is pinned or stated in the module tests, shared_units, about, HOW_IT_WORKS, the generated registry and compose_modules, and no ledger event was planned."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2012
+      because: "Each place is in scope and the event opposition.recorded is declared in share/events.yaml."
+  - id: claims-and-prose
+    class: surface_missing
+    subject: I2012
+    finding: "CLAIMS.yaml and three documents say Majordomus writes neither record, case 892 pins that prose, the Cockpit shows no critique and the context section prints only reviewed_at."
+    blocking: false
+    resolution:
+      state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      issue: I2013
+      because: "The claim and the prose are amended and the context section and intent explain show the review; the Cockpit's intent page is the Cockpit milestone's."
+  - id: replace-vs-append
+    class: missed_requirement
+    subject: intent-opposition#review-names-what-it-reviewed
+    finding: "One record per intent, stamped in place, keeps earlier reviews only in git, and nothing defined how a supplied finding is withdrawn."
+    blocking: false
+    resolution:
+      state: rejected
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Git is the history of a tracked record and the ledger event is the append-only trace of each run; a second append-only store would be the parallel record the intent forbids. A finding is withdrawn by its reviewer editing the record, which moves the binding's pin and is visible in the diff."

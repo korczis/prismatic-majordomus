@@ -1,0 +1,171 @@
+intent: intent-in-the-cockpit
+reviewed_at: "8993bbf173"
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records and the requirement documents and none of the author's reasoning; same model and operator session as the author. Disposition given: accept with required changes; findings 1 to 6 were required. The plan was rewritten after it."
+reviewed_revision: b6b1c2fd0bcc803ddd52ba7c462813b10e2673ce836b9f412ab50eed3f5123ab
+reviewed_with: "majordomus-cli 0.15.0"
+findings:
+  - id: guard-standing-third-copy
+    class: invariant_conflict
+    subject: I2030
+    finding: "The words violated, holds and not judged are computed by the command line and by the briefing script; the page would be a third copy, against the intent's own invariant."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2030
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "IntentGuard carries a standing the engine derives; the command line, the briefing and the page read it."
+  - id: opposition-failure-unreachable
+    class: delivery_verification
+    subject: I2031
+    finding: "intent_opposition.review fails only where intent_realization.explain has already failed, so the alert branch could not be reached through the page and its lines would stay uncovered."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2031
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The review card is a function of the answer or its failure and is tested with a constructed failure."
+  - id: evaluations-not-producible-in-process
+    class: delivery_verification
+    subject: I2030
+    finding: "The in-process fixture is not a git repository and records no run, so an evaluation, a guard and a stale review cannot be produced through the capabilities in a unit test."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2030
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Each card is a function of the typed answer; the tests mutate the answered structs."
+  - id: list-join-doubles-derivation
+    class: unproven_assumption
+    subject: I2032
+    finding: "Joining intents.list to intent_realization.work derives the model twice, and the missing-answer branch could never occur in process."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2032
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "IntentRealizationView carries the verdict; the list asks one capability and has no join."
+  - id: accept-without-review-reads-healthy
+    class: insufficient_work
+    subject: I2031
+    finding: "With no critique the disposition is accept; drawn green beside none it shows unknown as healthy. An empty gap answer means both no gap record and a gap with no conditions."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2031
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "An accepting disposition is coloured only under a current review; each review state has a sentence; the empty gap says no condition is recorded."
+  - id: scope-too-narrow-for-the-work
+    class: insufficient_work
+    subject: I2030
+    finding: "The issue scopes held only the page and its test, while the answers to the findings above touch the engine, the realization, the command line and the briefing script."
+    source: the reviewing subagent
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2030
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The three issues and the milestone name the sources, the tests, the briefing script, the records, the documents and the site."
+  - id: records-unresolved-until-test-exists
+    class: dependency_order
+    subject: intent-in-the-cockpit#verdict-is-explained-on-the-page
+    finding: "The criteria name a test file that does not exist yet, and no critique is recorded, so the records fail validation until both land."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2032
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The test file, the records and this critique land in one commit, stamped."
+  - id: cockpit-already-computes
+    class: invariant_conflict
+    subject: I2032
+    finding: "The page subtracts the optional count from the criteria itself, so the acceptance line that nothing is derived in the Cockpit is false today."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2032
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The page reads the required count the realization answers; the acceptance says no state, standing, verdict or disposition."
+  - id: deep-links-missing
+    class: missed_requirement
+    subject: I2030
+    finding: "The requirement asks for stable links to a criterion and its evidence; the plan had none."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2030
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Criterion and guard rows carry an id, the verdict's reasons link to them, and a finding links the issue it was planned into."
+  - id: invariants-not-shown
+    class: missed_requirement
+    subject: intent-in-the-cockpit#verdict-is-explained-on-the-page
+    finding: "The invariants, non-goals and governance are answered and not rendered."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2030
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "A card lists them as stated, and says the invariants are judged by nothing."
+  - id: findings-table-too-wide
+    class: regression_risk
+    subject: I2031
+    finding: "A column per field of a finding makes a table of eleven columns; the requirement asks for progressive disclosure."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2031
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "One row per finding; its text, class, reason, source and resolver are behind a disclosure."
+  - id: status-words-unfiled
+    class: unproven_assumption
+    subject: I2031
+    finding: "The words of a disposition, a review state and a guard standing are not filed status words, and a finding's class is free text."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2031
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "Each enum word is drawn with one of the five filed statuses and tested per variant; free text is a tag."
+  - id: cross-surface-contract-absent
+    class: missed_requirement
+    subject: intent-in-the-cockpit#verdict-is-explained-on-the-page
+    finding: "The requirement asks one fixture to assert the same verdict and states across the command line and the Cockpit; the tests asserted the page alone."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2032
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "tests/cockpit_intents.rs compares the served page with intent explain on one fixture."
+  - id: claim-and-doc-copies
+    class: surface_missing
+    subject: I2032
+    finding: "The claim names another test, the Cockpit document names one capability per page, and the site and the graph hold derived copies."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2032
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The claim, its page and the Cockpit document are updated and the copies regenerated."
+  - id: redundant-scope-lines
+    class: unnecessary_work
+    subject: I2030
+    finding: "The milestone scope listed files beside the directories that contain them."
+    source: the reviewing subagent
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2030
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
+      because: "The scope names directories."
