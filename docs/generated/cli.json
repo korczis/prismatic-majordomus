@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.17.0",
-  "version": "0.17.0",
+  "generator": "majordomus-cli 0.20.0",
+  "version": "0.20.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -24526,6 +24526,180 @@
                   "I0001"
                 ],
                 "command": "majordomus intent preflight --issue I0001",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "intent",
+              "binding"
+            ],
+            "route": "/docs/cli/intent/binding/",
+            "executable": true,
+            "usage": "majordomus intent binding [OPTIONS]",
+            "about": "What a piece of work is bound to before it starts: the issue, the intent or the paths it names resolved to the criteria it serves, or an exemption the policy declares, with the two pins a resumed worker compares; exit 10 when refused",
+            "args": [
+              {
+                "name": "issue",
+                "long": "issue",
+                "positional": false,
+                "help": "The issue the work executes",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "intent",
+                "long": "intent",
+                "positional": false,
+                "help": "The intent the work serves, named directly",
+                "value_name": "INTENT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "paths",
+                "long": "path",
+                "positional": false,
+                "help": "A path the work will touch; repeat for each",
+                "value_name": "PATHS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "exempt",
+                "long": "exempt",
+                "positional": false,
+                "help": "An exemption class the policy declares under intent.exemptions",
+                "value_name": "EXEMPT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "because",
+                "long": "because",
+                "positional": false,
+                "help": "Why the exemption applies",
+                "value_name": "BECAUSE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-binding",
+                "title": "What a task is bound to before it starts",
+                "description": "What `majordomus start --issue` asks: the issue resolved to the intent and the criteria it serves, with what the intent asks of the worker and the two pins a handover carries. The example fixture's intent has no critique, so the binding is refused naming that cause, and exits 10; a bound issue answers `bound`, an issue under a milestone no intent names `maintenance`, and `--exempt <class> --because <reason>` answers `exempt` when the policy declares the class.",
+                "argv": [
+                  "intent",
+                  "binding",
+                  "--issue",
+                  "I0001"
+                ],
+                "command": "majordomus intent binding --issue I0001",
                 "setup": [],
                 "expectation": "exits 10"
               }

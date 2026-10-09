@@ -1,17 +1,17 @@
 ---
 id: project.an-intent-outlives-its-sessions
-version: 2
+version: 3
 kind: rule
 title: An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence
-description: Which work realises an intent is derived from the ledger, the session records and the peer board, with every link's provenance; no session, provider or handover holds intent state; and an intent whose work is all closed while its evidence says no is refused by a gate.
-statement: The lineage from an intent to the tasks, episodes, providers, handovers, session records and peer claims realising it is derived on read and stored in none of them; every link says whether it is declared, observed, derived or inferred; every episode records its provider on the ledger so the lineage survives the episode's end; an intent whose milestones are all DONE while a criterion's recorded evidence is failing or stale fails the intent-realization gate, naming the criterion; and every disagreement between the plan-derived stage and the evidence-derived verdict is reported as drift.
+description: Which work realises an intent is derived from the ledger, the session records and the peer board, with every link's provenance; no session, provider or handover holds intent state — a task or handover may carry the names its worker declared and a hash compared on read, never a stage, a verdict or a criterion; and an intent whose work is all closed while its evidence says no is refused by a gate.
+statement: The lineage from an intent to the tasks, episodes, providers, handovers, session records and peer claims realising it is derived on read and stored in none of them; what a task or a handover may carry is the name its worker declared (an issue, an intent, an exemption with its reason) and pins compared on a later read (plan_revision, evidence_standing), and no stage, verdict, criterion or evidence state; every link says whether it is declared, observed, derived or inferred; every episode records its provider on the ledger so the lineage survives the episode's end; an intent whose milestones are all DONE while a criterion's recorded evidence is failing or stale fails the intent-realization gate, naming the criterion; and every disagreement between the plan-derived stage and the evidence-derived verdict is reported as drift.
 status: active
 class: blocking
 depends_on: [project.work-serves-a-declared-intent@1, project.derived-once@1]
 tags: [intent, session, handover, provenance, evidence]
 
 x-majordomus:
-  tests: [test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh, test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh, apps/majordomus-cli/tests/intent_realization.rs]
+  tests: [test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh, test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh, apps/majordomus-cli/tests/intent_realization.rs, test/cases/960_a_task_starts_bound_to_what_it_serves.sh, test/cases/961_a_resumed_task_is_told_its_intent_moved.sh]
 ---
 
 # Rationale
@@ -38,6 +38,12 @@ honest if a link guessed from overlapping paths is never shown as a link a perso
   when its episode moved the issue, `derived` when its branch names the issue, `inferred` only
   when nothing stronger exists and an open issue's scope overlaps. One link per issue, the
   strongest.
+- A task record and a handover may carry what the worker named at `start` — `issue`, `intent`,
+  `exemption` with its reason — and two pins, `plan_revision` and `evidence_standing`, which are
+  hashes `intents.binding` answered and a later read compares (ADR 0111). They carry no stage,
+  no verdict, no criterion and no evidence state: a name is a declaration and a pin is a
+  question to ask again, and neither is the answer. The issue a task named is a `declared`
+  link, as an issue cited in its title is.
 - `session.started` carries `provider` and `provider_session` when a provider opened the
   episode, so a closed episode keeps its provider.
 - Each intent reports its unmet criteria with the issues serving each, the work and providers
@@ -75,3 +81,7 @@ provenance of each kind of link and that the command line, HTTP and MCP answer t
 the milestone is open and its absence once it closes;
 `test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh` proves `closed_work_not_satisfied`
 naming the criterion after a completed finish.
+`test/cases/960_a_task_starts_bound_to_what_it_serves.sh` proves that a bound task's record holds
+the names and the pins and no line of the intent itself, and
+`test/cases/961_a_resumed_task_is_told_its_intent_moved.sh` that a handover holds the same and
+that a pin a body tries to write is refused.

@@ -1925,7 +1925,19 @@ impl Intents {
                 ),
             ));
         }
+        self.preflight_issues(plan, gaps, critiques, &issues)
+    }
 
+    /// The preflight over issues already resolved: what [`Intents::preflight`] answers once
+    /// it knows which issues the work executes, and what [`crate::intent_binding`] asks when
+    /// it resolved them another way — the open issues serving an intent a worker named.
+    pub(crate) fn preflight_issues(
+        &self,
+        plan: &Plan,
+        gaps: &[GapRecord],
+        critiques: &[CritiqueRecord],
+        issues: &[&crate::plan::PlanIssue],
+    ) -> IntentPreflight {
         // The links are judged by the coverage validation reports from, over outlines of the
         // intents already derived, so a link `intent validate` calls broken is refused here
         // too; the preflight may refuse more, never less.
@@ -1950,7 +1962,7 @@ impl Intents {
         // is bounded to these, never every intent
         let mut reached: Vec<(String, BTreeSet<String>)> = Vec::new();
 
-        for i in &issues {
+        for i in issues {
             let mut mine: Vec<IntentPreflightRefusal> = cov
                 .findings
                 .iter()
@@ -3149,5 +3161,179 @@ mod tests {
         );
         assert!(i.findings[0].message.contains("`no-kind-at-all`"));
         assert!(i.findings[1].message.contains("`ticket:42`"));
+    }
+    /// The binding (ADR 0111) over the same plan the preflight is judged over: every way
+    /// work is named resolves or says which link is missing, and every preflight cause
+    /// reaches the binding under its own word.
+    #[test]
+    fn the_binding_resolves_every_way_work_is_named() {
+        use crate::intent_binding::{bind, BindingCause, BindingRequest, BindingStanding};
+        use crate::policy::IntentPolicy;
+
+        let mut finished = serving("I4", "zm", &["zed"], &["z#case"]);
+        finished.status = "DONE".into();
+        let p = plan(
+            vec![
+                milestone("m", "ACTIVE"),
+                milestone("n", "ACTIVE"),
+                milestone("zm", "ACTIVE"),
+                milestone("rm", "ACTIVE"),
+                milestone("ops", "ACTIVE"),
+            ],
+            vec![
+                serving("I1", "m", &["lib"], &["x#case"]),
+                serving("I2", "ops", &["ops"], &[]),
+                serving("I3", "n", &["lib"], &["y#case"]),
+                finished,
+                serving("I5", "m", &["five"], &[]),
+                serving("I6", "m", &["six"], &["y#case"]),
+                serving("I7", "m", &["seven"], &["ghost#case"]),
+            ],
+        );
+        let mut retired = record("r", &["rm"], &[CASE]);
+        retired.cancelled = true;
+        let i = Intents::derive(
+            vec![
+                record("x", &["m"], &[CASE]),
+                record("y", &["n"], &[CASE]),
+                record("z", &["zm"], &[CASE]),
+                retired,
+            ],
+            &p,
+            &Table::new(),
+        );
+        let reviewed = [critique("x", &[]), critique("y", &[]), critique("z", &[])];
+        let policy = IntentPolicy::default();
+        let ask = |critiques: &[CritiqueRecord], r: BindingRequest| {
+            bind(&i, &p, &[], critiques, &policy, r)
+        };
+        let by_issue = |id: &str| BindingRequest {
+            issue: Some(id.into()),
+            ..Default::default()
+        };
+        let by_intent = |id: &str| BindingRequest {
+            intent: Some(id.into()),
+            ..Default::default()
+        };
+        let by_path = |path: &str| BindingRequest {
+            paths: vec![path.into()],
+            ..Default::default()
+        };
+        let first = |b: &crate::intent_binding::IntentBinding| b.refusals[0].cause;
+
+        // an issue, the intent it serves, and both together are one binding
+        let bound = ask(&reviewed, by_issue("I1"));
+        assert_eq!(bound.standing, BindingStanding::Bound);
+        assert_eq!(bound.standing.as_str(), "bound");
+        assert!(!bound.standing.refuses());
+        assert_eq!(bound.plan_revision.len(), 64);
+        assert_eq!(bound.evidence_standing.len(), 64);
+        let named = ask(&reviewed, by_intent("x"));
+        assert_eq!(named.standing, BindingStanding::Bound);
+        assert_eq!(named.plan_revision, bound.plan_revision);
+        let both = ask(
+            &reviewed,
+            BindingRequest {
+                intent: Some("x".into()),
+                ..by_issue("I1")
+            },
+        );
+        assert_eq!(both.standing, BindingStanding::Bound);
+        // an issue beside an intent it does not serve is a contradiction
+        let contradiction = ask(
+            &reviewed,
+            BindingRequest {
+                intent: Some("y".into()),
+                ..by_issue("I1")
+            },
+        );
+        assert_eq!(first(&contradiction), BindingCause::IssueOutsideIntent);
+        assert!(contradiction.standing.refuses());
+        assert_eq!(contradiction.standing.as_str(), "refused");
+
+        // paths that reach two intents are ambiguous; paths under no intent are maintenance
+        let ambiguous = ask(&reviewed, by_path("lib/a.rs"));
+        assert_eq!(first(&ambiguous), BindingCause::AmbiguousIntent);
+        assert!(ambiguous.refusal.unwrap().contains("x, y"));
+        let maintenance = ask(&reviewed, by_path("ops/run.sh"));
+        assert_eq!(maintenance.standing, BindingStanding::Maintenance);
+        assert_eq!(maintenance.standing.as_str(), "maintenance");
+        assert!(maintenance.plan_revision.is_empty() && maintenance.evidence_standing.is_empty());
+        assert_eq!(BindingStanding::Exempt.as_str(), "exempt");
+
+        // an intent with nothing open to do, and one that was retired
+        assert_eq!(
+            first(&ask(&reviewed, by_intent("z"))),
+            BindingCause::IntentHasNoOpenWork
+        );
+        let gone = ask(&reviewed, by_intent("r"));
+        assert_eq!(first(&gone), BindingCause::IntentRetired);
+        assert!(gone.refusal.unwrap().contains("cancelled"));
+
+        // a path the named issue's scope does not cover is said, and refuses nothing
+        let noted = ask(
+            &reviewed,
+            BindingRequest {
+                paths: vec!["docs/x.md".into(), "lib/a.rs".into()],
+                ..by_issue("I1")
+            },
+        );
+        assert_eq!(noted.standing, BindingStanding::Bound);
+        assert_eq!(noted.notes, ["docs/x.md lie outside the scope of I1"]);
+
+        // each of the preflight's causes is the binding's cause, under the same word
+        assert_eq!(
+            first(&ask(&[], by_issue("I1"))),
+            BindingCause::IntentNotCritiqued
+        );
+        let blocked = [critique("x", &[("F1", true, "open")])];
+        assert_eq!(
+            first(&ask(&blocked, by_issue("I1"))),
+            BindingCause::OpenBlockingFinding
+        );
+        for (id, cause) in [
+            ("I5", BindingCause::IssueServesNothing),
+            ("I6", BindingCause::ServesAnotherIntent),
+            ("I7", BindingCause::ServesUnknownCriterion),
+        ] {
+            assert_eq!(first(&ask(&reviewed, by_issue(id))), cause, "{id}");
+        }
+        for (from, to) in [
+            (
+                IntentPreflightCause::UnknownIssue,
+                BindingCause::UnknownIssue,
+            ),
+            (
+                IntentPreflightCause::NoIssueCoversPaths,
+                BindingCause::NoIssueCoversPaths,
+            ),
+            (
+                IntentPreflightCause::IssueServesNothing,
+                BindingCause::IssueServesNothing,
+            ),
+            (
+                IntentPreflightCause::ServesAnotherIntent,
+                BindingCause::ServesAnotherIntent,
+            ),
+            (
+                IntentPreflightCause::ServesUnknownCriterion,
+                BindingCause::ServesUnknownCriterion,
+            ),
+            (
+                IntentPreflightCause::IntentNotCritiqued,
+                BindingCause::IntentNotCritiqued,
+            ),
+            (
+                IntentPreflightCause::OpenBlockingFinding,
+                BindingCause::OpenBlockingFinding,
+            ),
+        ] {
+            assert_eq!(BindingCause::from(from), to);
+            assert_eq!(
+                serde_json::to_value(from).unwrap(),
+                serde_json::to_value(to).unwrap(),
+                "the word changed on the way"
+            );
+        }
     }
 }

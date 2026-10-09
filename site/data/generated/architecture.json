@@ -400,6 +400,16 @@
       "external": false
     },
     {
+      "id": "lib/intent_binding.sh",
+      "kind": "module",
+      "label": "intent_binding",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/history.sh",
       "kind": "module",
       "label": "history",
@@ -1353,6 +1363,11 @@
     },
     {
       "source": "lib/context.sh",
+      "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
       "target": "lib/knowledge.sh",
       "kind": "sources"
     },
@@ -1507,8 +1522,18 @@
       "kind": "sources"
     },
     {
+      "source": "lib/handover.sh",
+      "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/init.sh",
       "target": "lib/rules.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/intent_binding.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1524,6 +1549,11 @@
     {
       "source": "lib/migrate.sh",
       "target": "lib/init.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/plan.sh",
+      "target": "lib/intent_binding.sh",
       "kind": "sources"
     },
     {
@@ -1604,6 +1634,11 @@
     {
       "source": "lib/start.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/start.sh",
+      "target": "lib/intent_binding.sh",
       "kind": "sources"
     },
     {

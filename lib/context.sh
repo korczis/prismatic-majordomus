@@ -15,6 +15,8 @@
 # exclusion list, not by guessing.
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
+# shellcheck source=intent_binding.sh
+. "$MJ_LIB_DIR/intent_binding.sh"
 # shellcheck source=decision.sh
 . "$MJ_LIB_DIR/decision.sh"
 # shellcheck source=history.sh
@@ -200,6 +202,32 @@ mj_context_sections() {
     } > "$MJ_CTX_TMP/30.profile"
   fi
 
+  # 3a. intent — what the task is bound to, asked of intents.binding now (ADR 0111). The
+  #     record names an issue, an intent or an exemption; everything below is derived on
+  #     this read and nothing of it is stored. A binding that cannot be read is said to be
+  #     unknown: a worker told "no intent" when the answer was "nobody could ask" would work
+  #     to no criterion at all and believe that was the plan.
+  if [ "$have_task" = 1 ] && mj_task_names_work; then
+    {
+      printf '## INTENT (what this task serves; majordomus-cli intent binding)\n'
+      if mj_binding_ask_task; then
+        mj_binding_section 40
+        if [ -n "$(mj_cur plan_revision)" ]; then
+          case "$(mj_binding_get '.plan_revision // empty')" in
+            "$(mj_cur plan_revision)") ;;
+            *) printf 'WARNING      the intent, a link or its critique changed since this task started; re-read the criteria above\n' ;;
+          esac
+        fi
+      else
+        printf 'standing     unknown — %s\n' "$MJ_BIND_WHY"
+        printf 'named        %s\n' "$(printf '%s %s %s' "$(mj_cur issue)" "$(mj_cur intent)" "$(mj_cur exemption)" | sed 's/  */ /g; s/^ //; s/ $//')"
+        printf 'settle       %s\n' "$MJ_BIND_FIX"
+      fi
+    } > "$MJ_CTX_TMP/32.intent"
+  elif [ "$have_task" = 1 ] && [ "$(mj_binding_mode)" != off ]; then
+    mj_ctx_excl "intent" "the task named no issue, intent or exemption at start"
+  fi
+
   # 3b. the context documents that apply to the task's scope: the chain for each claimed
   #     path, ids only; the documents themselves are read where they live
   if [ "$have_task" = 1 ]; then
@@ -369,7 +397,7 @@ mj_ctx_verification() {
 # reason — a collision in flight is worth more than history. `75.integration` is one line a
 # command away (`majordomus prs brief`), so it goes before any record body does.
 MJ_CTX_DROP_ORDER="90.history 75.integration 80.files 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
-MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 45.knowledge 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
+MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 32.intent 35.documents 40.questions 45.knowledge 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -609,7 +637,7 @@ mj_context_json() {
   else printf ',"task":null'; fi
   printf ',"sections":['
   first=1
-  for d in 30.profile 35.documents 40.questions 45.knowledge 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
+  for d in 30.profile 32.intent 35.documents 40.questions 45.knowledge 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
     [ -f "$MJ_CTX_TMP/$d" ] || continue
     [ "$first" = 1 ] || printf ','
     printf '{"id":"%s","lines":%s,"text":"%s"}' "${d#*.}" "$(mj_lines "$MJ_CTX_TMP/$d")" "$(mj_json_file "$MJ_CTX_TMP/$d")"

@@ -179,6 +179,26 @@ pub enum IntentCommand {
         #[arg(long = "path")]
         paths: Vec<String>,
     },
+    /// What a piece of work is bound to before it starts: the issue, the intent or the
+    /// paths it names resolved to the criteria it serves, or an exemption the policy
+    /// declares, with the two pins a resumed worker compares; exit 10 when refused
+    Binding {
+        /// The issue the work executes
+        #[arg(long)]
+        issue: Option<String>,
+        /// The intent the work serves, named directly
+        #[arg(long)]
+        intent: Option<String>,
+        /// A path the work will touch; repeat for each
+        #[arg(long = "path")]
+        paths: Vec<String>,
+        /// An exemption class the policy declares under intent.exemptions
+        #[arg(long)]
+        exempt: Option<String>,
+        /// Why the exemption applies
+        #[arg(long)]
+        because: Option<String>,
+    },
     /// Which work realises which intent — tasks, episodes, providers, handovers, peer claims —
     /// each link with its provenance, and each intent's unmet criteria and drift; exit 10 when
     /// an intent whose milestones are all DONE is contradicted by its evidence
@@ -5711,6 +5731,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Which intent the work on an issue serves, or why it may not proceed",
             description: "The issue followed through the criteria it declares it serves to the intent each belongs to, with what that intent asks of the worker: its statement, the served criteria and their evidence, invariants, non-goals, governance, critique and gap. A broken link, or an intent whose plan was never critiqued or has a blocking finding open, is a refusal naming its cause, and exit 10; the example fixture's intent has no critique, so this is that refusal. Work under milestones no intent names is maintenance, and exits 0.",
             argv: &["intent", "preflight", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "intent binding",
+        examples: &[ExampleDoc {
+            id: "intent-binding",
+            title: "What a task is bound to before it starts",
+            description: "What `majordomus start --issue` asks: the issue resolved to the intent and the criteria it serves, with what the intent asks of the worker and the two pins a handover carries. The example fixture's intent has no critique, so the binding is refused naming that cause, and exits 10; a bound issue answers `bound`, an issue under a milestone no intent names `maintenance`, and `--exempt <class> --because <reason>` answers `exempt` when the policy declares the class.",
+            argv: &["intent", "binding", "--issue", "I0001"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

@@ -59,6 +59,36 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 0
             })
         }
+        IntentCommand::Binding {
+            issue,
+            intent,
+            paths,
+            exempt,
+            because,
+        } => {
+            let mut input = json!({ "paths": paths.join(",") });
+            for (key, value) in [
+                ("issue", issue),
+                ("intent", intent),
+                ("exemption", exempt),
+                ("because", because),
+            ] {
+                if let Some(value) = value {
+                    input[key] = json!(value);
+                }
+            }
+            // the binding has no failure of its own beyond the call and the write, so both
+            // are returned as they are and the exit follows the standing
+            call(&app.context, &["intent", "binding"], input).and_then(|v| {
+                emit(format, &v, binding_text).map(|()| {
+                    if v["standing"] == "refused" {
+                        EXIT_INVALID
+                    } else {
+                        0
+                    }
+                })
+            })
+        }
         IntentCommand::Realization { intent } => {
             let mut input = json!({});
             if let Some(intent) = intent {
@@ -378,10 +408,48 @@ fn words(v: &Value) -> Vec<&str> {
         .collect()
 }
 
+/// The standing, what was named, then what the preflight prints for the same issues and
+/// intents, the pins, the notes and every refusal with its cause.
+fn binding_text(v: &Value) -> String {
+    let mut out = vec![format!("standing    {}", s(v, "standing"))];
+    let named = &v["named"];
+    for key in ["issue", "intent"] {
+        if named[key].is_string() {
+            out.push(format!("named       {key} {}", s(named, key)));
+        }
+    }
+    let exemption = &v["exemption"];
+    if exemption.is_object() {
+        out.push(format!(
+            "exempt      {} — {}",
+            s(exemption, "class"),
+            s(exemption, "because")
+        ));
+    }
+    held_text(v, &mut out);
+    if !s(v, "plan_revision").is_empty() {
+        out.push(format!("plan        {}", s(v, "plan_revision")));
+        out.push(format!("evidence    {}", s(v, "evidence_standing")));
+    }
+    for n in words(&v["notes"]) {
+        out.push(format!("note        {n}"));
+    }
+    refusals_text(v, &mut out);
+    out.join("\n")
+}
+
 /// The verdict, each issue with its own, each intent the work is held to with what it asks
 /// of the worker, then every refusal with its cause.
 fn preflight_text(v: &Value) -> String {
     let mut out = vec![format!("verdict     {}", s(v, "verdict"))];
+    held_text(v, &mut out);
+    refusals_text(v, &mut out);
+    out.join("\n")
+}
+
+/// The issues, the intents the work is held to and their governance: the part a preflight
+/// and a binding print alike, because a binding is the preflight's answer with more beside it.
+fn held_text(v: &Value, out: &mut Vec<String>) {
     for i in v["issues"].as_array().into_iter().flatten() {
         let serves = words(&i["serves"]);
         out.push(format!(
@@ -452,6 +520,10 @@ fn preflight_text(v: &Value) -> String {
     for g in words(&v["governance"]) {
         out.push(format!("governance  {g}"));
     }
+}
+
+/// Every refusal, with its cause first: the word a reader greps for.
+fn refusals_text(v: &Value, out: &mut Vec<String>) {
     for r in v["refusals"].as_array().into_iter().flatten() {
         out.push(format!(
             "refusal     {}  {}",
@@ -459,7 +531,6 @@ fn preflight_text(v: &Value) -> String {
             s(r, "message")
         ));
     }
-    out.join("\n")
 }
 
 #[cfg(test)]
@@ -521,6 +592,66 @@ mod tests {
             .any(|l| l.ends_with("milestone m") && l.contains("I2")));
     }
 
+    /// A binding says its standing first, then what was named, the exemption, the pins, the
+    /// notes and each refusal: every part has its line, and a part that is absent has none.
+    #[test]
+    fn the_binding_text_says_every_part_of_the_answer() {
+        let bound = json!({
+            "standing": "bound",
+            "named": {"issue": "I1", "intent": "x"},
+            "issues": [{"issue": "I1", "verdict": "serves", "milestone": "m", "serves": ["x#case"]}],
+            "intents": [],
+            "governance": [],
+            "plan_revision": "aaaa",
+            "evidence_standing": "bbbb",
+            "notes": ["docs lie outside the scope of I1"],
+            "refusals": []
+        });
+        let text = binding_text(&bound);
+        for line in [
+            "standing    bound",
+            "named       issue I1",
+            "named       intent x",
+            "issue       I1  serves  milestone m  serves x#case",
+            "plan        aaaa",
+            "evidence    bbbb",
+            "note        docs lie outside the scope of I1",
+        ] {
+            assert!(
+                text.lines().any(|l| l == line),
+                "{line:?} missing from\n{text}"
+            );
+        }
+        assert!(!text.contains("exempt "), "{text}");
+
+        let exempt = json!({
+            "standing": "exempt",
+            "named": {"exemption": "emergency", "because": "the trunk is red"},
+            "exemption": {"class": "emergency", "because": "the trunk is red"},
+            "issues": [], "intents": [], "governance": [],
+            "plan_revision": "", "evidence_standing": "", "refusals": []
+        });
+        let text = binding_text(&exempt);
+        assert!(
+            text.lines()
+                .any(|l| l == "exempt      emergency — the trunk is red"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("plan "),
+            "nothing reached, nothing pinned: {text}"
+        );
+
+        let refused = json!({
+            "standing": "refused", "named": {}, "issues": [], "intents": [], "governance": [],
+            "plan_revision": "", "evidence_standing": "",
+            "refusals": [{"cause": "nothing_named", "message": "nothing was named"}]
+        });
+        assert!(binding_text(&refused)
+            .lines()
+            .any(|l| l == "refusal     nothing_named  nothing was named"));
+    }
+
     #[test]
     fn each_verb_reaches_its_capability_and_an_unexposed_one_is_named() {
         let repo = SyntheticRepository::small().unwrap();
@@ -552,6 +683,33 @@ mod tests {
             }
             other => panic!("an absent intent answered: {other:?}"),
         }
+        // the command itself: a refused binding is exit 10, whatever was or was not named
+        let root = repo.root().to_string_lossy().into_owned();
+        let share = crate::synthetic::crate_share()
+            .to_string_lossy()
+            .into_owned();
+        let cli = <crate::cli::Cli as clap::Parser>::parse_from([
+            "majordomus",
+            "intent",
+            "binding",
+            "--repo",
+            &root,
+            "--discovery",
+            "filesystem",
+            "--share",
+            &share,
+            "--exempt",
+            "whim",
+            "--because",
+            "a reason",
+            "--format",
+            "json",
+        ]);
+        assert_eq!(crate::commands::run(cli).unwrap(), EXIT_INVALID);
+        // the binding of nothing is an answer, not an error: refused, with its cause
+        let nothing = call(&ctx, &["intent", "binding"], json!({ "paths": "" })).unwrap();
+        assert_eq!(nothing["standing"], "refused");
+        assert_eq!(nothing["refusals"][0]["cause"], "nothing_named");
         // every other refusal is a protocol error carrying the capability's message
         match call(&ctx, &["intent", "preflight"], json!({ "paths": "" })) {
             Err(Error::Protocol { reason }) => {

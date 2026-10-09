@@ -27,6 +27,16 @@ checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report
   retention_max_files: 500
 
+# Whether a task is bound to the intent it serves before it starts (ADR 0111). Absent or
+# `off`, `start` behaves as it always did and asks only when given --issue, --intent or
+# --exempt. `advisory` reports a refused binding; `required` refuses to start on one.
+# Declare the exemption classes a worker may give with a reason before choosing `required`.
+intent:
+  binding: off
+  exemptions:
+    - id: maintenance
+      description: Upkeep no issue covers
+
 handover:
   required_sections: [Objective, Current State, Next Action]
   retention_max_files: 200
@@ -79,6 +89,8 @@ session:
                                          # same reason: both are moments at which what the
                                          # episode knows stops being reachable
   handover_on_end: true
+  handover_on_fill: true                 # ask the worker for a handover while the context
+                                         # window still has room to write one (ADR 0123)
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path
