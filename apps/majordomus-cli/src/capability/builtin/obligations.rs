@@ -169,23 +169,21 @@ enum Established {
     Undecidable(String),
 }
 
+/// What git printed, or `None` when it could not be run or refused. Through the crate's
+/// one read-only constructor, so asking does not refresh the index it is asking about.
 fn git_out(root: &Path, args: &[&str]) -> Option<String> {
-    let out = std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
+    git::read_only(root)
         .args(args)
         .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
+        .ok()
+        .filter(|out| out.status.success())
+        // the end only: a porcelain status line begins with its two status columns, and
+        // the first of them is a space for a file that is modified and not staged
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim_end().to_string())
 }
 
 fn git_ok(root: &Path, args: &[&str]) -> bool {
-    std::process::Command::new("git")
-        .arg("-C")
-        .arg(root)
+    git::read_only(root)
         .args(args)
         .output()
         .map(|o| o.status.success())
@@ -224,9 +222,10 @@ fn trunk_ref(root: &Path) -> Result<String, Established> {
 }
 
 /// Establish one token live, the way `lib/evidence.sh`'s `mj_obl_est_*` do: the same
-/// questions of git, the same probe of the published site, the same live verification of
-/// the deployed surfaces. A token this cannot settle says so and falls back to the ledger.
-fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> Established {
+/// questions of git and the same probe of the published site. A deployed surface is asked
+/// only whether the trunk reaches HEAD, because nothing here verifies one live yet. A token
+/// this cannot settle says so and falls back to the ledger.
+fn establish(root: &Path, task: &ActiveTask, o: &Obligation) -> Established {
     if o.established_by.is_empty() || o.established_by == "none" {
         return Established::Undecidable(
             "nothing establishes this token; the recorded evidence stands".into(),
@@ -384,61 +383,9 @@ fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> E
                     short(&head)
                 ));
             }
-            let expected = git_out(root, &["rev-parse", &trunk]).unwrap_or_default();
-            let mut input = serde_json::json!({ "expected_commit": expected });
-            if o.id == "deploy" {
-                let apps: Vec<String> = ctx
-                    .index
-                    .objects
-                    .iter()
-                    .filter(|x| x.kind == crate::deploy::KIND)
-                    .map(|x| x.identity.clone())
-                    .collect();
-                if apps.is_empty() {
-                    return Established::Undecidable("this repository declares no deployment object, so nothing here can establish a deployment; the recorded evidence stands".into());
-                }
-                input["targets"] = serde_json::json!(apps);
-            }
-            match ctx.execute("deploy.verify", input) {
-                Err(e) => {
-                    Established::Undecidable(format!("deploy.verify could not be executed: {e}"))
-                }
-                Ok(v) => {
-                    let ok = v.get("ok").and_then(|b| b.as_bool()).unwrap_or(false);
-                    let asked = v.get("asked").and_then(|n| n.as_u64()).unwrap_or(0);
-                    let detail: Vec<String> = v
-                        .get("verifications")
-                        .and_then(|a| a.as_array())
-                        .map(|a| {
-                            a.iter()
-                                .filter(|x| {
-                                    x.get("status").and_then(|s| s.as_str())
-                                        != Some("not_applicable")
-                                })
-                                .map(|x| {
-                                    format!(
-                                        "{}: {} — {}",
-                                        x.get("target").and_then(|s| s.as_str()).unwrap_or("?"),
-                                        x.get("status").and_then(|s| s.as_str()).unwrap_or("?"),
-                                        x.get("detail").and_then(|s| s.as_str()).unwrap_or("")
-                                    )
-                                })
-                                .collect()
-                        })
-                        .unwrap_or_default();
-                    if ok {
-                        Established::Yes(format!(
-                            "exact: every applicable surface serves {} ({})",
-                            short(&expected),
-                            detail.join("; ")
-                        ))
-                    } else if asked == 0 {
-                        Established::Yes("no surface applies to this token here".into())
-                    } else {
-                        Established::No(detail.join("; "))
-                    }
-                }
-            }
+            Established::Undecidable(
+                "nothing in this repository verifies a deployed surface live yet; the recorded evidence stands".into(),
+            )
         }
         other => Established::Undecidable(format!(
             "share/obligations.yaml says '{}' establishes '{other}', and nothing here does it",
@@ -1129,7 +1076,7 @@ fn obligations_closure(ctx: &Context, input: ClosureInput) -> Result<Closure, Ca
                 );
                 judged.declared = *declared_here;
                 if let Some(o) = declared.filter(|_| live) {
-                    match establish(ctx, &root, t, o) {
+                    match establish(&root, t, o) {
                         Established::Yes(detail) => {
                             judged.state = ObligationState::Discharged;
                             judged.staleness = Some(Divergence::Exact);
@@ -1469,5 +1416,605 @@ mod tests {
         assert_eq!(found.len(), 1, "another task's evidence is another task's");
         assert_eq!(found["tests"].inputs_hash, "new");
         assert_eq!(found["tests"].head, "b");
+    }
+
+    /// git in `dir`, with nothing of this machine's configuration reaching the fixture: a
+    /// runner has no identity, and a laptop may sign every commit.
+    fn git(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(args)
+            .env("GIT_CONFIG_GLOBAL", "/dev/null")
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .env_remove("GIT_INDEX_FILE")
+            .output()
+            .expect("git runs");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    fn commit_all(root: &Path, message: &str) -> String {
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-q", "-m", message]);
+        git(root, &["rev-parse", "HEAD"])
+    }
+
+    /// A checkout on `main` holding one commit, in a directory with room for its remote.
+    fn checkout() -> (tempfile::TempDir, PathBuf) {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("work");
+        std::fs::create_dir_all(root.join("src")).unwrap();
+        git(&root, &["init", "-q", "-b", "main"]);
+        for (key, value) in [
+            ("user.name", "A Worker"),
+            ("user.email", "worker@example.test"),
+            ("commit.gpgsign", "false"),
+        ] {
+            git(&root, &["config", key, value]);
+        }
+        std::fs::write(root.join("src/a.rs"), "one\n").unwrap();
+        commit_all(&root, "the first commit");
+        (dir, root)
+    }
+
+    /// A bare repository beside the checkout, known to it as `origin` and holding nothing.
+    fn add_remote(root: &Path) {
+        let bare = root.parent().unwrap().join("origin.git");
+        std::fs::create_dir_all(&bare).unwrap();
+        git(&bare, &["init", "-q", "--bare", "-b", "main"]);
+        git(root, &["remote", "add", "origin", bare.to_str().unwrap()]);
+    }
+
+    fn token(id: &str, established_by: &str) -> Obligation {
+        Obligation {
+            id: id.into(),
+            title: id.into(),
+            summary: String::new(),
+            discharged_by: "git".into(),
+            inputs: Vec::new(),
+            remote: false,
+            note: String::new(),
+            established_by: established_by.into(),
+        }
+    }
+
+    fn task_at(head: &str, scope: &[&str]) -> ActiveTask {
+        serde_json::from_value(serde_json::json!({
+            "id": "t-1",
+            "task": "work",
+            "profile": "implementation",
+            "outcome": "active",
+            "scope": scope,
+            "head": head,
+        }))
+        .expect("a task record")
+    }
+
+    /// The answer as a word and its sentence, so a test can state both.
+    fn said(answer: Established) -> (&'static str, String) {
+        match answer {
+            Established::Yes(why) => ("yes", why),
+            Established::No(why) => ("no", why),
+            Established::Undecidable(why) => ("undecidable", why),
+        }
+    }
+
+    fn short(head: &str) -> &str {
+        &head[..12]
+    }
+
+    #[test]
+    fn a_token_nothing_establishes_is_left_to_the_ledger() {
+        let nowhere = Path::new("/nonexistent-so-git-cannot-answer");
+        let task = task_at("", &[]);
+        for by in ["", "none"] {
+            let (word, why) = said(establish(nowhere, &task, &token("tests", by)));
+            assert_eq!(word, "undecidable", "established_by '{by}'");
+            assert!(why.contains("nothing establishes this token"), "{why}");
+        }
+
+        // a vocabulary that names something this executable was never taught says which
+        let (_dir, root) = checkout();
+        let (word, why) = said(establish(&root, &task, &token("invented", "an oracle")));
+        assert_eq!(word, "undecidable");
+        assert_eq!(
+            why,
+            "share/obligations.yaml says 'an oracle' establishes 'invented', and nothing here does it"
+        );
+    }
+
+    #[test]
+    fn a_checkout_with_no_commit_establishes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        git(dir.path(), &["init", "-q", "-b", "main"]);
+        let (word, why) = said(establish(
+            dir.path(),
+            &task_at("", &[]),
+            &token("commit", "git"),
+        ));
+        assert_eq!(word, "no");
+        assert_eq!(why, "the checkout has no commit at all");
+    }
+
+    /// `commit` is two facts: nothing the task touched is still only in the working tree,
+    /// and the branch is no longer where the task found it.
+    #[test]
+    fn commit_is_read_from_the_working_tree_and_from_where_the_branch_was() {
+        let (_dir, root) = checkout();
+        let started = git(&root, &["rev-parse", "HEAD"]);
+        let commit = token("commit", "git");
+        let ask =
+            |head: &str, scope: &[&str]| said(establish(&root, &task_at(head, scope), &commit));
+
+        let (word, why) = ask(&started, &[]);
+        assert_eq!(word, "no");
+        assert!(
+            why.contains("no commit was made since the task started"),
+            "{why}"
+        );
+        assert!(why.contains(short(&started)), "{why}");
+
+        std::fs::write(root.join("src/a.rs"), "two\n").unwrap();
+        std::fs::write(root.join("src/b.rs"), "new\n").unwrap();
+        std::fs::create_dir_all(root.join(".ai/local/state")).unwrap();
+        std::fs::write(root.join(".ai/local/state/note"), "local\n").unwrap();
+
+        // a directory in the scope claims everything under it
+        let (word, why) = ask(&started, &["src/"]);
+        assert_eq!(word, "no");
+        assert!(why.starts_with("2 file(s) the task touched"), "{why}");
+        assert!(why.ends_with("(src/a.rs and more)"), "{why}");
+
+        // a file in the scope claims itself and nothing beside it
+        let (word, why) = ask(&started, &["src/b.rs"]);
+        assert_eq!(word, "no");
+        assert!(
+            why.starts_with("1 file(s)") && why.ends_with("(src/b.rs)"),
+            "{why}"
+        );
+
+        // what is dirty outside the scope is somebody else's, and is not held against it
+        let (word, why) = ask(&started, &["docs"]);
+        assert_eq!(word, "no");
+        assert!(why.contains("no commit was made"), "{why}");
+
+        // a task that claims nothing answers for the whole tree but the layer's own state
+        let (_, why) = ask(&started, &[]);
+        assert!(
+            why.starts_with("2 file(s)"),
+            "the .ai/ half is not counted: {why}"
+        );
+
+        // a rename is the name it was given, not the one it had
+        git(&root, &["mv", "src/a.rs", "src/c.rs"]);
+        let (_, why) = ask(&started, &["src/c.rs"]);
+        assert!(why.ends_with("(src/c.rs)"), "{why}");
+
+        let head = commit_all(&root, "the work");
+        let (word, why) = ask(&started, &["src"]);
+        assert_eq!(word, "yes");
+        assert_eq!(
+            why,
+            format!(
+                "exact: the tree is clean and the branch has moved to {}",
+                short(&head)
+            )
+        );
+
+        // a task that recorded no starting commit cannot be told it did not move
+        for unrecorded in ["NONE", ""] {
+            assert_eq!(ask(unrecorded, &["src"]).0, "yes", "head '{unrecorded}'");
+        }
+        assert_eq!(
+            ask(&head, &["src"]).0,
+            "no",
+            "clean, and exactly where it started"
+        );
+    }
+
+    #[test]
+    fn push_is_read_from_the_remote_tracking_refs() {
+        let (_dir, root) = checkout();
+        let push = token("push", "git");
+        let ask = || said(establish(&root, &task_at("", &[]), &push));
+        let first = git(&root, &["rev-parse", "HEAD"]);
+
+        let (word, why) = ask();
+        assert_eq!(word, "undecidable");
+        assert!(
+            why.contains("no remote, so a push cannot be established"),
+            "{why}"
+        );
+
+        add_remote(&root);
+        let (word, why) = ask();
+        assert_eq!(word, "no", "a remote nothing was sent to holds nothing");
+        assert!(
+            why.starts_with(&format!("no remote-tracking ref reaches {}", short(&first))),
+            "{why}"
+        );
+
+        git(&root, &["push", "-q", "-u", "origin", "main"]);
+        assert_eq!(
+            ask(),
+            (
+                "yes",
+                format!("exact: origin/main contains {}", short(&first))
+            )
+        );
+
+        std::fs::write(root.join("src/a.rs"), "two\n").unwrap();
+        let second = commit_all(&root, "not pushed");
+        let (word, why) = ask();
+        assert_eq!(word, "no");
+        assert!(
+            why.contains(short(&second)) && why.contains("has not reached the remote"),
+            "{why}"
+        );
+
+        // a branch that tracks nothing is pushed once any remote ref holds its commit
+        git(&root, &["push", "-q", "origin", "main"]);
+        git(&root, &["checkout", "-q", "-b", "side"]);
+        let (word, why) = ask();
+        assert_eq!(word, "yes");
+        assert!(
+            why.starts_with("exact: origin") && why.ends_with(short(&second)),
+            "{why}"
+        );
+    }
+
+    #[test]
+    fn target_is_read_from_the_default_branch_the_remote_states() {
+        let (_dir, root) = checkout();
+        let target = token("target", "git");
+        let ask = || said(establish(&root, &task_at("", &[]), &target));
+        let first = git(&root, &["rev-parse", "HEAD"]);
+
+        let (word, why) = ask();
+        assert_eq!(word, "undecidable");
+        assert!(
+            why.contains("no remote, so the trunk cannot be read here"),
+            "{why}"
+        );
+
+        add_remote(&root);
+        git(&root, &["push", "-q", "-u", "origin", "main"]);
+        let (word, why) = ask();
+        assert_eq!(word, "undecidable", "a push records no default branch");
+        assert!(why.contains("no default branch for 'origin'"), "{why}");
+        assert!(
+            why.contains("git remote set-head origin -a"),
+            "it carries its repair: {why}"
+        );
+
+        git(&root, &["remote", "set-head", "origin", "-a"]);
+        assert_eq!(
+            ask(),
+            (
+                "yes",
+                format!("exact: origin/main reaches {}", short(&first))
+            )
+        );
+
+        // work on a branch that tracks nothing is still measured against the remote's trunk
+        git(&root, &["checkout", "-q", "-b", "side"]);
+        std::fs::write(root.join("src/a.rs"), "two\n").unwrap();
+        let second = commit_all(&root, "not integrated");
+        assert_eq!(
+            ask(),
+            (
+                "no",
+                format!(
+                    "origin/main does not reach {}; the work is not integrated",
+                    short(&second)
+                )
+            )
+        );
+    }
+
+    /// Nothing on this branch asks a deployed surface what it serves, so the most these two
+    /// tokens can be told live is that the trunk does not hold the work yet.
+    #[test]
+    fn a_deployed_surface_is_refused_before_the_trunk_and_left_to_the_ledger_after_it() {
+        let (_dir, root) = checkout();
+        let task = task_at("", &[]);
+        for id in ["verify", "deploy"] {
+            let (word, why) = said(establish(&root, &task, &token(id, "deploy.verify")));
+            assert_eq!(word, "undecidable", "{id}");
+            assert!(why.contains("no remote"), "{id}: {why}");
+        }
+
+        add_remote(&root);
+        git(&root, &["push", "-q", "-u", "origin", "main"]);
+        git(&root, &["remote", "set-head", "origin", "-a"]);
+        std::fs::write(root.join("src/a.rs"), "two\n").unwrap();
+        let head = commit_all(&root, "not integrated");
+        for id in ["verify", "deploy"] {
+            let (word, why) = said(establish(&root, &task, &token(id, "deploy.verify")));
+            assert_eq!(word, "no", "{id}");
+            assert_eq!(
+                why,
+                format!(
+                    "the trunk (origin/main) does not reach {}, so nothing deployed can be serving this task yet",
+                    short(&head)
+                )
+            );
+        }
+
+        git(&root, &["push", "-q", "origin", "main"]);
+        for id in ["verify", "deploy"] {
+            let (word, why) = said(establish(&root, &task, &token(id, "deploy.verify")));
+            assert_eq!(word, "undecidable", "{id}: integrated is not verified");
+            assert_eq!(
+                why,
+                "nothing in this repository verifies a deployed surface live yet; the recorded evidence stands"
+            );
+        }
+    }
+
+    #[cfg(unix)]
+    fn pages_probe(root: &Path, body: &str, mode: u32) {
+        use std::os::unix::fs::PermissionsExt;
+        let path = root.join("scripts/pages");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, format!("#!/usr/bin/env bash\n{body}\n")).unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).unwrap();
+        // Linux refuses to exec a file any process still holds open for writing, and a test
+        // thread that forked during the write above holds it until its child execs. One
+        // exec that is not refused that way proves no writer is left (worktree::direnv).
+        for _ in 0..100 {
+            match std::process::Command::new(&path).arg("probe").output() {
+                Err(e) if e.raw_os_error() == Some(libc::ETXTBSY) => {
+                    std::thread::sleep(std::time::Duration::from_millis(20))
+                }
+                _ => return,
+            }
+        }
+        panic!("{} stayed busy for writing", path.display());
+    }
+
+    /// The published site is asked through the repository's own probe, and its three exits
+    /// are three different answers: serving, not serving, and could not be asked.
+    #[cfg(unix)]
+    #[test]
+    fn pages_is_the_probe_s_answer_and_an_unreachable_site_is_not_a_refusal() {
+        let (_dir, root) = checkout();
+        let head = git(&root, &["rev-parse", "HEAD"]);
+        let pages = token("pages", "scripts/pages verify");
+        let ask = || said(establish(&root, &task_at("", &[]), &pages));
+
+        let (word, why) = ask();
+        assert_eq!(word, "undecidable");
+        assert!(why.contains("no scripts/pages"), "{why}");
+
+        // the probe is run in the repository, about HEAD, without waiting and without noise
+        pages_probe(
+            &root,
+            r#"[ "$*" = "verify --commit $(git rev-parse HEAD) --timeout 0 --quiet" ] || exit 99"#,
+            0o755,
+        );
+        assert_eq!(
+            ask(),
+            (
+                "yes",
+                format!("exact: the published site serves {}", short(&head))
+            )
+        );
+
+        pages_probe(
+            &root,
+            "echo 'pages verify: an earlier line'\necho 'pages verify: the site serves 0000000' >&2\nexit 10",
+            0o755,
+        );
+        assert_eq!(ask(), ("no", "the site serves 0000000".to_string()));
+
+        pages_probe(&root, "exit 10", 0o755);
+        assert_eq!(
+            ask(),
+            (
+                "no",
+                "the published site does not serve this commit".to_string()
+            )
+        );
+
+        pages_probe(&root, "exit 3", 0o755);
+        let (word, why) = ask();
+        assert_eq!(word, "undecidable");
+        assert!(why.contains("scripts/pages verify exited 3"), "{why}");
+
+        pages_probe(&root, "exit 0", 0o644);
+        let (word, why) = ask();
+        assert_eq!(
+            word, "undecidable",
+            "a probe that cannot be run proved nothing"
+        );
+        assert!(why.starts_with("scripts/pages could not be run: "), "{why}");
+    }
+
+    /// One report hashes many tokens over overlapping files: each file is read once per
+    /// report, and a file git tracks that the tree no longer holds is left out of the
+    /// listing rather than failing it.
+    #[test]
+    fn the_input_hash_is_the_listing_s_and_a_file_is_read_once_per_report() {
+        let (_dir, root) = checkout();
+        std::fs::write(root.join("src/b.rs"), "two\n").unwrap();
+        commit_all(&root, "a second file");
+        let specs = vec!["src/**".to_string()];
+        let line = |path: &str, bytes: &[u8]| {
+            format!("{path} {}\n", crate::policy::sha256_bytes_hex(bytes))
+        };
+
+        let mut report = FileHashes::default();
+        let (hash, files) = inputs_hash_with(&root, &specs, &mut report).unwrap();
+        assert_eq!(files, 2);
+        assert_eq!(
+            hash,
+            listing_hash(&(line("src/a.rs", b"one\n") + &line("src/b.rs", b"two\n")))
+        );
+
+        std::fs::write(root.join("src/a.rs"), "changed\n").unwrap();
+        assert_eq!(
+            inputs_hash_with(&root, &specs, &mut report).unwrap().0,
+            hash,
+            "the same report does not read a file twice"
+        );
+
+        std::fs::remove_file(root.join("src/b.rs")).unwrap();
+        assert_eq!(
+            inputs_hash(&root, &specs).unwrap(),
+            (listing_hash(&line("src/a.rs", b"changed\n")), 2),
+            "selected, counted, and absent from the listing"
+        );
+
+        assert_eq!(
+            inputs_hash(&root, &["docs/**".to_string()]),
+            Some((String::new(), 0))
+        );
+        assert_eq!(
+            inputs_hash(&root, &[]),
+            None,
+            "a token that declares no inputs"
+        );
+    }
+
+    const VOCABULARY: &str = "version: 1\nobligations:\n  - id: tests\n    title: The cases were run\n    summary: They passed.\n    discharged_by: usecase impact\n    inputs: [\"src/**\"]\n    remote: false\n    established_by: none\n  - id: commit\n    title: The work is committed\n    summary: It is in the branch's history.\n    discharged_by: git\n    remote: false\n    established_by: git\n  - id: push\n    title: The commit reached the remote\n    summary: The branch head exists on the remote.\n    discharged_by: git\n    remote: true\n    established_by: git\n";
+
+    /// The closure as a served instance answers it: what the repository can settle is asked
+    /// of the repository first, in both directions, and only the rest is read from the
+    /// ledger. A token the task never declared is answered too and counts toward nothing.
+    #[test]
+    fn the_closure_asks_the_repository_before_it_reads_the_ledger() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        git(&root, &["init", "-q", "-b", "main"]);
+        for (key, value) in [
+            ("user.name", "A Worker"),
+            ("user.email", "worker@example.test"),
+            ("commit.gpgsign", "false"),
+        ] {
+            git(&root, &["config", key, value]);
+        }
+        std::fs::create_dir_all(root.join("src")).unwrap();
+        std::fs::write(root.join("src/a.rs"), "one\n").unwrap();
+        let started = commit_all(&root, "the first commit");
+
+        let share = tempfile::tempdir().unwrap();
+        std::fs::write(share.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+        std::fs::write(share.path().join(VOCABULARY_FILE), VOCABULARY).unwrap();
+        let mut index = repo.index().unwrap();
+        index.share = Some(share.path().to_path_buf());
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+
+        let state = root.join(STATE_DIR);
+        std::fs::create_dir_all(&state).unwrap();
+        let record = |requires: &str| {
+            std::fs::write(
+                state.join("current.yaml"),
+                format!(
+                    "id: t-1\ntask: work\nprofile: implementation\noutcome: active\nscope: [\"src\"]\nrequires: [{requires}]\nhead: {started}\n"
+                ),
+            )
+            .unwrap();
+        };
+        let by = |c: &Closure, id: &str| {
+            c.obligations
+                .iter()
+                .find(|o| o.id == id)
+                .unwrap_or_else(|| panic!("{id} is not in the closure"))
+                .clone()
+        };
+
+        // the work is in the tree and not in the history
+        record("\"tests\", \"commit\", \"invented\"");
+        std::fs::write(root.join("src/a.rs"), "two\n").unwrap();
+        let c = obligations_closure(&ctx, ClosureInput::default()).unwrap();
+        assert!(c.present && !c.closed);
+        let ids: Vec<&str> = c.obligations.iter().map(|o| o.id.as_str()).collect();
+        assert_eq!(ids, ["tests", "commit", "invented", "push"]);
+        let commit = by(&c, "commit");
+        assert_eq!(commit.state, ObligationState::Owed);
+        assert!(
+            commit.detail.starts_with("1 file(s) the task touched"),
+            "{}",
+            commit.detail
+        );
+        assert_eq!(by(&c, "tests").detail, "owed, and no evidence was recorded");
+        assert_eq!(by(&c, "invented").state, ObligationState::Undeclared);
+        let push = by(&c, "push");
+        assert!(!push.declared, "the task never promised a push");
+        assert_eq!(
+            push.detail,
+            "owed, and no evidence was recorded; the checkout has no remote, so a push cannot be established here",
+            "what could not be settled says why, beside what the ledger said"
+        );
+        assert_eq!(
+            c.tallies,
+            BTreeMap::from([("owed".to_string(), 2), ("undeclared".to_string(), 1)]),
+            "only what the task declared is tallied"
+        );
+
+        // committed, and the cases were run over exactly this tree
+        git(&root, &["commit", "-q", "-am", "the work"]);
+        let head = git(&root, &["rev-parse", "HEAD"]);
+        let (hash, _) = inputs_hash(&root, &["src/**".to_string()]).unwrap();
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            format!(
+                "{}\nnot json at all\n",
+                serde_json::json!({
+                    "ts": "2026-09-09T00:00:00Z", "event": EVIDENCE_EVENT, "head": head,
+                    "task": "t-1", "covers": "tests", "kind": "test",
+                    "command": "usecase impact", "inputs_hash": hash,
+                })
+            ),
+        )
+        .unwrap();
+        record("\"tests\", \"commit\"");
+        let c = obligations_closure(&ctx, ClosureInput::default()).unwrap();
+        let commit = by(&c, "commit");
+        assert_eq!(commit.state, ObligationState::Discharged);
+        assert_eq!(commit.staleness, Some(Divergence::Exact));
+        assert_eq!(commit.reproduce, "established live by git");
+        assert!(
+            commit.evidence.is_none(),
+            "discharged by the repository, with no ledger line"
+        );
+        assert_eq!(by(&c, "tests").state, ObligationState::Discharged);
+        assert_eq!(by(&c, "push").state, ObligationState::Owed);
+        assert!(
+            c.closed,
+            "a token the task did not declare does not hold it open"
+        );
+        assert_eq!(c.tallies, BTreeMap::from([("discharged".to_string(), 2)]));
+        assert!(
+            c.findings
+                .iter()
+                .any(|f| f.starts_with("1 ledger line(s) could not be read")),
+            "{:?}",
+            c.findings
+        );
+
+        // without the live pass the same commit is a claim nobody recorded
+        let recorded = obligations_closure(&ctx, ClosureInput { live: Some(false) }).unwrap();
+        let ids: Vec<&str> = recorded.obligations.iter().map(|o| o.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            ["tests", "commit"],
+            "only the declared tokens are read"
+        );
+        assert_eq!(by(&recorded, "commit").state, ObligationState::Owed);
+        assert!(!recorded.closed);
     }
 }

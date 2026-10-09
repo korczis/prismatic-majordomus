@@ -650,4 +650,97 @@ mod tests {
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(site_base_url(&dir), None);
     }
+
+    #[test]
+    fn a_kind_s_word_is_the_word_it_is_serialised_as() {
+        for kind in [
+            TargetKind::Pages,
+            TargetKind::Release,
+            TargetKind::Application,
+        ] {
+            assert_eq!(serde_json::to_value(kind).unwrap(), kind.as_str());
+        }
+        assert_eq!(TargetKind::Release.as_str(), "release");
+    }
+
+    #[test]
+    fn an_identity_is_empty_only_when_it_expects_nothing_at_all() {
+        assert!(DeploymentIdentity::default().is_empty());
+        for one in [
+            DeploymentIdentity {
+                commit: Some("abc".into()),
+                ..Default::default()
+            },
+            DeploymentIdentity {
+                version: Some("0.5.0".into()),
+                ..Default::default()
+            },
+            DeploymentIdentity {
+                tag: Some("v0.5.0".into()),
+                ..Default::default()
+            },
+        ] {
+            assert!(
+                !one.is_empty(),
+                "one field is enough to compare against: {one:?}"
+            );
+        }
+    }
+
+    /// "Not reached" has more than one cause, and the reason says which: a model that never
+    /// said what the site is built from is not a change that missed it.
+    #[test]
+    fn a_target_that_cannot_be_reached_says_what_is_missing_rather_than_what_changed() {
+        let mut f = facts();
+        f.site_inputs.clear();
+        f.applications = vec![ApplicationFact {
+            id: "nowhere".into(),
+            status: "active".into(),
+            url: None,
+            inputs: vec!["apps/**".into()],
+        }];
+        let p = plan(&f, &["apps/majordomus-cli/src/lib.rs".into()], false);
+        let by = |id: &str| p.targets.iter().find(|t| t.id == id).unwrap().clone();
+        assert!(!by("pages").applicable);
+        assert!(
+            by("pages").reason.contains("declares no site-build gate"),
+            "{}",
+            by("pages").reason
+        );
+        assert!(
+            !by("nowhere").applicable,
+            "active and reached, with nothing to ask"
+        );
+        assert!(
+            by("nowhere").reason.contains("states no url"),
+            "{}",
+            by("nowhere").reason
+        );
+        assert_eq!(by("nowhere").identity_url, None);
+    }
+
+    #[test]
+    fn only_a_base_url_assignment_with_a_value_is_the_origin() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("site")).unwrap();
+        let config = dir.path().join("site/config.toml");
+
+        std::fs::write(&config, "base_url_note\nbase_url = \"\"\n").unwrap();
+        assert_eq!(
+            site_base_url(dir.path()),
+            None,
+            "a key that merely begins with it, and an empty value"
+        );
+
+        std::fs::write(
+            &config,
+            "base_urls = \"https://wrong.test\"\nbase_url = ''\n  base_url='https://right.test/'\n",
+        )
+        .unwrap();
+        assert_eq!(
+            site_base_url(dir.path()).as_deref(),
+            Some("https://right.test"),
+            "the first line that assigns one"
+        );
+    }
 }

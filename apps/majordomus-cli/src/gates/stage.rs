@@ -325,4 +325,21 @@ mod tests {
             ["b", "a"]
         );
     }
+
+    #[test]
+    fn a_state_s_word_is_the_word_it_is_serialised_as() {
+        for state in [
+            StageState::Complete,
+            StageState::Pending,
+            StageState::Blocked,
+            StageState::Empty,
+        ] {
+            assert_eq!(serde_json::to_value(state).unwrap(), state.as_str());
+            assert_eq!(
+                serde_json::from_value::<StageState>(state.as_str().into()).unwrap(),
+                state
+            );
+        }
+        assert_eq!(StageState::Blocked.as_str(), "blocked");
+    }
 }
