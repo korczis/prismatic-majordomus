@@ -548,6 +548,68 @@ a schedule, without anybody choosing it. `test/cases/353` asserts exactly that, 
 assertion is a mutation rather than a description: a variant of the workflow with `git tag`
 appended is refused, naming the tag.
 
+## A release carries less debt than the one before it
+
+A gate that could not be made to pass on the day it was written keeps a baseline: a file of
+violations it accepts. Each keeps its own list from growing inside one change. Nothing made
+the lists shorter, and nothing added them up, so a release was green over a debt that only
+had to stand still. From 2026-10-08 it does not (rule
+`project.a-release-carries-less-debt-than-the-last`): before every release the documents say
+what is true, every claim is validated and covered by a test, and the accepted violations are
+fewer than at the previous release, by at least a declared minimum.
+
+```bash
+majordomus release debt
+majordomus release debt --release
+```
+
+The first is the gate of a change. It prints every baseline
+[`.ai/repo/ci/debt.yaml`](../.ai/repo/ci/debt.yaml) declares, what it holds, what the previous
+release recorded for it, and the total; it exits 10 when a baseline grew, when a file named
+like a baseline is neither counted nor excluded with a reason, or when one cannot be counted.
+The second is the gate of a release: it also exits 10 when the total is not lower than the
+previous release's by `minimum_reduction`, and says the largest total a release may carry.
+
+| Standing | What it means | A change | A release |
+|---|---|---|---|
+| `paid` | every baseline is empty | allowed | allowed |
+| `unrecorded` | the previous release recorded no counts: these are recorded and compared with nothing | allowed | allowed |
+| `reduced` | no baseline grew and the total fell by the minimum | allowed | allowed |
+| `owed` | no baseline grew and the total has not yet fallen by the minimum | allowed | refused |
+| `refused` | a baseline grew, is undeclared, or cannot be counted | refused | refused |
+
+A baseline is counted in the form its own gate reads it, which the declaration names: one
+violation per line, or the numbers the file states, summed. A line count would let a counter
+go from 54 to 500 unseen and would call a payment from 192 to 1 nothing.
+
+One baseline counts what no change can fix — published commits that break the commit
+policy, in a history that is append-only — and is declared `payable: false`, with that
+reason. It is still counted, recorded and refused if it grows; it is left out of what a
+release must reduce. The report shows the total and, when they differ, the part of it that
+can be paid.
+
+The release is judged where a person stands before pushing a tag, by
+`scripts/ci/release-verdict`, and again by the pipeline's `debt` phase before an artifact is
+built. `scripts/release-record` writes what was counted into the release's record, under
+`debt`, so that the next release is held against a number that was measured. Paying is done
+by fixing what an entry names: an entry deleted while its violation remains makes its own
+gate fail.
+
+The same declaration names the tracked evidence ledger, `evidence_ledger`. A baseline says
+what is accepted; the ledger says what was run. A release is refused when the newest
+execution CI recorded in it predates the previous release's publication, when it holds no
+CI execution, or when it cannot be read, and the report names both times. The check that
+reads the ledger refuses only evidence that was lost, so it passed through two releases
+while supporting no claim; the age is therefore judged here. A change is never refused for
+it, because a change cannot re-record it.
+
+A baseline can also sit above the truth: what it accepted was fixed and nobody wrote the
+file again, so its gate passes and a release would record a debt the tree does not have.
+Only the gate knows the measured value, so a baseline may declare `slack`: the command to
+run and the words it prints when the baseline can be tightened. At a release each such gate
+is asked; one that says so, or cannot be run, refuses the release. A baseline whose gate
+cannot state slack is listed as "slack not measured" in every release report.
+
 ## What proves it
 
 | | |
