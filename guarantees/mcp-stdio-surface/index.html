@@ -178,7 +178,7 @@
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>Tools that speak MCP cannot read a shell tool. The layer is the repository's, readable without any tool, and this is the reader for clients that read through a protocol, kept subordinate to the shell tool that validates and enforces the layer. <code>test/cases/72_rust_mcp.sh</code> speaks to the built binary inside a repository the shell tool's own <code>init</code> wrote; <code>apps/majordomus-cli/tests/mcp_stdio.rs</code> holds every frame to the rules above, including that a session mutates nothing.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/docs/claims/mcp-stdio-surface.md" class="font-mono underline">docs/claims/mcp-stdio-surface.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/docs/claims/mcp-stdio-surface.md" class="font-mono underline">docs/claims/mcp-stdio-surface.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
     <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="mcp-stdio-surface">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; the public statement</p>
@@ -188,15 +188,15 @@
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; the canonical claim</p>
         <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">mcp-stdio-surface</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
-<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
-        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/mcp/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/docs/MCP.md" class="font-mono text-fg-brand hover:underline">docs/MCP.md</a></p>
+<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/mcp/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/docs/MCP.md" class="font-mono text-fg-brand hover:underline">docs/MCP.md</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; the implementation</p>
-        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/apps/majordomus-cli/src/mcp/protocol.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/mcp/protocol.rs</a></p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/apps/majordomus-cli/src/mcp/protocol.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/mcp/protocol.rs</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/test/cases/72_rust_mcp.sh" class="font-mono text-fg-brand hover:underline">test/cases/72_rust_mcp.sh</a></p><p class="mt-1 mb-0 text-body">Executed in <a href="https://majordomus.dev/use-cases/serve-the-layer-to-ai-clients/" class="font-medium text-fg-brand hover:underline">Serve the repository&#39;s AI layer to every AI client through one shared server</a>, <a href="https://majordomus.dev/use-cases/find-an-object-without-reading-everything/" class="font-medium text-fg-brand hover:underline">Find an object of the layer without reading everything</a>.</p>
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/test/cases/72_rust_mcp.sh" class="font-mono text-fg-brand hover:underline">test/cases/72_rust_mcp.sh</a></p><p class="mt-1 mb-0 text-body">Executed in <a href="https://majordomus.dev/use-cases/serve-the-layer-to-ai-clients/" class="font-medium text-fg-brand hover:underline">Serve the repository&#39;s AI layer to every AI client through one shared server</a>, <a href="https://majordomus.dev/use-cases/find-an-object-without-reading-everything/" class="font-medium text-fg-brand hover:underline">Find an object of the layer without reading everything</a>.</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the recorded runs</p>
@@ -282,9 +282,9 @@
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/993122a7db30f8f70b12f9ef57a723f572825cc3/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -292,7 +292,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.19.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/fe0b58b67b63d7a95b15236d9de222ea2dc2fab5" class="font-mono underline">fe0b58b</a> · inputs <span class="font-mono">ee8b0bdaf251</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.19.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/993122a7db30f8f70b12f9ef57a723f572825cc3" class="font-mono underline">993122a</a> · inputs <span class="font-mono">ee8b0bdaf251</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
