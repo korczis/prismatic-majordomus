@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub(crate) mod continuity_transfer;
 pub(crate) mod convergence;
 pub mod dashboard;
 pub(crate) mod delivery;
@@ -59,10 +60,12 @@ pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
 pub mod lifecycle;
+pub mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub mod objects;
 pub mod obligations;
+pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
@@ -197,8 +200,10 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         episodes,
         peers,
         server,
+        mcp,
         session_domain,
         shell,
+        pack,
         perf,
         plan,
         recover,
@@ -314,6 +319,9 @@ mod tests {
             // reasoning.record writes checkout state under .ai/local, never a tracked file,
             // and is classified with the writers so that every surface asks before it runs.
             [
+                "continuity.publish",
+                "continuity.resume",
+                "continuity.sync",
                 "intent_opposition.record",
                 "plan.transition",
                 "reasoning.record",

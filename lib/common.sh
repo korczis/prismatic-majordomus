@@ -445,18 +445,38 @@ mj_phase_end() {
 # mj_count <name>: one unit of a kind of work worth counting (a parse, a git call)
 mj_count() { mj_timing_on || return 0; printf 'count\t%s\t1\n' "$1" >> "$MJ_TIMING_FILE"; }
 # The report: phases ranked by time, counters summed, on stderr so the command's own
-# output is untouched, in the same shape whatever the command was.
+# output is untouched, in the same shape whatever the command was. Under --json it is the
+# same data as one line of JSON (docs/SCHEMAS.md, "The timing report"), so a check can
+# compare one run's breakdown with another's; the text form is for a person reading it.
+# Both forms are read from the one aggregation below, in the one order, so neither can
+# carry a phase or a counter the other lacks.
 mj_timing_report() {
   mj_timing_on || return 0
   [ -n "$MJ_TIMING_FILE" ] && [ -f "$MJ_TIMING_FILE" ] || return 0
-  local tab; tab="$(printf '\t')"
-  {
-    printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$(( $(mj_ms) - MJ_TIMING_T0 ))"
+  local tab total rows
+  tab="$(printf '\t')"
+  total="$(( $(mj_ms) - MJ_TIMING_T0 ))"
+  # kind <TAB> amount <TAB> calls <TAB> name: phases by time, then counters by count
+  rows="$(
     awk -F'\t' '$1=="phase" { t[$2]+=$3; n[$2]++ } END { for (k in t) printf "phase\t%d\t%d\t%s\n", t[k], n[k], k }' "$MJ_TIMING_FILE" \
-      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
-    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
-      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
-  } >&2
+      | LC_ALL=C sort -t "$tab" -k2,2nr -k4,4
+    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t0\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
+      | LC_ALL=C sort -t "$tab" -k2,2nr -k4,4
+  )"
+  if [ "${MJ_JSON:-0}" = 1 ]; then
+    printf '%s\n' "$rows" | awk -F'\t' -v clock="$MJ_TIMING_CLOCK" -v total="$total" '
+      function q(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, "\\t", s); return "\"" s "\"" }
+      $1 == "phase" { p = p (p == "" ? "" : ",") "{\"name\":" q($4) ",\"ms\":" $2 ",\"calls\":" $3 "}" }
+      $1 == "count" { c = c (c == "" ? "" : ",") "{\"name\":" q($4) ",\"count\":" $2 "}" }
+      END { printf "{\"timing\":{\"clock\":%s,\"total_ms\":%d,\"phases\":[%s],\"counters\":[%s]}}\n", q(clock), total, p, c }' >&2
+  else
+    {
+      printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$total"
+      printf '%s\n' "$rows" | awk -F'\t' '
+        $1 == "phase" { printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }
+        $1 == "count" { printf "count  %8d     %s\n", $2, $4 }'
+    } >&2
+  fi
   rm -f "$MJ_TIMING_FILE"
 }
 # The same instant as mj_now, in the form a record's filename uses. It reads the same
@@ -1191,9 +1211,39 @@ mj_change_set() {
 # The repository, named without naming a disk: the remote's URL when there is one, and a
 # hash of the common git directory when there is not. A shared record carries this; the
 # local records keep mj_git_repo_id, which is a path and is theirs to hold.
+#
+# The URL is written without its credentials. A remote configured as
+# https://x-access-token:<token>@host/o/r.git — which is how a CI clone and many a laptop
+# are configured — used to be copied whole into every shared record, and a shared record
+# is tracked and pushed: the token left the machine in a file nobody thought of as holding
+# one. The identity is the repository's, and a credential is not part of which repository
+# it is.
 mj_repository_id() {
   local remote; remote="$(mj_git config --get remote.origin.url 2>/dev/null)"
-  if [ -n "$remote" ]; then printf '%s' "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+  if [ -n "$remote" ]; then mj_url_public "$remote"; else printf 'local:%s' "$(mj_worktree_id)"; fi
+}
+
+# A URL as it may be written down: over HTTP the whole userinfo goes, because a token is as
+# often the user name as the password; over any other scheme only a password does, because
+# `ssh://git@host/...` names a login that is no secret and is part of how the remote is
+# reached. The scp form (`git@host:o/r.git`) has no scheme and carries no password.
+#   mj_url_public <url>
+mj_url_public() {
+  local u="$1" scheme rest authority userinfo
+  case "$u" in
+    *://*)
+      scheme="${u%%://*}"; rest="${u#*://}"; authority="${rest%%/*}"
+      case "$authority" in
+        *@*)
+          userinfo="${authority%@*}"
+          case "$scheme" in
+            http|https) rest="${authority##*@}${rest#"$authority"}" ;;
+            *) rest="${userinfo%%:*}@${authority##*@}${rest#"$authority"}" ;;
+          esac ;;
+      esac
+      printf '%s://%s' "$scheme" "$rest" ;;
+    *) printf '%s' "$u" ;;
+  esac
 }
 
 mj_worktree_id() {
@@ -1316,7 +1366,7 @@ mj_resolve_latest() {
     # A shared record names the repository by its remote, a local one by its git directory;
     # the same repository answers to either (ADR 0014).
     if [ "$(mj_yget "$flat" repository_id)" = "$my_id" ] \
-       || [ "$(mj_yget "$flat" repository_id)" = "$(mj_repository_id)" ]; then
+       || [ "$(mj_url_public "$(mj_yget "$flat" repository_id)")" = "$(mj_repository_id)" ]; then
       # Tier 0 is "this worktree". A local record names it by path; a shared one names it by
       # `worktree_id`, because an absolute path is a fact about a disk and a shared record
       # carries none (ADR 0014). Either identifies the same working copy.

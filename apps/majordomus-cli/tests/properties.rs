@@ -283,7 +283,19 @@ fn direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way() {
                             prop_assert_eq!(&answer["result"]["structuredContent"], v, "{}: MCP equals direct", id);
                         }
                         Err(CapabilityError::Internal(_)) => prop_assert!(answer.get("error").is_some()),
-                        Err(_) => prop_assert!(answer["result"]["isError"] == true, "{}: a refusal is a result with isError", id),
+                        Err(e) => {
+                            prop_assert!(answer["result"]["isError"] == true, "{}: a refusal is a result with isError", id);
+                            // the category is the error's own word, not a sentence to parse
+                            prop_assert_eq!(
+                                &answer["result"]["_meta"]["majordomus"]["error"]["code"],
+                                &json!(e.code()),
+                                "{}: MCP names the category {}", id, answer
+                            );
+                            prop_assert!(
+                                answer["result"].get("structuredContent").is_none(),
+                                "{}: a refusal carries no structuredContent, the output schema describes a success", id
+                            );
+                        }
                     }
                 }
                 if let Some(route) = &route {
@@ -323,6 +335,9 @@ fn direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way() {
                                     CapabilityError::Internal(_) => 500,
                                 };
                                 prop_assert_eq!(response.status, expected, "{} {}: {}", id, target, response.body);
+                                // and the word HTTP answers is the one MCP carries
+                                let body: Value = serde_json::from_str(&response.body.text()).unwrap();
+                                prop_assert_eq!(&body["error"]["code"], &json!(e.code()), "{} {}: {}", id, target, response.body);
                             }
                         }
                     }

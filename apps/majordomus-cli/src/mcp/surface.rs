@@ -61,9 +61,43 @@ pub struct Tool {
     pub input_schema: Value,
     /// The canonical output schema.
     pub output_schema: Value,
-    /// Does a call leave the process as it found it? Every tool leaves the repository
-    /// untouched; `false` means it changes this process's in-memory state.
-    pub read_only: bool,
+    /// What the call changes: nothing, this process's memory, or the repository.
+    pub effect: crate::capability::Effect,
+    /// What a caller may assume before calling, classified from the effect. The tool's
+    /// annotations are this value and nothing else.
+    pub hints: crate::capability::Hints,
+}
+
+impl Tool {
+    /// The tool a capability projects, when it projects one.
+    ///
+    /// The one place a capability becomes a tool: its name is the declared exposure, and
+    /// everything else — the schemas, the effect, what a caller may assume — is read from
+    /// the capability, so a tool cannot say anything its capability does not.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{builtin, CapabilityRegistry, Effect};
+    /// use majordomus_cli::mcp::surface::Tool;
+    /// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).build().unwrap();
+    /// let c = registry.by_mcp_tool("majordomus_plan_transition").unwrap();
+    /// let tool = Tool::of(c).unwrap();
+    /// assert_eq!(tool.id, "plan.transition");
+    /// assert_eq!(tool.effect, Effect::RepositoryMutation);
+    /// assert!(tool.hints.destructive, "a tool that writes the repository is announced as one");
+    /// ```
+    pub fn of(c: &crate::capability::Capability) -> Option<Tool> {
+        let name = c.exposure.mcp.as_ref()?.tool.clone()?;
+        Some(Tool {
+            name,
+            title: c.title.clone(),
+            description: c.description.clone(),
+            id: c.id.to_string(),
+            input_schema: c.input.for_mcp(),
+            output_schema: c.output.for_mcp(),
+            effect: c.execution.effect,
+            hints: c.execution.hints(),
+        })
+    }
 }
 
 /// What a tool call produced: a value, or a refusal with the reason. Refusals are
@@ -72,8 +106,14 @@ pub struct Tool {
 pub enum ToolOutcome {
     /// The value the handler produced.
     Ok(Value),
-    /// The handler declined, with the reason.
-    Refused(String),
+    /// The handler declined: the category as one word ([`CapabilityError::code`]) and the
+    /// reason as the handler gave it.
+    Refused {
+        /// `invalid_input`, `not_found` or `refused`.
+        code: &'static str,
+        /// The message, category included, as every transport shows it.
+        reason: String,
+    },
 }
 
 /// Why a request to the surface could not be answered.
@@ -333,21 +373,7 @@ impl Surface {
         let ctx = self.context();
         let _phase = crate::perf::phase(crate::perf::Phase::McpProjectionBuild);
         crate::perf::Counters::bump(&crate::perf::COUNTERS.mcp_projection_builds);
-        ctx.registry
-            .iter()
-            .filter_map(|c| {
-                let name = c.exposure.mcp.as_ref()?.tool.clone()?;
-                Some(Tool {
-                    name,
-                    title: c.title.clone(),
-                    description: c.description.clone(),
-                    id: c.id.to_string(),
-                    input_schema: c.input.for_mcp(),
-                    output_schema: c.output.for_mcp(),
-                    read_only: c.kind.is_read_only(),
-                })
-            })
-            .collect()
+        ctx.registry.iter().filter_map(Tool::of).collect()
     }
 
     /// Call a tool by name.
@@ -360,7 +386,10 @@ impl Surface {
         match ctx.execute(c.id.as_str(), args.clone()) {
             Ok(v) => Ok(ToolOutcome::Ok(v)),
             Err(CapabilityError::Internal(e)) => Err(SurfaceError::Internal(e)),
-            Err(e) => Ok(ToolOutcome::Refused(e.to_string())),
+            Err(e) => Ok(ToolOutcome::Refused {
+                code: e.code(),
+                reason: e.to_string(),
+            }),
         }
     }
 

@@ -18,12 +18,15 @@
 #         to say
 #      b  the head a pull request was built from is carried beside the commit that ran, and
 #         never replaces it
-#      c  the working tree is the one the producing jobs measured where they ran: clean only
-#         when every recorded runner measured a clean tree, dirty when any measured a dirty
-#         one, unknown when one was not measured, however clean the others; the rows' own
-#         stamp is kept apart
+#      c  the working tree is the one the producing jobs measured where they ran, carried into
+#         each runner's rows: clean only when every recorded runner measured a clean tree,
+#         dirty when any measured a dirty one; a report whose job left no measurement is not
+#         recorded, and is named as refused and absent
 #      d  a report whose job measured another commit is refused: it is not recorded, and it is
 #         named as absent and refused; when every report is refused, nothing is gathered
+#      f  the manifest's totals, tree and absences are the run record's, joined rather than
+#         derived again: a second gather under the same run counts what it recorded, not every
+#         row the ledger holds under that run
 #      e  the report is the tracked ledger's: derived before the run's rows are recorded, on a
 #         checkout measured first, so a claim only the run proved still reads `not_run` in it
 #   4  nothing to gather is refused, not written as an empty success
@@ -65,7 +68,9 @@ FIXTURE="$(git -C "$T" rev-parse HEAD)"
 printf '01_holds\tok\t1\tparallel\n02_breaks\tFAIL\t2\tparallel\n' > "$W/suite.tsv"
 
 # ---------------------------------------------------------------- 1. a ci recording names its run
-run_quiet "$W/r1.err" actions "$MJB" evidence --repo "$T" record --suite "$W/suite.tsv" --origin ci > /dev/null
+# a ci recording carries the measurement its own run made of the checkout
+run_quiet "$W/s1.err" "$MJB" evidence --repo "$T" stamp --producer suite --report "$W/suite.tsv" --out "$W/suite.provenance.json" > /dev/null
+run_quiet "$W/r1.err" actions "$MJB" evidence --repo "$T" record --suite "$W/suite.tsv" --provenance "suite=$W/suite.provenance.json" --origin ci > /dev/null
 r="$(row suite:01_holds)"
 [ "$(printf '%s' "$r" | jq -r '.run.url')" = "https://forge.example/owner/repo/actions/runs/77/attempts/3" ] \
   || { echo "    a ci recording did not name the run it happened in: $r"; exit 1; }
@@ -78,7 +83,7 @@ row suite:02_breaks | jq -e '.outcome == "fail" and .run.id == "77"' >/dev/null 
 run_quiet "$W/r2.err" actions "$MJB" evidence --repo "$T" record --suite "$W/suite.tsv" --origin local > /dev/null
 row suite:01_holds | jq -e 'has("run") | not' >/dev/null \
   || { echo "    a local recording inside a CI shell claimed that run: $(row suite:01_holds)"; exit 1; }
-run_quiet "$W/r3.err" env -u GITHUB_ACTIONS "$MJB" evidence --repo "$T" record --suite "$W/suite.tsv" --origin ci > /dev/null
+run_quiet "$W/r3.err" env -u GITHUB_ACTIONS "$MJB" evidence --repo "$T" record --suite "$W/suite.tsv" --provenance "suite=$W/suite.provenance.json" --origin ci > /dev/null
 row suite:01_holds | jq -e '(has("run") | not) and .origin == "ci"' >/dev/null \
   || { echo "    a ci recording outside any run invented one: $(row suite:01_holds)"; exit 1; }
 
@@ -142,8 +147,12 @@ state_of() {     # state_of <evidence show json> — the fixture claim's state i
   jq -r '.claims[] | select(.id == "fixture-holds") | .state' "$1"
 }
 printf '     Running tests/holds.rs (target/debug/deps/holds-1a2b3c)\n\nrunning 1 test\ntest holds ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n\n' > "$W/cargo-test.txt"
+# the producing jobs' measurements: the recorder refuses a CI report without its own
+tree "$W/suite-clean.json" "$HEAD_T" clean
+tree "$W/suite-dirty.json" "$HEAD_T" dirty
+tree "$W/crate-clean.json" "$HEAD_T" clean
 
-gather ev --suite "$W/suite.tsv" --crate-output "$W/no-such-output.txt" --coverage "$W/export.json"
+gather ev --suite "$W/suite.tsv" --suite-tree "$W/suite-clean.json" --crate-output "$W/no-such-output.txt" --coverage "$W/export.json"
 M="$W/ev/manifest.json"
 jq -e --arg c "$HEAD_T" '.commit == $c and .run.id == "77"' "$M" >/dev/null \
   || { echo "    the manifest does not name the commit and the run gathered"; jq -c . "$M"; exit 1; }
@@ -159,11 +168,10 @@ jq -e '.crate.lines.total > 0 and .crate.lines.covered < .crate.lines.total and 
 # b: no head named, so the head is the commit that ran
 jq -e '.head_sha == .commit and .event == "push"' "$M" >/dev/null \
   || { echo "    with no pull request head named, the head is not the commit that ran, or the event is lost"; jq -c '{commit, head_sha, event}' "$M"; exit 1; }
-# c: the suite was recorded and nothing measured its tree, so the tree is unknown, whatever the
-#    recorder stamped into the rows
+# c: the suite's job measured a clean tree, and the rows carry that measurement
 rows_wt="$(row suite:01_holds | jq -r .working_tree)"
-jq -e --arg w "$rows_wt" '.working_tree == "unknown" and .producers.suite == null and .rows_working_tree == $w' "$M" >/dev/null \
-  || { echo "    an unmeasured tree was not published as unknown, or the rows' own stamp ($rows_wt) was not kept apart"; jq -c '{working_tree, rows_working_tree, producers}' "$M"; exit 1; }
+jq -e --arg w "$rows_wt" '.working_tree == "clean" and .producers.suite.working_tree == "clean" and .rows_working_tree == $w and $w == "clean"' "$M" >/dev/null \
+  || { echo "    the suite job's clean measurement did not reach the manifest or the rows ($rows_wt)"; jq -c '{working_tree, rows_working_tree, producers}' "$M"; exit 1; }
 # e: the report is the tracked ledger's. The committed ledger has no row for 01_holds, so the
 #    claim reads not_run in the gathered report, while the working ledger, which now holds the
 #    run's rows, answers otherwise
@@ -178,7 +186,7 @@ jq -e '.report_tree == "clean"' "$M" >/dev/null \
 
 # a: a crate report with no test binary in it is absent, not an empty success
 printf 'error: could not compile `majordomus-cli` (lib) due to 1 previous error\n' > "$W/cargo-broken.txt"
-gather broken --suite "$W/suite.tsv" --crate-output "$W/cargo-broken.txt"
+gather broken --suite "$W/suite.tsv" --suite-tree "$W/suite-clean.json" --crate-output "$W/cargo-broken.txt" --crate-tree "$W/crate-clean.json"
 jq -e '.absent | any(.[]; . == "crate")' "$W/broken/manifest.json" >/dev/null \
   || { echo "    a crate report that yielded no test binary was not named as absent"; jq -c '{absent, totals}' "$W/broken/manifest.json"; exit 1; }
 grep -q 'absent: .*crate' "$W/broken.out" \
@@ -188,28 +196,35 @@ grep -q 'absent: .*crate' "$W/broken.out" \
 PR_HEAD="0123456789abcdef0123456789abcdef01234567"
 fresh
 run_quiet "$W/head.err" actions env MJ_RUN_HEAD_SHA="$PR_HEAD" MAJORDOMUS_BIN="$MJB" \
-  "$T/scripts/ci/evidence-collect" --out "$W/head" --suite "$W/suite.tsv" > /dev/null
+  "$T/scripts/ci/evidence-collect" --out "$W/head" --suite "$W/suite.tsv" --suite-tree "$W/suite-clean.json" > /dev/null
 jq -e --arg h "$PR_HEAD" --arg c "$HEAD_T" '.head_sha == $h and .commit == $c' "$W/head/manifest.json" >/dev/null \
   || { echo "    the pull request head is not carried beside the commit that ran"; jq -c '{commit, head_sha}' "$W/head/manifest.json"; exit 1; }
 
 # c: the tree is the one the producing jobs measured
-tree "$W/suite-clean.json" "$HEAD_T" clean
-tree "$W/suite-dirty.json" "$HEAD_T" dirty
-tree "$W/crate-clean.json" "$HEAD_T" clean
 gather clean --suite "$W/suite.tsv" --suite-tree "$W/suite-clean.json" --crate-output "$W/cargo-test.txt" --crate-tree "$W/crate-clean.json"
 jq -e '.working_tree == "clean" and .producers.suite.working_tree == "clean" and .producers.crate.working_tree == "clean" and .totals.runners.crate == 1 and .refused == []' "$W/clean/manifest.json" >/dev/null \
   || { echo "    two clean measurements did not give a clean tree, or the crate recorded nothing"; jq -c '{working_tree, producers, totals, refused}' "$W/clean/manifest.json"; exit 1; }
-# the recorder's own checkout is clean and so are the rows it stamps: only the suite's
-# measurement says dirty, and a script that copied the rows' tree would say clean
+# the recorder's own checkout is clean: only the suite's measurement says dirty, and each
+# runner's rows carry its own job's measurement, so the rows are mixed and the run is dirty
 gather dirty --suite "$W/suite.tsv" --suite-tree "$W/suite-dirty.json" --crate-output "$W/cargo-test.txt" --crate-tree "$W/crate-clean.json"
-jq -e '.working_tree == "dirty" and .rows_working_tree == "clean" and .report_tree == "clean"' "$W/dirty/manifest.json" >/dev/null \
+jq -e '.working_tree == "dirty" and .rows_working_tree == "mixed" and .report_tree == "clean"' "$W/dirty/manifest.json" >/dev/null \
   || { echo "    a producer's dirty tree was not published as dirty over a clean recorder"; jq -c '{working_tree, rows_working_tree, report_tree}' "$W/dirty/manifest.json"; exit 1; }
-# both runners recorded, the crate measured clean and the suite not measured at all: one clean
-# measurement does not stand in for a missing one, so the tree is unknown, never clean
+# both runners reported, the crate measured clean and the suite not measured at all: the
+# recorder refuses a CI report without its measurement, so the suite is not recorded, it is
+# named as refused for having none and as absent, and one clean measurement does not stand in
+# for it anywhere in the rows
 gather unmeasured --suite "$W/suite.tsv" --crate-output "$W/cargo-test.txt" --crate-tree "$W/crate-clean.json"
-jq -e '.working_tree == "unknown" and .producers.suite == null and .producers.crate.working_tree == "clean"
-       and .totals.runners.suite == 2 and .totals.runners.crate == 1' "$W/unmeasured/manifest.json" >/dev/null \
-  || { echo "    a recorded runner nobody measured did not leave the tree unknown beside a clean one"; jq -c '{working_tree, producers, totals}' "$W/unmeasured/manifest.json"; exit 1; }
+jq -e '.producers.suite == null and .producers.crate.working_tree == "clean"
+       and (.refused == [{runner: "suite", reason: "no measurement"}]) and (.absent | any(.[]; . == "suite"))
+       and (.totals.runners | has("suite") | not) and .totals.runners.crate == 1' "$W/unmeasured/manifest.json" >/dev/null \
+  || { echo "    a runner nobody measured was recorded, or not named as refused and absent"; jq -c '{working_tree, producers, totals, refused, absent}' "$W/unmeasured/manifest.json"; exit 1; }
+grep -q 'refused: suite (no measurement)' "$W/unmeasured.out" \
+  || { echo "    the summary line does not name the unmeasured suite:"; cat "$W/unmeasured.out"; exit 1; }
+# with nothing measured at all, nothing is recorded and nothing is gathered
+fresh
+expect_exit 12 actions env MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/none-measured" \
+  --suite "$W/suite.tsv"
+expect_grep "every report was refused: suite \(no measurement\)"
 
 # d: a report whose job measured another commit is not recorded against this one
 tree "$W/suite-foreign.json" "$FIXTURE" clean
@@ -232,10 +247,27 @@ expect_grep "every report was refused: suite"
 fresh
 printf 'left behind\n' > "$T/left-behind.txt"
 run_quiet "$W/untracked.err" actions env -u MJ_RUN_HEAD_SHA MAJORDOMUS_BIN="$MJB" \
-  "$T/scripts/ci/evidence-collect" --out "$W/untracked" --suite "$W/suite.tsv" > /dev/null
+  "$T/scripts/ci/evidence-collect" --out "$W/untracked" --suite "$W/suite.tsv" --suite-tree "$W/suite-clean.json" > /dev/null
 rm -f "$T/left-behind.txt"
 jq -e '.report_tree == "dirty"' "$W/untracked/manifest.json" >/dev/null \
   || { echo "    a report derived in a checkout holding an untracked file was not marked dirty"; jq -c '{report_tree}' "$W/untracked/manifest.json"; exit 1; }
+
+# f: the run's totals, tree and absences are the run record's, joined rather than derived again
+jq -e -S --slurpfile r "$W/clean/record.json" '
+    .totals == $r[0].run_record.totals and .working_tree == $r[0].run_record.working_tree
+    and ((.absent | map(select(. != "coverage")) | sort)
+         == ([$r[0].run_record.absent[].producer | select(. != "coverage")] | sort))' \
+  "$W/clean/manifest.json" >/dev/null \
+  || { echo "    the manifest does not carry the run record's totals, tree and absences"; jq -c '{totals, working_tree, absent}' "$W/clean/manifest.json"; jq -c '.run_record | {totals, working_tree, absent}' "$W/clean/record.json"; exit 1; }
+# a second gather at the same commit under the same run, naming one test and no crate report:
+# its totals are what it recorded, not every row the ledger holds under that run
+printf '01_holds\tok\t1\tparallel\n' > "$W/suite-one.tsv"
+run_quiet "$W/again.err" actions env -u MJ_RUN_HEAD_SHA MAJORDOMUS_BIN="$MJB" \
+  "$T/scripts/ci/evidence-collect" --out "$W/again" --suite "$W/suite-one.tsv" --suite-tree "$W/suite-clean.json" > /dev/null
+rows_of_run="$(jq --arg c "$HEAD_T" '[.executions[] | select(.commit == $c and .run.id == "77")] | length' "$T/$L")"
+[ "$rows_of_run" -gt 1 ] || { echo "    the ledger holds $rows_of_run row(s) of the run, so the join proves nothing"; exit 1; }
+jq -e --slurpfile r "$W/again/record.json" '.totals.executions == 1 and .totals == $r[0].run_record.totals' "$W/again/manifest.json" >/dev/null \
+  || { echo "    the second gather counted the ledger's rows of the run ($rows_of_run), not what it recorded"; jq -c .totals "$W/again/manifest.json"; exit 1; }
 
 # ---------------------------------------------------------------- 4. nothing to gather
 expect_exit 12 env MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/empty" --suite "$W/absent.tsv"

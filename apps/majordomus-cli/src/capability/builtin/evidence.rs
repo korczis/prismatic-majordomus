@@ -35,7 +35,13 @@
 //!     .collect();
 //! assert_eq!(
 //!     ids,
-//!     ["evidence.report", "evidence.claim", "evidence.test", "evidence.record"]
+//!     [
+//!         "evidence.report",
+//!         "evidence.claim",
+//!         "evidence.test",
+//!         "evidence.record",
+//!         "evidence.stamp"
+//!     ]
 //! );
 //!
 //! // the recorder writes a tracked file, so it is offered to whoever runs the executable
@@ -52,17 +58,23 @@
 //!     ["evidence".to_string(), "record".to_string()]
 //! );
 //! ```
+//!
+//! # Why the stamp is offered only to whoever runs the executable
+//!
+//! `evidence.stamp` writes nothing, but it reads a file whose path its caller names (the
+//! report it digests) and measures the checkout it runs in. A network client must not choose
+//! a path this executable reads, so the stamp too declares a command line and nothing else.
 
 //! # Example
 //!
-//! Four capabilities, and every projection — the command line, the HTTP operation, the MCP
+//! The capabilities, and every projection — the command line, the HTTP operation, the MCP
 //! tool — is derived from that one declaration.
 //!
 //! ```
 //! use majordomus_cli::capability::builtin::evidence::module;
 //! let m = module();
 //! assert_eq!(m.id.as_str(), "evidence");
-//! assert_eq!(m.capabilities.len(), 4);
+//! assert_eq!(m.capabilities.len(), 5);
 //! ```
 
 use schemars::JsonSchema;
@@ -76,8 +88,9 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::evidence::{
-    self, freshness, ClaimProof, EvidenceReport, Execution, Ledger, Origin, ProofState,
-    RecordRequest, TreeState,
+    self, freshness, ClaimProof, EvidenceDropped, EvidenceProducer, EvidenceProvenance,
+    EvidenceReport, EvidenceRunRecord, Execution, Ledger, LedgerTarget, Origin, ProofState,
+    RecordRequest, StampRequest, TreeState,
 };
 use crate::{capability, module};
 
@@ -254,8 +267,9 @@ impl BenchmarkCases for EvidenceTestInput {
 /// A run to record into the ledger.
 ///
 /// Paths to what the runners already wrote, not a run to perform: the recorder reads a
-/// report, stamps each result with the provenance the run did not carry, and merges it.
-/// Both reports are optional and may be given together; an absent origin is `local`.
+/// report, carries into each result what that run measured about its own checkout, and
+/// merges it. The reports are optional and may be given together; an absent origin is
+/// `local`, and an absent ledger is the tracked one.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;
@@ -282,12 +296,65 @@ pub struct EvidenceRecordInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Where the run happened: `local` (the default), `ci` or `release`.
     pub origin: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// A measurement per report: the file `majordomus evidence stamp` wrote at the end of
+    /// that run, as `<file>` or `<producer>=<file>` (`suite`, `crate`, `coverage`). Without a
+    /// producer word, the producer is the file's own, else the only report given.
+    pub provenance: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A coverage summary: what `scripts/rust-coverage --summary-json` wrote.
+    pub coverage: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The ledger to merge into: `repo` (the default, the tracked ledger) or `local` (the
+    /// ignored one under `.ai/local/`, which moves no verdict).
+    pub ledger: Option<LedgerTarget>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Also write the run record to this file.
+    pub run_record: Option<String>,
 }
 
 impl BenchmarkCases for EvidenceRecordInput {
     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         // nothing: the capability is waived from the benchmark because it writes a tracked
         // file, and timing it in a loop would rewrite the repository's evidence
+        Vec::new()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// What a run asks to have measured about the checkout it leaves: its producer, its report,
+/// and its own untracked outputs, which are not a change to what it tested.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceStampInput;
+/// use majordomus_cli::evidence::EvidenceProducer;
+///
+/// let input: EvidenceStampInput =
+///     serde_json::from_str(r#"{"producer": "suite", "exclude": ["dist"]}"#).unwrap();
+/// assert_eq!(input.producer, Some(EvidenceProducer::Suite));
+/// assert_eq!(input.exclude, ["dist"]);
+/// assert_eq!(serde_json::to_string(&input).unwrap(), r#"{"producer":"suite","exclude":["dist"]}"#);
+/// ```
+pub struct EvidenceStampInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The producer whose run this is: `suite`, `crate` or `coverage`.
+    pub producer: Option<EvidenceProducer>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The report the run wrote; a local recording needs it named.
+    pub report: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The run's own untracked outputs, as repository paths: a file, or a directory with
+    /// everything under it. A pattern, the whole checkout or a path holding tracked files is
+    /// refused.
+    pub exclude: Vec<String>,
+}
+
+impl BenchmarkCases for EvidenceStampInput {
+    /// Nothing: the benchmark repository (`src/synthetic.rs`) is not a git work tree, so
+    /// every case would time a refusal ("there is no commit to measure") rather than a
+    /// measurement. The capability is waived as depending on an external `git`.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         Vec::new()
     }
 }
@@ -418,7 +485,14 @@ pub struct TestEvidence {
 ///     commit: "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f".to_string(),
 ///     working_tree: "clean".to_string(),
 ///     unknown: vec!["docs/CLAIMS.yaml".to_string()],
+///     dropped: vec![],
 ///     ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
+///     run_record: serde_json::from_value(serde_json::json!({
+///         "schema": 1, "id": "local:06fa258913a1:20260926T120000Z", "origin": "local",
+///         "commit": "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f", "working_tree": "clean",
+///         "recorded_at": "2026-09-26T12:00:00Z", "ledger": "repo"
+///     }))
+///     .unwrap(),
 /// };
 /// // the failing test is one of the three recorded, not a fourth thing that was dropped
 /// assert_eq!(report.recorded - report.passed, 1);
@@ -427,6 +501,8 @@ pub struct TestEvidence {
 /// let json = serde_json::to_value(&report).unwrap();
 /// assert_eq!(json["unknown"].as_array().unwrap().len(), 1);
 /// assert_eq!(json["working_tree"], "clean");
+/// // a suite-only recording listed nothing, and its document is what it always was
+/// assert!(json.get("dropped").is_none());
 /// ```
 pub struct RecordReport {
     /// How many executions were written.
@@ -439,8 +515,14 @@ pub struct RecordReport {
     pub working_tree: String,
     /// Results the run named that no runner in this repository owns.
     pub unknown: Vec<String>,
-    /// Where the ledger was written.
+    /// What the reports held that no claim can name yet: the crate's unit-test binary, its
+    /// doctests. Listed rather than ignored, and absent from the document when empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dropped: Vec<EvidenceDropped>,
+    /// Where the ledger was written: the path of the target the recording named.
     pub ledger: String,
+    /// The recording as a typed run.
+    pub run_record: EvidenceRunRecord,
 }
 
 // ---------------------------------------------------------------- handlers
@@ -594,31 +676,64 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         Origin::Ci => evidence::RunRef::from_env(|k| std::env::var(k).ok()),
         Origin::Local | Origin::Release => None,
     };
+    let ledger = input.ledger.unwrap_or_default();
+    let given: Vec<EvidenceProducer> = [
+        (EvidenceProducer::Suite, input.suite.is_some()),
+        (EvidenceProducer::Crate, input.crate_output.is_some()),
+        (EvidenceProducer::Coverage, input.coverage.is_some()),
+    ]
+    .into_iter()
+    .filter_map(|(p, is)| is.then_some(p))
+    .collect();
+    let provenance =
+        EvidenceProvenance::resolve(&input.provenance, &given).map_err(CapabilityError::Refused)?;
     let req = RecordRequest {
         suite: input.suite.map(std::path::PathBuf::from),
         crate_output: input.crate_output.map(std::path::PathBuf::from),
-        origin,
         run,
+        provenance,
+        coverage: input.coverage.map(std::path::PathBuf::from),
+        ledger,
+        run_record: input.run_record.map(std::path::PathBuf::from),
+        ..RecordRequest::new(origin)
     };
-    let got = evidence::record(&root, &req).map_err(|e| match e {
-        crate::error::Error::InvalidSurface { reason, .. } => CapabilityError::Refused(reason),
-        other => internal(other),
-    })?;
+    let got = evidence::record(&root, &req).map_err(refused_or_internal)?;
     Ok(RecordReport {
         recorded: got.recorded,
         passed: got.passed,
         commit: got.commit,
         working_tree: got.working_tree,
         unknown: got.unknown,
-        ledger: evidence::LEDGER_PATH.to_string(),
+        dropped: got.dropped,
+        ledger: ledger.path().to_string(),
+        run_record: got.run_record,
     })
+}
+
+/// A refusal of the evidence surface is the caller's to fix; anything else is this
+/// executable's.
+fn refused_or_internal(e: crate::error::Error) -> CapabilityError {
+    match e {
+        crate::error::Error::InvalidSurface { reason, .. } => CapabilityError::Refused(reason),
+        other => internal(other),
+    }
+}
+
+fn stamp(ctx: &Context, input: EvidenceStampInput) -> Result<EvidenceProvenance, CapabilityError> {
+    let req = StampRequest {
+        producer: input.producer,
+        report: input.report.map(std::path::PathBuf::from),
+        exclude: input.exclude,
+        run: evidence::RunRef::from_env(|k| std::env::var(k).ok()),
+    };
+    evidence::stamp(&root_of(ctx), &req).map_err(refused_or_internal)
 }
 
 // ---------------------------------------------------------------- the module
 
 /// The `evidence` module: claims joined to the runs recorded against them.
 ///
-/// The declaration is the whole of what the four capabilities are — every projection, from
+/// The declaration is the whole of what the capabilities are — every projection, from
 /// the HTTP route to the MCP tool to the word a person types, is read out of what it
 /// returns. Nothing here caches: the ledger is a file that changes outside this process,
 /// and a cached answer would be exactly the stale evidence the module exists to name.
@@ -711,7 +826,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "evidence.record",
                 kind: CapabilityKind::Command,
                 title: "Record a run that happened",
-                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing.",
+                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
                 input: EvidenceRecordInput,
                 output: RecordReport,
                 stability: Stability::BehaviorallyVerified,
@@ -724,6 +839,23 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
                 handler: record,
+            },
+            capability! {
+                id: "evidence.stamp",
+                title: "Measure the tree a run left behind",
+                description: "The one measurement a runner takes at the end of its run, for evidence record --provenance: the commit; the tree, ignoring the evidence ledger and the run's own untracked outputs, never a tracked change; the producer; its toolchain; the recorder's version; the report's digest; the host; the CI run. It writes nothing. It is offered only on the command line because it reads a path its caller names.",
+                input: EvidenceStampInput,
+                output: EvidenceProvenance,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["evidence".into(), "stamp".into()] }),
+                },
+                tags: ["evidence", "tests", "provenance"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: stamp,
             },
         ],
     }
@@ -765,6 +897,7 @@ mod tests {
                 &["evidence", "proves"],
             ),
             ("evidence.record", None, None, &["evidence", "record"]),
+            ("evidence.stamp", None, None, &["evidence", "stamp"]),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -816,6 +949,27 @@ mod tests {
                 assert!(
                     matches!(e.capability.benchmark, BenchmarkPolicy::Waived { .. }),
                     "{id} must not be timed in a loop: it writes a tracked file"
+                );
+            } else if id == "evidence.stamp" {
+                // a read, but of a path its caller names: a network client must not choose a
+                // file this executable reads, so it is offered only on the command line; and
+                // it is waived, because the benchmark repository is not a git work tree
+                assert!(e.capability.kind.is_read_only(), "{id} writes");
+                assert!(x.mcp.is_none(), "{id} is reachable over MCP");
+                assert!(x.http.is_none(), "{id} is reachable over HTTP");
+                assert_eq!(
+                    e.capability.visibility,
+                    crate::capability::Visibility::Developer,
+                    "{id} must be a developer capability"
+                );
+                assert!(
+                    matches!(
+                        e.capability.benchmark,
+                        BenchmarkPolicy::Waived {
+                            reason: WaiverReason::ExternalDependency
+                        }
+                    ),
+                    "{id} is waived for its external git"
                 );
             } else {
                 assert!(e.capability.kind.is_read_only(), "{id} writes");
@@ -877,6 +1031,75 @@ mod tests {
             .execute("evidence.report", serde_json::json!({}))
             .unwrap();
         assert_eq!(v["presented"]["revision"], "working_tree");
+    }
+
+    /// What a crate run held that no claim can name yet reaches the recording's answer, in
+    /// the order the output held it, and a recording with nothing dropped carries no
+    /// `dropped` at all, so a suite-only recording answers as it did before the list existed.
+    #[test]
+    fn the_recording_answers_with_what_it_dropped() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+        let ctx = repo.context().unwrap();
+
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running unittests src/lib.rs (target/debug/deps/majordomus_cli-1)\n\
+             test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                Doc-tests majordomus_cli\n\
+             test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let v = ctx
+            .execute(
+                "evidence.record",
+                serde_json::json!({ "crate_output": log.to_string_lossy() }),
+            )
+            .unwrap();
+        assert_eq!(v["recorded"], 0, "{v}");
+        let dropped: Vec<(&str, &str)> = v["dropped"]
+            .as_array()
+            .unwrap_or_else(|| panic!("no dropped list: {v}"))
+            .iter()
+            .map(|d| {
+                (
+                    d["producer"].as_str().unwrap_or("?"),
+                    d["what"].as_str().unwrap_or("?"),
+                )
+            })
+            .collect();
+        assert_eq!(
+            dropped,
+            [
+                ("crate", "unittests src/lib.rs"),
+                ("crate", "doc-tests majordomus_cli")
+            ]
+        );
+
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(&tsv, "99_ghost\tok\t1\tparallel\n").unwrap();
+        let v = ctx
+            .execute(
+                "evidence.record",
+                serde_json::json!({ "suite": tsv.to_string_lossy() }),
+            )
+            .unwrap();
+        assert!(v.get("dropped").is_none(), "{v}");
     }
 
     /// Each ledger a report reads — the one a presented commit holds, the working copy

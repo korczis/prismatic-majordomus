@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.15.0",
+  "generator": "majordomus-cli 0.19.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 175,
-      "covered": 156,
+      "required": 186,
+      "covered": 162,
       "missing": 0,
-      "waived": 19,
+      "waived": 24,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 173,
-      "covered": 156,
+      "required": 183,
+      "covered": 162,
       "missing": 0,
-      "waived": 17,
+      "waived": 21,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 169,
-      "covered": 152,
+      "required": 179,
+      "covered": 158,
       "missing": 0,
-      "waived": 17,
+      "waived": 21,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 530,
-      "covered": 477,
+      "required": 561,
+      "covered": 495,
       "missing": 0,
-      "waived": 53,
+      "waived": 66,
       "inapplicable": 0
     }
   ],
@@ -185,6 +185,61 @@
       ]
     },
     {
+      "id": "continuity.device",
+      "module": "continuity",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "continuity.plan",
+      "module": "continuity",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "by-prefix"
+      ]
+    },
+    {
+      "id": "continuity.publish",
+      "module": "continuity",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "continuity.records",
+      "module": "continuity",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "continuity.resume",
+      "module": "continuity",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "continuity.state",
       "module": "continuity",
       "kind": "query",
@@ -195,6 +250,28 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "continuity.status",
+      "module": "continuity",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "continuity.sync",
+      "module": "continuity",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "convergence.report",
@@ -647,6 +724,16 @@
         "all",
         "findings"
       ]
+    },
+    {
+      "id": "evidence.stamp",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
     },
     {
       "id": "evidence.test",
@@ -1108,6 +1195,19 @@
       ]
     },
     {
+      "id": "mcp.projection",
+      "module": "mcp",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-tool",
+        "writers"
+      ]
+    },
+    {
       "id": "mesh.claim",
       "module": "mesh",
       "kind": "command",
@@ -1439,6 +1539,31 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "pack.plan",
+      "module": "pack",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default-profile",
+        "chatgpt"
+      ]
+    },
+    {
+      "id": "pack.verify",
+      "module": "pack",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "absent"
       ]
     },
     {

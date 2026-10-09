@@ -48,6 +48,11 @@ record() {       # record <tsv line...> — one runner report, recorded into the
   printf '%s\n' "$@" > "$W/run.tsv"
   expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/run.tsv"
 }
+measured() {     # measured <tsv line...> — the same, with the measurement its run took of the checkout
+  printf '%s\n' "$@" > "$W/run.tsv"
+  expect_exit 0 "$MJB" evidence --repo "$T" stamp --producer suite --report "$W/run.tsv" --out "$W/run.provenance.json"
+  expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/run.tsv" --provenance "suite=$W/run.provenance.json"
+}
 TAB="$(printf '\t')"
 ALPHA='.claims[] | select(.id == "alpha-holds")'
 BETA='.claims[] | select(.id == "beta-holds")'
@@ -127,7 +132,7 @@ jqe elsewhere "$ALPHA | .detail | contains(\"${SIDE:0:12}\") and contains(\"does
 # The checked-out commit, judged as committed: the ledger that commit holds, the tree
 # measured without the ledger's working copy.
 C1="$(git rev-parse HEAD)"
-record "01_alpha${TAB}ok${TAB}2${TAB}parallel"
+measured "01_alpha${TAB}ok${TAB}2${TAB}parallel"
 git add "$LEDGER" >/dev/null && git commit -qm ledger
 C2="$(git rev-parse HEAD)"
 [ -z "$(git status --porcelain)" ] || { echo "    committing the ledger left the tree dirty"; git status --porcelain; exit 1; }
@@ -143,9 +148,9 @@ expect_exit 0 "$MJB" evidence --repo "$T" show
 expect_grep "judged at the working tree \(HEAD ${C2:0:12}, clean\)"
 
 # The verdict follows the commit's ledger, and a clean failure the checkout holds withholds
-# `proven` there. The recorder ignores the ledger when it measures the tree, so this run is
+# `proven` there. The stamp ignores the ledger when it measures the tree, so this run is
 # stamped with C2 and a clean tree: a clean failing run of exactly what is presented.
-record "01_alpha${TAB}FAIL${TAB}3${TAB}parallel"
+measured "01_alpha${TAB}FAIL${TAB}3${TAB}parallel"
 ev w_fail show
 jqe w_fail "$ALPHA | .state == \"failing\"" "the working tree does not read its own failing run"
 jqe w_fail "$ALPHA | .execution.commit == \"$C2\" and .execution.working_tree == \"clean\"" \
@@ -171,7 +176,7 @@ jqe p_restored '.presented | has("uncommitted") | not' "a restored ledger still 
 
 # The cap is read from the run of the same test and no other: a clean failure of beta the
 # checkout holds, stamped with C2 like alpha's above, says nothing about alpha at C2.
-record "02_beta${TAB}FAIL${TAB}2${TAB}parallel"
+measured "02_beta${TAB}FAIL${TAB}2${TAB}parallel"
 ev w_beta_fail show
 jqe w_beta_fail "$BETA | .state == \"failing\" and .execution.commit == \"$C2\" and .execution.working_tree == \"clean\"" \
   "beta's failing run was not stamped with the presented commit and a clean tree"
@@ -183,7 +188,7 @@ jqe p_beta_fail "$ALPHA | .state == \"proven\"" \
 git checkout -q -- "$LEDGER"
 
 # An uncommitted pass never strengthens: the commit's ledger holds no row for beta.
-record "02_beta${TAB}ok${TAB}1${TAB}parallel"
+measured "02_beta${TAB}ok${TAB}1${TAB}parallel"
 ev w_beta show
 jqe w_beta "$BETA | .state == \"proven\"" "the working tree does not read its own passing run"
 ev p_beta show --presented HEAD
@@ -197,7 +202,7 @@ git checkout -q -b other
 printf 'another history\n' > other.txt
 git add other.txt >/dev/null && git commit -qm other
 OTHER="$(git rev-parse HEAD)"
-record "01_alpha${TAB}FAIL${TAB}4${TAB}parallel"
+measured "01_alpha${TAB}FAIL${TAB}4${TAB}parallel"
 cp "$LEDGER" "$W/other-ledger.json"
 git checkout -q -- "$LEDGER"
 git checkout -q "$TRUNK"

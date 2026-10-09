@@ -263,15 +263,25 @@ ev() {           # ev <name> <args...> -- the JSON answer into $W/<name>.json
 jqe() {          # jqe <name> <filter> <what broke>
   jq -e "$2" "$W/$1.json" >/dev/null 2>&1 || { printf '    %s\n' "$3"; jq -c . "$W/$1.json" | head -c 2000; echo; return 1; }
 }
+# A report recorded without the measurement its run took carries the tree unknown, and an
+# unknown tree is never `proven` whatever the word. Both reports below are therefore stamped
+# first, as a runner stamps its own: the tree is then measured clean in both, and the word
+# is the one thing left to differ.
+stamped() {      # stamped <report> -- measure the fixture as the run left it, then record the report with that measurement
+  "$MJB" evidence --repo "$T" stamp --producer suite --report "$1" --out "$1.provenance.json" >/dev/null &&
+    "$MJB" evidence --repo "$T" record --suite "$1" --provenance "suite=$1.provenance.json"
+}
 
 # ---------------------------------------------------------------- 5. a SKIP proves nothing
 # The word the runner now writes, read back by the recorder. It is recorded -- a skip is a
 # fact about the run and hiding it would leave the claim reading `not run`, which says less
 # than the truth -- and it does not support the guarantee.
 printf '01_alpha\tSKIP\t1\tserial\n' > "$W/skip.tsv"
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/skip.tsv"
+expect_exit 0 stamped "$W/skip.tsv"
 expect_grep 'recorded +1 execution\(s\), 0 passing'
 ev skipped claim alpha-holds
+jqe skipped '.execution.working_tree == "clean"' \
+  "the stamped run did not carry the clean tree it measured, so a skip could be withheld for its tree and not its word"
 jqe skipped '.execution.outcome == "skip"' \
   "a case the runner reported as SKIP was recorded with some other outcome"
 jqe skipped '.state != "proven" and .state != "inputs_unchanged"' \
@@ -285,8 +295,10 @@ expect_exit 10 "$MJB" evidence --repo "$T" show --check
 # The same fixture, the same commit, the same report -- one field changed. Without this the
 # section above would assert only that the fixture is unprovable.
 printf '01_alpha\tok\t1\tserial\n' > "$W/pass.tsv"
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/pass.tsv"
+expect_exit 0 stamped "$W/pass.tsv"
 ev passed claim alpha-holds
+jqe passed '.execution.working_tree == "clean"' \
+  "the stamped run did not carry the clean tree it measured, so the next line could not tell the word from the tree"
 jqe passed '.execution.outcome == "pass" and .state == "proven"' \
   "the identical report with ok in that field does not prove the claim, so the skip proved nothing about the word"
 expect_exit 0 "$MJB" evidence --repo "$T" show --check

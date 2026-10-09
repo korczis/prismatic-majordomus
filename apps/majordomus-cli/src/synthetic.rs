@@ -157,6 +157,108 @@ impl SyntheticRepository {
     }
 }
 
+/// The sources a plan is discovered through, appended to [`SOURCES`].
+#[cfg(test)]
+const PLAN_SOURCES: &str = "
+  - id: milestone
+    kind: milestone
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/milestones/*.yaml'
+    required: false
+  - id: issue
+    kind: issue
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/issues/*.yaml'
+    required: false
+";
+
+#[cfg(test)]
+fn plan_milestone_record(id: &str, order: u32, depends_on: &[&str]) -> String {
+    format!(
+        "id: {id}\ntitle: The milestone {id}\nslug: {id}\norder: {order}\npriority: p1\n\
+         problem: \"A problem.\"\noutcome: \"The outcome of {id}.\"\n\
+         depends_on: [{}]\nacceptance_criteria:\n  - It is reached\n\
+         validation:\n  - \"true\"\nevidence_required:\n  - proof\n",
+        depends_on.join(", ")
+    )
+}
+
+#[cfg(test)]
+fn plan_issue_record(id: &str, milestone: &str, scope: &str, depends_on: &[&str]) -> String {
+    format!(
+        "id: {id}\nmilestone: {milestone}\ntitle: The work of {id}\nslug: work-{id}\n\
+         priority: p1\nprofile: implementation\nobjective: \"Do {id}.\"\n\
+         scope:\n  - {scope}\ndepends_on: [{}]\nacceptance_criteria:\n  - {id} is done\n\
+         validation:\n  - \"true\"\nevidence_required:\n  - proof\n",
+        depends_on.join(", ")
+    )
+}
+
+#[cfg(test)]
+impl SyntheticRepository {
+    /// A repository with a plan: `m-first` holds a ready issue, one waiting on it and one
+    /// that shares its scope; `m-second` waits on `m-first` and holds nothing; `m-loop`
+    /// holds two issues that wait on each other.
+    pub(crate) fn planned() -> SyntheticRepository {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        // `devtask.issue` traces an issue through git, and refuses a directory that is not
+        // a git work tree; the index itself is read from the filesystem
+        assert!(std::process::Command::new("git")
+            .arg("-C")
+            .arg(repo.root())
+            .args(["init", "-q"])
+            .status()
+            .expect("git")
+            .success());
+        let write = |rel: &str, body: &str| {
+            let path = repo.root().join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, body).unwrap();
+        };
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(PLAN_SOURCES);
+        std::fs::write(&sources, text).unwrap();
+        write(
+            ".ai/repo/project/project.yaml",
+            "schema_version: 1\nname: Synthetic\nrepository: example/synthetic\ndefault_branch: master\n",
+        );
+        for (id, order, deps) in [
+            ("m-first", 0, vec![]),
+            ("m-second", 1, vec!["m-first"]),
+            ("m-loop", 2, vec![]),
+        ] {
+            write(
+                &format!(".ai/repo/project/milestones/{id}.yaml"),
+                &plan_milestone_record(id, order, &deps),
+            );
+        }
+        for (id, milestone, scope, deps) in [
+            ("I0001", "m-first", "lib", vec![]),
+            ("I0002", "m-first", "docs", vec!["I0001"]),
+            ("I0003", "m-first", "lib", vec![]),
+            ("I0010", "m-loop", "lib", vec!["I0011"]),
+            ("I0011", "m-loop", "lib", vec!["I0010"]),
+        ] {
+            write(
+                &format!(".ai/repo/project/issues/{id}.yaml"),
+                &plan_issue_record(id, milestone, scope, &deps),
+            );
+        }
+        // an issue that declares what it does not touch and carries the evidence it requires
+        write(
+            ".ai/repo/project/issues/I0021.yaml",
+            "id: I0021\nmilestone: m-loop\ntitle: The evidenced work\nslug: work-I0021\n\
+             priority: p2\nprofile: implementation\nobjective: \"Prove it.\"\n\
+             scope:\n  - share\nnon_scope:\n  - share/elsewhere\n\
+             acceptance_criteria:\n  - It is proven\nvalidation:\n  - \"true\"\n\
+             evidence_required:\n  - proof\nevidence:\n  - covers: proof\n    type: manual\n\
+             \x20   command: \"true\"\n    result: \"it held\"\n",
+        );
+        repo
+    }
+}
+
 impl Drop for SyntheticRepository {
     fn drop(&mut self) {
         let _ = std::fs::remove_dir_all(&self.root);

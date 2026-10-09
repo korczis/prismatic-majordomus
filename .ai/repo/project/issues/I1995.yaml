@@ -1,0 +1,28 @@
+id: I1995
+milestone: development-runtime
+title: "Work a session left uncommitted in a worktree is named, not found by luck"
+slug: uncommitted-work-in-a-worktree-is-named
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make doctor and the worktree status name a linked worktree whose index or working tree holds changes no commit carries and no live session holds, with how many files and how old, so that finished work on one disk is seen before the disk is."
+why: "Twice in two days finished work existed on one disk only. On 2026-10-07 the supersession-trust half of the integration safety fixes sat as 45 uncommitted files in the worktree of a session that had ended; it was pushed as origin/rescue/integration-supersession-trust-20261007 and became #808 and #809. On 2026-10-08 the completion doctrine sat as 21 staged files in another ended session's worktree; it was pushed as origin/rescue/completion-doctrine-20261008. Neither had a commit or a remote ref, and the same evening the data volume reached 125 MiB free. `majordomus doctor` names branches whose commits reach no remote. It says nothing about an index that holds work no commit carries, so both were found only because someone happened to read that worktree."
+current_state: "doctor reports unpushed branches. `majordomus worktree` reports a worktree as dirty without saying how much, for how long, or whether any session is working in it. Nothing reports the set of worktrees holding uncommitted work that nobody is attached to."
+desired_state: "One reading lists every linked worktree with staged or unstaged changes: the count of paths, the age of the oldest change, and whether a session or task is active there. doctor warns for each one that is older than a declared age with no active session. The reading changes nothing and suggests the command that preserves the work on a remote ref."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+  - "lib/doctor.sh"
+  - "docs/WORKTREES.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A worktree with staged files and no active session is named by doctor with its path, the number of paths and the age of the oldest"
+  - "A worktree with uncommitted work and an active task or attached session is listed and not warned about"
+  - "The reading writes nothing: `git status` of every worktree is the same before and after it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "abandoned_index_named_case"
+  - "reading_is_read_only_case"
+created_at: 2026-10-08
+updated_at: 2026-10-08
