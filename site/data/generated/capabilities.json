@@ -2731,6 +2731,19 @@
       "test_case": "494_the_mesh_is_declared_and_held"
     },
     {
+      "id": "mesh-firewall-is-derived",
+      "claim": "The inbound admissions a mesh declaration implies on a machine — the multicast group's port, the declared hub ports whose address is the machine's, the server's port beyond loopback — are derived from the declaration by `majordomus mesh firewall`, which names the host's firewall backend, the commands that admit them and the firewall's own verdict, exits 10 when a rule is observed missing or the kernel logged a drop toward those ports, and whose `apply` runs the commands only as root and never over HTTP or MCP; `mesh doctor` carries the same verdict as its `firewall` check",
+      "source": "docs/MESH.md",
+      "implementation": "apps/majordomus-cli/src/mesh/firewall.rs",
+      "test": "test/cases/495_the_firewall_admits_the_mesh.sh",
+      "status": "guaranteed",
+      "note": "The plan, the backend detection and every judgement of a firewall's output are pure functions with doctests; only observing and applying touch the host, and each says when it could not (unobservable without root is an absence, not a failure, unless the kernel log shows drops). The case runs the report over this repository's declaration and over fixtures, and never applies anything. It does not make a firewall nobody runs the command on admit anything.",
+      "responsibility": "none",
+      "source_route": "/docs/mesh/",
+      "command": null,
+      "test_case": "495_the_firewall_admits_the_mesh"
+    },
+    {
       "id": "models-one-declaration",
       "claim": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
       "source": "docs/MODELS.md",

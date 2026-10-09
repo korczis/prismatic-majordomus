@@ -37,6 +37,15 @@
 # else. It crosses no router and no tailnet, and it trusts nobody: a runtime found this
 # way is verified and judged by `trust` below exactly as one heard any other way. A
 # machine without avahi reports the provider `unavailable` and runs on.
+#
+# What the declaration says who may link, the host firewall says what reaches the socket
+# at all, and the two drifted: on 2026-10-08 lundra, a declared hub, ran ufw with default
+# deny and no rule for port 8791 or the multicast group, and dropped every registration and
+# every advertisement from the LAN while `mesh doctor` held. The admissions this file
+# implies on a machine are derived from it — `majordomus mesh firewall` prints them and the
+# commands that admit them, `sudo majordomus mesh firewall apply` admits them, and the
+# doctor's `firewall` check fails on a machine whose firewall observably drops them
+# (docs/MESH.md, "The host firewall"). Nothing here configures a firewall; it is read.
 schema: mesh/v1
 kind: mesh-declaration
 id: majordomus
@@ -60,8 +69,9 @@ rendezvous:
     # lundra: LAN, tailnet
     - http://192.168.100.10:8791
     - http://100.65.22.118:8791
-    # the owner's MacBook Pro (641bdb94): LAN
-    - http://192.168.100.93:8791
+    # the owner's MacBook Pro (641bdb94): LAN — the address its router hands it; it was
+    # 192.168.100.93 until 2026-10-08, when the machine was found at .91 and the hub moved
+    - http://192.168.100.91:8791
   interval_seconds: 30
 trust:
   policy: deny_unknown

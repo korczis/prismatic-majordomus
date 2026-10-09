@@ -951,6 +951,24 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.firewall",
+        "kind": "capability",
+        "label": "mesh.firewall",
+        "summary": "The host firewall, as the mesh needs it",
+        "route": "/cockpit/capabilities/mesh.firewall",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.firewall.apply",
+        "kind": "capability",
+        "label": "mesh.firewall.apply",
+        "summary": "Admit the mesh through the host firewall",
+        "route": "/cockpit/capabilities/mesh.firewall.apply",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.handover.consume",
         "kind": "capability",
         "label": "mesh.handover.consume",
@@ -2788,6 +2806,14 @@
         "label": "doctor.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/firewall.rs",
+        "kind": "file",
+        "label": "firewall.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/firewall.rs",
         "external": true
       },
       {
@@ -9077,6 +9103,21 @@
         }
       },
       {
+        "id": "majordomus://claim/mesh-firewall-is-derived",
+        "kind": "claim",
+        "label": "mesh-firewall-is-derived",
+        "summary": "The inbound admissions a mesh declaration implies on a machine — the multicast group's port, the declared hub ports whose address is the machine's, the server's port beyond loopback — are derived from the declaration by `majordomus mesh firewall`, which names the host's firewall backend, the commands that admit them and the firewall's own verdict, exits 10 when a rule is observed missing or the kernel logged a drop toward those ports, and whose `apply` runs the commands only as root and never over HTTP or MCP; `mesh doctor` carries the same verdict as its `firewall` check",
+        "route": "/cockpit/objects/claim/mesh-firewall-is-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/firewall.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/495_the_firewall_admits_the_mesh.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/mesh-liveness-expiry",
         "kind": "claim",
         "label": "mesh-liveness-expiry",
@@ -14560,6 +14601,14 @@
         "summary": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
         "route": "/cockpit/objects/document/docs-claims-mesh-declared-is-held-md",
         "source": "docs/claims/mesh-declared-is-held.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-firewall-is-derived.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-firewall-is-derived.md",
+        "summary": "The inbound admissions a mesh declaration implies on a machine — the multicast group's port, the declared hub ports whose address is the machine's, the server's port beyond loopback — are derived from the declaration by `majordomus mesh firewall`, which names the host's firewall backend, the commands that admit them and the firewall's own verdict, exits 10 when a rule is observed missing or the kernel logged a drop toward those ports, and whose `apply` runs the commands only as root and never over HTTP or MCP; `mesh doctor` carries the same verdict as its `firewall` check",
+        "route": "/cockpit/objects/document/docs-claims-mesh-firewall-is-derived-md",
+        "source": "docs/claims/mesh-firewall-is-derived.md"
       },
       {
         "id": "majordomus://document/docs/claims/mesh-liveness-expiry.md",
@@ -43724,6 +43773,13 @@
         "source": "test/cases/494_the_mesh_is_declared_and_held.sh"
       },
       {
+        "id": "majordomus://test/test/cases/495_the_firewall_admits_the_mesh.sh",
+        "kind": "test",
+        "label": "test/cases/495_the_firewall_admits_the_mesh.sh",
+        "route": "/cockpit/objects/test/test-cases-495-the-firewall-admits-the-mesh-sh",
+        "source": "test/cases/495_the_firewall_admits_the_mesh.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "kind": "test",
         "label": "test/cases/49_roadmap_doctrine.sh",
@@ -49276,6 +49332,36 @@
       {
         "source": "capability:mesh.events",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.firewall",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.firewall",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.firewall",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.firewall",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.firewall.apply",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.firewall.apply",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -56954,6 +57040,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/mesh-firewall-is-derived",
+        "target": "file:apps/majordomus-cli/src/mesh/firewall.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-firewall-is-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-firewall-is-derived",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-firewall-is-derived",
+        "target": "majordomus://test/test/cases/495_the_firewall_admits_the_mesh.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/mesh-liveness-expiry",
         "target": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
         "kind": "implemented_by"
@@ -60690,6 +60796,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mesh-declared-is-held.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-firewall-is-derived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -69869,6 +69980,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/495_the_firewall_admits_the_mesh.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -74190,6 +74306,16 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.firewall",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.firewall.apply",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.handover.consume",
         "kind": "composes"
       },
@@ -74620,8 +74746,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2474,
-      "edges": 5417,
+      "nodes": 2480,
+      "edges": 5431,
       "acyclic": false,
       "truncated": false
     }

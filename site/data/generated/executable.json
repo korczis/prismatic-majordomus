@@ -1797,6 +1797,40 @@
       "tool": "majordomus_mesh_events"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-firewall",
+      "claims": [],
+      "cli": "majordomus mesh firewall",
+      "id": "mesh.firewall",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-firewall/",
+      "slug": "mesh-firewall",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The host firewall, as the mesh needs it",
+      "tool": "majordomus_mesh_firewall"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh firewall apply",
+      "id": "mesh.firewall.apply",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-firewall-apply/",
+      "slug": "mesh-firewall-apply",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Admit the mesh through the host firewall",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-handover-consume",
       "claims": [],
       "cli": null,
@@ -3740,6 +3774,13 @@
         "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
       },
       {
+        "id": "mesh-firewall-is-derived",
+        "implementation": "apps/majordomus-cli/src/mesh/firewall.rs",
+        "route": "/guarantees/mesh-firewall-is-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/495_the_firewall_admits_the_mesh.sh"
+      },
+      {
         "id": "models-one-declaration",
         "implementation": "apps/majordomus-cli/src/models/mod.rs",
         "route": "/guarantees/models-one-declaration/",
@@ -3907,8 +3948,8 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
-    "claims": 89,
+    "capabilities": 186,
+    "claims": 90,
     "modules": 53
   },
   "generator": "majordomus-cli 0.18.0",
@@ -4747,6 +4788,16 @@
           "id": "mesh.events",
           "route": "/registry/capabilities/mesh-events/",
           "slug": "mesh-events"
+        },
+        {
+          "id": "mesh.firewall",
+          "route": "/registry/capabilities/mesh-firewall/",
+          "slug": "mesh-firewall"
+        },
+        {
+          "id": "mesh.firewall.apply",
+          "route": "/registry/capabilities/mesh-firewall-apply/",
+          "slug": "mesh-firewall-apply"
         },
         {
           "id": "mesh.handover.consume",

@@ -600,8 +600,10 @@ pub enum MeshCommand {
     Nodes(MeshQueryArgs),
     /// This machine's node identity, public half only; absent is an answer, not an error
     Identity(MeshQueryArgs),
-    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
     Doctor(MeshQueryArgs),
+    /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
+    Firewall(MeshFirewallArgs),
     /// Every machine, runtime and session this checkout's server cooperates with, with each link's state
     Peers(MeshQueryArgs),
     /// One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here
@@ -622,6 +624,91 @@ pub enum MeshCommand {
     Handover(MeshHandoverArgs),
     /// Ask the mesh for a review, or answer a request
     Review(MeshReviewArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh firewall`: the inbound admissions the declared mesh needs on this host, which
+/// firewall the host runs, the commands that admit them, and the firewall's own word —
+/// a report, exit 10 when the host does not admit the mesh. `mesh firewall apply` runs
+/// those commands, and needs root. `--port` names the port this checkout's server listens
+/// on beyond loopback, when it does, because a peer dials it there.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshFirewallArgs, MeshFirewallCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "firewall", "--port", "8741"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Firewall(firewall) = mesh.command else { panic!("expected `firewall`") };
+/// let firewall: MeshFirewallArgs = firewall;
+/// assert_eq!(firewall.port, Some(8741));
+/// assert!(firewall.command.is_none());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "firewall", "apply", "--port", "8791"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Firewall(firewall) = mesh.command else { panic!("expected `firewall`") };
+/// let Some(MeshFirewallCommand::Apply(apply)) = firewall.command else { panic!("expected `apply`") };
+/// assert_eq!(apply.port, Some(8791));
+/// ```
+pub struct MeshFirewallArgs {
+    #[command(subcommand)]
+    /// `apply`, or nothing for the report.
+    pub command: Option<MeshFirewallCommand>,
+    #[arg(long)]
+    /// The port this checkout's server listens on beyond loopback, when it does
+    pub port: Option<u16>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh firewall` subcommands: only `apply`, because the report is the command
+/// itself with nothing after it. `apply` is the one mesh operation offered on the command
+/// line alone — it runs a privileged host tool, which nothing reachable over HTTP or MCP
+/// may do — and it refuses without root rather than failing half-way.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshFirewallCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "firewall", "apply"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Firewall(firewall) = mesh.command else { panic!("expected `firewall`") };
+/// assert!(matches!(firewall.command, Some(MeshFirewallCommand::Apply(_))));
+///
+/// // nothing else follows `firewall`
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "firewall", "remove"]).is_err());
+/// ```
+pub enum MeshFirewallCommand {
+    /// Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh
+    Apply(MeshFirewallApplyArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh firewall apply`: the same `--port` the report takes, because the commands it
+/// runs are the report's, and the same repository and output arguments, so that
+/// `--format json` prints the apply report unchanged for a script that records what ran.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshFirewallApplyArgs, MeshFirewallCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "firewall", "apply", "--port", "8791", "--format", "json"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Firewall(firewall) = mesh.command else { panic!("expected `firewall`") };
+/// let Some(MeshFirewallCommand::Apply(apply)) = firewall.command else { panic!("expected `apply`") };
+/// let apply: MeshFirewallApplyArgs = apply;
+/// assert_eq!(apply.port, Some(8791));
+/// assert_eq!(apply.query.format, OutputFormat::Json);
+/// ```
+pub struct MeshFirewallApplyArgs {
+    #[arg(long)]
+    /// The port this checkout's server listens on beyond loopback, when it does
+    pub port: Option<u16>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -6242,6 +6329,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh firewall",
+        examples: &[ExampleDoc {
+            id: "mesh-firewall",
+            title: "What the host firewall must admit for the declared mesh, and whether it does",
+            description: "The admissions derived from the declaration and this machine's addresses — the multicast group's port, the hub ports whose address is this machine's, the server's port beyond loopback — the firewall front this host runs, the commands that admit them there, the firewall's own word about them, and what the kernel logged it dropping toward those ports in the last five minutes. Here, with no declaration, nothing is needed and the report says so; a rule observed missing or a logged drop exits 10.",
+            argv: &["mesh", "firewall"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["backend", "verdict"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh firewall apply",
+        examples: &[ExampleDoc {
+            id: "mesh-firewall-apply",
+            title: "Admit the mesh through the host firewall, as root",
+            description: "Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root.",
+            argv: &["mesh", "firewall", "apply"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {
