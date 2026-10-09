@@ -266,11 +266,30 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
-| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names, then rerun `smoke` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (the pipeline asked for that verdict; if it could not, `gh workflow run validate.yml --ref release/record-<tag> -f plan=change`), then rerun `smoke` | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
 </div>
 
+
+#### Why the release asks for the verdict of its record
+
+The record is proposed as a pull request, and that pull request is opened with
+`GITHUB_TOKEN`. GitHub starts no workflow from an event that token caused: the run its
+`pull_request` event records concludes failure with no job in it, the required `ci` check
+never reports, and the proposal cannot merge. After `v0.15.0` and after `v0.16.0` it sat so,
+with an empty check rollup, until somebody closed and reopened it, and `smoke` failed by
+design for as long as that took.
+
+A dispatch is the one event that token may cause. So after proposing the record the
+pipeline dispatches `validate` on the record's branch with the input `plan=change`, and
+`validate` plans that run as the pull request's own run would have been planned: the gates
+of the head commit's change, without the on-demand runners a dispatch otherwise asks for.
+The check-runs attach to the branch's head commit, which is what the pull request and its
+required check read. A dispatch that cannot be started is a warning naming the remedy and
+does not fail the job, because the release is published either way and `smoke` must still
+run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
+workflows to this.
 
 #### Why the release asks Pages to publish
 

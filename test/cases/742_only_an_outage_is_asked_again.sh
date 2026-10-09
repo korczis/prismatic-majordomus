@@ -35,7 +35,7 @@ printf '[{"number":1,"title":"change 1","author":{"login":"someone"},"headRefNam
 #   mergebad — everything answers, `pr merge` fails with a 502
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
-echo "\$*" >> "$STATE/log"
+[ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
 mode="\$(cat "$STATE/mode")"
 case "\$1 \$2" in
   "repo view")
@@ -52,6 +52,11 @@ case "\$1 \$2" in
   "pr list") cat "$STATE/prs.json" ;;
   "pr merge") echo "HTTP 502: Bad Gateway" >&2; exit 1 ;;
   "pr view") echo OPEN ;;
+  # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
+  # this repository, and no pull request mentions it. The list is this forge's own, unlogged
+  "api graphql")
+    nodes="\$(DECLARATIONS=1 "\$0" pr list --state open | grep -o '"number":[0-9]*' | sed 's/.*/{&,"authorAssociation":"OWNER","isCrossRepository":false,"timelineItems":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[]}}/' | paste -sd, -)"
+    printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[%s]}}}}\n' "\$nodes" ;;
   *) echo "UNEXPECTED" >> "$STATE/log"; exit 1 ;;
 esac
 EOF

@@ -234,8 +234,9 @@ nobody can read is not a resolution.
 Work is held to the review of its plan once it has started: an issue serving an intent that is
 `ACTIVE`, `VERIFY` or `DONE` while the intent has no critique is `executing_without_critique`,
 and while a blocking finding is open, `executing_with_open_blocker`. Both are failures of
-`intent validate` and the `intent-check` gate. `plan start` itself does not refuse the start;
-refusing it there is planned (`intent-refused-at-plan-start` in [`CLAIMS.yaml`](@/guarantees/_index.md)).
+`intent validate` and the `intent-check` gate. Whether the start itself is refused is the
+policy's choice (`intent.binding`, under [Binding](#binding-what-a-task-serves-asked-before-it-starts)
+below): where it is `required`, the issue never becomes `ACTIVE`.
 
 **Majordomus judges these records; it does not write them.** A person or a worker — Claude,
 Codex, Gemini — does the observing and the criticising, and the repository refuses the result
@@ -284,6 +285,68 @@ The answer carries the intents the work serves and no other: each with its state
 served criteria with the live state of their evidence, its invariants, non-goals and
 governance, its critique with the blocking findings still open, and its recorded gap bounded
 to the served criteria.
+
+### Binding: what a task serves, asked before it starts
+
+The preflight is a question. The binding is who asks it (ADR 0111): `majordomus start`,
+`majordomus context`, `majordomus handover` and `majordomus plan start` each ask the
+`intents.binding` capability — `majordomus-cli intent binding`, `GET /api/v1/intents/binding`,
+`majordomus_intent_binding` — and decide nothing themselves. A task names the work it
+executes:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| a task started with | is bound by |
+|---|---|
+| `--issue <id>` | the criteria that issue serves |
+| `--intent <id>` | the open issues serving that intent |
+| `--exempt <class> --because "<reason>"` | nothing: a class the policy declares under `intent.exemptions`, and why |
+| a scope alone | the open issues whose scope covers a path, when the policy asks at all |
+
+</div>
+
+
+The standing is `bound`, `maintenance` (the issues sit under milestones no live intent names),
+`exempt` or `refused`. A refusal carries one of the preflight's causes, or one only a binding
+can find:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| cause | what it means |
+|---|---|
+| `nothing_named` | no issue, intent, path or exemption was given |
+| `unknown_intent`, `intent_retired` | the intent named does not exist, or is cancelled or superseded |
+| `intent_has_no_open_work` | no open issue serves the intent named |
+| `issue_outside_intent` | the issue named serves no criterion of the intent named beside it |
+| `ambiguous_intent` | paths alone reached more than one intent; name the issue |
+| `unknown_exemption`, `exemption_without_reason`, `exemption_names_work` | the class is not declared, no reason was given, or an exemption was given beside named work |
+
+</div>
+
+
+What a refusal costs is the policy's `intent.binding`:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| value | `start` | `plan start` |
+|---|---|---|
+| absent or `off` | asks only when given `--issue`, `--intent` or `--exempt`; a refused or unreadable answer to that question does not start | unchanged |
+| `advisory` | always asks; a refused binding is reported and the task starts | unchanged |
+| `required` | a refused or unreadable binding does not start | an issue whose binding is refused does not become ACTIVE, in both engines |
+
+</div>
+
+
+A binding that cannot be read — no built executable, no `jq` — is *unknown*, and unknown is
+never a pass where an answer was required.
+
+The task record and a handover keep what the worker named and two pins, and nothing of the
+intent itself: `plan_revision` moves when the intent's statement, invariants, non-goals or
+criteria, a link, or the critique is edited; `evidence_standing` moves when a served
+criterion's evidence changes state. `majordomus context` prints an INTENT section read from
+the binding on every call, and `majordomus handover --resolve` prints `Intent: unchanged`,
+`evidence_moved`, `plan_changed` or `unknown`. The issue a task named is a `declared` link in
+the realization below.
 
 ### Realization: who is making it true, and whether reality agrees
 
@@ -344,10 +407,6 @@ fixed, satisfied, broken again and repaired — with the intent file byte-identi
 Each of these is a `planned` claim in [`CLAIMS.yaml`](@/guarantees/_index.md), and the homepage lists them
 from there:
 
-- `intent-in-session-context` — a session does not load the intents its task serves; a worker
-  reaches one only by asking `majordomus intent` for it.
-- `intent-refused-at-plan-start` — `plan start` lets an issue start before its intent's plan was
-  critiqued; `intent validate` names it afterwards.
 - `intent-closes-github-milestones` — the GitHub projection closes a milestone from its derived
   plan status alone and reads no intent.
 - `intent-command-deployment-evidence` — a criterion settled by a `command` or a `deployment`

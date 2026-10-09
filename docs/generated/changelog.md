@@ -1,11 +1,82 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.17.0 -->
+     Generator: majordomus-cli 0.19.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.17.0**
+Current version: **0.19.0**
+
+## v0.19.0 — 2026-10-09
+
+### Added
+
+- **capture**: the worker is asked for a handover before the window fills (`81ce30338`)
+
+### Fixed
+
+- **capture**: remove only what was installed, and type no context figures (`46bde5240`)
+- **site**: the release feed shows the changes that exist, not three it assumes (`86312044e`)
+
+### Documentation
+
+- **plan**: four adopter and runtime findings, and the pages derive writes (`d45bdb577`)
+- **plan**: I2059 and I1995, two runtime defects the plan did not hold (`10178b6f7`)
+
+### Housekeeping
+
+- **release**: raise to 0.19.0, record the verification episode, derive (`5b5367f08`)
+- **release**: record v0.18.0 and the metadata it publishes (`1e09f7301`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.19.0-aarch64-apple-darwin.tar.gz (`c5c4e75deab6`)
+- `macos-x86_64` — majordomus-v0.19.0-x86_64-apple-darwin.tar.gz (`dbb82c3d9c2f`)
+- `linux-x86_64-gnu` — majordomus-v0.19.0-x86_64-unknown-linux-gnu.tar.gz (`e8e6c7f6305a`)
+- `linux-x86_64-musl` — majordomus-v0.19.0-x86_64-unknown-linux-musl.tar.gz (`063bfd95327c`)
+- `linux-aarch64-gnu` — majordomus-v0.19.0-aarch64-unknown-linux-gnu.tar.gz (`af08acfd1c9f`)
+- `linux-aarch64-musl` — majordomus-v0.19.0-aarch64-unknown-linux-musl.tar.gz (`48c52e57a5f9`)
+
+
+## v0.18.0 — 2026-10-09
+
+### Added
+
+- **intent**: a task names what it serves, and the binding is derived, pinned and never stored (`4f4136ea6`)
+
+### Fixed
+
+- **site**: the source-pin debt is paid, eleven to none (`b72089932`)
+- **batch**: the suite budget is re-measured, and two failures found in other runs are fixed (`5f01c9e07`)
+- **probe**: a chosen tab's panel that did not appear is not a region nothing reveals (`707629eca`)
+- **test**: two surfaces are compared without the age a finding quotes (`ee24f0d73`)
+- **test**: case 938 sorts in the C locale (`bfcd1a7c4`)
+- **integration**: an unlisted open successor and a successor read in part hold, they do not release (`4335a3002`)
+- **integration**: a binding the forge spells unreadably is a requirement that was not read (`9591a68d0`)
+- **integration**: a supersession is declared by someone who may, and closes on what git finds (`1970e9252`)
+- **integration**: a required check bound to an app is only that app's run (S1) (`16d90ffeb`)
+
+### Tests
+
+- **ci**: case 97 reads the dispatch arm the release record's verdict split (`2ce9315fa`)
+- **mcp**: every listed tool is one a client accepts, held over the wire (`310a2c87e`)
+- **intent**: every changed line of the binding is covered in process, and its shell is declared (`f5de1f889`)
+
+### Housekeeping
+
+- **derive**: the batch's derived artifacts follow the v0.17.0 record (`3f7e93d0b`)
+- **release**: record v0.17.0 and the metadata it publishes (`c174bca9d`)
+- **batch**: batch 3 is composed, raised to 0.18.0 and derived (`6cbaa8a06`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.18.0-aarch64-apple-darwin.tar.gz (`a751cfc79c27`)
+- `macos-x86_64` — majordomus-v0.18.0-x86_64-apple-darwin.tar.gz (`c04f73944627`)
+- `linux-x86_64-gnu` — majordomus-v0.18.0-x86_64-unknown-linux-gnu.tar.gz (`ee2746a1d6dd`)
+- `linux-x86_64-musl` — majordomus-v0.18.0-x86_64-unknown-linux-musl.tar.gz (`4e6356f0c6d1`)
+- `linux-aarch64-gnu` — majordomus-v0.18.0-aarch64-unknown-linux-gnu.tar.gz (`bb92f0a28263`)
+- `linux-aarch64-musl` — majordomus-v0.18.0-aarch64-unknown-linux-musl.tar.gz (`dd24611623a2`)
+
 
 ## v0.17.0 — 2026-10-08
 
