@@ -1046,6 +1046,73 @@ fn fit(text: &str, room: usize) -> String {
 mod tests {
     use super::*;
 
+    /// The drawings a Cockpit source file makes outside this component: every line that
+    /// builds an `svg` element or writes `<svg` markup, unless the line or the one above
+    /// it says why with `// figure: <reason>` (an icon, a mark, a legend swatch drawn by
+    /// this module). The gate of rule project.figures-are-maps-of-evidence (I2113).
+    fn drawings_outside_the_figure(file: &str, source: &str) -> Vec<String> {
+        let mut found = Vec::new();
+        let mut excused = false;
+        for (i, line) in source.lines().enumerate() {
+            let t = line.trim();
+            if t.starts_with("//") {
+                excused = t.starts_with("// figure:") && t.len() > "// figure:".len() + 1;
+                continue;
+            }
+            let draws = t.contains(r#"el("svg")"#) || t.contains("<svg");
+            if draws && !excused && !t.contains("// figure:") {
+                found.push(format!("{file}:{}: {t}", i + 1));
+            }
+            excused = false;
+        }
+        found
+    }
+
+    #[test]
+    fn no_cockpit_page_draws_outside_the_figure_component() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/cockpit");
+        let mut found = Vec::new();
+        let mut read = 0;
+        for entry in std::fs::read_dir(&dir).expect("the cockpit sources") {
+            let path = entry.expect("an entry").path();
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default()
+                .to_string();
+            if !name.ends_with(".rs") || name == "figure.rs" {
+                continue;
+            }
+            let source = std::fs::read_to_string(&path).expect("a source file");
+            read += 1;
+            found.extend(drawings_outside_the_figure(&name, &source));
+        }
+        // a scan that read nothing would pass without having looked
+        assert!(read >= 5, "only {read} cockpit source file(s) were read");
+        assert!(
+            found.is_empty(),
+            "a page draws outside cockpit::figure (ADR 0122); build a Flow, or say why with // figure: <reason>:\n{}",
+            found.join("\n")
+        );
+    }
+
+    #[test]
+    fn the_drawing_scan_finds_a_planted_drawing_and_honours_a_reason() {
+        let planted = "fn page() -> El {\n    el(\"svg\").attr(\"viewBox\", \"0 0 1 1\")\n}\n";
+        assert_eq!(drawings_outside_the_figure("p.rs", planted).len(), 1);
+        let markup = "let s = \"<svg viewBox='0 0 1 1'></svg>\";\n";
+        assert_eq!(drawings_outside_the_figure("p.rs", markup).len(), 1);
+        let above = "// figure: the brand mark, a file of share/design/brand\nel(\"svg\")\n";
+        assert!(drawings_outside_the_figure("p.rs", above).is_empty());
+        let inline = "el(\"svg\") // figure: an icon\n";
+        assert!(drawings_outside_the_figure("p.rs", inline).is_empty());
+        // an empty reason is no reason, and a reason covers only the line under it
+        let empty = "// figure:\nel(\"svg\")\n";
+        assert_eq!(drawings_outside_the_figure("p.rs", empty).len(), 1);
+        let stale = "// figure: an icon\nlet x = 1;\nel(\"svg\")\n";
+        assert_eq!(drawings_outside_the_figure("p.rs", stale).len(), 1);
+    }
+
     fn two_columns(edges: Vec<FlowEdge>) -> Flow {
         Flow {
             id: "t".into(),

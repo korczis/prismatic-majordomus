@@ -402,7 +402,11 @@ A figure that answers a question about one subject is drawn by `cockpit::figure:
 evidence figure of [ADR 122](../.ai/repo/adrs/0122-a-figure-is-a-map-of-its-evidence.md),
 under the rule `project.figures-are-maps-of-evidence`. The entity page draws one for every
 object joined to something: what names it on the left, the object in the middle, what it
-names on the right. One box stands for each relation name in each direction.
+names on the right. One box stands for each relation name in each direction. A milestone's page
+draws one too: the milestones it requires on the left (one not yet done labelled "waits on"),
+the milestone with its issues by readiness as its subtree, and the milestones that require
+it on the right. Each line's claim is the provenance of the list it came from: explicit
+is declared, derived is derived, inferred is an estimate, unknown is unknown.
 
 - **The head names the question**, and the caption says what on the figure is recorded and
   what is inferred.

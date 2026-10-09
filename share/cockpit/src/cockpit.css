@@ -452,10 +452,13 @@
     stroke: var(--mj-status-fg, var(--mj-muted));
     stroke-width: 1.5;
   }
+  /* a line is chosen by a finger: its invisible reach is 24 screen pixels however far the
+     drawing is scaled down in its frame (WCAG 2.5.8), so the width does not scale */
   .mj-flow-hit {
     fill: none;
     stroke: transparent;
-    stroke-width: 16;
+    stroke-width: 24;
+    vector-effect: non-scaling-stroke;
   }
   .mj-flow-arrow {
     fill: var(--mj-muted);

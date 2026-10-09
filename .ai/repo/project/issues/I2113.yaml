@@ -5,21 +5,20 @@ slug: a-drawing-outside-the-figure-component-is-refused
 priority: p2
 profile: implementation
 parallel_safe: true
-objective: "Extend the ui-integrity scan so that an <svg> drawing emitted by a Cockpit page outside cockpit::figure (and outside the declared exceptions: icons, the brand mark, the legend swatches) is a finding. Rule project.figures-are-maps-of-evidence then has a gate for its first sentence rather than a review."
+objective: "Refuse an <svg> drawing built by a Cockpit page outside cockpit::figure, unless the line says why (`// figure: <reason>`). Rule project.figures-are-maps-of-evidence then has a gate for its first sentence rather than a review. The gate is a typed in-process test rather than more shell (ADR 0069)."
 why: "The rule admits that a figure drawn outside the component is today only a review finding. A rule a gate cannot see is declared, not enforced."
 current_state: "scripts/ci/cockpit-projection-check --ui-integrity scans pages.rs for direct reads, healthy literals and count defaults. It does not look at drawings."
-desired_state: "A new finding kind, 'drawing-outside-figure', names file and line. Known exceptions are declared once, and the case plants a violation and requires the refusal."
+desired_state: "cockpit::figure::tests::no_cockpit_page_draws_outside_the_figure_component names the file and line of every drawing outside the component; a planted drawing, markup and an empty or stale reason are refused by its positive control; a stated reason passes."
 scope:
-  - scripts/ci/cockpit-projection-check
-  - test/cases/547_the_ui_says_only_what_is_derived.sh
+  - apps/majordomus-cli/src/cockpit/figure.rs
   - .ai/repo/rules/project/figures-are-maps-of-evidence.v1.md
 depends_on:
   - I2110
 acceptance_criteria:
-  - A planted el("svg") drawing in a fixture pages.rs is refused with file and line
-  - The figure component, icons and the brand mark pass
+  - A planted el("svg") drawing or <svg markup is refused with file and line
+  - A drawing with a stated `// figure:` reason, and the component itself, pass
 validation:
-  - bash test/run.sh 547_the_ui_says_only_what_is_derived
+  - "cargo test --lib cockpit::figure"
 evidence_required:
   - drawing_outside_figure_refused
 created_at: 2026-10-09
