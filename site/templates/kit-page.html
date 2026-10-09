@@ -199,7 +199,16 @@
           </div>
           <div class="mt-4 grid gap-4 lg:grid-cols-2">
             {% <panel title={"Changes in " ~ latest.version} variant="quiet"> %}
-              {{ <feed items={[{"icon": "commit", "tone": "green", "title": latest.groups[0].changes[0].subject, "ref": latest.groups[0].changes[0].commit, "href": latest.groups[0].changes[0].url}, {"icon": "commit", "tone": "blue", "title": latest.groups[0].changes[1].subject, "ref": latest.groups[0].changes[1].commit, "href": latest.groups[0].changes[1].url}, {"icon": "commit", "tone": "violet", "title": latest.groups[0].changes[2].subject, "ref": latest.groups[0].changes[2].commit, "href": latest.groups[0].changes[2].url}]} /> }}
+              {#- the first three changes across the groups, and only as many as there are (Tera has no list append) -#}
+              {%- set_global shown = 0 -%}
+              {%- for g in latest.groups %}{% for c in g.changes %}{% if shown == 0 %}{% set_global c0 = c %}{% elif shown == 1 %}{% set_global c1 = c %}{% elif shown == 2 %}{% set_global c2 = c %}{% endif %}{% set_global shown = shown + 1 %}{% endfor %}{% endfor -%}
+              {%- if shown >= 3 %}
+              {{ <feed items={[{"icon": "commit", "tone": "green", "title": c0.subject, "ref": c0.commit, "href": c0.url}, {"icon": "commit", "tone": "blue", "title": c1.subject, "ref": c1.commit, "href": c1.url}, {"icon": "commit", "tone": "violet", "title": c2.subject, "ref": c2.commit, "href": c2.url}]} /> }}
+              {%- elif shown == 2 %}
+              {{ <feed items={[{"icon": "commit", "tone": "green", "title": c0.subject, "ref": c0.commit, "href": c0.url}, {"icon": "commit", "tone": "blue", "title": c1.subject, "ref": c1.commit, "href": c1.url}]} /> }}
+              {%- elif shown == 1 %}
+              {{ <feed items={[{"icon": "commit", "tone": "green", "title": c0.subject, "ref": c0.commit, "href": c0.url}]} /> }}
+              {%- endif %}
             {% </panel> %}
             {% <panel title="The layer" variant="quiet"> %}
               {{ <legend items={[{"title": "rules", "value": kinds.rule, "tone": "blue"}, {"title": "decisions", "value": kinds.adr, "tone": "violet"}, {"title": "tests", "value": kinds.test, "tone": "green"}, {"title": "use cases", "value": kinds["use-case"], "tone": "orange"}]} /> }}

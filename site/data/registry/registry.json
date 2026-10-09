@@ -6,23 +6,23 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "17116f39709e5b5ac9d4d4ee83965ad8fc7f4453502c44b4adb654e989c34878",
+    "fingerprint": "d0a6f8f6a03932664cc59f827bb3ab30ff17094910764630f731a813650279e7",
     "summary": {
-      "total": 2088,
+      "total": 2098,
       "builtin": 185,
-      "declarative": 1903,
+      "declarative": 1913,
       "by_kind": {
         "command": 26,
         "query": 159,
-        "resource": 1903
+        "resource": 1913
       },
       "by_stability": {
         "behaviorally_verified": 133,
         "experimental": 44,
-        "implemented": 1911
+        "implemented": 1921
       },
       "mcp_tools": 178,
-      "mcp_resources": 1958,
+      "mcp_resources": 1968,
       "http_routes": 182,
       "cli_commands": 101,
       "modules": 86,
@@ -76064,7 +76064,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 262,
+        "capabilities": 268,
         "capability_ids": []
       },
       {
@@ -76429,7 +76429,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 15,
+        "capabilities": 17,
         "capability_ids": []
       },
       {
@@ -76599,7 +76599,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 408,
+        "capabilities": 410,
         "capability_ids": []
       },
       {
@@ -76689,7 +76689,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a6509a5509dfd2106bb0aa007eccb416e922496c8de85fb939f88bb700551fad",
+    "fingerprint": "b8f497314bb582bcce68638bf530646e779f8a128fb0a948da8e623128332dc4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76728,7 +76728,7 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 262,
+      "issue": 268,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 25,
@@ -76736,13 +76736,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 15,
+      "release-record": 17,
       "rule": 163,
       "scope": 1,
       "session": 84,
       "skill": 7,
       "taxonomy": 10,
-      "test": 408,
+      "test": 410,
       "use-case": 48,
       "workspace": 1
     },
@@ -81958,7 +81958,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 24507
+        "bytes": 25918
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -82093,7 +82093,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 10667
+        "bytes": 10877
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -82192,7 +82192,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 97316
+        "bytes": 118672
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -88261,7 +88261,7 @@
         "path": ".ai/repo/project/issues/I1986.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1521
+        "bytes": 1799
       },
       {
         "uri": "majordomus://issue/I1987",
@@ -88319,6 +88319,61 @@
         "bytes": 1159
       },
       {
+        "uri": "majordomus://issue/I1995",
+        "kind": "issue",
+        "identity": "I1995",
+        "title": "Work a session left uncommitted in a worktree is named, not found by luck",
+        "description": "Make doctor and the worktree status name a linked worktree whose index or working tree holds changes no commit carries and no live session holds, with how many files and how old, so that finished work on one disk is seen before the disk is.",
+        "path": ".ai/repo/project/issues/I1995.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2621
+      },
+      {
+        "uri": "majordomus://issue/I1996",
+        "kind": "issue",
+        "identity": "I1996",
+        "title": "doctor does not fail an adopter on a check written for this repository",
+        "description": "Stop `majordomus doctor` from failing an adopter's repository on the reasoning design's own coupling rules, and stop its reproduce hints from naming paths only this repository has.",
+        "path": ".ai/repo/project/issues/I1996.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2950
+      },
+      {
+        "uri": "majordomus://issue/I1997",
+        "kind": "issue",
+        "identity": "I1997",
+        "title": "The peer board can be read from the command line",
+        "description": "Project the peers capability onto the command line, so that a worker with no MCP tools can still ask who else is working in this repository and on which paths.",
+        "path": ".ai/repo/project/issues/I1997.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2517
+      },
+      {
+        "uri": "majordomus://issue/I1998",
+        "kind": "issue",
+        "identity": "I1998",
+        "title": "A health command in an unsupervised repository does not exit 0",
+        "description": "Make `majordomus doctor`, `session list` and the other read-only commands exit with the missing-artifact code when the repository has no .ai/manifest.yaml, so a caller can tell a healthy repository from one the tool is not installed in.",
+        "path": ".ai/repo/project/issues/I1998.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1842
+      },
+      {
+        "uri": "majordomus://issue/I1999",
+        "kind": "issue",
+        "identity": "I1999",
+        "title": "A tracked file a hook regenerates does not refuse a task that never touched it",
+        "description": "Let a repository declare the tracked paths its own tooling rewrites, have `check` and `finish` judge them as the machine's and not the worker's, and make the scope finding and the note finding say what settles them before `finish` refuses.",
+        "path": ".ai/repo/project/issues/I1999.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3136
+      },
+      {
         "uri": "majordomus://issue/I2000",
         "kind": "issue",
         "identity": "I2000",
@@ -88372,6 +88427,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2091
+      },
+      {
+        "uri": "majordomus://issue/I2059",
+        "kind": "issue",
+        "identity": "I2059",
+        "title": "A rebuild never replaces the executable a live lease names",
+        "description": "Stop an entry point from rebuilding the executable in place under a running shared server, and make the server that follows a superseded one bind the address the old one was serving, or say that it did not.",
+        "path": ".ai/repo/project/issues/I2059.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3003
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -89499,6 +89565,26 @@
         "identity": "v0.16.0",
         "title": "v0.16.0",
         "path": ".ai/repo/releases/v0.16.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
+        "uri": "majordomus://release-record/v0.17.0",
+        "kind": "release-record",
+        "identity": "v0.17.0",
+        "title": "v0.17.0",
+        "path": ".ai/repo/releases/v0.17.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
+        "uri": "majordomus://release-record/v0.18.0",
+        "kind": "release-record",
+        "identity": "v0.18.0",
+        "title": "v0.18.0",
+        "path": ".ai/repo/releases/v0.18.0.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2442
@@ -94110,7 +94196,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 20041
+        "bytes": 20835
       },
       {
         "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
@@ -95046,7 +95132,7 @@
         "identity": "test/cases/533_source_links_name_the_built_commit.sh",
         "path": "test/cases/533_source_links_name_the_built_commit.sh",
         "source_class": "case",
-        "bytes": 6157
+        "bytes": 7649
       },
       {
         "uri": "majordomus://test/test/cases/534_the_overview_answers_four_questions.sh",
@@ -96438,7 +96524,7 @@
         "identity": "test/cases/97_install_gate.sh",
         "path": "test/cases/97_install_gate.sh",
         "source_class": "case",
-        "bytes": 7776
+        "bytes": 8355
       },
       {
         "uri": "majordomus://test/test/cases/97_pages_fast_path.sh",
@@ -96527,6 +96613,22 @@
         "path": "test/cases/994_a_panel_that_did_not_appear_is_not_a_hidden_region.sh",
         "source_class": "case",
         "bytes": 6455
+      },
+      {
+        "uri": "majordomus://test/test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh",
+        "kind": "test",
+        "identity": "test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh",
+        "path": "test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh",
+        "source_class": "case",
+        "bytes": 3431
+      },
+      {
+        "uri": "majordomus://test/test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+        "kind": "test",
+        "identity": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+        "path": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+        "source_class": "case",
+        "bytes": 5633
       },
       {
         "uri": "majordomus://test/test/cases/99_adr.sh",
@@ -97262,7 +97364,7 @@
       "identity": [
         "id"
       ],
-      "objects": 262
+      "objects": 268
     },
     {
       "name": "knowledge",
@@ -97348,7 +97450,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 15
+      "objects": 17
     },
     {
       "name": "rule",
@@ -97414,7 +97516,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 408
+      "objects": 410
     },
     {
       "name": "use-case",

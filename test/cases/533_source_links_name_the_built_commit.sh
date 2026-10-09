@@ -78,6 +78,25 @@ fi
 rc=0; out="$("$CHECK" 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    source-pin-check fails on this tree ($rc): $out"; exit 1; }
 
+# At zero the gate still answers. Every template link was converted on 2026-10-08, and the
+# gate then exited 1 without a word: with nothing measured and nothing allowed both of its
+# pipelines ended in a `grep -v` that printed nothing, and under pipefail that was the
+# script's own status. A gate that dies when its debt is paid would have been "fixed" by
+# putting a link back. So the paid state is held by name: no template names master, the
+# baseline allows none, and the gate says so and exits 0.
+occ="$(grep -rhoE '(blob|tree|\}\})/master/' "$ROOT/site/templates" | wc -l | tr -d ' ')"
+[ "$occ" = 0 ] || { echo "    $occ source link(s) under site/templates name master again"; exit 1; }
+allowed="$({ grep -v -e '^#' -e '^$' "$BASE" || true; } | wc -l | tr -d ' ')"
+[ "$allowed" = 0 ] || { echo "    the baseline allows $allowed template(s) to name master; it was paid to zero"; exit 1; }
+printf '%s\n' "$out" | grep -q '0 occurrence(s) under site/templates' \
+  || { echo "    at zero the gate did not say what it measured: $out"; exit 1; }
+# and an empty tree with an empty baseline is an answer too, not a crash
+Z="$T/zero"; mkdir -p "$Z/.ai/repo" "$Z/site/templates"
+printf '<p>no links</p>\n' > "$Z/site/templates/page.html"
+printf '# nothing is allowed\n' > "$Z/.ai/repo/source-pin-baseline.txt"
+rc=0; out_zero="$(MJ_ROOT="$Z" "$CHECK" 2>&1)" || rc=$?
+[ "$rc" = 0 ] || { echo "    source-pin-check fails on a tree with no link and an empty baseline ($rc): $out_zero"; exit 1; }
+
 R="$T/ratchet"; mkdir -p "$R/.ai/repo" "$R/site"
 cp -R "$ROOT/site/templates" "$R/site/templates"
 cp "$BASE" "$R/.ai/repo/source-pin-baseline.txt"
