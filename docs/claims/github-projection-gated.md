@@ -12,6 +12,8 @@ is the other half: that the two agree now, and that a build fails when they stop
 `scripts/ci/github-check` reads the remote and classifies every record. It applies two
 tolerances rather than one.
 
+Given the base a pull request merges into (`--base <ref>`, or `origin/$GITHUB_BASE_REF` in a pull request's run), a `behind` or `state` record whose rendering differs between the base and the head, and a record new in the head, is `pending` — the pull request's own change, which GitHub can show only once it has merged and the trunk is applied — and is reported rather than refused. Drift on a record both render alike is refused as below. The trunk's own run has no base.
+
 Refused outright, from the first run, with no allowance:
 
 | state | what it means |
@@ -41,6 +43,7 @@ which. It never exits clean.
 
 ```bash
 scripts/ci/github-check                   # 0 in sync, 10 findings, 12 the gate cannot run
+scripts/ci/github-check --base origin/master  # a pull request: its own plan change is pending
 scripts/ci/github-check --write-baseline  # record today's backlog as the ceiling, deliberately
 scripts/github-sync --plan                # offline: what an apply would create or change
 ```

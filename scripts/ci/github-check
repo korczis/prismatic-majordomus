@@ -29,8 +29,24 @@
 # deliberate act with a reason, exactly as scripts/ci/pipefail-check treats its own.
 #
 #   scripts/ci/github-check                  report and exit 10 on any refused finding
+#   scripts/ci/github-check --base <ref>     a pull request: its own plan change is pending
 #   MJ_ROOT=<dir> MJ_GH_BASELINE=<file>      measure another tree against another baseline
 #   scripts/ci/github-check --write-baseline record today's backlog as the ceiling
+#
+# A pull request that changes a plan record cannot be projected before it merges: the
+# adapter projects the trunk's plan and nothing else. So the record it changed is `behind`,
+# or in the wrong `state`, on GitHub for exactly as long as the pull request is open, and a
+# gate that refused that could never pass for it. Given the base the pull request merges
+# into (--base, or origin/$GITHUB_BASE_REF in a pull request's run), the gate renders the
+# base's plan with the base's own adapter and the head's with this one, and a `behind` or
+# `state` drift on a record whose state or body differs between the two is `pending`: the
+# pull request's own change, reported and not refused; a record new in the head that GitHub
+# does not have yet is `missing` and pending alike, and does not count against the
+# baseline. The same drift on a record both
+# render alike was there before the pull request and is refused as always. A base that
+# cannot be resolved or rendered exits 12; it is never read as "no base". Pending drift is
+# still drift: once the pull request merges it is refused on the trunk until somebody runs
+# `scripts/github-sync --apply` there. The trunk's own run has no base and is unchanged.
 #
 # Exit: 0 clean, 10 findings, 12 the gate cannot run (no gh, no token, no model).
 set -eu
@@ -42,11 +58,13 @@ SYNC="$SELF/../github-sync"
 ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
 cd "$ROOT"
 BASELINE="${MJ_GH_BASELINE:-.ai/repo/ci/github-drift-baseline.txt}"
-WRITE=0
+WRITE=0; BASE_REF=""
 while [ $# -gt 0 ]; do case "$1" in
   --write-baseline) WRITE=1; shift ;;
+  --base) [ $# -ge 2 ] || { echo "github-check: --base needs a ref" >&2; exit 2; }; BASE_REF="$2"; shift 2 ;;
   *) echo "github-check: unknown option $1" >&2; exit 2 ;;
 esac; done
+[ -n "$BASE_REF" ] || [ -z "${GITHUB_BASE_REF:-}" ] || BASE_REF="origin/$GITHUB_BASE_REF"
 
 # A gate that cannot reach the remote must say so. Passing quietly is the failure this
 # gate exists to remove, and it would remove it by reintroducing it. A fixture remote
@@ -61,7 +79,38 @@ if [ -z "${MJ_GH_FIXTURE_ISSUES:-}${MJ_GH_FIXTURE_MILESTONES:-}" ]; then
 fi
 
 out="$(mktemp "${TMPDIR:-/tmp}/mj.ghc.XXXXXX")"
-trap 'rm -f "$out"' EXIT
+work="$(mktemp -d "${TMPDIR:-/tmp}/mj.ghcw.XXXXXX")"
+trap 'rm -rf "$out" "$work"' EXIT
+
+# The records a plan renders, one line each: id, state (issues only) and body hash, from
+# the adapter's offline --plan.
+signature() {
+  awk '/^issues$/ { s = 1; next } /^body hashes/ { s = 2; next } /^[^ ]/ { s = 0 }
+       s == 1 && $1 ~ /^I[0-9]/ { st[$1] = $2 }
+       s == 2 && NF == 2 { h[$1] = $2 }
+       END { for (i in h) print i, ((i in st) ? st[i] : "-"), h[i] }' | LC_ALL=C sort
+}
+# The ids whose rendering the pull request changed: present in the head and not rendered
+# alike in the base. The base is rendered by the adapter it carries, so a change to the
+# renderer is the pull request's change too; a tree with no adapter (a fixture) is rendered
+# by this one.
+PENDING="$work/pending"; : > "$PENDING"
+if [ -n "$BASE_REF" ]; then
+  git -C "$ROOT" rev-parse -q --verify "$BASE_REF^{commit}" >/dev/null \
+    || { echo "github-check: the base $BASE_REF does not resolve here, so what the pull request changed cannot be told (git -C $ROOT rev-parse $BASE_REF)" >&2; exit 12; }
+  mkdir "$work/base"
+  git -C "$ROOT" archive "$BASE_REF" | tar -x -C "$work/base" \
+    || { echo "github-check: the base $BASE_REF could not be extracted (git -C $ROOT archive $BASE_REF)" >&2; exit 12; }
+  git -C "$work/base" init -q
+  adapter="$work/base/scripts/github-sync"; [ -x "$adapter" ] || adapter="$SYNC"
+  ( cd "$work/base" && MJ_ROOT="$work/base" "$adapter" --plan ) > "$work/base.plan" 2>/dev/null \
+    || { echo "github-check: the base's plan could not be rendered ($adapter --plan in a copy of $BASE_REF)" >&2; exit 12; }
+  "$SYNC" --plan > "$work/head.plan" 2>/dev/null \
+    || { echo "github-check: the head's plan could not be rendered ($SYNC --plan)" >&2; exit 12; }
+  signature < "$work/base.plan" > "$work/base.sig"
+  signature < "$work/head.plan" > "$work/head.sig"
+  LC_ALL=C comm -13 "$work/base.sig" "$work/head.sig" | awk '{ print $1 }' > "$PENDING"
+fi
 set +e
 "$SYNC" --check > "$out" 2>&1
 rc=$?
@@ -69,6 +118,15 @@ set -e
 [ "$rc" = 11 ] || [ "$rc" = 0 ] || { echo "github-check: the adapter could not read the remote (exit $rc)" >&2; sed -n '$p' "$out" >&2; exit 12; }
 
 count_of() { grep -cE "^DRIFT  $1 " "$out" || true; }
+# The drift lines of one state, split by whether the pull request changed the record: the
+# fourth field of a DRIFT line is the record's id.
+lines_of() { # <state> <pending|held>
+  # the pending ids are read in BEGIN: with `NR == FNR` an empty list would make every
+  # drift line read as a pending id, and nothing would be refused
+  grep -E "^DRIFT  $1 " "$out" | awk -v want="$2" -v list="$PENDING" '
+    BEGIN { while ((getline id < list) > 0) p[id] = 1 }
+    { if (($4 in p) == (want == "pending")) print }' || true
+}
 REFUSED="behind edited conflict unmanaged state milestone closed"
 RATCHET="missing adopt"
 
@@ -93,17 +151,26 @@ fail() { printf 'FAIL github-check  %s\n' "$*"; findings=$((findings + 1)); }
 ok()   { printf 'OK   github-check  %s\n' "$*"; }
 
 for s in $REFUSED; do
-  n="$(count_of "$s")"
+  case "$s" in behind|state) held="$(lines_of "$s" held)"; pend="$(lines_of "$s" pending)" ;;
+                *) held="$(grep -E "^DRIFT  $s " "$out" || true)"; pend="" ;; esac
+  n="$(printf '%s' "$held" | grep -c . || true)"
+  p="$(printf '%s' "$pend" | grep -c . || true)"
   if [ "$n" -gt 0 ]; then
     fail "$n record(s) $s — the projection is behind the canonical model or a person's text is at stake (run: scripts/github-sync --check)"
-    grep -E "^DRIFT  $s " "$out" | sed 's/^/     /' | head -10
+    printf '%s\n' "$held" | sed 's/^/     /' | head -10
   else
     ok "no record is $s"
+  fi
+  if [ "$p" -gt 0 ]; then
+    printf 'PEND github-check  %s record(s) %s pending — the pull request changed them against %s; GitHub shows them only after it merges and somebody runs scripts/github-sync --apply on the trunk\n' "$p" "$s" "$BASE_REF"
+    printf '%s\n' "$pend" | sed 's/^/     /' | head -10
   fi
 done
 
 for s in $RATCHET; do
-  n="$(count_of "$s")"
+  n="$(lines_of "$s" held | grep -c . || true)"
+  p="$(lines_of "$s" pending | grep -c . || true)"
+  [ "$p" = 0 ] || printf 'PEND github-check  %s record(s) %s pending — new in the pull request against %s, projected only after it merges\n' "$p" "$s" "$BASE_REF"
   b="$(awk -v s="$s" '$1==s { print $2; exit }' "$BASELINE")"
   [ -n "$b" ] || b=0
   if [ "$n" -gt "$b" ]; then
