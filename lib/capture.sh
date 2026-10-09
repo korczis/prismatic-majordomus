@@ -285,6 +285,14 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # nothing writes `-`, and its workers resolve through the pointer as everything did before.
 MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
 
+# The mods a provider loads by itself from a folder inside the repository (ADR 0123): one
+# line each, the provider, the mod's name under share/mods/<provider>/, the folder it is
+# installed to, and the policy key that switches it. A shim answers an event the provider
+# fires; a mod is asked by the provider while the conversation runs, which is the only
+# place a measurement of the context window is made, so the request for a handover before
+# the window fills cannot be a shim.
+MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill'
+
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
 # must not need one: it fires no event, so there is no vendor payload shape to version
@@ -2094,6 +2102,7 @@ mj_capture_install_one() {
         "capture session --provider $p --event $one" "$(mj_lifecycle_latency "$one")"
     done
   fi
+  mj_capture_install_mods "$p"
 
   if [ ! -f "$cfg" ]; then
     mj_capture_config "$p" > "$cfg"
@@ -2173,6 +2182,51 @@ mj_capture_install_shim() {
   printf '%s\n' "$body" > "$shim"
   chmod +x "$shim"
   mj_info capture "$rel" "written and made executable ($latency)"
+}
+
+# Every mod this provider has, copied from the distribution into the folder the provider
+# loads it from. The rules are the shim's: a folder whose hooks module does not carry the
+# marker is somebody's own and is left as it is; one this tool wrote is rewritten when the
+# distribution's copy differs, so an upgrade is repaired by the command that installed it.
+# The policy key is the switch, and only `true` turns it on: the mod writes into the
+# adopter's own .claude/ tree, and an absent key is not consent to that (the reading F15
+# gave the keys that commit and push). The skeleton declares true, so `init` opts in
+# knowingly; an older policy without the key, or one that cannot be read, gets nothing.
+# The command converges in both directions: off removes a folder this tool wrote, because
+# a mod the policy turned off and the provider still loads is a declaration nothing enforces.
+#
+# The test file is the distribution's own evidence (`claude plugin test`) and is not
+# installed; the provider's type declarations, laid beside a loaded mod, are not compared.
+mj_capture_install_mods() {
+  local p="$1" prov name rel key src dst on verb f
+  while read -r prov name rel key; do
+    [ "$prov" = "$p" ] || continue
+    src="$MJ_SHARE_DIR/mods/$p/$name"; dst="$MJ_ROOT/$rel"
+    [ -f "$src/hooks/register.ts" ] || {
+      mj_err "capture install: $src is not in this distribution; the $name mod is not installed"
+      continue; }
+    on=0
+    if mj_load_policy 2>/dev/null && [ "$(mj_pol "$key")" = true ]; then on=1; fi
+    if [ -d "$dst" ] && ! grep -qF 'Written by `majordomus capture install`' "$dst/hooks/register.ts" 2>/dev/null; then
+      mj_info capture "$rel" "already present and not this tool's; left as it is"; continue
+    fi
+    if [ "$on" = 0 ]; then
+      if [ -d "$dst" ]; then rm -rf "$dst"; mj_info capture "$rel" "removed: $key is not true"
+      else mj_info capture "$rel" "not written: $key is not true"; fi
+      continue
+    fi
+    if [ -d "$dst" ] && diff -rq -x '*.test.ts' -x types "$src" "$dst" >/dev/null 2>&1; then
+      mj_info capture "$rel" "already present; left as it is"; continue
+    fi
+    verb=written
+    [ -d "$dst" ] && { rm -rf "$dst"; verb=rewritten; }
+    (cd "$src" && find . -type f ! -name '*.test.ts') | while read -r f; do
+      mkdir -p "$dst/$(dirname "$f")" && cp "$src/$f" "$dst/$f"
+    done
+    mj_info capture "$rel" "$verb; the provider loads it at its next start"
+  done <<EOF
+$MJ_CAPTURE_MODS
+EOF
 }
 
 # The text of one shim. Kept apart from writing it so that an installed shim can be compared
