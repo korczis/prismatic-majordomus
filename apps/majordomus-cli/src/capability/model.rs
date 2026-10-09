@@ -462,6 +462,14 @@ pub enum Effect {
     ///
     /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     RepositoryMutation,
+    /// Other machines change: the handler reaches, over ssh, machines this process does not
+    /// run on, and installs, writes or restarts something there ([ADR 0121]). The strongest
+    /// effect a capability can have, and the only one that is open-world: what it changes
+    /// outlives this process, this repository and this machine. A handler says so with
+    /// [`ExecutionPolicy::changes_other_machines`].
+    ///
+    /// [ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md
+    RemoteMutation,
 }
 
 /// Whether two executions of one capability may overlap.
@@ -575,6 +583,23 @@ impl ExecutionPolicy {
         }
     }
 
+    /// The same policy, for a command whose handler changes other machines — the third
+    /// documented addition, and like the second one only a command may make it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Command).changes_other_machines();
+    /// assert_eq!(p.effect, Effect::RemoteMutation);
+    /// assert!(p.needs_confirmation());
+    /// assert!(p.hints().open_world);
+    /// ```
+    pub fn changes_other_machines(self) -> Self {
+        ExecutionPolicy {
+            effect: Effect::RemoteMutation,
+            ..self
+        }
+    }
+
     /// Should a client ask before running this? True for anything that changes something.
     ///
     /// ```
@@ -609,7 +634,7 @@ impl ExecutionPolicy {
     /// assert!(!memory.read_only && !memory.idempotent && !memory.destructive);
     /// let writer = ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().hints();
     /// assert!(!writer.read_only && !writer.idempotent && writer.destructive);
-    /// assert!(!writer.open_world, "no handler of this executable reaches beyond the machine");
+    /// assert!(!writer.open_world, "writing the repository stays on this machine");
     /// ```
     pub fn hints(self) -> Hints {
         match self.effect {
@@ -630,6 +655,12 @@ impl ExecutionPolicy {
                 destructive: true,
                 idempotent: false,
                 open_world: false,
+            },
+            Effect::RemoteMutation => Hints {
+                read_only: false,
+                destructive: true,
+                idempotent: false,
+                open_world: true,
             },
         }
     }
@@ -657,8 +688,9 @@ pub struct Hints {
     pub destructive: bool,
     /// A second identical call changes nothing the first did not.
     pub idempotent: bool,
-    /// The call reaches beyond this machine. No handler of this executable does: observing
-    /// the forge and talking to an advisor are commands a person runs, not capabilities.
+    /// The call reaches beyond this machine. Only a handler that changes other machines
+    /// does ([`Effect::RemoteMutation`]): observing the forge and talking to an advisor are
+    /// commands a person runs, not capabilities.
     pub open_world: bool,
 }
 

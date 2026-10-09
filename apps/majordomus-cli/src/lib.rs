@@ -56,6 +56,7 @@ pub mod ledger;
 pub mod live;
 pub mod logging;
 pub mod mcp;
+pub mod fleet;
 pub mod mesh;
 pub mod metadata;
 pub mod model;

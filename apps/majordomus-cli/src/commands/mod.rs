@@ -38,6 +38,7 @@ pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod fleet;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -113,6 +114,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
+        Command::Fleet(args) => fleet::run(args),
     }
 }
 

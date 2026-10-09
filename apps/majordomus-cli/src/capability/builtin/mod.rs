@@ -60,6 +60,7 @@ pub mod intents;
 pub mod knowledge_base;
 pub mod lifecycle;
 pub mod mcp;
+pub(crate) mod fleet;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub mod objects;
@@ -194,6 +195,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         rules,
         executions,
         mesh,
+        fleet,
         models,
         reasoning,
         episodes,
