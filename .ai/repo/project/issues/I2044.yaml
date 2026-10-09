@@ -1,0 +1,25 @@
+id: I2044
+milestone: pr-integration-hardening
+title: Work on the forge is bounded and asked cheapest first
+slug: forge-calls-are-bounded
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Every subprocess that asks the forge has a bound and a named failure when it is exceeded; a refresh asks the expensive questions only of what the cheap read left open."
+why: "A call to the forge has no timeout, and a refresh asks every question of every pull request."
+current_state: "drain.rs line 1801 and mod.rs lines 440-450."
+desired_state: "Every subprocess that asks the forge has a bound and a named failure when it is exceeded; a refresh asks the expensive questions only of what the cheap read left open."
+scope:
+  - apps/majordomus-cli/src/integration/drain.rs
+  - apps/majordomus-cli/src/integration/mod.rs
+  - apps/majordomus-cli/tests/integration_executor.rs
+depends_on: []
+acceptance_criteria:
+  - A forge call that does not return within its bound is a recorded failure and never a hang, proved with a forge that stalls
+  - A refresh of several pull requests asks relation and change shape only for those the cheap read left open, counted in the scripted forge's log
+validation:
+  - cd apps/majordomus-cli && cargo test --test integration_executor
+evidence_required:
+  - forge_calls_are_bounded_and_staged
+created_at: 2026-10-08
+updated_at: 2026-10-08

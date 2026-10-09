@@ -1,0 +1,26 @@
+id: I2046
+milestone: pr-integration
+title: The two safety properties are generated, not exemplified
+slug: safety-properties-are-generated
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - pr-integration#a-stale-decision-never-merges
+  - pr-integration#closure-needs-a-strong-ground
+objective: "Both are property tests over generated observations, plans and closure candidates."
+why: "That a stale decision never merges and that a closure needs evidence are example tests, while the determinism of the queue is already a generated property."
+current_state: "integration/tests.rs lines 729 and 5478 are examples; lines 1486 and 1551 are the existing property tests."
+desired_state: "Both are property tests over generated observations, plans and closure candidates."
+scope:
+  - apps/majordomus-cli/src/integration/tests.rs
+depends_on: [I2041]
+acceptance_criteria:
+  - A property test generates observations and plans and asserts no merge on a decision whose master or head differs from the fresh observation
+  - A property test generates closure candidates and asserts none closes without one of the named grounds
+validation:
+  - cd apps/majordomus-cli && cargo test --lib integration::tests
+evidence_required:
+  - safety_is_a_generated_property
+created_at: 2026-10-08
+updated_at: 2026-10-08

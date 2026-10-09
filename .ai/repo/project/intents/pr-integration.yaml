@@ -1,0 +1,85 @@
+id: pr-integration
+title: Pull requests reach the trunk one at a time, each provably safe against the trunk as it stands
+statement: "Every open pull request is observed, classified and ranked by one derivation; the next one that is provably safe against the current master is merged by one executor under a lease, never around a required check, a required review or the branch protection; the queue is recomputed after every merge; a pull request is closed only on strong, named evidence; and every act is recorded where every surface and every later session can read it."
+invariants:
+  - No loop over the open pull requests merges them, and no set of pull requests that was green at the start is merged as a set
+  - A mergeable flag, a stale check result or an old plan is never sufficient to merge
+  - No merge uses an administrator override, no base branch is force-pushed, and no review policy or branch protection is bypassed
+  - A contributor's branch is never updated silently, and nothing is closed because it is old or because two texts read alike to a model
+  - The forge is asked through one adapter; no frontend code and no shell glue decides or performs a merge, and no second registry of pull requests is kept
+  - A read-only command reaches no mutation, and no unrelated command merges or closes; draining and applying are asked for by name
+  - No surface shows a pull request that was not observed; nothing mocked or written by hand stands in for the queue
+  - A branch composed of several pull requests is a person's decision and never the executor's (ADR 0101); nothing in the code tells such a branch from another yet, so this holds by agreement until the gate of I2051 exists, and pull request 816 is the last one composed by hand
+milestones:
+  - pr-integration
+satisfaction:
+  - id: one-queue-where-a-person-looks
+    criterion: The Cockpit and HTTP show the lease, the last merge and the throughput the command line derives from the same trail
+    evidence: test
+    ref: test/cases/740_integration_is_visible_where_a_person_looks.sh
+  - id: a-later-session-can-continue
+    criterion: The session context and the derived handover carry what was merged, what remains and who holds the lease, read from the repository's trail by any worktree
+    evidence: test
+    ref: test/cases/740_integration_is_visible_where_a_person_looks.sh
+  - id: the-executor-acts-under-its-lease
+    criterion: The executor observes again before it acts, merges under its lease pinned to the head it decided on, never with an administrator override, and the MCP tools answer the queue it works from
+    evidence: test
+    ref: test/cases/720_integration_follows_the_current_master.sh
+  - id: required-checks-are-authoritative
+    criterion: A pull request whose required check has not passed on its current head is never ready, and nothing that is not ready is the next merge
+    evidence: test
+    ref: test/cases/857_required_checks_are_authoritative.sh
+  - id: reviews-are-authoritative
+    criterion: A pull request the forge still requires a review of is never ready, and nothing that is not ready is the next merge
+    evidence: test
+    ref: test/cases/858_reviews_are_authoritative.sh
+  - id: no-merge-route-beside-the-integrator
+    criterion: Nothing outside the integrator merges a pull request or arms the forge to: the gate refuses every such route in scripts, recipes, workflows and hooks
+    evidence: test
+    ref: test/cases/910_nothing_merges_around_the_integrator.sh
+  - id: a-stale-decision-never-merges
+    criterion: A merge is proved after it is made, and one that landed on a master that had moved holds every further drain until a person has looked
+    evidence: test
+    ref: apps/majordomus-cli/tests/integration_executor.rs
+  - id: one-executor-on-one-machine
+    criterion: Executors racing for one base on one machine merge a pull request once
+    evidence: test
+    ref: test/cases/855_racing_executors_merge_once.sh
+  - id: one-executor-across-machines
+    criterion: An executor says how far its lease reaches, and where a mesh runs a second machine is refused the base
+    evidence: test
+    ref: test/cases/924_one_executor_across_machines.sh
+  - id: the-queue-is-recomputed-after-each-merge
+    criterion: One merge invalidates every earlier plan: the queue is recomputed from the new master after each merge, and ready pull requests keep landing one at a time while unrelated ones stay blocked
+    evidence: test
+    ref: test/cases/850_integration_drains_cycle_by_cycle.sh
+  - id: closure-needs-a-strong-ground
+    criterion: A declaration that is not authorised neither holds a pull request nor closes one, and applying a cleanup closes nothing on it
+    evidence: test
+    ref: test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh
+  - id: a-superseded-pull-request-is-detected
+    criterion: A pull request whose declared successor landed is found superseded from what git holds
+    evidence: test
+    ref: test/cases/861_a_successor_that_landed_supersedes.sh
+  - id: merged-branches-are-cleaned-by-policy
+    criterion: A branch a merged pull request left behind is reported and removed only as the policy says
+    evidence: test
+    ref: apps/majordomus-cli/tests/integration_merged_branches.rs
+  - id: a-dry-run-moves-nothing
+    criterion: A read or a dry run reaches no mutation of the forge or of git
+    evidence: test
+    ref: test/cases/852_a_dry_run_moves_nothing.sh
+  - id: repair-acts-under-the-lease
+    criterion: Bringing master into a pull request is decided from the observation and done only under the lease, with the act in the trail
+    evidence: test
+    ref: test/cases/912_repair_acts_under_the_lease_and_the_trail.sh
+governance:
+  - rule:project.integration-follows-the-current-master
+  - adr:adr-0101
+non_goals:
+  - Deciding whether a change is correct; the required checks and reviews do
+  - Merging faster than the forge can prove a head safe
+  - Restating what other gates already hold for every subsystem - that the OpenAPI document is generated, that documents and claims are proved, that new code is covered; the mission's items on interfaces, tests and documentation are held there
+  - Naming as a criterion what no test yet proves; starvation, bounded forge calls, the gating of every rollout stage and a typed batch are issues of the hardening milestone and become criteria in the change that brings their case
+created_at: 2026-10-08
+updated_at: 2026-10-08

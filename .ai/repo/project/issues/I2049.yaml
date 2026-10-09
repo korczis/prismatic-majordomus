@@ -1,0 +1,24 @@
+id: I2049
+milestone: pr-integration-hardening
+title: The documented commands of integration are proved
+slug: integration-commands-are-proved
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Each command the document tells a reader to run is in a fence the gate reads, with a proof, or is marked with its reason."
+why: "docs/INTEGRATION.md shows its commands in tables and a text fence, which the documented-command gate does not read, so none of them owes a proof."
+current_state: "scripts/ci/doc-command-check reads bash, sh and just fences; the document has one mermaid and one text fence."
+desired_state: "Each command the document tells a reader to run is in a fence the gate reads, with a proof, or is marked with its reason."
+scope:
+  - docs/INTEGRATION.md
+  - apps/majordomus-cli/src/cli.rs
+depends_on: []
+acceptance_criteria:
+  - Every prs command the document tells a reader to run has a proof or a marked reason
+  - The documented-command baseline does not grow
+validation:
+  - scripts/ci/doc-command-check
+evidence_required:
+  - documented_commands_are_proved
+created_at: 2026-10-08
+updated_at: 2026-10-08

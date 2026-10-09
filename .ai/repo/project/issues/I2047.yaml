@@ -1,0 +1,26 @@
+id: I2047
+milestone: pr-integration-hardening
+title: A blocking rule whose governing decision is not accepted is reported
+slug: a-rule-ahead-of-its-decision-is-reported
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A gate reports every blocking rule whose governing ADR is not accepted, with a baseline that may only shrink."
+why: "ADR 0101 is proposed while rule project.integration-follows-the-current-master v3 is active and blocking, and nothing says so. Accepting the record is the owner's act; reporting the disagreement is a gate's."
+current_state: ".ai/repo/adrs/0101 has status proposed; case 936 asserts that status in its fourth section."
+desired_state: "A gate reports every blocking rule whose governing ADR is not accepted, with a baseline that may only shrink."
+scope:
+  - scripts/ci
+  - test/cases
+  - .ai/repo/ci/gates.yaml
+depends_on: []
+acceptance_criteria:
+  - The gate names ADR 0101 today and refuses a new blocking rule with a governing ADR that is not accepted
+  - When the owner decides ADR 0101, the fourth section of case 936 is changed in the same change
+validation:
+  - bash test/run.sh 936_the_rule_names_every_closure_ground
+evidence_required:
+  - a_rule_ahead_of_its_decision_is_reported
+risk: "The decision on ADR 0101 is the owner's and is no part of this issue; a worker writes proposed or rejected and nothing else."
+created_at: 2026-10-08
+updated_at: 2026-10-08

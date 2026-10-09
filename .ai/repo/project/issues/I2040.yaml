@@ -1,0 +1,25 @@
+id: I2040
+milestone: pr-integration-hardening
+title: One classifier decides a disposition
+slug: a-disposition-has-one-author
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "What the executor learned is an observation the classifier reads; every disposition a surface shows is the classifier's own answer, and a pull request with no next step says why."
+why: "The classifier answers a disposition and executor feedback rewrites it afterwards, outside the classifier, so two places decide what a pull request is."
+current_state: "mod.rs lines 751-790 rewrite dispositions from executor feedback; model.rs line 1152 declares the next step optional."
+desired_state: "What the executor learned is an observation the classifier reads; every disposition a surface shows is the classifier's own answer, and a pull request with no next step says why."
+scope:
+  - apps/majordomus-cli/src/integration/mod.rs
+  - apps/majordomus-cli/src/integration/model.rs
+  - apps/majordomus-cli/src/integration/tests.rs
+depends_on: []
+acceptance_criteria:
+  - No code outside the classifier assigns a disposition
+  - A pull request with no next step carries the reason
+validation:
+  - cd apps/majordomus-cli && cargo test --lib integration
+evidence_required:
+  - one_author_of_a_disposition
+created_at: 2026-10-08
+updated_at: 2026-10-08

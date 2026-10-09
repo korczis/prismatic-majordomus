@@ -1,0 +1,29 @@
+id: pr-integration-hardening
+title: What the integration mission asks for and no test yet proves
+slug: pr-integration-hardening
+order: 126
+priority: p1
+problem: "Some of what the mission asks for cannot be an intent criterion yet, because a criterion names evidence that exists: starvation, bounded forge calls, one author of a disposition, the gating of every rollout stage, proved commands, and batches."
+outcome: "Each is done with a case, and the intent pr-integration gains a criterion naming that case in the same change."
+current_state: "Eight issues, each from a partly met row of the audit of 2026-10-08 or from the owner's decision on batches of the same day."
+desired_state: "Every issue is done and each has become a criterion of pr-integration or is recorded as not one, with the reason."
+scope:
+  - apps/majordomus-cli/src/integration
+  - apps/majordomus-cli/tests
+  - test/cases
+  - docs
+  - .ai/repo
+non_scope:
+  - Rewriting the subsystem; the audit found most of the mission met
+  - The acceptance of ADR 0101 and ADR 0114, which is the owner's act
+acceptance_criteria:
+  - "Each issue's case exists and is named by a criterion of pr-integration, or the issue says why it is not one"
+validation:
+  - majordomus intent validate
+evidence_required: []
+depends_on: [pr-integration]
+risks:
+  - "Two issues wait on decisions that are the owner's."
+  - "A typed batch contradicts the blocking rule until the rule is revised in the same change."
+created_at: 2026-10-08
+updated_at: 2026-10-08

@@ -1,0 +1,192 @@
+intent: pr-integration
+reviewed_at: "70d83863b7"
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records, the owner's mission, the integrating session's audit, ADR 0101 and the rule, and none of the author's reasoning; same model and operator session as the author. Disposition given: accept with required changes, eight findings blocking. The plan was rewritten after it."
+findings:
+  - id: context-and-handover-uncarried
+    class: missed_requirement
+    subject: pr-integration
+    finding: "The mission asks that the session context records progress, that a handover can continue drain work and that the evidence is queryable; no criterion carried them."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2053
+      because: "Criterion a-later-session-can-continue names case 740, which asserts the context section, the derived handover and the trail read from a second worktree."
+  - id: one-decision-path-case-omits-mcp
+    class: delivery_verification
+    subject: pr-integration#one-queue-where-a-person-looks
+    finding: "The criterion named the command line, HTTP, MCP and the Cockpit; its case calls no MCP tool and compares three fields over HTTP."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2045
+      because: "The sentence is narrowed to what case 740 asserts, and the MCP tools are held by the criterion whose case calls them, 720."
+  - id: integrator-case-proves-the-gate-not-the-executor
+    class: delivery_verification
+    subject: pr-integration#no-merge-route-beside-the-integrator
+    finding: "Case 910 proves that a gate refuses merge routes planted in scripts, recipes, workflows and hooks; it asserts nothing about the executor, its lease or an administrator override."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2053
+      because: "Two criteria: the gate refuses every route beside the integrator (910), and the executor acts under its lease with no override (720)."
+  - id: closure-case-reads-prose
+    class: delivery_verification
+    subject: pr-integration#closure-needs-a-strong-ground
+    finding: "Case 936 reads the text of the rule and of ADR 0101 and closes nothing; it also asserts the ADR is proposed, so accepting the ADR would break the evidence."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2046
+      because: "The criterion names case 937, in which applying a cleanup closes nothing on an unauthorised declaration; I2047 carries the change to case 936 that an acceptance needs."
+  - id: gap-satisfied-contradicts-its-own-because
+    class: unproven_assumption
+    subject: pr-integration
+    finding: "The gap recorded criteria satisfied while its own reasons and the issues serving them said they were weakened, and satisfied meant satisfied by reading."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2041
+      because: "The cases the criteria name were run on the audited commit and the gap records what the runs showed; the two criteria with a hole are recorded conflicting."
+  - id: batch-contradicts-the-blocking-rule
+    class: unproven_assumption
+    subject: I2052
+    finding: "A typed batch that the subsystem lands contradicts the active blocking rule and ADR 0101 as they stand, and the invariant about batches rested on a record that does not exist."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2053
+      because: "The invariant says what is true today. Naming and holding a composed branch is I2051, consistent with ADR 0101; the typed batch is I2052, which revises the rule and the decision in the same change and composes nothing until the owner accepts."
+  - id: owners-act-as-implementation-issue
+    class: insufficient_work
+    subject: I2047
+    finding: "Two issues had the owner's decision on an ADR as an acceptance item, which no worker can complete, and one of them served a criterion an ADR's status does not weaken."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2053
+      because: "I2047 is the gate that reports a blocking rule ahead of its decision; the owner's decision is named as a risk and not as acceptance, in I2047 and in I2052."
+  - id: issues-serve-criteria-they-do-not-weaken
+    class: insufficient_work
+    subject: I2043
+    finding: "Starvation, timeouts, rollout gating and documented commands served criteria whose sentences mention none of them, so finishing them would change no evidence."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2053
+      because: "They moved to the milestone pr-integration-hardening, which no intent names, and each becomes a criterion in the change that brings its case; a criterion cannot name evidence that does not exist."
+  - id: missing-dependency-order
+    class: insufficient_work
+    subject: pr-integration
+    finding: "Every issue declared no dependency while the milestone called them sequential and two waited on a decision."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2046
+      because: "I2046 depends on I2041, I2050 on I2042, I2052 on I2051, and the hardening milestone on this one."
+  - id: identical-scope-triggers-duplicate-work
+    class: unnecessary_work
+    subject: I2040
+    finding: "Every issue had the same five-path scope."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2053
+      because: "Each scope names the files its current state names."
+  - id: validation-cannot-fail-on-the-issue
+    class: delivery_verification
+    subject: I2045
+    finding: "Every issue named the same two commands, neither of which could fail on it."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2045
+      because: "Each issue names the test binary, case or gate its work is proved by."
+  - id: i2044-staging-has-no-acceptance
+    class: insufficient_work
+    subject: I2044
+    finding: "The objective asked for cheap-first staging and no acceptance item did."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2053
+      because: "An acceptance item counts the questions asked in the scripted forge's log."
+  - id: i2042-half-exists
+    class: unnecessary_work
+    subject: I2042
+    finding: "Case 924 and a test already prove that the executor says its lease reaches this machine only."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2042
+      because: "The issue is the residue: a policy key that allows or refuses a local-only lease."
+  - id: i2048-and-i2050-vague
+    class: insufficient_work
+    subject: I2048
+    finding: "Neither said what is refused at which stage, nor where a halt would live without a mesh."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2050
+      because: "I2048 enumerates the refusal of each stage; I2050 says where the halt lives with a mesh and what is said without one."
+  - id: i2040-and-i2046-span-two-things
+    class: insufficient_work
+    subject: I2046
+    finding: "The closure property served the stale-decision criterion only."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2046
+      because: "I2046 serves both criteria."
+  - id: stale-and-check-criteria-proved-at-the-planner
+    class: delivery_verification
+    subject: pr-integration#required-checks-are-authoritative
+    finding: "Cases 857 and 858 never drain, and case 720 never moves a head or a master between the decision and the act."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2041
+      because: "The two sentences say never ready and never next; the stale criterion names the executor test that moves master."
+  - id: one-executor-sentence-wider-than-855
+    class: delivery_verification
+    subject: pr-integration#one-executor-on-one-machine
+    finding: "Case 855 races processes in one clone; machines are case 924."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2042
+      because: "Two criteria, one per case."
+  - id: section-52-and-anti-goals-omitted
+    class: missed_requirement
+    subject: pr-integration
+    finding: "The default safety posture and several anti-goals had no invariant or criterion."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2053
+      because: "Three invariants and the criterion a-dry-run-moves-nothing, which names case 852."
+  - id: evidence-will-not-stay-current
+    class: delivery_verification
+    subject: pr-integration
+    finding: "Every named case declares it covers nothing, so the verdict reads unsatisfied after any unrelated commit."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2053
+      because: "I2053 makes each case declare the sources it covers."
+  - id: requirement-and-audit-are-not-in-the-repository
+    class: delivery_verification
+    subject: pr-integration
+    finding: "The mission is local state of another checkout and the audit table a working paper outside the repository."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "The mission is the owner's prompt and stays where prompts are kept; the gap carries each partly met row as an observation naming its file, and the met rows by the cases run for it. The audit's table is the integrating session's to publish."
+  - id: uncovered-items-need-a-decision
+    class: missed_requirement
+    subject: pr-integration
+    finding: "A dozen acceptance items on interfaces, tests, documentation and cleanup were carried by nothing."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2053
+      because: "Criteria for superseded detection (861) and merged branches (the merged-branches tests) were added; the non-goals say which items other gates hold for every subsystem."

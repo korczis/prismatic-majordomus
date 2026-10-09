@@ -1,0 +1,24 @@
+id: I2058
+milestone: pr-integration-hardening
+title: A proof after a merge does not fail because another session was fetching
+slug: a-proof-survives-a-concurrent-fetch
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The proof reads the base into a ref of the executor's own, or retries a ref-lock failure within a bound, so that a concurrent fetch by another session is not an unproved merge; a fetch that fails for any other reason still is."
+why: "After a merge the executor fetches the base to prove the merge landed. In a clone several sessions share, another session's fetch can hold the lock of the same remote-tracking ref at that moment; the executor's fetch then fails, the merge reads as unproved, and every drain halts until a person has looked - for a merge that did land."
+current_state: "Observed on 2026-10-08 after pull request 822 merged: git fetch of the base failed after the merge with cannot lock ref refs/remotes/origin/master; the integrating session proved the merge by hand and resumed with --resume-after-failure. The cause is confirmed and sharper than first recorded: a fetch aimed at a private ref still locks refs/remotes/origin/<base>, because git updates the remote-tracking ref opportunistically. The fix under way on fix/a-merge-is-verified-on-a-ref-nobody-else-writes is a private ref with an empty refmap, and asking again within the window the merge has to become visible in, while the base is still the master the decision was taken against."
+desired_state: "The proof reads the base into a ref of the executor's own, or retries a ref-lock failure within a bound, so that a concurrent fetch by another session is not an unproved merge; a fetch that fails for any other reason still is."
+scope:
+  - apps/majordomus-cli/src/integration/drain.rs
+  - apps/majordomus-cli/tests/integration_executor.rs
+depends_on: []
+acceptance_criteria:
+  - A test holds the lock of the remote-tracking ref while the executor proves a merge, and the merge is proved
+  - A fetch that fails because the remote does not answer is still an unproved merge and still halts the drain
+validation:
+  - cd apps/majordomus-cli && cargo test --test integration_executor
+evidence_required:
+  - a_concurrent_fetch_is_not_an_unproved_merge
+created_at: 2026-10-08
+updated_at: 2026-10-08

@@ -1,0 +1,27 @@
+id: I2051
+milestone: pr-integration-hardening
+title: A branch composed of several pull requests names its members or is refused
+slug: a-composed-branch-is-attributed
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A gate reads the pull request under test: a head that contains the heads of two or more other open pull requests carries a manifest whose members are exactly its first-parent merges, or it is refused. A failed check on a composed branch is reported with the members it may belong to."
+why: "Nothing tells a branch composed by hand from several pull requests apart from an ordinary one: its red check belongs to no member, and the executor would merge it as one change. This repository landed three such branches in one day."
+current_state: "No type for a composed branch exists under apps/majordomus-cli/src/integration; ADR 0101 lists batches among the alternatives rejected and leaves them a person's decision."
+desired_state: "A gate reads the pull request under test: a head that contains the heads of two or more other open pull requests carries a manifest whose members are exactly its first-parent merges, or it is refused. A failed check on a composed branch is reported with the members it may belong to."
+scope:
+  - apps/majordomus-cli/src/integration/
+  - apps/majordomus-cli/tests
+  - test/cases
+  - docs/INTEGRATION.md
+depends_on: []
+acceptance_criteria:
+  - A pull request whose head contains the heads of two or more other open pull requests and carries no manifest naming exactly those members is refused by the gate
+  - One that carries the manifest passes the gate and its members are listed where the queue is shown
+  - A case proves both with a scripted forge
+validation:
+  - cd apps/majordomus-cli && cargo test --lib integration
+evidence_required:
+  - a_composed_branch_is_named_and_held
+created_at: 2026-10-08
+updated_at: 2026-10-08

@@ -1,0 +1,30 @@
+id: pr-integration
+title: Integration is held to the mission that asked for it
+slug: pr-integration
+order: 125
+priority: p1
+problem: "The subsystem that integrates pull requests one at a time (ADR 0101) was built against a written mission with a list of acceptance items. Nothing in the plan held it to them: no intent named what must be true, so what an audit found only partly met had no issue."
+outcome: "The mission's acceptance is an intent whose criteria name the cases that prove them, and each partly met item that weakens a criterion is an issue serving it."
+current_state: "Audit of 2026-10-08 at 70d83863b7, read only: 51 rows, 41 met, 10 partly met, none unmet. The cases the criteria name were run on that commit for the gap record."
+desired_state: "Every issue of this milestone is done with evidence and the intent's criteria have current evidence."
+scope:
+  - apps/majordomus-cli/src/integration
+  - apps/majordomus-cli/tests
+  - test/cases
+  - docs
+  - .ai/repo
+non_scope:
+  - Rewriting the subsystem; the audit found most of the mission met
+  - The acceptance of ADR 0101 and ADR 0114, which is the owner's act
+acceptance_criteria:
+  - "A master that moved prevents the merge or the window is stated"
+  - "A halt reaches every executor of a base"
+  - "The evidence of the criteria goes stale only with the subsystem"
+validation:
+  - majordomus intent validate
+evidence_required: []
+depends_on: []
+risks:
+  - "The issues touch one module and are sequential."
+created_at: 2026-10-08
+updated_at: 2026-10-08

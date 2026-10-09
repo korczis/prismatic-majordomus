@@ -1,0 +1,32 @@
+id: I2042
+milestone: pr-integration
+title: A lease that reaches one machine only is allowed by policy or refused
+slug: local-only-exclusivity-is-a-policy
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - pr-integration#one-executor-across-machines
+objective: "A policy key says whether a drain may proceed on a lease that reaches this machine only; where it may not, the drain refuses and names the key."
+why: "Where no mesh runs, the executor already says its lease guards this clone only (case 924, tests/integration_across_machines.rs) and then drains; whether that is acceptable is nobody's decision, so two machines can drain one base with each having said so."
+current_state: "exclusive.rs lines 215-217 fall back to the local lease without asking a policy."
+desired_state: "A policy key says whether a drain may proceed on a lease that reaches this machine only; where it may not, the drain refuses and names the key."
+scope:
+  - apps/majordomus-cli/src/integration/exclusive.rs
+  - apps/majordomus-cli/src/policy.rs
+  - share/skeleton/policy.yaml
+  - share/schemas/majordomus/policy
+  - apps/majordomus-cli/tests/integration_across_machines.rs
+  - test/cases
+depends_on: []
+acceptance_criteria:
+  - With the key set to refuse and no mesh, drain exits with the refusal and merges nothing
+  - With the key allowing it, drain proceeds and says how far the lease reaches
+  - The key is in the skeleton, the schema and the allow-list
+validation:
+  - cd apps/majordomus-cli && cargo test --test integration_across_machines
+  - bash test/run.sh 924_one_executor_across_machines
+evidence_required:
+  - exclusivity_is_allowed_or_refused
+created_at: 2026-10-08
+updated_at: 2026-10-08

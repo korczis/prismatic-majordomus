@@ -12704,6 +12704,18 @@
         }
       },
       {
+        "id": "majordomus://critique/pr-integration",
+        "kind": "critique",
+        "label": "pr-integration",
+        "summary": "pr-integration",
+        "route": "/cockpit/objects/critique/pr-integration",
+        "source": ".ai/repo/project/critiques/pr-integration.yaml",
+        "facts": {
+          "intent": "pr-integration",
+          "reviewed_at": "70d83863b7"
+        }
+      },
+      {
         "id": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "label": "majordomus",
@@ -17208,6 +17220,23 @@
         }
       },
       {
+        "id": "majordomus://gap/pr-integration",
+        "kind": "gap",
+        "label": "pr-integration",
+        "summary": "pr-integration",
+        "route": "/cockpit/objects/gap/pr-integration",
+        "source": ".ai/repo/project/gaps/pr-integration.yaml",
+        "facts": {
+          "intent": "pr-integration",
+          "observed_at": "70d83863b7",
+          "recorded_at": "2026-10-08",
+          "risks": [
+            "A passing run on one commit is evidence for that commit; until the cases declare what they cover (I2053) the intent's own verdict reads them as not current after any later commit",
+            "The audit's row-by-row table is the integrating session's working paper and is not in this record; its ten partly met rows are the issues of this milestone and of pr-integration-hardening"
+          ]
+        }
+      },
+      {
         "id": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "label": "bin/majordomus",
@@ -17646,6 +17675,35 @@
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
           "updated_at": "2026-09-15"
+        }
+      },
+      {
+        "id": "majordomus://intent/pr-integration",
+        "kind": "intent",
+        "label": "pr-integration",
+        "summary": "Pull requests reach the trunk one at a time, each provably safe against the trunk as it stands",
+        "route": "/cockpit/objects/intent/pr-integration",
+        "source": ".ai/repo/project/intents/pr-integration.yaml",
+        "facts": {
+          "created_at": "2026-10-08",
+          "governance": [
+            "rule:project.integration-follows-the-current-master",
+            "adr:adr-0101"
+          ],
+          "invariants": [
+            "No loop over the open pull requests merges them, and no set of pull requests that was green at the start is merged as a set",
+            "A mergeable flag, a stale check result or an old plan is never sufficient to merge",
+            "No merge uses an administrator override, no base branch is force-pushed, and no review policy or branch protection is bypassed",
+            "A contributor's branch is never updated silently, and nothing is closed because it is old or because two texts read alike to a model",
+            "The forge is asked through one adapter; no frontend code and no shell glue decides or performs a merge, and no second registry of pull requests is kept",
+            "A read-only command reaches no mutation, and no unrelated command merges or closes; draining and applying are asked for by name",
+            "No surface shows a pull request that was not observed; nothing mocked or written by hand stands in for the queue",
+            "No branch composed of several pull requests is merged by the executor; ADR 0101 leaves a batch a person's decision"
+          ],
+          "milestones": [
+            "pr-integration"
+          ],
+          "updated_at": "2026-10-08"
         }
       },
       {
@@ -29998,6 +30056,562 @@
         }
       },
       {
+        "id": "majordomus://issue/I2040",
+        "kind": "issue",
+        "label": "I2040",
+        "summary": "One classifier decides a disposition",
+        "route": "/cockpit/objects/issue/i2040",
+        "source": ".ai/repo/project/issues/I2040.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No code outside the classifier assigns a disposition",
+            "A pull request with no next step carries the reason"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "mod.rs lines 751-790 rewrite dispositions from executor feedback; model.rs line 1152 declares the next step optional.",
+          "depends_on": [],
+          "desired_state": "What the executor learned is an observation the classifier reads; every disposition a surface shows is the classifier's own answer, and a pull request with no next step says why.",
+          "evidence_required": [
+            "one_author_of_a_disposition"
+          ],
+          "milestone": "pr-integration-hardening",
+          "objective": "What the executor learned is an observation the classifier reads; every disposition a surface shows is the classifier's own answer, and a pull request with no next step says why.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/tests.rs"
+          ],
+          "slug": "a-disposition-has-one-author",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib integration"
+          ],
+          "why": "The classifier answers a disposition and executor feedback rewrites it afterwards, outside the classifier, so two places decide what a pull request is."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2041",
+        "kind": "issue",
+        "label": "I2041",
+        "summary": "The master a decision was taken against is pinned at the merge",
+        "route": "/cockpit/objects/issue/i2041",
+        "source": ".ai/repo/project/issues/I2041.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A test moves master between the decision and the merge and no merge is made, or the forge is shown to offer no pin and the document states the window and its bound",
+            "The detection after the merge still holds"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "drain.rs lines 1953-1969 pass --match-head-commit only; the move is detected by the proof after the merge (tests/integration_executor.rs, a merge onto a master that moved holds the next drain).",
+          "depends_on": [],
+          "evidence_required": [
+            "a_moved_master_prevents_the_merge"
+          ],
+          "milestone": "pr-integration",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            "docs/INTEGRATION.md"
+          ],
+          "serves": [
+            "pr-integration#a-stale-decision-never-merges"
+          ],
+          "slug": "master-is-pinned-at-the-merge",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --test integration_executor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2042",
+        "kind": "issue",
+        "label": "I2042",
+        "summary": "A lease that reaches one machine only is allowed by policy or refused",
+        "route": "/cockpit/objects/issue/i2042",
+        "source": ".ai/repo/project/issues/I2042.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the key set to refuse and no mesh, drain exits with the refusal and merges nothing",
+            "With the key allowing it, drain proceeds and says how far the lease reaches",
+            "The key is in the skeleton, the schema and the allow-list"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "exclusive.rs lines 215-217 fall back to the local lease without asking a policy.",
+          "depends_on": [],
+          "desired_state": "A policy key says whether a drain may proceed on a lease that reaches this machine only; where it may not, the drain refuses and names the key.",
+          "evidence_required": [
+            "exclusivity_is_allowed_or_refused"
+          ],
+          "milestone": "pr-integration",
+          "objective": "A policy key says whether a drain may proceed on a lease that reaches this machine only; where it may not, the drain refuses and names the key.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "apps/majordomus-cli/tests/integration_across_machines.rs",
+            "test/cases"
+          ],
+          "serves": [
+            "pr-integration#one-executor-across-machines"
+          ],
+          "slug": "local-only-exclusivity-is-a-policy",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --test integration_across_machines",
+            "bash test/run.sh 924_one_executor_across_machines"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2043",
+        "kind": "issue",
+        "label": "I2043",
+        "summary": "Starvation is visible",
+        "route": "/cockpit/objects/issue/i2043",
+        "source": ".ai/repo/project/issues/I2043.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A skip records its reason",
+            "The wait of a pull request survives a change of lane",
+            "A pull request ready longer than the declared bound is a finding in prs status, proved by a case"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "wait.rs lines 22 and 53-61.",
+          "depends_on": [],
+          "desired_state": "A reader sees how long each pull request has been ready, how often it was passed over and why, and a declared bound after which that is a finding.",
+          "evidence_required": [
+            "starvation_is_reported"
+          ],
+          "milestone": "pr-integration-hardening",
+          "objective": "A reader sees how long each pull request has been ready, how often it was passed over and why, and a declared bound after which that is a finding.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/wait.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "test/cases"
+          ],
+          "slug": "starvation-is-visible",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib integration::wait"
+          ],
+          "why": "A pull request passed over has no recorded reason for the skip, its wait count resets when it leaves the actionable lane, and there is no age for how long it has been ready."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2044",
+        "kind": "issue",
+        "label": "I2044",
+        "summary": "Work on the forge is bounded and asked cheapest first",
+        "route": "/cockpit/objects/issue/i2044",
+        "source": ".ai/repo/project/issues/I2044.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A forge call that does not return within its bound is a recorded failure and never a hang, proved with a forge that stalls",
+            "A refresh of several pull requests asks relation and change shape only for those the cheap read left open, counted in the scripted forge's log"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "drain.rs line 1801 and mod.rs lines 440-450.",
+          "depends_on": [],
+          "desired_state": "Every subprocess that asks the forge has a bound and a named failure when it is exceeded; a refresh asks the expensive questions only of what the cheap read left open.",
+          "evidence_required": [
+            "forge_calls_are_bounded_and_staged"
+          ],
+          "milestone": "pr-integration-hardening",
+          "objective": "Every subprocess that asks the forge has a bound and a named failure when it is exceeded; a refresh asks the expensive questions only of what the cheap read left open.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/tests/integration_executor.rs"
+          ],
+          "slug": "forge-calls-are-bounded",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --test integration_executor"
+          ],
+          "why": "A call to the forge has no timeout, and a refresh asks every question of every pull request."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2045",
+        "kind": "issue",
+        "label": "I2045",
+        "summary": "Issue and milestone linkage is proved through the executable",
+        "route": "/cockpit/objects/issue/i2045",
+        "source": ".ai/repo/project/issues/I2045.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case asserts the issue and the milestone of a pull request through the command line and through HTTP or the Cockpit, and fails when the linkage is removed"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "link_issues is at mod.rs line 1078 and its tests are unit tests at mod.rs lines 1966 and 1996.",
+          "depends_on": [],
+          "desired_state": "A case drives the built executable over a fixture and reads the linkage from the command line and one other surface.",
+          "evidence_required": [
+            "linkage_proved_through_the_executable"
+          ],
+          "milestone": "pr-integration",
+          "objective": "A case drives the built executable over a fixture and reads the linkage from the command line and one other surface.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "test/cases"
+          ],
+          "serves": [
+            "pr-integration#one-queue-where-a-person-looks"
+          ],
+          "slug": "linkage-is-proved-end-to-end",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 740_integration_is_visible_where_a_person_looks"
+          ],
+          "why": "How a pull request is linked to its issue and milestone is covered by unit tests only, so no surface is held to showing it."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2046",
+        "kind": "issue",
+        "label": "I2046",
+        "summary": "The two safety properties are generated, not exemplified",
+        "route": "/cockpit/objects/issue/i2046",
+        "source": ".ai/repo/project/issues/I2046.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A property test generates observations and plans and asserts no merge on a decision whose master or head differs from the fresh observation",
+            "A property test generates closure candidates and asserts none closes without one of the named grounds"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "integration/tests.rs lines 729 and 5478 are examples; lines 1486 and 1551 are the existing property tests.",
+          "depends_on": [
+            "I2041"
+          ],
+          "desired_state": "Both are property tests over generated observations, plans and closure candidates.",
+          "evidence_required": [
+            "safety_is_a_generated_property"
+          ],
+          "milestone": "pr-integration",
+          "objective": "Both are property tests over generated observations, plans and closure candidates.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/tests.rs"
+          ],
+          "serves": [
+            "pr-integration#a-stale-decision-never-merges",
+            "pr-integration#closure-needs-a-strong-ground"
+          ],
+          "slug": "safety-properties-are-generated",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib integration::tests"
+          ],
+          "why": "That a stale decision never merges and that a closure needs evidence are example tests, while the determinism of the queue is already a generated property."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2047",
+        "kind": "issue",
+        "label": "I2047",
+        "summary": "A blocking rule whose governing decision is not accepted is reported",
+        "route": "/cockpit/objects/issue/i2047",
+        "source": ".ai/repo/project/issues/I2047.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The gate names ADR 0101 today and refuses a new blocking rule with a governing ADR that is not accepted",
+            "When the owner decides ADR 0101, the fourth section of case 936 is changed in the same change"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": ".ai/repo/adrs/0101 has status proposed; case 936 asserts that status in its fourth section.",
+          "depends_on": [],
+          "desired_state": "A gate reports every blocking rule whose governing ADR is not accepted, with a baseline that may only shrink.",
+          "evidence_required": [
+            "a_rule_ahead_of_its_decision_is_reported"
+          ],
+          "milestone": "pr-integration-hardening",
+          "objective": "A gate reports every blocking rule whose governing ADR is not accepted, with a baseline that may only shrink.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "The decision on ADR 0101 is the owner's and is no part of this issue; a worker writes proposed or rejected and nothing else.",
+          "scope": [
+            "scripts/ci",
+            "test/cases",
+            ".ai/repo/ci/gates.yaml"
+          ],
+          "slug": "a-rule-ahead-of-its-decision-is-reported",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bash test/run.sh 936_the_rule_names_every_closure_ground"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2048",
+        "kind": "issue",
+        "label": "I2048",
+        "summary": "Every rollout stage is gated and recorded",
+        "route": "/cockpit/objects/issue/i2048",
+        "source": ".ai/repo/project/issues/I2048.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of the first three stages has a test in which the act of the next stage is refused",
+            "The rollout record states the current stage with the trail entries that proved the earlier ones"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "tests/integration_rollout.rs and docs/INTEGRATION_ROLLOUT.md; docs/INTEGRATION.md says the gate reads the trail and nothing else.",
+          "depends_on": [],
+          "evidence_required": [
+            "every_stage_is_gated"
+          ],
+          "milestone": "pr-integration-hardening",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/",
+            "apps/majordomus-cli/tests/integration_rollout.rs",
+            "docs/INTEGRATION_ROLLOUT.md"
+          ],
+          "slug": "rollout-stages-are-gated",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --test integration_rollout"
+          ],
+          "why": "The rollout has four stages - a dry run, one merge, a bounded drain, a continuous one - and only the fourth is gated; the rollout record names the first only."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2049",
+        "kind": "issue",
+        "label": "I2049",
+        "summary": "The documented commands of integration are proved",
+        "route": "/cockpit/objects/issue/i2049",
+        "source": ".ai/repo/project/issues/I2049.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every prs command the document tells a reader to run has a proof or a marked reason",
+            "The documented-command baseline does not grow"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "scripts/ci/doc-command-check reads bash, sh and just fences; the document has one mermaid and one text fence.",
+          "depends_on": [],
+          "desired_state": "Each command the document tells a reader to run is in a fence the gate reads, with a proof, or is marked with its reason.",
+          "evidence_required": [
+            "documented_commands_are_proved"
+          ],
+          "milestone": "pr-integration-hardening",
+          "objective": "Each command the document tells a reader to run is in a fence the gate reads, with a proof, or is marked with its reason.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/INTEGRATION.md",
+            "apps/majordomus-cli/src/cli.rs"
+          ],
+          "slug": "integration-commands-are-proved",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "scripts/ci/doc-command-check"
+          ],
+          "why": "docs/INTEGRATION.md shows its commands in tables and a text fence, which the documented-command gate does not read, so none of them owes a proof."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2050",
+        "kind": "issue",
+        "label": "I2050",
+        "summary": "A halt after an unproved merge holds for every executor of the base",
+        "route": "/cockpit/objects/issue/i2050",
+        "source": ".ai/repo/project/issues/I2050.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a mesh, a second machine refuses to drain while the first is halted, and an acknowledgement is seen by both",
+            "Without a mesh, the reach of the halt is stated by the command that halts"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "drain.rs line 1211 reads the halt from the clone.",
+          "depends_on": [
+            "I2042"
+          ],
+          "evidence_required": [
+            "the_halt_reaches_every_executor"
+          ],
+          "milestone": "pr-integration",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/tests/integration_across_machines.rs",
+            "docs/INTEGRATION.md"
+          ],
+          "serves": [
+            "pr-integration#a-stale-decision-never-merges"
+          ],
+          "slug": "the-halt-reaches-every-executor",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --test integration_across_machines"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2051",
+        "kind": "issue",
+        "label": "I2051",
+        "summary": "A branch composed of several pull requests is named as one and attributed",
+        "route": "/cockpit/objects/issue/i2051",
+        "source": ".ai/repo/project/issues/I2051.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A pull request whose head contains the heads of other open pull requests is classified as composed and lists them",
+            "The executor does not merge it without a person's recorded decision",
+            "A case proves both with a scripted forge"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "No type for a composed branch exists under apps/majordomus-cli/src/integration; ADR 0101 lists batches among the alternatives rejected and leaves them a person's decision.",
+          "depends_on": [],
+          "evidence_required": [
+            "a_composed_branch_is_named_and_held"
+          ],
+          "milestone": "pr-integration-hardening",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/INTEGRATION.md"
+          ],
+          "slug": "a-composed-branch-is-attributed",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib integration"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2052",
+        "kind": "issue",
+        "label": "I2052",
+        "summary": "A batch is a typed composition that names its members",
+        "route": "/cockpit/objects/issue/i2052",
+        "source": ".ai/repo/project/issues/I2052.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0114 is written as proposed and amends the rejected alternative of ADR 0101",
+            "The rule is revised in the same change, and until the owner accepts ADR 0114 the executor composes no batch",
+            "A red check of a batch names the member it belongs to, proved by a case",
+            "The intent pr-integration gains a criterion naming that case"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "ADR 0114 is not written; the rule says one at a time and holds no plan across a merge.",
+          "depends_on": [
+            "I2051"
+          ],
+          "desired_state": "A batch is declared, composed and landed through the subsystem, names each member and its head, and a failure is attributed to a member; the rule and the decision say so in the same change.",
+          "evidence_required": [
+            "a_batch_is_typed_and_attributable"
+          ],
+          "milestone": "pr-integration-hardening",
+          "objective": "A batch is declared, composed and landed through the subsystem, names each member and its head, and a failure is attributed to a member; the rule and the decision say so in the same change.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Whether ADR 0114 is accepted is the owner's act. This issue is owned by the integrating session.",
+          "scope": [
+            "apps/majordomus-cli/src/integration/",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            ".ai/repo/rules/project",
+            ".ai/repo/adrs",
+            "docs"
+          ],
+          "slug": "a-batch-names-its-members",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "majordomus intent validate"
+          ],
+          "why": "The owner decided on 2026-10-08 that a batch may exist as a typed capability with attributability. Rule project.integration-follows-the-current-master v3 and ADR 0101 forbid it as they stand."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2053",
+        "kind": "issue",
+        "label": "I2053",
+        "summary": "The evidence of the intent stays current",
+        "route": "/cockpit/objects/issue/i2053",
+        "source": ".ai/repo/project/issues/I2053.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each named case declares the integration sources it covers",
+            "intent show pr-integration reads current for a criterion after an unrelated commit and stale after a change under the integration module"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The cases carry the line majordomus-covers none; docs/CLAIMS.yaml names none of them.",
+          "depends_on": [],
+          "desired_state": "Each case and test a criterion names declares the sources it covers, so its evidence goes stale when the subsystem changes and not otherwise, and a recorded run exists.",
+          "evidence_required": [
+            "evidence_goes_stale_only_with_its_subject"
+          ],
+          "milestone": "pr-integration",
+          "objective": "Each case and test a criterion names declares the sources it covers, so its evidence goes stale when the subsystem changes and not otherwise, and a recorded run exists.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "test/cases",
+            "apps/majordomus-cli/tests",
+            "docs/CLAIMS.yaml",
+            "docs/claims"
+          ],
+          "serves": [
+            "pr-integration#one-queue-where-a-person-looks",
+            "pr-integration#a-later-session-can-continue",
+            "pr-integration#the-executor-acts-under-its-lease",
+            "pr-integration#required-checks-are-authoritative",
+            "pr-integration#reviews-are-authoritative",
+            "pr-integration#no-merge-route-beside-the-integrator",
+            "pr-integration#a-stale-decision-never-merges",
+            "pr-integration#one-executor-on-one-machine",
+            "pr-integration#one-executor-across-machines",
+            "pr-integration#the-queue-is-recomputed-after-each-merge",
+            "pr-integration#closure-needs-a-strong-ground",
+            "pr-integration#a-superseded-pull-request-is-detected",
+            "pr-integration#merged-branches-are-cleaned-by-policy",
+            "pr-integration#a-dry-run-moves-nothing",
+            "pr-integration#repair-acts-under-the-lease"
+          ],
+          "slug": "the-evidence-stays-current",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "majordomus intent show pr-integration"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30917,6 +31531,91 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/pr-integration",
+        "kind": "milestone",
+        "label": "pr-integration",
+        "summary": "Integration is held to the mission that asked for it",
+        "route": "/cockpit/objects/milestone/pr-integration",
+        "source": ".ai/repo/project/milestones/pr-integration.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A master that moved prevents the merge or the window is stated",
+            "A halt reaches every executor of a base",
+            "The evidence of the criteria goes stale only with the subsystem"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "Audit of 2026-10-08 at 70d83863b7, read only: 51 rows, 41 met, 10 partly met, none unmet. The cases the criteria name were run on that commit for the gap record.",
+          "depends_on": [],
+          "desired_state": "Every issue of this milestone is done with evidence and the intent's criteria have current evidence.",
+          "evidence_required": [],
+          "non_scope": [
+            "Rewriting the subsystem; the audit found most of the mission met",
+            "The acceptance of ADR 0101 and ADR 0114, which is the owner's act"
+          ],
+          "order": 125,
+          "outcome": "The mission's acceptance is an intent whose criteria name the cases that prove them, and each partly met item that weakens a criterion is an issue serving it.",
+          "priority": "p1",
+          "risks": [
+            "The issues touch one module and are sequential."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs",
+            ".ai/repo"
+          ],
+          "slug": "pr-integration",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "majordomus intent validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/pr-integration-hardening",
+        "kind": "milestone",
+        "label": "pr-integration-hardening",
+        "summary": "What the integration mission asks for and no test yet proves",
+        "route": "/cockpit/objects/milestone/pr-integration-hardening",
+        "source": ".ai/repo/project/milestones/pr-integration-hardening.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each issue's case exists and is named by a criterion of pr-integration, or the issue says why it is not one"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "Eight issues, each from a partly met row of the audit of 2026-10-08 or from the owner's decision on batches of the same day.",
+          "depends_on": [
+            "pr-integration"
+          ],
+          "desired_state": "Every issue is done and each has become a criterion of pr-integration or is recorded as not one, with the reason.",
+          "evidence_required": [],
+          "non_scope": [
+            "Rewriting the subsystem; the audit found most of the mission met",
+            "The acceptance of ADR 0101 and ADR 0114, which is the owner's act"
+          ],
+          "order": 126,
+          "outcome": "Each is done with a case, and the intent pr-integration gains a criterion naming that case in the same change.",
+          "priority": "p1",
+          "risks": [
+            "Two issues wait on decisions that are the owner's.",
+            "A typed batch contradicts the blocking rule until the rule is revised in the same change."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs",
+            ".ai/repo"
+          ],
+          "slug": "pr-integration-hardening",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "majordomus intent validate"
           ]
         }
       },
@@ -59423,6 +60122,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/pr-integration",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
         "kind": "is_a"
@@ -61243,6 +61947,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/pr-integration",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/bin/majordomus",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -61509,6 +62218,11 @@
       },
       {
         "source": "majordomus://intent/intent-planning",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/pr-integration",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -65748,6 +66462,161 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2040",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2040",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2041",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2041",
+        "target": "majordomus://milestone/pr-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2042",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2042",
+        "target": "majordomus://milestone/pr-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2043",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2043",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2044",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2044",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2045",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2045",
+        "target": "majordomus://milestone/pr-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2046",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2046",
+        "target": "majordomus://issue/I2041",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2046",
+        "target": "majordomus://milestone/pr-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2047",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2047",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2048",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2048",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2049",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2049",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2050",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2050",
+        "target": "majordomus://issue/I2042",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2050",
+        "target": "majordomus://milestone/pr-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2051",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2051",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2052",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2052",
+        "target": "majordomus://issue/I2051",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2052",
+        "target": "majordomus://milestone/pr-integration-hardening",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2053",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2053",
+        "target": "majordomus://milestone/pr-integration",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -65870,6 +66739,21 @@
       {
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/pr-integration",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/pr-integration-hardening",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/pr-integration-hardening",
+        "target": "majordomus://milestone/pr-integration",
         "kind": "depends_on"
       },
       {
@@ -74454,8 +75338,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2466,
-      "edges": 5403,
+      "nodes": 2485,
+      "edges": 5440,
       "acyclic": false,
       "truncated": false
     }
