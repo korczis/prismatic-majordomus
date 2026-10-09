@@ -1,0 +1,43 @@
+id: I2000
+milestone: intent-bound-work
+title: What a piece of work serves is one derivation, with a revision
+slug: a-binding-is-derived-once
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-bound-work#binding-is-resolved
+  - intent-bound-work#exemption-is-typed
+objective: "Add Intents::binding over the preflight: the work named by an issue, an intent, paths or a declared exemption resolves to a standing (bound, maintenance, exempt, refused), the intents and criteria served, and two pins of what was resolved — plan_revision, a hash of each served intent's statement, invariants and criteria, the links that reach it and its critique, and evidence_standing, a hash of the served criteria's evidence states; answer it as the read-only capability intents.binding on the command line, HTTP and MCP."
+why: "intent preflight answers what an issue serves and has no caller; nothing takes an intent by id, nothing knows an exemption, several intents reached by paths are all judged and none is called ambiguous, and nothing computes a revision a later reader could compare."
+current_state: "Intents::preflight takes an issue or paths. No exemption class exists. No revision of an intent, its links or its critique is computed."
+desired_state: "intents.binding answers the same value on every surface; ambiguity, an unknown or retired intent, an undeclared exemption class and a missing reason are refusals with a cause."
+scope:
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/policy.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/tests/intent_binding.rs
+  - .ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md
+  - .ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md
+  - .ai/repo/project
+  - docs
+depends_on: []
+acceptance_criteria:
+  - An issue, an intent id and paths each resolve to the criteria served, a plan_revision that changes when the intent, the links or the critique change and at no other time, and an evidence_standing that changes when a served criterion's evidence state does
+  - ADR 0111 records the decision and rule project.an-intent-outlives-its-sessions v3 states that a name a worker declared and a hash compared on read are not intent state
+  - Paths reaching more than one intent with no issue named are refused as ambiguous_intent
+  - An exemption of a class the policy declares, with a reason, is standing exempt; an undeclared class or an empty reason is refused
+  - The command line, HTTP and MCP answer the same binding
+validation:
+  - cargo test --lib intent_binding
+  - cargo test --test intent_binding
+evidence_required:
+  - binding_resolves_issue_intent_and_paths
+  - ambiguous_paths_are_refused
+  - an_exemption_is_a_declared_class_with_a_reason
+  - plan_revision_moves_only_with_the_plan
+created_at: 2026-10-07
+updated_at: 2026-10-07

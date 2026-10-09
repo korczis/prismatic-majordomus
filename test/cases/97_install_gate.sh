@@ -103,8 +103,16 @@ grep -q "scripts/ci/install-check" "$W" || { echo "    the $job job does not run
 # plan with the on-demand gates, and installer-live is one of them
 grep -qE "^    - cron: '" "$W" || { echo "    validate.yml has no nightly schedule"; exit 1; }
 grep -q '^  workflow_dispatch:' "$W" || { echo "    validate.yml cannot be run on request"; exit 1; }
-grep -qE 'schedule\|workflow_dispatch\) .*--on-demand' "$W" \
-  || { echo "    a scheduled or dispatched run does not plan the on-demand gates"; exit 1; }
+grep -qE '^ +schedule\) .*--on-demand' "$W" \
+  || { echo "    a scheduled run does not plan the on-demand gates"; exit 1; }
+# a dispatch with no input is the request; one that names `plan=change` is the release asking
+# for its record's verdict (case 996), and that one plans what a pull request plans
+dispatch="$(awk '/^ +workflow_dispatch\)$/{f=1;next} f&&/^ +esac ;;$/{exit} f' "$W")"
+printf '%s\n' "$dispatch" | grep -qE "^ +''\) .*--on-demand" \
+  || { echo "    a run dispatched on request does not plan the on-demand gates"; exit 1; }
+if printf '%s\n' "$dispatch" | grep -E '^ +change\) ' | grep -q -- '--on-demand'; then
+  echo "    a run dispatched for a change plans the on-demand gates a pull request does not"; exit 1
+fi
 awk '/^  - id: installer-live$/{f=1;next} f&&/^  - id: /{exit} f&&/^    on-demand: true$/{print;exit}' "$MODEL_CI" | grep -q . \
   || { echo "    installer-live is not an on-demand gate, so the nightly run does not carry it"; exit 1; }
 # CI gives the deployment a window; a person does not. A gate that waits by default would
