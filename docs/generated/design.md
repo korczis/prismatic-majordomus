@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.0 -->
+     Generator: majordomus-cli 0.20.0 -->
 # The design system
 
 One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540` (`--mj-design: "944a896b2646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
