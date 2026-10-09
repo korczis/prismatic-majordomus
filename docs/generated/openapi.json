@@ -30447,6 +30447,11 @@
             "type": "string",
             "const": "repository_mutation",
             "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+          },
+          {
+            "type": "string",
+            "const": "remote_mutation",
+            "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0121]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
           }
         ],
         "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -30835,7 +30840,7 @@
           },
           "open_world": {
             "type": "boolean",
-            "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities."
+            "description": "The call reaches beyond this machine. Only a handler that changes other machines\ndoes (`Effect::RemoteMutation`): observing the forge and talking to an advisor are\ncommands a person runs, not capabilities."
           }
         },
         "required": [

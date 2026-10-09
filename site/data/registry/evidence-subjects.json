@@ -369,6 +369,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:fleet.plan",
+      "path": "/evidence/capabilities/fleet-plan/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:fleet.rollout",
+      "path": "/evidence/capabilities/fleet-rollout/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:fleet.status",
+      "path": "/evidence/capabilities/fleet-status/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:gates.completion",
       "path": "/evidence/capabilities/gates-completion/"
     },
@@ -2579,6 +2594,21 @@
     },
     {
       "kind": "command",
+      "subject": "command:fleet plan",
+      "path": "/evidence/commands/fleet-plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:fleet rollout",
+      "path": "/evidence/commands/fleet-rollout/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:fleet status",
+      "path": "/evidence/commands/fleet-status/"
+    },
+    {
+      "kind": "command",
       "subject": "command:generate",
       "path": "/evidence/commands/generate/"
     },
@@ -4349,6 +4379,42 @@
       "programs": [],
       "members": [
         "command:run"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:fleet.plan": {
+      "kind": "capability",
+      "id": "fleet.plan",
+      "page": "/evidence/capabilities/fleet-plan/",
+      "programs": [],
+      "members": [
+        "command:fleet plan"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:fleet.rollout": {
+      "kind": "capability",
+      "id": "fleet.rollout",
+      "page": "/evidence/capabilities/fleet-rollout/",
+      "programs": [],
+      "members": [
+        "command:fleet rollout"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:fleet.status": {
+      "kind": "capability",
+      "id": "fleet.status",
+      "page": "/evidence/capabilities/fleet-status/",
+      "programs": [],
+      "members": [
+        "command:fleet status"
       ],
       "routes": [],
       "mechanisms": [],
@@ -13672,6 +13738,42 @@
           "category": "e2e"
         }
       ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:fleet plan": {
+      "kind": "command",
+      "id": "fleet plan",
+      "page": "/evidence/commands/fleet-plan/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:fleet rollout": {
+      "kind": "command",
+      "id": "fleet rollout",
+      "page": "/evidence/commands/fleet-rollout/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:fleet status": {
+      "kind": "command",
+      "id": "fleet status",
+      "page": "/evidence/commands/fleet-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [],
       "mechanisms": [],
       "findings": []
     },
@@ -25395,6 +25497,7 @@
     "crate:tool_input_schemas",
     "crate:worktree",
     "suite:09_site_mobile_first",
+    "suite:1003_the_fleet_is_rolled_out",
     "suite:102_completion_shell",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",

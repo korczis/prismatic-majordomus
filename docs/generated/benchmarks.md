@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 183 | 159 | 0 | 24 |
+| direct | 186 | 160 | 0 | 26 |
 | http | 180 | 159 | 0 | 21 |
 | mcp | 176 | 155 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 552 | 486 | 0 | 66 |
+| total | 555 | 487 | 0 | 68 |
 
 ## Capabilities
 
@@ -84,6 +84,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.list` | executions | query | — | covered | covered | covered | `recent` |
 | `executions.protocol` | executions | query | — | covered | covered | covered | `default` |
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
+| `fleet.plan` | fleet | query | — | covered | — | — | `default` |
+| `fleet.rollout` | fleet | command | — | waived | — | — | — |
+| `fleet.status` | fleet | query | — | waived | — | — | — |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |

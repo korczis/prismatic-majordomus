@@ -115,6 +115,8 @@ pub enum Command {
     Knowledge(KnowledgeArgs),
     /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
     Continuity(ContinuityArgs),
+    /// The machines that run this repository's mesh, as .ai/repo/fleet/ declares them: what a rollout would do, what every machine runs, and the rollout that installs this release everywhere, restarts each hub's service and verifies that the hubs see each other
+    Fleet(FleetArgs),
 }
 
 #[derive(Debug, Args)]
@@ -2571,6 +2573,60 @@ pub enum ContinuityCommand {
         /// A record id or a unique prefix; the one resumable handover when absent
         #[arg(long)]
         record: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus fleet`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, FleetCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "fleet", "rollout", "--machine", "lundra"]).unwrap();
+/// let Command::Fleet(args) = cli.command else { panic!("not the fleet command") };
+/// assert!(matches!(args.command, FleetCommand::Rollout { machine, .. } if machine == vec!["lundra".to_string()]));
+/// assert!(Cli::try_parse_from(["majordomus", "fleet"]).is_err(), "a subcommand is required");
+/// ```
+pub struct FleetArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`, `status` or `rollout`.
+    pub command: FleetCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus fleet`: the command line of `fleet.plan`, `fleet.status`
+/// and `fleet.rollout`.
+pub enum FleetCommand {
+    /// What a rollout would do on every machine, reaching nothing
+    Plan {
+        /// A machine to plan for, by its name in the fleet; repeat for more, every machine when absent
+        #[arg(long)]
+        machine: Vec<String>,
+        /// The release to install; this executable's own when absent
+        #[arg(long)]
+        version: Option<String>,
+    },
+    /// What every machine runs: platform, installed version, servers, and each hub's checkout and answer
+    Status,
+    /// Install the release on every machine, fast-forward and restart each hub, and verify that the hubs see each other; exits 10 unless every machine converged
+    Rollout {
+        /// A machine to roll out to, by its name in the fleet; repeat for more, every machine when absent
+        #[arg(long)]
+        machine: Vec<String>,
+        /// The release to install; this executable's own when absent. Named, it is installed even where a newer one is
+        #[arg(long)]
+        version: Option<String>,
+        /// Leave running the servers a machine runs from an older installed tree, rather than restarting them at the version
+        #[arg(long)]
+        keep_servers: bool,
     },
 }
 
