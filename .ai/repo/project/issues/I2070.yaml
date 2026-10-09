@@ -1,0 +1,40 @@
+id: I2070
+milestone: claims-held-to-evidence
+title: "Before every release the documents are true, the claims validated, the changes covered and the debt lower"
+slug: before-every-release-truth-claims-tests-and-less-debt
+priority: p0
+profile: implementation
+parallel_safe: true
+serves:
+  - claims-and-releases-are-held-to-evidence#debt-falls-every-release
+  - claims-and-releases-are-held-to-evidence#evidence-is-not-older-than-the-release
+objective: "Hold every release to the owner's standing rule of 2026-10-08: all Markdown reflects the truth, every claim is validated, what changed is covered by tests, the repository's own accepted violations converge to zero by at least a minimum per release, and the repository's own tool enforces it."
+why: "The owner stated the rule on 2026-10-08 and restated it six times that day. Measured the same day: eighteen baselines held 2788 accepted violations (2734 payable) and no release had ever been asked to carry fewer; v0.16.0, v0.17.0 and the batch after shipped over byte-identical baselines; the tracked evidence ledger was recorded on 2026-09-17 and supported 0 of 219 guaranteed claims (237 examined) through two releases while evidence-check exited 0; the pipefail baseline declared 29 while its own gate measured 28."
+current_state: "Each gate keeps its own baseline from growing inside one change. Nothing adds the baselines up, nothing compares a release with the previous one, nothing judges the age of the evidence, and a baseline above the truth is reported and accepted. A release audit states the four things by hand."
+desired_state: "`majordomus release debt` counts every declared baseline by its form, records the counts in each release record, refuses a release whose payable total did not fall by the declared minimum, refuses any change that grows a baseline, refuses a release over evidence older than the previous release, and refuses a release whose baseline its own gate reports as tightenable. The release announcement states each of the four with the command that showed it and names what no gate states."
+scope:
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/commands/release.rs"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - ".ai/repo/ci"
+  - ".ai/repo/rules/project"
+  - "scripts/ci/release-verdict"
+  - "scripts/release-record"
+  - "docs/RELEASE.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A release over baselines no change touched is refused, against the release before it"
+  - "A change that adds one entry to any baseline is refused, whatever the total did"
+  - "A release whose evidence ledger's newest CI execution predates the previous release is refused, and a change is not"
+  - "A release whose declared baseline is above what its own gate measures is refused, and a gate that cannot state its measured value is named as not measured"
+  - "Every release record carries the counts the next release is held against"
+  - "A baseline that cannot be paid is declared so with its reason, counted, and named in every report"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 997_a_release_carries_less_debt_than_the_last"
+  - "majordomus release debt --release"
+evidence_required:
+  - "release_debt_case_997"
+  - "a_tightenable_baseline_is_refused_case"
+created_at: 2026-10-08
+updated_at: 2026-10-09
