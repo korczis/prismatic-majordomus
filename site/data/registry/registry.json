@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "fc64183d0217791212cb3c3e88485b2004a109caf11f4d6c14955e765bedae23",
+    "fingerprint": "308c4e02dc5af248b96bf1dacbea59c26abfc19f1bfee74a71e687e6bde81c0c",
     "summary": {
-      "total": 2099,
+      "total": 2101,
       "builtin": 184,
-      "declarative": 1915,
+      "declarative": 1917,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1915
+        "resource": 1917
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1923
+        "implemented": 1925
       },
       "mcp_tools": 177,
-      "mcp_resources": 1969,
+      "mcp_resources": 1971,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b62b9049c7e3fd97b5b5430183ded6dd1e661f41118b4ff79ae9e043f5a54e52",
+    "fingerprint": "146d9ef1a90fdac7508731709820f7ffa13ca39db167ac5abbe84965fff5eec5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81616,7 +81616,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58533
+        "bytes": 59348
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 120777
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87918,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2145",
+        "kind": "issue",
+        "identity": "I2145",
+        "title": "A tool call that may have run is never sent a second time",
+        "description": "Make the stdio bridge resend a message only when the server provably did not receive or run it, and report every other failure as the error it is, so no tool call executes twice.",
+        "path": ".ai/repo/project/issues/I2145.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2871
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88126,6 +88137,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "milestone",
+        "identity": "mcp-transports-are-reliable",
+        "title": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation",
+        "description": "A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it.",
+        "path": ".ai/repo/project/milestones/mcp-transports-are-reliable.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4834
       },
       {
         "uri": "majordomus://milestone/public-proof",
@@ -96853,7 +96875,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96883,7 +96905,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",

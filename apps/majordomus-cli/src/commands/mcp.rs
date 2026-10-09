@@ -218,6 +218,8 @@ impl Session {
                 let answer = lock(bridge).handle(&message);
                 match answer {
                     Ok(v) => v.map(Reply::Value),
+                    // a server that answered and refused works: no election, the refusal
+                    Err(e) if !e.calls_for_election() => refused(&message, &e),
                     Err(e) => self.failover(message, e),
                 }
             }
@@ -226,7 +228,12 @@ impl Session {
 
     /// The server this session was bridged to is gone: elect again, and either become
     /// the server (carrying the client's session over) or attach to whoever did.
+    ///
+    /// The message is sent again only when the cause says that cannot run it twice
+    /// ([`BridgeError::may_resend`]); otherwise the election still happens, for the
+    /// messages that follow, and the client is told this one's outcome is unknown.
     fn failover(&mut self, message: Value, cause: BridgeError) -> Option<Reply> {
+        let resend = cause.may_resend(&message);
         tracing::warn!("{cause}; electing again");
         let (client, announcements) = match &self.backend {
             Backend::Remote { bridge, .. } => {
@@ -280,15 +287,16 @@ impl Session {
                                 );
                             }
                         }
-                        self.handle(message)
+                        if resend {
+                            self.handle(message)
+                        } else {
+                            outcome_unknown(&message, &cause)
+                        }
                     }
                     Err(e) => {
                         tracing::error!("cannot take over as the shared server: {e}");
-                        self.settle_alone(
-                            message,
-                            client,
-                            &format!("{cause}; and taking over failed: {e}"),
-                        )
+                        let reason = format!("{cause}; and taking over failed: {e}");
+                        self.settle_alone(message, client, &reason, (!resend).then_some(&cause))
                     }
                 }
             }
@@ -298,20 +306,27 @@ impl Session {
                 };
                 let mut b = lock(bridge);
                 b.move_to(url.clone());
-                let retry = b.reinitialize().and_then(|()| b.handle(&message));
+                let retry =
+                    b.reinitialize()
+                        .and_then(|()| if resend { b.handle(&message) } else { Ok(None) });
                 match retry {
+                    Ok(_) if !resend => {
+                        tracing::info!(url = %url, "re-attached to the shared server");
+                        outcome_unknown(&message, &cause)
+                    }
                     Ok(v) => {
                         tracing::info!(url = %url, "re-attached to the shared server");
                         v.map(Reply::Value)
                     }
+                    Err(_) if !resend => outcome_unknown(&message, &cause),
+                    Err(e) if !e.calls_for_election() => refused(&message, &e),
                     Err(e) => unavailable(&message, &e.to_string()),
                 }
             }
-            Err(e) => self.settle_alone(
-                message,
-                client,
-                &format!("{cause}; electing again failed: {e}"),
-            ),
+            Err(e) => {
+                let reason = format!("{cause}; electing again failed: {e}");
+                self.settle_alone(message, client, &reason, (!resend).then_some(&cause))
+            }
         }
     }
 
@@ -325,20 +340,29 @@ impl Session {
 
     /// Neither serving nor attaching worked: serve this client alone when the layer
     /// loads, and answer the request with an error naming every failure when it does not.
+    /// `withheld` is the failure that may have run the message already: it is then not
+    /// run here, and the client is told its outcome is unknown.
     fn settle_alone(
         &mut self,
         message: Value,
         client: Option<ClientInfo>,
         reason: &str,
+        withheld: Option<&BridgeError>,
     ) -> Option<Reply> {
         match Self::alone(&self.args, client, reason) {
             Ok(backend) => {
                 self.replace(backend);
-                self.handle(message)
+                match withheld {
+                    Some(cause) => outcome_unknown(&message, cause),
+                    None => self.handle(message),
+                }
             }
             Err(e) => {
                 tracing::error!("cannot serve this client alone either: {e}");
-                unavailable(&message, reason)
+                match withheld {
+                    Some(cause) => outcome_unknown(&message, cause),
+                    None => unavailable(&message, reason),
+                }
             }
         }
     }
@@ -380,6 +404,45 @@ fn unavailable(message: &Value, reason: &str) -> Option<Reply> {
         "jsonrpc": "2.0",
         "id": id,
         "error": { "code": -32603, "message": format!("shared server unavailable: {reason}") }
+    })))
+}
+
+/// The JSON-RPC answer for a request that was sent, got no answer, and is not sent again
+/// because it may have run: its outcome is unknown, and the answer says so with its id.
+/// Nothing for a notification.
+fn outcome_unknown(message: &Value, cause: &BridgeError) -> Option<Reply> {
+    let id = message.get("id").cloned().filter(|i| !i.is_null())?;
+    tracing::warn!(request = %id, "{cause}; the request may have run, so it is not sent again");
+    Some(Reply::Value(json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "error": {
+            "code": -32603,
+            "message": format!(
+                "outcome unknown: request {id} was sent to the shared server and no answer came \
+                 ({cause}); it may have run, so it was not sent again"
+            ),
+            "data": { "request_id": id, "outcome": "unknown" }
+        }
+    })))
+}
+
+/// The JSON-RPC answer for a request the server answered with a refusal that calls for no
+/// election (a 4xx other than 404 or 409): that refusal, named. Nothing for a notification.
+fn refused(message: &Value, cause: &BridgeError) -> Option<Reply> {
+    let id = message.get("id").cloned().filter(|i| !i.is_null())?;
+    let status = match cause {
+        BridgeError::Rejected { status, .. } => Some(*status),
+        BridgeError::Unreachable { .. } | BridgeError::Unanswered { .. } => None,
+    };
+    let text = match status {
+        Some(413) => format!("payload too large: request {id} was refused: {cause}"),
+        _ => format!("request {id} was refused: {cause}"),
+    };
+    Some(Reply::Value(json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "error": { "code": -32603, "message": text, "data": { "request_id": id, "status": status } }
     })))
 }
 

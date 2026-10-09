@@ -5,6 +5,14 @@
 //! which is why it starts in milliseconds. The HTTP client below is the few lines a
 //! loopback request needs (the server always answers with `Content-Length`, never
 //! chunked); no HTTP library is pulled in for it.
+//!
+//! A message is sent a second time only when the server provably did not run it: the
+//! connection was never made, or the server answered 404 (the session is unknown) or 409
+//! (the lease is lost), both before it looks at the message. A message that was sent and
+//! never answered — a timeout, a dropped connection, a 5xx — may have run, so it is sent
+//! again only when it is idempotent: every method but `tools/call`, and a tool whose
+//! declared execution hints say so ([`idempotent`]). Anything else is the caller's to
+//! report as an outcome nobody knows ([`BridgeError::may_resend`]).
 
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
@@ -21,7 +29,7 @@ pub const HEARTBEAT: Duration = Duration::from_secs(20);
 /// How long a bridge waits to connect.
 pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(2);
 
-/// How long a bridge waits for one answer.
+/// How long a bridge waits for one answer, unless it was made with [`Bridge::with_timeout`].
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 
 const SESSION_HEADER: &str = "Mcp-Session-Id";
@@ -57,6 +65,13 @@ pub fn request(
     body: Option<&str>,
     timeout: Duration,
 ) -> std::io::Result<Reply> {
+    let (stream, host) = connect(base_url, timeout)?;
+    exchange(stream, &host, method, path, headers, body, timeout)
+}
+
+/// Open a connection to `base_url`. Nothing has been sent when this fails, which is what
+/// lets a caller send the same message again elsewhere.
+fn connect(base_url: &str, timeout: Duration) -> std::io::Result<(TcpStream, String)> {
     let host = base_url
         .strip_prefix("http://")
         .unwrap_or(base_url)
@@ -67,7 +82,21 @@ pub fn request(
         .ok_or_else(|| std::io::Error::other(format!("{host}: no address")))?;
     // The connection shares the caller's budget when that is the shorter: a probe on a shell
     // prompt that allows 250 ms must not wait 2 s on a server whose accept queue is full.
-    let mut stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT.min(timeout))?;
+    let stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT.min(timeout))?;
+    Ok((stream, host.to_string()))
+}
+
+/// Send one request on an open connection and read the reply. From the first byte written
+/// the server may have the request, so a failure here leaves its outcome unknown.
+fn exchange(
+    mut stream: TcpStream,
+    host: &str,
+    method: &str,
+    path: &str,
+    headers: &[(&str, &str)],
+    body: Option<&str>,
+    timeout: Duration,
+) -> std::io::Result<Reply> {
     stream.set_read_timeout(Some(timeout))?;
     stream.set_write_timeout(Some(timeout))?;
     let body = body.unwrap_or("");
@@ -122,8 +151,18 @@ fn parse_reply(raw: &[u8]) -> std::io::Result<Reply> {
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum BridgeError {
     #[error("the shared server at {url} is unreachable: {reason}")]
-    /// No connection, a timeout, or a server-side failure: the server is gone or broken.
+    /// No connection could be made: nothing was sent, so nothing ran, and the server is gone.
     Unreachable {
+        /// The server's URL.
+        url: String,
+        /// What happened.
+        reason: String,
+    },
+    #[error("the shared server at {url} did not answer: {reason}")]
+    /// The message was sent and no usable answer came back: a timeout, a dropped
+    /// connection, a server-side failure (5xx), an answer that is not JSON. The server
+    /// may have run it, and whether it did is unknown.
+    Unanswered {
         /// The server's URL.
         url: String,
         /// What happened.
@@ -139,6 +178,96 @@ pub enum BridgeError {
         /// The body.
         body: String,
     },
+}
+
+impl BridgeError {
+    /// Whether this failure calls for electing a server again: the server is gone, broken,
+    /// lost the session (404) or the lease (409). Any other refusal is an answer about the
+    /// message, from a server that works, and is reported to the client as it is.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::BridgeError;
+    /// let url = "http://127.0.0.1:1".to_string();
+    /// let refused = |status| BridgeError::Rejected { url: url.clone(), status, body: String::new() };
+    /// assert!(refused(404).calls_for_election());
+    /// assert!(refused(409).calls_for_election());
+    /// assert!(!refused(413).calls_for_election(), "a message too large is too large anywhere");
+    /// assert!(BridgeError::Unanswered { url: url.clone(), reason: "timed out".into() }.calls_for_election());
+    /// ```
+    pub fn calls_for_election(&self) -> bool {
+        match self {
+            BridgeError::Unreachable { .. } | BridgeError::Unanswered { .. } => true,
+            BridgeError::Rejected { status, .. } => matches!(status, 404 | 409),
+        }
+    }
+
+    /// Whether `message` may be sent again after this failure without the risk of running
+    /// it twice: when the server provably did not run it (no connection, a lost session or
+    /// lease), or when running it twice changes nothing the first run did not
+    /// ([`idempotent`]).
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::BridgeError;
+    /// use serde_json::json;
+    /// let url = "http://127.0.0.1:1".to_string();
+    /// let call = |tool: &str| json!({ "jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": { "name": tool } });
+    /// let writer = call("majordomus_plan_transition");
+    /// let reader = call("majordomus_repository");
+    /// let lost = BridgeError::Unanswered { url: url.clone(), reason: "timed out".into() };
+    /// assert!(!lost.may_resend(&writer), "a write that may have run is not run again");
+    /// assert!(lost.may_resend(&reader), "a read is");
+    /// let never_sent = BridgeError::Unreachable { url: url.clone(), reason: "refused".into() };
+    /// assert!(never_sent.may_resend(&writer));
+    /// let too_large = BridgeError::Rejected { url, status: 413, body: String::new() };
+    /// assert!(!too_large.may_resend(&reader));
+    /// ```
+    pub fn may_resend(&self, message: &Value) -> bool {
+        match self {
+            BridgeError::Unreachable { .. } => true,
+            BridgeError::Rejected { status, .. } => matches!(status, 404 | 409),
+            BridgeError::Unanswered { .. } => idempotent(message),
+        }
+    }
+}
+
+/// Whether sending `message` twice changes nothing that sending it once did not.
+///
+/// Every MCP method but `tools/call` reads. A `tools/call` is idempotent when its tool's
+/// declared execution hints say so ([`crate::capability::ExecutionPolicy::hints`]), looked
+/// up in the compiled-in registry; a tool that registry does not know is assumed not to
+/// be, because a call wrongly withheld is reported while a call wrongly repeated may have
+/// written twice. A batch is idempotent when every message in it is.
+///
+/// ```
+/// use majordomus_cli::mcp::bridge::idempotent;
+/// use serde_json::json;
+/// let call = |tool: &str| json!({ "method": "tools/call", "params": { "name": tool } });
+/// assert!(idempotent(&json!({ "method": "resources/read", "params": { "uri": "majordomus://repository" } })));
+/// assert!(idempotent(&call("majordomus_repository")));
+/// assert!(!idempotent(&call("majordomus_plan_transition")));
+/// assert!(!idempotent(&call("no_such_tool")));
+/// assert!(!idempotent(&json!([call("majordomus_repository"), call("majordomus_plan_transition")])));
+/// ```
+pub fn idempotent(message: &Value) -> bool {
+    match message {
+        Value::Array(batch) => batch.iter().all(idempotent),
+        m if m.get("method").and_then(Value::as_str) == Some("tools/call") => m
+            .pointer("/params/name")
+            .and_then(Value::as_str)
+            .is_some_and(tool_is_idempotent),
+        _ => true,
+    }
+}
+
+fn tool_is_idempotent(name: &str) -> bool {
+    // composed only on a failure, never on the path of a message that was answered: the
+    // bridge keeps starting in milliseconds
+    crate::capability::CapabilityRegistry::builder()
+        .with_modules(crate::capability::builtin::modules())
+        .build()
+        .ok()
+        .and_then(|r| r.by_mcp_tool(name).map(|c| c.execution.hints().idempotent))
+        .unwrap_or(false)
 }
 
 /// A stdio session forwarded to a shared server.
@@ -167,17 +296,34 @@ pub struct Bridge {
     /// unnamed claim. A `BTreeMap` so a replay is in a stable order and re-announcing a
     /// name replaces rather than appends, exactly as the board itself does.
     announcements: BTreeMap<String, Value>,
+    /// How long one answer is waited for.
+    timeout: Duration,
 }
 
 impl Bridge {
-    /// A bridge to the server at `url`, with no session yet.
+    /// A bridge to the server at `url`, with no session yet, waiting [`REQUEST_TIMEOUT`]
+    /// for each answer.
     pub fn new(url: String) -> Self {
+        Self::with_timeout(url, REQUEST_TIMEOUT)
+    }
+
+    /// A bridge to the server at `url` that waits `timeout` for each answer. A call that
+    /// outlasts it is [`BridgeError::Unanswered`]: it was sent, and whether it ran is unknown.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::Bridge;
+    /// use std::time::Duration;
+    /// let bridge = Bridge::with_timeout("http://127.0.0.1:8741".into(), Duration::from_secs(5));
+    /// assert_eq!(bridge.url(), "http://127.0.0.1:8741");
+    /// ```
+    pub fn with_timeout(url: String, timeout: Duration) -> Self {
         Bridge {
             url,
             session: None,
             initialize: None,
             client: None,
             announcements: BTreeMap::new(),
+            timeout,
         }
     }
 
@@ -321,15 +467,34 @@ impl Bridge {
             .map(|s| vec![(SESSION_HEADER, s)])
             .unwrap_or_default();
         let body = message.to_string();
-        let reply = request(
-            &self.url,
+        // the server would refuse it unread; saying so here keeps the refusal from being
+        // mistaken for a connection the server cut short while the body was still going out
+        if body.len() > crate::http::server::MAX_BODY_BYTES {
+            return Err(BridgeError::Rejected {
+                url: self.url.clone(),
+                status: 413,
+                body: format!(
+                    "the message is {} bytes, over the {} the server accepts; it was not sent",
+                    body.len(),
+                    crate::http::server::MAX_BODY_BYTES
+                ),
+            });
+        }
+        let (stream, host) =
+            connect(&self.url, self.timeout).map_err(|e| BridgeError::Unreachable {
+                url: self.url.clone(),
+                reason: e.to_string(),
+            })?;
+        let reply = exchange(
+            stream,
+            &host,
             "POST",
             crate::http::mcp::PATH,
             &headers,
             Some(&body),
-            REQUEST_TIMEOUT,
+            self.timeout,
         )
-        .map_err(|e| BridgeError::Unreachable {
+        .map_err(|e| BridgeError::Unanswered {
             url: self.url.clone(),
             reason: e.to_string(),
         })?;
@@ -339,13 +504,22 @@ impl Bridge {
         match reply.status {
             200 => serde_json::from_str::<Value>(&reply.body)
                 .map(|v| Sent::Answer(Some(v)))
-                .map_err(|e| BridgeError::Unreachable {
+                .map_err(|e| BridgeError::Unanswered {
                     url: self.url.clone(),
                     reason: format!("the answer is not JSON: {e}"),
                 }),
             202 | 204 => Ok(Sent::Answer(None)),
             404 => Ok(Sent::SessionLost),
-            s if s >= 500 => Err(BridgeError::Unreachable {
+            // sent without a session by a bridge whose client did initialize (a re-attach
+            // whose initialize failed): refused before the message was looked at, so it is
+            // a session to open again, as a 404 is. A client that never initialized is told.
+            400 if session.is_none()
+                && self.initialize.is_some()
+                && reply.body.contains("session_required") =>
+            {
+                Ok(Sent::SessionLost)
+            }
+            s if s >= 500 => Err(BridgeError::Unanswered {
                 url: self.url.clone(),
                 reason: format!("status {s}: {}", reply.body),
             }),
