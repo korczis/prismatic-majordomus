@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "fc64183d0217791212cb3c3e88485b2004a109caf11f4d6c14955e765bedae23",
+    "fingerprint": "998580055dbd3eada72831a3d624adef6100cf6fdf8e65e2398902c7420ac9b4",
     "summary": {
-      "total": 2099,
+      "total": 2101,
       "builtin": 184,
-      "declarative": 1915,
+      "declarative": 1917,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1915
+        "resource": 1917
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1923
+        "implemented": 1925
       },
       "mcp_tools": 177,
-      "mcp_resources": 1969,
+      "mcp_resources": 1971,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 410,
+        "capabilities": 411,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b62b9049c7e3fd97b5b5430183ded6dd1e661f41118b4ff79ae9e043f5a54e52",
+    "fingerprint": "d5780ee9abaac79329612a31b9cf858a6871200965ac446234ac4edcc3c39d76",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,7 +76190,7 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 25,
@@ -76204,7 +76204,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 410,
+      "test": 411,
       "use-case": 48,
       "workspace": 1
     },
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 121459
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -84854,7 +84854,7 @@
         "identity": "lib/rules.sh",
         "path": "lib/rules.sh",
         "source_class": "library",
-        "bytes": 31684
+        "bytes": 32201
       },
       {
         "uri": "majordomus://implementation/lib/rust_bin.sh",
@@ -87916,6 +87916,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3003
+      },
+      {
+        "uri": "majordomus://issue/I2068",
+        "kind": "issue",
+        "identity": "I2068",
+        "title": "A verdict that depends on the runner says so, and one cold sample is not a regression",
+        "description": "Make the timing verdicts this repository's CI and its adopters' hooks hand down distinguish a slower change from a slower machine: a benchmark regression is judged from more than one cold sample and against the load it was measured under, and a case whose cost sits within a few percent of its kill bound is reported as a budget risk before it fails a suite whose every case passed.",
+        "path": ".ai/repo/project/issues/I2068.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2981
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -92968,6 +92979,14 @@
         "bytes": 11695
       },
       {
+        "uri": "majordomus://test/test/cases/1015_one_malformed_rule_is_one_finding.sh",
+        "kind": "test",
+        "identity": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+        "path": "test/cases/1015_one_malformed_rule_is_one_finding.sh",
+        "source_class": "case",
+        "bytes": 2269
+      },
+      {
         "uri": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
         "kind": "test",
         "identity": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
@@ -96853,7 +96872,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -97005,7 +97024,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 410
+      "objects": 411
     },
     {
       "name": "use-case",

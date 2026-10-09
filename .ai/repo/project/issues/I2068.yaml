@@ -1,0 +1,30 @@
+id: I2068
+milestone: M004
+title: A verdict that depends on the runner says so, and one cold sample is not a regression
+slug: a-timing-verdict-names-its-runner
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the timing verdicts this repository's CI and its adopters' hooks hand down distinguish a slower change from a slower machine: a benchmark regression is judged from more than one cold sample and against the load it was measured under, and a case whose cost sits within a few percent of its kill bound is reported as a budget risk before it fails a suite whose every case passed."
+why: "On 2026-10-08 three verdicts failed changes that ran none of the measured code: test/cases/82_bench_check.sh failed #823 on `version cold — regression: p50 9 -> 23 ms` from one sample on a saturated runner; test/cases/95_executable_reference.sh cost 3465 s against a 3450 s budget on a slow runner and failed batch 3's suite aggregate although every case passed (rerun once, green); and prismatic-platform's pre-push page-load check reported violations at load ~30 that passed alone and on retry. Each was rerun by hand, and each rerun costs a real run fifteen jobs on a shared pool."
+current_state: "82_bench_check compares one cold sample with a committed macOS baseline at a fixed percentage threshold and records no load; the suite aggregate refuses a case over its per-case budget with no margin warning beforehand (the budget is held below the 3600 s kill bound by case 417); nothing in a timing verdict names the runner, its load or the number of samples."
+desired_state: "A timing failure states the samples it rests on, the runner and its load; a single cold sample over threshold is reported as a warning to re-measure, and a regression needs the repeat to agree; a case whose recorded cost is within 5% of its budget is reported by the suite before the run that crosses it; the 3600 s kill bound and case 417's guarantee are unchanged, and no threshold is loosened."
+scope:
+  - test/cases/82_bench_check.sh
+  - test/cases/95_executable_reference.sh
+  - test/cases/417_the_suite_finishes_inside_its_bound.sh
+  - scripts/ci/suite-budget
+  - apps/majordomus-cli/src/bench
+acceptance_criteria:
+  - A bench check with one cold sample over threshold reports a warning naming the sample count and does not fail; two agreeing samples over threshold fail as today
+  - Every timing finding names the runner, the sample count and the load average it was measured under
+  - The suite reports a case whose recorded cost is within 5% of the per-case budget, by name, before any run exceeds it
+  - Case 417 and the kill bound are unchanged, and no regression threshold is raised
+validation:
+  - bash test/run.sh 82_bench_check
+  - bash test/run.sh 417_the_suite_finishes_inside_its_bound
+evidence_required:
+  - a_single_cold_sample_is_a_warning_and_two_are_a_verdict
+  - a_case_near_its_budget_is_named_before_it_fails
+created_at: 2026-10-09
+updated_at: 2026-10-09
