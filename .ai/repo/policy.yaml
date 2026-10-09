@@ -30,6 +30,28 @@ checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report
   retention_max_files: 500
 
+# Whether a task is bound to what it serves before it starts (ADR 0111). `start` asks
+# `intents.binding` what the task serves — from the issue it names (--issue), the intent it
+# names (--intent), or its scope — and the policy decides what a refused answer costs:
+#   off        (or the key absent) asked only when start is given one of the flags
+#   advisory   every start asks; a refused binding is reported and the task starts
+#   required   a refused or unreadable binding does not start, and neither does `plan start`
+# An exemption is a class declared here, given with a reason (--exempt <class> --because
+# "<reason>") and recorded in the task record and the ledger. The absence of an intent is
+# never an exemption by itself: derived maintenance is work under a milestone no intent
+# names, and everything else either serves a criterion or says why it serves none.
+intent:
+  binding: advisory
+  exemptions:
+    - id: maintenance
+      description: Upkeep no issue covers — dependency bumps, regenerated projections, repairs to the tool's own records
+    - id: emergency
+      description: Restoring a broken trunk, a failed release or a failing deployment before anything else
+    - id: integration
+      description: Landing, merging or refreshing work other tasks produced, which serves what those tasks served
+    - id: exploration
+      description: Reading, measuring or prototyping whose result is a finding and not a change to the product
+
 handover:
   required_sections: [Objective, Current State, Next Action]
   retention_max_files: 200
@@ -87,6 +109,8 @@ session:
                                          # same reason: both are moments at which what the
                                          # episode knows stops being reachable
   handover_on_end: true
+  handover_on_fill: true                 # ask the worker for a handover while the context
+                                         # window still has room to write one (ADR 0123)
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path

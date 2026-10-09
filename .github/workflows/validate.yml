@@ -28,6 +28,18 @@ on:
   push:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      # A dispatch plans every gate, the on-demand ones included: that is what a person
+      # asks for by hand. The release pipeline asks for something else. Its record is
+      # proposed as a pull request opened with GITHUB_TOKEN, and GitHub starts no workflow
+      # from an event that token caused, so that pull request has no check and can never
+      # merge until somebody closes and reopens it. The pipeline therefore dispatches this
+      # workflow on the record's branch with plan=change, and gets the plan a pull request's
+      # own run would have had: the gates of the head commit's change, no on-demand runner.
+      plan:
+        description: "empty: every gate, on-demand included. 'change': the gates of the head commit's own change, as a pull request's run plans them"
+        required: false
+        default: ''
   schedule:
     # Every night, and this is the run that carries the on-demand gates: a gate nothing
     # selected for a while still has a run, and a gate no push can afford a runner for still
@@ -103,6 +115,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           REF: ${{ github.ref_name }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PLAN_AS: ${{ github.event.inputs.plan }}
         run: |
           # --on-demand asks for the gates the model marks on-demand — the macOS ones, whose
           # runners this repository waits hours for. The schedule, a dispatch and a pull
@@ -114,7 +127,14 @@ jobs:
                 *,ci:full,*) scripts/ci-plan --full "pull request labelled ci:full" --on-demand > plan.json ;;
                 *) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;
               esac ;;
-            schedule|workflow_dispatch) scripts/ci-plan --full "$EVENT on $REF" --on-demand > plan.json ;;
+            schedule) scripts/ci-plan --full "$EVENT on $REF" --on-demand > plan.json ;;
+            workflow_dispatch)
+              # read from the environment, never interpolated into this script
+              case "${PLAN_AS:-}" in
+                '') scripts/ci-plan --full "$EVENT on $REF" --on-demand > plan.json ;;
+                change) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;
+                *) echo "::error::workflow_dispatch input plan is '${PLAN_AS}'; it is empty or 'change'"; exit 2 ;;
+              esac ;;
             *) scripts/ci-plan --full "$EVENT on $REF" > plan.json ;;
           esac
           jq -r '"mode=\(.mode)", "selected=\(.selected | join(" "))", (.gates[] | "\(.id | gsub("-"; "_"))=\(.selected)")' plan.json >> "$GITHUB_OUTPUT"

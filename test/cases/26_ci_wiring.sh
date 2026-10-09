@@ -218,8 +218,16 @@ if [ -n "$ondemand" ]; then
     || { echo "    the model marks gate(s) on-demand ($ondemand) and validate.yml has no schedule to run them"; exit 1; }
   grep -qE 'ci-plan --full "\$EVENT on \$REF" --on-demand' "$W" \
     || { echo "    the schedule and the dispatch do not ask the planner for the on-demand gates (--on-demand)"; exit 1; }
-  grep -qE 'schedule\|workflow_dispatch\)' "$W" \
-    || { echo "    validate.yml does not tell the schedule and the dispatch apart from a push, so a push would ask for the on-demand gates"; exit 1; }
+  # The schedule has an arm of its own, and so has the dispatch: a dispatch with no input is
+  # the person's "every gate", and one with plan=change is the release pipeline asking for
+  # the record's verdict as a pull request would have had it (case 996). What must not
+  # happen is the default arm — a push — asking for the on-demand gates.
+  grep -qE '^[[:space:]]*schedule\) scripts/ci-plan --full "\$EVENT on \$REF" --on-demand' "$W" \
+    || { echo "    validate.yml does not give the schedule an arm of its own that asks for the on-demand gates"; exit 1; }
+  grep -qE '^[[:space:]]*workflow_dispatch\)$' "$W" \
+    || { echo "    validate.yml does not tell the dispatch apart from a push, so a push would ask for the on-demand gates"; exit 1; }
+  grep -E '^[[:space:]]*\*\) scripts/ci-plan --full "\$EVENT on \$REF"' "$W" | grep -q -- '--on-demand' \
+    && { echo "    the default arm of validate.yml asks for the on-demand gates, so a push would wait for their runners"; exit 1; }
   grep -qE 'ci-plan --full "pull request labelled ci:full" --on-demand' "$W" \
     || { echo "    the ci:full label does not ask for the on-demand gates, so a reviewer cannot request them"; exit 1; }
   grep -qE 'ci-plan --base HEAD\^1 --head HEAD.*--on-demand' "$W" \

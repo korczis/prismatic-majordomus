@@ -4,10 +4,10 @@ description = "An intent outlives the sessions and providers that realise it, an
 weight = 70
 [extra]
 kind = "rule"
-slug = "project-an-intent-outlives-its-sessions-2"
-identity = "project.an-intent-outlives-its-sessions@2"
+slug = "project-an-intent-outlives-its-sessions-3"
+identity = "project.an-intent-outlives-its-sessions@3"
 status = "active"
-source = ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+source = ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md"
 +++
 {% raw %}
 
@@ -35,6 +35,12 @@ honest if a link guessed from overlapping paths is never shown as a link a perso
   when its episode moved the issue, `derived` when its branch names the issue, `inferred` only
   when nothing stronger exists and an open issue's scope overlaps. One link per issue, the
   strongest.
+- A task record and a handover may carry what the worker named at `start` — `issue`, `intent`,
+  `exemption` with its reason — and two pins, `plan_revision` and `evidence_standing`, which are
+  hashes `intents.binding` answered and a later read compares (ADR 0111). They carry no stage,
+  no verdict, no criterion and no evidence state: a name is a declaration and a pin is a
+  question to ask again, and neither is the answer. The issue a task named is a `declared`
+  link, as an issue cited in its title is.
 - `session.started` carries `provider` and `provider_session` when a provider opened the
   episode, so a closed episode keeps its provider.
 - Each intent reports its unmet criteria with the issues serving each, the work and providers
@@ -72,4 +78,8 @@ provenance of each kind of link and that the command line, HTTP and MCP answer t
 the milestone is open and its absence once it closes;
 `test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh` proves `closed_work_not_satisfied`
 naming the criterion after a completed finish.
+`test/cases/960_a_task_starts_bound_to_what_it_serves.sh` proves that a bound task's record holds
+the names and the pins and no line of the intent itself, and
+`test/cases/961_a_resumed_task_is_told_its_intent_moved.sh` that a handover holds the same and
+that a pin a body tries to write is refused.
 {% endraw %}

@@ -195,6 +195,15 @@
       "summary": "Execution telemetry, only from providers that expose it honestly"
     },
     {
+      "id": "intent-bound-work",
+      "kind": "milestone",
+      "label": "intent-bound-work",
+      "status": "BLOCKED",
+      "route": "/plan/intent-bound-work/",
+      "external": false,
+      "summary": "A task is bound to the intent it serves"
+    },
+    {
       "id": "cost-per-accepted-outcome",
       "kind": "milestone",
       "label": "0.4  cost-per-accepted-outcome",
@@ -236,6 +245,11 @@
     {
       "source": "runtime-adapters",
       "target": "execution-telemetry",
+      "kind": "requires"
+    },
+    {
+      "source": "intent-planning",
+      "target": "intent-bound-work",
       "kind": "requires"
     },
     {

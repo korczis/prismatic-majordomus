@@ -69,7 +69,22 @@ bound_minutes: 225
 # room, or the budget is a number nothing can reach. One declaration, two readers —
 # test/run.sh and this file must agree, and case 417 refuses it when they do not, or when the
 # budget is not below the bound.
-case_bound_seconds: 3600
+#
+# Re-derived on 2026-10-09 from the ci-metrics-suite report of every complete validate run
+# that day (19 runs, 409 to 412 cases each). 95_executable_reference cost, at its worst:
+#
+#   run 37932195384   3530 s   #852 at 5b5367f08a
+#   run 37922977087   3495 s   master
+#   run 37950924470   3473 s   fix/an-absent-key-is-not-consent
+#   run 37926379104   3419 s   #831 (its first attempt measured 3468 s)
+#   run 37962747722   3405 s
+#   fourteen more     2048 to 3254 s
+#
+# plus first attempts the reports above were rerun over: 3471 s (37943722020, #852) and
+# 3469 s (37980257400, #861, the v0.19.0 record). Every case passed in each. At 3530 s the
+# case was 70 s from being killed, so the bound no longer held the doctrine above: the
+# worst uncensored cost x 1.5 = 5295, so 5300.
+case_bound_seconds: 5300
 
 # ---------------------------------------------------------------- what a healthy run costs
 # Seconds of case time, summed over every case the runner executed, from MJ_TEST_REPORT.
@@ -171,10 +186,29 @@ case_bound_seconds: 3600
 #
 # The same tree cost 22% more on the second run: runner load, not growth. 50000 is about a
 # tenth above the worst total measured, 45524.
+#
+# Re-measured on 2026-10-08, when batch int/batch-handovers-3 (#816) was refused at 51011 s
+# with all four shards green and every case passing:
+#
+#   run 37760481991   51011 s over 407 cases   slowest 3305 s (95_executable_reference)  int/batch-handovers-3
+#   run 37755491985   39334 s over 388 cases   slowest 3352 s (95_executable_reference)  master 4090b2b8ae
+#   run 37718699384   43359 s over 375 cases   slowest 3057 s (77_rust_evidence)         master f70c522d73
+#
+# The batch adds 19 cases (925-939, 960-962, 994) and they cost 216 s of the 51011 between
+# them. The other 388 are the cases master ran an hour earlier for 39334 s, and here they
+# cost 50795 s: 1.29 times as much on the same tree, with eight sessions' runs queued on the
+# same runner pool. That is the spread the paragraph above measured at 1.22, larger; it is
+# runner load, not growth, and no case came near its own bound. 56000 is about a tenth above
+# the worst total measured, 51011. The slowest-case budget stands: 3352 is under 3450.
 budget:
-  # every case, summed; run 37214316674 (45524 s) and the ones above
-  cases_seconds: 50000
+  # every case, summed; run 37760481991 (51011 s) and the ones above
+  cases_seconds: 56000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
-  # Re-derived from the uncensored 3168 s of run 37207794591: see above.
-  slowest_case_seconds: 3450
+  # Re-derived from the uncensored 3168 s of run 37207794591: see above. Re-derived on
+  # 2026-10-09 from the worst of that day's 19 complete runs, 3530 s (run 37932195384; the
+  # table is above case_bound_seconds). Six attempts that day went over the 3450 with every
+  # case passing, the v0.19.0 record among them, and each cost a rerun of about 86 minutes:
+  # runner load on a shared pool, not growth. About a tenth above the worst, 3530 x 1.1 = 3883,
+  # so 3890, below the case bound as case 417 requires.
+  slowest_case_seconds: 3890

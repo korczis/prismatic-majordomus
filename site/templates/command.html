@@ -2,7 +2,6 @@
 {% block body %}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
 {%- set c = [x for x in cmds.commands if x.name == page.extra.name][0] -%}
-{%- set repo = project.repository_url -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
   <div class="min-w-0">
 
@@ -119,24 +118,24 @@
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.behaviour %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.behaviour %}<li><a href="{{ <source_blob path={"test/cases/" ~ t ~ ".sh"} /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
-        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.negative %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.negative %}<li><a href="{{ <source_blob path={"test/cases/" ~ t ~ ".sh"} /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="{{ repo }}/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li>
-          {%- if c.name != "version" %}<li><a href="{{ repo }}/blob/master/lib/{{ c.name }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/{{ c.name }}.sh</a></li>{% endif -%}
-          <li><a href="{{ repo }}/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">share/commands.yaml</a></li>
+          <li><a href="{{ <source_blob path="bin/majordomus" /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li>
+          {%- if c.name != "version" %}<li><a href="{{ <source_blob path={"lib/" ~ c.name ~ ".sh"} /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/{{ c.name }}.sh</a></li>{% endif -%}
+          <li><a href="{{ <source_blob path="share/commands.yaml" /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">share/commands.yaml</a></li>
         </ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Demonstration</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="{{ repo }}/blob/master/test/fixtures/commands/{{ c.name }}.json" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/{{ c.name }}.json</a></li>
+          <li><a href="{{ <source_blob path={"test/fixtures/commands/" ~ c.name ~ ".json"} /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/{{ c.name }}.json</a></li>
         </ul>
         {%- set tile = "command-demonstration" -%}{% include "partials/proof.html" %}
       </div>
