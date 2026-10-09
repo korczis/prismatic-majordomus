@@ -69,6 +69,23 @@ grep -q '^  handover_on_fill: true' .ai/repo/policy.yaml || fail 'the key could 
 expect_exit 0 "$MJ" capture install
 expect_grep "$MOD — written"
 
+# ---------------------------------------------------------------- only what was installed goes
+# A loaded mod carries the provider's type declarations, and those go with it. A file the
+# person put in the folder does not: the removal stops there, names it, and leaves it.
+mkdir -p "$MOD/.claude-plugin/types/claude-code" && echo '// laid' > "$MOD/.claude-plugin/types/claude-code/index.d.ts"
+echo 'my notes' > "$MOD/hooks/NOTES.md"
+pol_set handover_on_fill false
+expect_exit 0 "$MJ" capture install
+expect_grep "$MOD — its files removed \(session.handover_on_fill is not true\); left in place, not this tool's: hooks/NOTES.md"
+grep -qx 'my notes' "$MOD/hooks/NOTES.md" || fail 'the removal took a file the person put in the folder'
+[ ! -e "$MOD/hooks/register.ts" ] && [ ! -e "$MOD/.claude-plugin/plugin.json" ] \
+  || fail 'the removal left a file it installed'
+[ ! -e "$MOD/.claude-plugin/types" ] || fail "the provider's type declarations outlived the mod"
+rm -f "$MOD/hooks/NOTES.md" && rmdir "$MOD/hooks" "$MOD"
+pol_set handover_on_fill true
+expect_exit 0 "$MJ" capture install
+expect_grep "$MOD — written"
+
 # ---------------------------------------------------------------- somebody's own is theirs
 rm -rf "$MOD" && mkdir -p "$MOD/hooks" && printf '// mine\n' > "$MOD/hooks/register.ts"
 expect_exit 0 "$MJ" capture install

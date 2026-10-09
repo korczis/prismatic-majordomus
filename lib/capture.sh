@@ -2195,8 +2195,39 @@ mj_capture_install_shim() {
 # The command converges in both directions: off removes a folder this tool wrote, because
 # a mod the policy turned off and the provider still loads is a declaration nothing enforces.
 #
-# The test file is the distribution's own evidence (`claude plugin test`) and is not
-# installed; the provider's type declarations, laid beside a loaded mod, are not compared.
+# Only what was installed is ever touched. The files are the distribution's list (its test
+# file excepted: that is the distribution's own evidence, run by `claude plugin test`), so a
+# rewrite copies those files over their installed copies and a removal deletes those files
+# one by one, then the type declarations the provider lays beside a mod it loaded, then the
+# directories that are left empty, deepest first. Nothing is deleted recursively: a file the
+# person put in the folder stops the removal, which names it and leaves it where it is.
+
+# The files of a mod in the distribution, relative to its folder, one per line.
+mj_capture_mod_files() { (cd "$1" && find . -type f ! -name '*.test.ts' | sed 's|^\./||' | sort); }
+
+# Whether every file of the distribution's copy is already installed, byte for byte.
+mj_capture_mod_same() {
+  local f
+  for f in $(mj_capture_mod_files "$1"); do cmp -s "$1/$f" "$2/$f" || return 1; done
+}
+
+# Remove an installed mod: its own files, the provider's type declarations, then the empty
+# directories. Says what is left when something the tool did not write is still there.
+mj_capture_mod_remove() {
+  local src="$1" dst="$2" rel="$3" key="$4" f d left
+  for f in $(mj_capture_mod_files "$src"); do rm -f "$dst/$f"; done
+  if [ -d "$dst/.claude-plugin/types" ]; then
+    find "$dst/.claude-plugin/types" -type f | while read -r f; do rm -f "$f"; done
+  fi
+  find "$dst" -depth -type d | while read -r d; do rmdir "$d" 2>/dev/null || true; done
+  if [ -d "$dst" ]; then
+    left="$(cd "$dst" && find . -type f | sed 's|^\./||' | paste -sd, - | sed 's/,/, /g')"
+    mj_info capture "$rel" "its files removed ($key is not true); left in place, not this tool's: $left"
+  else
+    mj_info capture "$rel" "removed: $key is not true"
+  fi
+}
+
 mj_capture_install_mods() {
   local p="$1" prov name rel key src dst on verb f
   while read -r prov name rel key; do
@@ -2211,16 +2242,15 @@ mj_capture_install_mods() {
       mj_info capture "$rel" "already present and not this tool's; left as it is"; continue
     fi
     if [ "$on" = 0 ]; then
-      if [ -d "$dst" ]; then rm -rf "$dst"; mj_info capture "$rel" "removed: $key is not true"
+      if [ -d "$dst" ]; then mj_capture_mod_remove "$src" "$dst" "$rel" "$key"
       else mj_info capture "$rel" "not written: $key is not true"; fi
       continue
     fi
-    if [ -d "$dst" ] && diff -rq -x '*.test.ts' -x types "$src" "$dst" >/dev/null 2>&1; then
+    if [ -d "$dst" ] && mj_capture_mod_same "$src" "$dst"; then
       mj_info capture "$rel" "already present; left as it is"; continue
     fi
-    verb=written
-    [ -d "$dst" ] && { rm -rf "$dst"; verb=rewritten; }
-    (cd "$src" && find . -type f ! -name '*.test.ts') | while read -r f; do
+    verb=written; [ -d "$dst" ] && verb=rewritten
+    for f in $(mj_capture_mod_files "$src"); do
       mkdir -p "$dst/$(dirname "$f")" && cp "$src/$f" "$dst/$f"
     done
     mj_info capture "$rel" "$verb; the provider loads it at its next start"

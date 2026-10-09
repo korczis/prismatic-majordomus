@@ -54,8 +54,9 @@ closes nothing and replaces no derived record.
 
 The mod does one thing. In a repository it can see is supervised (`.ai/manifest.yaml` at the
 session's root), it asks the worker for a `majordomus handover` once the window crosses a line.
-The line is 60 000 tokens short of the window or 80 % of it, whichever comes first, because the
-writing turn costs a fixed amount and not a share. The request names the three required
+The line is a fixed headroom short of the window or a share of it, whichever comes first, because
+the writing turn costs a fixed amount and not a share. Both are constants of the mod
+(`HEADROOM_TOKENS` and `MAX_FILL` in its hooks module), and this record states neither figure. The request names the three required
 sections, says to read the live state first, and says to stop afterwards. It is asked once per
 window. It re-arms when the fill falls below half the line, after a compaction or a `/clear`.
 It is not asked at all when the worker already wrote a handover in that window. The prompt is
@@ -101,8 +102,8 @@ that the provider still loads would be a declaration nothing enforces.
   is why it derives in the first place.
 - **The mod derives a handover itself on `session.compact`.** That duplicates the `PreCompact`
   checkpoint the lifecycle already writes, under a second owner.
-- **A percentage line alone.** On a 1M-token window, 80 % leaves 200 000 tokens. On a
-  200 000-token window it leaves 40 000. The turn needs the same either way.
+- **A share of the window alone.** A share leaves room in proportion to the window, and the
+  writing turn needs the same room on any window.
 - **A user-level install under `~/.claude` as the product's form.** The mod gates itself on
   `.ai/manifest.yaml`, so it would stay silent elsewhere. But no repository's policy would
   declare it, `capture install` could not converge on it, and one person's machine is not an
