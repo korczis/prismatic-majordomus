@@ -112,7 +112,14 @@
   {#- 6 · the Cockpit, pictured: a window with its navigation, counts, a series and what changed -#}
   {% <panel title="Cockpit" sub="Visual overview, served at /cockpit; pictured here from the generated data" step={6} tone="orange" variant="toned" cls="min-w-0 lg:col-span-2 xl:col-span-3"> %}
     {%- set latest = cl.sections | first -%}
-    {%- set changes = latest.groups[0].changes[:3] -%}
+    {#- the first three changes across the section's groups, and only as many as there are: a
+        release's first group may hold a single change (v0.18.0's did). Tera has no list append,
+        so the three are picked into c0, c1 and c2 by position. -#}
+    {%- set_global shown = 0 -%}
+    {%- for g in latest.groups %}{% for c in g.changes %}
+      {%- if shown == 0 %}{% set_global c0 = c %}{% elif shown == 1 %}{% set_global c1 = c %}{% elif shown == 2 %}{% set_global c2 = c %}{% endif -%}
+      {%- set_global shown = shown + 1 -%}
+    {%- endfor %}{% endfor -%}
     <div class="mt-4">
     {% <window title="Cockpit" brand={project.short_name} foot={"v" ~ project.release} nav={[{"title": "Overview", "href": base ~ "docs/cockpit/", "icon": "home", "current": true}, {"title": "Capabilities", "href": base ~ "registry/capabilities/", "icon": "puzzle"}, {"title": "Commands", "href": base ~ "commands/", "icon": "terminal"}, {"title": "Objects", "href": base ~ "registry/", "icon": "database"}, {"title": "Graphs", "href": base ~ "docs/api/graph/", "icon": "nodes"}, {"title": "Health", "href": base ~ "docs/api/health/", "icon": "activity"}]}> %}
       <p class="mj-point-title">Repository overview</p>
@@ -122,7 +129,13 @@
           {{ <chart values={series} label={"Decisions recorded per release, oldest first: " ~ (series | join(sep=", "))} tone="green" /> }}
         {% </panel> %}
         {% <panel title={"Changes in " ~ latest.version} variant="quiet"> %}
-          {{ <feed items={[{"icon": "commit", "tone": "green", "title": changes[0].subject, "ref": changes[0].commit, "href": changes[0].url}, {"icon": "commit", "tone": "blue", "title": changes[1].subject, "ref": changes[1].commit, "href": changes[1].url}, {"icon": "commit", "tone": "violet", "title": changes[2].subject, "ref": changes[2].commit, "href": changes[2].url}]} /> }}
+          {%- if shown >= 3 %}
+          {{ <feed items={[{"icon": "commit", "tone": "green", "title": c0.subject, "ref": c0.commit, "href": c0.url}, {"icon": "commit", "tone": "blue", "title": c1.subject, "ref": c1.commit, "href": c1.url}, {"icon": "commit", "tone": "violet", "title": c2.subject, "ref": c2.commit, "href": c2.url}]} /> }}
+          {%- elif shown == 2 %}
+          {{ <feed items={[{"icon": "commit", "tone": "green", "title": c0.subject, "ref": c0.commit, "href": c0.url}, {"icon": "commit", "tone": "blue", "title": c1.subject, "ref": c1.commit, "href": c1.url}]} /> }}
+          {%- elif shown == 1 %}
+          {{ <feed items={[{"icon": "commit", "tone": "green", "title": c0.subject, "ref": c0.commit, "href": c0.url}]} /> }}
+          {%- endif %}
         {% </panel> %}
       </div>
     {% </window> %}
