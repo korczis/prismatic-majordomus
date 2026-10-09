@@ -25,6 +25,7 @@
 #   MAJORDOMUS_BIN            the Rust executable to use instead of building one
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   CARGO_TARGET_DIR          where cargo builds, when worktrees share one build directory
+#   MJ_DERIVE_LOCK_*          the machine lock every derive takes first (lib/machine_lock.sh)
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
@@ -33,6 +34,16 @@ export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
 # for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
 # shellcheck source=../lib/rust_bin.sh
 . "$ROOT/lib/rust_bin.sh"
+# shellcheck source=../lib/machine_lock.sh
+. "$ROOT/lib/machine_lock.sh"
+
+# One derive at a time on this machine, taken here and not by whoever calls: every worktree
+# of the repository shares the machine, and a lock kept by agreement was skipped, leaked and
+# orphaned in one day (project.a-derive-takes-the-machine-lock). Released on any exit; an
+# interrupt stops every process this derive started before it lets the lock go.
+mj_lock_acquire "$ROOT" "${MJ_DERIVE_OWNER:-derive}" || exit 12
+trap 'mj_lock_release' EXIT
+trap 'mj_lock_kill_tree $$; exit 130' INT TERM HUP
 
 # Progress, on stderr. Stage B writes the whole site data set and runs the use-case scenarios;
 # it says nothing at all while it does, and minutes of silence read as a hang — a session has
