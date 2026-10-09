@@ -21,10 +21,22 @@
 #   scripts/ci/release-verdict --tag v0.7.0 --wait 300
 #                                                    poll a run still in progress, up to N seconds
 #   RELEASE_VERDICT_CHECK=<name>                     the check to require (default: ci)
+#   RELEASE_VERDICT_DEBT=phase                       the debt is judged by the release contract's
+#                                                    own `debt` phase, which the workflow runs once
+#                                                    the executable is built; not judged here
 #   GITHUB_REPOSITORY=<owner/repo>                   the repository (default: from origin)
 #
-# Exit: 0 the check concluded success · 2 usage · 10 it concluded anything else ·
-# 12 no verdict could be read (no gh, no slug, no answer, no such check-run, still running).
+# A release also carries less debt than the one before it (rule
+# project.a-release-carries-less-debt-than-the-last): once the check passed, the commit's
+# baselines are counted by `majordomus release debt --release` and a total that did not fall
+# by the declared minimum, or a baseline that grew, refuses here, where a person stands
+# before pushing a tag, and not only in the pipeline after it. The count is of the working
+# tree, so it is taken only when the tree is at the commit; anywhere else it cannot be
+# taken, which is exit 12 and never a pass.
+#
+# Exit: 0 the check concluded success and the debt fell · 2 usage · 10 the check concluded
+# anything else, or the debt refuses · 12 no verdict could be read (no gh, no slug, no
+# answer, no such check-run, still running, or the debt could not be counted here).
 set -euo pipefail
 
 TAG=""; COMMIT=""; WAIT=0
@@ -101,3 +113,27 @@ if [ "$conclusion" != success ]; then
 fi
 echo "release-verdict: the '$CHECK' check of $WHAT concluded success"
 [ -z "$url" ] || echo "  $url"
+
+# ---------------------------------------------------------------- the debt the release carries
+if [ "${RELEASE_VERDICT_DEBT:-}" = phase ]; then
+  echo "release-verdict: the debt of $WHAT is judged by the release contract's debt phase, not here"
+  exit 0
+fi
+ROOT="$(git rev-parse --show-toplevel)"
+if [ "$(git rev-parse HEAD)" != "$COMMIT" ]; then
+  echo "release-verdict: the debt of $WHAT cannot be counted here: this tree is at $(git rev-parse --short HEAD), not at that commit" >&2
+  echo "  check the commit out and run this again; a release that cannot show its debt fell has not earned one" >&2
+  exit 12
+fi
+command -v cargo >/dev/null 2>&1 || {
+  echo "release-verdict: the debt of $WHAT cannot be counted here: cargo is not installed" >&2
+  exit 12; }
+drc=0
+cargo run --quiet --manifest-path "$ROOT/apps/majordomus-cli/Cargo.toml" -- release --repo "$ROOT" debt --release || drc=$?
+case "$drc" in
+  0) echo "release-verdict: $WHAT carries less debt than the release before it, or has none to compare with" ;;
+  10) echo "release-verdict: $WHAT does not carry less debt than the release before it; a release reduces it by at least the minimum" >&2
+      exit 10 ;;
+  *) echo "release-verdict: the debt of $WHAT could not be counted (exit $drc)" >&2
+     exit 12 ;;
+esac

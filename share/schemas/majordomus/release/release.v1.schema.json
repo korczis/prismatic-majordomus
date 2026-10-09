@@ -66,6 +66,43 @@
       "minItems": 1,
       "description": "The target ids the distribution model published when this release was made — the set the release had to be complete over, recorded rather than recomputed, so that adding a platform later cannot make an older release retroactively incomplete. Written by scripts/release-record. Absent on records written before the field existed; those are judged on internal consistency alone."
     },
+    "debt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "baselines"
+      ],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The sum over every baseline."
+        },
+        "payable": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The part of the total a change can pay: what the next release must carry less of. Absent on records written before the split."
+        },
+        "unpayable": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "The ids of the baselines declared unpayable at this release: counted and recorded, refused if they grow, and left out of what the next release must reduce. Absent when there is none."
+        },
+        "baselines": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Each baseline's debt, by the id .ai/repo/ci/debt.yaml gives it."
+        }
+      },
+      "description": "The debt the release carried: every baseline of accepted violations, counted on the released commit, and their total. The next release is held against it and must carry less, by at least the declared minimum. Written by scripts/release-record from `majordomus release debt --record`. Absent on records written before the field existed; the first release after such a record is compared with nothing, and says so."
+    },
     "artifacts": {
       "type": "array",
       "minItems": 1,

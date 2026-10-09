@@ -1,0 +1,24 @@
+id: I2088
+milestone: recovery-baseline
+title: "The README describes the tool as it ships"
+slug: the-readme-describes-the-tool-as-it-ships
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Correct README and site sentences that call the tool lightweight, shell-only, never invoking a model or read-only, distinguishing the supervisor core from the optional modules that ship."
+why: "Finding F07: README.md:7, :21 and :405 against six mutating MCP tools, five model advisor adapters and a Fly.io deployment."
+current_state: "The README states the narrower tool it once was."
+desired_state: "Every sentence names what ships, and which modules are optional."
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "the_description_is_true"
+scope:
+  - "README.md"
+  - "site/content"
+  - "docs"
+  - "test/cases"
+acceptance_criteria:
+  - "Every corrected README sentence is held by a case that fails when the old wording returns"
+created_at: 2026-10-09
+updated_at: 2026-10-09

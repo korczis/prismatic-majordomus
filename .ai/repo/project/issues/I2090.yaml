@@ -1,0 +1,25 @@
+id: I2090
+milestone: recovery-baseline
+title: "Growth outside an intent is reviewed before it lands"
+slug: growth-outside-an-intent-is-reviewed-before-it-lands
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Flag a new registry, provider, route or service that no intent's scope names, and refuse it until reviewed."
+why: "Finding F15: 39 Rust modules and 68 commands; growth is not held to an intent."
+current_state: "Nothing compares an addition with an intent's scope."
+desired_state: "A new file under src/capability/builtin, share/providers or share/kinds.yaml that no intent scope names is reported by intent validate, and refused when the policy requires it."
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "growth_is_reviewed"
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/capability"
+  - "share/providers"
+  - "test/cases"
+acceptance_criteria:
+  - "A capability module added outside every intent scope is reported in a fixture, and refused under the required policy"
+created_at: 2026-10-09
+updated_at: 2026-10-09

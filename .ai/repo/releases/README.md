@@ -64,3 +64,13 @@ made. Completeness is judged against that set, not against the model as it stand
 target added later is a promise about the next release, and a published release cannot grow
 an artifact. A record written before the field existed carries no set and is judged on
 internal consistency alone. `scripts/release-record` writes it; nothing else may.
+
+## `debt`
+
+Each record carries the debt the released tree held: every baseline of accepted violations
+`.ai/repo/ci/debt.yaml` declares, counted on the released commit, and their total. The next
+release is held against it and must carry less, by at least the declared minimum
+(`majordomus release debt --release`; rule
+`project.a-release-carries-less-debt-than-the-last`). A record written before the field
+existed carries none, and the first release after it is compared with nothing and says so.
+`scripts/release-record` writes it, from `majordomus release debt --record`; nothing else may.

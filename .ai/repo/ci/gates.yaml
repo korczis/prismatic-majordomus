@@ -448,6 +448,19 @@ gates:
   # so rather than passing when it has none: a projection gate that skips quietly is the
   # disease it was written to cure — --check has exited 11 on drift since the adapter was
   # written, and nothing ever called it.
+  # A release carries less debt than the one before it (rule
+  # project.a-release-carries-less-debt-than-the-last). In a change this refuses a baseline
+  # that grew since the last release, one .ai/repo/ci/debt.yaml does not count, and one that
+  # cannot be counted; the release itself is judged by `release debt --release`, which
+  # scripts/ci/release-verdict and the release contract's debt phase run.
+  - id: release-debt
+    job: structure
+    # every change: a baseline can be touched from any path class, and a new one can be
+    # added anywhere under the layer
+    always: true
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- release debt
+    summary: no baseline of accepted violations is larger than the previous release recorded it, every file named like a baseline is counted or excluded with a reason, and what the next release owes is printed
+
   - id: order-check
     job: structure
     runs: scripts/ci/order-check
