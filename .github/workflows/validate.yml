@@ -838,7 +838,7 @@ jobs:
   cockpit:
     needs: plan
     if: needs.plan.outputs.cockpit_probe == 'true'
-    timeout-minutes: 25
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -854,6 +854,14 @@ jobs:
         run: scripts/ci/timed --bound 900 cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
         run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1200 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+      # The same gate in Safari's engine, at a phone's width: every other browser check here
+      # drives Chrome, and the first WebKit run found a defect Chrome hides (Ctrl+K opened a
+      # palette whose input never took focus). Playwright's own WebKit build, with the system
+      # libraries it needs; the phone mode only, and two seeded walks, to stay in budget.
+      - name: install WebKit
+        run: scripts/ci/timed --bound 600 cockpit-probe install-webkit timings.tsv npx playwright install --with-deps webkit
+      - name: probe the Cockpit at a phone's width in WebKit
+        run: COCKPIT_PROBE_ENGINE=webkit COCKPIT_PROBE_WALKS=2 scripts/ci/timed --bound 900 cockpit-probe cockpit-probe-webkit timings.tsv scripts/cockpit-probe --phone
       - if: always()
         run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()
