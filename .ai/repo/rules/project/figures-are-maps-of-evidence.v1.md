@@ -51,8 +51,13 @@ build when the component stops doing so.
 `test/cases/1010_a_figure_is_a_map_of_its_evidence.sh` serves a real repository's
 Cockpit and requires, on a rendered entity page, a figure whose every drawn element has
 an explanation, whose legend names only drawn claims, and whose script and stylesheet
-are served. A figure drawn outside the component is a review finding until a gate can
-see it. That gap is open, and this rule says so rather than claiming it closed.
+are served. A figure drawn outside the component is refused by
+`cockpit::figure::tests::no_cockpit_page_draws_outside_the_figure_component`. That test
+reads every Cockpit source file except the component and fails on any line that builds an
+`svg` element or writes `<svg` markup, unless the line or the one above it says why with
+`// figure: <reason>`. An empty reason is no reason, and a reason covers only the line
+under it. `the_drawing_scan_finds_a_planted_drawing_and_honours_a_reason` is its positive
+control: it plants each violation and requires the refusal.
 
 # Verification
 

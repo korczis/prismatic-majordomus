@@ -51,8 +51,9 @@ port must not reintroduce.
 - **A click shows evidence, and the neighbourhood is traced.** The report dimmed
   everything outside a tapped node's neighbourhood and showed its note in an info box.
   The legend's layer switches hid an edge class together with the nodes it stranded.
-- **A wide invisible hit path** under each thin line (16 units), so a line can be chosen
-  with a finger.
+- **A wide invisible hit path** under each thin line, so a line can be chosen with a
+  finger: 24 screen pixels, non-scaling, so a drawing scaled down on a phone still meets
+  WCAG 2.5.8 (the report's was 16 and scaled with the drawing).
 - **Subtrees open one level at a time**, with open-all and close-all.
 - **A table behind every drawing.**
 - **Validators that drive a browser.** `check_tree.cjs` and `check_viz.cjs` clicked

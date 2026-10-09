@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0122
 kind: adr
 title: A figure is a map of its evidence
-status: proposed
+status: accepted
 date: 2026-10-09
 tags:
   - architecture
@@ -26,6 +26,10 @@ provenance:
 ---
 
 # 122. A figure is a map of its evidence
+
+Accepted by the repository owner on 2026-10-09, in the session that implemented it, in so many
+words ("accept it"), after the implementation, its tests and its pull request
+(#833) were reported to them.
 
 ## Context
 

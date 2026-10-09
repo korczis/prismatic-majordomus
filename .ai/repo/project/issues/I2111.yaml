@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Draw the intent page (criteria, milestones, issues, tasks) and the milestone page (issues by wave, blockers) with the evidence-figure component. A criterion's evidence state is the claim of its box: declared when its evidence is fresh, missing when it names evidence that does not resolve, and unknown when the ledger could not be read."
 why: "Those two pages answer 'how far is reality from this' with tables and badges. That is the question an evidence figure answers best, and ADR 0122 makes the figure the way this product draws such a question."
-current_state: "/cockpit/intents/<id> and /cockpit/plan/milestones/<id> render tables, lists and badges and draw nothing."
+current_state: "/cockpit/plan/milestones/<id> draws its figure (requires, the milestone with its issues by readiness, required by; claims from field provenance). /cockpit/intents/<id> still renders tables only, and is left until #819, which rewrites that page, has landed."
 desired_state: "Both pages carry a figure built by the component from the capability answer they already ask for. Every box explains itself, and the tables stay as its data."
 scope:
   - apps/majordomus-cli/src/cockpit/intents.rs

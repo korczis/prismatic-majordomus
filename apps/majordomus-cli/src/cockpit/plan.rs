@@ -672,6 +672,9 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
     );
 
     let mut body = el("div").class("mj-grid").child(statistics).child(about);
+    if let Some(figure) = milestone_figure(&graph, id) {
+        body = body.child(card("Where it sits", figure.render()));
+    }
     if !graph.cycles.is_empty() {
         body = body.child(alert(
             "fail",
@@ -701,6 +704,132 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
             ("Plan", Some("/cockpit/plan")),
             (id, None),
         ])
+        .script("flow.js")
+}
+
+/// How sure a figure is of a value the plan attests: what a person authored is declared,
+/// what a rule that cannot be wrong derived is derived, what a rule that can be wrong
+/// inferred is an estimate, and what nobody could read is unknown (ADR 0122).
+fn claim_of(provenance: FieldProvenance) -> super::figure::Claim {
+    use super::figure::Claim;
+    match provenance {
+        FieldProvenance::Explicit => Claim::Declared,
+        FieldProvenance::Derived => Claim::Derived,
+        FieldProvenance::Inferred => Claim::Estimated,
+        FieldProvenance::Unknown => Claim::Unknown,
+    }
+}
+
+/// The milestone as an evidence figure: the milestones it requires on the left (those not
+/// yet done drawn as what it waits on), the milestone in the middle with its issues by
+/// readiness as its subtree, and the milestones that require it on the right. Every box and
+/// line carries the provenance of the list it came from. A milestone with no neighbour and
+/// no issue gets no figure.
+fn milestone_figure(graph: &MilestoneGraph, id: &str) -> Option<super::figure::Flow> {
+    use super::figure::{Column, Flow, FlowEdge, FlowNode, Member};
+
+    let partitions: [(&str, &Vec<String>); 8] = [
+        ("ready", &graph.ready),
+        ("active", &graph.active),
+        ("review", &graph.review),
+        ("blocked", &graph.blocked),
+        ("waiting", &graph.waiting),
+        ("completion blocked", &graph.completion_blocked),
+        ("complete", &graph.complete),
+        ("cancelled", &graph.cancelled),
+    ];
+    let issues: Vec<Member> = partitions
+        .iter()
+        .filter(|(_, ids)| !ids.is_empty())
+        .map(|(state, ids)| {
+            Member::new(
+                format!("{state} ({})", ids.len()),
+                super::figure::Claim::Derived,
+            )
+            .detail("readiness, derived by devtask.milestone")
+            .members(
+                ids.iter()
+                    .map(|i| Member::new(i, super::figure::Claim::Declared).href(issue_href(i)))
+                    .collect(),
+            )
+        })
+        .collect();
+    let upstream = &graph.depends_on.values;
+    let downstream = &graph.dependents.values;
+    if upstream.is_empty() && downstream.is_empty() && issues.is_empty() {
+        return None;
+    }
+
+    let mut lines = Vec::new();
+    let required: Vec<FlowNode> = upstream
+        .iter()
+        .map(|m| {
+            let waits = graph.blocked_by.values.contains(m);
+            let key = format!("up-{m}");
+            lines.push(
+                FlowEdge::new(
+                    &key,
+                    "self",
+                    if waits { "waits on" } else { "met" },
+                    claim_of(graph.depends_on.provenance),
+                )
+                .note(format!("Required by this milestone, read from {}.", graph.depends_on.source)),
+            );
+            FlowNode::new(&key, m, claim_of(graph.depends_on.provenance))
+                .detail(if waits { "not done: holds every issue here" } else { "done" })
+                .note(if waits {
+                    format!("{m} is not DONE, so every issue of {id} waits for it whatever its own dependencies say.")
+                } else {
+                    format!("{m} is done; it holds nothing back.")
+                })
+                .href(milestone_href(m))
+        })
+        .collect();
+    let held: Vec<FlowNode> = downstream
+        .iter()
+        .map(|m| {
+            let key = format!("down-{m}");
+            lines.push(
+                FlowEdge::new(
+                    "self",
+                    &key,
+                    "holds back",
+                    claim_of(graph.dependents.provenance),
+                )
+                .note(format!(
+                    "{m} requires {id}; derived from the milestones that name it."
+                )),
+            );
+            FlowNode::new(&key, m, claim_of(graph.dependents.provenance))
+                .detail("requires this milestone")
+                .note(format!(
+                    "{m} names {id} among the milestones it depends on."
+                ))
+                .href(milestone_href(m))
+        })
+        .collect();
+    let subject = FlowNode::new("self", id, claim_of(graph.status.provenance))
+        .detail(format!(
+            "{} · {} issues",
+            graph.status.value.as_deref().unwrap_or("status unknown"),
+            graph.counts.total
+        ))
+        .note(graph.outcome.value.clone().unwrap_or_default())
+        .members(issues)
+        .focused();
+
+    Some(Flow {
+        id: "milestone".into(),
+        question: format!("What does {id} wait on, and what does it hold back?"),
+        caption: "Lines into the milestone are the milestones it requires, as its record declares them; lines out of it are those that require it, derived by reading every other record. A milestone that is not done holds every issue here back. The middle box opens the issues by readiness.".into(),
+        columns: vec![
+            Column::new("Requires", required),
+            Column::new("This milestone", vec![subject]),
+            Column::new("Required by", held),
+        ],
+        edges: lines,
+        data: None,
+    })
 }
 
 // ------------------------------------------------------------------- one issue
@@ -1341,5 +1470,74 @@ mod tests {
         assert!(card.contains("mj-button mj-button--primary"), "{card}");
         let card = moves(&context(&repo, &[]), "I0002", false).render();
         assert!(!card.contains("mj-button--primary"), "{card}");
+    }
+}
+
+#[cfg(test)]
+mod figure_tests {
+    use super::*;
+    use crate::cockpit::figure::Claim;
+
+    /// A milestone graph as devtask.milestone answers it for execution-telemetry, trimmed of
+    /// the issue nodes the figure does not draw.
+    fn graph() -> MilestoneGraph {
+        serde_json::from_str(r#"{"milestone":"execution-telemetry","declared":true,"record":"records/execution-telemetry.yaml","title":{"value":"Execution telemetry, only from providers that expose it honestly","provenance":"explicit","source":"records/execution-telemetry.yaml#title"},"outcome":{"value":"Execution telemetry is recorded for providers that report it truthfully, and absence is recorded as absence rather than estimated.","provenance":"explicit","source":"records/execution-telemetry.yaml#outcome"},"status":{"value":"BLOCKED","provenance":"derived","source":"plan.model"},"rank":{"value":2,"provenance":"derived","source":"plan.model"},"depends_on":{"values":["runtime-adapters"],"provenance":"explicit","source":"records/execution-telemetry.yaml#depends_on"},"blocked_by":{"values":["runtime-adapters"],"provenance":"derived","source":"plan.model"},"dependents":{"values":["cost-per-accepted-outcome"],"provenance":"derived","source":"plan.model"},"nodes":[],"edges":[],"ready":[],"blocked":["I0302","I0303","I0304","I0305"],"waiting":["I0301"],"active":[],"review":[],"completion_blocked":[],"complete":[],"cancelled":[],"critical_blockers":[],"parallelizable":[],"cycles":[],"diagnostics":[],"counts":{"total":5,"required":5,"by_readiness":{"blocked":4,"waiting":1}}}"#).expect("a milestone graph")
+    }
+
+    #[test]
+    fn provenance_becomes_the_claim_it_supports() {
+        assert_eq!(claim_of(FieldProvenance::Explicit), Claim::Declared);
+        assert_eq!(claim_of(FieldProvenance::Derived), Claim::Derived);
+        assert_eq!(claim_of(FieldProvenance::Inferred), Claim::Estimated);
+        assert_eq!(claim_of(FieldProvenance::Unknown), Claim::Unknown);
+    }
+
+    /// ADR 0122 on the milestone page: what it requires on the left, an unfinished one drawn
+    /// as what it waits on; what requires it on the right, derived; its issues by readiness
+    /// as the subject's subtree.
+    #[test]
+    fn a_milestone_is_drawn_between_what_it_waits_on_and_what_it_holds_back() {
+        let html = milestone_figure(&graph(), "execution-telemetry")
+            .expect("a figure")
+            .render()
+            .render();
+        assert!(
+            html.contains(
+                r#"data-claim="declared" data-from="up-runtime-adapters" data-to="self""#
+            ),
+            "{html}"
+        );
+        assert!(html.contains(">waits on</text>"), "{html}");
+        assert!(
+            html.contains(
+                r#"data-claim="derived" data-from="self" data-to="down-cost-per-accepted-outcome""#
+            ),
+            "{html}"
+        );
+        assert!(
+            html.contains("blocked (4)") && html.contains("waiting (1)"),
+            "{html}"
+        );
+        assert!(html.contains("I0302"), "the issues open under the subject");
+
+        // a requirement that is done is met, not waited on
+        let mut done = graph();
+        done.blocked_by.values.clear();
+        let html = milestone_figure(&done, "execution-telemetry")
+            .expect("a figure")
+            .render()
+            .render();
+        assert!(
+            html.contains(">met</text>") && html.contains(">done</text>"),
+            "{html}"
+        );
+
+        // nothing around it and no issue: no figure
+        let mut alone = graph();
+        alone.depends_on.values.clear();
+        alone.dependents.values.clear();
+        alone.blocked.clear();
+        alone.waiting.clear();
+        assert!(milestone_figure(&alone, "execution-telemetry").is_none());
     }
 }
