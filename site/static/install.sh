@@ -403,7 +403,12 @@ resolve_release() {
   [ "$MJ_TAG" = "v$MJ_VERSION" ] || fail "the release metadata is not usable" \
     "the tag \"$MJ_TAG\" and the version \"$MJ_VERSION\" do not agree" \
     "Metadata: $MJ_METADATA_URL"
+  resolve_artifact
+}
 
+# The artifact the resolved release publishes for $MJ_TARGET. Called again when the target
+# changes after a probe (stage_artifact), against the same metadata.
+resolve_artifact() {
   MJ_ARTIFACT=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" name)
   MJ_URL=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" url)
   MJ_SHA256=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" sha256)
@@ -630,6 +635,59 @@ cleanup() {
   exit "$code"
 }
 
+# Download the artifact of $MJ_TARGET, verify it, and unpack it into a fresh $MJ_STAGE.
+# Answers 1 only when the unpacked native executable cannot be loaded by this machine
+# (see probe_native); every other failure stops the installer.
+stage_artifact() {
+  step "Downloading $MJ_ARTIFACT ..."
+  http_get "$MJ_URL" "$MJ_TMP/$MJ_ARTIFACT" || fail "the artifact could not be downloaded" \
+    "url: $MJ_URL" \
+    "The release metadata named it, and the download did not succeed."
+  actual_size=$(wc -c < "$MJ_TMP/$MJ_ARTIFACT" | tr -d ' ')
+  [ "$actual_size" = "$MJ_SIZE" ] || fail "the download is not the size the release records" \
+    "artifact: $MJ_ARTIFACT" \
+    "expected: $MJ_SIZE bytes" \
+    "received: $actual_size bytes" \
+    "The download was discarded; this is what a truncated transfer looks like."
+
+  step "Verifying the digest ..."
+  verify_checksum "$MJ_TMP/$MJ_ARTIFACT" "$MJ_SHA256"
+  validate_archive "$MJ_TMP/$MJ_ARTIFACT" "$MJ_ROOT"
+
+  MJ_STAGE="$MJ_PREFIX/.staging.$$"
+  rm -rf "$MJ_STAGE"; mkdir -p "$MJ_STAGE"
+  step "Unpacking ..."
+  tar -xzf "$MJ_TMP/$MJ_ARTIFACT" -C "$MJ_STAGE"
+  candidate="$MJ_STAGE/$MJ_ROOT/bin/$MJ_BINARY"
+  [ -f "$candidate" ] || fail "the archive holds no $MJ_ROOT/bin/$MJ_BINARY" \
+    "artifact: $MJ_ARTIFACT" "Nothing was installed."
+  chmod 0755 "$candidate" "$MJ_STAGE/$MJ_ROOT/bin/$MJ_BINARY-mcp" 2>/dev/null || true
+  [ -x "$candidate" ] || fail "the unpacked $MJ_BINARY is not executable" "Nothing was installed."
+
+  reported=$("$candidate" version 2>/dev/null | sed -n "s/^$MJ_BINARY \\(.*\\)\$/\\1/p" | head -n 1)
+  [ "$reported" = "$MJ_VERSION" ] || fail "the unpacked executable reports another version" \
+    "release:  v$MJ_VERSION" \
+    "reported: ${reported:-nothing}" \
+    "This is what a mismatched release looks like. Nothing was installed."
+
+  probe_native "$MJ_STAGE/$MJ_ROOT/libexec/$MJ_BINARY-cli"
+}
+
+# The launcher in bin/ is shell and answers `version` without loading the native
+# executable, so it says nothing about whether this machine can run the release. A glibc
+# build needs the glibc it was linked against or newer: Ubuntu 18.04 has 2.27, and a build
+# from a current runner needs 2.32 and more, which the loader reports as
+# "version `GLIBC_2.32' not found" before main. So the native executable itself is run.
+probe_native() {
+  native=$1
+  [ "$MJ_OS" = linux ] || return 0
+  [ -f "$native" ] || return 0
+  chmod 0755 "$native" 2>/dev/null || true
+  if MJ_PROBE=$("$native" --version 2>&1 >/dev/null); then return 0; fi
+  MJ_PROBE=$(printf '%s\n' "$MJ_PROBE" | grep -m 1 'GLIBC\|not found\|No such file' || printf '%s\n' "$MJ_PROBE" | head -n 1)
+  return 1
+}
+
 main() {
   parse_arguments "$@"
   MJ_TMP=$(mktemp -d 2>/dev/null || mktemp -d -t majordomus) || {
@@ -691,21 +749,6 @@ REPORT
     exit 0
   fi
 
-  step "Downloading $MJ_ARTIFACT ..."
-  http_get "$MJ_URL" "$MJ_TMP/$MJ_ARTIFACT" || fail "the artifact could not be downloaded" \
-    "url: $MJ_URL" \
-    "The release metadata named it, and the download did not succeed."
-  actual_size=$(wc -c < "$MJ_TMP/$MJ_ARTIFACT" | tr -d ' ')
-  [ "$actual_size" = "$MJ_SIZE" ] || fail "the download is not the size the release records" \
-    "artifact: $MJ_ARTIFACT" \
-    "expected: $MJ_SIZE bytes" \
-    "received: $actual_size bytes" \
-    "The download was discarded; this is what a truncated transfer looks like."
-
-  step "Verifying the digest ..."
-  verify_checksum "$MJ_TMP/$MJ_ARTIFACT" "$MJ_SHA256"
-  validate_archive "$MJ_TMP/$MJ_ARTIFACT" "$MJ_ROOT"
-
   mkdir -p "$MJ_PREFIX" || fail "cannot create the installation prefix" \
     "prefix: $MJ_PREFIX" \
     "Choose another with --prefix. This installer never uses sudo."
@@ -720,21 +763,26 @@ REPORT
     "Choose another with --install-dir, or make it writable. This installer never uses sudo."
 
   lock_prefix
-  MJ_STAGE="$MJ_PREFIX/.staging.$$"
-  rm -rf "$MJ_STAGE"; mkdir -p "$MJ_STAGE"
-  step "Unpacking ..."
-  tar -xzf "$MJ_TMP/$MJ_ARTIFACT" -C "$MJ_STAGE"
-  candidate="$MJ_STAGE/$MJ_ROOT/bin/$MJ_BINARY"
-  [ -f "$candidate" ] || fail "the archive holds no $MJ_ROOT/bin/$MJ_BINARY" \
-    "artifact: $MJ_ARTIFACT" "Nothing was installed."
-  chmod 0755 "$candidate" "$MJ_STAGE/$MJ_ROOT/bin/$MJ_BINARY-mcp" 2>/dev/null || true
-  [ -x "$candidate" ] || fail "the unpacked $MJ_BINARY is not executable" "Nothing was installed."
-
-  reported=$("$candidate" version 2>/dev/null | sed -n "s/^$MJ_BINARY \\(.*\\)\$/\\1/p" | head -n 1)
-  [ "$reported" = "$MJ_VERSION" ] || fail "the unpacked executable reports another version" \
-    "release:  v$MJ_VERSION" \
-    "reported: ${reported:-nothing}" \
-    "This is what a mismatched release looks like. Nothing was installed."
+  if ! stage_artifact; then
+    if [ "$MJ_LIBC" = gnu ]; then
+      say "The glibc build cannot run here: ${MJ_PROBE:-its executable did not start}."
+      say "Installing the statically linked musl build of the same release instead."
+      rm -rf "$MJ_STAGE"
+      MJ_LIBC=musl
+      resolve_target "$MJ_OS" "$MJ_ARCH" "$MJ_LIBC"
+      [ -n "$MJ_TARGET" ] && [ "$MJ_TARGET_STATUS" != unavailable ] || fail \
+        "this machine cannot run the glibc build, and no musl build is offered for it" \
+        "probe: ${MJ_PROBE:-the executable did not start}" "Nothing was installed."
+      resolve_artifact
+      stage_artifact || fail "the release's executable does not start on this machine" \
+        "artifact: $MJ_ARTIFACT" "probe: ${MJ_PROBE:-the executable did not start}" \
+        "Nothing was installed."
+    else
+      fail "the release's executable does not start on this machine" \
+        "artifact: $MJ_ARTIFACT" "probe: ${MJ_PROBE:-the executable did not start}" \
+        "Nothing was installed."
+    fi
+  fi
 
   step "Installing ..."
   install_tree

@@ -29998,6 +29998,36 @@
         }
       },
       {
+        "id": "majordomus://issue/I2106",
+        "kind": "issue",
+        "label": "I2106",
+        "summary": "The installer installs a Linux build this machine's C library can load",
+        "route": "/cockpit/objects/issue/i2106",
+        "source": ".ai/repo/project/issues/I2106.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "current_state": "detect_libc returns gnu whenever a glibc loader is on disk; the version check after unpacking runs bin/majordomus, which is shell; the native executable is first run by the user.",
+          "evidence_required": [
+            "the_installer_falls_back_to_a_build_the_host_can_load"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "share/install/install.sh.in",
+            "site/static/install.sh",
+            "test/cases/1010_the_installer_installs_what_the_libc_can_load.sh"
+          ],
+          "slug": "the-installer-installs-what-the-libc-can-load",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 1010_the_installer_installs_what_the_libc_can_load",
+            "bash test/run.sh 85_installer 86_installer_platform"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42342,6 +42372,13 @@
         "label": "test/cases/100_execution_plane.sh",
         "route": "/cockpit/objects/test/test-cases-100-execution-plane-sh",
         "source": "test/cases/100_execution_plane.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1010_the_installer_installs_what_the_libc_can_load.sh",
+        "kind": "test",
+        "label": "test/cases/1010_the_installer_installs_what_the_libc_can_load.sh",
+        "route": "/cockpit/objects/test/test-cases-1010-the-installer-installs-what-the-libc-can-load-sh",
+        "source": "test/cases/1010_the_installer_installs_what_the_libc_can_load.sh"
       },
       {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
@@ -65808,6 +65845,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2106",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2106",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -68819,6 +68866,11 @@
       },
       {
         "source": "majordomus://test/test/cases/100_execution_plane.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1010_the_installer_installs_what_the_libc_can_load.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74534,8 +74586,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2470,
-      "edges": 5407,
+      "nodes": 2472,
+      "edges": 5410,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,26 @@
+id: I2106
+milestone: adopter-upgrades
+title: The installer installs a Linux build this machine's C library can load
+slug: the-installer-installs-what-the-libc-can-load
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Decide the Linux build by what the host can load rather than by which C library it has: after the archive is verified and unpacked, run its native executable; when the glibc build cannot start and the release offers a musl build for the architecture, install that instead and say why, naming the loader's error; when neither starts, install nothing."
+why: "On 2026-10-09 v0.18.0 was installed on a Jetson TX2 (Ubuntu 18.04, glibc 2.27). detect_libc answered gnu, the aarch64 gnu build needs GLIBC_2.32, the installer's own check ran only the shell launcher (which answers `version` without loading the executable) and reported success, and the hub's unit failed with exit 2 on start. The release's aarch64 musl build of the same version runs there and was installed by hand. The probe runs only an executable that already matched the digest the release records, from the staging tree, with --version. A minimum glibc recorded per build would decide before downloading; it is not used, because a hand-written minimum goes stale with the next runner image and nothing measures it."
+current_state: "detect_libc returns gnu whenever a glibc loader is on disk; the version check after unpacking runs bin/majordomus, which is shell; the native executable is first run by the user."
+desired_state: "The installer probes libexec/majordomus-cli --version before installing. On Linux a glibc build that does not start is replaced by the release's musl build, downloaded and verified like the first; a build that starts is installed as before; a release none of whose builds start here installs nothing and leaves an existing installation untouched."
+scope:
+  - share/install/install.sh.in
+  - site/static/install.sh
+  - test/cases/1010_the_installer_installs_what_the_libc_can_load.sh
+acceptance_criteria:
+  - "Case 1010 passes: with uname Linux aarch64 and getconf glibc 2.27, a gnu build that fails as the loader fails is replaced by the musl build, the output names the missing GLIBC symbol; a gnu build that runs is installed with no word about musl; when neither runs nothing is installed"
+  - "Case 1010 fails against master's site/static/install.sh, and against this installer with the probe made to answer success"
+  - "Cases 85 and 86 pass unchanged"
+validation:
+  - bash test/run.sh 1010_the_installer_installs_what_the_libc_can_load
+  - bash test/run.sh 85_installer 86_installer_platform
+evidence_required:
+  - the_installer_falls_back_to_a_build_the_host_can_load
+created_at: 2026-10-09
+updated_at: 2026-10-09

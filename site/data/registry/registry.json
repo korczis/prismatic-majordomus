@@ -6,23 +6,23 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "590d24b24dc804b558d1d5569ec2500827a5737b5cfdefe222907e88bb2720ad",
+    "fingerprint": "ecf210d2b130c0edc2f8944a157ae7132c4a389436e1d0228ced09cf0139a68e",
     "summary": {
-      "total": 2090,
+      "total": 2092,
       "builtin": 184,
-      "declarative": 1906,
+      "declarative": 1908,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1906
+        "resource": 1908
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1914
+        "implemented": 1916
       },
       "mcp_tools": 177,
-      "mcp_resources": 1960,
+      "mcp_resources": 1962,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 262,
+        "capabilities": 263,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 409,
+        "capabilities": 410,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3e0ea38b91e726c886ded48ad10620e79ad78623b28a1a3eaf2d2dda9e20eb46",
+    "fingerprint": "e02a2e10cda4f40d10d8c563daf31967d831490f876f9db8daf2b344821bb293",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,7 +76190,7 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 262,
+      "issue": 263,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 25,
@@ -76204,7 +76204,7 @@
       "session": 84,
       "skill": 7,
       "taxonomy": 10,
-      "test": 409,
+      "test": 410,
       "use-case": 48,
       "workspace": 1
     },
@@ -81654,7 +81654,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 97316
+        "bytes": 99585
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87836,6 +87836,17 @@
         "bytes": 2091
       },
       {
+        "uri": "majordomus://issue/I2106",
+        "kind": "issue",
+        "identity": "I2106",
+        "title": "The installer installs a Linux build this machine's C library can load",
+        "description": "Decide the Linux build by what the host can load rather than by which C library it has: after the archive is verified and unpacked, run its native executable; when the glibc build cannot start and the release offers a musl build for the architecture, install that instead and say why, naming the loader's error; when neither starts, install nothing.",
+        "path": ".ai/repo/project/issues/I2106.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2750
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -92875,6 +92886,14 @@
         "bytes": 11695
       },
       {
+        "uri": "majordomus://test/test/cases/1010_the_installer_installs_what_the_libc_can_load.sh",
+        "kind": "test",
+        "identity": "test/cases/1010_the_installer_installs_what_the_libc_can_load.sh",
+        "path": "test/cases/1010_the_installer_installs_what_the_libc_can_load.sh",
+        "source_class": "case",
+        "bytes": 7358
+      },
+      {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
         "kind": "test",
         "identity": "test/cases/101_command_graph.sh",
@@ -96752,7 +96771,7 @@
       "identity": [
         "id"
       ],
-      "objects": 262
+      "objects": 263
     },
     {
       "name": "knowledge",
@@ -96904,7 +96923,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 409
+      "objects": 410
     },
     {
       "name": "use-case",
