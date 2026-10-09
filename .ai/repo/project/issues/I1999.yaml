@@ -1,0 +1,33 @@
+id: I1999
+milestone: adopter-upgrades
+title: "A tracked file a hook regenerates does not refuse a task that never touched it"
+slug: a-tracked-file-a-hook-regenerates-does-not-refuse-a-task-that-never-touched-it
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let a repository declare the tracked paths its own tooling rewrites, have `check` and `finish` judge them as the machine's and not the worker's, and make the scope finding and the note finding say what settles them before `finish` refuses."
+why: "Reported by an adopter session (progresus-isir) on 2026-10-08 with majordomus 0.14.0: seven tracked files are rewritten by a post-checkout hook on every checkout, so every task showed them as changed outside its scope and `check` failed on work that never touched them. The interim advice — name the seven files in --scope — was measured to work: 0 failing in `check` over three tasks and two `finish --outcome completed` (t-20261008121807-0d62, t-20261008123637-b728). Two things still tripped the adopter. `finish` also refused on majordomus.note-integrity while `check` had shown the note line only as INFO, so nothing said a handover had to exist first. And the scope finding gives no pointer to a remedy: 'restore the file' is not one where a hook rewrites it at once."
+current_state: "The scope check treats every changed tracked path alike. A path a hook regenerates must be named in each task's --scope by hand. The scope finding names the path and nothing that settles it. `check` reports a missing completion note as INFO and `finish` refuses on it."
+desired_state: "A repository declares its machine-regenerated tracked paths once, with the reason, and the scope check reports a change to one of them as the machine's: named, not failing, and not silently dropped. A scope finding on any other path says the two remedies — name the path in the scope, or stop tracking the file — and does not advise restoring a file the repository declares regenerated. `check` reports what `finish` will refuse over a note or a handover with the same severity `finish` uses, and names the command that writes it."
+scope:
+  - "bin/majordomus"
+  - "lib"
+  - "apps/majordomus-cli/src"
+  - "share/skeleton"
+  - "docs/CLI.md"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A repository that declares a regenerated path passes `check` on a task whose scope does not name it, and the report names the path and the declaration that covers it"
+  - "A change to an undeclared path outside the scope still fails `check`, and the finding names both remedies"
+  - "A declaration without a reason is refused"
+  - "Whatever `finish --outcome completed` refuses over a note or a handover, `check` reports as failing beforehand with the command that settles it"
+  - "The shell tool and the Rust executable give the same verdict for the same tree"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "regenerated_paths_scope_case"
+  - "check_reports_what_finish_refuses_case"
+created_at: 2026-10-08
+updated_at: 2026-10-08

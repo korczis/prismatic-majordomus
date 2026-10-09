@@ -6,23 +6,23 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "590d24b24dc804b558d1d5569ec2500827a5737b5cfdefe222907e88bb2720ad",
+    "fingerprint": "b0657ac8c786b4784bdf643e4ea2abdbf380ece5f48c4af281a41be628bd3272",
     "summary": {
-      "total": 2090,
+      "total": 2096,
       "builtin": 184,
-      "declarative": 1906,
+      "declarative": 1912,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1906
+        "resource": 1912
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1914
+        "implemented": 1920
       },
       "mcp_tools": 177,
-      "mcp_resources": 1960,
+      "mcp_resources": 1966,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 262,
+        "capabilities": 268,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3e0ea38b91e726c886ded48ad10620e79ad78623b28a1a3eaf2d2dda9e20eb46",
+    "fingerprint": "fc76a31420386526a5adccfe58cad865752a919680abbbd4080324337f70d321",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,7 +76190,7 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 262,
+      "issue": 268,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 25,
@@ -81654,7 +81654,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 97316
+        "bytes": 118672
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87723,7 +87723,7 @@
         "path": ".ai/repo/project/issues/I1986.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1521
+        "bytes": 1799
       },
       {
         "uri": "majordomus://issue/I1987",
@@ -87781,6 +87781,61 @@
         "bytes": 1159
       },
       {
+        "uri": "majordomus://issue/I1995",
+        "kind": "issue",
+        "identity": "I1995",
+        "title": "Work a session left uncommitted in a worktree is named, not found by luck",
+        "description": "Make doctor and the worktree status name a linked worktree whose index or working tree holds changes no commit carries and no live session holds, with how many files and how old, so that finished work on one disk is seen before the disk is.",
+        "path": ".ai/repo/project/issues/I1995.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2621
+      },
+      {
+        "uri": "majordomus://issue/I1996",
+        "kind": "issue",
+        "identity": "I1996",
+        "title": "doctor does not fail an adopter on a check written for this repository",
+        "description": "Stop `majordomus doctor` from failing an adopter's repository on the reasoning design's own coupling rules, and stop its reproduce hints from naming paths only this repository has.",
+        "path": ".ai/repo/project/issues/I1996.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2950
+      },
+      {
+        "uri": "majordomus://issue/I1997",
+        "kind": "issue",
+        "identity": "I1997",
+        "title": "The peer board can be read from the command line",
+        "description": "Project the peers capability onto the command line, so that a worker with no MCP tools can still ask who else is working in this repository and on which paths.",
+        "path": ".ai/repo/project/issues/I1997.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2517
+      },
+      {
+        "uri": "majordomus://issue/I1998",
+        "kind": "issue",
+        "identity": "I1998",
+        "title": "A health command in an unsupervised repository does not exit 0",
+        "description": "Make `majordomus doctor`, `session list` and the other read-only commands exit with the missing-artifact code when the repository has no .ai/manifest.yaml, so a caller can tell a healthy repository from one the tool is not installed in.",
+        "path": ".ai/repo/project/issues/I1998.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1842
+      },
+      {
+        "uri": "majordomus://issue/I1999",
+        "kind": "issue",
+        "identity": "I1999",
+        "title": "A tracked file a hook regenerates does not refuse a task that never touched it",
+        "description": "Let a repository declare the tracked paths its own tooling rewrites, have `check` and `finish` judge them as the machine's and not the worker's, and make the scope finding and the note finding say what settles them before `finish` refuses.",
+        "path": ".ai/repo/project/issues/I1999.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3136
+      },
+      {
         "uri": "majordomus://issue/I2000",
         "kind": "issue",
         "identity": "I2000",
@@ -87834,6 +87889,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2091
+      },
+      {
+        "uri": "majordomus://issue/I2059",
+        "kind": "issue",
+        "identity": "I2059",
+        "title": "A rebuild never replaces the executable a live lease names",
+        "description": "Stop an entry point from rebuilding the executable in place under a running shared server, and make the server that follows a superseded one bind the address the old one was serving, or say that it did not.",
+        "path": ".ai/repo/project/issues/I2059.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3003
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -96752,7 +96818,7 @@
       "identity": [
         "id"
       ],
-      "objects": 262
+      "objects": 268
     },
     {
       "name": "knowledge",
