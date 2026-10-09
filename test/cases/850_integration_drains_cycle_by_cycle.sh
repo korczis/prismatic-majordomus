@@ -85,7 +85,7 @@ echo FAILURE > "$STATE/ci/$H4"
 
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
-echo "\$*" >> "$STATE/log"
+[ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
 case " \$* " in *" --admin "*) echo "ADMIN" >> "$STATE/log"; exit 1 ;; esac
 case "\$1 \$2" in
   "repo view") echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
@@ -122,12 +122,17 @@ case "\$1 \$2" in
     case " \$* " in
       # the refresh's read of a declared dependency that is no longer open (ADR 0101: it is
       # satisfied by a merge alone), as the forge's JSON
-      *" --json number,state,headRefOid,body "*)
+      *" --json number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles "*)
         [ -f "$STATE/merged-\$3" ] || { echo "UNEXPECTED" >> "$STATE/log"; exit 1; }
-        printf '{"number":%s,"state":"MERGED","headRefOid":"%s","body":""}\n' \
+        printf '{"number":%s,"state":"MERGED","headRefOid":"%s","body":"","mergeCommit":null,"baseRefName":"master","author":{"login":"someone"},"isCrossRepository":false,"changedFiles":1}\n' \
           "\$3" "\$(git -C "$ORIGIN" rev-parse "refs/pull/\$3/head")" ;;
       *) if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
     esac ;;
+  # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
+  # this repository, and no pull request mentions it. The list is this forge's own, unlogged
+  "api graphql")
+    nodes="\$(DECLARATIONS=1 "\$0" pr list --state open | grep -o '"number":[0-9]*' | sed 's/.*/{&,"authorAssociation":"OWNER","isCrossRepository":false,"timelineItems":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[]}}/' | paste -sd, -)"
+    printf '{"data":{"repository":{"pullRequests":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[%s]}}}}\n' "\$nodes" ;;
   *) echo "UNEXPECTED" >> "$STATE/log"; exit 1 ;;
 esac
 EOF

@@ -77,6 +77,13 @@ older than its sources gets that same line and no runtime — the adapter sets
 `MAJORDOMUS_RUNTIME=off` — because a server started from stale code answers with a tree that
 is no longer there.
 
+The server entry starts binds loopback, unless this machine's environment names another
+interface in `MAJORDOMUS_HTTP_HOST`. Entry inherits that variable and passes it on; it does
+not read it, and `.envrc` does not set it. Because `.envrc.local` is sourced after the one
+call above, a value written there arrives too late for the server that call starts: it
+belongs in the shell's own startup file
+([`MCP.md`](@/docs/mcp.md#the-machine-names-the-interface)).
+
 The rules that hold this shut are `project.envrc-is-an-adapter`
 ([`.ai/repo/rules/project/envrc-is-an-adapter.v2.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/envrc-is-an-adapter.v2.md)) —
 a file a shell evaluates on entering the repository resolves the tool and makes exactly one

@@ -668,6 +668,11 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
     if event.actor.is_empty() {
         event.actor = actor();
     }
+    // The detail is as often relayed as composed: the standard error of a `git` or a `gh`
+    // that failed, naming the remote in whatever form it was configured. The trail is
+    // served, so a credential in that URL is removed here, at the one place every event
+    // passes, rather than trusted to have been anonymised by the tool that printed it.
+    event.detail = crate::session::public_text(&event.detail);
     if event.class.is_none() {
         // every failed act names its class, decided once, here, from what it says
         event.class = match event.action {
@@ -2257,12 +2262,16 @@ pub struct CleanupItem {
     pub action: String,
 }
 
-/// Close pull requests whose work is provably on master already, and nothing else.
+/// Close pull requests whose work is provably on master already, or that an authorised
+/// successor which landed replaces, and nothing else.
 ///
-/// Only [`PullRequestDisposition::Redundant`] — the head is an ancestor of master, merging it
-/// changes no file, or every commit is on master as an equal patch — and
-/// [`PullRequestDisposition::Superseded`] — a declared successor landed, and the comment names
-/// it — qualify. A pull request whose merge would change only derived
+/// Four grounds, and no other. Three are [`PullRequestDisposition::Redundant`]: the head is an
+/// ancestor of master, merging it changes no file, or every commit is on master as an equal
+/// patch. The fourth is [`PullRequestDisposition::Superseded`]: a successor was declared for
+/// it by an owner, member or collaborator in a pull request of this repository, git finds
+/// that successor's head or merge commit in master, and the comment names it. A declaration
+/// by anyone else closes nothing, and neither does a pull request whose cross-references were
+/// not read whole. A pull request whose merge would change only derived
 /// artifacts ([`PullRequestDisposition::PossiblyRedundant`]) is listed for a person and never closed:
 /// "the generated output differs" is not proof that the authored change landed. Age,
 /// shared paths and similar titles are not evidence of anything here. The queue is
@@ -2289,7 +2298,8 @@ pub fn cleanup(
 }
 
 /// What cleanup does with a pull request of this disposition: [`WOULD_CLOSE`] for what is
-/// provably on master already or superseded by a successor that landed,
+/// provably on master already (ancestry, a no-change merge, every patch upstream) or
+/// superseded by an authorised successor that landed,
 /// [`LEFT_FOR_A_PERSON`] for weak evidence and for what a person marked obsolete (owner
 /// decision D3), and nothing for every other disposition. The one table both the act and
 /// the plan read.
@@ -2330,7 +2340,10 @@ pub const LEFT_FOR_A_PERSON: &str = "left_for_a_person";
 /// Close one superseded pull request, as a merge is taken: observed again first, closed only
 /// if the second decision still says superseded against the same master and head, recorded
 /// before the forge hears of it, and refused by the forge side if the head moved meanwhile.
-/// The comment names the reason that decided it, the base, the master and the head.
+/// The comment names the reason that decided it, the base, the master and the head. One
+/// closed on git's proof (ancestry, a no-change merge, every patch upstream) is told its work
+/// is already on the base; one closed because an authorised successor landed is told which
+/// successor, and is not told its own work is there.
 fn close_superseded(
     root: &Path,
     integrator: &mut dyn Integrator,
@@ -2366,14 +2379,23 @@ fn close_superseded(
         .reasons
         .first()
         .map_or(String::from("superseded"), ToString::to_string);
-    let body = format!(
-        "Closed by `majordomus prs cleanup`: its work is already on `{}`.\n\nEvidence: {deciding} (master {}, head {}).",
-        second.base, a.evaluated_against.master_sha, a.evaluated_against.head_sha
+    let evidence = format!(
+        "Evidence: {deciding} (master {}, head {}).",
+        a.evaluated_against.master_sha, a.evaluated_against.head_sha
     );
-    // a declared successor that landed is named first: the reader learns where the work went
+    let base = &second.base;
+    // a declared successor that landed is named first: the reader learns where the work went.
+    // Such a closure rests on the declaration and on git finding the successor in the base,
+    // and does not claim the closed work itself is there.
     let body = match a.superseded_by {
-        Some(by) => format!("Superseded by #{by}, which landed.\n\n{body}"),
-        None => body,
+        Some(by) => format!(
+            "Superseded by #{by}, which landed.\n\nClosed by `majordomus prs cleanup`: #{by} \
+             was declared its replacement by someone this repository lets declare one, and \
+             `{base}` contains it.\n\n{evidence}"
+        ),
+        None => format!(
+            "Closed by `majordomus prs cleanup`: its work is already on `{base}`.\n\n{evidence}"
+        ),
     };
     // on the trail before the forge hears of it: a closure the trail cannot name is not made,
     // and nothing after it is attempted
@@ -2697,6 +2719,7 @@ mod obsolete_and_plan_tests {
                     "body": "", "statusCheckRollup": [], "reviewDecision": "",
                     "autoMergeRequest": null, "isCrossRepository": false
                 }))
+                .map(forge::read_whole)
             })
             .collect();
         let obs = ForgeObservation {

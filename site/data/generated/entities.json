@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 84,
+      "count": 87,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 161,
+      "count": 163,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 84
+      "count": 87
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 235
+      "count": 239
     },
     {
       "kind": "command",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 324
+      "count": 329
     },
     {
       "kind": "domain",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 269
+      "count": 275
     },
     {
       "kind": "knowledge",
@@ -229,7 +229,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 14
+      "count": 17
     },
     {
       "kind": "rule",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 161
+      "count": 163
     },
     {
       "kind": "scope",
@@ -253,7 +253,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 84
+      "count": 85
     },
     {
       "kind": "skill",
@@ -261,7 +261,7 @@
       "route": "/skills/",
       "title": null,
       "reason": null,
-      "count": 6
+      "count": 7
     },
     {
       "kind": "taxonomy",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 377
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -413,6 +413,13 @@
           "label": "adr-0047",
           "kind": "adr",
           "route": "/adrs/adr-0047/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0110",
+          "kind": "adr",
+          "route": "/adrs/adr-0110/",
           "external": false
         }
       ]
@@ -824,6 +831,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0052/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0105",
+          "kind": "adr",
+          "route": "/adrs/adr-0105/",
+          "external": false
         }
       ]
     },
@@ -841,7 +855,15 @@
       ],
       "source": ".ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0123",
+          "kind": "adr",
+          "route": "/adrs/adr-0123/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2415,7 +2437,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0110",
+          "kind": "adr",
+          "route": "/adrs/adr-0110/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3309,6 +3339,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0047/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0123",
+          "kind": "adr",
+          "route": "/adrs/adr-0123/",
+          "external": false
         }
       ]
     },
@@ -3863,6 +3900,13 @@
           "label": "adr-0098",
           "kind": "adr",
           "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0105",
+          "kind": "adr",
+          "route": "/adrs/adr-0105/",
           "external": false
         }
       ]
@@ -5760,9 +5804,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.integration-follows-the-current-master@2",
+          "label": "project.integration-follows-the-current-master@3",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-2/",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
           "external": false
         },
         {
@@ -5984,6 +6028,89 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0105",
+      "identity": "adr-0105",
+      "slug": "adr-0105",
+      "cockpit": "/cockpit/objects/adr/adr-0105",
+      "title": "A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "continuity",
+        "handover",
+        "devices",
+        "security"
+      ],
+      "source": ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/continuity/lineage.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/continuity/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/continuity/record.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/continuity/store.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0014",
+          "kind": "adr",
+          "route": "/adrs/adr-0014/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/CONTINUITY.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.session-continuity-is-portable@1",
+          "kind": "rule",
+          "route": "/rules/project-session-continuity-is-portable-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/821_a_session_moves_between_machines.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0107",
       "identity": "adr-0107",
       "slug": "adr-0107",
@@ -6064,6 +6191,96 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0110",
+      "identity": "adr-0110",
+      "slug": "adr-0110",
+      "cockpit": "/cockpit/objects/adr/adr-0110",
+      "title": "MCP says nothing its capability does not",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "mcp",
+        "projections",
+        "capabilities",
+        "safety"
+      ],
+      "source": ".ai/repo/adrs/0110-mcp-says-nothing-its-capability-does-not.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/mcp.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mcp/protocol.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0040",
+          "kind": "adr",
+          "route": "/adrs/adr-0040/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MCP.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.operation-transport-parity@1",
+          "kind": "rule",
+          "route": "/rules/project-operation-transport-parity-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/mcp_prose.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "adr",
@@ -6348,6 +6565,66 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0123",
+      "identity": "adr-0123",
+      "slug": "adr-0123",
+      "cockpit": "/cockpit/objects/adr/adr-0123",
+      "title": "The worker is asked for a handover before the context window fills, by a provider mod the policy switches",
+      "status": "proposed",
+      "tags": [
+        "session",
+        "handover",
+        "provider"
+      ],
+      "source": ".ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/mods/claude-code/majordomus-handover/hooks/register.ts",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0015",
+          "kind": "adr",
+          "route": "/adrs/adr-0015/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/claims/session-lifecycle.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -9470,9 +9747,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.integration-follows-the-current-master@2",
+          "label": "project.integration-follows-the-current-master@3",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-2/",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
           "external": false
         }
       ]
@@ -10201,6 +10478,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.packs-carry-only-sources@1",
+          "kind": "rule",
+          "route": "/rules/project-packs-carry-only-sources-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.providers-are-data@1",
           "kind": "rule",
           "route": "/rules/project-providers-are-data-1/",
@@ -10448,6 +10732,13 @@
           "label": "project.execution-state-is-authoritative@1",
           "kind": "rule",
           "route": "/rules/project-execution-state-is-authoritative-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.session-continuity-is-portable@1",
+          "kind": "rule",
+          "route": "/rules/project-session-continuity-is-portable-1/",
           "external": false
         }
       ]
@@ -11375,10 +11666,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.integration-follows-the-current-master@2",
-      "identity": "project.integration-follows-the-current-master@2",
-      "slug": "project-integration-follows-the-current-master-2",
-      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
+      "id": "majordomus://rule/project.integration-follows-the-current-master@3",
+      "identity": "project.integration-follows-the-current-master@3",
+      "slug": "project-integration-follows-the-current-master-3",
+      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-3",
       "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
       "status": "active",
       "tags": [
@@ -11389,7 +11680,7 @@
         "governance",
         "evidence"
       ],
-      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
+      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v3.md",
       "references": [
         {
           "edge": "depends_on",
@@ -11542,6 +11833,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0110",
+          "kind": "adr",
+          "route": "/adrs/adr-0110/",
           "external": false
         },
         {
@@ -11797,9 +12095,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.integration-follows-the-current-master@2",
+          "label": "project.integration-follows-the-current-master@3",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-2/",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
           "external": false
         },
         {
@@ -12368,6 +12666,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.packs-carry-only-sources@1",
+          "kind": "rule",
+          "route": "/rules/project-packs-carry-only-sources-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.the-lease-is-read-once@1",
           "kind": "rule",
           "route": "/rules/project-the-lease-is-read-once-1/",
@@ -12606,6 +12911,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0028/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0110",
+          "kind": "adr",
+          "route": "/adrs/adr-0110/",
+          "external": false
         }
       ]
     },
@@ -12648,6 +12960,39 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.packs-carry-only-sources@1",
+      "identity": "project.packs-carry-only-sources@1",
+      "slug": "project-packs-carry-only-sources-1",
+      "cockpit": "/cockpit/objects/rule/project-packs-carry-only-sources-1",
+      "title": "A pack that leaves the machine carries only committed sources",
+      "status": "active",
+      "tags": [
+        "archive",
+        "privacy",
+        "review",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/packs-carry-only-sources.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-machine-paths@1",
+          "kind": "rule",
+          "route": "/rules/project-no-machine-paths-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -13363,6 +13708,40 @@
       "source": ".ai/repo/rules/project/scope-is-declared.v1.md",
       "references": [],
       "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.session-continuity-is-portable@1",
+      "identity": "project.session-continuity-is-portable@1",
+      "slug": "project-session-continuity-is-portable-1",
+      "cockpit": "/cockpit/objects/rule/project-session-continuity-is-portable-1",
+      "title": "Session continuity is portable, and what is portable is checked",
+      "status": "active",
+      "tags": [
+        "continuity",
+        "handover",
+        "devices",
+        "security"
+      ],
+      "source": ".ai/repo/rules/project/session-continuity-is-portable.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.diagnostics-decide-the-exit@1",
+          "kind": "rule",
+          "route": "/rules/project-diagnostics-decide-the-exit-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0105",
+          "kind": "adr",
+          "route": "/adrs/adr-0105/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",

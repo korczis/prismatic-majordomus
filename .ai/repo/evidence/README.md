@@ -25,8 +25,9 @@ A claim's proof is the join of the two, and it is derived on every read — neve
 down. `majordomus evidence show` is the whole matrix; `docs/EVIDENCE.md` is the reference.
 
 The ledger is written by `majordomus evidence record`, which reads what a run already
-wrote (`MJ_TEST_REPORT=<file> bash test/run.sh`, and `cargo test`'s output) and stamps it
-with the provenance the run itself did not carry. It is never edited by hand to make a
+wrote (`MJ_TEST_REPORT=<file> bash test/run.sh`, and `cargo test`'s output) and carries the
+measurement the run made of its own checkout (`majordomus evidence stamp`) into every
+execution; a report recorded without one is recorded with its tree unknown. It is never edited by hand to make a
 gate pass: a result nobody measured is exactly the failure this directory exists to
 prevent, and unlike a number in prose it is one line in a diff.
 

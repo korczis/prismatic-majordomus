@@ -104,7 +104,20 @@ pub fn latest(root: &Path) -> Result<PathBuf, String> {
                 // nothing outside it is ever published.
                 && p.canonicalize().is_ok_and(|real| real.starts_with(&real_dir))
         })
-        .max()
+        // The name's timestamp is the moment the record describes, to the second; two
+        // records written inside one second differ there only by a random suffix, which
+        // orders nothing. Within one second the later write is the newer record — the
+        // tie the shell resolver breaks by ledger position.
+        .max_by_key(|p| {
+            let name = p
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default()
+                .to_string();
+            let second = name.split("--").next().unwrap_or_default().to_string();
+            let written = std::fs::metadata(p).and_then(|m| m.modified()).ok();
+            (second, written, name)
+        })
         .ok_or_else(|| format!("no handover record under {}", dir.display()))
 }
 
@@ -299,9 +312,68 @@ fn repository_id(root: &Path) -> Result<String, String> {
 /// assert!(std::fs::read_to_string(&written).unwrap().contains("worktree: mesh:"));
 /// ```
 pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> {
+    write_record(
+        root,
+        &view.handover,
+        &Provenance {
+            transport: "mesh",
+            marker_key: "mesh_handover",
+            marker: view.id.clone(),
+            origin_key: "mesh_origin",
+            origin: view.runtime.clone(),
+            working_tree: None,
+            changed_files: Vec::new(),
+        },
+    )
+}
+
+/// Where a handover written into this checkout came from, and what its front matter says
+/// about the source state it was written against. The mesh and a continuity record are the
+/// two transports that bring one; both write through [`write_record`], so a handover that
+/// arrived from another machine has one shape whichever way it travelled.
+#[derive(Debug, Clone)]
+pub(crate) struct Provenance {
+    /// `mesh` or `continuity`: the file-name segment and the prefix of owner and worktree.
+    pub transport: &'static str,
+    /// The front-matter key whose value identifies the handover on its transport; a record
+    /// holding `<marker_key>: <marker>` already is this handover, which is what makes
+    /// writing it twice write one file.
+    pub marker_key: &'static str,
+    /// That value (32 hex).
+    pub marker: String,
+    /// The front-matter key naming where it came from.
+    pub origin_key: &'static str,
+    /// Where it came from: a runtime id or a device node id (hex).
+    pub origin: String,
+    /// `clean` or `dirty` at the origin when the transport carries it. `None` writes
+    /// `clean`, as the mesh, which does not carry it, always has.
+    pub working_tree: Option<&'static str>,
+    /// The repository-relative paths that differed from HEAD at the origin.
+    pub changed_files: Vec<String>,
+}
+
+/// Write a handover that arrived from elsewhere into `root`'s handovers directory, or
+/// return the record that already holds it. See [`materialize`] for why every value is
+/// written defensively.
+pub(crate) fn write_record(
+    root: &Path,
+    h: &HandoverBody,
+    from: &Provenance,
+) -> Result<PathBuf, String> {
     let dir = directory(root);
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-    let marker = format!("mesh_handover: {}", view.id);
+    let hexish = |v: &str| {
+        v.chars()
+            .filter(char::is_ascii_hexdigit)
+            .take(64)
+            .collect::<String>()
+    };
+    let marker_value = hexish(&from.marker);
+    let origin = hexish(&from.origin.replace('-', ""));
+    if marker_value.len() < 16 {
+        return Err("a handover from elsewhere is identified by at least 16 hex".into());
+    }
+    let marker = format!("{}: {marker_value}", from.marker_key);
     if let Ok(entries) = std::fs::read_dir(&dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -315,7 +387,15 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
     // Everything below comes from another runtime. Validation refused multi-line values at
     // ingest; this writes defensively anyway, because a file name and a front matter built
     // from a peer's words are exactly where a path or a key would be smuggled.
-    let h = &view.handover;
+    let origin_label = if from.transport == "mesh" {
+        // the mesh's runtime id keeps its dash, as it always has
+        one_line(&from.origin)
+            .chars()
+            .filter(|c| c.is_ascii_hexdigit() || *c == '-')
+            .collect()
+    } else {
+        origin
+    };
     let branch = one_line(h.branch.as_deref().unwrap_or("DETACHED"));
     let head = one_line(h.head.as_deref().unwrap_or("NONE"));
     let created = one_line(
@@ -331,13 +411,21 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
         one_line(h.task.as_deref().unwrap_or("none"))
     ));
     text.push_str("profile: none\n");
-    text.push_str(&format!("owner: \"mesh:{}\"\n", view.runtime));
+    let transport = from.transport;
+    text.push_str(&format!("owner: \"{transport}:{origin_label}\"\n"));
     text.push_str(&format!("repository_id: {}\n", repository_id(root)?));
-    text.push_str(&format!("worktree: mesh:{}\n", view.runtime));
+    text.push_str(&format!("worktree: {transport}:{origin_label}\n"));
     text.push_str(&format!(
-        "branch: {branch}\nhead: {head}\nworking_tree: clean\nchanged_files:\n"
+        "branch: {branch}\nhead: {head}\nworking_tree: {}\nchanged_files:\n",
+        from.working_tree.unwrap_or("clean")
     ));
-    text.push_str(&format!("{marker}\nmesh_origin: {}\n", view.runtime));
+    for path in &from.changed_files {
+        let path = one_line(path);
+        if !path.is_empty() && !path.starts_with('/') && !path.split('/').any(|c| c == "..") {
+            text.push_str(&format!("  - {path}\n"));
+        }
+    }
+    text.push_str(&format!("{marker}\n{}: {origin_label}\n", from.origin_key));
     if let Some(issue) = &h.issue {
         text.push_str(&format!("issue: \"{}\"\n", one_line(issue)));
     }
@@ -376,8 +464,8 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
         head7 = "0000000".into();
     }
     let name = format!(
-        "{compact}--mesh--{branch_key}--{head7}--{}.md",
-        &view.id[..16]
+        "{compact}--{transport}--{branch_key}--{head7}--{}.md",
+        &marker_value[..16]
     );
     let path = dir.join(&name);
     if name.contains('/') || path.parent() != Some(dir.as_path()) {
@@ -386,7 +474,7 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
             dir.display()
         ));
     }
-    let tmp = dir.join(format!(".tmp.mesh.{}", &view.id[..16]));
+    let tmp = dir.join(format!(".tmp.{transport}.{}", &marker_value[..16]));
     std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", tmp.display()))?;
     #[cfg(unix)]
     {
@@ -403,6 +491,38 @@ mod tests {
     use crate::mesh::journal::StreamId;
 
     const RECORD: &str = "---\nschema_version: 1\ncreated_at: 2026-09-15T10:00:00Z\ntask_id: t-1\nprofile: implementation\nowner: \"k\"\nrepository_id: /somewhere/.git\nworktree: /somewhere\nbranch: feature/x\nhead: abcdef1234\nworking_tree: dirty\nchanged_files:\n  - apps/x.rs\n---\n\n# Objective\nship\n# Current State\nhalf\n# Next Action\nrest\n";
+
+    #[test]
+    fn two_records_of_one_second_resolve_to_the_later_write_not_the_larger_suffix() {
+        let root = tempfile::tempdir().unwrap();
+        let dir = directory(root.path());
+        std::fs::create_dir_all(&dir).unwrap();
+        let earlier = dir.join("20261004T010000Z--b--0000000--ffff.md");
+        let later = dir.join("20261004T010000Z--b--0000000--0000.md");
+        std::fs::write(&earlier, "---\n---\nfirst").unwrap();
+        std::fs::write(&later, "---\n---\nsecond").unwrap();
+        let at = std::time::SystemTime::now();
+        let set = |p: &Path, t: std::time::SystemTime| {
+            std::fs::File::options()
+                .write(true)
+                .open(p)
+                .unwrap()
+                .set_modified(t)
+                .unwrap();
+        };
+        set(&earlier, at - std::time::Duration::from_millis(500));
+        set(&later, at);
+        assert_eq!(
+            latest(root.path()).unwrap(),
+            later,
+            "the suffix orders nothing"
+        );
+        // and a record of a later second still wins whatever its write time
+        let next = dir.join("20261004T010001Z--b--0000000--0000.md");
+        std::fs::write(&next, "---\n---\nthird").unwrap();
+        set(&next, at - std::time::Duration::from_secs(60));
+        assert_eq!(latest(root.path()).unwrap(), next);
+    }
 
     #[test]
     fn a_hostile_handover_is_written_inside_the_directory_with_no_injected_keys() {
@@ -519,5 +639,57 @@ mod tests {
         assert!(front["repository_id"].ends_with(".git"));
         assert!(text.contains("# Next Action"));
         assert_eq!(latest(&root).unwrap(), first);
+    }
+
+    /// A handover that arrived from elsewhere is written with what its transport says about
+    /// the source it was written against — and with nothing of it that names a place outside
+    /// the repository.
+    #[test]
+    fn a_record_from_elsewhere_carries_its_source_state_and_only_repository_paths() {
+        let w = crate::continuity::tests_support::World::new();
+        let root = w.root("a");
+        let body = "# Objective\nship\n\n# Next Action\nrest\n".to_string();
+        let h = HandoverBody {
+            id: HandoverBody::digest_of(&body),
+            task: None,
+            issue: None,
+            milestone: None,
+            branch: Some("feature/x".into()),
+            head: Some("abcdef1234".into()),
+            created_at: Some("2026-10-03T12:00:00Z".into()),
+            name: None,
+            body,
+        };
+        let from = |marker: &str| Provenance {
+            transport: "continuity",
+            marker_key: "continuity_record",
+            marker: marker.into(),
+            origin_key: "continuity_device",
+            origin: "b".repeat(32),
+            working_tree: Some("dirty"),
+            changed_files: vec![
+                "lib/a.rs".into(),
+                "/etc/passwd".into(),
+                "../outside".into(),
+                String::new(),
+            ],
+        };
+        let err = write_record(&root, &h, &from("abc")).unwrap_err();
+        assert!(err.contains("at least 16 hex"), "{err}");
+
+        let written = write_record(&root, &h, &from(&"a".repeat(32))).unwrap();
+        let (front, text) = read(&written).unwrap();
+        assert_eq!(front.get("working_tree").map(String::as_str), Some("dirty"));
+        assert!(text.starts_with("# Objective"));
+        let whole = std::fs::read_to_string(&written).unwrap();
+        assert!(
+            whole.contains("changed_files:\n  - lib/a.rs\ncontinuity_record: "),
+            "{whole}"
+        );
+        // writing it twice writes one file
+        assert_eq!(
+            write_record(&root, &h, &from(&"a".repeat(32))).unwrap(),
+            written
+        );
     }
 }

@@ -116,7 +116,10 @@ run() { # <case-name>
   local word=ok
   bash "test/cases/$1.sh" || word=FAIL
   printf '%s\t%s\t0\tserial\n' "$1" "$word" > "$W/report.tsv"
-  "$RB" evidence record --suite "$W/report.tsv" >/dev/null
+  # measured as the run left it, the way a runner stamps its own report: a record with no
+  # stamp carries an unknown tree, and an unknown tree is never current evidence
+  "$RB" evidence stamp --producer suite --report "$W/report.tsv" --out "$W/report.provenance.json" >/dev/null
+  "$RB" evidence record --suite "$W/report.tsv" --provenance "suite=$W/report.provenance.json" >/dev/null
   commit "record $1: $word"
 }
 

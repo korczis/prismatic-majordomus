@@ -121,6 +121,10 @@
           "type": "boolean",
           "description": "Write a derived continuation record when an episode ends. Until ADR 0052 this happened only while a task was still active, so a repository whose last task had been handed over stopped writing the one record a future worker resumes from."
         },
+        "handover_on_fill": {
+          "type": "boolean",
+          "description": "Install the provider mod that asks the worker for a continuation record when the context window nears its fill line, while there is still room for the writing turn. PreCompact derives a checkpoint because the worker cannot be asked at that moment; this asks before it. `capture install` converges on the value: only true installs it, and anything else removes a mod it wrote. Absent means off, because the mod writes into the adopter's own .claude/ tree and an absent key is not consent to that; the skeleton declares true (ADR 0123)."
+        },
         "knowledge_on_end": {
           "type": "boolean",
           "description": "Derive the knowledge an episode produced into candidate records under the tracked knowledge section as the episode closes, on every close path: the ledger lines it stamped are the evidence, and they are about to stop being reachable. Deterministic and without a model; a second run over the same evidence writes nothing (ADR 0091). Absent means on."

@@ -1,7 +1,7 @@
 +++
 title = "Pack the repository for an outside reviewer"
 description = "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
-weight = 4
+weight = 5
 [extra]
 id = "pack-for-review"
 status = "active"
@@ -22,7 +22,9 @@ brief that makes the review answerable.
 
 When the review happens outside the repository: a second model in another tool, an external
 auditor, a person without clone access. A reviewer who can read the checkout uses
-`repo-review` directly and needs no pack.
+`repo-review` directly and needs no pack. A ChatGPT project searches text files rather than
+archives, so for one the `pack-for-chatgpt` skill writes the same selection as verified,
+token-bounded shards.
 
 ## Procedure
 

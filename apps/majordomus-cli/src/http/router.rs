@@ -682,6 +682,11 @@ impl Router {
                 // tree, and a reader can only say so if the server names its own
                 "commit": crate::COMMIT,
                 "dirty": crate::DIRTY,
+                // and whether that code still exists: null while the file this process was
+                // started from is the file on disk, the reason once it has been replaced —
+                // the same answer `health.ready` gives, so a client reading only this
+                // document can tell a current server from one serving yesterday's code
+                "stale": crate::lease::serving_replaced_code(),
                 "description": crate::about::SUMMARY,
                 "reference": crate::about::REFERENCE_URL,
                 // the repository's name and not its path: this answer is served to whoever
@@ -893,10 +898,21 @@ impl Router {
         tracing::debug!(capability_id = %c.id, route = %format!("{} {}", req.method, req.path), "http");
         match ctx.execute(c.id.as_str(), input) {
             Ok(v) => json_response(200, &v),
-            Err(CapabilityError::InvalidInput(m)) => error_response(400, "invalid_input", &m),
-            Err(CapabilityError::NotFound(m)) => error_response(404, "not_found", &m),
-            Err(CapabilityError::Refused(m)) => error_response(422, "refused", &m),
-            Err(CapabilityError::Internal(m)) => error_response(500, "internal", &m),
+            // the word is the error's own, the same one an MCP tool result carries; only
+            // the status is this transport's
+            Err(e) => {
+                let status = match &e {
+                    CapabilityError::InvalidInput(_) => 400,
+                    CapabilityError::NotFound(_) => 404,
+                    CapabilityError::Refused(_) => 422,
+                    CapabilityError::Internal(_) => 500,
+                };
+                let (CapabilityError::InvalidInput(m)
+                | CapabilityError::NotFound(m)
+                | CapabilityError::Refused(m)
+                | CapabilityError::Internal(m)) = &e;
+                error_response(status, e.code(), m)
+            }
         }
     }
 }

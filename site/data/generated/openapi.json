@@ -11,7 +11,14 @@
     "op-commit-plan": "docs/api/commit/",
     "op-commit-scopes": "docs/api/commit/",
     "op-commit-validate": "docs/api/commit/",
+    "op-continuity-device": "docs/api/continuity/",
+    "op-continuity-plan": "docs/api/continuity/",
+    "op-continuity-publish": "docs/api/continuity/",
+    "op-continuity-records": "docs/api/continuity/",
+    "op-continuity-resume": "docs/api/continuity/",
     "op-continuity-state": "docs/api/continuity/",
+    "op-continuity-status": "docs/api/continuity/",
+    "op-continuity-sync": "docs/api/continuity/",
     "op-convergence-report": "docs/api/convergence/",
     "op-dashboard-overview": "docs/api/dashboard/",
     "op-delivery-feature": "docs/api/delivery/",
@@ -86,6 +93,7 @@
     "op-lifecycle-providers": "docs/api/lifecycle/",
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
+    "op-mcp-projection": "docs/api/mcp/",
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
@@ -115,6 +123,8 @@
     "op-objects-verify": "docs/api/objects/",
     "op-obligations-closure": "docs/api/obligations/",
     "op-obligations-vocabulary": "docs/api/obligations/",
+    "op-pack-plan": "docs/api/pack/",
+    "op-pack-verify": "docs/api/pack/",
     "op-peers-announce": "docs/api/peers/",
     "op-peers-list": "docs/api/peers/",
     "op-perf-counters": "docs/api/perf/",
@@ -301,10 +311,10 @@
     "schema-CommitTrailer": "docs/api/commit/",
     "schema-CommitVerdict": "docs/api/commit/",
     "schema-Comparison": "docs/api/objects/",
-    "schema-CompileInput": "docs/api/shared/",
     "schema-CompiledContext": "docs/api/devcontext/",
     "schema-CompilerPolicy": "docs/api/devcontext/",
     "schema-Completion": "docs/api/gates/",
+    "schema-Component": "docs/api/continuity/",
     "schema-ConclusionView": "docs/api/reasoning/",
     "schema-Concurrency": "docs/api/deploy/",
     "schema-ConditionState": "docs/api/intents/",
@@ -364,6 +374,9 @@
     "schema-DevTaskPosition": "docs/api/devtask/",
     "schema-DevTaskSynchronisation": "docs/api/devtask/",
     "schema-DevelopmentStage": "docs/api/delivery/",
+    "schema-Device": "docs/api/continuity/",
+    "schema-DeviceInput": "docs/api/continuity/",
+    "schema-DeviceView": "docs/api/continuity/",
     "schema-Diagnosis": "docs/api/why/",
     "schema-Diagnostic": "docs/api/shared/",
     "schema-DiagnosticCode": "docs/api/worktree/",
@@ -389,6 +402,8 @@
     "schema-DomainRef": "docs/api/product/",
     "schema-DoneQuestion": "docs/api/gates/",
     "schema-DriftedObject": "docs/api/objects/",
+    "schema-DropReason": "docs/api/pack/",
+    "schema-DroppedFile": "docs/api/pack/",
     "schema-DryRunProof": "docs/api/integration/",
     "schema-EconomicsCheck": "docs/api/economics/",
     "schema-EconomicsCheckReport": "docs/api/economics/",
@@ -466,9 +481,10 @@
     "schema-ExecutableIdentity": "docs/api/server/",
     "schema-ExecutionConcurrency": "docs/api/capabilities/",
     "schema-ExecutionDiagnostic": "docs/api/executions/",
-    "schema-ExecutionEffect": "docs/api/capabilities/",
+    "schema-ExecutionEffect": "docs/api/shared/",
     "schema-ExecutionError": "docs/api/executions/",
     "schema-ExecutionEvent": "docs/api/executions/",
+    "schema-ExecutionHints": "docs/api/mcp/",
     "schema-ExecutionId": "docs/api/executions/",
     "schema-ExecutionLinks": "docs/api/executions/",
     "schema-ExecutionList": "docs/api/executions/",
@@ -477,7 +493,6 @@
     "schema-ExecutionView": "docs/api/executions/",
     "schema-ExecutorWait": "docs/api/integration/",
     "schema-Exemption": "docs/api/quality/",
-    "schema-ExplainInput": "docs/api/shared/",
     "schema-Explanation": "docs/api/devcontext/",
     "schema-Exposure": "docs/api/capabilities/",
     "schema-FacetValue": "docs/api/why/",
@@ -620,6 +635,10 @@
     "schema-LeftBranchReport": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
+    "schema-LineState": "docs/api/continuity/",
+    "schema-LineSync": "docs/api/continuity/",
+    "schema-LineSyncView": "docs/api/continuity/",
+    "schema-LineView": "docs/api/continuity/",
     "schema-LinkRefusal": "docs/api/mesh/",
     "schema-LinkReply": "docs/api/mesh/",
     "schema-LinkState": "docs/api/mesh/",
@@ -633,8 +652,18 @@
     "schema-Materiality": "docs/api/reasoning/",
     "schema-Matrix": "docs/api/product/",
     "schema-MatrixRow": "docs/api/product/",
+    "schema-McpClient": "docs/api/mcp/",
+    "schema-McpClientStanding": "docs/api/mcp/",
+    "schema-McpEffectCount": "docs/api/mcp/",
     "schema-McpExposure": "docs/api/capabilities/",
+    "schema-McpFinding": "docs/api/mcp/",
+    "schema-McpProjection": "docs/api/mcp/",
     "schema-McpResource": "docs/api/capabilities/",
+    "schema-McpResourceSummary": "docs/api/mcp/",
+    "schema-McpServerIdentity": "docs/api/mcp/",
+    "schema-McpServing": "docs/api/mcp/",
+    "schema-McpToolEntry": "docs/api/mcp/",
+    "schema-McpTransportEntry": "docs/api/mcp/",
     "schema-Measured": "docs/api/design/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
@@ -697,6 +726,9 @@
     "schema-Overlap": "docs/api/peers/",
     "schema-OverlapKind": "docs/api/integration/",
     "schema-OverlapPath": "docs/api/peers/",
+    "schema-PackFinding": "docs/api/pack/",
+    "schema-PackPlan": "docs/api/pack/",
+    "schema-PackVerdict": "docs/api/pack/",
     "schema-ParallelSet": "docs/api/devtask/",
     "schema-ParameterView": "docs/api/executions/",
     "schema-PassedOver": "docs/api/integration/",
@@ -718,6 +750,7 @@
     "schema-PlanFingerprint": "docs/api/commit/",
     "schema-PlanIssue": "docs/api/plan/",
     "schema-PlanIssueList": "docs/api/plan/",
+    "schema-PlanItem": "docs/api/continuity/",
     "schema-PlanMilestone": "docs/api/plan/",
     "schema-PlanMilestoneProgress": "docs/api/plan/",
     "schema-PlanNextIssue": "docs/api/plan/",
@@ -725,6 +758,7 @@
     "schema-PlanProject": "docs/api/plan/",
     "schema-PlanRecord": "docs/api/plan/",
     "schema-PlanRoadmap": "docs/api/plan/",
+    "schema-PlanStatus": "docs/api/continuity/",
     "schema-PlanStatusReport": "docs/api/plan/",
     "schema-PlanTransition": "docs/api/plan/",
     "schema-PlanTransitionInput": "docs/api/plan/",
@@ -737,6 +771,7 @@
     "schema-Pointer": "docs/api/lifecycle/",
     "schema-PointerLayout": "docs/api/lifecycle/",
     "schema-Port": "docs/api/deploy/",
+    "schema-Position": "docs/api/continuity/",
     "schema-Positive": "docs/api/deploy/",
     "schema-Preflight": "docs/api/environment/",
     "schema-PreflightCheck": "docs/api/environment/",
@@ -770,6 +805,8 @@
     "schema-PublicApiQuality": "docs/api/quality/",
     "schema-PublicIdentity": "docs/api/mesh/",
     "schema-Publication": "docs/api/delivery/",
+    "schema-PublishInput": "docs/api/continuity/",
+    "schema-Published": "docs/api/continuity/",
     "schema-PullRequestAssessment": "docs/api/integration/",
     "schema-PullRequestDependency": "docs/api/integration/",
     "schema-PullRequestDisposition": "docs/api/integration/",
@@ -802,7 +839,10 @@
     "schema-ReasoningTotals": "docs/api/reasoning/",
     "schema-Recommendation": "docs/api/why/",
     "schema-Record": "docs/api/continuity/",
+    "schema-RecordInput": "docs/api/continuity/",
+    "schema-RecordView": "docs/api/continuity/",
     "schema-RecordedSpelling": "docs/api/session-domain/",
+    "schema-Records": "docs/api/continuity/",
     "schema-RecoverOrphansInput": "docs/api/recover/",
     "schema-RecoverOrphansResult": "docs/api/recover/",
     "schema-Recovery": "docs/api/lifecycle/",
@@ -813,6 +853,7 @@
     "schema-RefusedView": "docs/api/mesh/",
     "schema-RegisterAnswer": "docs/api/mesh/",
     "schema-RegisterInput": "docs/api/mesh/",
+    "schema-Relation": "docs/api/continuity/",
     "schema-RelationDirection": "docs/api/entity/",
     "schema-RelationToMaster": "docs/api/integration/",
     "schema-ReleaseArtifactView": "docs/api/distribution/",
@@ -861,6 +902,8 @@
     "schema-ResolvedRelation": "docs/api/knowledge-base/",
     "schema-ResourceView": "docs/api/objects/",
     "schema-Resources": "docs/api/deploy/",
+    "schema-ResumePlan": "docs/api/continuity/",
+    "schema-Resumed": "docs/api/continuity/",
     "schema-ReviewAnswer": "docs/api/mesh/",
     "schema-ReviewAnswerInput": "docs/api/mesh/",
     "schema-ReviewPlan": "docs/api/reasoning/",
@@ -925,6 +968,8 @@
     "schema-SessionState": "docs/api/mesh/",
     "schema-SessionView": "docs/api/mesh/",
     "schema-Severity": "docs/api/shared/",
+    "schema-ShardLimits": "docs/api/pack/",
+    "schema-ShardPlan": "docs/api/pack/",
     "schema-ShellFinding": "docs/api/shell/",
     "schema-ShellReport": "docs/api/shell/",
     "schema-ShellUnit": "docs/api/shell/",
@@ -949,6 +994,8 @@
     "schema-Snapshot": "docs/api/integration/",
     "schema-SnapshotSection": "docs/api/integration/",
     "schema-Source": "docs/api/design/",
+    "schema-SourceCheck": "docs/api/continuity/",
+    "schema-SourceRelation": "docs/api/continuity/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
     "schema-Stance": "docs/api/reasoning/",
@@ -956,10 +1003,12 @@
     "schema-StartInput": "docs/api/executions/",
     "schema-State": "docs/api/repository/",
     "schema-StateView": "docs/api/session-domain/",
+    "schema-Status": "docs/api/continuity/",
     "schema-StatusReport": "docs/api/worktree/",
     "schema-StepOutcome": "docs/api/worktree/",
     "schema-StepState": "docs/api/executions/",
     "schema-StepView": "docs/api/executions/",
+    "schema-StoreView": "docs/api/continuity/",
     "schema-StoredConclusion": "docs/api/reasoning/",
     "schema-StoredPlan": "docs/api/reasoning/",
     "schema-Stranded": "docs/api/lifecycle/",
@@ -981,11 +1030,17 @@
     "schema-SurfaceReport": "docs/api/web/",
     "schema-SurfaceVisibility": "docs/api/web/",
     "schema-Surfaces": "docs/api/product/",
+    "schema-SyncAction": "docs/api/continuity/",
+    "schema-SyncInput": "docs/api/continuity/",
+    "schema-SyncNote": "docs/api/continuity/",
+    "schema-SyncState": "docs/api/continuity/",
+    "schema-Synced": "docs/api/continuity/",
     "schema-Tallies": "docs/api/mesh/",
     "schema-Tally": "docs/api/repository/",
     "schema-TargetStatus": "docs/api/distribution/",
     "schema-TargetView": "docs/api/distribution/",
     "schema-TaskReadiness": "docs/api/devtask/",
+    "schema-TaskRef": "docs/api/continuity/",
     "schema-TestEvidence": "docs/api/evidence/",
     "schema-TestSubjects": "docs/api/rules/",
     "schema-ThemeView": "docs/api/design/",
@@ -1008,6 +1063,7 @@
     "schema-Transport": "docs/api/peers/",
     "schema-TrunkSource": "docs/api/worktree/",
     "schema-TrunkView": "docs/api/worktree/",
+    "schema-Trust": "docs/api/continuity/",
     "schema-TrustState": "docs/api/mesh/",
     "schema-UpstreamState": "docs/api/worktree/",
     "schema-UseCaseRef": "docs/api/product/",
@@ -1017,6 +1073,7 @@
     "schema-VendorView": "docs/api/models/",
     "schema-Verdict": "docs/api/repository/",
     "schema-VerifyReport": "docs/api/objects/",
+    "schema-Via": "docs/api/continuity/",
     "schema-Violation": "docs/api/quality/",
     "schema-ViolationCode": "docs/api/quality/",
     "schema-Vocabulary": "docs/api/obligations/",
@@ -1025,6 +1082,7 @@
     "schema-WorkflowDescriptor": "docs/api/environment/",
     "schema-WorkflowEntrypoint": "docs/api/environment/",
     "schema-WorkflowParameter": "docs/api/environment/",
+    "schema-WorkingTree": "docs/api/continuity/",
     "schema-WorkingTreeState": "docs/api/commit/",
     "schema-WorktreeFingerprint": "docs/api/worktree/",
     "schema-WorktreeKind": "docs/api/worktree/",
@@ -1059,10 +1117,12 @@
     "tag-intents": "docs/api/intents/",
     "tag-knowledge_base": "docs/api/knowledge-base/",
     "tag-lifecycle": "docs/api/lifecycle/",
+    "tag-mcp": "docs/api/mcp/",
     "tag-mesh": "docs/api/mesh/",
     "tag-models": "docs/api/models/",
     "tag-objects": "docs/api/objects/",
     "tag-obligations": "docs/api/obligations/",
+    "tag-pack": "docs/api/pack/",
     "tag-peers": "docs/api/peers/",
     "tag-perf": "docs/api/perf/",
     "tag-plan": "docs/api/plan/",
@@ -1085,9 +1145,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 173,
-    "schemas": 857,
-    "tags": 52
+    "operations": 183,
+    "schemas": 905,
+    "tags": 54
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1116,7 +1176,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.15.0",
+  "generated_by": "majordomus-cli 0.19.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1125,7 +1185,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.15.0"
+    "version": "0.19.0"
   },
   "infrastructure": [
     {
@@ -1183,7 +1243,14 @@
     "commit.plan": "commit",
     "commit.scopes": "commit",
     "commit.validate": "commit",
+    "continuity.device": "continuity",
+    "continuity.plan": "continuity",
+    "continuity.publish": "continuity",
+    "continuity.records": "continuity",
+    "continuity.resume": "continuity",
     "continuity.state": "continuity",
+    "continuity.status": "continuity",
+    "continuity.sync": "continuity",
     "convergence.report": "convergence",
     "dashboard.overview": "dashboard",
     "delivery.feature": "delivery",
@@ -1258,6 +1325,7 @@
     "lifecycle.providers": "lifecycle",
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
+    "mcp.projection": "mcp",
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
@@ -1287,6 +1355,8 @@
     "objects.verify": "objects",
     "obligations.closure": "obligations",
     "obligations.vocabulary": "obligations",
+    "pack.plan": "pack",
+    "pack.verify": "pack",
     "peers.announce": "peers",
     "peers.list": "peers",
     "perf.counters": "perf",
@@ -1477,10 +1547,10 @@
     "CommitTrailer": "commit",
     "CommitVerdict": "commit",
     "Comparison": "objects",
-    "CompileInput": "shared",
     "CompiledContext": "devcontext",
     "CompilerPolicy": "devcontext",
     "Completion": "gates",
+    "Component": "continuity",
     "ConclusionView": "reasoning",
     "Concurrency": "deploy",
     "ConditionState": "intents",
@@ -1540,6 +1610,9 @@
     "DevTaskPosition": "devtask",
     "DevTaskSynchronisation": "devtask",
     "DevelopmentStage": "delivery",
+    "Device": "continuity",
+    "DeviceInput": "continuity",
+    "DeviceView": "continuity",
     "Diagnosis": "why",
     "Diagnostic": "shared",
     "DiagnosticCode": "worktree",
@@ -1565,6 +1638,8 @@
     "DomainRef": "product",
     "DoneQuestion": "gates",
     "DriftedObject": "objects",
+    "DropReason": "pack",
+    "DroppedFile": "pack",
     "DryRunProof": "integration",
     "EconomicsCheck": "economics",
     "EconomicsCheckReport": "economics",
@@ -1642,9 +1717,10 @@
     "ExecutableIdentity": "server",
     "ExecutionConcurrency": "capabilities",
     "ExecutionDiagnostic": "executions",
-    "ExecutionEffect": "capabilities",
+    "ExecutionEffect": "shared",
     "ExecutionError": "executions",
     "ExecutionEvent": "executions",
+    "ExecutionHints": "mcp",
     "ExecutionId": "executions",
     "ExecutionLinks": "executions",
     "ExecutionList": "executions",
@@ -1653,7 +1729,6 @@
     "ExecutionView": "executions",
     "ExecutorWait": "integration",
     "Exemption": "quality",
-    "ExplainInput": "shared",
     "Explanation": "devcontext",
     "Exposure": "capabilities",
     "FacetValue": "why",
@@ -1796,6 +1871,10 @@
     "LeftBranchReport": "integration",
     "Libc": "distribution",
     "LimitsView": "executions",
+    "LineState": "continuity",
+    "LineSync": "continuity",
+    "LineSyncView": "continuity",
+    "LineView": "continuity",
     "LinkRefusal": "mesh",
     "LinkReply": "mesh",
     "LinkState": "mesh",
@@ -1809,8 +1888,18 @@
     "Materiality": "reasoning",
     "Matrix": "product",
     "MatrixRow": "product",
+    "McpClient": "mcp",
+    "McpClientStanding": "mcp",
+    "McpEffectCount": "mcp",
     "McpExposure": "capabilities",
+    "McpFinding": "mcp",
+    "McpProjection": "mcp",
     "McpResource": "capabilities",
+    "McpResourceSummary": "mcp",
+    "McpServerIdentity": "mcp",
+    "McpServing": "mcp",
+    "McpToolEntry": "mcp",
+    "McpTransportEntry": "mcp",
     "Measured": "design",
     "MeshDoctorReport": "mesh",
     "MeshEvent": "mesh",
@@ -1873,6 +1962,9 @@
     "Overlap": "peers",
     "OverlapKind": "integration",
     "OverlapPath": "peers",
+    "PackFinding": "pack",
+    "PackPlan": "pack",
+    "PackVerdict": "pack",
     "ParallelSet": "devtask",
     "ParameterView": "executions",
     "PassedOver": "integration",
@@ -1894,6 +1986,7 @@
     "PlanFingerprint": "commit",
     "PlanIssue": "plan",
     "PlanIssueList": "plan",
+    "PlanItem": "continuity",
     "PlanMilestone": "plan",
     "PlanMilestoneProgress": "plan",
     "PlanNextIssue": "plan",
@@ -1901,6 +1994,7 @@
     "PlanProject": "plan",
     "PlanRecord": "plan",
     "PlanRoadmap": "plan",
+    "PlanStatus": "continuity",
     "PlanStatusReport": "plan",
     "PlanTransition": "plan",
     "PlanTransitionInput": "plan",
@@ -1913,6 +2007,7 @@
     "Pointer": "lifecycle",
     "PointerLayout": "lifecycle",
     "Port": "deploy",
+    "Position": "continuity",
     "Positive": "deploy",
     "Preflight": "environment",
     "PreflightCheck": "environment",
@@ -1946,6 +2041,8 @@
     "PublicApiQuality": "quality",
     "PublicIdentity": "mesh",
     "Publication": "delivery",
+    "PublishInput": "continuity",
+    "Published": "continuity",
     "PullRequestAssessment": "integration",
     "PullRequestDependency": "integration",
     "PullRequestDisposition": "integration",
@@ -1978,7 +2075,10 @@
     "ReasoningTotals": "reasoning",
     "Recommendation": "why",
     "Record": "continuity",
+    "RecordInput": "continuity",
+    "RecordView": "continuity",
     "RecordedSpelling": "session-domain",
+    "Records": "continuity",
     "RecoverOrphansInput": "recover",
     "RecoverOrphansResult": "recover",
     "Recovery": "lifecycle",
@@ -1989,6 +2089,7 @@
     "RefusedView": "mesh",
     "RegisterAnswer": "mesh",
     "RegisterInput": "mesh",
+    "Relation": "continuity",
     "RelationDirection": "entity",
     "RelationToMaster": "integration",
     "ReleaseArtifactView": "distribution",
@@ -2037,6 +2138,8 @@
     "ResolvedRelation": "knowledge-base",
     "ResourceView": "objects",
     "Resources": "deploy",
+    "ResumePlan": "continuity",
+    "Resumed": "continuity",
     "ReviewAnswer": "mesh",
     "ReviewAnswerInput": "mesh",
     "ReviewPlan": "reasoning",
@@ -2101,6 +2204,8 @@
     "SessionState": "mesh",
     "SessionView": "mesh",
     "Severity": "shared",
+    "ShardLimits": "pack",
+    "ShardPlan": "pack",
     "ShellFinding": "shell",
     "ShellReport": "shell",
     "ShellUnit": "shell",
@@ -2125,6 +2230,8 @@
     "Snapshot": "integration",
     "SnapshotSection": "integration",
     "Source": "design",
+    "SourceCheck": "continuity",
+    "SourceRelation": "continuity",
     "Spelling": "session-domain",
     "Stability": "shared",
     "Stance": "reasoning",
@@ -2132,10 +2239,12 @@
     "StartInput": "executions",
     "State": "repository",
     "StateView": "session-domain",
+    "Status": "continuity",
     "StatusReport": "worktree",
     "StepOutcome": "worktree",
     "StepState": "executions",
     "StepView": "executions",
+    "StoreView": "continuity",
     "StoredConclusion": "reasoning",
     "StoredPlan": "reasoning",
     "Stranded": "lifecycle",
@@ -2157,11 +2266,17 @@
     "SurfaceReport": "web",
     "SurfaceVisibility": "web",
     "Surfaces": "product",
+    "SyncAction": "continuity",
+    "SyncInput": "continuity",
+    "SyncNote": "continuity",
+    "SyncState": "continuity",
+    "Synced": "continuity",
     "Tallies": "mesh",
     "Tally": "repository",
     "TargetStatus": "distribution",
     "TargetView": "distribution",
     "TaskReadiness": "devtask",
+    "TaskRef": "continuity",
     "TestEvidence": "evidence",
     "TestSubjects": "rules",
     "ThemeView": "design",
@@ -2184,6 +2299,7 @@
     "Transport": "peers",
     "TrunkSource": "worktree",
     "TrunkView": "worktree",
+    "Trust": "continuity",
     "TrustState": "mesh",
     "UpstreamState": "worktree",
     "UseCaseRef": "product",
@@ -2193,6 +2309,7 @@
     "VendorView": "models",
     "Verdict": "repository",
     "VerifyReport": "objects",
+    "Via": "continuity",
     "Violation": "quality",
     "ViolationCode": "quality",
     "Vocabulary": "obligations",
@@ -2201,6 +2318,7 @@
     "WorkflowDescriptor": "environment",
     "WorkflowEntrypoint": "environment",
     "WorkflowParameter": "environment",
+    "WorkingTree": "continuity",
     "WorkingTreeState": "commit",
     "WorktreeFingerprint": "worktree",
     "WorktreeKind": "worktree",
@@ -8803,82 +8921,6 @@
       "variants": []
     },
     {
-      "description": "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.\n\nThe seeds are additive, not alternative: `issue`, `milestone`, `uris`, `paths` and\n`intent` all contribute, and naming several is the normal case rather than a conflict.\n`intent` is the only one the compiler infers from, which is why every entry it produces\ncarries `Selector::IntentMatch` and a confidence below one.\n\n`deny_unknown_fields` is deliberate. This is the input of a served capability, so a\nmisspelled field is a request that does not mean what its author thought; refusing it is\nthe difference between a typo and a silently smaller answer.\n\n```\nuse majordomus_cli::devcontext::CompileInput;\nuse serde_json::json;\n\n// the smallest legitimate request, which is not the same as no request\nlet nothing: CompileInput = serde_json::from_value(json!({})).unwrap();\nassert_eq!(nothing, CompileInput::default());\nassert!(nothing.issue.is_none() && nothing.paths.is_empty());\n\n// the seeds combine rather than compete\nlet both: CompileInput = serde_json::from_value(json!({\n    \"issue\": \"I0301\",\n    \"paths\": [\"apps/majordomus-cli/src\"],\n    \"intent\": \"explain the budget\",\n    \"budget_tokens\": 4_000,\n})).unwrap();\nassert_eq!(both.issue.as_deref(), Some(\"I0301\"));\nassert_eq!(both.paths, [\"apps/majordomus-cli/src\"]);\nassert_eq!(both.budget_tokens, Some(4_000));\n\n// and a misspelled field is refused rather than quietly ignored\nlet typo = serde_json::from_value::<CompileInput>(json!({\"max_dept\": 2}));\nassert!(typo.is_err(), \"a typo must not become a smaller answer\");\n```",
-      "home": "shared",
-      "is_enum": false,
-      "name": "CompileInput",
-      "properties": [
-        {
-          "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
-          "name": "issue",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "A milestone id or slug, or its canonical identifier.",
-          "name": "milestone",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
-          "name": "intent",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
-          "name": "paths",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
-          "name": "uris",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.",
-          "name": "budget_tokens",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.",
-          "name": "max_depth",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.",
-          "name": "floor",
-          "refs": [],
-          "required": false,
-          "type": "number | null"
-        },
-        {
-          "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
-          "name": "all_blocking_rules",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "A compiled development context: what to give a session, what was left out, what\ncollapsed into what, and the budget it was all decided under.\n\nThis is the canonical form. Rendering it as a prompt is a downstream projection of this\nvalue and is not performed here — the structure is what lets a caller re-budget, re-order\nor explain the selection without recompiling it.\n\nTwo invariants hold over every answer, and they are what make it safe to cache and to\ncompare. `fingerprint` is over the index this was compiled from, so the same request\nagainst the same fingerprint is the same answer and a different fingerprint is a\ndifferent tree — a caller can tell two trees apart without asking. And\n`budget.used_tokens` is exactly the sum of `selected`'s costs, so the arithmetic in the\nbudget describes the list beside it rather than a walk that has since been filtered.\n\n```\nuse majordomus_cli::devcontext::{compile, CompileInput, CompiledContext};\nuse majordomus_cli::devcontext::{Tier, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\n\nlet c: CompiledContext = compile(&ctx, CompileInput::default()).unwrap();\n\n// the answer says which tree it is true of, and nothing else has to be asked\nassert_eq!(c.schema, 1);\nassert!(!c.fingerprint.is_empty(), \"an answer that names no tree is not one\");\n\n// the budget describes the list beside it\nlet spent: u64 = c.selected.iter().map(|e| e.cost_tokens).sum();\nassert_eq!(c.budget.used_tokens, spent);\nassert_eq!(c.budget.limit_tokens, DEFAULT_BUDGET_TOKENS);\n\n// every tier is reported, so an empty tier is visibly empty rather than missing\nassert_eq!(c.budget.tiers.len(), Tier::ORDER.len());\n\n// a request that named nothing has no seeds and is still an answer\nassert!(c.seeds.is_empty());\n\n// and recompiling the same request over the same tree gives the same answer\nlet again: CompiledContext = compile(&ctx, CompileInput::default()).unwrap();\nassert_eq!(again.fingerprint, c.fingerprint);\nassert_eq!(again.selected.len(), c.selected.len());\n```",
       "home": "devcontext",
       "is_enum": false,
@@ -9170,6 +9212,69 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a resume writes, recomputes or leaves.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "Component",
+      "properties": [],
+      "type": "\"handover\" | \"intent\" | \"issue\" | \"decisions\" | \"next_action\" | \"lineage\" | \"provenance\" | \"worktree\" | \"repository_id\" | \"episode\" | \"working_context\" | \"source_state\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResumePlan"
+      ],
+      "values": [
+        {
+          "description": "The handover, into this checkout's handovers.",
+          "value": "handover"
+        },
+        {
+          "description": "The task's title and scope, offered as the `start` to run.",
+          "value": "intent"
+        },
+        {
+          "description": "The issue and milestone.",
+          "value": "issue"
+        },
+        {
+          "description": "The decisions the task recorded, into this checkout's decision log.",
+          "value": "decisions"
+        },
+        {
+          "description": "The handover's next action.",
+          "value": "next_action"
+        },
+        {
+          "description": "The record this checkout continues: the parent of its next publication.",
+          "value": "lineage"
+        },
+        {
+          "description": "Who published it, where, when, from which source state.",
+          "value": "provenance"
+        },
+        {
+          "description": "This checkout's path, recomputed rather than copied.",
+          "value": "worktree"
+        },
+        {
+          "description": "The repository id the shell compares, recomputed.",
+          "value": "repository_id"
+        },
+        {
+          "description": "The episode, opened here by the provider's hooks.",
+          "value": "episode"
+        },
+        {
+          "description": "The working context, compiled here from the restored records and this git.",
+          "value": "working_context"
+        },
+        {
+          "description": "The source state, from this checkout's git.",
+          "value": "source_state"
+        }
+      ],
       "variants": []
     },
     {
@@ -12041,7 +12146,7 @@
       "name": "Desired",
       "properties": [
         {
-          "description": "The interface the shared server binds by default.",
+          "description": "The interface a server started here would bind: what `MAJORDOMUS_HTTP_HOST` names\nin this process's environment, and loopback when it names nothing.",
           "name": "host",
           "refs": [],
           "required": true,
@@ -12854,6 +12959,90 @@
       "variants": []
     },
     {
+      "description": "The device a record was written on: the mesh node key's id and the label its identity\nfile carries. The label is presentation; the node id is identity.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Device",
+      "properties": [
+        {
+          "description": "The node id: the first 32 hex of the SHA-256 of the device's Ed25519 public key.",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The display label of the device's identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeviceView",
+        "RecordView",
+        "Status"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `continuity.device`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "DeviceInput",
+      "properties": [
+        {
+          "description": "A label to give this device (`macbook-pro`, `mac-mini`): letters, digits, `.`, `_`,\n`-`. The key, and so the identity, is unchanged.",
+          "name": "label",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.device"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `continuity device`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "DeviceView",
+      "properties": [
+        {
+          "description": "The node id and label.",
+          "name": "device",
+          "refs": [
+            "Device"
+          ],
+          "required": true,
+          "type": "Device"
+        },
+        {
+          "description": "The Ed25519 public key (hex): what a trust list names.",
+          "name": "public_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.device"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
       "home": "why",
       "is_enum": false,
@@ -12997,8 +13186,11 @@
         "CompiledContext",
         "JudgedCommit",
         "LayerSummary",
+        "Records",
         "RepositoryEnvironment",
-        "RepositoryReport"
+        "RepositoryReport",
+        "Status",
+        "Synced"
       ],
       "values": [],
       "variants": []
@@ -14238,6 +14430,76 @@
       "used_by": [],
       "used_by_schemas": [
         "VerifyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why a tracked file is not in the pack. Every reason but `derived` and `excluded` is\nfinal: no `include` of a profile re-admits a link, a gitlink, an artifact or a binary.\n\n```\nuse majordomus_cli::pack::DropReason;\nassert_eq!(DropReason::Binary.as_str(), \"binary\");\nlet json = serde_json::to_string(&DropReason::Artifact).unwrap();\nassert_eq!(json, \"\\\"artifact\\\"\");\n```",
+      "home": "pack",
+      "is_enum": true,
+      "name": "DropReason",
+      "properties": [],
+      "type": "\"worktree\" | \"link\" | \"artifact\" | \"binary\" | \"derived\" | \"excluded\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DroppedFile"
+      ],
+      "values": [
+        {
+          "description": "A gitlink: a nested repository or worktree whose content is not in this index.",
+          "value": "worktree"
+        },
+        {
+          "description": "A symbolic link, whose content is a path on the machine that committed it.",
+          "value": "link"
+        },
+        {
+          "description": "A path the distribution names as build output, a cache or a worktree container.",
+          "value": "artifact"
+        },
+        {
+          "description": "Not text: a NUL byte, content that is not UTF-8, or an extension on the binary list.",
+          "value": "binary"
+        },
+        {
+          "description": "Marked `merge=derived` in `.gitattributes`: a projection of a file that is here.",
+          "value": "derived"
+        },
+        {
+          "description": "Matched by the profile's `exclude`.",
+          "value": "excluded"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, DropReason, DroppedFile};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet dropped = plan(&root, &share, None).plan.dropped_files;\nlet want = DroppedFile { path: \"logo.png\".into(), reason: DropReason::Binary };\nassert_eq!(dropped, [want]);\n```",
+      "home": "pack",
+      "is_enum": false,
+      "name": "DroppedFile",
+      "properties": [
+        {
+          "description": "The path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why.",
+          "name": "reason",
+          "refs": [
+            "DropReason"
+          ],
+          "required": true,
+          "type": "DropReason"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PackPlan"
       ],
       "values": [],
       "variants": []
@@ -17303,6 +17565,13 @@
         "commit.scopes",
         "commit.validate",
         "continuity.state",
+        "continuity.device",
+        "continuity.plan",
+        "continuity.publish",
+        "continuity.records",
+        "continuity.resume",
+        "continuity.status",
+        "continuity.sync",
         "convergence.report",
         "dashboard.overview",
         "delivery.report",
@@ -17371,6 +17640,7 @@
         "lifecycle.recovery",
         "lifecycle.runtime",
         "health.live",
+        "mcp.projection",
         "mesh.status",
         "mesh.claim",
         "mesh.release",
@@ -17399,6 +17669,8 @@
         "objects.verify",
         "obligations.vocabulary",
         "obligations.closure",
+        "pack.plan",
+        "pack.verify",
         "peers.list",
         "peers.announce",
         "perf.counters",
@@ -18043,7 +18315,7 @@
           "value": "auto_merge"
         },
         {
-          "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared.",
+          "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`).",
           "value": "supersession"
         },
         {
@@ -18285,7 +18557,7 @@
       "variants": []
     },
     {
-      "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```",
+      "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```",
       "home": "shared",
       "is_enum": false,
       "name": "EvidenceRun",
@@ -18331,6 +18603,20 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it.",
+          "name": "head_sha",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`.",
+          "name": "event",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -18832,14 +19118,19 @@
     },
     {
       "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.",
-      "home": "capabilities",
+      "home": "shared",
       "is_enum": true,
       "name": "ExecutionEffect",
       "properties": [],
       "type": "\"read\" | \"process_state\" | \"repository_mutation\"",
-      "used_by": [],
+      "used_by": [
+        "mcp.projection"
+      ],
       "used_by_schemas": [
-        "ExecutionPolicy"
+        "ExecutionPolicy",
+        "McpEffectCount",
+        "McpToolEntry",
+        "Row"
       ],
       "values": [
         {
@@ -19187,6 +19478,49 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared.\n\n```\nuse majordomus_cli::capability::{CapabilityKind, ExecutionPolicy, Hints};\nlet read: Hints = ExecutionPolicy::classify(CapabilityKind::Query).hints();\nassert_eq!(\n    serde_json::to_value(read).unwrap(),\n    serde_json::json!({ \"read_only\": true, \"destructive\": false, \"idempotent\": true, \"open_world\": false })\n);\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "ExecutionHints",
+      "properties": [
+        {
+          "description": "The call changes nothing, anywhere.",
+          "name": "read_only",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The call may overwrite or remove something that outlives this process.",
+          "name": "destructive",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "A second identical call changes nothing the first did not.",
+          "name": "idempotent",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities.",
+          "name": "open_world",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpToolEntry"
+      ],
+      "values": [],
+      "variants": []
     },
     {
       "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.",
@@ -19649,89 +19983,6 @@
       "used_by_schemas": [
         "PublicApiQuality"
       ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "The input of `devcontext.explain`: one identifier, and the request to judge it under.\n\nThe request is not optional context for the question — it is half of the question.\n\"Why is this ADR not in my context\" has no answer in the abstract: it is in or out of a\n*particular* compiled answer, and \"excluded for budget\" is only actionable when the\nbudget it did not fit in is known. So the same fields `compile` takes are `flatten`ed in\nhere, which also means the wire form is one flat object rather than a nested `request`,\nand the command line can share its flags.\n\n```\nuse majordomus_cli::devcontext::ExplainInput;\nuse serde_json::json;\n\n// flattened: the request's fields sit beside `uri`, not under it\nlet input: ExplainInput = serde_json::from_value(json!({\n    \"uri\": \"majordomus://adr/0052\",\n    \"budget_tokens\": 2_000,\n    \"max_depth\": 1,\n})).unwrap();\nassert_eq!(input.uri, \"majordomus://adr/0052\");\nassert_eq!(input.request.budget_tokens, Some(2_000));\nassert_eq!(input.request.max_depth, Some(1));\n\n// and the identifier alone is a complete question, judged under the default request\nlet bare: ExplainInput = serde_json::from_value(json!({\"uri\": \"majordomus://adr/0052\"}))\n    .unwrap();\nassert_eq!(bare.request, Default::default());\n```",
-      "home": "shared",
-      "is_enum": false,
-      "name": "ExplainInput",
-      "properties": [
-        {
-          "description": "The canonical identifier to explain.",
-          "name": "uri",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
-          "name": "issue",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "A milestone id or slug, or its canonical identifier.",
-          "name": "milestone",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
-          "name": "intent",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
-          "name": "paths",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
-          "name": "uris",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.",
-          "name": "budget_tokens",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.",
-          "name": "max_depth",
-          "refs": [],
-          "required": false,
-          "type": "integer | null"
-        },
-        {
-          "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.",
-          "name": "floor",
-          "refs": [],
-          "required": false,
-          "type": "number | null"
-        },
-        {
-          "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
-          "name": "all_blocking_rules",
-          "refs": [],
-          "required": false,
-          "type": "boolean | null"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -23517,7 +23768,7 @@
           "value": "auto_merge"
         },
         {
-          "description": "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting.",
+          "description": "No authorised successor is declared to replace it, and the pull requests that mention\nit were all read. Asked before the relation to master, because a pull request whose\nsuccessor landed usually conflicts with what the successor brought, and is superseded\nrather than conflicting. A declaration nobody entitled made does not fail it.",
           "value": "supersession"
         },
         {
@@ -27554,6 +27805,154 @@
       "variants": []
     },
     {
+      "description": "Whether a line has one current record or several.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "LineState",
+      "properties": [],
+      "type": "\"linear\" | \"diverged\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LineView"
+      ],
+      "values": [
+        {
+          "description": "One head: the line continues from it.",
+          "value": "linear"
+        },
+        {
+          "description": "More than one head: the same work was continued in more than one place.",
+          "value": "diverged"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How the local store and a remote's stand towards each other, for one line.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "LineSync",
+      "properties": [],
+      "type": "\"equal\" | \"remote_newer\" | \"local_newer\" | \"diverged\" | \"local_only\" | \"remote_only\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LineSyncView"
+      ],
+      "values": [
+        {
+          "description": "Both hold the same heads.",
+          "value": "equal"
+        },
+        {
+          "description": "The remote holds records that continue the local heads: fetching brings them.",
+          "value": "remote_newer"
+        },
+        {
+          "description": "The local store holds records that continue the remote's: publishing sends them.",
+          "value": "local_newer"
+        },
+        {
+          "description": "Each holds a continuation the other lacks: after merging, the line has two heads.",
+          "value": "diverged"
+        },
+        {
+          "description": "Only the local store holds the line.",
+          "value": "local_only"
+        },
+        {
+          "description": "Only the remote holds the line.",
+          "value": "remote_only"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One line's comparison in a sync.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "LineSyncView",
+      "properties": [
+        {
+          "description": "The line.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How the local store and the remote's stood before the merge.",
+          "name": "relation",
+          "refs": [
+            "LineSync"
+          ],
+          "required": true,
+          "type": "LineSync"
+        },
+        {
+          "description": "The line's heads after the merge.",
+          "name": "heads",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Synced"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A line of work as `status` shows it.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "LineView",
+      "properties": [
+        {
+          "description": "The line id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Linear or diverged.",
+          "name": "state",
+          "refs": [
+            "LineState"
+          ],
+          "required": true,
+          "type": "LineState"
+        },
+        {
+          "description": "How many records it holds.",
+          "name": "records",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Its heads.",
+          "name": "heads",
+          "refs": [
+            "RecordView"
+          ],
+          "required": true,
+          "type": "array of RecordView"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Records",
+        "Status"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```",
       "home": "mesh",
       "is_enum": false,
@@ -28113,6 +28512,109 @@
       "variants": []
     },
     {
+      "description": "One client the distribution declares a project-scoped configuration for.\n\n```\nuse majordomus_cli::capability::builtin::mcp::{McpClient, McpClientStanding};\nlet mut clients: Vec<McpClient> = serde_json::from_value(serde_json::json!([\n    { \"id\": \"gemini\", \"title\": \"Gemini CLI\", \"config\": \".gemini/settings.json\", \"standing\": \"absent\" },\n    { \"id\": \"claude-code\", \"title\": \"Claude Code\", \"config\": \".mcp.json\", \"standing\": \"wired\" },\n])).unwrap();\n// ordered by the provider's id, whatever order the distribution declared them in\nmajordomus_cli::order::canonical(&mut clients);\nassert_eq!(clients[0].id, \"claude-code\");\nassert_eq!(clients[0].standing, McpClientStanding::Wired);\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpClient",
+      "properties": [
+        {
+          "description": "The provider id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person knows it by.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file it reads, repository-relative.",
+          "name": "config",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where that file stands here.",
+          "name": "standing",
+          "refs": [
+            "McpClientStanding"
+          ],
+          "required": true,
+          "type": "McpClientStanding"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a client's project-scoped configuration stands in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpClientStanding;\n// the words a caller reads, as they are written on every surface\nassert_eq!(serde_json::to_value(McpClientStanding::Wired).unwrap(), \"wired\");\nassert_eq!(serde_json::to_value(McpClientStanding::Foreign).unwrap(), \"foreign\");\nassert_eq!(serde_json::to_value(McpClientStanding::Absent).unwrap(), \"absent\");\n```",
+      "home": "mcp",
+      "is_enum": true,
+      "name": "McpClientStanding",
+      "properties": [],
+      "type": "\"wired\" | \"foreign\" | \"absent\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpClient"
+      ],
+      "values": [
+        {
+          "description": "The file exists and names the launcher: this client starts this repository's server.",
+          "value": "wired"
+        },
+        {
+          "description": "The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing.",
+          "value": "foreign"
+        },
+        {
+          "description": "The file does not exist: this client starts no server here until it is written.",
+          "value": "absent"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many tools have one effect.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpEffectCount;\nuse majordomus_cli::capability::Effect;\nlet c: McpEffectCount =\n    serde_json::from_value(serde_json::json!({ \"effect\": \"read\", \"tools\": 149 })).unwrap();\nassert_eq!((c.effect, c.tools), (Effect::Read, 149));\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpEffectCount",
+      "properties": [
+        {
+          "description": "The effect.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
+        },
+        {
+          "description": "How many tools have it.",
+          "name": "tools",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How, if at all, a capability appears to an MCP client.",
       "home": "capabilities",
       "is_enum": false,
@@ -28144,6 +28646,157 @@
       "variants": []
     },
     {
+      "description": "Something about the projection a person should act on.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpFinding;\nlet f: McpFinding = serde_json::from_value(serde_json::json!({\n    \"code\": \"mcp_client_config_foreign\",\n    \"message\": \".mcp.json exists and does not name majordomus-mcp\",\n    \"remedy\": \"add a `majordomus` server to .mcp.json whose command is majordomus-mcp\",\n})).unwrap();\n// a finding always says what to do, not only what is wrong\nassert!(!f.code.is_empty() && !f.remedy.is_empty());\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpFinding",
+      "properties": [
+        {
+          "description": "The stable code.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The MCP projection of this registry in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjection;\nlet p: McpProjection = serde_json::from_value(serde_json::json!({\n    \"server\": { \"name\": \"majordomus\", \"title\": \"Majordomus\", \"version\": \"0.14.0\" },\n    \"protocol_versions\": [\"2025-06-18\"],\n    \"transports\": [{ \"id\": \"stdio\", \"reached_by\": \"majordomus mcp\", \"attached\": 0 }],\n    \"serving\": { \"methods\": [\"initialize\"], \"tools\": true, \"resources\": true, \"prompts\": false, \"notifications\": false },\n    \"tool_count\": 2,\n    \"tools\": [],\n    \"effects\": [{ \"effect\": \"read\", \"tools\": 1 }, { \"effect\": \"repository_mutation\", \"tools\": 1 }],\n    \"writers\": [\"majordomus_plan_transition\"],\n    \"resources\": { \"builtin\": 1, \"objects\": 0, \"template\": \"majordomus://<kind>/<identity>\" },\n    \"launcher_in_repository\": false,\n    \"clients\": [],\n    \"findings\": [],\n})).unwrap();\n// the count is of every tool, whatever the `effect` filter narrowed `tools` to\nassert_eq!(p.tool_count, p.effects.iter().map(|e| e.tools).sum::<usize>());\nassert!(p.tools.is_empty() && p.writers.len() == 1);\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpProjection",
+      "properties": [
+        {
+          "description": "Who answers `initialize`.",
+          "name": "server",
+          "refs": [
+            "McpServerIdentity"
+          ],
+          "required": true,
+          "type": "McpServerIdentity"
+        },
+        {
+          "description": "The protocol versions accepted, newest first.",
+          "name": "protocol_versions",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "How a client reaches the server.",
+          "name": "transports",
+          "refs": [
+            "McpTransportEntry"
+          ],
+          "required": true,
+          "type": "array of McpTransportEntry"
+        },
+        {
+          "description": "What of the protocol is served.",
+          "name": "serving",
+          "refs": [
+            "McpServing"
+          ],
+          "required": true,
+          "type": "McpServing"
+        },
+        {
+          "description": "How many tools the registry projects, whatever the filter asked for.",
+          "name": "tool_count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The tools asked for, in registry order.",
+          "name": "tools",
+          "refs": [
+            "McpToolEntry"
+          ],
+          "required": true,
+          "type": "array of McpToolEntry"
+        },
+        {
+          "description": "The tools counted by effect, every effect present.",
+          "name": "effects",
+          "refs": [
+            "McpEffectCount"
+          ],
+          "required": true,
+          "type": "array of McpEffectCount"
+        },
+        {
+          "description": "The tools that write the repository, by name. The `initialize` instructions name the\nsame ones.",
+          "name": "writers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The resources.",
+          "name": "resources",
+          "refs": [
+            "McpResourceSummary"
+          ],
+          "required": true,
+          "type": "McpResourceSummary"
+        },
+        {
+          "description": "Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names.",
+          "name": "launcher_in_repository",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The clients the distribution declares a configuration for, and where each stands.",
+          "name": "clients",
+          "refs": [
+            "McpClient"
+          ],
+          "required": true,
+          "type": "array of McpClient"
+        },
+        {
+          "description": "What a person should act on. Empty is nothing to do.",
+          "name": "findings",
+          "refs": [
+            "McpFinding"
+          ],
+          "required": true,
+          "type": "array of McpFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mcp.projection"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "An MCP resource: its URI and the short name a client lists.",
       "home": "capabilities",
       "is_enum": false,
@@ -28168,6 +28821,225 @@
       "used_by": [],
       "used_by_schemas": [
         "McpExposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The resources a client can read.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpResourceSummary;\nlet r: McpResourceSummary = serde_json::from_value(serde_json::json!({\n    \"builtin\": 54, \"objects\": 1742, \"template\": \"majordomus://<kind>/<identity>\",\n})).unwrap();\n// the two counts together are the length of `resources/list`\nassert_eq!(r.builtin + r.objects, 1796);\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpResourceSummary",
+      "properties": [
+        {
+          "description": "Resources a builtin capability answers.",
+          "name": "builtin",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Objects of this repository's layer, each one more resource.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The URI shape of an object's resource.",
+          "name": "template",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who answers `initialize`, as it answers.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServerIdentity;\nlet s: McpServerIdentity = serde_json::from_value(serde_json::json!({\n    \"name\": \"majordomus\", \"title\": \"Majordomus\", \"version\": \"0.14.0\",\n})).unwrap();\n// the version is the executable's: the protocol adapter has none of its own to drift\nassert_eq!((s.name.as_str(), s.version.as_str()), (\"majordomus\", \"0.14.0\"));\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpServerIdentity",
+      "properties": [
+        {
+          "description": "The server name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version: this executable's, never one of the protocol adapter's own.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the server serves of the protocol, and what it does not.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServing;\nlet s: McpServing = serde_json::from_value(serde_json::json!({\n    \"methods\": [\"initialize\", \"tools/call\"], \"tools\": true, \"resources\": true,\n    \"prompts\": false, \"notifications\": false,\n})).unwrap();\n// what is not served is stated, so a client does not learn it from a refusal\nassert!(s.tools && !s.prompts && !s.notifications);\nassert!(!s.methods.iter().any(|m| m.starts_with(\"prompts/\")));\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpServing",
+      "properties": [
+        {
+          "description": "The methods a request may name. Anything else is answered `-32601`.",
+          "name": "methods",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Tools: every capability that declares one.",
+          "name": "tools",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Resources: every capability that declares one, and every object of the layer.",
+          "name": "resources",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Prompts. Not served: the repository's prompt assets are resources, because a prompt\nserved unrendered would read as finished.",
+          "name": "prompts",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked.",
+          "name": "notifications",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One tool, as the registry projects it.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpToolEntry;\nuse majordomus_cli::capability::Effect;\nlet t: McpToolEntry = serde_json::from_value(serde_json::json!({\n    \"name\": \"majordomus_plan_transition\", \"capability\": \"plan.transition\",\n    \"module\": \"plan\", \"title\": \"Move an issue\", \"effect\": \"repository_mutation\",\n    \"hints\": { \"read_only\": false, \"destructive\": true, \"idempotent\": false, \"open_world\": false },\n})).unwrap();\nassert_eq!(t.effect, Effect::RepositoryMutation);\n// the hints are the effect's classification, carried beside it rather than restated\nassert!(t.hints.destructive && !t.hints.read_only && !t.hints.idempotent);\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpToolEntry",
+      "properties": [
+        {
+          "description": "The name a client calls.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability it projects; `capabilities.describe` answers its schemas.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The module that composes the capability.",
+          "name": "module",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a call changes.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
+        },
+        {
+          "description": "What a caller may assume before calling; the tool's annotations are this value.",
+          "name": "hints",
+          "refs": [
+            "ExecutionHints"
+          ],
+          "required": true,
+          "type": "ExecutionHints"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One way a client reaches the server.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpTransportEntry;\nlet t: McpTransportEntry = serde_json::from_value(serde_json::json!({\n    \"id\": \"stdio\", \"reached_by\": \"majordomus mcp\", \"attached\": 1,\n})).unwrap();\n// a count of sessions at the moment of asking, not a claim that a server is running\nassert_eq!((t.id.as_str(), t.attached), (\"stdio\", 1));\n```",
+      "home": "mcp",
+      "is_enum": false,
+      "name": "McpTransportEntry",
+      "properties": [
+        {
+          "description": "`stdio` or `http`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it is reached: the command a client starts, or the path on the shared server.",
+          "name": "reached_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Sessions attached to this process over it right now.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "McpProjection"
       ],
       "values": [],
       "variants": []
@@ -31915,6 +32787,272 @@
       "variants": []
     },
     {
+      "description": "A reason the pack cannot be built as planned, or a written pack is not what its\nmanifest says: a stable code, the path when there is one, and the remedy.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackFinding};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet findings: Vec<PackFinding> = plan(&root, &share, Some(\"bare\")).plan.findings;\nassert_eq!(findings[0].code, \"pack.no_limits\");\nassert!(findings[0].path.is_none() && !findings[0].remedy.is_empty());\n```",
+      "home": "pack",
+      "is_enum": false,
+      "name": "PackFinding",
+      "properties": [
+        {
+          "description": "A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,\n`pack.empty`, `pack.no_limits`, and from verification `pack.tampered`,\n`pack.not_text`, `pack.forbidden_path`, `pack.missing`, `pack.stray`,\n`pack.over_budget`, `pack.manifest`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The path the finding is about, when it is about one.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What is wrong.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What settles it.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PackPlan",
+        "PackVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackPlan};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet p: PackPlan = plan(&root, &share, None).plan;\nassert!(p.measured && p.passes && p.index_matches_head);\nassert_eq!((p.tracked, p.selected), (2, 1));\nassert_eq!(p.dropped[\"binary\"], 1);\n// an unknown profile is not measured, and not measured is never a pass\nlet p: PackPlan = plan(&root, &share, Some(\"nope\")).plan;\nassert!(!p.measured && !p.passes);\n```",
+      "home": "pack",
+      "is_enum": false,
+      "name": "PackPlan",
+      "properties": [
+        {
+          "description": "Whether the tree could be read at all. `false` is not a pass.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it could not, when it could not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The profile planned.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit `HEAD` names; the content is the index's, which equals it when\n`index_matches_head` is true.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the index holds exactly what `HEAD` holds. `false` means staged changes\ntravel with the pack under a commit id that does not contain them.",
+          "name": "index_matches_head",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many files the index tracks.",
+          "name": "tracked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many the pack carries.",
+          "name": "selected",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The bytes of the content carried.",
+          "name": "bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The tokens of the content carried, in `o200k_base`.",
+          "name": "tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The tokenizer the counts are in.",
+          "name": "tokenizer",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The limits applied.",
+          "name": "limits",
+          "refs": [
+            "ShardLimits"
+          ],
+          "required": false,
+          "type": "ShardLimits | null"
+        },
+        {
+          "description": "How many files were left out, by reason.",
+          "name": "dropped",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every file left out for a reason other than `derived`.",
+          "name": "dropped_files",
+          "refs": [
+            "DroppedFile"
+          ],
+          "required": true,
+          "type": "array of DroppedFile"
+        },
+        {
+          "description": "The shards, in order; the index is not one of them.",
+          "name": "shards",
+          "refs": [
+            "ShardPlan"
+          ],
+          "required": true,
+          "type": "array of ShardPlan"
+        },
+        {
+          "description": "Every reason the pack cannot be built. Empty is the passing answer.",
+          "name": "findings",
+          "refs": [
+            "PackFinding"
+          ],
+          "required": true,
+          "type": "array of PackFinding"
+        },
+        {
+          "description": "`true` when the tree was measured and nothing was found.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "pack.plan"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The verdict on a written pack: whether it could be read, what its manifest names, how\nmany files and sources it holds, and every finding against it.\n\nThe examples below build a pack of a repository holding `main.rs`.\n\n```\nuse majordomus_cli::pack::{build, plan, verify, PackVerdict, Profiles};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet profiles = Profiles::load(&share, &root).unwrap();\nlet out = dir.path().join(\"pack\");\nlet v: PackVerdict = build(&plan(&root, &share, None), &root, &out).unwrap();\nassert_eq!((v.files, v.sources), (2, 1), \"the index and one shard, carrying one file\");\nassert_eq!(v.profile.as_deref(), Some(\"chat\"));\n// a directory with no manifest is not measured, which is not a pass\nlet v: PackVerdict = verify(dir.path(), &profiles, &root);\nassert!(!v.measured && !v.passes);\n```",
+      "home": "pack",
+      "is_enum": false,
+      "name": "PackVerdict",
+      "properties": [
+        {
+          "description": "Whether the pack could be read at all. `false` is not a pass.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it could not, when it could not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The directory read.",
+          "name": "dir",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The profile its manifest names.",
+          "name": "profile",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit its manifest names.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many files it holds, the index included.",
+          "name": "files",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many source files its shards carry.",
+          "name": "sources",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The tokens of its largest file.",
+          "name": "largest_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Every finding. Empty is the passing answer.",
+          "name": "findings",
+          "refs": [
+            "PackFinding"
+          ],
+          "required": true,
+          "type": "array of PackFinding"
+        },
+        {
+          "description": "`true` when the pack was read and nothing was found.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "pack.verify"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One subset of the startable work that may genuinely run at the same time.",
       "home": "devtask",
       "is_enum": false,
@@ -33161,6 +34299,35 @@
       "variants": []
     },
     {
+      "description": "One thing a plan says about itself.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "PlanItem",
+      "properties": [
+        {
+          "description": "A stable code: `source_incomplete`, `line_diverged`, `origin_untrusted`, …",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it means here.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResumePlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One milestone, as its record declares it and as the two graphs derive it.",
       "home": "plan",
       "is_enum": false,
@@ -33488,6 +34655,49 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The verdict of a resume plan.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "PlanStatus",
+      "properties": [],
+      "type": "\"ready\" | \"ready_with_warnings\" | \"requires_source_update\" | \"conflict\" | \"choose_record\" | \"nothing_to_resume\" | \"refused\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResumePlan"
+      ],
+      "values": [
+        {
+          "description": "Resume restores everything; nothing needs attention.",
+          "value": "ready"
+        },
+        {
+          "description": "Resume restores everything; the warnings say what is not what it was at the origin.",
+          "value": "ready_with_warnings"
+        },
+        {
+          "description": "The local source does not hold what the record was written against: update git\nfirst, as the actions say.",
+          "value": "requires_source_update"
+        },
+        {
+          "description": "The same work was continued twice, or the source histories diverged: a person\nchooses.",
+          "value": "conflict"
+        },
+        {
+          "description": "More than one record could be meant: name one with `--record`.",
+          "value": "choose_record"
+        },
+        {
+          "description": "Nothing to resume.",
+          "value": "nothing_to_resume"
+        },
+        {
+          "description": "The record is not one this checkout may resume from (an untrusted signer).",
+          "value": "refused"
+        }
+      ],
       "variants": []
     },
     {
@@ -33954,6 +35164,52 @@
       "used_by": [],
       "used_by_schemas": [
         "Listen"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The record this checkout continues on one branch.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Position",
+      "properties": [
+        {
+          "description": "The line.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record: the parent of this checkout's next publication on the branch.",
+          "name": "record",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Published here or resumed here.",
+          "name": "via",
+          "refs": [
+            "Via"
+          ],
+          "required": true,
+          "type": "Via"
+        },
+        {
+          "description": "When, by this machine's clock.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Resumed",
+        "Status"
       ],
       "values": [],
       "variants": []
@@ -35543,6 +36799,94 @@
       "variants": []
     },
     {
+      "description": "The input of `continuity.publish`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "PublishInput",
+      "properties": [
+        {
+          "description": "The file name of a handover record under `.ai/local/state/handovers/`; the newest\nwhen absent.",
+          "name": "handover",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue the work belongs to (`#184`, `I0042`).",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone it belongs to.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.publish"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `continuity publish`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Published",
+      "properties": [
+        {
+          "description": "The record.",
+          "name": "record",
+          "refs": [
+            "RecordView"
+          ],
+          "required": true,
+          "type": "RecordView"
+        },
+        {
+          "description": "False when the same handover at the same source state was already the record this\ncheckout stands on: nothing new was written.",
+          "name": "written",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The local ref's commit.",
+          "name": "tip",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The handover record it was read from, relative to the checkout.",
+          "name": "handover",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is next: the record reaches another machine only through a sync.",
+          "name": "next",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.publish"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The canonical state of one open pull request: what was observed, what it is to master,\nhow it is classified and why. The one value every surface renders.",
       "home": "integration",
       "is_enum": false,
@@ -35602,7 +36946,7 @@
           "type": "PullRequestDisposition"
         },
         {
-          "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead.",
+          "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or merged somewhere master does not contain,\nis in the `supersession` evidence and the reasons instead, and one closed unmerged is\nevidence only.",
           "name": "superseded_by",
           "refs": [],
           "required": false,
@@ -35881,11 +37225,11 @@
           "value": "redundant"
         },
         {
-          "description": "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy.",
+          "description": "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy.",
           "value": "superseded"
         },
         {
-          "description": "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically.",
+          "description": "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically.",
           "value": "possibly_redundant"
         },
         {
@@ -36255,6 +37599,13 @@
           ],
           "required": true,
           "type": "HealthStatus"
+        },
+        {
+          "description": "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502).",
+          "name": "stale",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -38354,6 +39705,166 @@
       "variants": []
     },
     {
+      "description": "The input of `continuity.plan` and `continuity.resume`: which record, by id or a prefix\nof one. Absent, the one handover another device published that this checkout has not\nresumed — on this branch when there is one there.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "RecordInput",
+      "properties": [
+        {
+          "description": "A record id, or a unique prefix of one.",
+          "name": "record",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.resume"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One record as every surface shows it.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "RecordView",
+      "properties": [
+        {
+          "description": "The record id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its line.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record it continues.",
+          "name": "parent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The device that published it.",
+          "name": "device",
+          "refs": [
+            "Device"
+          ],
+          "required": true,
+          "type": "Device"
+        },
+        {
+          "description": "Whether that device is this one.",
+          "name": "this_device",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether its signer is trusted here.",
+          "name": "trust",
+          "refs": [
+            "Trust"
+          ],
+          "required": true,
+          "type": "Trust"
+        },
+        {
+          "description": "The episode it was published from.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch it was written on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit it was written at.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Clean or dirty at the origin.",
+          "name": "working_tree",
+          "refs": [
+            "WorkingTree"
+          ],
+          "required": true,
+          "type": "WorkingTree"
+        },
+        {
+          "description": "How many paths differed from HEAD at the origin.",
+          "name": "changed_total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When it was published, by the publisher's clock.",
+          "name": "published_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Minutes since then, by this machine's clock; absent when either clock's reading is\nunusable.",
+          "name": "age_minutes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The task's title: the intent.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The handover's `# Objective`, first line.",
+          "name": "objective",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LineView",
+        "Published",
+        "Records",
+        "ResumePlan",
+        "Status",
+        "Synced"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```",
       "home": "session-domain",
       "is_enum": false,
@@ -38388,6 +39899,48 @@
       "used_by_schemas": [
         "IdentityFacet"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `continuity records`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Records",
+      "properties": [
+        {
+          "description": "Every admitted record, by line and then by id.",
+          "name": "records",
+          "refs": [
+            "RecordView"
+          ],
+          "required": true,
+          "type": "array of RecordView"
+        },
+        {
+          "description": "Every line.",
+          "name": "lines",
+          "refs": [
+            "LineView"
+          ],
+          "required": true,
+          "type": "array of LineView"
+        },
+        {
+          "description": "Refused files and lineage findings.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.records"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -38866,6 +40419,41 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "What one record is to another.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "Relation",
+      "properties": [],
+      "type": "\"equal\" | \"newer\" | \"older\" | \"diverged\" | \"independent\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResumePlan"
+      ],
+      "values": [
+        {
+          "description": "The same record.",
+          "value": "equal"
+        },
+        {
+          "description": "The second descends from the first: the second is newer.",
+          "value": "newer"
+        },
+        {
+          "description": "The first descends from the second: the second is older.",
+          "value": "older"
+        },
+        {
+          "description": "Same line, neither descends from the other: the work was continued twice.",
+          "value": "diverged"
+        },
+        {
+          "description": "Different lines: separate work.",
+          "value": "independent"
+        }
+      ],
       "variants": []
     },
     {
@@ -41835,6 +43423,209 @@
       "variants": []
     },
     {
+      "description": "The answer of `continuity plan`, and the plan `continuity resume` acts on.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "ResumePlan",
+      "properties": [
+        {
+          "description": "The verdict.",
+          "name": "status",
+          "refs": [
+            "PlanStatus"
+          ],
+          "required": true,
+          "type": "PlanStatus"
+        },
+        {
+          "description": "The record it is about.",
+          "name": "record",
+          "refs": [
+            "RecordView"
+          ],
+          "required": false,
+          "type": "RecordView | null"
+        },
+        {
+          "description": "When the record is not decided: the records that could be meant.",
+          "name": "candidates",
+          "refs": [
+            "RecordView"
+          ],
+          "required": false,
+          "type": "array of RecordView"
+        },
+        {
+          "description": "The source check.",
+          "name": "source",
+          "refs": [
+            "SourceCheck"
+          ],
+          "required": false,
+          "type": "SourceCheck | null"
+        },
+        {
+          "description": "What the record is to the record this checkout stands on, when it stands on one.",
+          "name": "lineage",
+          "refs": [
+            "Relation"
+          ],
+          "required": false,
+          "type": "Relation | null"
+        },
+        {
+          "description": "The task, as published: the intent.",
+          "name": "task",
+          "refs": [
+            "TaskRef"
+          ],
+          "required": false,
+          "type": "TaskRef | null"
+        },
+        {
+          "description": "The milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The headings of the decisions a resume carries.",
+          "name": "decisions",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The handover's `# Objective`.",
+          "name": "objective",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The handover's `# Current State`.",
+          "name": "current_state",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The handover's `# Next Action`.",
+          "name": "next_action",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "What stops a resume.",
+          "name": "blockers",
+          "refs": [
+            "PlanItem"
+          ],
+          "required": true,
+          "type": "array of PlanItem"
+        },
+        {
+          "description": "What a resume proceeds past and a person should know.",
+          "name": "warnings",
+          "refs": [
+            "PlanItem"
+          ],
+          "required": true,
+          "type": "array of PlanItem"
+        },
+        {
+          "description": "The commands that resolve the blockers or follow the resume. Recommended, never run:\nnothing a record says is executed.",
+          "name": "actions",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What a resume writes into this checkout.",
+          "name": "restores",
+          "refs": [
+            "Component"
+          ],
+          "required": true,
+          "type": "array of Component"
+        },
+        {
+          "description": "What this checkout computes for itself instead of copying.",
+          "name": "recomputes",
+          "refs": [
+            "Component"
+          ],
+          "required": true,
+          "type": "array of Component"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.plan"
+      ],
+      "used_by_schemas": [
+        "Resumed"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `continuity resume`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Resumed",
+      "properties": [
+        {
+          "description": "Whether anything was restored. False when the plan did not admit a resume.",
+          "name": "resumed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The plan it acted on, or declined on.",
+          "name": "plan",
+          "refs": [
+            "ResumePlan"
+          ],
+          "required": true,
+          "type": "ResumePlan"
+        },
+        {
+          "description": "The handover record written into this checkout, relative to it.",
+          "name": "handover",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many decisions were appended to this checkout's log.",
+          "name": "decisions_carried",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The record this checkout now stands on.",
+          "name": "position",
+          "refs": [
+            "Position"
+          ],
+          "required": false,
+          "type": "Position | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.resume"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One answer to a review request: who answered, what they decided, and why. The verdict\nis one of the three declared words, so a requester can act on it without reading the\nnote; the note is where the reasoning goes and is optional, because \"approved\" often\nneeds none.\n\n```\nuse majordomus_cli::mesh::state::ReviewAnswer;\n\nlet answer = ReviewAnswer {\n    session: \"a1b2c3d4-r1-0f/s2\".into(),\n    verdict: \"changes_requested\".into(),\n    note: Some(\"the fold is not deterministic\".into()),\n};\nassert_eq!(answer.verdict, \"changes_requested\");\n\n// the note is omitted rather than carried empty when there is nothing to say\nlet bare = ReviewAnswer { note: None, ..answer };\nlet value = serde_json::to_value(&bare).unwrap();\nassert!(value.get(\"note\").is_none());\n```",
       "home": "mesh",
       "is_enum": false,
@@ -42352,6 +44143,15 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "What a call changes: nothing, this process's memory, or the repository. The same\nclassification every projection reads, so the matrix answers \"where is it reachable\"\nand \"what does reaching it risk\" in one row.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
         },
         {
           "description": "The command line, when it declares one and clap has it.",
@@ -45218,6 +47018,92 @@
       "variants": []
     },
     {
+      "description": "The shard limits of a profile: the reader's own limits on what it can index, the file\ncount of a project and the tokens one file of it may hold.\n\n```\nuse majordomus_cli::pack::{Profiles, ShardLimits};\nlet p = Profiles::parse(\n    \"default: a\\nprofiles:\\n  - id: a\\n    shards:\\n      max_count: 20\\n      max_tokens: 900\\n\",\n)\n.unwrap();\nlet want = ShardLimits { max_count: 20, max_tokens: 900 };\nassert_eq!(p.profile(None).unwrap().shards, Some(want));\n```",
+      "home": "pack",
+      "is_enum": false,
+      "name": "ShardLimits",
+      "properties": [
+        {
+          "description": "The most files the pack may hold, the index included.",
+          "name": "max_count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The most tokens one file of the pack may hold, counted with `o200k_base`.",
+          "name": "max_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PackPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One planned shard: a Markdown file of the pack, the paths it carries from first to last,\nand what it weighs in bytes and in tokens.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, ShardPlan};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet planned = plan(&root, &share, None);\nlet first: &ShardPlan = &planned.plan.shards[0];\nassert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, \"main.rs\", \"main.rs\"));\nassert!(first.file.ends_with(\".md\") && first.tokens > 0);\n```",
+      "home": "pack",
+      "is_enum": false,
+      "name": "ShardPlan",
+      "properties": [
+        {
+          "description": "The file name inside the pack.",
+          "name": "file",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many files it carries.",
+          "name": "files",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The first path it carries.",
+          "name": "first",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The last path it carries.",
+          "name": "last",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The bytes of the content it carries.",
+          "name": "bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The tokens of the blocks it carries.",
+          "name": "tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PackPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One thing the check refuses, with what to do about it.",
       "home": "shell",
       "is_enum": false,
@@ -46282,6 +48168,136 @@
       "variants": []
     },
     {
+      "description": "The source half of a plan.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "SourceCheck",
+      "properties": [
+        {
+          "description": "The branch the record was written on.",
+          "name": "expected_branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit it was written at.",
+          "name": "expected_head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This checkout's branch.",
+          "name": "local_branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This checkout's commit.",
+          "name": "local_head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How they stand.",
+          "name": "relation",
+          "refs": [
+            "SourceRelation"
+          ],
+          "required": true,
+          "type": "SourceRelation"
+        },
+        {
+          "description": "Whether the origin's tree was dirty.",
+          "name": "origin_dirty",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The paths that were uncommitted at the origin, as listed.",
+          "name": "origin_changed",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "How many were uncommitted.",
+          "name": "origin_changed_total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether this checkout's tree is dirty.",
+          "name": "local_dirty",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether this checkout holds the very uncommitted work the origin held (their\nfingerprints agree); absent when either side is clean.",
+          "name": "same_uncommitted_work",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResumePlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How the local source stands towards the record's.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "SourceRelation",
+      "properties": [],
+      "type": "\"exact\" | \"local_ahead\" | \"local_behind\" | \"diverged\" | \"head_missing\" | \"branch_differs\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SourceCheck"
+      ],
+      "values": [
+        {
+          "description": "Same branch, same commit.",
+          "value": "exact"
+        },
+        {
+          "description": "Same branch; the local branch has commits the record did not see.",
+          "value": "local_ahead"
+        },
+        {
+          "description": "Same branch; the record's commit is ahead of the local one.",
+          "value": "local_behind"
+        },
+        {
+          "description": "Same branch; neither commit contains the other.",
+          "value": "diverged"
+        },
+        {
+          "description": "The record's commit is not in this clone.",
+          "value": "head_missing"
+        },
+        {
+          "description": "This checkout is on another branch.",
+          "value": "branch_differs"
+        },
+        {
+          "description": "The record carries no commit, or git could not answer.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Which store a recorded identity was read from, kept beside the value.\n\nThe point is not to choose between `mj_git_repo_id` and `mj_repository_id`, or between\n`worktree:` and `worktree_id:`. It is to stop pretending they are one value. A reader\nthat knows a string is the *local* spelling can compare it with other local spellings\nand can refuse to compare it with a shared one, which is precisely the comparison that\nproduced \"these two records are about different repositories\" for records of the same\nrepository written four minutes apart.\n\n```\nuse majordomus_cli::session::Spelling;\n// the two halves are different answers to one question, and are never compared\nassert_ne!(Spelling::Local, Spelling::Shared);\nassert_eq!(Spelling::Canonical.as_str(), \"canonical\");\n```",
       "home": "session-domain",
       "is_enum": true,
@@ -46510,6 +48526,121 @@
       "variants": []
     },
     {
+      "description": "The answer of `continuity status`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Status",
+      "properties": [
+        {
+          "description": "This repository's identity (32 hex), the same on every clone.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This device.",
+          "name": "device",
+          "refs": [
+            "Device"
+          ],
+          "required": true,
+          "type": "Device"
+        },
+        {
+          "description": "The branch this checkout is on, or `DETACHED`.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it is on.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Clean or dirty.",
+          "name": "working_tree",
+          "refs": [
+            "WorkingTree"
+          ],
+          "required": true,
+          "type": "WorkingTree"
+        },
+        {
+          "description": "The record this checkout continues on its branch.",
+          "name": "position",
+          "refs": [
+            "Position"
+          ],
+          "required": false,
+          "type": "Position | null"
+        },
+        {
+          "description": "The stores.",
+          "name": "store",
+          "refs": [
+            "StoreView"
+          ],
+          "required": true,
+          "type": "StoreView"
+        },
+        {
+          "description": "The last sync, as this checkout recorded it.",
+          "name": "last_sync",
+          "refs": [
+            "SyncNote"
+          ],
+          "required": false,
+          "type": "SyncNote | null"
+        },
+        {
+          "description": "Every line, by id.",
+          "name": "lines",
+          "refs": [
+            "LineView"
+          ],
+          "required": true,
+          "type": "array of LineView"
+        },
+        {
+          "description": "What other devices published that this checkout could resume, newest first.",
+          "name": "resumable",
+          "refs": [
+            "RecordView"
+          ],
+          "required": true,
+          "type": "array of RecordView"
+        },
+        {
+          "description": "Refused files, broken lineage, diverged lines.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        },
+        {
+          "description": "The command to run next, when there is an obvious one.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer to \"where am I, and is that where I belong\".",
       "home": "worktree",
       "is_enum": false,
@@ -46694,6 +48825,73 @@
       "used_by": [],
       "used_by_schemas": [
         "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The two stores, as refs.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "StoreView",
+      "properties": [
+        {
+          "description": "The local ref.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its commit.",
+          "name": "tip",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The remote `sync` uses.",
+          "name": "remote",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit last fetched from or pushed to it.",
+          "name": "remote_tip",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How they stand.",
+          "name": "sync",
+          "refs": [
+            "SyncState"
+          ],
+          "required": true,
+          "type": "SyncState"
+        },
+        {
+          "description": "Records admitted.",
+          "name": "records",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files refused.",
+          "name": "refused",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Status",
+        "Synced"
       ],
       "values": [],
       "variants": []
@@ -47739,6 +49937,234 @@
       "variants": []
     },
     {
+      "description": "What a sync did.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "SyncAction",
+      "properties": [],
+      "type": "\"none\" | \"fetched\" | \"published\" | \"exchanged\" | \"unreachable\" | \"no_remote\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Synced"
+      ],
+      "values": [
+        {
+          "description": "Nothing to move: both held the same records.",
+          "value": "none"
+        },
+        {
+          "description": "Records were fetched.",
+          "value": "fetched"
+        },
+        {
+          "description": "Records were published.",
+          "value": "published"
+        },
+        {
+          "description": "Both.",
+          "value": "exchanged"
+        },
+        {
+          "description": "The remote could not be reached; nothing local changed, and what is pending stays\npending.",
+          "value": "unreachable"
+        },
+        {
+          "description": "No remote is configured.",
+          "value": "no_remote"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The input of `continuity.sync`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "SyncInput",
+      "properties": [
+        {
+          "description": "The git remote; the current branch's, else `origin`, when absent.",
+          "name": "remote",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.sync"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the last sync did, so that a later status can report it without the network.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "SyncNote",
+      "properties": [
+        {
+          "description": "The remote.",
+          "name": "remote",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When, by this machine's clock.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`ok`, or `unreachable` when the remote could not be asked.",
+          "name": "outcome",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What git said when it was not `ok`.",
+          "name": "detail",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Status"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How the local store stands towards the remote's, from the refs alone — no network.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "SyncState",
+      "properties": [],
+      "type": "\"no_remote\" | \"never_synced\" | \"in_sync\" | \"pending\" | \"behind\" | \"diverged\" | \"empty\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "StoreView"
+      ],
+      "values": [
+        {
+          "description": "No remote is configured: the store is local, and that is a valid answer.",
+          "value": "no_remote"
+        },
+        {
+          "description": "Never synced with the remote.",
+          "value": "never_synced"
+        },
+        {
+          "description": "Both hold the same records.",
+          "value": "in_sync"
+        },
+        {
+          "description": "This store holds records the remote has not received: a sync publishes them.",
+          "value": "pending"
+        },
+        {
+          "description": "The last fetch brought records not merged yet.",
+          "value": "behind"
+        },
+        {
+          "description": "Both of the above.",
+          "value": "diverged"
+        },
+        {
+          "description": "The store is empty and nothing was ever fetched.",
+          "value": "empty"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `continuity sync`.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "Synced",
+      "properties": [
+        {
+          "description": "The remote, when there is one.",
+          "name": "remote",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What happened.",
+          "name": "action",
+          "refs": [
+            "SyncAction"
+          ],
+          "required": true,
+          "type": "SyncAction"
+        },
+        {
+          "description": "Records the local store gained.",
+          "name": "fetched",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Records the remote gained.",
+          "name": "published",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every line either side holds, compared.",
+          "name": "lines",
+          "refs": [
+            "LineSyncView"
+          ],
+          "required": true,
+          "type": "array of LineSyncView"
+        },
+        {
+          "description": "The store after the sync.",
+          "name": "store",
+          "refs": [
+            "StoreView"
+          ],
+          "required": true,
+          "type": "StoreView"
+        },
+        {
+          "description": "What other devices published that this checkout could resume.",
+          "name": "resumable",
+          "refs": [
+            "RecordView"
+          ],
+          "required": true,
+          "type": "array of RecordView"
+        },
+        {
+          "description": "Refused files, collisions, diverged lines, an unreachable remote.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "continuity.sync"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The registry's tallies, for status and health.",
       "home": "mesh",
       "is_enum": false,
@@ -48018,6 +50444,56 @@
           "value": "undeclared"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The task the handover was written under, as the task record named it.",
+      "home": "continuity",
+      "is_enum": false,
+      "name": "TaskRef",
+      "properties": [
+        {
+          "description": "The task id, `t-<stamp>-<hex>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the task is, in its author's words: the intent.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The profile it ran under.",
+          "name": "profile",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository paths it may touch.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The outcome the task record held when the handover was published.",
+          "name": "outcome",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResumePlan"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -49199,6 +51675,37 @@
       "variants": []
     },
     {
+      "description": "Whether the device that signed a record is one this repository trusts.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "Trust",
+      "properties": [],
+      "type": "\"this_device\" | \"trusted\" | \"untrusted\" | \"undeclared\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RecordView"
+      ],
+      "values": [
+        {
+          "description": "This device signed it.",
+          "value": "this_device"
+        },
+        {
+          "description": "The mesh declaration's trust list admits the key.",
+          "value": "trusted"
+        },
+        {
+          "description": "The mesh declaration exists and does not admit the key: never resumed from.",
+          "value": "untrusted"
+        },
+        {
+          "description": "The repository declares no mesh, so no list exists to check the key against. The\nsignature still binds the record to its key; the plan warns.",
+          "value": "undeclared"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What the policy decided about one node.",
       "home": "mesh",
       "is_enum": false,
@@ -49620,6 +52127,29 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "How this checkout came to stand on a record.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "Via",
+      "properties": [],
+      "type": "\"published\" | \"resumed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Position"
+      ],
+      "values": [
+        {
+          "description": "This checkout published it.",
+          "value": "published"
+        },
+        {
+          "description": "This checkout resumed from it.",
+          "value": "resumed"
+        }
+      ],
       "variants": []
     },
     {
@@ -50051,6 +52581,30 @@
         "WorkflowDescriptor"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether the working tree had changes git does not hold in a commit.",
+      "home": "continuity",
+      "is_enum": true,
+      "name": "WorkingTree",
+      "properties": [],
+      "type": "\"clean\" | \"dirty\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RecordView",
+        "Status"
+      ],
+      "values": [
+        {
+          "description": "Nothing outside HEAD.",
+          "value": "clean"
+        },
+        {
+          "description": "Modified, staged or untracked files that HEAD does not hold.",
+          "value": "dirty"
+        }
+      ],
       "variants": []
     },
     {
@@ -51277,6 +53831,441 @@
           "result_schema": "Continuity",
           "stability": "behaviorally_verified",
           "summary": "What the lifecycle is holding"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "DeviceInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity device",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/continuity/device\" -H \"content-type: application/json\" -d '{}'",
+          "description": "The device a published handover names: the mesh node key (created when this device has none, in the user's state directory and never in a repository), its node id, its public key — what a trust list admits — and the label a person reads. With a label, renames the device; the key and every signature it made are unchanged.",
+          "home": "continuity",
+          "id": "continuity.device",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_device",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/continuity/device",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "This device's identity, and its label: the result.",
+              "schema": "DeviceView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DeviceView",
+          "stability": "experimental",
+          "summary": "This device's identity, and its label"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity plan",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/continuity/plan?record=0000\"",
+          "description": "Writes nothing. Chooses the record (named, or the one other device's handover this checkout has not resumed, on this branch first) and decides: is its signer trusted, does it diverge from the record this checkout stands on, does the local source hold the commit and branch it was written against, was it written in a dirty tree whose uncommitted files never reached a commit, may the other device still be working. The verdict is ready, ready_with_warnings, requires_source_update, conflict, choose_record, nothing_to_resume or refused, with blockers, warnings, the commands that resolve them (recommended, never run), what a resume restores and what this checkout recomputes for itself.",
+          "home": "continuity",
+          "id": "continuity.plan",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_plan",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A record id, or a unique prefix of one.",
+              "examples": [
+                {
+                  "case": "by-prefix",
+                  "value": "\"0000\""
+                }
+              ],
+              "name": "record",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/continuity/plan",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether and how a published handover can be resumed here: the result.",
+              "schema": "ResumePlan",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ResumePlan",
+          "stability": "experimental",
+          "summary": "Whether and how a published handover can be resumed here"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "PublishInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity publish",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/continuity/publish\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Projects the newest handover record into a portable record — the handover body, the repository and device identity, the episode, the source state (branch, commit, and for a dirty tree the changed paths and a fingerprint, never their content), the task and its decisions, and the record it continues — refuses it when any value carries a credential, a secret environment value or a path of this machine's disk, signs it with the device's mesh key and adds it to refs/majordomus/continuity. Touches no branch, index or working tree, and no network: a sync publishes it.",
+          "home": "continuity",
+          "id": "continuity.publish",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_publish",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/continuity/publish",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Publish this checkout's newest handover for another machine: the result.",
+              "schema": "Published",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Published",
+          "stability": "experimental",
+          "summary": "Publish this checkout's newest handover for another machine"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity records",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/continuity/records\"",
+          "description": "Every record of refs/majordomus/continuity that passed admission — schema, id, signature, repository identity, portability — by line, with each line's heads, and a diagnostic for every file refused and every lineage defect.",
+          "home": "continuity",
+          "id": "continuity.records",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_records",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/continuity/records",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every published handover the local store admits: the result.",
+              "schema": "Records",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Records",
+          "stability": "experimental",
+          "summary": "Every published handover the local store admits"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "by-prefix",
+              "json": "{\"record\":\"0000\"}"
+            },
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "RecordInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity resume",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/continuity/resume\" -H \"content-type: application/json\" -d '{\"record\":\"0000\"}'",
+          "description": "Plans exactly as continuity.plan does and acts only on a ready or ready_with_warnings plan: writes the handover into this checkout's handovers (where handover --resolve and the session briefing find it), appends the task's decisions to the decision log once each, and records the record as the one this checkout continues, so that its next publication extends the same line. Runs nothing the record says; the start command for the task is returned as a recommendation.",
+          "home": "continuity",
+          "id": "continuity.resume",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_resume",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/continuity/resume",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Resume a handover another machine published: the result.",
+              "schema": "Resumed",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Resumed",
+          "stability": "experimental",
+          "summary": "Resume a handover another machine published"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/continuity/status\"",
+          "description": "This device and repository identity, the record this checkout continues on its branch, how the local continuity store stands towards the remote's (from the refs alone, no network), every line of work with its heads, the handovers other devices published that this checkout could resume, and every refused record or broken lineage as a diagnostic. A diverged line — the same work continued twice — is reported; separate lines of work on separate devices are not a conflict.",
+          "home": "continuity",
+          "id": "continuity.status",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_status",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/continuity/status",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where this device stands in the work published from every device: the result.",
+              "schema": "Status",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Status",
+          "stability": "experimental",
+          "summary": "Where this device stands in the work published from every device"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "SyncInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "continuity sync",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/continuity/sync\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Fetches the remote's refs/majordomus/continuity, merges it into the local store as the union of both (records are content-addressed, so a name holding different bytes is reported and the local copy kept), and pushes the result, never forced. Reports each line as equal, remote_newer, local_newer, diverged, local_only or remote_only. An unreachable remote changes nothing and leaves what is pending pending.",
+          "home": "continuity",
+          "id": "continuity.sync",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_continuity_sync",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/continuity/sync",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::continuity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Exchange published handovers with a git remote: the result.",
+              "schema": "Synced",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Synced",
+          "stability": "experimental",
+          "summary": "Exchange published handovers with a git remote"
         }
       ],
       "slug": "continuity"
@@ -56425,6 +59414,83 @@
       "slug": "lifecycle"
     },
     {
+      "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers.",
+      "name": "mcp",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mcp?effect=repository_mutation\"",
+          "description": "Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository's server. Reads the registry and one file per declared client; writes nothing.",
+          "home": "mcp",
+          "id": "mcp.projection",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "mcp",
+            "uri": "majordomus://mcp"
+          },
+          "mcp_tool": "majordomus_mcp",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool.",
+              "examples": [
+                {
+                  "case": "writers",
+                  "value": "\"repository_mutation\""
+                }
+              ],
+              "name": "effect",
+              "required": false,
+              "type": "ExecutionEffect | null"
+            }
+          ],
+          "path": "/api/v1/mcp",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mcp",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The MCP projection of this registry: the result.",
+              "schema": "McpProjection",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "McpProjection",
+          "stability": "experimental",
+          "summary": "The MCP projection of this registry"
+        }
+      ],
+      "slug": "mcp"
+    },
+    {
       "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
       "name": "mesh",
       "operations": [
@@ -58353,6 +61419,147 @@
         }
       ],
       "slug": "obligations"
+    },
+    {
+      "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds.",
+      "name": "pack",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "pack plan",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pack/plan?profile=chatgpt\"",
+          "description": "What a profile of share/archive.yaml would pack: the files carried and their bytes and o200k_base tokens, every file left out by reason (worktree, link, artifact, binary, derived, excluded; derived counted, the rest listed), the shards it is cut into within the profile's token budget and file count, and every finding that refuses the build — a file over the budget, too many shards, a machine path or credential in a selected file, an empty selection, a profile without limits. Reads git's index and blobs only; writes nothing.",
+          "home": "pack",
+          "id": "pack.plan",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pack_plan",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A profile of `share/archive.yaml`; its `default` when absent.",
+              "examples": [
+                {
+                  "case": "chatgpt",
+                  "value": "\"chatgpt\""
+                }
+              ],
+              "name": "profile",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/pack/plan",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::pack",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Plan a source pack: the result.",
+              "schema": "PackPlan",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PackPlan",
+          "stability": "behaviorally_verified",
+          "summary": "Plan a source pack"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "pack verify",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pack/verify?dir=tmp%2Fpacks%2Fabsent\"",
+          "description": "Read a pack directory inside the repository against its pack.json: every file it names is present with its digest and nothing else is, every carried file's content has the digest its marker records, no carried path is a binary, an artifact, a link or a gitlink under the profile the manifest names, no file is over the profile's token budget or holds a NUL byte or a leak, and there are no more files than the profile allows. An unreadable manifest is unmeasured, never a pass.",
+          "home": "pack",
+          "id": "pack.verify",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pack_verify",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The pack's directory, inside the repository: relative to its root, or absolute\nunder it.",
+              "examples": [
+                {
+                  "case": "absent",
+                  "value": "\"tmp/packs/absent\""
+                }
+              ],
+              "name": "dir",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/pack/verify",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::pack",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Verify a written source pack: the result.",
+              "schema": "PackVerdict",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PackVerdict",
+          "stability": "behaviorally_verified",
+          "summary": "Verify a written source pack"
+        }
+      ],
+      "slug": "pack"
     },
     {
       "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",

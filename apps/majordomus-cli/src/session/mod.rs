@@ -227,7 +227,105 @@ fn remote_url(root: &Path) -> Option<String> {
         return None;
     }
     let url = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    (!url.is_empty()).then_some(url)
+    (!url.is_empty()).then(|| public_url(&url))
+}
+
+/// A URL as it may be shown and written down: without its credentials.
+///
+/// A remote configured as `https://x-access-token:<token>@host/o/r.git` is how a CI clone
+/// and many a laptop are configured, and until this function the whole string was what
+/// `session.identity` answered — to an MCP client, over HTTP, in the Cockpit. Which
+/// repository this is does not depend on who is allowed to push to it.
+///
+/// Over HTTP the whole userinfo goes, because a token is as often the user name as the
+/// password. Over any other scheme only a password does: `ssh://git@host/...` names a
+/// login that is no secret and is part of how the remote is reached. The scp form has no
+/// scheme and carries no password. The same rule as `mj_url_public` in `lib/common.sh`,
+/// which writes this value into shared records.
+///
+/// ```
+/// use majordomus_cli::session::public_url;
+/// assert_eq!(public_url("https://x-access-token:ghs_secret@github.com/o/r.git"), "https://github.com/o/r.git");
+/// assert_eq!(public_url("https://ghp_secret@github.com/o/r.git"), "https://github.com/o/r.git");
+/// assert_eq!(public_url("ssh://git:hunter2@host:22/o/r.git"), "ssh://git@host:22/o/r.git");
+/// // nothing to remove, nothing changed
+/// assert_eq!(public_url("ssh://git@github.com/o/r.git"), "ssh://git@github.com/o/r.git");
+/// assert_eq!(public_url("git@github.com:o/r.git"), "git@github.com:o/r.git");
+/// assert_eq!(public_url("https://github.com/o/r.git"), "https://github.com/o/r.git");
+/// // an at sign in the path is not userinfo
+/// assert_eq!(public_url("https://host/o/r@v1.git"), "https://host/o/r@v1.git");
+/// ```
+pub fn public_url(url: &str) -> String {
+    let Some((scheme, rest)) = url.split_once("://") else {
+        return url.to_string();
+    };
+    let (authority, path) = match rest.find('/') {
+        Some(at) => rest.split_at(at),
+        None => (rest, ""),
+    };
+    let Some((userinfo, host)) = authority.rsplit_once('@') else {
+        return url.to_string();
+    };
+    if scheme == "http" || scheme == "https" {
+        return format!("{scheme}://{host}{path}");
+    }
+    let user = userinfo.split(':').next().unwrap_or_default();
+    format!("{scheme}://{user}@{host}{path}")
+}
+
+/// Free text as it may be shown and written down: every URL in it without its credentials.
+///
+/// For what this tool relays rather than composes — the standard error of a `git` or a
+/// `gh` that failed, which names the remote it could not reach in whatever form the remote
+/// was configured. That text is recorded in the integration trail, and the trail is served.
+/// Whether the subprocess anonymised its own message is a property of someone else's tool
+/// at someone else's version; this is the same rule as [`public_url`], applied to each URL
+/// the text contains, and everything that is not a URL's userinfo is left exactly as it
+/// was.
+///
+/// ```
+/// use majordomus_cli::session::public_text;
+/// assert_eq!(
+///     public_text("fatal: unable to access 'https://user:secret@host/x/': timeout"),
+///     "fatal: unable to access 'https://host/x/': timeout"
+/// );
+/// assert_eq!(
+///     public_text("a https://t0ken@h/a and ssh://git:pw@h:22/b, then c"),
+///     "a https://h/a and ssh://git@h:22/b, then c"
+/// );
+/// // nothing to remove, nothing changed: no URL, a clean URL, an address in a sentence
+/// for same in ["no url here", "see https://host/o/r@v1 now", "mail me@example.org", "a://", "://x@y"] {
+///     assert_eq!(public_text(same), same);
+/// }
+/// ```
+pub fn public_text(text: &str) -> String {
+    let scheme_char = |c: char| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.');
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find("://") {
+        // the scheme is the run of scheme characters that ends where `://` begins
+        let scheme_start = rest[..at]
+            .char_indices()
+            .rev()
+            .take_while(|(_, c)| scheme_char(*c))
+            .last()
+            .map_or(at, |(i, _)| i);
+        let after = &rest[at + 3..];
+        // a URL ends where text that cannot be part of one begins
+        let end = after
+            .find(|c: char| c.is_whitespace() || matches!(c, '\'' | '"' | '<' | '>' | '`'))
+            .unwrap_or(after.len());
+        out.push_str(&rest[..scheme_start]);
+        let url = &rest[scheme_start..at + 3 + end];
+        if scheme_start == at {
+            out.push_str(url);
+        } else {
+            out.push_str(&public_url(url));
+        }
+        rest = &after[end..];
+    }
+    out.push_str(rest);
+    out
 }
 
 /// `(episode id, its timestamp in Unix seconds)` for every ledger line that carries one.
@@ -445,5 +543,99 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp dir");
         assert!(open_episodes(dir.path()).is_empty());
         assert!(Ledger::of(dir.path()).read().events.is_empty());
+    }
+
+    // The examples on `public_url` and `public_text` state the rule and run as doc tests,
+    // which the coverage measurement does not count. These hold the same rule where it
+    // does: each branch is reached by a test that would fail if the branch answered
+    // differently.
+
+    #[test]
+    fn over_http_the_whole_userinfo_goes() {
+        for dirty in [
+            "https://x-access-token:ghs_secret@github.com/o/r.git",
+            "https://ghp_secret@github.com/o/r.git",
+        ] {
+            assert_eq!(public_url(dirty), "https://github.com/o/r.git");
+        }
+        assert_eq!(
+            public_url("http://u:p@host:8080/o/r"),
+            "http://host:8080/o/r"
+        );
+    }
+
+    #[test]
+    fn over_any_other_scheme_the_login_stays_and_the_password_goes() {
+        assert_eq!(
+            public_url("ssh://git:hunter2@host:22/o/r.git"),
+            "ssh://git@host:22/o/r.git"
+        );
+        // a URL that stops at its authority has no path to carry over
+        assert_eq!(public_url("ssh://git:hunter2@host"), "ssh://git@host");
+        assert_eq!(public_url("https://token@host"), "https://host");
+    }
+
+    #[test]
+    fn a_url_with_nothing_to_remove_is_returned_as_it_was() {
+        for same in [
+            // no scheme: the scp form, which carries no password
+            "git@github.com:o/r.git",
+            // no userinfo
+            "https://github.com/o/r.git",
+            "ssh://git@github.com/o/r.git",
+            // an at sign in the path is not userinfo
+            "https://host/o/r@v1.git",
+        ] {
+            assert_eq!(public_url(same), same);
+        }
+    }
+
+    #[test]
+    fn every_url_in_a_text_loses_its_credential_and_nothing_else_changes() {
+        assert_eq!(
+            public_text("fatal: unable to access 'https://user:secret@host/x/': timeout"),
+            "fatal: unable to access 'https://host/x/': timeout"
+        );
+        assert_eq!(
+            public_text("a https://t0ken@h/a and ssh://git:pw@h:22/b, then c"),
+            "a https://h/a and ssh://git@h:22/b, then c"
+        );
+        for same in [
+            "no url here",
+            "see https://host/o/r@v1 now",
+            "mail me@example.org",
+            "a://",
+            // `://` with no scheme before it is not a URL, and what follows is left alone
+            "://x@y",
+            "see ://user:secret@host and go on",
+        ] {
+            assert_eq!(public_text(same), same);
+        }
+    }
+
+    #[test]
+    fn the_remote_a_repository_names_is_read_without_its_credential() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let git = |args: &[&str]| {
+            let status = std::process::Command::new("git")
+                .args(args)
+                .current_dir(dir.path())
+                .status()
+                .expect("git");
+            assert!(status.success(), "git {args:?}");
+        };
+        git(&["init", "-q", "."]);
+        // no remote at all is no URL, not an empty one
+        assert_eq!(remote_url(dir.path()), None);
+        git(&[
+            "remote",
+            "add",
+            "origin",
+            "https://x-access-token:ghs_secret@github.com/o/r.git",
+        ]);
+        assert_eq!(
+            remote_url(dir.path()).as_deref(),
+            Some("https://github.com/o/r.git")
+        );
     }
 }

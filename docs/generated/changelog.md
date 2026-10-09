@@ -1,11 +1,174 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.15.0 -->
+     Generator: majordomus-cli 0.19.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.15.0**
+Current version: **0.19.0**
+
+## v0.18.0 — 2026-10-09
+
+### Decisions
+
+- **ADR-0111** A task names what it serves, and the binding is derived, pinned and never stored _(proposed)_
+
+### Added
+
+- **intent**: a task names what it serves, and the binding is derived, pinned and never stored (`4f4136ea6`)
+
+### Fixed
+
+- **site**: the source-pin debt is paid, eleven to none (`b72089932`)
+- **batch**: the suite budget is re-measured, and two failures found in other runs are fixed (`5f01c9e07`)
+- **probe**: a chosen tab's panel that did not appear is not a region nothing reveals (`707629eca`)
+- **test**: two surfaces are compared without the age a finding quotes (`ee24f0d73`)
+- **test**: case 938 sorts in the C locale (`bfcd1a7c4`)
+- **integration**: an unlisted open successor and a successor read in part hold, they do not release (`4335a3002`)
+- **integration**: a binding the forge spells unreadably is a requirement that was not read (`9591a68d0`)
+- **integration**: a supersession is declared by someone who may, and closes on what git finds (`1970e9252`)
+- **integration**: a required check bound to an app is only that app's run (S1) (`16d90ffeb`)
+
+### Tests
+
+- **ci**: case 97 reads the dispatch arm the release record's verdict split (`2ce9315fa`)
+- **mcp**: every listed tool is one a client accepts, held over the wire (`310a2c87e`)
+- **intent**: every changed line of the binding is covered in process, and its shell is declared (`f5de1f889`)
+
+### Housekeeping
+
+- **derive**: the batch's derived artifacts follow the v0.17.0 record (`3f7e93d0b`)
+- **release**: record v0.17.0 and the metadata it publishes (`c174bca9d`)
+- **batch**: batch 3 is composed, raised to 0.18.0 and derived (`6cbaa8a06`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.18.0-aarch64-apple-darwin.tar.gz (`a751cfc79c27`)
+- `macos-x86_64` — majordomus-v0.18.0-x86_64-apple-darwin.tar.gz (`c04f73944627`)
+- `linux-x86_64-gnu` — majordomus-v0.18.0-x86_64-unknown-linux-gnu.tar.gz (`ee2746a1d6dd`)
+- `linux-x86_64-musl` — majordomus-v0.18.0-x86_64-unknown-linux-musl.tar.gz (`4e6356f0c6d1`)
+- `linux-aarch64-gnu` — majordomus-v0.18.0-aarch64-unknown-linux-gnu.tar.gz (`bb92f0a28263`)
+- `linux-aarch64-musl` — majordomus-v0.18.0-aarch64-unknown-linux-musl.tar.gz (`dd24611623a2`)
+
+
+## v0.17.0 — 2026-10-08
+
+### Added
+
+- **mcp**: a tool says nothing its capability does not (`24f88e9cc`)
+- **timing**: the timing report is one line of JSON under --json (`3142d2762`)
+- **pack**: a source pack for ChatGPT, verified to carry only committed sources (`748b4cd22`)
+- **cockpit**: the plan, one milestone and one issue, with moves run as executions (`54cf109dc`)
+- **continuity**: a handover moves between machines as a signed record and is resumed on a plan (`d385ed52b`)
+
+### Fixed
+
+- **test**: case 886 gives both runs of context one clock (`acb1ebb45`)
+- **mcp**: every tool's input schema is an object at its root (`88a03d1fc`)
+- **pack**: every changed line of the source pack is reached by a test (`7573e2682`)
+- **cockpit**: the plan pages spell no layer path and their links are 24px targets (`98f386a02`)
+- **mcp**: the clients are ordered by the canonical order, and the case's requests are bounded (`e90368b7f`)
+- **security**: a remote's URL is published without its credential (`8fdb8ed2e`)
+- **pack**: every exported item shows itself, and the pack tools are called (`8592877a0`)
+- **server**: the staleness judgement is unit-tested and case 885 is bounded (`dc1119870`)
+- **cockpit**: the issue page's moves ask capabilities.describe, not the registry (`a23e632a3`)
+- **server**: a server serving code that no longer exists stops calling itself ready (`8c29f1f3a`)
+- **handover**: two records of one second resolve to the later write, not the larger suffix (`fd36929ae`)
+- **continuity**: the offered handovers and the changed paths take the canonical order (`aa46dceac`)
+
+### Documentation
+
+- **continuity**: the continuity code carries its examples and its tests (`9b4d3f1b4`)
+- **mcp**: every exported type of the projection carries an example, as rustfmt formats it (`fe6d177c5`)
+
+### Tests
+
+- **continuity**: every changed path of the continuity code is driven (`fbea8da0b`)
+- **continuity**: the command writes its report once, and the cases name their remote branch (`c123ccd97`)
+- **continuity**: the seven continuity tools are asked as a client asks them (`1aad152bd`)
+- **mcp**: every changed path of the projection is driven; unreachable arms are folded (`f1fe41d8c`)
+- **session**: every branch of the public URL rule is reached by a unit test (`28ada7aa6`)
+- **mcp**: a remote keeps its login, and no shared record holds its password (`ba47d6651`)
+- **mcp**: the projection's account of itself is held against the server (`a79fcdf9b`)
+- **mcp**: the stdio round trip asserts a tool's hints, not the constant they replaced (`82a7ab31d`)
+- **mcp**: the server is held to the protocol and its boundaries from outside (`032c54ee0`)
+- **cockpit**: the last unreached arms of the plan pages are reached (`88c1edacb`)
+- **cockpit**: every arm of the plan pages is reached by a test (`f4401610e`)
+
+### Housekeeping
+
+- **batch**: batch 2 is composed, raised to 0.17.0 and derived (`3b9f93790`)
+- **release**: record v0.16.0 and the metadata it publishes (`52e9738c6`)
+- **derive**: the projections follow the merge with master (`a993a21d4`)
+- **derive**: the projections follow the conformance suite (`6bd507c91`)
+
+### Formatting
+
+- **integration**: the trail test is formatted as rustfmt formats it (`9f00e62c6`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.17.0-aarch64-apple-darwin.tar.gz (`db80bb29dcc5`)
+- `macos-x86_64` — majordomus-v0.17.0-x86_64-apple-darwin.tar.gz (`2293e5867027`)
+- `linux-x86_64-gnu` — majordomus-v0.17.0-x86_64-unknown-linux-gnu.tar.gz (`d18f937c7493`)
+- `linux-x86_64-musl` — majordomus-v0.17.0-x86_64-unknown-linux-musl.tar.gz (`7597dcf38b2b`)
+- `linux-aarch64-gnu` — majordomus-v0.17.0-aarch64-unknown-linux-gnu.tar.gz (`fd4ca7f47470`)
+- `linux-aarch64-musl` — majordomus-v0.17.0-aarch64-unknown-linux-musl.tar.gz (`a5fc3dd0a1d2`)
+
+
+## v0.16.0 — 2026-10-08
+
+### Added
+
+- **serve**: the interface a local server binds is the machine's to name (`c39c30cb7`)
+- **evidence**: a recording carries what its run measured, as a typed run (`0e0e9443e`)
+- **evidence**: a crate binary that ran nothing is not a pass (`62f9ec556`)
+
+### Fixed
+
+- **batch**: the findings of the first run that are the batch's own (`90b6dff01`)
+- **docs**: the heading a link names has one anchor in every renderer (`4f5baa60c`)
+- **test**: case 991 judges a terminated command after the one that follows it (`a390e0235`)
+- **live**: a request that arrives during a rebuild waits for it (`e3e122211`)
+- **test**: case 413 records the reports its run stamped (`b2f66bc5b`)
+- **evidence**: a run's records and its excluded outputs are put in canonical order (`2f12b7501`)
+- **finish**: the registry declares exit 13, a note that could not be recorded (`bcaef20f7`)
+- **finish**: a note is read once, and kept before the outcome says completed (`1b404b69c`)
+- **lint**: a reporter that sets a flag is a reporter (`15f95faf9`)
+
+### Changed
+
+- **evidence**: a coverage summary is read without a debug-only assertion (`c0a296d0c`)
+
+### Documentation
+
+- **serve**: the host resolution's public items carry an example (`dec928066`)
+- **evidence**: the stamp and record pair says why no documentation check runs it (`67daf5123`)
+- **evidence**: a run's totals say what they count (`9687d8b0f`)
+
+### Tests
+
+- **serve**: every arm of the host resolution runs under a test (`29865face`)
+- **evidence**: the newest failing recording is the one a stale judgement names (`3265284a1`)
+- **evidence**: every line the typed run changed is reached by a test (`5a96f3a6e`)
+- **evidence**: the text recording runs through the command and reports a failed write (`df28b9543`)
+- **evidence**: every line the crate adapter changed is reached by a test (`d41005bbb`)
+
+### Housekeeping
+
+- **derive**: the batch's derived artifacts follow the case 991 fix (`a27f5b7d6`)
+- **release**: record v0.15.0 and the metadata it publishes (`f062a71cd`)
+- **derive**: the projections follow the merge with master (`0594c0097`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.16.0-aarch64-apple-darwin.tar.gz (`b92c3af90eed`)
+- `macos-x86_64` — majordomus-v0.16.0-x86_64-apple-darwin.tar.gz (`9ee53da26715`)
+- `linux-x86_64-gnu` — majordomus-v0.16.0-x86_64-unknown-linux-gnu.tar.gz (`f784ddaf5c29`)
+- `linux-x86_64-musl` — majordomus-v0.16.0-x86_64-unknown-linux-musl.tar.gz (`62d6248ebde7`)
+- `linux-aarch64-gnu` — majordomus-v0.16.0-aarch64-unknown-linux-gnu.tar.gz (`2a2973a878f4`)
+- `linux-aarch64-musl` — majordomus-v0.16.0-aarch64-unknown-linux-musl.tar.gz (`aa85553180e1`)
+
 
 ## v0.15.0 — 2026-10-07
 
