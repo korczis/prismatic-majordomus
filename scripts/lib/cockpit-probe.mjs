@@ -32,7 +32,7 @@ import { chromium } from 'playwright';
 import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
 
 const BASE = process.argv[2];
-const MODE = process.argv[3] || 'full'; // full | quick | drawer
+const MODE = process.argv[3] || 'full'; // full | quick | drawer | phone
 // The widths come from the design declaration through `/api/v1/design`, read once the
 // server answers; nothing here holds a width. Until then the sweep has none.
 let WIDTHS = [];
@@ -314,10 +314,11 @@ async function interactions(context) {
 }
 
 /** The generic runner, on a real capability, through its real route. */
-async function runner(context) {
+async function runner(context, width = 1600) {
   const page = await context.newPage();
-  watch(page, 'runner');
-  await page.setViewportSize({ width: 1600, height: 1200 });
+  const at = width < 1024 ? `@${width}px ` : '';
+  watch(page, `runner ${at}`.trim());
+  await page.setViewportSize({ width, height: width < 1024 ? 740 : 1200 });
   await page.goto(BASE + '/cockpit/capabilities/objects.search', { waitUntil: 'networkidle' });
 
   const preview = () => page.textContent('[data-mj-preview]');
@@ -363,12 +364,33 @@ async function runner(context) {
     return { status: badge?.textContent?.trim() || '', body: body?.textContent || '' };
   });
   if (result.status !== '200') {
-    fail('runner', `running objects.search answered "${result.status}"`);
+    fail('runner', `${at}running objects.search answered "${result.status}"`);
   } else if (!result.body.includes('"hits"')) {
-    fail('runner', 'the answer carries no hits');
+    fail('runner', `${at}the answer carries no hits`);
   } else {
-    ok('runner', 'a form generated from the schema called the capability\'s own route and rendered its answer');
+    ok('runner', `${at}a form generated from the schema called the capability's own route and rendered its answer`);
   }
+
+  // A long answer is read where it is, not by widening the page: the block scrolls inside
+  // itself, and the form and its button stay inside the viewport. At a phone's width the
+  // JSON is wider than the screen, so this is the case that matters there.
+  const fits = await page.evaluate(() => {
+    const d = document.documentElement;
+    const pre = document.querySelector('[data-mj-result] .mj-pre');
+    const button = document.querySelector('.mj-runner button[type=submit]').getBoundingClientRect();
+    const wider = [...document.querySelectorAll('.mj-runner input, .mj-runner select, .mj-runner textarea')]
+      .filter((c) => c.getBoundingClientRect().right > d.clientWidth + 1).length;
+    return {
+      page: d.scrollWidth <= d.clientWidth + 1,
+      preScrolls: !pre || pre.scrollWidth <= pre.clientWidth + 1 || ['auto', 'scroll'].includes(getComputedStyle(pre).overflowX),
+      button: button.left >= 0 && button.right <= d.clientWidth + 1 && button.height >= 24,
+      wider,
+    };
+  });
+  if (!fits.page) fail('runner', `${at}the answer widened the page`);
+  if (!fits.preScrolls) fail('runner', `${at}the answer block neither fits nor scrolls inside itself`);
+  if (!fits.button) fail('runner', `${at}the run button is outside the viewport or under 24px`);
+  if (fits.wider) fail('runner', `${at}${fits.wider} form control(s) reach past the viewport`);
 
   // and it is the real route: what the preview promised is what the browser asked for
   const asked = [];
@@ -376,31 +398,32 @@ async function runner(context) {
   await page.click('.mj-runner button[type=submit]');
   await page.waitForTimeout(600);
   if (!asked.some((u) => u.includes('/api/v1/search?query=majordomus'))) {
-    fail('runner', `the request went somewhere else: ${asked.filter((u) => u.includes('/api/')).join(' ')}`);
+    fail('runner', `${at}the request went somewhere else: ${asked.filter((u) => u.includes('/api/')).join(' ')}`);
   }
   await page.close();
 }
 
 /** The graph drawing, when the library is vendored; the tables, always. */
-async function graph(context) {
+async function graph(context, width = 1600) {
   const page = await context.newPage();
-  watch(page, 'graph');
-  await page.setViewportSize({ width: 1600, height: 1200 });
+  const at = width < 1024 ? `@${width}px ` : '';
+  watch(page, `graph ${at}`.trim());
+  await page.setViewportSize({ width, height: width < 1024 ? 740 : 1200 });
   await page.goto(BASE + '/cockpit/graphs/registry', { waitUntil: 'networkidle' });
 
   const tables = await page.evaluate(() => ({
     nodes: document.querySelectorAll('.mj-table tbody tr').length,
     frame: !!document.querySelector('[data-mj-graph]'),
   }));
-  if (tables.nodes < 10) fail('graph', `the page lists ${tables.nodes} rows; the graph has more than that`);
+  if (tables.nodes < 10) fail('graph', `${at}the page lists ${tables.nodes} rows; the graph has more than that`);
 
   const vendored = (await fetch(BASE + '/cockpit/assets/vendor/cytoscape.min.js')).ok;
   if (!vendored) {
     const said = await page.textContent('[data-mj-graph]');
     if (!/not available|not in share/.test(said || '')) {
-      fail('graph', 'the library is absent and the frame does not say so');
+      fail('graph', `${at}the library is absent and the frame does not say so`);
     } else {
-      ok('graph', 'without the library the frame says so and every node and edge is still listed');
+      ok('graph', `${at}without the library the frame says so and every node and edge is still listed`);
     }
   } else {
     // A canvas element is not a drawing. Counting `[data-mj-graph] canvas` reported three
@@ -421,23 +444,32 @@ async function graph(context) {
         layout: frame && frame.mjGraph ? frame.mjGraph.layout : null,
       };
     });
-    if (!drew.layers) fail('graph', 'the drawing library loaded and drew nothing');
+    if (!drew.layers) fail('graph', `${at}the drawing library loaded and drew nothing`);
     else if (!drew.extent) {
-      fail('graph', `${drew.layers} canvas layer(s) and no extent: the viewer never reported what it drew`);
+      fail('graph', `${at}${drew.layers} canvas layer(s) and no extent: the viewer never reported what it drew`);
     } else {
       const e = drew.extent;
       const across = e.width / Math.max(e.frameWidth, 1);
       const down = e.height / Math.max(e.frameHeight, 1);
       const said = `${e.nodes} nodes by "${drew.layout}" occupy ${Math.round(e.width)}x${Math.round(e.height)}px of a ${Math.round(e.frameWidth)}x${Math.round(e.frameHeight)}px frame`;
       if (across < MIN_DRAWN || down < MIN_DRAWN) {
-        fail('graph', `the drawing is not a drawing: ${said} (${(across * 100).toFixed(1)}% across, ${(down * 100).toFixed(1)}% down; ${MIN_DRAWN * 100}% of each is the least that conveys anything)`);
+        fail('graph', `${at}the drawing is not a drawing: ${said} (${(across * 100).toFixed(1)}% across, ${(down * 100).toFixed(1)}% down; ${MIN_DRAWN * 100}% of each is the least that conveys anything)`);
       } else {
         // the search narrows the drawing without touching the page
         await page.fill('[data-mj-graph-search]', 'objects');
         await page.waitForTimeout(400);
-        ok('graph', `${said} over the same nodes the page lists`);
+        ok('graph', `${at}${said} over the same nodes the page lists`);
       }
     }
+  }
+  if (width < 1024) {
+    const fits = await page.evaluate(() => {
+      const d = document.documentElement;
+      const frame = document.querySelector('[data-mj-graph]')?.getBoundingClientRect();
+      return { page: d.scrollWidth <= d.clientWidth + 1, frame: !frame || frame.right <= d.clientWidth + 1 };
+    });
+    if (!fits.page) fail('graph', `${at}the graph page is wider than the screen`);
+    if (!fits.frame) fail('graph', `${at}the drawing's frame reaches past the screen`);
   }
   await page.close();
 }
@@ -906,6 +938,31 @@ async function drawerAccessibility(browser, width) {
  */
 const REGRESSION_SEEDS = [1017];
 
+/**
+ * The surfaces a person works in, at the narrowest width the design declares and on a touch
+ * screen: the capability runner (a form, a request, a long answer) and the graph (a drawing
+ * and its tables). The same blocks the sweep runs at 1600, asked again where a phone is.
+ */
+async function phoneSurfaces(browser) {
+  const width = Math.min(...WIDTHS);
+  const phone = await browser.newContext({ hasTouch: true, isMobile: true });
+  try {
+    for (const [name, check] of [
+      ['runner', () => runner(phone, width)],
+      ['graph', () => graph(phone, width)],
+    ]) {
+      try {
+        await check();
+      } catch (e) {
+        const lines = String(e.message || e).split('\n').filter((l) => l.trim());
+        fail(name, `@${width}px ` + lines.slice(0, 3).join(' — ').slice(0, 240));
+      }
+    }
+  } finally {
+    await phone.close();
+  }
+}
+
 /** A small seeded generator (mulberry32): the same seed walks the same path. */
 function seeded(seed) {
   let a = seed >>> 0;
@@ -1114,11 +1171,12 @@ async function drawerWithoutAlpine(browser, width) {
 const browser = await chromium.launch({ channel: 'chrome' });
 // the drawer alone: the fast answer to "can a phone reach the sections", for a change that
 // touches the shell and should not wait for the whole sweep
-if (MODE === 'drawer') {
+if (MODE === 'drawer' || MODE === 'phone') {
   try {
     DESIGN = await api('/api/v1/design');
     WIDTHS = DESIGN.viewports;
     await drawer(browser);
+    if (MODE === 'phone') await phoneSurfaces(browser);
   } catch (e) {
     fail('drawer', String(e.message || e).split('\n').filter((l) => l.trim()).slice(0, 3).join(' — ').slice(0, 260));
   } finally {
@@ -1126,7 +1184,7 @@ if (MODE === 'drawer') {
   }
   for (const line of notes) console.log(line);
   for (const line of findings) console.log(line);
-  console.log(`cockpit-probe: the drawer check found ${findings.length}`);
+  console.log(`cockpit-probe: the ${MODE} check found ${findings.length}`);
   process.exit(findings.length ? 10 : 0);
 }
 try {
@@ -1185,6 +1243,7 @@ try {
   for (const [name, check] of [
     ['interactions', () => interactions(context)],
     ['drawer', () => drawer(browser)],
+    ['phone', () => phoneSurfaces(browser)],
     ['runner', () => runner(context)],
     ['graph', () => graph(context)],
     ['graph-scale', async () => graphAtScale(context, await largestGraph())],

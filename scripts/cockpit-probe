@@ -21,6 +21,7 @@
 #   scripts/cockpit-probe --quick     the status sweep in full, one of each family in the browser
 #   scripts/cockpit-probe --status    the status sweep alone; no browser needed
 #   scripts/cockpit-probe --drawer    the narrow-width navigation drawer alone, in the browser
+#   scripts/cockpit-probe --phone     the drawer, the runner and the graph at a phone's width
 #   COCKPIT_PROBE_URL=http://...      probe a server that is already running, and start none
 #   COCKPIT_PROBE_PORT=N              the port to bind (default: a free one the OS picks)
 #
@@ -38,6 +39,7 @@ case "${1:-}" in
   --quick) MODE=quick ;;
   --status) MODE=status ;;
   --drawer) MODE=drawer ;;
+  --phone) MODE=phone ;;
   '') ;;
   *) echo "cockpit-probe: unknown option $1" >&2; exit 2 ;;
 esac
