@@ -1,0 +1,30 @@
+id: I2153
+milestone: cockpit-control-center
+title: "The Cockpit asks before it runs a capability that changes the repository"
+slug: the-cockpit-asks-before-it-writes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the generic runner confirm, naming the declared effect, before it submits a capability that writes, as the executions and plan scripts already do."
+why: "share/cockpit/runner.js:103-122 submits the generated form straight to the capability's route with no confirmation, even for a repository_mutation capability; only share/cockpit/executions.js:28-38 and share/cockpit/plan.js:46-62 confirm before a write. The runner form is generated from the schema (apps/majordomus-cli/tests/cockpit.rs:247), so every writer the registry declares is one click from running. The pack's premise that the Cockpit takes actions of its own is refuted: its routes are GET-only (apps/majordomus-cli/src/cockpit/mod.rs:152-158) and the browser calls the capability's own /api/v1 route. Baseline audit of 2026-10-09 at master 1fb8d6be44, coordination gap 4 and the Cockpit actions row."
+current_state: "One click on Run sends any capability, writers included."
+desired_state: "runner.js reads data-mj-confirm and the declared effect exactly as executions.js does; a writer runs only after an explicit confirmation that names its effect; a read runs at once."
+scope:
+  - "share/cockpit/runner.js"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "scripts/lib/cockpit-probe.mjs"
+  - "docs/COCKPIT.md"
+depends_on: []
+acceptance_criteria:
+  - "In a browser test, submitting the runner form of a repository_mutation capability without confirming sends no request"
+  - "Confirming sends exactly one request, and a read capability's form sends at once"
+  - "The confirmation names the declared effect"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test cockpit"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "runner_confirms_writers_browser_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

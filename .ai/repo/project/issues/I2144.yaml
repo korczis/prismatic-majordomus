@@ -1,0 +1,37 @@
+id: I2144
+milestone: work-is-coordinated
+title: "A session, a claim, a handover and a review name the task and issue they serve, by ids every store shares"
+slug: coordination-records-share-ids
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Validate the issue a mesh record names against the plan, fill the board's sessions with the local task and issue, and give a handover one id across the local, mesh and continuity stores."
+why: "Coordination lives in nine stores with no shared key: the plan (.ai/repo/project), checkout-local state (current.yaml, sessions-open/, ledger.jsonl, handovers, open-questions.md), tracked sessions (.ai/repo/sessions/), server memory (peer board, episodes), the mesh journal (apps/majordomus-cli/src/shared.rs:119), the continuity ref (apps/majordomus-cli/src/continuity/store.rs:35), the evidence ledger, GitHub, and git refs. On the live server 0 of 100 mesh sessions carry a task or issue, 0 of 54 claims carry an issue and 0 of 1250 refs name an issue id. The mesh issue field accepts #N or I#### with no mapping or validation (apps/majordomus-cli/src/mesh/journal.rs:306,620-628); the board projection fills no task or issue (apps/majordomus-cli/src/mesh/cooperation.rs:1345-1357) although docs/MESH.md:316 says sessions share them. A handover exists three times with no shared id (lib/handover.sh, apps/majordomus-cli/src/mesh/journal.rs:405, apps/majordomus-cli/src/continuity/record.rs:143-212). Reviews are mesh-only with no task or claim link (apps/majordomus-cli/src/mesh/journal.rs:518-546). Open questions are called tracked at lib/check.sh:241-244 and live in .ai/local/state/open-questions.md (lib/question.sh:6). docs/CONTINUITY.md:81-82 disagrees with lib/session.sh:440,466,676 on how many tasks a record holds. Milestone peers-share-what-work-is-for (I2071, I2072) pins a claim to its task's binding; this issue makes the ids valid and shared. Baseline audit of 2026-10-09 at master 1fb8d6be44, coordination gap 9, catalogues 14-15, drift c-7, c-8, c-11."
+current_state: "Coordination records carry free-text or empty task and issue fields and three unrelated handover ids."
+desired_state: "EventBody::validate refuses an issue that is not an issue id of the plan; Cooperation::project_board fills SessionInfo.task and issue from the local task record; a review request may name the claim or task it reviews; a mesh handover carries the local handover's id and the three handover read models report it; lib/check.sh and docs/CONTINUITY.md describe the stores as they are."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/handover.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "lib/handover.sh"
+  - "lib/check.sh"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+  - "docs/CONTINUITY.md"
+depends_on: []
+acceptance_criteria:
+  - "A mesh claim naming an issue id the plan does not hold is refused with a typed reason"
+  - "A board session of a checkout with an active task carries its task and issue on every linked runtime"
+  - "A handover published to the mesh and its local record report one id"
+  - "lib/check.sh and docs/CONTINUITY.md name the stores as they are"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves"
+evidence_required:
+  - "unknown_issue_refused_test"
+  - "board_session_carries_task_test"
+  - "handover_id_shared_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

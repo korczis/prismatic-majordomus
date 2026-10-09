@@ -1,0 +1,37 @@
+id: I2151
+milestone: surfaces-never-disagree
+title: "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing"
+slug: pages-beside-writers-are-hardened
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON."
+why: "/swagger serves no Content-Security-Policy, no frame-ancestors and no subresource integrity for the scripts it loads from unpkg (apps/majordomus-cli/src/http/swagger.rs:52,79; headers confirmed live by the sub-audit), on the same origin as every POST route. The Origin check (apps/majordomus-cli/src/http/router.rs:503-508, 718-745) passes for a same-origin script, so a substituted CDN script could call plan/transition, continuity/*, recover/orphans or executions/start. GET routes do no Host validation (only non-GET is checked, apps/majordomus-cli/src/http/router.rs:504, host_is_literal at :749), and the comment at apps/majordomus-cli/src/http/router.rs:498-502 assumes a cross-origin read is contained, which DNS rebinding defeats (the exploit is unverified). The static site embeds json_encode | safe inside script elements without escaping the closing sequence (site/templates/partials/graph.html:76, site/templates/api.html:94, site/templates/why-section.html:284; exploitability unverified). The Cockpit already sends a CSP (apps/majordomus-cli/src/cockpit/mod.rs:193-204, 296-310). Baseline audit of 2026-10-09 at master 1fb8d6be44, projections gaps 7 and 11, lifecycle authorization row and drift 9."
+current_state: "/swagger trusts a CDN with the write routes' origin; GET answers any Host; three site templates embed JSON unescaped."
+desired_state: "/swagger sends the Cockpit's header set with unpkg allowed by name and an integrity hash on every script; every route refuses a Host that does not name this server's bind; the site templates escape the closing-script sequence before marking JSON safe."
+scope:
+  - "apps/majordomus-cli/src/http/swagger.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "site/templates/partials/graph.html"
+  - "site/templates/api.html"
+  - "site/templates/why-section.html"
+  - "apps/majordomus-cli/tests/http_host.rs"
+  - "apps/majordomus-cli/tests/http_serve.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "GET /swagger answers with a Content-Security-Policy that includes frame-ancestors, and every script it loads carries an integrity attribute"
+  - "A GET whose Host header names another domain is refused before its handler runs"
+  - "A site data value containing a closing script tag renders as text in each template that embeds JSON"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test http_host --test http_serve"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "swagger_csp_test"
+  - "rebinding_host_refused_test"
+  - "site_script_escape_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

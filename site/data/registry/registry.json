@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "fc64183d0217791212cb3c3e88485b2004a109caf11f4d6c14955e765bedae23",
+    "fingerprint": "01b993982115d9a7d4263a1f0e8b5500537f5ba18b04e4d4daacae2046efd816",
     "summary": {
-      "total": 2099,
+      "total": 2150,
       "builtin": 184,
-      "declarative": 1915,
+      "declarative": 1966,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1915
+        "resource": 1966
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1923
+        "implemented": 1974
       },
       "mcp_tools": 177,
-      "mcp_resources": 1969,
+      "mcp_resources": 2020,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75257,7 +75257,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 327,
+        "capabilities": 328,
         "capability_ids": []
       },
       {
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 308,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 35,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b62b9049c7e3fd97b5b5430183ded6dd1e661f41118b4ff79ae9e043f5a54e52",
+    "fingerprint": "f406f427db01004d92e44ed47b56e5a471226745cea89a933084d445cf7c6b54",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76184,16 +76184,16 @@
       "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 328,
       "domain": 6,
       "feature": 27,
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 308,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 35,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 252904
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -81706,7 +81706,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22777
+        "bytes": 23269
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -81734,6 +81734,15 @@
         "path": "docs/ROADMAP.md",
         "source_class": "document",
         "bytes": 5025
+      },
+      {
+        "uri": "majordomus://document/docs/RUNTIME_BASELINE.md",
+        "kind": "document",
+        "identity": "docs/RUNTIME_BASELINE.md",
+        "title": "Runtime baseline: server, MCP, mesh, surfaces, coordination, failure, release",
+        "path": "docs/RUNTIME_BASELINE.md",
+        "source_class": "document",
+        "bytes": 65045
       },
       {
         "uri": "majordomus://document/docs/RUSTDOC.md",
@@ -87918,6 +87927,446 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2126",
+        "kind": "issue",
+        "identity": "I2126",
+        "title": "A server busy with tool calls is never taken over as if it were dead",
+        "description": "Make the lease probe reach a server whose HTTP workers are all running tool calls, and make it prove it reached the leaseholder, so that a client deciding whether the owner is alive is never answered by a full worker pool or by another process.",
+        "path": ".ai/repo/project/issues/I2126.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3051
+      },
+      {
+        "uri": "majordomus://issue/I2127",
+        "kind": "issue",
+        "identity": "I2127",
+        "title": "A server that lost its lease hands its sessions on and ends",
+        "description": "Make a server that lost or was superseded in its lease answer its existing MCP sessions with session-not-found after a bounded in-flight grace, so their bridges re-attach to the current leaseholder and the old process reaches its own end.",
+        "path": ".ai/repo/project/issues/I2127.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2719
+      },
+      {
+        "uri": "majordomus://issue/I2128",
+        "kind": "issue",
+        "identity": "I2128",
+        "title": "A lease is removed only by the process that holds it, and serve stop stops the server in order",
+        "description": "Make every removal and every rewrite of the lease file conditional on the actor still holding it, and turn the SIGTERM that serve stop sends into the ordered stop the server already has.",
+        "path": ".ai/repo/project/issues/I2128.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4142
+      },
+      {
+        "uri": "majordomus://issue/I2129",
+        "kind": "issue",
+        "identity": "I2129",
+        "title": "The lease timings the policy declares are the ones the mcp and serve elections use",
+        "description": "Load the policy before mcp and serve elect, make every reader of a lease timing read the declared value, and declare the idle timeout beside the other server timings.",
+        "path": ".ai/repo/project/issues/I2129.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3199
+      },
+      {
+        "uri": "majordomus://issue/I2130",
+        "kind": "issue",
+        "identity": "I2130",
+        "title": "A server's lifecycle is one typed state the server owns, reports and records",
+        "description": "Extend the one standing decision with degraded, stopping and failed, have the server publish the facts it is decided from, log every transition to a log that belongs to the current server, and make the documents say what the server writes and when it ends.",
+        "path": ".ai/repo/project/issues/I2130.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4279
+      },
+      {
+        "uri": "majordomus://issue/I2131",
+        "kind": "issue",
+        "identity": "I2131",
+        "title": "A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address",
+        "description": "Count every surface's use toward the idle timeout, and bind a port derived from the checkout's identity before falling back to a random one.",
+        "path": ".ai/repo/project/issues/I2131.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3095
+      },
+      {
+        "uri": "majordomus://issue/I2132",
+        "kind": "issue",
+        "identity": "I2132",
+        "title": "A hello names the runtime it is meant for, and no other runtime accepts it",
+        "description": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
+        "path": ".ai/repo/project/issues/I2132.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2561
+      },
+      {
+        "uri": "majordomus://issue/I2133",
+        "kind": "issue",
+        "identity": "I2133",
+        "title": "Every mesh input and answer has a bound, and a refused registration learns nothing",
+        "description": "Bound the discovery channel, every reply a runtime reads and the candidates it accepts; answer a refused registration with its refusal alone; and give every link retry a floor and jitter.",
+        "path": ".ai/repo/project/issues/I2133.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3607
+      },
+      {
+        "uri": "majordomus://issue/I2134",
+        "kind": "issue",
+        "identity": "I2134",
+        "title": "A key removed from the trust list loses its links without a restart, and a node key can be rotated",
+        "description": "Re-read the trust declaration while the runtime runs, drop the links and admission of a de-listed key, offer a key rotation that peers can follow, and create the node key file private from its first byte.",
+        "path": ".ai/repo/project/issues/I2134.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2788
+      },
+      {
+        "uri": "majordomus://issue/I2135",
+        "kind": "issue",
+        "identity": "I2135",
+        "title": "The trust root is read from the default branch, not from whatever the checkout holds",
+        "description": "Read the mesh's trust list, seeds and rendezvous endpoints from the default branch's tree, report a working tree that differs, and refuse a committed declaration that trusts on first use.",
+        "path": ".ai/repo/project/issues/I2135.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2621
+      },
+      {
+        "uri": "majordomus://issue/I2136",
+        "kind": "issue",
+        "identity": "I2136",
+        "title": "The mesh documents, ADRs and trust code say what the mesh does",
+        "description": "Remove or make reachable the dead trust-on-first-use branch, normalise allowlist entries, and bring ADRs 0050, 0059 and 0067, docs/MESH.md, docs/CLAIMS.yaml and the cooperation rule into line with the shipped mesh.",
+        "path": ".ai/repo/project/issues/I2136.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3670
+      },
+      {
+        "uri": "majordomus://issue/I2137",
+        "kind": "issue",
+        "identity": "I2137",
+        "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "description": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+        "path": ".ai/repo/project/issues/I2137.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3295
+      },
+      {
+        "uri": "majordomus://issue/I2138",
+        "kind": "issue",
+        "identity": "I2138",
+        "title": "An expired claim never returns to beat a claim admitted in its absence, and every claim change is announced",
+        "description": "Fence claims with an epoch so a revived claim is a conflict and not a winner, announce every Held and Conflicted transition, check release ownership per session, and prove the fold with randomized multi-stream histories.",
+        "path": ".ai/repo/project/issues/I2138.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3822
+      },
+      {
+        "uri": "majordomus://issue/I2139",
+        "kind": "issue",
+        "identity": "I2139",
+        "title": "A sync message stays under the link bound whatever the marks weigh",
+        "description": "Budget each sync message as the link bound minus its marks, and stop sending tombstone marks the peer does not hold.",
+        "path": ".ai/repo/project/issues/I2139.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1949
+      },
+      {
+        "uri": "majordomus://issue/I2140",
+        "kind": "issue",
+        "identity": "I2140",
+        "title": "Paging mesh.events returns every event exactly once",
+        "description": "Page mesh.events by the causal key and return the last key returned as the next cursor.",
+        "path": ".ai/repo/project/issues/I2140.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1812
+      },
+      {
+        "uri": "majordomus://issue/I2141",
+        "kind": "issue",
+        "identity": "I2141",
+        "title": "Starting, checking and finishing a task are capabilities every surface can reach",
+        "description": "Declare task.start, task.check, task.finish and task.handover as capabilities whose handlers run the existing shell implementation, so the task lifecycle has CLI, HTTP, MCP and OpenAPI projections and the accepted debt for it is retired.",
+        "path": ".ai/repo/project/issues/I2141.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2745
+      },
+      {
+        "uri": "majordomus://issue/I2142",
+        "kind": "issue",
+        "identity": "I2142",
+        "title": "The pre-push hook refuses a push it cannot judge, and an exclusive mesh claim is part of the judgement",
+        "description": "Let the policy require an active task for finish --check, have check and finish report an overlapping exclusive mesh claim of another session, and make the bootstraps and comments say what the hooks enforce.",
+        "path": ".ai/repo/project/issues/I2142.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3030
+      },
+      {
+        "uri": "majordomus://issue/I2143",
+        "kind": "issue",
+        "identity": "I2143",
+        "title": "A task or claim whose worker is gone ends, or is reported orphaned, within a declared time",
+        "description": "Give recover a tasks subject, bind a named mesh session to the peer that opened it, age departed peers' claims off the local board by time, and make doctor and recover agree on when an episode is stale.",
+        "path": ".ai/repo/project/issues/I2143.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3074
+      },
+      {
+        "uri": "majordomus://issue/I2144",
+        "kind": "issue",
+        "identity": "I2144",
+        "title": "A session, a claim, a handover and a review name the task and issue they serve, by ids every store shares",
+        "description": "Validate the issue a mesh record names against the plan, fill the board's sessions with the local task and issue, and give a handover one id across the local, mesh and continuity stores.",
+        "path": ".ai/repo/project/issues/I2144.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3590
+      },
+      {
+        "uri": "majordomus://issue/I2145",
+        "kind": "issue",
+        "identity": "I2145",
+        "title": "A tool call that may have run is never sent a second time",
+        "description": "Make the stdio bridge resend a message only when the server provably did not receive or run it, and report every other failure as the error it is, so no tool call executes twice.",
+        "path": ".ai/repo/project/issues/I2145.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2881
+      },
+      {
+        "uri": "majordomus://issue/I2146",
+        "kind": "issue",
+        "identity": "I2146",
+        "title": "A cancelled MCP request stops the work it started",
+        "description": "Handle notifications/cancelled by stopping the call it names, and let the bridge forward a notification while a call of the same client is in flight.",
+        "path": ".ai/repo/project/issues/I2146.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2097
+      },
+      {
+        "uri": "majordomus://issue/I2147",
+        "kind": "issue",
+        "identity": "I2147",
+        "title": "The MCP transports bound what they read and follow the Streamable HTTP rules they claim",
+        "description": "Apply one declared message bound to stdin lines, request bodies and every response the bridge reads, validate MCP-Protocol-Version, issue unpredictable session ids, and never reap a session whose request is still running.",
+        "path": ".ai/repo/project/issues/I2147.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2921
+      },
+      {
+        "uri": "majordomus://issue/I2148",
+        "kind": "issue",
+        "identity": "I2148",
+        "title": "The client launch configurations are generated from the provider declaration and diagnosed by parsing them",
+        "description": "Render .mcp.json, .gemini/settings.json and .codex/config.toml from share/providers.yaml, write them on init, and diagnose them by parsing the server entry rather than searching the text.",
+        "path": ".ai/repo/project/issues/I2148.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2683
+      },
+      {
+        "uri": "majordomus://issue/I2149",
+        "kind": "issue",
+        "identity": "I2149",
+        "title": "Every answer that reports state says when it was observed, and a server says how far it is behind its checkout",
+        "description": "Carry the existing observation (observed_at, source, stale) on every capability output that reports state, re-take a stale git observation instead of waiting for a stamp to move, and report the commit a server serves beside its checkout's HEAD.",
+        "path": ".ai/repo/project/issues/I2149.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3193
+      },
+      {
+        "uri": "majordomus://issue/I2150",
+        "kind": "issue",
+        "identity": "I2150",
+        "title": "The command line, HTTP and MCP answer every capability alike, writers and coordination reads included",
+        "description": "Extend the transport parity property to POST routes, to the command line's JSON, and to the coordination read models it now excludes, comparing refusals as classes.",
+        "path": ".ai/repo/project/issues/I2150.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2612
+      },
+      {
+        "uri": "majordomus://issue/I2151",
+        "kind": "issue",
+        "identity": "I2151",
+        "title": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "description": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+        "path": ".ai/repo/project/issues/I2151.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3146
+      },
+      {
+        "uri": "majordomus://issue/I2152",
+        "kind": "issue",
+        "identity": "I2152",
+        "title": "No surface keeps its own list of what the registry already declares",
+        "description": "Derive every consumer-side list in the Cockpit and the site from its owner, prove each dashboard card's route resolves, and make ADR 0004, ADR 0003 and the Cockpit documents name the second registries that remain.",
+        "path": ".ai/repo/project/issues/I2152.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4823
+      },
+      {
+        "uri": "majordomus://issue/I2153",
+        "kind": "issue",
+        "identity": "I2153",
+        "title": "The Cockpit asks before it runs a capability that changes the repository",
+        "description": "Make the generic runner confirm, naming the declared effect, before it submits a capability that writes, as the executions and plan scripts already do.",
+        "path": ".ai/repo/project/issues/I2153.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2111
+      },
+      {
+        "uri": "majordomus://issue/I2154",
+        "kind": "issue",
+        "identity": "I2154",
+        "title": "A change to the Cockpit's Rust source reaches the accessibility audit",
+        "description": "Select ui-audit for every change that can alter the Cockpit's HTML, including one that touches only its Rust source.",
+        "path": ".ai/repo/project/issues/I2154.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1787
+      },
+      {
+        "uri": "majordomus://issue/I2155",
+        "kind": "issue",
+        "identity": "I2155",
+        "title": "The Cockpit shows sessions, tasks, handovers, reviews, runtimes and events, each from its capability",
+        "description": "Add Cockpit areas for the coordination objects, each a projection of its capability with freshness, trust and conflicts shown and drilldown to canonical ids.",
+        "path": ".ai/repo/project/issues/I2155.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2533
+      },
+      {
+        "uri": "majordomus://issue/I2156",
+        "kind": "issue",
+        "identity": "I2156",
+        "title": "A slow or silent HTTP client cannot hold a server worker",
+        "description": "Put a declared deadline on reading each request's head and body, close and count a connection that misses it, and keep handler time off the workers the probe needs.",
+        "path": ".ai/repo/project/issues/I2156.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2178
+      },
+      {
+        "uri": "majordomus://issue/I2157",
+        "kind": "issue",
+        "identity": "I2157",
+        "title": "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready",
+        "description": "Fold lease loss and a degraded index into readiness with a named reason, add a mesh check to health.report, and make majordomus doctor report the runtime or say that it does not.",
+        "path": ".ai/repo/project/issues/I2157.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3026
+      },
+      {
+        "uri": "majordomus://issue/I2158",
+        "kind": "issue",
+        "identity": "I2158",
+        "title": "Every failure class the runtime names has a test or a stated limitation",
+        "description": "Publish the runtime's failure-class table with a test or a stated limitation on every row, add the missing fault-injection tests, report swallowed write failures, and make the logging and runtime documents describe what exists.",
+        "path": ".ai/repo/project/issues/I2158.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3211
+      },
+      {
+        "uri": "majordomus://issue/I2159",
+        "kind": "issue",
+        "identity": "I2159",
+        "title": "A red or cancelled scheduled full CI run is raised where people look, the day it happens",
+        "description": "Turn the scheduled full plan's verdict into a visible record when it is red or cancelled, count a cancelled required job as not green, and give bench and macos timeouts they can meet.",
+        "path": ".ai/repo/project/issues/I2159.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2462
+      },
+      {
+        "uri": "majordomus://issue/I2160",
+        "kind": "issue",
+        "identity": "I2160",
+        "title": "A rule is proven only by a run of its proof, not by the proof's existence",
+        "description": "Make rule-proof read recorded CI runs, report each rule as proven, not run or failing, and fix the rule whose named proof does not exercise it.",
+        "path": ".ai/repo/project/issues/I2160.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2859
+      },
+      {
+        "uri": "majordomus://issue/I2161",
+        "kind": "issue",
+        "identity": "I2161",
+        "title": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "description": "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist.",
+        "path": ".ai/repo/project/issues/I2161.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3075
+      },
+      {
+        "uri": "majordomus://issue/I2162",
+        "kind": "issue",
+        "identity": "I2162",
+        "title": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "description": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+        "path": ".ai/repo/project/issues/I2162.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2498
+      },
+      {
+        "uri": "majordomus://issue/I2163",
+        "kind": "issue",
+        "identity": "I2163",
+        "title": "A client never attaches to a server of another version without saying so, and a newer client replaces an older server",
+        "description": "Make the election compare versions through the one standing verdict: a newer client takes over in an ordered hand-off, an older client attaches and says it is older.",
+        "path": ".ai/repo/project/issues/I2163.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2752
+      },
+      {
+        "uri": "majordomus://issue/I2164",
+        "kind": "issue",
+        "identity": "I2164",
+        "title": "A change to the mesh wire, the lease schema or a journal event is priced by the version gate",
+        "description": "Add the discovery and link protocol ranges, the lease schema and the journal event schema to the release surface, and prove the reader of the oldest accepted discovery version with a recorded fixture.",
+        "path": ".ai/repo/project/issues/I2164.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2429
+      },
+      {
+        "uri": "majordomus://issue/I2165",
+        "kind": "issue",
+        "identity": "I2165",
+        "title": "A released archive carries a provenance attestation the installer can check",
+        "description": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
+        "path": ".ai/repo/project/issues/I2165.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2285
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88007,6 +88456,17 @@
         "bytes": 3523
       },
       {
+        "uri": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "identity": "architecture-is-enforced",
+        "title": "A violated invariant fails a gate, and green means every required check ran",
+        "description": "A deliberate architectural violation fails a named gate; a red or cancelled full run is raised the day it happens; a rule is reported proven only when its proof ran; a credential shape never leaves through a response, log or frame; an installed release is proven to serve a repository that is not this one.",
+        "path": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4102
+      },
+      {
         "uri": "majordomus://milestone/capability-graph",
         "kind": "milestone",
         "identity": "capability-graph",
@@ -88016,6 +88476,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 6038
+      },
+      {
+        "uri": "majordomus://milestone/cockpit-control-center",
+        "kind": "milestone",
+        "identity": "cockpit-control-center",
+        "title": "A person can follow and steer the coordination of work from the Cockpit, and every action asks before it writes",
+        "description": "From the Cockpit a person sees runtimes, sessions, tasks, claims, handovers, reviews and events with their freshness and trust, drills into canonical ids, and runs a writer only after a confirmation that names its effect; every Cockpit change is audited for accessibility.",
+        "path": ".ai/repo/project/milestones/cockpit-control-center.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3711
       },
       {
         "uri": "majordomus://milestone/cost-per-accepted-outcome",
@@ -88073,6 +88544,17 @@
         "bytes": 6152
       },
       {
+        "uri": "majordomus://milestone/failure-is-visible",
+        "kind": "milestone",
+        "identity": "failure-is-visible",
+        "title": "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports",
+        "description": "A client can tell running from ready from mesh-healthy from degraded on one endpoint; no client can hold a worker past a declared deadline; each failure class in a published table names its test or its stated limitation.",
+        "path": ".ai/repo/project/milestones/failure-is-visible.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3805
+      },
+      {
         "uri": "majordomus://milestone/fly-deployment",
         "kind": "milestone",
         "identity": "fly-deployment",
@@ -88128,6 +88610,28 @@
         "bytes": 2652
       },
       {
+        "uri": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "milestone",
+        "identity": "mcp-transports-are-reliable",
+        "title": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation",
+        "description": "A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it.",
+        "path": ".ai/repo/project/milestones/mcp-transports-are-reliable.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4834
+      },
+      {
+        "uri": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "identity": "mesh-journal-converges",
+        "title": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "description": "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once.",
+        "path": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5484
+      },
+      {
         "uri": "majordomus://milestone/public-proof",
         "kind": "milestone",
         "identity": "public-proof",
@@ -88161,6 +88665,39 @@
         "bytes": 1571
       },
       {
+        "uri": "majordomus://milestone/runtime-lifecycle",
+        "kind": "milestone",
+        "identity": "runtime-lifecycle",
+        "title": "One usable server per checkout starts, attaches, stops and reports its state without races or hidden kills",
+        "description": "Entering a checkout, opening the Cockpit, or starting any number of MCP clients converges on one server for that checkout, which is taken over only when it is dead, stops in order when asked, removes only its own lease, reports a typed state every surface reads, and stays up while any surface uses it.",
+        "path": ".ai/repo/project/milestones/runtime-lifecycle.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6715
+      },
+      {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
+      },
+      {
+        "uri": "majordomus://milestone/safe-self-update",
+        "kind": "milestone",
+        "identity": "safe-self-update",
+        "title": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "description": "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
+        "path": ".ai/repo/project/milestones/safe-self-update.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3948
+      },
+      {
         "uri": "majordomus://milestone/shared-policy",
         "kind": "milestone",
         "identity": "shared-policy",
@@ -88170,6 +88707,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1441
+      },
+      {
+        "uri": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "identity": "surfaces-never-disagree",
+        "title": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "description": "A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped.",
+        "path": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4606
       },
       {
         "uri": "majordomus://milestone/test-evidence",
@@ -88214,6 +88762,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5886
+      },
+      {
+        "uri": "majordomus://milestone/work-is-coordinated",
+        "kind": "milestone",
+        "identity": "work-is-coordinated",
+        "title": "Work is allocated and enforced through one typed task model, not observed on a board",
+        "description": "A task is a typed capability every surface can start, check and finish; a push or finish that no task covers is refused where the policy says so; a dead worker's task and claims end or are reported within a declared time; a session, claim, handover and review name the task and issue they serve by ids every store shares.",
+        "path": ".ai/repo/project/milestones/work-is-coordinated.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4532
       },
       {
         "uri": "majordomus://moment/abandoned-worktree",
@@ -96796,7 +97355,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 327
+      "objects": 328
     },
     {
       "name": "domain",
@@ -96853,7 +97412,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 308
     },
     {
       "name": "knowledge",
@@ -96883,7 +97442,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 35
     },
     {
       "name": "moment",

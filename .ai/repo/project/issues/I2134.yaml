@@ -1,0 +1,35 @@
+id: I2134
+milestone: runtime-trust
+title: "A key removed from the trust list loses its links without a restart, and a node key can be rotated"
+slug: trust-can-be-revoked-and-keys-rotated
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Re-read the trust declaration while the runtime runs, drop the links and admission of a de-listed key, offer a key rotation that peers can follow, and create the node key file private from its first byte."
+why: "Trust is frozen at activation (apps/majordomus-cli/src/mesh/manager.rs:466,486, apps/majordomus-cli/src/mesh/cooperation.rs:1150): a key removed from trust.allow keeps its links until every peer restarts, and there is no rotate or revoke flow (threat T11). A compromised key therefore cannot be cut off without restarting every runtime. The node key file is written and then chmodded to 0600 (apps/majordomus-cli/src/mesh/identity.rs:338-347), so it exists for a moment at umask permissions. Reloaded events of a revoked key are I2124's (the journal reload applies the trust policy, milestone runtime-trust); this issue is the live half. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 6 and the identity row."
+current_state: "Revocation takes effect only on each peer's restart. Rotation does not exist. The key file is briefly readable at umask permissions."
+desired_state: "The declaration is re-read on index refresh (the live context at apps/majordomus-cli/src/shared.rs:164 exists), expire_links re-evaluates each peer's trust and drops the links and stream admission of a de-listed key, a rotate command writes a new key and a statement signed by the old key naming the new one that peers trusting the old key accept, and the key file is created with mode 0600."
+scope:
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/trust.rs"
+  - "apps/majordomus-cli/src/mesh/identity.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "Removing a key from trust.allow on a running runtime closes that key's links within one heartbeat and refuses its next hello, with no restart"
+  - "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused"
+  - "Under a permissive umask the node key file is never readable by group or others"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --lib mesh::identity"
+evidence_required:
+  - "revocation_without_restart_test"
+  - "key_rotation_test"
+  - "key_file_created_private_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

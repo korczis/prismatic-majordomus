@@ -1,0 +1,34 @@
+id: I2136
+milestone: runtime-trust
+title: "The mesh documents, ADRs and trust code say what the mesh does"
+slug: mesh-documents-match-the-mesh
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Remove or make reachable the dead trust-on-first-use branch, normalise allowlist entries, and bring ADRs 0050, 0059 and 0067, docs/MESH.md, docs/CLAIMS.yaml and the cooperation rule into line with the shipped mesh."
+why: "apps/majordomus-cli/src/mesh/trust.rs:31-33 says a later appearance of a node id under a different key is rejected, but the node id is a hash of the key (apps/majordomus-cli/src/mesh/identity.rs:40-45), so that branch (apps/majordomus-cli/src/mesh/trust.rs:99-103) never fires, TOFU trusts every valid key, and the test a_key_change_under_one_node_id_is_rejected exercises an unreachable branch. The allowlist compares exact strings, so an uppercase-hex entry never matches. ADR 0050 says kind mesh (line 79) where the code has mesh-declaration (apps/majordomus-cli/src/mesh/config.rs:28), says trusted records are never evicted (line 68) where only allowlisted ones are protected (apps/majordomus-cli/src/mesh/registry.rs:295), says nothing persists but the identity file where the journal persists (apps/majordomus-cli/src/shared.rs:119), and says mode 0600 where the file is chmodded after writing. ADRs 0050, 0059 and 0067 are status proposed while the rule they ground is active and blocking. docs/MESH.md:21-22, the rule's rationale and claim mesh-claims-cross-runtime say an exclusive claim refuses an overlapping claim everywhere, while admission is local (apps/majordomus-cli/src/mesh/cooperation.rs:3310-3318); docs/MESH.md:225-230 qualifies it correctly. docs/MESH.md:330-356 omits that every non-link mesh route was open to a beyond-loopback caller, which I2123 closes. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 15 and drift 3, 6, 7 and 8."
+current_state: "The trust code carries an unreachable branch, the allowlist is case-sensitive, and the ADRs, MESH.md and CLAIMS.yaml disagree with the code in the places listed."
+desired_state: "trust.rs has no unreachable branch and normalises entries; ADR 0050 is amended and the three ADRs are put to the owner for acceptance or supersession, since changing an ADR's status is the owner's act; docs/MESH.md, the rule and docs/CLAIMS.yaml state exclusivity as local admission with deterministic, announced conflicts, and the security model names the remote-write exposure and its fix."
+scope:
+  - "apps/majordomus-cli/src/mesh/trust.rs"
+  - ".ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
+  - ".ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md"
+  - ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md"
+  - ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+  - "docs/MESH.md"
+  - "docs/CLAIMS.yaml"
+depends_on: []
+acceptance_criteria:
+  - "An allowlist entry written in uppercase hex trusts the key it names"
+  - "No test in trust.rs exercises a branch production cannot reach"
+  - "ADR 0050 names mesh-declaration, allowlist-only eviction protection, the persisted journal and the key file's real mode, and the three ADRs carry a status the owner set"
+  - "No sentence in docs/MESH.md, the rule or docs/CLAIMS.yaml says an exclusive claim excludes everywhere"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::trust"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem"
+evidence_required:
+  - "allowlist_normalised_test"
+  - "mesh_documents_reviewed"
+created_at: 2026-10-09
+updated_at: 2026-10-09

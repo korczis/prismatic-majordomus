@@ -1,0 +1,30 @@
+id: I2132
+milestone: runtime-trust
+title: "A hello names the runtime it is meant for, and no other runtime accepts it"
+slug: a-hello-names-its-recipient
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs."
+why: "Hello (apps/majordomus-cli/src/mesh/link.rs:444-456) names no audience. The nonce cache that refuses a replay is per answerer, held in memory and checked after trust (apps/majordomus-cli/src/mesh/cooperation.rs:1847-1875), so a captured hello replays to another runtime of the same repository, or to the same runtime after a restart, within the 300 s skew window (threat T6). The effect is a displaced inbound link and a false 'connected' for the real peer (apps/majordomus-cli/src/mesh/cooperation.rs:1918-1934); the replayer cannot sync. docs/MESH.md:128-136 and item 1 of rule project.mesh-cooperation-is-authenticated put the nonce check before protocol, self, repository and trust; the code checks it last on purpose, so strangers cannot fill the cache, while the blocking rule says 'verify, in order'. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 9 and drift 1."
+current_state: "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce."
+desired_state: "Hello carries the target runtime's key or the endpoint dialed inside its signed bytes, accept_hello refuses a hello addressed elsewhere with a typed refusal, and the rule and docs/MESH.md state the order the code checks in and why. The link protocol version moves with the wire change."
+scope:
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+  - ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+depends_on: []
+acceptance_criteria:
+  - "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B"
+  - "A hello replayed to A after A restarts cannot displace an established link"
+  - "The rule's check order and the code's check order are the same, and a test names the order"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --lib mesh::cooperation"
+evidence_required:
+  - "hello_replay_to_another_runtime_refused_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

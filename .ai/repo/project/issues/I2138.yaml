@@ -1,0 +1,35 @@
+id: I2138
+milestone: mesh-journal-converges
+title: "An expired claim never returns to beat a claim admitted in its absence, and every claim change is announced"
+slug: an-expired-claim-never-wins
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Fence claims with an epoch so a revived claim is a conflict and not a winner, announce every Held and Conflicted transition, check release ownership per session, and prove the fold with randomized multi-stream histories."
+why: "A claim is Held while unreleased, its session open and its stream Live (apps/majordomus-cli/src/mesh/state.rs:656-672). Expiry is a fold-time verdict, so when the same stream beats again after a sleep or a partition (apps/majordomus-cli/src/mesh/journal.rs:1681-1697) its claim is Held again, and the fold winner is the lowest (lamport, stream, seq) (apps/majordomus-cli/src/mesh/state.rs:677-703), so the revived claim beats a claim admitted legitimately while it was gone. There is no fencing token or epoch; admission is local under a mutex (apps/majordomus-cli/src/mesh/cooperation.rs:3300-3334); nobody is notified when a claim moves between Held and Conflicted. Release checks the run, not the session (apps/majordomus-cli/src/mesh/cooperation.rs:3373-3390), so any caller of the server releases any claim of the run, while docs/MESH.md:229 reads as per holder. docs/MESH.md:229-230 and the mesh.claim description (apps/majordomus-cli/src/capability/builtin/mesh.rs:1271) say a dead holder's claim expires everywhere on its own. docs/MESH.md:189-190 says a property test permutes and duplicates deliveries; the journal proptest permutes one stream of six events (apps/majordomus-cli/src/mesh/journal.rs:3333-3343) and the state proptest one fixed 8-event history (apps/majordomus-cli/src/mesh/state.rs:1105-1126); no test covers a revived claim. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 2 and 12, drift 4, 10 and 11. The Lamport forward bound that stops a trusted key backdating a claim is I2124; this issue meets runtime-trust's criterion that an expired claim does not return as live."
+current_state: "An expired claim revives and wins on its stream's next beat; conflicts are named only when someone reads the state; release is per run."
+desired_state: "ClaimAcquired carries an epoch; the fold marks a claim that was Expired and then revived as Conflicted against any claim admitted during its absence; Held and Conflicted transitions are emitted on mesh.state and reach the peer board; release refuses a session other than the claim's; a randomized property test over several streams permutes and duplicates deliveries. The wire change is versioned as I2164 requires."
+scope:
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "A runtime that sleeps past expiry and beats again does not regain a claim another runtime admitted meanwhile, and both runtimes report the conflict"
+  - "A Held-to-Conflicted transition is visible on mesh.state with both claims named"
+  - "A release by a session other than the claim's is refused with not_own"
+  - "A property test over random multi-stream histories with permutation and duplication holds exclusivity and order independence"
+  - "docs/MESH.md and the mesh.claim description say what expiry and revival do"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::state"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "revived_claim_conflicts_test"
+  - "release_is_per_session_test"
+  - "multi_stream_fold_proptest"
+created_at: 2026-10-09
+updated_at: 2026-10-09

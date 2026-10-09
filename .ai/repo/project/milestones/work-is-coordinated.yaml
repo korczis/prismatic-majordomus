@@ -1,0 +1,50 @@
+id: work-is-coordinated
+title: "Work is allocated and enforced through one typed task model, not observed on a board"
+slug: work-is-coordinated
+order: 138
+priority: p1
+problem: "The peer board and mesh claims are observation, not allocation. The task lifecycle (start, check, finish, handover) is shell only (bin/majordomus:150, lib/start.sh, lib/finish.sh), accepted as debt in .ai/repo/development-semantics-baseline.txt:19-33, so no HTTP, MCP or Cockpit path can start or finish a task. `finish --check` exits 0 with no task, a foreign task or a non-active task (lib/finish.sh:41-55), so the pre-push hook (.githooks/pre-push:13) enforces nothing without an active task, and nothing in lib/ or .githooks/ reads a mesh claim. A dead worker leaves an active task forever (lib/recover.sh:63-70 has no tasks subject) and a claim in a named session outlives it while the runtime beats (apps/majordomus-cli/src/mesh/cooperation.rs:3319-3321). Coordination is spread over nine stores with no shared key; on the live server 0 of 100 mesh sessions carry a task or issue and 0 of 54 claims carry an issue. Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "A task is a typed capability every surface can start, check and finish; a push or finish that no task covers is refused where the policy says so; a dead worker's task and claims end or are reported within a declared time; a session, claim, handover and review name the task and issue they serve by ids every store shares."
+current_state: "Typed and enforced: plan.transition refuses illegal moves (apps/majordomus-cli/src/plan.rs:1659-1720). Enforced at check and finish when a task is active: scope (lib/check.sh:142-198). Observational only: the peer board (apps/majordomus-cli/src/peers.rs), mesh claims outside mesh.claim itself, reviews (mesh only, no task link). Duplicated: handover in three stores (lib/handover.sh, apps/majordomus-cli/src/mesh/journal.rs:405, apps/majordomus-cli/src/continuity/record.rs:143-212). GitHub stays a projection through scripts/github-sync and is not changed here."
+desired_state: "The audit's chain intent, milestone, issue, task, session, worktree, claim, evidence, review, handover and completion is traversable by ids from any surface, and every link the audit found missing is either present or refused with a reason. Tests cover: a worker dying mid-task, two agents claiming one scope, a push with no task, a named-session claim after its client dies, a handover across runtimes carrying its task."
+scope:
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "lib/finish.sh"
+  - "lib/recover.sh"
+  - "lib/handover.sh"
+  - ".githooks/pre-push"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/continuity"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/peers.rs"
+  - ".ai/repo/development-semantics-baseline.txt"
+  - ".ai/repo/policy.yaml"
+  - "test/cases"
+  - "docs/MESH.md"
+  - "docs/CLI.md"
+non_scope:
+  - "A second task database, queue or frontend assignment table (pack M05)."
+  - "Turning a received peer message into shell execution."
+  - "Pinning a claim to its task's binding revision, which is milestone peers-share-what-work-is-for (I2071, I2072)."
+  - "Which pushed refs the pre-push hook judges, which is I1990."
+acceptance_criteria:
+  - "task.start, task.check and task.finish are capabilities with HTTP, MCP and CLI projections and the baseline entries for them are removed"
+  - "With the policy key set, a push no active task covers is refused with a remedy"
+  - "A task and a named-session claim whose worker died are ended or listed as orphaned within the declared time"
+  - "A mesh claim naming an issue id the plan does not have is refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 04_start_check 06_finish 27_foreign_task"
+  - "cargo test --test mesh_cooperation --test peer_claims"
+evidence_required:
+  - "task_capabilities"
+  - "unjudged_push_refused"
+  - "zombies_recovered"
+depends_on: []
+risks:
+  - "Requiring an active task for every push changes every worker's habit; the policy key must default to today's behaviour and the switch for this repository must follow a measurement of how many pushes have no task."
+  - "Task capabilities that write are repository_mutation and must be refused to remote callers by the rule I2123 introduces (milestone runtime-trust)."
+created_at: 2026-10-09
+updated_at: 2026-10-09

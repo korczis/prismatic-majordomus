@@ -1,0 +1,28 @@
+id: I2139
+milestone: mesh-journal-converges
+title: "A sync message stays under the link bound whatever the marks weigh"
+slug: sync-respects-the-link-bound
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Budget each sync message as the link bound minus its marks, and stop sending tombstone marks the peer does not hold."
+why: "The 600 KiB event budget of a sync ignores the size of the marks sent with it (apps/majordomus-cli/src/mesh/journal.rs:1734-1766). 1024 live marks of about 340 B, plus 4096 tombstones of about 95 B, plus 600 KiB of events exceeds MAX_LINK_MESSAGE of 900 KiB (apps/majordomus-cli/src/mesh/link.rs:67,70). This is the audit's arithmetic, not observed at runtime. Past that size the answerer refuses the message (apps/majordomus-cli/src/mesh/cooperation.rs:1769-1779, 2010-2020), and a busy journal would stop replicating with no typed explanation. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 7."
+current_state: "The event budget is a constant that does not account for the marks."
+desired_state: "sync_with and accept_sync compute the event budget as MAX_LINK_MESSAGE minus the serialized marks, omit tombstone marks the peer does not hold, and the message builder asserts the bound."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+depends_on: []
+acceptance_criteria:
+  - "A journal with 1024 live marks and 4096 tombstones replicates to an empty peer over several rounds, every message under MAX_LINK_MESSAGE"
+  - "No sync message the dialer or the answerer builds exceeds MAX_LINK_MESSAGE, asserted where it is built"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "sync_at_the_mark_bound_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

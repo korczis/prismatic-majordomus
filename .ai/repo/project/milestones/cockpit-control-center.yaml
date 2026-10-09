@@ -1,0 +1,41 @@
+id: cockpit-control-center
+title: "A person can follow and steer the coordination of work from the Cockpit, and every action asks before it writes"
+slug: cockpit-control-center
+order: 141
+priority: p2
+problem: "The Cockpit is a projection with no actions of its own: its routes are GET-only (apps/majordomus-cli/src/cockpit/mod.rs:152-158) and the browser calls each capability's /api/v1 route. The pack's premise that the Cockpit takes actions is refuted, and there is no `majordomus ui`. But its one generic action path writes without asking: share/cockpit/runner.js:103-122 submits a repository_mutation capability's form with no confirmation, where share/cockpit/executions.js:28-38 confirms. The primary coordination objects have no area: /cockpit/sessions, tasks, handovers, reviews, runtimes and events answered 404 on 2026-10-09. A change to apps/majordomus-cli/src/cockpit/** alone never reaches the accessibility audit, because the rust change class (.ai/repo/ci/gates.yaml:709) does not select ui-audit. Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "From the Cockpit a person sees runtimes, sessions, tasks, claims, handovers, reviews and events with their freshness and trust, drills into canonical ids, and runs a writer only after a confirmation that names its effect; every Cockpit change is audited for accessibility."
+current_state: "Implemented: XSS-safe element tree (apps/majordomus-cli/src/cockpit/html.rs:21-34) with a CSP (apps/majordomus-cli/src/cockpit/mod.rs:296-310), a dashboard whose every card is its source's answer (apps/majordomus-cli/tests/dashboard.rs:87), the peer board page, no demo data served as live. Partial: Run confirmation, freshness, coordination areas. Mobile navigation and dense surfaces at phone width are milestone mobile-first (I2096-I2103, on feature/cockpit-mobile-navigation) and are not repeated here."
+desired_state: "The primary coordination workflow (see who works where, see a conflict, take a handover, answer a review) is completable in the Cockpit with no terminal, each step a capability call visible identically in CLI, MCP and HTTP, each page passing the probe at every declared width."
+scope:
+  - "apps/majordomus-cli/src/cockpit"
+  - "share/cockpit"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/lib/cockpit-probe.mjs"
+  - "scripts/lib/ui-audit.mjs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "test/cases"
+  - "docs/COCKPIT.md"
+  - "docs/SURFACES.md"
+non_scope:
+  - "Cockpit mobile navigation, which is milestone mobile-first."
+  - "A topology drawing without a text alternative; any drawing goes through the evidence-figure component (milestone capability-graph)."
+  - "Trust enrollment controls before runtime-trust's revocation and rotation (I2134) exist to call."
+acceptance_criteria:
+  - "No Cockpit control sends a request to a repository_mutation capability before a confirmation naming the effect"
+  - "Areas for sessions, tasks, handovers, reviews, runtimes and events answer 200 from capability calls"
+  - "A diff touching only Cockpit Rust source selects ui-audit"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test cockpit"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 389_cockpit_projection 547_the_ui_says_only_what_is_derived"
+evidence_required:
+  - "writers_confirmed"
+  - "coordination_areas"
+  - "cockpit_changes_audited"
+depends_on: []
+risks:
+  - "The tasks area needs task capabilities (I2141); building it before them would invent a read model the Cockpit would own."
+  - "mobile-first is on an unmerged branch; new areas must follow its drawer when it lands rather than add their own navigation."
+created_at: 2026-10-09
+updated_at: 2026-10-09

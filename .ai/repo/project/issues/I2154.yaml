@@ -1,0 +1,27 @@
+id: I2154
+milestone: cockpit-control-center
+title: "A change to the Cockpit's Rust source reaches the accessibility audit"
+slug: cockpit-changes-reach-ui-audit
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Select ui-audit for every change that can alter the Cockpit's HTML, including one that touches only its Rust source."
+why: "The rust change class (.ai/repo/ci/gates.yaml:709) selects cockpit-probe but not ui-audit (gates at .ai/repo/ci/gates.yaml:494,506,529,536), so a change to apps/majordomus-cli/src/cockpit/** alone never runs axe (scripts/lib/ui-audit.mjs), although the Cockpit's HTML is built in Rust (apps/majordomus-cli/src/cockpit/html.rs). The comment at scripts/lib/cockpit-probe.mjs:18 says three widths where the code uses all five declared widths (share/design/tokens.yaml:489). Baseline audit of 2026-10-09 at master 1fb8d6be44, projections gap 10 (sub-audit) and drift c-18."
+current_state: "A Rust-only Cockpit change is checked for overflow but not for accessibility."
+desired_state: "A change class for apps/majordomus-cli/src/cockpit/** and share/cockpit/** selects ui-audit and cockpit-probe, and a case holds that selection; the probe's comment states the widths it uses."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci-plan"
+  - "scripts/lib/cockpit-probe.mjs"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "The CI plan for a diff touching only apps/majordomus-cli/src/cockpit/pages.rs selects ui-audit"
+  - "The CI plan for a diff touching only an unrelated Rust module does not select ui-audit"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "cockpit_change_selects_ui_audit_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

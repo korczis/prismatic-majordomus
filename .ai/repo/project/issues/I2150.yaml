@@ -1,0 +1,30 @@
+id: I2150
+milestone: surfaces-never-disagree
+title: "The command line, HTTP and MCP answer every capability alike, writers and coordination reads included"
+slug: parity-covers-writers-and-the-cli
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Extend the transport parity property to POST routes, to the command line's JSON, and to the coordination read models it now excludes, comparing refusals as classes."
+why: "apps/majordomus-cli/tests/properties.rs:251 (direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way) compares every deterministic executable directly, over MCP and over HTTP, but over HTTP only for GET routes (apps/majordomus-cli/tests/properties.rs:300), so all 26 non-read capabilities, mesh.claim and plan.transition among them, are compared only direct against MCP. It excludes peers.list, peers.announce and perf.counters (apps/majordomus-cli/tests/properties.rs:166-168), which are the coordination read model. No generic test compares CLI JSON with HTTP; per-module ones exist (apps/majordomus-cli/tests/product.rs:343, apps/majordomus-cli/tests/intent.rs, apps/majordomus-cli/tests/http_serve.rs:204). docs/SURFACES.md F-12 says HTTP equals MCP 'for a sample', which understates the test, while the CLI half of the claim is untested. Baseline audit of 2026-10-09 at master 1fb8d6be44, projections gap 6, catalogue 13 and drift c-13."
+current_state: "Parity holds for reads over three transports and for writers over two; the CLI and the board are outside it."
+desired_state: "The parity property drives POST routes through Request::bind (apps/majordomus-cli/src/http/router.rs:91), drives the CLI through cli::tree() paths with --json, compares peers.list, peers.announce and perf.counters on structure, and compares authorization refusals as a class; docs/SURFACES.md F-12 states what is compared."
+scope:
+  - "apps/majordomus-cli/tests/properties.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/SURFACES.md"
+depends_on: []
+acceptance_criteria:
+  - "The parity test exercises every capability with an HTTP route, GET or not, against a synthetic repository"
+  - "Every capability with a CLI path is compared through the CLI's JSON"
+  - "peers.list, peers.announce and perf.counters are compared on structure rather than excluded"
+  - "A deliberately divergent CLI renderer makes the test fail"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test properties"
+evidence_required:
+  - "parity_covers_writers_and_cli_test"
+  - "divergence_mutant_fails"
+created_at: 2026-10-09
+updated_at: 2026-10-09

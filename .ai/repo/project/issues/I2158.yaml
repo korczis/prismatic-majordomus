@@ -1,0 +1,33 @@
+id: I2158
+milestone: failure-is-visible
+title: "Every failure class the runtime names has a test or a stated limitation"
+slug: every-failure-class-is-tested-or-stated
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish the runtime's failure-class table with a test or a stated limitation on every row, add the missing fault-injection tests, report swallowed write failures, and make the logging and runtime documents describe what exists."
+why: "The audit's failure table found tests for SIGKILL of a published server (test/cases/113_shared_server_survives_a_crash.sh), port collision (apps/majordomus-cli/tests/mcp_shared.rs:627), an unwritable lease directory (apps/majordomus-cli/tests/mcp_shared.rs:903) and a frozen owner (apps/majordomus-cli/tests/lease_busy.rs:131), and none for: a kill between create_new and the first write of the lease; disk full anywhere (test/cases/276_disk_is_bounded.sh is about reclaiming space); a read-only journal directory; a slow HTTP client; a frozen worker inside a live server; a mesh v1 advertisement. Lease keep-alive write errors are swallowed (apps/majordomus-cli/src/lease.rs:1058-1060); the shell ledger append is a bare >> (lib/common.sh:893). Logging is human tracing fmt on stderr with no JSON, correlation id or redaction layer (apps/majordomus-cli/src/logging.rs:29-37), while apps/majordomus-cli/src/logging.rs:3 calls it structured. docs/DEVELOPMENT_RUNTIME.md:321 lists only case 108 as the shared-server test, while coverage is in apps/majordomus-cli/tests/mcp_shared.rs, serve_lifecycle.rs, lease_busy.rs, lease_lost.rs, lease_declared.rs, server_status.rs, shared_units.rs and cases 90, 113, 191, 192 and 885. Baseline audit of 2026-10-09 at master 1fb8d6be44, the failure-class table, drift 6 of the failure slice and drift 11 of the lifecycle slice."
+current_state: "Failure coverage is real but uneven, unpublished, and two write paths swallow errors."
+desired_state: "A failure-class table in docs/DEVELOPMENT_RUNTIME.md where each row names a CI test or states a limitation, held by a case that refuses a row with neither; fault injection through ephemeral roots for the missing classes; keep-alive and ledger write failures counted and reported; logging.rs's documentation says what the format is."
+scope:
+  - "docs/DEVELOPMENT_RUNTIME.md"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/logging.rs"
+  - "lib/common.sh"
+  - "apps/majordomus-cli/tests/mcp_shared.rs"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "Each failure class in the table names a test that runs in CI or a sentence stating the limitation, and a case refuses a row with neither"
+  - "A full file system during lease keep-alive is reported by server.status"
+  - "A kill between lease creation and its first write is recovered within the bind grace, proved by a test"
+  - "docs/DEVELOPMENT_RUNTIME.md names the shared-server tests that exist"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_shared"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "failure_class_table_case"
+  - "keepalive_write_failure_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

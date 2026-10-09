@@ -1,0 +1,36 @@
+id: I2133
+milestone: runtime-trust
+title: "Every mesh input and answer has a bound, and a refused registration learns nothing"
+slug: mesh-inputs-are-bounded
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bound the discovery channel, every reply a runtime reads and the candidates it accepts; answer a refused registration with its refusal alone; and give every link retry a floor and jitter."
+why: "The provider channel is unbounded (apps/majordomus-cli/src/mesh/manager.rs:425 channel()) and feeds one thread that runs an Ed25519 verify per datagram, with no per-source rate and no drop counter (threat T3). Rendezvous and link replies to the dialer are read with an unbounded read_to_end (apps/majordomus-cli/src/mcp/bridge.rs:84-85) under a per-read timeout only, so a slow trickle holds the worker and the per-runtime round lock (apps/majordomus-cli/src/mesh/cooperation.rs:2383-2387) (T4), and the candidate count received is unbounded. docs/MESH.md:341 lists 'messages (900 KiB)' as a flood bound, which holds only for what the answerer receives (apps/majordomus-cli/src/mesh/cooperation.rs:1769-1779, 2010-2020) and the dialer sends (apps/majordomus-cli/src/mesh/link.rs:883-888). mesh.register answers its own envelope and up to 32 candidates even when the caller's envelope is refused (apps/majordomus-cli/src/mesh/manager.rs:623-636), and the candidates include untrusted nodes of any repository (apps/majordomus-cli/src/mesh/registry.rs:342-357) (T2, T13). An UnknownLink answer is retried with zero delay (apps/majordomus-cli/src/mesh/cooperation.rs:2592-2595), so a peer that welcomes and then refuses sync drives a busy loop, and the link backoff has no jitter (apps/majordomus-cli/src/mesh/cooperation.rs:2611-2614). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 5 and 11, threats T2, T3, T4 and T13, drift 5."
+current_state: "Inputs the answerer receives are bounded; the discovery channel, replies the dialer reads, received candidates and registration answers are not."
+desired_state: "A bounded sync_channel with a counted drop in the manager's refusals; every reply read capped at MAX_LINK_MESSAGE through the bound I2147 puts on the shared request function; received candidates capped at MAX_CANDIDATES; a refused registration answered with the refusal alone, and candidates limited to the caller's repository and to trusted nodes; every link retry waits at least one heartbeat plus jitter."
+scope:
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/mesh/rendezvous.rs"
+  - "apps/majordomus-cli/src/mesh/registry.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+depends_on:
+  - "I2147"
+acceptance_criteria:
+  - "Datagrams beyond the channel bound are dropped and counted in mesh status, and the process's memory stays bounded under a flood test"
+  - "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors"
+  - "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository"
+  - "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh"
+  - "cargo test --test mesh --test mesh_cooperation"
+evidence_required:
+  - "discovery_flood_bounded_test"
+  - "reply_bound_test"
+  - "refused_registration_learns_nothing_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

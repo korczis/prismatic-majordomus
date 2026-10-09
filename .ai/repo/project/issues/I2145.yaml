@@ -1,0 +1,32 @@
+id: I2145
+milestone: mcp-transports-are-reliable
+title: "A tool call that may have run is never sent a second time"
+slug: a-tool-call-is-never-sent-twice
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make the stdio bridge resend a message only when the server provably did not receive or run it, and report every other failure as the error it is, so no tool call executes twice."
+why: "The bridge waits REQUEST_TIMEOUT, 60 s, for an answer (apps/majordomus-cli/src/mcp/bridge.rs:25). A timeout is Unreachable, which makes Session::failover re-elect (apps/majordomus-cli/src/commands/mcp.rs:229-311); when the election finds the same server as Peer, the bridge reinitializes and calls b.handle(&message) again (apps/majordomus-cli/src/commands/mcp.rs:301, and :283 after a takeover), so the same tools/call is sent twice. A slow repository_mutation tool (there are six, plus executions.start, which runs any capability) can therefore run twice. Any 4xx other than 404, such as 413, 403 or 400, also triggers a re-election (apps/majordomus-cli/src/mcp/bridge.rs:352): a message over the 1 MiB body limit (apps/majordomus-cli/src/http/server.rs:20,207-214) becomes 413, then a resend, then -32603 'shared server unavailable', which names the wrong cause. The bridge is synchronous under a mutex (apps/majordomus-cli/src/commands/mcp.rs:218). Client-side timeouts differ: Gemini and Codex allow 120 s against the bridge's 60 s. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 2 (ranked second after authorization) and the payload-limit row."
+current_state: "A timed-out or rejected tool call is re-sent after a re-election, whatever its effect."
+desired_state: "failover resends only on Sent::SessionLost, a refused connection, or a tool whose declared execution hints say idempotent; otherwise the client receives -32603 with 'outcome unknown' and the request id. A 4xx other than 404 or 409 is answered as that error, with no re-election."
+scope:
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/tests/mcp_shared.rs"
+  - "apps/majordomus-cli/tests/shared_units.rs"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A mutating tool call that outlasts the bridge timeout is executed exactly once, proved by a test tool that counts its invocations"
+  - "A 413 for an oversized message reaches the client as payload too large, and no election follows"
+  - "A read-only tool call that timed out is retried and returns its answer"
+  - "docs/MCP.md states when the bridge resends"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_shared --test shared_units"
+evidence_required:
+  - "timed_out_mutation_runs_once_test"
+  - "rejected_request_is_not_reelected_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09
