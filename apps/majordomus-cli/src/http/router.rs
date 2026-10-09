@@ -155,6 +155,12 @@ impl Request {
     }
 
     /// The same request, as having come from `address`.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Request;
+    /// let r = Request::parse_target("GET", "/", vec![]).with_remote(Some("10.0.0.2".parse().unwrap()));
+    /// assert_eq!(r.remote, Some("10.0.0.2".parse().unwrap()));
+    /// ```
     pub fn with_remote(mut self, address: Option<std::net::IpAddr>) -> Self {
         self.remote = address;
         self

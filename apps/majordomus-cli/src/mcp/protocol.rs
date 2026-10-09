@@ -128,7 +128,7 @@ impl Server {
     /// of one session may come from somewhere else: a session id is a name, not a proof.
     /// A caller beyond loopback reads; a tool that changes something is refused to it
     /// unless its input authenticates it (ADR 0126).
-    pub fn set_remote(&mut self, remote: bool) {
+    pub(crate) fn set_remote(&mut self, remote: bool) {
         self.remote = remote;
     }
 
