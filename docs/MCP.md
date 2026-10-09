@@ -286,6 +286,13 @@ session id is a name, not a proof. Reads are still served to the whole network, 
 to write from another machine, reach the loopback server through an SSH tunnel
 (`ssh -L 8741:127.0.0.1:8741 <machine>`), whose requests arrive from loopback.
 
+A request from loopback must name this server by an address or `localhost`: one that names any
+other host is refused `forbidden` before any surface answers, reads included, because that is
+what a page whose domain was made to resolve to this machine (DNS rebinding) sends. A request
+from another host may name the machine as it knows it. `/swagger` is served with a
+Content-Security-Policy that admits only its pinned CDN files, whose integrity hashes the page
+names, and its one inline script.
+
 ### What a contest is judged by
 
 Four numbers decide which process owns the lease. They are **declared**, in

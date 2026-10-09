@@ -470,6 +470,26 @@ impl Executable {
     /// Declare that the input is a signed message the handler verifies before it changes
     /// anything, so a caller on another host is admitted by its key rather than refused by
     /// its address. See [`crate::capability::ExecutionPolicy::authenticates_its_input`].
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Effect, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct Signed {}
+    /// impl BenchmarkCases for Signed {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", Signed {})] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out { ok: bool }
+    /// fn hello(_: &Context, _: Signed) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+    /// let e = capability! {
+    ///     id: "demo.hello", kind: CapabilityKind::Command, title: "Hello", description: "Verifies a signed hello.",
+    ///     input: Signed, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: hello,
+    /// }.authenticates_its_input();
+    /// assert!(e.capability.execution.signed_input && e.capability.execution.admits_remote());
+    /// assert_eq!(e.capability.execution.effect, Effect::ProcessState);
+    /// ```
     pub fn authenticates_its_input(mut self) -> Self {
         self.capability.execution = self.capability.execution.authenticates_its_input();
         self

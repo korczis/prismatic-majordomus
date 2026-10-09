@@ -765,8 +765,12 @@ mod tests {
             );
             assert_eq!(c.kind, *kind, "{id} changed kind");
             let base = crate::capability::ExecutionPolicy::classify(*kind);
+            // executions.start may run a writer, so it is declared one (ADR 0126)
+            let writes = c.id.as_str() == "executions.start";
             assert!(
-                c.execution == base || c.execution == base.stoppable(),
+                c.execution == base
+                    || c.execution == base.stoppable()
+                    || (writes && c.execution == base.writes_repository()),
                 "{id} carries a policy neither its kind nor a cancellation declaration gives it"
             );
         }

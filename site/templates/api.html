@@ -91,6 +91,6 @@
 {% block scripts %}
 {#- Every id the single-page reference carried, and the page it moved to, relative to the site's
     root: api-anchors.js reads it when a reader arrives with one of those ids in the address. -#}
-<script type="application/json" id="api-anchors" data-base="{{ get_url(path="/", trailing_slash=true) }}">{{ api.anchors | json_encode() | safe }}</script>
+<script type="application/json" id="api-anchors" data-base="{{ get_url(path="/", trailing_slash=true) }}">{{ api.anchors | json_encode() | replace(from="</", to="<\\/") | safe }}</script>
 <script src="{{ get_url(path="js/api-anchors.js") }}"></script>
 {% endblock scripts %}

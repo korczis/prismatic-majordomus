@@ -155,6 +155,12 @@ impl Request {
     }
 
     /// The same request, as having come from `address`.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Request;
+    /// let r = Request::parse_target("GET", "/", vec![]).with_remote(Some("10.0.0.2".parse().unwrap()));
+    /// assert_eq!(r.remote, Some("10.0.0.2".parse().unwrap()));
+    /// ```
     pub fn with_remote(mut self, address: Option<std::net::IpAddr>) -> Self {
         self.remote = address;
         self
@@ -534,6 +540,9 @@ impl Router {
     /// from another origin is refused before it reaches a handler. A client that is not a
     /// browser sends no `Origin` and is unaffected.
     pub fn handle(&self, req: &Request) -> Response {
+        if let Some(refusal) = Self::rebound(req) {
+            return refusal;
+        }
         if req.method != "GET" && req.method != "HEAD" {
             if let Some(refusal) = self.foreign_origin(req) {
                 return refusal;
@@ -779,6 +788,30 @@ impl Router {
     /// Whether a `Host` header names this machine by an address rather than by a domain a
     /// third party could point at it: an IPv4 or bracketed IPv6 literal, `localhost` or a
     /// `*.localhost` name, each with an optional port.
+    /// The refusal for a request a DNS-rebinding page sent, when this is one.
+    ///
+    /// A page on another domain cannot read this server's answers, until its domain is made
+    /// to resolve to this machine: then the browser on this machine sends the page's requests
+    /// here, from loopback, naming the page's domain as the host. Nothing else sends a
+    /// loopback request under a name that is neither an address nor `localhost`, so that
+    /// request is refused before any surface answers it, reads included. A request from
+    /// another host is judged by ADR 0126, and one that names no host is a program's.
+    fn rebound(req: &Request) -> Option<Response> {
+        let from_loopback = req.remote.is_some_and(|ip| ip.to_canonical().is_loopback());
+        let host = req.header("host")?;
+        if !from_loopback || Self::host_is_literal(host) {
+            return None;
+        }
+        tracing::warn!(host = host, path = %req.path, "a loopback request under a foreign host name was refused");
+        Some(error_response(
+            403,
+            "forbidden",
+            &format!(
+                "a request from this machine addressed to '{host}' is refused: this server answers loopback requests only under an address or `localhost`, so a page whose domain was made to resolve here reads nothing"
+            ),
+        ))
+    }
+
     fn host_is_literal(host: &str) -> bool {
         let name = if let Some(rest) = host.strip_prefix('[') {
             match rest.split_once(']') {
@@ -991,6 +1024,9 @@ fn repository_name(root: &str) -> &str {
 /// distribution and the document by absolute path, so neither form can resolve wrongly.
 fn swagger_response() -> Response {
     Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
+        .with_header("Content-Security-Policy", swagger::csp())
+        .with_header("X-Content-Type-Options", "nosniff")
+        .with_header("Referrer-Policy", "no-referrer")
 }
 
 fn json_response(status: u16, v: &Value) -> Response {

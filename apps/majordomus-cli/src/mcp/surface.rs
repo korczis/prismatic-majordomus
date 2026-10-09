@@ -384,7 +384,7 @@ impl Surface {
     /// Call a tool by name, saying whether the caller is on another host. A remote caller
     /// is refused a tool that changes something and does not authenticate its input, with
     /// the same word and sentence the HTTP route answers (ADR 0126).
-    pub fn call_from(
+    pub(crate) fn call_from(
         &self,
         name: &str,
         args: &Value,

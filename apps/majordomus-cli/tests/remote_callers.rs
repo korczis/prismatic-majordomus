@@ -328,3 +328,61 @@ fn the_socket_says_where_a_request_came_from() {
     assert_eq!(remote.status, 403, "{}", remote.body);
     assert_ne!(local.status, 403, "{}", local.body);
 }
+
+#[test]
+fn a_loopback_request_under_a_foreign_host_name_reads_nothing() {
+    let f = Fixture::new();
+    let (_, router, _) = router(&f);
+    let get = |from: &str, host: Option<&str>| {
+        let mut req = Request::bind(
+            majordomus_cli::capability::HttpMethod::Get,
+            "/api/v1/repository",
+            &json!({}),
+        );
+        if let Some(h) = host {
+            req = req.with_headers(vec![("Host".into(), h.into())]);
+        }
+        router.handle(&self::from(from, req))
+    };
+    // a rebinding page: this machine's browser, the page's own domain
+    let rebound = get("127.0.0.1", Some("attacker.example:8741"));
+    assert_eq!(rebound.status, 403, "{}", rebound.body.text());
+    assert_eq!(body(&rebound)["error"]["code"], json!("forbidden"));
+    // the same machine under its own names and addresses, and a program that names no host
+    for host in [
+        Some("127.0.0.1:8741"),
+        Some("localhost:8741"),
+        Some("[::1]:8741"),
+        None,
+    ] {
+        assert_eq!(get("127.0.0.1", host).status, 200, "{host:?}");
+    }
+    // another host may name this machine as it knows it; ADR 0126 already lets it only read
+    assert_eq!(get(LAN, Some("macbook.local:57547")).status, 200);
+}
+
+#[test]
+fn the_api_page_runs_only_the_scripts_it_ships() {
+    let f = Fixture::new();
+    let (_, router, _) = router(&f);
+    let page = router.handle(&Request::bind(
+        majordomus_cli::capability::HttpMethod::Get,
+        "/swagger",
+        &json!({}),
+    ));
+    assert_eq!(page.status, 200);
+    let policy = page
+        .headers
+        .iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case("content-security-policy"))
+        .map(|(_, v)| v.clone())
+        .expect("a Content-Security-Policy");
+    assert!(policy.contains("frame-ancestors 'none'"), "{policy}");
+    assert!(!policy.contains("unsafe-eval"), "{policy}");
+    let html = page.body.text();
+    assert_eq!(
+        html.matches("integrity=\"sha384-").count(),
+        2,
+        "both CDN files are pinned by hash"
+    );
+}

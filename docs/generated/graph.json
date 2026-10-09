@@ -30339,6 +30339,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I2151",
+        "kind": "issue",
+        "label": "I2151",
+        "summary": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "route": "/cockpit/objects/issue/i2151",
+        "source": ".ai/repo/project/issues/I2151.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /swagger answers with a Content-Security-Policy that includes frame-ancestors, and every script it loads carries an integrity attribute",
+            "A GET whose Host header names another domain is refused before its handler runs",
+            "A site data value containing a closing script tag renders as text in each template that embeds JSON"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "/swagger trusts a CDN with the write routes' origin; GET answers any Host; three site templates embed JSON unescaped.",
+          "depends_on": [],
+          "evidence_required": [
+            "swagger_csp_test",
+            "rebinding_host_refused_test",
+            "site_script_escape_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "objective": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/swagger.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "site/templates/partials/graph.html",
+            "site/templates/api.html",
+            "site/templates/why-section.html",
+            "apps/majordomus-cli/tests/http_host.rs",
+            "apps/majordomus-cli/tests/http_serve.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "pages-beside-writers-are-hardened",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test http_host --test http_serve",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31511,6 +31558,65 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "label": "surfaces-never-disagree",
+        "summary": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "route": "/cockpit/objects/milestone/surfaces-never-disagree",
+        "source": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A test over the registry fails when a state-reporting capability answers without observed_at",
+            "The parity test covers every capability with an HTTP route and every capability with a CLI path",
+            "GET /swagger answers with a CSP and integrity hashes, and a foreign Host is refused on GET",
+            "A gate fails on a literal /api/v1/ path or a copied enum value in Cockpit or site code"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "uniform_freshness",
+            "parity_with_writers_and_cli",
+            "no_consumer_catalogue"
+          ],
+          "non_scope": [
+            "Removing the clap tree or cli/local.rs LOCAL; both are measured second declarations (SURFACES F-1, F-4) and this milestone records them rather than rewriting the CLI.",
+            "Writing a static site that claims live state; the site stays a picture labelled as one.",
+            "Reporting a replaced executable, which is I1502."
+          ],
+          "order": 140,
+          "priority": "p1",
+          "risks": [
+            "Adding observed_at to capability outputs changes their schemas and so the public surface; version-surface will price it as a change, which is correct.",
+            "Extending parity to POST routes runs writers in tests; each must run against a synthetic repository, never the checkout."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/live.rs",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/site.rs",
+            "apps/majordomus-cli/src/web/discover.rs",
+            "share/cockpit",
+            "site/templates",
+            "apps/majordomus-cli/tests/properties.rs",
+            "apps/majordomus-cli/tests/dashboard.rs",
+            "test/cases",
+            "docs/SURFACES.md",
+            "docs/COCKPIT.md",
+            ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md"
+          ],
+          "slug": "surfaces-never-disagree",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test properties --test projections --test dashboard --test http_serve --test http_host",
+            "bin/majordomus-cli generate --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 545_every_answer_says_when_it_was_observed 406_one_declaration_every_surface"
           ]
         }
       },
@@ -66413,6 +66519,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2151",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2151",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66591,6 +66707,11 @@
         "source": "majordomus://milestone/shared-policy",
         "target": "majordomus://milestone/routing-recommendations",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/surfaces-never-disagree",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/test-evidence",
@@ -75159,8 +75280,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2486,
-      "edges": 5442,
+      "nodes": 2488,
+      "edges": 5445,
       "acyclic": false,
       "truncated": false
     }
