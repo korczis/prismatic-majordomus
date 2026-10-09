@@ -202,6 +202,29 @@ struct RelationCache {
     shapes: BTreeMap<String, ChangeShape>,
 }
 
+/// Why a pull request's observed head is not in this clone. Its mirror is fetched with it
+/// and removed when the forge serves no `refs/pull/<n>/head` ([`forge::fetch`]), so a
+/// missing mirror is a head the forge never handed over; a mirror that is there holds a newer
+/// head, fetched after the pull request moved during the refresh.
+fn unfetched_head_reason(root: &Path, number: u64, head: &str) -> String {
+    let mirrored = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--verify", "--quiet"])
+        .arg(format!("{}{number}^{{commit}}", forge::PR_REF_PREFIX))
+        .output()
+        .is_ok_and(|o| o.status.success());
+    if mirrored {
+        format!(
+            "the observed head {head} is not fetched; the pull request moved during the refresh — majordomus prs refresh"
+        )
+    } else {
+        format!(
+            "the observed head {head} is not fetched: the forge serves no refs/pull/{number}/head — majordomus prs refresh once it does"
+        )
+    }
+}
+
 fn relation_cached(
     root: &Path,
     cache: &mut RelationCache,
@@ -1147,11 +1170,8 @@ fn computed(
             // the fetched ref holds now is another head nobody observed
             if !relation::has_commit(root, &p.head_sha) {
                 return RelationToMaster::Unknown {
-                reason: format!(
-                    "the observed head {} is not fetched; the pull request moved during the refresh — majordomus prs refresh",
-                    p.head_sha
-                ),
-            };
+                    reason: unfetched_head_reason(root, p.number, &p.head_sha),
+                };
             }
             relation_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha)
         },
@@ -1235,14 +1255,21 @@ impl QueueSummary {
 pub fn refresh(root: &Path) -> Result<ForgeObservation, String> {
     use forge::Forge;
     let obs = forge::GhForge { root }.observe().map_err(|e| e.0)?;
-    forge::fetch(root, &obs).map_err(|e| e.0)?;
+    let unserved = forge::fetch(root, &obs).map_err(|e| e.0)?;
     store_observation(root, &obs)?;
+    // a head the forge does not serve is unknown to its relation, and the trail says which
+    let unfetched = if unserved.is_empty() {
+        String::new()
+    } else {
+        let list: Vec<String> = unserved.iter().map(|n| format!("#{n}")).collect();
+        format!("; the forge serves no head for {}", list.join(", "))
+    };
     drain::record(
         root,
         drain::IntegrationEvent {
             master_before: Some(obs.base_sha.clone()),
             detail: format!(
-                "{} open pull request(s) of {} at {}",
+                "{} open pull request(s) of {} at {}{unfetched}",
                 obs.pull_requests.len(),
                 obs.repository,
                 obs.observed_at
