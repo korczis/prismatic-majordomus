@@ -11,6 +11,7 @@
 # repository: the distribution is read-only wherever it is installed. A rule file edited
 # without rewriting the manifest fails `check`, which the test suite runs.
 set -eu
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # the executable's version, as the tool itself prints it: authored once in the crate
 # manifest and read by bin/majordomus from its projection, never parsed out of a file here

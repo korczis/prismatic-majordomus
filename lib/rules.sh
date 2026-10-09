@@ -394,13 +394,19 @@ mj_rules_manifest_check() {
     mj_sha256_tool 2>/dev/null || { rm -rf "$tmp"; mj_die "$MJ_EX_MISSING" "$MJ_SHA256_MISSING"; }
     mj_sha256_xargs < "$tmp/existing" > "$tmp/hashes"
     # and one pipeline over their front matter for the identity each declares: the same
-    # cut and the same parser as everywhere else, one marker line per file
-    if ! xargs awk 'FNR == 1 { print "mjfile: " (++k); fm = ($0 == "---"); next } fm && $0 == "---" { fm = 0; next } fm { print }' < "$tmp/existing" \
-        | mj_yaml_flatten - 2>/dev/null \
-        | awk '{ eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
-                 if (k == "mjfile") { if (n) print id "@" ver; n++; id = ""; ver = ""; i = 0; w = 0 }
-                 else if (k == "id" && !i) { id = v; i = 1 } else if (k == "version" && !w) { ver = v; w = 1 } }
-               END { if (n) print id "@" ver }' > "$tmp/idents"; then
+    # cut and the same parser as everywhere else, one marker line per file. Run with
+    # pipefail in a subshell of its own, whatever the caller set: the parser refusing one
+    # front matter is the signal for the fallback below, and without pipefail the `if` saw
+    # only the last awk, which always succeeds. The fallback never ran, and one malformed
+    # rule file cut the batch short and misaligned every identity after it: 57 findings
+    # where there was one (doctor and scripts/rules-package alike, 2026-10-09).
+    if ! ( set -o pipefail
+           xargs awk 'FNR == 1 { print "mjfile: " (++k); fm = ($0 == "---"); next } fm && $0 == "---" { fm = 0; next } fm { print }' < "$tmp/existing" \
+             | mj_yaml_flatten - 2>/dev/null \
+             | awk '{ eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+                      if (k == "mjfile") { if (n) print id "@" ver; n++; id = ""; ver = ""; i = 0; w = 0 }
+                      else if (k == "id" && !i) { id = v; i = 1 } else if (k == "version" && !w) { ver = v; w = 1 } }
+                    END { if (n) print id "@" ver }' > "$tmp/idents" ) 2>/dev/null; then
       # a front matter the parser refuses would have cut the batch short: fall back to one
       # pipeline per file, which is what the check did before it was batched
       : > "$tmp/idents"
