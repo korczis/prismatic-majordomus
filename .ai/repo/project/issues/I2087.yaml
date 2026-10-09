@@ -1,0 +1,21 @@
+id: I2087
+milestone: recovery-baseline
+title: "Every recovery issue serves a criterion of the recovery intent"
+slug: every-recovery-issue-serves-a-criterion-of-the-recovery-intent
+priority: p0
+profile: implementation
+parallel_safe: true
+scope:
+  - ".ai/repo/project"
+objective: "Hold the recovery as one intent whose issues each serve a criterion, so an issue added without one is refused by intent validate."
+why: "A campaign without a criterion per issue grows unbounded; the pack forbids exactly that."
+current_state: "The recovery intent covers milestones M00 and M10; M01-M09 and M11-M13 are unassigned."
+desired_state: "The two recovery intents carry the outcomes of M00, M01, M03 and M10; this issue closes when they land."
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "every_issue_serves_a_criterion"
+acceptance_criteria:
+  - "intent validate holds both recovery intents with 0 failures, and a critique by another session is recorded"
+created_at: 2026-10-09
+updated_at: 2026-10-09
