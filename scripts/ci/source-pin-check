@@ -59,6 +59,9 @@ if [ "$MODE" = write ]; then
 fi
 
 [ -f "$BASELINE" ] || { echo "source-pin-check: no baseline at $BASELINE (run --write-baseline)" >&2; exit 12; }
+# a baseline that cannot be read allows nothing and reports nothing, which is not what it says:
+# it is a gate that cannot judge, and says so with exit 12
+[ -r "$BASELINE" ] || { echo "source-pin-check: $BASELINE cannot be read; nothing can be judged against it" >&2; exit 12; }
 allowed() { awk -v f="$1" '$1 == f && NF == 2 { print $2; found = 1 } END { if (!found) print 0 }' "$BASELINE"; }
 
 # `grep -v` exits 1 when it prints nothing, and under pipefail that was this script's own
@@ -79,7 +82,7 @@ if [ -n "$new" ]; then
 fi
 
 # a baseline entry that has since shrunk: report, never fail
-{ grep -v -e '^#' -e '^$' "$BASELINE" || true; } | while read -r f a; do
+{ grep -v -e '^#' -e '^$' "$BASELINE" || [ $? -eq 1 ]; } | while read -r f a; do
   n="$(printf '%s\n' "$now" | awk -v f="$f" '$1 == f { print $2; found = 1 } END { if (!found) print 0 }')"
   [ "$n" -ge "$a" ] || echo "  FIXED $f: $a -> $n — tighten the baseline: scripts/ci/source-pin-check --write-baseline"
 done
