@@ -23,4 +23,11 @@ validation:
 evidence_required:
 - mobile_webkit_exercised
 created_at: '2026-10-09'
-updated_at: '2026-10-09'
+updated_at: 2026-10-09T11:53:17Z
+evidence:
+  - covers: mobile_webkit_exercised
+    type: test
+    command: "COCKPIT_PROBE_ENGINE=webkit node scripts/lib/cockpit-probe.mjs <url> phone (Playwright WebKit 26.0, build 2215, emulated touch)"
+    result: "drawer walks (5 seeds, 200 steps), axe, Alpine blocked, no-JS, runner, graph, filters and long-token pages pass in WebKit. Found: Ctrl+K never focused the palette's input in WebKit at any width (typing was lost); fixed by focusing once the palette is displayed, verified by request interception in WebKit and Chrome (before: focus false, typed ''; after: focus true, typed 'obj'). Probe portability: WebKit reports aborted requests as 'cancelled', and window.Alpine is set before the component's init runs; both handled. Emulation only; no physical device."
+    commit: 0fce63df17830f09f53d5ce2c334ea0909b3e290
+    recorded_at: 2026-10-09T11:53:17Z

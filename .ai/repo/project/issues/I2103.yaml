@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: Audit the Cockpit's tables, graphs, runner forms, code and log blocks, filters and pagination at 320 and 390 by interaction, not only by overflow, and fix what a person cannot do there.
 why: The overflow sweep passes on 139 routes at five widths, which says nothing scrolls sideways; it does not say a runner form can be submitted, a graph selected or a table read on a phone.
-current_state: Open. Navigation is fixed (I2096); the surfaces it leads to are unaudited by interaction at narrow widths.
+current_state: "In progress. The runner and the graph are exercised at 320 on touch by the probe's phoneSurfaces (commit 0fce63df17) and pass; the UI audit over 186 Cockpit pages at 13 widths finds no accessibility, overflow, landmark or target-size defect. Still unexercised by interaction at a phone width: pagination, listing filters, the plan moves on an issue page, the topology and activity views. Agreed with the owner of #833 (the evidence figure, ADR 0122): its phone-width check joins phoneSurfaces in this branch once #833 is on master (narrowest viewport, touch, page not widened, canvas scrolls, a tapped box and a tapped edge fill the info box), rather than a second phone harness."
 desired_state: Every family of Cockpit route has an interaction check at a phone width in the probe.
 scope:
 - apps/majordomus-cli/src/cockpit
@@ -23,4 +23,12 @@ validation:
 evidence_required:
 - sections_reachable_on_a_phone
 created_at: '2026-10-09'
-updated_at: '2026-10-09'
+updated_at: 2026-10-09T09:37:21Z
+evidence:
+  - covers: sections_reachable_on_a_phone
+    type: test
+    command: "node scripts/lib/cockpit-probe.mjs <url> phone; scripts/ui audit --origin <url> --only /cockpit --no-build"
+    result: "runner and graph at 320 on touch: 0 findings (form calls objects.search's route, answer scrolls inside its block, 327 nodes drawn over 183x326 of 254x518); mutant C08 (code block overflow visible) fails twice. UI audit: 186 Cockpit pages, 855 visits at 13 widths, 0 accessibility, overflow, landmark or target findings; 16 page.unreachable on /cockpit, /cockpit/worktrees and /cockpit/intents filed under I2101."
+    artifact: "target/web/run-ui-cockpit.json"
+    commit: 0fce63df17830f09f53d5ce2c334ea0909b3e290
+    recorded_at: 2026-10-09T09:37:21Z
