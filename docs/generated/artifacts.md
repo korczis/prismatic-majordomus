@@ -196,7 +196,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 28388 | `eb05641c195c2fb9` |
 | `docs/generated/economics.md` | `economics` | markdown | 15023 | `7167492c884c974b` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 23676 | `82688da450893994` |
-| `docs/generated/graph.json` | `graph` | json | 2806207 | `9d21f8fd1b2b66ae` |
+| `docs/generated/graph.json` | `graph` | json | 2818190 | `b5871e715c78dc5b` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `accc9b9af6ee102f` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `825b136bd5d7ced4` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `f8ab6e7eb4ed4d21` |
@@ -315,9 +315,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `46f954bf9935431c` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `5cbac1a9f5c4b80a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 725412 | `328e492e759b28e3` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `63c84b92d2aeb78c` |
-| `site/data/registry/product.json` | `site-product` | json | 632822 | `78d803ff44cdf57a` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6190871 | `5f2cf36b13d6e436` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `fb86c5326ca2f551` |
+| `site/data/registry/product.json` | `site-product` | json | 632822 | `87f9779584cd1728` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6194327 | `1856b90ba4fecfa1` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `fb580e8672717d10` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `699073355b7e134e` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `b192a36f68e5abdb` |
