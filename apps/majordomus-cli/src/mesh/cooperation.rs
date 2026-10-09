@@ -1201,6 +1201,30 @@ fn rfc3339_now() -> String {
     crate::peers::rfc3339(std::time::SystemTime::now())
 }
 
+/// The trust verdict for `public_key` on a machine whose own key is `own_key`: the one
+/// definition behind [`Cooperation::trust_of_key`], and behind the journal's reload, which
+/// runs before the runtime exists and must decide exactly what the live path decides.
+fn key_trust(
+    own_key: &str,
+    config: &TrustConfig,
+    registry: &MeshRegistry,
+    public_key: &str,
+) -> TrustState {
+    if public_key == own_key {
+        return TrustState::Trusted("this machine's own key".into());
+    }
+    let Some(node) = node_id_of_key(public_key) else {
+        return TrustState::Rejected("not a key".into());
+    };
+    trust::evaluate(
+        &config.policy,
+        &config.allow,
+        public_key,
+        registry.known_key(&node).as_deref(),
+        registry.trust_of(&node).as_ref(),
+    )
+}
+
 impl Cooperation {
     /// Open the journal and build the runtime; nothing dials until [`Cooperation::start`].
     ///
@@ -1237,12 +1261,32 @@ impl Cooperation {
     /// ```
     pub fn new(setup: CooperationSetup) -> Result<Arc<Self>, super::MeshError> {
         setup.config.validate().map_err(super::MeshError::Config)?;
-        let journal = Arc::new(Journal::open(
+        // The journal file is believed as far as the declared trust believes its origins
+        // now, exactly as `origin_accept` decides for an event arriving over a link: a key
+        // withdrawn from the allowlist does not come back from this runtime's own disk.
+        let own_pk = setup.identity.public.public_key.as_str();
+        let reload_accept = |event: &MeshEvent| {
+            if key_trust(own_pk, &setup.trust, &setup.registry, &event.pk).is_trusted() {
+                Ok(())
+            } else {
+                Err(Rejection::Untrusted)
+            }
+        };
+        let journal = Arc::new(Journal::open_trusting(
             Arc::clone(&setup.identity),
             &setup.runtime,
             setup.repository.id.clone(),
-            setup.journal_path,
+            setup.journal_path.clone(),
+            &reload_accept,
         )?);
+        let reloaded = journal.reload_report();
+        if reloaded.rejected_total() > 0 {
+            tracing::warn!(
+                accepted = reloaded.accepted,
+                refused = ?reloaded.rejected,
+                "mesh journal reload refused events its trust no longer admits"
+            );
+        }
         let card = RuntimeCard {
             pk: setup.identity.public.public_key.clone(),
             runtime: setup.runtime.clone(),
@@ -1665,18 +1709,11 @@ impl Cooperation {
     /// assert!(!cooperation.trust_of_key("not a key at all").is_trusted());
     /// ```
     pub fn trust_of_key(&self, public_key: &str) -> TrustState {
-        if public_key == self.identity.public.public_key {
-            return TrustState::Trusted("this machine's own key".into());
-        }
-        let Some(node) = node_id_of_key(public_key) else {
-            return TrustState::Rejected("not a key".into());
-        };
-        trust::evaluate(
-            &self.trust.policy,
-            &self.trust.allow,
+        key_trust(
+            &self.identity.public.public_key,
+            &self.trust,
+            &self.registry,
             public_key,
-            self.registry.known_key(&node).as_deref(),
-            self.registry.trust_of(&node).as_ref(),
         )
     }
 
