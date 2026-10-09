@@ -141,6 +141,38 @@ pub enum BridgeError {
     },
 }
 
+impl BridgeError {
+    /// Whether this failure says the server is no longer the one to talk to, so that the
+    /// client should elect again: it could not be reached, it answered with a failure of
+    /// its own, it forgot the session twice running, or it said it had lost the lease.
+    ///
+    /// Any other refusal comes from a server that is there and serving: it read the request
+    /// and would not take it — a request before `initialize`, a body it cannot parse. An
+    /// election cannot change that answer. It finds the same server, attaches to it again
+    /// and is refused again, having cost the client a lease read and a second round trip
+    /// to learn what the first reply already said.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::BridgeError;
+    /// let refused = |status| BridgeError::Rejected {
+    ///     url: "http://127.0.0.1:1".into(), status, body: String::new(),
+    /// };
+    /// assert!(!refused(400).calls_for_an_election());
+    /// assert!(refused(404).calls_for_an_election());
+    /// assert!(refused(409).calls_for_an_election());
+    /// let gone = BridgeError::Unreachable { url: "http://127.0.0.1:1".into(), reason: "refused".into() };
+    /// assert!(gone.calls_for_an_election());
+    /// ```
+    pub fn calls_for_an_election(&self) -> bool {
+        match self {
+            BridgeError::Unreachable { .. } => true,
+            // 404: the session was lost and could not be re-opened; 409: this server lost
+            // the checkout's lease and says another process is the one to attach to
+            BridgeError::Rejected { status, .. } => matches!(status, 404 | 409),
+        }
+    }
+}
+
 /// A stdio session forwarded to a shared server.
 ///
 /// Besides the frames, the bridge keeps two things it saw pass through: the client's
