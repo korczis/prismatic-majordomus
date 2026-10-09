@@ -170,11 +170,11 @@
         },
         "commit_record_on_end": {
           "type": "boolean",
-          "description": "Commit the record the end event publishes. Every surface that reads session records reads the tracked tree, so a record left in the working tree is written, validated, counted healthy and invisible. The commit carries that one path and runs no commit hook. False restores the older behaviour, in which the lifecycle wrote a record and nothing committed it."
+          "description": "Commit the record the end event publishes. Every surface that reads session records reads the tracked tree, so a record left in the working tree is written, validated, counted healthy and invisible. The commit carries that one path and runs no commit hook, so only `true` commits; false or an absent key leaves the record in the working tree for the worker's own commit. The skeleton declares false."
         },
         "push_record_on_end": {
           "type": "boolean",
-          "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead."
+          "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead. Only `true` pushes; an absent key reads as false."
         }
       }
     },

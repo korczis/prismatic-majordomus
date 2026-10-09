@@ -189,6 +189,13 @@ git add -A >/dev/null
 # ---------------------------------------------------------------- the lifecycle commits it
 # A record nobody committed reaches no surface that reads session records. The lifecycle
 # wrote one at every episode end and nothing committed it, so the gap was the default.
+# The commit runs no hook, so it is opt-in: the skeleton declares both keys false and an
+# absent key reads as false (case 1014). This half is about what an opted-in repository gets.
+sed -e 's/^  commit_record_on_end: false/  commit_record_on_end: true/' \
+    -e 's/^  push_record_on_end: false/  push_record_on_end: true/' .ai/repo/policy.yaml > "$T/pol" \
+  && cp "$T/pol" .ai/repo/policy.yaml && rm -f "$T/pol"
+grep -q '^  commit_record_on_end: true' .ai/repo/policy.yaml \
+  || { echo "    the skeleton no longer carries commit_record_on_end to opt in with"; exit 1; }
 "$MJ" capture install >/dev/null
 PATH="$(dirname "$MJ"):$PATH"; export PATH
 unset MAJORDOMUS_PROVIDER_SESSION CLAUDE_CODE_SESSION_ID
