@@ -257,6 +257,14 @@ enforcement:
     path: bin/majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
+  # What CI would find, found first: the plan's structure gates that CI recorded as cheap and
+  # that reach no network, and the suite's fast cases, within a stated bound
+  # (rule project.a-push-runs-what-ci-would-find-first). Doctor refuses a clone whose hook
+  # stops calling it.
+  - name: structure-gates-on-push
+    path: scripts/ci/run-plan
+    args: [--before-push]
+    wired_by: git-hook:pre-push
   # .gitattributes marks the derived artifacts `merge=derived`, but the driver that name
   # resolves to is declared per clone and per worktree. Git says nothing when it is missing:
   # it falls back to the default text merge and conflicts on every generated file, which is

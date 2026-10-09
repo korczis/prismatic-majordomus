@@ -481,9 +481,13 @@ gates:
     runs: scripts/ci/step-bound-check
     summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
 
+  # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
+  # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push
+  # never runs such a gate before a push and says so (project.a-push-runs-what-ci-would-find-first).
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
+    network: true
     summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
 
   - id: providers-data
@@ -590,6 +594,7 @@ gates:
     job: pages
     at-finish: true
     runs: scripts/ci/pages-check
+    network: true
     summary: the site GitHub Pages serves was built from a commit on master, no publication has been owed longer than the deploy window, the live site is serving what gh-pages published, and GitHub's own build of that branch did not error
 
   # On demand: half of its matrix is a macOS runner, and `needs.install.result` is one value
@@ -601,6 +606,7 @@ gates:
     job: install
     on-demand: true
     runs: scripts/ci/install-check --wait 300
+    network: true
     summary: the install command the project advertises, fetched and run from the published site, installing the published release on this runner
 
   # The measurement this repository's macOS gates were made on-demand by, on 2026-09-10: four

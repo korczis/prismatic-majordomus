@@ -120,9 +120,14 @@ run_case() {
   set -m
   # the runner's own selection never reaches a case: a case that runs test/run.sh itself
   # (123, 413, 26, 94 do) would otherwise run its own shard of a suite it did not choose
+  #
+  # stdin is closed. Bash gives a background job /dev/null for stdin only while job control
+  # is off, and it is on here, so every case inherited the runner's stdin. A case whose
+  # command reads stdin (54's `session close` reads a summary) then waited for ever whenever
+  # that was an open pipe: 39 minutes on 2026-10-09, with nothing printed.
   ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
       MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
-    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" ) &
+    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" < /dev/null ) &
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then

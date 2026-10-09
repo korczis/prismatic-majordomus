@@ -6,23 +6,23 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "b0657ac8c786b4784bdf643e4ea2abdbf380ece5f48c4af281a41be628bd3272",
+    "fingerprint": "adea1ee2663cc7ff5ff8ec024c0b0b16daeb89fdb240043b388cb8c2e3503886",
     "summary": {
-      "total": 2096,
+      "total": 2098,
       "builtin": 184,
-      "declarative": 1912,
+      "declarative": 1914,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1912
+        "resource": 1914
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1920
+        "implemented": 1922
       },
       "mcp_tools": 177,
-      "mcp_resources": 1966,
+      "mcp_resources": 1968,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75918,7 +75918,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 163,
+        "capabilities": 164,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 409,
+        "capabilities": 410,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc76a31420386526a5adccfe58cad865752a919680abbbd4080324337f70d321",
+    "fingerprint": "239862fd889ebb458bedf422d68a70399dda89ea573451a48c28ca1fe848cf95",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76199,12 +76199,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 17,
-      "rule": 163,
+      "rule": 164,
       "scope": 1,
       "session": 84,
       "skill": 7,
       "taxonomy": 10,
-      "test": 409,
+      "test": 410,
       "use-case": 48,
       "workspace": 1
     },
@@ -88851,7 +88851,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 20534
+        "bytes": 20940
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -90079,6 +90079,21 @@
           "session",
           "capability",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "kind": "rule",
+        "identity": "project.a-push-runs-what-ci-would-find-first@1",
+        "title": "A push runs what CI would find first",
+        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
+        "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5020,
+        "tags": [
+          "ci",
+          "process"
         ]
       },
       {
@@ -92947,6 +92962,14 @@
         "path": "test/cases/101_command_graph.sh",
         "source_class": "case",
         "bytes": 12197
+      },
+      {
+        "uri": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "kind": "test",
+        "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "source_class": "case",
+        "bytes": 5072
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -96915,7 +96938,7 @@
         "id",
         "version"
       ],
-      "objects": 163
+      "objects": 164
     },
     {
       "name": "scope",
@@ -96970,7 +96993,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 409
+      "objects": 410
     },
     {
       "name": "use-case",
