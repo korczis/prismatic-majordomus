@@ -30259,6 +30259,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2132",
+        "kind": "issue",
+        "label": "I2132",
+        "summary": "A hello names the runtime it is meant for, and no other runtime accepts it",
+        "route": "/cockpit/objects/issue/i2132",
+        "source": ".ai/repo/project/issues/I2132.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
+            "A hello replayed to A after A restarts cannot displace an established link",
+            "The rule's check order and the code's check order are the same, and a test names the order"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
+          "depends_on": [],
+          "evidence_required": [
+            "hello_replay_to_another_runtime_refused_test"
+          ],
+          "milestone": "runtime-trust",
+          "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+          ],
+          "slug": "a-hello-names-its-recipient",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh_cooperation",
+            "cargo test --lib mesh::cooperation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31335,6 +31375,52 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "label": "runtime-trust",
+        "summary": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "route": "/cockpit/objects/milestone/runtime-trust",
+        "source": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request from an address that is not loopback runs only a capability that reads or whose input is a signed message, on every transport that knows the caller's address",
+            "Every event the journal holds passed the trust policy in force, whether it arrived over a link or was reloaded from disk",
+            "A trusted key cannot order its claim before claims already admitted, and an expired claim does not return as live",
+            "Every bound the security model names is enforced on the input it names, with a test that sends one more"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "remote_write_refused",
+            "reload_is_trust_checked"
+          ],
+          "non_scope": [
+            "Encrypting the transport. ADR 0032 decided no TLS dependency; confidentiality stays the network's.",
+            "Accounts or a login. A remote writer, when one is needed, is admitted by a key the trust policy names."
+          ],
+          "order": 135,
+          "priority": "p0",
+          "risks": [
+            "A remote MCP client loses writes it used to have (announce, mesh sessions). The route that remains is a tunnel that ends on loopback."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability",
+            "docs/MESH.md",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "runtime-trust",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test remote_callers --test mesh_cooperation"
           ]
         }
       },
@@ -66235,6 +66321,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2132",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2132",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66393,6 +66489,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/runtime-trust",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -74976,8 +75077,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2483,
+      "edges": 5432,
       "acyclic": false,
       "truncated": false
     }

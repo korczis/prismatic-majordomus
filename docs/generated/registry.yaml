@@ -29711,6 +29711,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
           CooperationCounters:
             type: object
@@ -30587,6 +30590,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -30727,6 +30733,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -31541,6 +31550,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -32166,6 +32178,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin

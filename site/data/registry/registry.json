@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "cfbccc9cb81ac6778fa768984fd7219a0d5010ac5856ac90b0a055782ed66ddb",
+    "fingerprint": "7592da02ad49e719ffed121c3666180a25dacfd452c6f38cae17490ff9a2d870",
     "summary": {
-      "total": 2100,
+      "total": 2102,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1918,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1918
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1926
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1972,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -41755,6 +41755,11 @@
                     "type": "string",
                     "const": "feature_unsupported",
                     "description": "The peer lacks a feature the operation needs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "misaddressed",
+                    "description": "A hello addressed to another runtime: captured on its way there and replayed here."
                   }
                 ],
                 "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
@@ -42937,6 +42942,11 @@
                     "type": "string",
                     "const": "feature_unsupported",
                     "description": "The peer lacks a feature the operation needs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "misaddressed",
+                    "description": "A hello addressed to another runtime: captured on its way there and replayed here."
                   }
                 ],
                 "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
@@ -43148,6 +43158,11 @@
                     "type": "string",
                     "const": "feature_unsupported",
                     "description": "The peer lacks a feature the operation needs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "misaddressed",
+                    "description": "A hello addressed to another runtime: captured on its way there and replayed here."
                   }
                 ],
                 "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
@@ -44301,6 +44316,11 @@
                     "type": "string",
                     "const": "feature_unsupported",
                     "description": "The peer lacks a feature the operation needs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "misaddressed",
+                    "description": "A hello addressed to another runtime: captured on its way there and replayed here."
                   }
                 ],
                 "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
@@ -45185,6 +45205,11 @@
                     "type": "string",
                     "const": "feature_unsupported",
                     "description": "The peer lacks a feature the operation needs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "misaddressed",
+                    "description": "A hello addressed to another runtime: captured on its way there and replayed here."
                   }
                 ],
                 "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
@@ -75526,7 +75551,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75664,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76176,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c769dd6103e5168ec7146335bc133243c7ce921177e7b0e9a38ffd10b8664993",
+    "fingerprint": "b9a11492c69084b1c5119583a97139a892537b468542cbc01a66cd12e930f673",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76215,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81625,7 +81650,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 43002
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +81695,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 119694
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87943,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2132",
+        "kind": "issue",
+        "identity": "I2132",
+        "title": "A hello names the runtime it is meant for, and no other runtime accepts it",
+        "description": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
+        "path": ".ai/repo/project/issues/I2132.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3030
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88159,6 +88195,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -96863,7 +96910,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96940,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",

@@ -39295,7 +39295,7 @@
       "is_enum": true,
       "name": "RefusalCode",
       "properties": [],
-      "type": "\"malformed\" | \"oversized\" | \"protocol_unsupported\" | \"signature\" | \"stale\" | \"replay\" | \"repository_mismatch\" | \"untrusted\" | \"self_link\" | \"not_active\" | \"unknown_link\" | \"capacity\" | \"feature_unsupported\"",
+      "type": "\"malformed\" | \"oversized\" | \"protocol_unsupported\" | \"signature\" | \"stale\" | \"replay\" | \"repository_mismatch\" | \"untrusted\" | \"self_link\" | \"not_active\" | \"unknown_link\" | \"capacity\" | \"feature_unsupported\" | \"misaddressed\"",
       "used_by": [],
       "used_by_schemas": [
         "LinkRefusal"
@@ -39352,6 +39352,10 @@
         {
           "description": "The peer lacks a feature the operation needs.",
           "value": "feature_unsupported"
+        },
+        {
+          "description": "A hello addressed to another runtime: captured on its way there and replayed here.",
+          "value": "misaddressed"
         }
       ],
       "variants": []
