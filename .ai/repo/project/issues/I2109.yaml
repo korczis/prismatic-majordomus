@@ -1,0 +1,25 @@
+id: I2109
+milestone: intent-bound-work
+title: A reclaim spares a worktree a derive is building
+slug: a-reclaim-spares-a-worktree-in-use
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the machine's derive lock the third reading of who is working before scripts/reap-orphans removes any build output: a worktree that the lock's owner line names, by `worktree=<path>` or by its branch, is kept. A held lock whose owner line names no worktree of the repository, or is empty, keeps every worktree. Each keep says which reading decided it."
+why: "On 2026-10-09 d1's derive of #831 lost the whole apps/majordomus-cli/target of fix/an-unreadable-remote-is-not-an-empty-one between its stages B and C, while ~/dev/.derive.lock/owner named that worktree. The derive died with rc 127 and about an hour of work was lost. The reaper decided liveness from `ps` command lines and the working directories of processes only. A derive between two stages shows in neither, and so does cargo given --manifest-path from another directory. Unknown is not idle: a lock that cannot be resolved to a worktree is still somebody's derive somewhere."
+current_state: "reap-orphans keeps a merged, clean worktree only when a live process names its path or stands in it. ~/dev/.derive.lock is never read. Both liveness keeps print the same words, so a reader cannot tell which reading decided."
+desired_state: "reap-orphans reads the owner line of the derive lock, which sits where lib/machine_lock.sh takes it: <home>/.derive.lock, <home> being the directory that holds the primary checkout, or $MAJORDOMUS_DERIVE_LOCK. It reads the lock once at the scan and again just before each removal. A worktree is kept with '(the derive lock names it)' when the line names it: by the library's '<who>:<branch> <pid>' (the branch is the text after the last ':'), by `worktree=<path>`, by its path, or by a bare word or `branch=<b>` that is one of the repository's checked-out branches. A held lock that names none, or has an empty owner line, keeps every worktree and says so in a line of its own. A process keep says '(a live process)'."
+scope:
+  - scripts/reap-orphans
+  - test/cases/1019_a_reclaim_spares_a_worktree_in_use.sh
+acceptance_criteria:
+  - "Case 1019 passes. An owner line built by lib/machine_lock.sh's own mj_lock_init, written where that file puts the lock, keeps the worktree of its branch. Until the file is on the base (case 1018), a hand-written line in its format stands in and the case says so. A lock naming worktree=<path> keeps that worktree, a process standing in another keeps that one, and an idle one is reclaimed in the same run. Owner lines written by hand name their worktree by a bare branch word or by branch=<b>. A held lock naming no worktree, or with an empty owner line, keeps every worktree and reclaims 0. Once the lock is removed the same worktrees are reclaimed."
+  - "Case 1019 fails when the lock reading is made to return nothing, and when the '<who>:' prefix is no longer stripped."
+  - "Case 276 passes unchanged."
+validation:
+  - bash test/run.sh 1019_a_reclaim_spares_a_worktree_in_use
+  - bash test/run.sh 276_disk_is_bounded 318_a_partial_sweep_says_so 828_a_server_holding_its_lease_is_not_reaped
+evidence_required:
+  - a_reclaim_spares_a_worktree_the_derive_lock_names
+created_at: 2026-10-09
+updated_at: 2026-10-09

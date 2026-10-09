@@ -47,7 +47,9 @@
 # directory is reclaimed only when all four hold:
 #
 #   - merged     — the worktree's tip is an ancestor of origin/master
-#   - not live   — no process names that path and no process is standing in it
+#   - not live   — no process names that path, no process is standing in it, and the
+#                  machine's derive lock does not name it (a held lock that names no
+#                  worktree of this repository spares them all)
 #   - idle       — `git status` is empty: nothing uncommitted, nothing untracked
 #   - owned      — a real directory inside that worktree, never a symlink out of it
 #                  (worktrees here have shared one build directory exactly that way),
@@ -365,6 +367,68 @@ EOF
   return 1
 }
 
+# Is a derive working in that path? The third reading, and the one the other two cannot make:
+# a derive's processes need not stand in the worktree it builds, nor name it — cargo given
+# --manifest-path, or the gap between two stages, is invisible to both — and on 2026-10-09
+# d1's derive of #831 lost apps/majordomus-cli/target between its stages B and C while the
+# machine lock's owner line named that worktree. The lock is `<home>/.derive.lock`, `<home>`
+# the directory that holds the primary checkout, or $MAJORDOMUS_DERIVE_LOCK — where
+# lib/machine_lock.sh takes it. Its owner line is "<who>:<branch> <pid>" as that file writes
+# it; git forbids ':' in a refname, so the text after the last ':' is the branch. A line
+# written by hand, the old way, names the branch as a bare word or `branch=<b>`, or names
+# the worktree as `worktree=<path>`.
+#
+# An owner line that names no worktree of this repository is not "nobody": the derive is
+# somewhere, and every worktree is treated as the one it is in. Unknown is not idle.
+DERIVE_HELD=""       # the worktree paths the lock names, one per line
+DERIVE_UNRESOLVED="" # why the lock could not be read, when it is held and names none
+derive_lock_reading() {  # derive_lock_reading <primary checkout>
+  DERIVE_HELD=""; DERIVE_UNRESOLVED=""
+  mj_dl_lock="${MAJORDOMUS_DERIVE_LOCK:-$(dirname "$1")/.derive.lock}"
+  [ -d "$mj_dl_lock" ] || return 0
+  mj_dl_owner="$(head -n 1 "$mj_dl_lock/owner" 2>/dev/null || true)"
+  if [ -z "$mj_dl_owner" ]; then
+    DERIVE_UNRESOLVED="$mj_dl_lock is held and its owner line is empty or unreadable"
+    return 0
+  fi
+  DERIVE_HELD="$(printf '%s\n' "$mj_dl_owner" \
+    | sed -n 's/.*[[:space:]]worktree=\([^[:space:]]*\).*/\1/p' | head -n 1)"
+  [ -z "$DERIVE_HELD" ] || return 0
+  # No `worktree=`: a word that is the path of one of this repository's worktrees, or the
+  # branch one of them has checked out, names it. `branch=<b>` and `<who>:<b>` are such words
+  # with a prefix.
+  read -r -a mj_dl_words <<<"$mj_dl_owner"
+  for mj_dl_tok in "${mj_dl_words[@]}"; do
+    mj_dl_tok="${mj_dl_tok#branch=}"
+    mj_dl_tok="${mj_dl_tok##*:}"
+    mj_dl_p="$(git -C "$ROOT" worktree list --porcelain 2>/dev/null | awk -v t="$mj_dl_tok" '
+      $1 == "worktree" { path = substr($0, 10); if (path == t) print path }
+      $1 == "branch" && $2 == "refs/heads/" t { print path }
+    ' | head -n 1)"
+    [ -z "$mj_dl_p" ] || DERIVE_HELD="$DERIVE_HELD$mj_dl_p
+"
+  done
+  [ -n "$DERIVE_HELD" ] \
+    || DERIVE_UNRESOLVED="its owner line names no worktree of this repository: $mj_dl_owner"
+}
+
+# Does the derive lock name that path? Compared under every spelling, as live_in compares.
+derive_in() {
+  [ -n "$DERIVE_HELD" ] || return 1
+  while read -r mj_di_held; do
+    [ -n "$mj_di_held" ] || continue
+    while read -r mj_di_p; do
+      [ -n "$mj_di_p" ] || continue
+      spellings "$mj_di_held" | grep -qxF -- "$mj_di_p" && return 0
+    done <<EOF
+$(spellings "$1")
+EOF
+  done <<EOF
+$DERIVE_HELD
+EOF
+  return 1
+}
+
 # KiB on disk, or nothing at all when it could not be read. Never a number that was not
 # measured: an unreadable size is a candidate this sweep leaves alone.
 size_kb() { du -sk "$1" 2>/dev/null | awk 'NR == 1 && $1 ~ /^[0-9]+$/ { print $1; exit }'; }
@@ -431,6 +495,10 @@ reap_targets() {
     || die "the primary checkout could not be identified, and it is excluded by name rather than by predicate: nothing is reclaimed"
   self_wt="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
 
+  derive_lock_reading "$main_wt"
+  [ -z "$DERIVE_UNRESOLVED" ] \
+    || echo "reap-orphans: a derive holds the machine lock and $DERIVE_UNRESOLVED — every worktree is treated as the one it builds, so nothing is reclaimed"
+
   printf '%-58s %8s  %s\n' WORKTREE SIZE STATE
 
   while IFS="$(printf '\t')" read -r wt tip; do
@@ -461,7 +529,15 @@ reap_targets() {
     esac
 
     if live_in "$wt"; then
-      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it"
+      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it (a live process)"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+    if [ -n "$DERIVE_UNRESOLVED" ]; then
+      row "$wt" "$(human "$size")" "keep — merged, but a derive holds the lock and names no worktree"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+    if derive_in "$wt"; then
+      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it (the derive lock names it)"
       tgt_kept=$((tgt_kept + 1)); continue
     fi
 
@@ -499,7 +575,12 @@ reap_targets() {
     # came back in the seconds since keeps its build.
     liveness_snapshot || die "liveness stopped being measurable mid-sweep: nothing further is reclaimed"
     if live_in "$wt"; then
-      row "$wt" "$(human "$size")" "skip — somebody started working in it since the scan"
+      row "$wt" "$(human "$size")" "skip — somebody started working in it since the scan (a live process)"
+      tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
+    fi
+    derive_lock_reading "$main_wt"
+    if [ -n "$DERIVE_UNRESOLVED" ] || derive_in "$wt"; then
+      row "$wt" "$(human "$size")" "skip — a derive took the machine lock since the scan"
       tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
     fi
     st="$(git --no-optional-locks -C "$wt" status --porcelain 2>/dev/null || true)"

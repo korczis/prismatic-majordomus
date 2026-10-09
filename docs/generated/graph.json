@@ -30225,6 +30225,34 @@
         }
       },
       {
+        "id": "majordomus://issue/I2109",
+        "kind": "issue",
+        "label": "I2109",
+        "summary": "A reclaim spares a worktree a derive is building",
+        "route": "/cockpit/objects/issue/i2109",
+        "source": ".ai/repo/project/issues/I2109.yaml",
+        "facts": {
+          "created_at": "2026-10-09",
+          "evidence_required": [
+            "a_reclaim_spares_a_worktree_the_derive_lock_names"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/reap-orphans",
+            "test/cases/1019_a_reclaim_spares_a_worktree_in_use.sh"
+          ],
+          "slug": "a-reclaim-spares-a-worktree-in-use",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bash test/run.sh 1019_a_reclaim_spares_a_worktree_in_use",
+            "bash test/run.sh 276_disk_is_bounded 318_a_partial_sweep_says_so 828_a_server_holding_its_lease_is_not_reaped"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42569,6 +42597,13 @@
         "label": "test/cases/100_execution_plane.sh",
         "route": "/cockpit/objects/test/test-cases-100-execution-plane-sh",
         "source": "test/cases/100_execution_plane.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1019_a_reclaim_spares_a_worktree_in_use.sh",
+        "kind": "test",
+        "label": "test/cases/1019_a_reclaim_spares_a_worktree_in_use.sh",
+        "route": "/cockpit/objects/test/test-cases-1019-a-reclaim-spares-a-worktree-in-use-sh",
+        "source": "test/cases/1019_a_reclaim_spares_a_worktree_in_use.sh"
       },
       {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
@@ -66095,6 +66130,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2109",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2109",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69106,6 +69151,11 @@
       },
       {
         "source": "majordomus://test/test/cases/100_execution_plane.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1019_a_reclaim_spares_a_worktree_in_use.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74821,8 +74871,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2476,
-      "edges": 5419,
+      "nodes": 2478,
+      "edges": 5422,
       "acyclic": false,
       "truncated": false
     }
