@@ -1282,6 +1282,14 @@ pub struct JournalTallies {
     pub opaque: usize,
     /// The highest Lamport stamp seen.
     pub lamport: u64,
+    /// Appends to the journal file that failed since start: the events were held in memory
+    /// and replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.
+    #[serde(default)]
+    pub write_failures: u64,
+    /// Lines of the journal file the last reload could not read: torn, corrupt, or written
+    /// by something that is not this journal. Counted, never silently dropped.
+    #[serde(default)]
+    pub unreadable: u64,
 }
 
 struct StreamLog {
@@ -1370,6 +1378,10 @@ pub struct Journal {
     inner: Mutex<Inner>,
     rotation: std::sync::atomic::AtomicUsize,
     reloaded: IngestReport,
+    /// Failed appends; outside `inner`, because an append runs with `inner` held.
+    write_failures: std::sync::atomic::AtomicU64,
+    /// Unreadable lines of the last reload.
+    unreadable: std::sync::atomic::AtomicU64,
 }
 
 impl Journal {
@@ -1494,6 +1506,8 @@ impl Journal {
             }),
             rotation: std::sync::atomic::AtomicUsize::new(0),
             reloaded: IngestReport::default(),
+            write_failures: std::sync::atomic::AtomicU64::new(0),
+            unreadable: std::sync::atomic::AtomicU64::new(0),
         };
         if let Some(path) = journal.path.clone() {
             journal.reloaded = journal.reload(&path, accept);
@@ -1507,13 +1521,31 @@ impl Journal {
         accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
     ) -> IngestReport {
         let mut report = IngestReport::default();
-        let Ok(text) = std::fs::read_to_string(path) else {
+        let Ok(bytes) = std::fs::read(path) else {
             return report;
         };
-        let events: Vec<MeshEvent> = text
-            .lines()
-            .filter_map(|line| serde_json::from_str(line).ok())
-            .collect();
+        // Line by line, and a line that does not read is counted rather than dropped in
+        // silence: a torn tail after a crash, or bytes that are not this journal's.
+        let mut events: Vec<MeshEvent> = Vec::new();
+        let mut unreadable = 0u64;
+        for line in bytes.split(|b| *b == b'\n') {
+            if line.iter().all(u8::is_ascii_whitespace) {
+                continue;
+            }
+            match serde_json::from_slice::<MeshEvent>(line) {
+                Ok(event) => events.push(event),
+                Err(_) => unreadable += 1,
+            }
+        }
+        if unreadable > 0 {
+            tracing::warn!(
+                path = %path.display(),
+                unreadable,
+                "mesh journal: lines that do not read were skipped on reload"
+            );
+        }
+        self.unreadable
+            .store(unreadable, std::sync::atomic::Ordering::SeqCst);
         // Reloaded events pass the same checks and the same trust decision as received
         // ones: a file is input too, written under a policy that may have changed since.
         // This node's own key is its own, whatever the policy says of other keys.
@@ -2098,17 +2130,6 @@ impl Journal {
         if events.is_empty() {
             return;
         }
-        if let Some(dir) = path.parent() {
-            let _ = std::fs::create_dir_all(dir);
-        }
-        let Ok(mut file) = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-        else {
-            tracing::warn!(path = %path.display(), "mesh journal: cannot open for append");
-            return;
-        };
         let mut text = String::new();
         for event in events {
             if let Ok(line) = serde_json::to_string(event) {
@@ -2116,7 +2137,16 @@ impl Journal {
                 text.push('\n');
             }
         }
-        let _ = file.write_all(text.as_bytes());
+        if let Err(e) = append_synced(path, &text) {
+            self.write_failures
+                .fetch_add(events.len() as u64, std::sync::atomic::Ordering::SeqCst);
+            tracing::warn!(
+                path = %path.display(),
+                error = %e,
+                events = events.len(),
+                "mesh journal: an append did not reach the disk; the events are held in memory and replicated only"
+            );
+        }
     }
 
     /// A stream's liveness on this runtime's clock, against `expiry`. The measurement is
@@ -2392,9 +2422,16 @@ impl Journal {
                         text.push('\n');
                     }
                 }
+                // A new file, synced, renamed over the old one: a crash leaves the old journal
+                // or the new one, never a mix of both.
                 let tmp = path.with_extension("jsonl.tmp");
-                if std::fs::write(&tmp, text).is_ok() {
-                    let _ = std::fs::rename(&tmp, path);
+                let replaced = write_synced(&tmp, &text).and_then(|()| std::fs::rename(&tmp, path));
+                match replaced {
+                    Ok(()) => sync_parent(path),
+                    Err(e) => {
+                        let _ = std::fs::remove_file(&tmp);
+                        tracing::warn!(path = %path.display(), error = %e, "mesh journal: compaction could not replace the file; the old one stands");
+                    }
                 }
             }
         }
@@ -2432,7 +2469,73 @@ impl Journal {
             .filter(|e| e.body().is_none())
             .count();
         tallies.lamport = inner.lamport;
+        tallies.write_failures = self
+            .write_failures
+            .load(std::sync::atomic::Ordering::SeqCst);
+        tallies.unreadable = self.unreadable.load(std::sync::atomic::Ordering::SeqCst);
         tallies
+    }
+}
+
+/// Open a journal file for writing as its owner alone: it holds other runtimes' events and
+/// handover bodies, which are nobody else's to read on this machine.
+fn owner_only(options: &mut std::fs::OpenOptions) -> &mut std::fs::OpenOptions {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options
+}
+
+/// Append `text` to the journal at `path` and sync it. A file whose last byte is not a
+/// newline — the tail a crash tore — gets one first, so the torn line stays one unreadable
+/// line and the events appended after it read.
+fn append_synced(path: &Path, text: &str) -> std::io::Result<()> {
+    use std::io::{Read, Seek, SeekFrom};
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let mut file = owner_only(
+        std::fs::OpenOptions::new()
+            .create(true)
+            .read(true)
+            .append(true),
+    )
+    .open(path)?;
+    let mut torn = false;
+    if file.metadata()?.len() > 0 {
+        let mut last = [0u8; 1];
+        file.seek(SeekFrom::End(-1))?;
+        file.read_exact(&mut last)?;
+        torn = last[0] != b'\n';
+    }
+    if torn {
+        file.write_all(b"\n")?;
+    }
+    file.write_all(text.as_bytes())?;
+    file.sync_data()
+}
+
+/// Write `text` to a new file at `path`, owner-only, and sync it before it is renamed anywhere.
+fn write_synced(path: &Path, text: &str) -> std::io::Result<()> {
+    let mut file = owner_only(
+        std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true),
+    )
+    .open(path)?;
+    file.write_all(text.as_bytes())?;
+    file.sync_all()
+}
+
+/// Sync the directory holding `path`, so a rename into it survives a crash too.
+fn sync_parent(path: &Path) {
+    if let Some(dir) = path.parent() {
+        if let Ok(handle) = std::fs::File::open(dir) {
+            let _ = handle.sync_all();
+        }
     }
 }
 
@@ -2784,6 +2887,93 @@ mod tests {
         assert!(a.missing_for(&b.marks(), usize::MAX).is_empty());
         let again = b.ingest(&a.events(), &accept_all);
         assert_eq!((again.accepted, again.duplicate), (0, 1));
+    }
+
+    fn on_disk(path: &Path, key: &Path) -> Journal {
+        Journal::open(
+            Arc::new(NodeIdentity::load_or_create(key).unwrap()),
+            "0000000000000002",
+            "repo".into(),
+            Some(path.to_path_buf()),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn a_torn_tail_is_one_unreadable_line_and_the_next_append_reads() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let key = dir.path().join("node.json");
+        let first = on_disk(&path, &key);
+        for name in ["s1", "s2"] {
+            first
+                .append_own(EventBody::SessionOpened {
+                    info: SessionInfo::named(name, "test"),
+                })
+                .unwrap();
+        }
+        drop(first);
+        // a crash in the middle of an append: half a line, no newline
+        let mut file = std::fs::OpenOptions::new()
+            .append(true)
+            .open(&path)
+            .unwrap();
+        file.write_all(br#"{"stream":"torn","seq":"#).unwrap();
+        drop(file);
+
+        let second = on_disk(&path, &key);
+        let after_crash = second.tallies();
+        assert_eq!(
+            after_crash.unreadable, 1,
+            "the torn line is counted, not dropped in silence"
+        );
+        assert_eq!(after_crash.events, 2, "every complete event reloads");
+        second
+            .append_own(EventBody::SessionOpened {
+                info: SessionInfo::named("s3", "test"),
+            })
+            .unwrap();
+        drop(second);
+
+        let third = on_disk(&path, &key);
+        let tallies = third.tallies();
+        assert_eq!(
+            tallies.unreadable, 1,
+            "the append after the tear did not fuse into it"
+        );
+        assert_eq!(tallies.events, 3);
+        assert_eq!(tallies.write_failures, 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_failed_append_is_counted_and_the_file_is_the_owners_alone() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let path = dir.path().join("state").join("journal.jsonl");
+        let journal = on_disk(&path, &key);
+        journal
+            .append_own(EventBody::SessionClosed {
+                session: "a".into(),
+            })
+            .unwrap();
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(
+            mode, 0o600,
+            "the journal holds other runtimes' events: {mode:o}"
+        );
+        assert_eq!(journal.tallies().write_failures, 0);
+
+        // the file can no longer be written: the event is held, and the loss is counted
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o400)).unwrap();
+        let held = journal.append_own(EventBody::SessionClosed {
+            session: "b".into(),
+        });
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert!(held.is_ok(), "the event is held in memory and replicated");
+        assert_eq!(journal.tallies().write_failures, 1);
+        assert!(!crate::mesh::doctor::journal_check(&journal.tallies()).ok);
     }
 
     #[test]

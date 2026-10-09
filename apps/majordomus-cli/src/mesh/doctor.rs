@@ -78,6 +78,39 @@ impl DoctorCheck {
     }
 }
 
+/// The `journal` check: whether the cooperation journal's file holds what the journal
+/// holds. A failed append keeps the event in memory and in replication and loses it from this
+/// machine's disk; an unreadable line is one the last reload could not use.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::journal_check;
+/// use majordomus_cli::mesh::journal::JournalTallies;
+/// assert!(journal_check(&JournalTallies::default()).ok);
+/// let lost = JournalTallies { write_failures: 2, ..Default::default() };
+/// let check = journal_check(&lost);
+/// assert!(!check.ok && check.detail.contains("2 event(s)"));
+/// ```
+pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
+    if tallies.write_failures == 0 && tallies.unreadable == 0 {
+        return DoctorCheck::pass(
+            "journal",
+            format!(
+                "{} event(s) held, every append synced to disk, no unreadable line on reload",
+                tallies.events
+            ),
+        );
+    }
+    DoctorCheck::fail(
+        "journal",
+        format!(
+            "{} event(s) did not reach the journal file; {} line(s) of it did not read on reload",
+            tallies.write_failures, tallies.unreadable
+        ),
+        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it",
+        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read",
+    )
+}
+
 /// The whole self-check.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshDoctorReport {

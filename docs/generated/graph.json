@@ -30294,6 +30294,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I2137",
+        "kind": "issue",
+        "label": "I2137",
+        "summary": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "route": "/cockpit/objects/issue/i2137",
+        "source": ".ai/repo/project/issues/I2137.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A journal whose last line is torn reloads every complete event, reports one unreadable line, and the next append is readable on the following reload",
+            "A failed write on a read-only or full file system in a test is counted, reported by mesh doctor, and the event is not acknowledged as durable",
+            "A kill during compaction leaves the old or the new journal, never a mix",
+            "The journal file is created with owner-only permissions"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Writes are best effort and unreported; a torn tail corrupts the next event; unreadable lines vanish on reload.",
+          "depends_on": [],
+          "evidence_required": [
+            "torn_tail_reload_test",
+            "write_failure_reported_test",
+            "compaction_crash_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "objective": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "test/cases",
+            "docs/MESH.md"
+          ],
+          "slug": "the-journal-is-durable",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::journal",
+            "cargo test --test mesh_compaction",
+            "MJ_TEST_JOBS=4 bash test/run.sh 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31213,6 +31258,59 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "label": "mesh-journal-converges",
+        "summary": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "route": "/cockpit/objects/milestone/mesh-journal-converges",
+        "source": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A torn or unreadable journal line is counted and reported by mesh doctor, and no complete event before or after it is lost",
+            "A write failure is reported and the event is not acknowledged as stored",
+            "A claim that expired and revived after a partition is Conflicted, not Held, against a claim admitted during its absence, on every runtime",
+            "Two replicas fed the same authenticated events in any order and with duplicates report equal digests, by a multi-stream property test",
+            "No sync message exceeds MAX_LINK_MESSAGE, and mesh.events pages return every event once"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "journal_durability_tests",
+            "claim_fencing_tests",
+            "multi_stream_convergence_proptest"
+          ],
+          "order": 137,
+          "priority": "p0",
+          "risks": [
+            "Adding an epoch to ClaimAcquired is a wire change; it needs the link or event schema version handled as I2164 prices it, or old runtimes will refuse or misread the new field.",
+            "fsync on every append costs latency on the heartbeat path; the bound chosen must be measured, not assumed.",
+            "I2124 edits the same reload path in apps/majordomus-cli/src/mesh/journal.rs; I2137 should land after it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "test/cases",
+            "test/mesh-lab",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-journal-converges",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh_cooperation --test mesh_compaction --test mesh",
+            "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
           ]
         }
       },
@@ -66303,6 +66401,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2137",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2137",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66426,6 +66534,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/mesh-journal-converges",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -75044,8 +75157,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2482,
-      "edges": 5431,
+      "nodes": 2484,
+      "edges": 5434,
       "acyclic": false,
       "truncated": false
     }

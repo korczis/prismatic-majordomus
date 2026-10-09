@@ -124,11 +124,15 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
     // The runtime's verdict is reported only where a shared server made one: in the
     // command line's process nothing activates the mesh, and that absence is not news.
     let runtime = ctx.mesh.decided().then(|| ctx.mesh.status());
-    Ok(crate::mesh::doctor::doctor_at(
-        declaration(ctx),
-        Some(root),
-        runtime.as_ref(),
-    ))
+    let mut report = crate::mesh::doctor::doctor_at(declaration(ctx), Some(root), runtime.as_ref());
+    // the journal is judged only where a runtime holds one
+    if let Some(cooperation) = ctx.mesh.cooperation() {
+        report.checks.push(crate::mesh::doctor::journal_check(
+            &cooperation.journal().tallies(),
+        ));
+        report.ok = report.checks.iter().all(|c| c.ok);
+    }
+    Ok(report)
 }
 
 /// The repository's mesh declaration, as the index discovered it: `None` when no object

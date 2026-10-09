@@ -6,23 +6,23 @@
     "version": "0.19.0"
   },
   "registry": {
-    "fingerprint": "cf42736c1355a497eefebe831853599e926d6e828eb7c3ce4880b8bc4c4e7b5a",
+    "fingerprint": "d89032d9ebe49b67e4aa3e37264100e57f03c82ed4a44f1cd566a7d4ed874d83",
     "summary": {
-      "total": 2101,
+      "total": 2103,
       "builtin": 184,
-      "declarative": 1917,
+      "declarative": 1919,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1917
+        "resource": 1919
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1925
+        "implemented": 1927
       },
       "mcp_tools": 177,
-      "mcp_resources": 1971,
+      "mcp_resources": 1973,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -41940,6 +41940,20 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "The highest Lamport stamp seen."
+                  },
+                  "write_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+                    "default": 0
+                  },
+                  "unreadable": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+                    "default": 0
                   }
                 },
                 "required": [
@@ -75526,7 +75540,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 269,
+        "capabilities": 270,
         "capability_ids": []
       },
       {
@@ -75639,7 +75653,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -76151,7 +76165,7 @@
     ]
   },
   "index": {
-    "fingerprint": "62e3af41e83a654df9cfdebb018bfe8f78f186718226f6e58e255a12134380bf",
+    "fingerprint": "5134866a4044dfd21c39cfb58dd12e9a9113f3cfac156b6ed4fd5469c7da0e13",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76204,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 269,
+      "issue": 270,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 26,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81625,7 +81639,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42808
+        "bytes": 43340
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +81684,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 119728
+        "bytes": 124308
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87929,6 +87943,17 @@
         "bytes": 2293
       },
       {
+        "uri": "majordomus://issue/I2137",
+        "kind": "issue",
+        "identity": "I2137",
+        "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "description": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+        "path": ".ai/repo/project/issues/I2137.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3430
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88137,6 +88162,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "identity": "mesh-journal-converges",
+        "title": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "description": "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once.",
+        "path": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5484
       },
       {
         "uri": "majordomus://milestone/public-proof",
@@ -96875,7 +96911,7 @@
       "identity": [
         "id"
       ],
-      "objects": 269
+      "objects": 270
     },
     {
       "name": "knowledge",
@@ -96905,7 +96941,7 @@
       "identity": [
         "id"
       ],
-      "objects": 26
+      "objects": 27
     },
     {
       "name": "moment",
