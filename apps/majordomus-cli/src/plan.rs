@@ -1730,6 +1730,10 @@ pub fn check(
                     issue.status
                 )));
             }
+            // where the policy requires binding, a transition is held to it as a task is
+            if let Some(why) = crate::intent_binding::start_refusal(index, plan, id) {
+                return Err(TransitionError::Refused(why));
+            }
         }
         Transition::Verify => {
             if !matches!(issue.status.as_str(), "ACTIVE" | "VERIFY") {

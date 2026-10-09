@@ -467,6 +467,13 @@ classes:
             requires: requires.iter().map(|s| (*s).to_string()).collect(),
             started_at: "2026-09-11T00:00:00Z".into(),
             head: "0123456789ab".into(),
+            issue: String::new(),
+            intent: String::new(),
+            exemption: String::new(),
+            exemption_because: String::new(),
+            binding: String::new(),
+            plan_revision: String::new(),
+            evidence_standing: String::new(),
         }
     }
 

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.17.0",
+  "generator": "majordomus-cli 0.19.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -777,6 +777,15 @@
         "summary": "Which work realises which intent, and what each still lacks",
         "route": "/cockpit/capabilities/intent_realization.work",
         "source": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.binding",
+        "kind": "capability",
+        "label": "intents.binding",
+        "summary": "What a piece of work is bound to before it starts",
+        "route": "/cockpit/capabilities/intents.binding",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
       },
       {
@@ -2694,6 +2703,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/intent_binding.rs",
+        "kind": "file",
+        "label": "intent_binding.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_binding.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/intent_plan.rs",
         "kind": "file",
         "label": "intent_plan.rs",
@@ -3659,6 +3676,14 @@
         "label": "models.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/models.yaml",
+        "external": true
+      },
+      {
+        "id": "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
+        "kind": "file",
+        "label": "register.ts",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/mods/claude-code/majordomus-handover/hooks/register.ts",
         "external": true
       },
       {
@@ -6292,6 +6317,64 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0111",
+        "kind": "adr",
+        "label": "adr-0111",
+        "summary": "A task names what it serves, and the binding is derived, pinned and never stored",
+        "route": "/cockpit/objects/adr/adr-0111",
+        "source": ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-07",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+            "file:.ai/repo/adrs/0075-intent-realization-is-a-join-and-closed-work-does-not-outrank-evidence.md",
+            "file:.ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+            "rule:project.an-intent-outlives-its-sessions",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent_binding.rs",
+            "file:lib/intent_binding.sh",
+            "file:.ai/repo/project/intents/intent-bound-work.yaml",
+            "test:test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            "test:test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+            "test:test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
+          ],
+          "tags": [
+            "intent",
+            "session",
+            "handover",
+            "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0123",
+        "kind": "adr",
+        "label": "adr-0123",
+        "summary": "The worker is asked for a handover before the context window fills, by a provider mod the policy switches",
+        "route": "/cockpit/objects/adr/adr-0123",
+        "source": ".ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
+            "file:.ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:lib/capture.sh",
+            "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
+            "file:docs/claims/session-lifecycle.md",
+            "test:test/cases/1016_the_worker_is_asked_before_compaction.sh"
+          ],
+          "tags": [
+            "session",
+            "handover",
+            "provider"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -8447,17 +8530,16 @@
         "id": "majordomus://claim/intent-in-session-context",
         "kind": "claim",
         "label": "intent-in-session-context",
-        "summary": "A session will load the intents its task serves when it starts",
+        "summary": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
         "route": "/cockpit/objects/claim/intent-in-session-context",
         "source": "docs/CLAIMS.yaml",
-        "status": "planned",
+        "status": "guaranteed",
         "facts": {
-          "claim": "A session will load the intents its task serves when it starts",
-          "implementation": "-",
-          "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it.",
-          "responsibility": "none",
+          "claim": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
+          "implementation": "lib/intent_binding.sh",
+          "responsibility": "state",
           "source": "docs/PLANNING.md",
-          "test": "-"
+          "test": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
         }
       },
       {
@@ -8528,17 +8610,16 @@
         "id": "majordomus://claim/intent-refused-at-plan-start",
         "kind": "claim",
         "label": "intent-refused-at-plan-start",
-        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "summary": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
         "route": "/cockpit/objects/claim/intent-refused-at-plan-start",
         "source": "docs/CLAIMS.yaml",
-        "status": "planned",
+        "status": "guaranteed",
         "facts": {
-          "claim": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
-          "implementation": "-",
-          "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed.",
-          "responsibility": "none",
+          "claim": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
+          "implementation": "apps/majordomus-cli/src/intent_binding.rs",
+          "responsibility": "plan",
           "source": "docs/PLANNING.md",
-          "test": "-"
+          "test": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
         }
       },
       {
@@ -10783,7 +10864,8 @@
             ".ai/local/prompts/",
             ".ai/local/session-contexts/",
             ".claude/hooks/majordomus-capture",
-            ".claude/settings.json"
+            ".claude/settings.json",
+            ".claude/skills/majordomus-handover/"
           ]
         }
       },
@@ -12632,6 +12714,18 @@
         }
       },
       {
+        "id": "majordomus://critique/intent-bound-work",
+        "kind": "critique",
+        "label": "intent-bound-work",
+        "summary": "intent-bound-work",
+        "route": "/cockpit/objects/critique/intent-bound-work",
+        "source": ".ai/repo/project/critiques/intent-bound-work.yaml",
+        "facts": {
+          "intent": "intent-bound-work",
+          "reviewed_at": "f7b9d6d4c8"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-planning",
         "kind": "critique",
         "label": "intent-planning",
@@ -14181,7 +14275,7 @@
         "id": "majordomus://document/docs/claims/intent-in-session-context.md",
         "kind": "document",
         "label": "docs/claims/intent-in-session-context.md",
-        "summary": "A session will load the intents its task serves when it starts",
+        "summary": "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved",
         "route": "/cockpit/objects/document/docs-claims-intent-in-session-context-md",
         "source": "docs/claims/intent-in-session-context.md"
       },
@@ -14221,7 +14315,7 @@
         "id": "majordomus://document/docs/claims/intent-refused-at-plan-start.md",
         "kind": "document",
         "label": "docs/claims/intent-refused-at-plan-start.md",
-        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "summary": "Where the policy requires binding, starting an issue or a task that serves an intent with no critique, or with a blocking finding open, is refused when it is started rather than reported afterwards",
         "route": "/cockpit/objects/document/docs-claims-intent-refused-at-plan-start-md",
         "source": "docs/claims/intent-refused-at-plan-start.md"
       },
@@ -17116,6 +17210,20 @@
         }
       },
       {
+        "id": "majordomus://gap/intent-bound-work",
+        "kind": "gap",
+        "label": "intent-bound-work",
+        "summary": "intent-bound-work",
+        "route": "/cockpit/objects/gap/intent-bound-work",
+        "source": ".ai/repo/project/gaps/intent-bound-work.yaml",
+        "facts": {
+          "intent": "intent-bound-work",
+          "observed_at": "f7b9d6d4c8",
+          "recorded_at": "2026-10-07",
+          "recorded_by": "claude-code (session fcbeae95, primary checkout; three read-only audit agents over int/batch-intent)"
+        }
+      },
+      {
         "id": "majordomus://gap/intent-planning",
         "kind": "gap",
         "label": "intent-planning",
@@ -17316,6 +17424,13 @@
         "source": "lib/init.sh"
       },
       {
+        "id": "majordomus://implementation/lib/intent_binding.sh",
+        "kind": "implementation",
+        "label": "lib/intent_binding.sh",
+        "route": "/cockpit/objects/implementation/lib-intent-binding-sh",
+        "source": "lib/intent_binding.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/json_scan.awk",
         "kind": "implementation",
         "label": "lib/json_scan.awk",
@@ -17482,6 +17597,29 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/objects/implementation/lib-watch-sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/intent-bound-work",
+        "kind": "intent",
+        "label": "intent-bound-work",
+        "summary": "Work starts bound to the intent it serves, and a worker resumes knowing whether that intent moved",
+        "route": "/cockpit/objects/intent/intent-bound-work",
+        "source": ".ai/repo/project/intents/intent-bound-work.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.an-intent-outlives-its-sessions",
+            "rule:project.derived-once",
+            "adr:adr-0070",
+            "adr:adr-0073",
+            "adr:adr-0111"
+          ],
+          "milestones": [
+            "intent-bound-work"
+          ],
+          "updated_at": "2026-10-07"
+        }
       },
       {
         "id": "majordomus://intent/intent-lifecycle",
@@ -29467,7 +29605,7 @@
             "test/cases"
           ],
           "slug": "vendored-rules-are-adopter-neutral",
-          "updated_at": "2026-10-04",
+          "updated_at": "2026-10-08",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -29657,6 +29795,467 @@
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
           ],
           "why": "OSCILLA db62a1f: a comment-only edit of policy.yaml moved the policy hash (ca779e02f878 to 9535da72e6a6) and rewrote all three bootstraps."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1995",
+        "kind": "issue",
+        "label": "I1995",
+        "summary": "Work a session left uncommitted in a worktree is named, not found by luck",
+        "route": "/cockpit/objects/issue/i1995",
+        "source": ".ai/repo/project/issues/I1995.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worktree with staged files and no active session is named by doctor with its path, the number of paths and the age of the oldest",
+            "A worktree with uncommitted work and an active task or attached session is listed and not warned about",
+            "The reading writes nothing: `git status` of every worktree is the same before and after it"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "abandoned_index_named_case",
+            "reading_is_read_only_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "slug": "uncommitted-work-in-a-worktree-is-named",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1996",
+        "kind": "issue",
+        "label": "I1996",
+        "summary": "doctor does not fail an adopter on a check written for this repository",
+        "route": "/cockpit/objects/issue/i1996",
+        "source": ".ai/repo/project/issues/I1996.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "doctor in a fixture adopter repository whose workflow names a model credential and whose document says 'requires ollama' reports no reasoning failure",
+            "The same two files in this repository are still refused",
+            "No reproduce hint doctor prints in an adopter repository names bin/majordomus-cli"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The ci and claims families of `reasoning check` scan every workflow and document of the repository they run in and fail doctor on a match. Reproduce hints name bin/majordomus-cli.",
+          "evidence_required": [
+            "adopter_reasoning_check_case",
+            "reproduce_hint_is_runnable_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Stop `majordomus doctor` from failing an adopter's repository on the reasoning design's own coupling rules, and stop its reproduce hints from naming paths only this repository has.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "apps/majordomus-cli/src/reasoning",
+            "docs/REASONING.md",
+            "test/cases"
+          ],
+          "slug": "doctor-does-not-fail-an-adopter-on-our-own-check",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1997",
+        "kind": "issue",
+        "label": "I1997",
+        "summary": "The peer board can be read from the command line",
+        "route": "/cockpit/objects/issue/i1997",
+        "source": ".ai/repo/project/issues/I1997.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`majordomus peers` lists a peer announced over MCP by another client of the same repository, with its worktree and claimed paths",
+            "The command is a projection of the registry's capability: no board logic is written a second time for the command line",
+            "With no server running it reports that no board could be asked and does not exit 0"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "cli_peers_lists_an_mcp_peer_case",
+            "cli_peers_without_server_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Project the peers capability onto the command line, so that a worker with no MCP tools can still ask who else is working in this repository and on which paths.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "the-peer-board-can-be-read-from-the-command-line",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1998",
+        "kind": "issue",
+        "label": "I1998",
+        "summary": "A health command in an unsupervised repository does not exit 0",
+        "route": "/cockpit/objects/issue/i1998",
+        "source": ".ai/repo/project/issues/I1998.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "doctor and session list in a git repository with no .ai/manifest.yaml exit 12 and name the missing file",
+            "init, version and help in the same repository exit 0",
+            "The shell tool and the Rust executable exit with the same code for the same missing layer"
+          ],
+          "created_at": "2026-10-08",
+          "current_state": "The shell tool's read-only commands print the missing-manifest line and exit 0 outside a supervised repository.",
+          "desired_state": "Outside a supervised repository every command that reports on the layer exits 12 with the line it prints today. Commands whose purpose is to work there — init, version, help — are unchanged.",
+          "evidence_required": [
+            "unsupervised_exit_code_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus",
+            "lib",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-health-command-in-an-unsupervised-repository-does-not-exit-0",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1999",
+        "kind": "issue",
+        "label": "I1999",
+        "summary": "A tracked file a hook regenerates does not refuse a task that never touched it",
+        "route": "/cockpit/objects/issue/i1999",
+        "source": ".ai/repo/project/issues/I1999.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A repository that declares a regenerated path passes `check` on a task whose scope does not name it, and the report names the path and the declaration that covers it",
+            "A change to an undeclared path outside the scope still fails `check`, and the finding names both remedies",
+            "A declaration without a reason is refused",
+            "Whatever `finish --outcome completed` refuses over a note or a handover, `check` reports as failing beforehand with the command that settles it",
+            "The shell tool and the Rust executable give the same verdict for the same tree"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "regenerated_paths_scope_case",
+            "check_reports_what_finish_refuses_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus",
+            "lib",
+            "apps/majordomus-cli/src",
+            "share/skeleton",
+            "docs/CLI.md",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "slug": "a-tracked-file-a-hook-regenerates-does-not-refuse-a-task-that-never-touched-it",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2000",
+        "kind": "issue",
+        "label": "I2000",
+        "summary": "What a piece of work serves is one derivation, with a revision",
+        "route": "/cockpit/objects/issue/i2000",
+        "source": ".ai/repo/project/issues/I2000.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "current_state": "Intents::preflight takes an issue or paths. No exemption class exists. No revision of an intent, its links or its critique is computed.",
+          "depends_on": [],
+          "desired_state": "intents.binding answers the same value on every surface; ambiguity, an unknown or retired intent, an undeclared exemption class and a missing reason are refusals with a cause.",
+          "evidence_required": [
+            "binding_resolves_issue_intent_and_paths",
+            "ambiguous_paths_are_refused",
+            "an_exemption_is_a_declared_class_with_a_reason",
+            "plan_revision_moves_only_with_the_plan"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/intent_binding.rs",
+            ".ai/repo/adrs/0111-a-task-names-what-it-serves-and-the-binding-is-derived.md",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md",
+            ".ai/repo/project",
+            "docs"
+          ],
+          "serves": [
+            "intent-bound-work#binding-is-resolved",
+            "intent-bound-work#exemption-is-typed"
+          ],
+          "slug": "a-binding-is-derived-once",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "cargo test --lib intent_binding",
+            "cargo test --test intent_binding"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2001",
+        "kind": "issue",
+        "label": "I2001",
+        "summary": "start asks what the task serves and refuses a refused binding where the policy requires it",
+        "route": "/cockpit/objects/issue/i2001",
+        "source": ".ai/repo/project/issues/I2001.yaml",
+        "facts": {
+          "created_at": "2026-10-07",
+          "current_state": "start takes a description, a scope, requires, a profile and an owner, and reads no intent.",
+          "depends_on": [
+            "I2000"
+          ],
+          "desired_state": "A task record carries issue, intent or exemption with its reason, and binding_revision; a refused binding is refused (exit 15) naming the cause and the three ways through.",
+          "evidence_required": [
+            "start_refuses_a_refused_binding",
+            "an_absent_policy_key_changes_nothing",
+            "realization_and_binding_agree",
+            "scope_only_binding_rate_measured"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/intent_binding.sh",
+            ".ai/repo/policy.yaml",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            "docs",
+            "lib/common.sh",
+            "share/schemas/majordomus/policy",
+            "share/schemas/majordomus/current",
+            "share/skeleton",
+            "share/events.yaml",
+            "share/allow",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/tests/intent_realization.rs"
+          ],
+          "serves": [
+            "intent-bound-work#start-is-gated"
+          ],
+          "slug": "start-asks-what-the-task-serves",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 04_start_check"
+          ],
+          "why": "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2002",
+        "kind": "issue",
+        "label": "I2002",
+        "summary": "The context of a bound task says what the intent asks of this work",
+        "route": "/cockpit/objects/issue/i2002",
+        "source": ".ai/repo/project/issues/I2002.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The context of a bound task names the intent, its statement, its invariants and each served criterion with its evidence state",
+            "The context of an exempt task names the class and the reason",
+            "An unreadable binding is reported as unknown, never as no intent",
+            "The section follows PROFILE, has the JSON section id intent, and under budget loses its gap conditions before anything else and is never dropped whole"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "majordomus context has no intent section; intent preflight renders the same facts for a reader who asks.",
+          "depends_on": [
+            "I2001"
+          ],
+          "desired_state": "The section is present for a bound task, absent with a named reason for an unbound one, and says so when the binding cannot be read.",
+          "evidence_required": [
+            "context_carries_the_intent_section"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/context.sh",
+            "lib/intent_binding.sh",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+          ],
+          "serves": [
+            "intent-bound-work#worker-is-briefed"
+          ],
+          "slug": "context-briefs-from-the-binding",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 23_context"
+          ],
+          "why": "A worker is handed the scope of the task and nothing of what the work is for; the criteria live in a record the briefing never opens."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2003",
+        "kind": "issue",
+        "label": "I2003",
+        "summary": "A handover pins the binding it was written under, and resolving it reports drift",
+        "route": "/cockpit/objects/issue/i2003",
+        "source": ".ai/repo/project/issues/I2003.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A handover of a bound task carries the binding revision",
+            "After a criterion of the intent is edited, --resolve reports the plan revision changed",
+            "A handover of an unbound task carries no pin and --resolve prints no Intent line",
+            "The front matter carries plan_revision and evidence_standing as two keys, a body that forges either is refused like every other computed key, and a checkpoint carries neither",
+            "An ordinary commit that changes no intent, link or critique leaves plan_revision unchanged"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "A handover's front matter carries the task, the branch and the head. --resolve prints Match, Git state, Freshness and Divergence.",
+          "depends_on": [
+            "I2001"
+          ],
+          "desired_state": "--resolve prints an Intent line: unchanged, or which of the two revisions moved, or unknown when the binding cannot be read.",
+          "evidence_required": [
+            "resolve_reports_intent_drift"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/handover.sh",
+            "lib/common.sh",
+            "lib/intent_binding.sh",
+            "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh"
+          ],
+          "serves": [
+            "intent-bound-work#resume-detects-drift"
+          ],
+          "slug": "a-handover-pins-the-binding",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved",
+            "bash test/run.sh 05_handover"
+          ],
+          "why": "A resumed worker is told how far the commit moved and nothing about whether the criteria it was working to were rewritten, or the critique reopened, in between."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2004",
+        "kind": "issue",
+        "label": "I2004",
+        "summary": "plan start refuses an issue whose binding is refused, in both engines",
+        "route": "/cockpit/objects/issue/i2004",
+        "source": ".ai/repo/project/issues/I2004.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Under required, plan start on an issue serving an uncritiqued intent is refused by the Rust engine and by the shell engine with the same message",
+            "The plan.transition capability refuses the same start over HTTP and MCP",
+            "With the policy key absent, cases 133 and 582 pass unchanged"
+          ],
+          "created_at": "2026-10-07",
+          "current_state": "plan::check refuses a start only when the issue is not READY; the shell engine does the same, and cases 133 and 582 hold the two equal.",
+          "depends_on": [
+            "I2000"
+          ],
+          "evidence_required": [
+            "plan_start_refuses_a_refused_binding_in_both_engines"
+          ],
+          "milestone": "intent-bound-work",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "lib/plan.sh",
+            "lib/intent_binding.sh",
+            "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+            "test/cases/133_plan_transition.sh"
+          ],
+          "serves": [
+            "intent-bound-work#start-is-gated"
+          ],
+          "slug": "plan-start-asks-the-binding",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines",
+            "bash test/run.sh 133_plan_transition",
+            "bash test/run.sh 582_the_done_guard_holds_in_both_engines"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2059",
+        "kind": "issue",
+        "label": "I2059",
+        "summary": "A rebuild never replaces the executable a live lease names",
+        "route": "/cockpit/objects/issue/i2059",
+        "source": ".ai/repo/project/issues/I2059.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build run in a checkout whose server is ready leaves `serve status` reporting that server ready on the address it had before the build",
+            "A successor started after a supersession binds the host and port the superseded lease published, or `serve status` names both addresses and why they differ",
+            "A server bound through MAJORDOMUS_HTTP_HOST or --host is not replaced by a loopback server without a line in server.log saying so"
+          ],
+          "created_at": "2026-10-08",
+          "evidence_required": [
+            "rebuild_keeps_server_ready_case",
+            "successor_address_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus-cli",
+            "lib/rust_bin.sh",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "a-rebuild-never-replaces-a-leased-executable",
+          "updated_at": "2026-10-08",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
         }
       },
       {
@@ -30428,6 +31027,69 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-bound-work",
+        "kind": "milestone",
+        "label": "intent-bound-work",
+        "summary": "A task is bound to the intent it serves",
+        "route": "/cockpit/objects/milestone/intent-bound-work",
+        "source": ".ai/repo/project/milestones/intent-bound-work.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A task started with --issue, --intent or by scope resolves through intents.binding, and an ambiguous or refused binding does not start where the policy requires binding",
+            "An exemption is a policy-declared class with a reason, recorded in the task record and the ledger",
+            "The context of a bound task carries the intent section, from the binding",
+            "A handover carries the binding revision and --resolve reports drift",
+            "The command line, HTTP and MCP answer the same binding"
+          ],
+          "created_at": "2026-10-07",
+          "depends_on": [
+            "intent-planning"
+          ],
+          "desired_state": "One derivation, `Intents::binding`, answered by `intents.binding` on every surface and asked by start, context and handover.",
+          "evidence_required": [],
+          "non_scope": [
+            "Refusing a finish on unmet criteria",
+            "Producing or executing a critique",
+            "Moving the task lifecycle from shell to Rust (ADR 0047)"
+          ],
+          "order": 120,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_binding.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "apps/majordomus-cli/src/commands/intent.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/tests",
+            "lib/start.sh",
+            "lib/context.sh",
+            "lib/handover.sh",
+            "lib/common.sh",
+            "lib/intent_binding.sh",
+            "lib/plan.sh",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "share",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            ".ai/repo/rules/project",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "intent-bound-work",
+          "updated_at": "2026-10-07",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent_binding",
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved"
           ]
         }
       },
@@ -34118,6 +34780,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.18.0",
+        "kind": "release-record",
+        "label": "v0.18.0",
+        "summary": "v0.18.0",
+        "route": "/cockpit/objects/release-record/v0-18-0",
+        "source": ".ai/repo/releases/v0.18.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "6800dcb5195fed70a3151275fc623da46576a613",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.18.0",
+          "published_at": "2026-10-09T00:19:54Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.18.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -35614,12 +36299,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "kind": "rule",
-        "label": "project.an-intent-outlives-its-sessions@2",
+        "label": "project.an-intent-outlives-its-sessions@3",
         "summary": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
-        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-2",
-        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md",
+        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-3",
+        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -36365,12 +37050,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.integration-follows-the-current-master@2",
+        "id": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "rule",
-        "label": "project.integration-follows-the-current-master@2",
+        "label": "project.integration-follows-the-current-master@3",
         "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
-        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-3",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -41515,6 +42200,47 @@
         }
       },
       {
+        "id": "majordomus://session/s-20261009091659-3ee5",
+        "kind": "session",
+        "label": "s-20261009091659-3ee5",
+        "summary": "Session s-20261009091659-3ee5 on feature/the-worker-is-asked-before-compaction",
+        "route": "/cockpit/objects/session/s-20261009091659-3ee5",
+        "source": ".ai/repo/sessions/20261009T091803Z--s-20261009091659-3ee5--feature-the-worker-is-asked-before-compaction--eb0609b--73ea739f7d4ff750.md",
+        "facts": {
+          "branch": "feature/the-worker-is-asked-before-compaction",
+          "changed_files": [
+            ".ai/repo/policy.yaml",
+            ".claude/skills/",
+            "lib/capture.sh",
+            "share/mods/",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/skeleton/policy.yaml"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-10-09T09:18:01Z",
+          "commits": [],
+          "created_at": "2026-10-09T09:18:01Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "eb0609b12394d4faf92d2daa71e866320cba9c36",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261009091659-3ee5",
+          "start_head": "eb0609b12394d4faf92d2daa71e866320cba9c36",
+          "start_working_tree": "dirty",
+          "started_at": "2026-10-09T09:16:59Z",
+          "task_id": "t-20261009090743-8bb5",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "3adef4010bd6fa7e"
+        }
+      },
+      {
         "id": "majordomus://skill/assess-before-deleting",
         "kind": "skill",
         "label": "assess-before-deleting",
@@ -41918,6 +42644,13 @@
         "label": "test/cases/100_execution_plane.sh",
         "route": "/cockpit/objects/test/test-cases-100-execution-plane-sh",
         "source": "test/cases/100_execution_plane.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "test",
+        "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "route": "/cockpit/objects/test/test-cases-1016-the-worker-is-asked-before-compaction-sh",
+        "source": "test/cases/1016_the_worker_is_asked_before_compaction.sh"
       },
       {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
@@ -44335,11 +45068,116 @@
         "source": "test/cases/924_one_executor_across_machines.sh"
       },
       {
+        "id": "majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh",
+        "kind": "test",
+        "label": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
+        "route": "/cockpit/objects/test/test-cases-925-a-bound-check-is-only-its-apps-run-sh",
+        "source": "test/cases/925_a_bound_check_is_only_its_apps_run.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/926_an_unread_writer_is_never_a_pass.sh",
+        "kind": "test",
+        "label": "test/cases/926_an_unread_writer_is_never_a_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-926-an-unread-writer-is-never-a-pass-sh",
+        "source": "test/cases/926_an_unread_writer_is_never_a_pass.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/927_an_unbound_base_asks_for_no_writer.sh",
+        "kind": "test",
+        "label": "test/cases/927_an_unbound_base_asks_for_no_writer.sh",
+        "route": "/cockpit/objects/test/test-cases-927-an-unbound-base-asks-for-no-writer-sh",
+        "source": "test/cases/927_an_unbound_base_asks_for_no_writer.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+        "kind": "test",
+        "label": "test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+        "route": "/cockpit/objects/test/test-cases-928-an-authorised-supersedes-holds-then-closes-sh",
+        "source": "test/cases/928_an_authorised_supersedes_holds_then_closes.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/929_a_forks_declaration_decides_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/929_a_forks_declaration_decides_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-929-a-forks-declaration-decides-nothing-sh",
+        "source": "test/cases/929_a_forks_declaration_decides_nothing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/92_openapi_reference.sh",
         "kind": "test",
         "label": "test/cases/92_openapi_reference.sh",
         "route": "/cockpit/objects/test/test-cases-92-openapi-reference-sh",
         "source": "test/cases/92_openapi_reference.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/930_an_own_body_is_tested_on_its_author.sh",
+        "kind": "test",
+        "label": "test/cases/930_an_own_body_is_tested_on_its_author.sh",
+        "route": "/cockpit/objects/test/test-cases-930-an-own-body-is-tested-on-its-author-sh",
+        "source": "test/cases/930_an_own_body_is_tested_on_its_author.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/931_a_closed_successor_releases_the_hold.sh",
+        "kind": "test",
+        "label": "test/cases/931_a_closed_successor_releases_the_hold.sh",
+        "route": "/cockpit/objects/test/test-cases-931-a-closed-successor-releases-the-hold-sh",
+        "source": "test/cases/931_a_closed_successor_releases_the_hold.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+        "kind": "test",
+        "label": "test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+        "route": "/cockpit/objects/test/test-cases-932-a-squashed-successor-lands-by-its-merge-commit-sh",
+        "source": "test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/933_every_page_of_cross_references_is_read.sh",
+        "kind": "test",
+        "label": "test/cases/933_every_page_of_cross_references_is_read.sh",
+        "route": "/cockpit/objects/test/test-cases-933-every-page-of-cross-references-is-read-sh",
+        "source": "test/cases/933_every_page_of_cross_references_is_read.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-934-a-failed-declarations-read-decides-nothing-sh",
+        "source": "test/cases/934_a_failed_declarations_read_decides_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/935_an_older_observation_is_refused.sh",
+        "kind": "test",
+        "label": "test/cases/935_an_older_observation_is_refused.sh",
+        "route": "/cockpit/objects/test/test-cases-935-an-older-observation-is-refused-sh",
+        "source": "test/cases/935_an_older_observation_is_refused.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/936_the_rule_names_every_closure_ground.sh",
+        "kind": "test",
+        "label": "test/cases/936_the_rule_names_every_closure_ground.sh",
+        "route": "/cockpit/objects/test/test-cases-936-the-rule-names-every-closure-ground-sh",
+        "source": "test/cases/936_the_rule_names_every_closure_ground.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+        "kind": "test",
+        "label": "test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+        "route": "/cockpit/objects/test/test-cases-937-an-unauthorised-declaration-neither-holds-nor-closes-sh",
+        "source": "test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/938_a_truncated_cross_reference_read_holds.sh",
+        "kind": "test",
+        "label": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
+        "route": "/cockpit/objects/test/test-cases-938-a-truncated-cross-reference-read-holds-sh",
+        "source": "test/cases/938_a_truncated_cross_reference_read_holds.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/939_a_batch_landed_successor_supersedes.sh",
+        "kind": "test",
+        "label": "test/cases/939_a_batch_landed_successor_supersedes.sh",
+        "route": "/cockpit/objects/test/test-cases-939-a-batch-landed-successor-supersedes-sh",
+        "source": "test/cases/939_a_batch_landed_successor_supersedes.sh"
       },
       {
         "id": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -44410,6 +45248,27 @@
         "label": "test/cases/95_skills.sh",
         "route": "/cockpit/objects/test/test-cases-95-skills-sh",
         "source": "test/cases/95_skills.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "kind": "test",
+        "label": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-960-a-task-starts-bound-to-what-it-serves-sh",
+        "source": "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "kind": "test",
+        "label": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "route": "/cockpit/objects/test/test-cases-961-a-resumed-task-is-told-its-intent-moved-sh",
+        "source": "test/cases/961_a_resumed_task_is_told_its_intent_moved.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "test",
+        "label": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "route": "/cockpit/objects/test/test-cases-962-plan-start-asks-the-binding-in-both-engines-sh",
+        "source": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
       },
       {
         "id": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
@@ -44522,6 +45381,27 @@
         "label": "test/cases/993_the_continuity_tools_answer_over_mcp.sh",
         "route": "/cockpit/objects/test/test-cases-993-the-continuity-tools-answer-over-mcp-sh",
         "source": "test/cases/993_the_continuity_tools_answer_over_mcp.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/994_a_panel_that_did_not_appear_is_not_a_hidden_region.sh",
+        "kind": "test",
+        "label": "test/cases/994_a_panel_that_did_not_appear_is_not_a_hidden_region.sh",
+        "route": "/cockpit/objects/test/test-cases-994-a-panel-that-did-not-appear-is-not-a-hidden-region-sh",
+        "source": "test/cases/994_a_panel_that_did_not_appear_is_not_a_hidden_region.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh",
+        "kind": "test",
+        "label": "test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh",
+        "route": "/cockpit/objects/test/test-cases-995-a-case-leaves-no-git-housekeeping-behind-sh",
+        "source": "test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+        "kind": "test",
+        "label": "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+        "route": "/cockpit/objects/test/test-cases-996-the-record-pull-request-gets-its-verdict-sh",
+        "source": "test/cases/996_the_record_pull_request_gets_its_verdict.sh"
       },
       {
         "id": "majordomus://test/test/cases/99_adr.sh",
@@ -48333,6 +49213,26 @@
       },
       {
         "source": "capability:intent_realization.work",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.binding",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -52178,7 +53078,7 @@
       },
       {
         "source": "majordomus://adr/adr-0075",
-        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "kind": "put_in_force"
       },
       {
@@ -53118,7 +54018,7 @@
       },
       {
         "source": "majordomus://adr/adr-0101",
-        "target": "majordomus://rule/project.integration-follows-the-current-master@2",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "put_in_force"
       },
       {
@@ -53399,6 +54299,111 @@
       {
         "source": "majordomus://adr/adr-0110",
         "target": "test:apps/majordomus-cli/tests/mcp_prose.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "file:apps/majordomus-cli/src/intent_binding.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0073",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0075",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://adr/adr-0107",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://implementation/lib/intent_binding.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://intent/intent-bound-work",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://test/test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0111",
+        "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://adr/adr-0015",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://adr/adr-0052",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://document/docs/claims/session-lifecycle.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0123",
+        "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
         "kind": "put_in_force"
       },
       {
@@ -55537,6 +56542,16 @@
         "kind": "defined_in"
       },
       {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "majordomus://implementation/lib/intent_binding.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/intent-links-resolve",
         "target": "file:apps/majordomus-cli/src/intent.rs",
         "kind": "implemented_by"
@@ -55618,6 +56633,11 @@
       },
       {
         "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "file:apps/majordomus-cli/src/intent_binding.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -55625,6 +56645,11 @@
         "source": "majordomus://claim/intent-refused-at-plan-start",
         "target": "majordomus://document/docs/PLANNING.md",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/intent-stage-derived",
@@ -58792,6 +59817,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-bound-work",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-planning",
         "target": "kind:critique",
         "kind": "is_a"
@@ -60607,6 +61637,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/intent-bound-work",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/intent-planning",
         "target": "kind:gap",
         "kind": "is_a"
@@ -60742,6 +61777,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/intent_binding.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/json_scan.awk",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -60859,6 +61899,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-bound-work",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -65037,6 +66082,136 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1995",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1995",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1996",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1996",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1997",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1997",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1998",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1998",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1999",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1999",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2000",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2000",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2001",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2001",
+        "target": "majordomus://issue/I2000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2001",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2002",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2002",
+        "target": "majordomus://issue/I2001",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2002",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2003",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2003",
+        "target": "majordomus://issue/I2001",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2003",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2004",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2004",
+        "target": "majordomus://issue/I2000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2004",
+        "target": "majordomus://milestone/intent-bound-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2059",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2059",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -65135,6 +66310,16 @@
         "source": "majordomus://milestone/foundation",
         "target": "kind:milestone",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-bound-work",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-bound-work",
+        "target": "majordomus://milestone/intent-planning",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/intent-lifecycle",
@@ -65503,6 +66688,11 @@
       },
       {
         "source": "majordomus://release-record/v0.17.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.18.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -66257,17 +67447,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@3",
         "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
@@ -66742,17 +67932,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@3",
         "target": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@3",
         "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },
@@ -67837,6 +69027,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://session/s-20261009091659-3ee5",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://skill/assess-before-deleting",
         "target": "kind:skill",
         "kind": "is_a"
@@ -68033,6 +69228,11 @@
       },
       {
         "source": "majordomus://test/test/cases/100_execution_plane.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -69762,7 +70962,82 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/926_an_unread_writer_is_never_a_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/927_an_unbound_base_asks_for_no_writer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/928_an_authorised_supersedes_holds_then_closes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/929_a_forks_declaration_decides_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/92_openapi_reference.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/930_an_own_body_is_tested_on_its_author.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/931_a_closed_successor_releases_the_hold.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/932_a_squashed_successor_lands_by_its_merge_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/933_every_page_of_cross_references_is_read.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/934_a_failed_declarations_read_decides_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/935_an_older_observation_is_refused.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/936_the_rule_names_every_closure_ground.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/938_a_truncated_cross_reference_read_holds.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/939_a_batch_landed_successor_supersedes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -69813,6 +71088,21 @@
       },
       {
         "source": "majordomus://test/test/cases/95_skills.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/961_a_resumed_task_is_told_its_intent_moved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -69893,6 +71183,21 @@
       },
       {
         "source": "majordomus://test/test/cases/993_the_continuity_tools_answer_over_mcp.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/994_a_panel_that_did_not_appear_is_not_a_hidden_region.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/995_a_case_leaves_no_git_housekeeping_behind.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/996_the_record_pull_request_gets_its_verdict.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -73118,6 +74423,11 @@
       },
       {
         "source": "module:intents",
+        "target": "capability:intents.binding",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
         "target": "capability:intents.coverage",
         "kind": "composes"
       },
@@ -73638,8 +74948,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2435,
-      "edges": 5342,
+      "nodes": 2480,
+      "edges": 5428,
       "acyclic": false,
       "truncated": false
     }

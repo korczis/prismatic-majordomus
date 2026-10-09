@@ -51,6 +51,10 @@ struct Sim {
     auto_merge: bool,
     /// More lines of its body, after any dependency line: supersession declarations.
     body: String,
+    /// What the forge says its author is to the repository.
+    association: &'static str,
+    /// Whether the pull requests that mention it were read whole.
+    references: crate::integration::CrossReferenceRead,
 }
 
 /// How a pull request stopped being open.
@@ -58,10 +62,16 @@ struct Sim {
 enum Gone {
     /// Merged with a merge commit: master contains its head.
     Merged,
-    /// Merged by a squash: the forge says merged, and master does not contain its head.
+    /// Merged somewhere master does not contain: the forge says merged, and master holds
+    /// neither its head nor a merge commit of it.
     Squashed,
     /// Closed unmerged.
     Closed,
+    /// Closed, not merged, after a batch carried its head into master.
+    Batched,
+    /// Closed, not merged, after its branch was reset onto a commit of master: its head is on
+    /// master, and the forge names no file it changes.
+    Reset,
 }
 
 fn sim(number: u64) -> Sim {
@@ -85,6 +95,9 @@ fn sim(number: u64) -> Sim {
         ci_unreported: false,
         auto_merge: false,
         body: String::new(),
+        // the repository's owner, read whole: what a single-owner repository's queue is
+        association: "OWNER",
+        references: crate::integration::CrossReferenceRead::Whole,
     }
 }
 
@@ -223,22 +236,24 @@ impl World {
     }
 
     /// What the forge reports of the pull requests no longer open, through the adapter's own
-    /// selection: the closed ones a search for "supersedes" finds, and each one viewed.
+    /// selection: the ones that mention an open one (its cross-references: here every one
+    /// that is gone, as a source with its author's association), and each one viewed.
     fn resolved(&self) -> BTreeMap<u64, super::forge::ResolvedPullRequest> {
         let json = |(s, how): &(Sim, Gone)| {
+            let merged = matches!(how, Gone::Merged | Gone::Squashed);
             serde_json::json!({
                 "number": s.number,
-                "state": if *how == Gone::Closed { "CLOSED" } else { "MERGED" },
+                "state": if merged { "MERGED" } else { "CLOSED" },
                 "headRefOid": s.head,
                 "body": observe_pr(s).body,
+                "authorAssociation": s.association,
+                "isCrossRepository": s.cross_repository,
+                "author": {"login": "someone"},
+                "baseRefName": s.base,
+                "changedFiles": u64::from(*how != Gone::Reset),
             })
         };
-        let closed: Vec<serde_json::Value> = self
-            .gone
-            .iter()
-            .filter(|(s, _)| s.body.to_ascii_lowercase().contains("supersedes"))
-            .map(json)
-            .collect();
+        let closed: Vec<serde_json::Value> = self.gone.iter().map(json).collect();
         let open: Vec<PullRequestObservation> = self.open.iter().map(observe_pr).collect();
         super::forge::resolved_for(&open, &serde_json::Value::Array(closed), |m| {
             self.gone.iter().find(|(s, _)| s.number == m).map(json)
@@ -247,9 +262,9 @@ impl World {
 
     fn relation(&self, n: u64) -> RelationToMaster {
         if let Some((_, how)) = self.gone.iter().find(|(s, _)| s.number == n) {
-            // a pull request no longer open: its head is on master exactly when it was merged
-            // with a merge commit
-            return if *how == Gone::Merged {
+            // a pull request no longer open: its head is on master when it was merged with a
+            // merge commit, and when a batch carried it in
+            return if matches!(how, Gone::Merged | Gone::Batched | Gone::Reset) {
                 RelationToMaster::Contained
             } else {
                 RelationToMaster::Behind {
@@ -363,6 +378,8 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
             Vec::new()
         },
         review_requests: Vec::new(),
+        author_association: s.association.into(),
+        cross_references: s.references,
     }
 }
 
@@ -3452,12 +3469,279 @@ fn a_status_context_from_the_wrong_writer_is_missing() {
         required_checks(&its_app, Some(&bound), &[]),
         RequiredCheckState::Passed
     );
+    // what `gh pr list` alone reports: a check run of the name that names no app. Nobody
+    // read who wrote it, so it is not the bound app's run, and it has not passed.
+    let unread = vec![CheckObservation {
+        name: "ci".into(),
+        state: CheckRunState::Passed,
+        ..Default::default()
+    }];
+    assert_eq!(
+        required_checks(&unread, Some(&bound), &[]),
+        RequiredCheckState::Unknown
+    );
     // unbound, a status context of the name is the check
     let unbound: Vec<super::RequiredCheck> = vec!["ci".into()];
     assert_eq!(
         required_checks(&status, Some(&unbound), &[]),
         RequiredCheckState::Passed
     );
+}
+
+/// A check run of `ci` written by `app` (`None`: the writer was not read), in `state`,
+/// completed at `at`.
+fn run_by(app: Option<u64>, state: CheckRunState, at: &str) -> CheckObservation {
+    CheckObservation {
+        app_id: app,
+        ..run("ci", state, at)
+    }
+}
+
+fn bound_to(context: &str, app: u64) -> super::RequiredCheck {
+    super::RequiredCheck {
+        context: context.into(),
+        app_id: Some(app),
+    }
+}
+
+/// Another app's check run of a bound context neither passes it, nor fails it, nor holds it
+/// pending, whenever it reported: only the bound app's runs are read.
+#[test]
+fn a_foreign_run_never_stands_for_a_bound_check() {
+    use crate::integration::classify::required_checks;
+    let bound = vec![bound_to("ci", 15368)];
+    let (t1, t2) = ("2026-09-01T00:01:00Z", "2026-09-01T00:09:00Z");
+    let verdict = |checks: &[CheckObservation]| required_checks(checks, Some(&bound), &[]);
+    // the override: the bound app failed, and a newer run of another app passed
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Failed, t1),
+            run_by(Some(1), CheckRunState::Passed, t2),
+        ]),
+        RequiredCheckState::Failed
+    );
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Passed, t1),
+            run_by(Some(1), CheckRunState::Pending, ""),
+        ]),
+        RequiredCheckState::Passed,
+        "a foreign run cannot hold it pending"
+    );
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Passed, t1),
+            run_by(Some(1), CheckRunState::Failed, t2),
+        ]),
+        RequiredCheckState::Passed,
+        "a foreign run cannot fail it"
+    );
+    assert_eq!(
+        verdict(&[run_by(Some(1), CheckRunState::Passed, t1)]),
+        RequiredCheckState::Missing,
+        "the bound app has not reported"
+    );
+}
+
+/// A check run of a bound context whose writer was not read is never the bound app's run and
+/// never nobody's: the check is unknown, unless the bound app's own verdict is a failure.
+#[test]
+fn an_unattributed_run_makes_a_bound_check_unknown() {
+    use crate::integration::classify::{required_check_states, required_checks};
+    let bound = vec![bound_to("ci", 15368)];
+    let (t1, t2) = ("2026-09-01T00:01:00Z", "2026-09-01T00:09:00Z");
+    let verdict = |checks: &[CheckObservation]| required_checks(checks, Some(&bound), &[]);
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Passed, t1),
+            run_by(None, CheckRunState::Passed, t2),
+        ]),
+        RequiredCheckState::Unknown
+    );
+    assert_eq!(
+        verdict(&[
+            run_by(Some(15368), CheckRunState::Failed, t1),
+            run_by(None, CheckRunState::Passed, t2),
+        ]),
+        RequiredCheckState::Failed,
+        "the bound app's failure stands whatever else is unread"
+    );
+    assert_eq!(
+        verdict(&[run_by(None, CheckRunState::Pending, "")]),
+        RequiredCheckState::Unknown,
+        "an unread writer's run does not make the check wait"
+    );
+    // a status context of the name is not a check run: it is not it, and not an unread writer
+    let status = CheckObservation {
+        kind: crate::integration::CheckKind::StatusContext,
+        ..run_by(None, CheckRunState::Passed, t2)
+    };
+    assert_eq!(
+        verdict(&[run_by(Some(15368), CheckRunState::Passed, t1), status]),
+        RequiredCheckState::Passed
+    );
+    // unbound, any report of the name is the check, as before
+    let unbound: Vec<super::RequiredCheck> = vec!["ci".into()];
+    assert_eq!(
+        required_checks(
+            &[run_by(None, CheckRunState::Passed, t1)],
+            Some(&unbound),
+            &[]
+        ),
+        RequiredCheckState::Passed
+    );
+    // each requirement is answered on its own
+    let mixed = vec![bound_to("ci", 15368), "lint".into()];
+    let checks = vec![
+        run_by(None, CheckRunState::Passed, t1),
+        run("lint", CheckRunState::Passed, t1),
+    ];
+    assert_eq!(
+        required_check_states(&checks, &mixed, &[]),
+        vec![
+            ("ci".to_string(), RequiredCheckState::Unknown),
+            ("lint".to_string(), RequiredCheckState::Passed),
+        ]
+    );
+}
+
+/// A context two sources bind to two apps is required of both: one app's pass does not
+/// stand for the other's failure.
+#[test]
+fn a_context_bound_to_two_apps_needs_both() {
+    use crate::integration::classify::{required_check_states, required_checks};
+    let both = vec![bound_to("ci", 7), bound_to("ci", 15368)];
+    let at = "2026-09-01T00:01:00Z";
+    let split = vec![
+        run_by(Some(7), CheckRunState::Passed, at),
+        run_by(Some(15368), CheckRunState::Failed, at),
+    ];
+    assert_eq!(
+        required_check_states(&split, &both, &[]),
+        vec![
+            ("ci".to_string(), RequiredCheckState::Passed),
+            ("ci".to_string(), RequiredCheckState::Failed),
+        ]
+    );
+    assert_eq!(
+        required_checks(&split, Some(&both), &[]),
+        RequiredCheckState::Failed
+    );
+    let one = vec![run_by(Some(7), CheckRunState::Passed, at)];
+    assert_eq!(
+        required_checks(&one, Some(&both), &[]),
+        RequiredCheckState::Missing
+    );
+    let passed = vec![
+        run_by(Some(7), CheckRunState::Passed, at),
+        run_by(Some(15368), CheckRunState::Passed, at),
+    ];
+    assert_eq!(
+        required_checks(&passed, Some(&both), &[]),
+        RequiredCheckState::Passed
+    );
+}
+
+/// The whole verdict on a pull request whose bound check was reported by a writer nobody
+/// read: unknown, with its own reason, never waiting and never next; the queue says so and
+/// why. The two older meanings of an unknown requirement still answer as they did.
+#[test]
+fn a_bound_check_with_an_unread_writer_is_unknown_not_waiting() {
+    use crate::integration::classify::{unread_writers, UNREAD_WRITER_REMEDY};
+    use crate::integration::{EvidenceKind, IntegrationGate};
+    let w = World {
+        open: vec![sim(1), sim(2)],
+        ..Default::default()
+    };
+    let mut obs = w.observation();
+    obs.required_checks = Some(vec![bound_to("ci", 15368), "lint".into()]);
+    // #1 as `gh pr list` alone reports it; #2 read with its writers
+    obs.pull_requests[0].checks = vec![
+        run_by(None, CheckRunState::Passed, ""),
+        run("lint", CheckRunState::Passed, ""),
+    ];
+    obs.pull_requests[1].checks = vec![
+        run_by(Some(15368), CheckRunState::Passed, ""),
+        run("lint", CheckRunState::Passed, ""),
+    ];
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+    assert_eq!(a.required_checks, RequiredCheckState::Unknown);
+    assert_eq!(
+        a.reasons.iter().map(|r| r.to_string()).collect::<Vec<_>>(),
+        ["required_checks:unknown"]
+    );
+    assert_eq!(a.next_action.as_deref(), Some(UNREAD_WRITER_REMEDY));
+    assert!(
+        a.gates.iter().map(|g| g.gate).eq(IntegrationGate::ALL),
+        "every gate answered, in policy order"
+    );
+    let failed: Vec<IntegrationGate> = a
+        .gates
+        .iter()
+        .filter(|g| !g.passed)
+        .map(|g| g.gate)
+        .collect();
+    assert_eq!(failed, [IntegrationGate::RequiredChecks]);
+    let lines: Vec<(&str, &str)> = a
+        .evidence
+        .iter()
+        .filter(|e| e.kind == EvidenceKind::RequiredCheck)
+        .map(|e| (e.detail.as_str(), e.status.as_str()))
+        .collect();
+    assert_eq!(lines, [("ci (app 15368)", "unknown"), ("lint", "passed")]);
+    // the one read with its writers is ready, and it alone is next
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::Ready);
+    assert_eq!(q.next_merge, Some(2));
+    assert_eq!(q.diagnostics.len(), 1, "{:?}", q.diagnostics);
+    let said = &q.diagnostics[0];
+    assert!(
+        said.starts_with("1 pull request(s) carry a check run of ci (app 15368)"),
+        "{said}"
+    );
+    assert!(
+        said.contains("(#1)") && said.contains("majordomus prs refresh"),
+        "{said}"
+    );
+    // the remedy names the bound the forge adapter reads to
+    let bound = (super::forge::CONTEXT_PAGES * 100).to_string();
+    assert!(
+        UNREAD_WRITER_REMEDY.contains(&bound),
+        "{UNREAD_WRITER_REMEDY}"
+    );
+
+    // alone, it leaves nothing next
+    obs.pull_requests.truncate(1);
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    assert_eq!(q.next_merge, None);
+    assert_eq!(q.diagnostics.len(), 1, "{:?}", q.diagnostics);
+
+    // every writer read, or nothing bound: the queue has nothing to say about writers
+    let unbound: Vec<super::RequiredCheck> = vec!["ci".into(), "lint".into()];
+    assert!(unread_writers(&obs.pull_requests, &unbound).is_empty());
+    obs.pull_requests[0].checks[0].app_id = Some(99);
+    assert!(unread_writers(&obs.pull_requests, &[bound_to("ci", 15368)]).is_empty());
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::WaitingForChecks);
+    assert_eq!(
+        q.get(1).unwrap().required_checks,
+        RequiredCheckState::Missing
+    );
+    assert!(q.diagnostics.is_empty(), "{:?}", q.diagnostics);
+
+    // the two older meanings of unknown keep their own reasons
+    obs.required_checks = Some(Vec::new());
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let reasons = |q: &IntegrationQueue| -> Vec<String> {
+        let a = q.get(1).unwrap();
+        assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+        a.reasons.iter().map(|r| r.to_string()).collect()
+    };
+    assert_eq!(reasons(&q), ["no_required_checks"]);
+    obs.required_checks = None;
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    assert_eq!(reasons(&q), ["required_checks_unread"]);
 }
 
 /// A skipped required check has not passed, unless the policy permits that context's skip.
@@ -3770,6 +4054,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::DependencyCycle { .. }
         | R::DependencyClosedUnmerged { .. }
         | R::DependencyUnread { .. }
+        | R::DeclarationsUnread
         | R::Unrecognised(_) => (),
     };
     let mut all = vec![
@@ -3821,6 +4106,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::DependencyCycle { number: 611 },
         R::DependencyClosedUnmerged { number: 612 },
         R::DependencyUnread { number: 613 },
+        R::DeclarationsUnread,
     ];
     for state in [
         PullRequestReview::NotRequired,
@@ -4663,7 +4949,8 @@ fn supersedes_in_the_successors_body_works_from_the_other_side() {
     // the successor itself is not held by what it supersedes
     assert_eq!(disposition(&q, 2), PullRequestDisposition::Ready);
 
-    // once #2 merged it is no longer open, and the forge's closed pull requests still say it
+    // once #2 merged it is no longer open, and #1's cross-references still name it. It counts
+    // because the scripted author is the repository's owner (`sim`'s default association)
     let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
     assert_eq!(report.merged, vec![2]);
     let obs = w.observation();
@@ -4678,11 +4965,12 @@ fn supersedes_in_the_successors_body_works_from_the_other_side() {
 }
 
 #[test]
-fn a_successor_that_did_not_land_leaves_it_to_a_person_and_nothing_closes_it() {
+fn a_successor_closed_unmerged_releases_it_and_one_merged_elsewhere_is_a_persons() {
     use crate::integration::ReasonCode as R;
     let root = scratch();
-    // #1's successor #2 was closed unmerged; #3's successor #4 was squashed (merged, but its
-    // head is not on master); #5's successor #9 is not open and the forge does not know it
+    // #1's successor #2 was closed unmerged; #3's successor #4 was squashed (merged, but
+    // neither its head nor a merge commit of it is on master); #5's successor #9 is not open
+    // and the forge does not know it
     let mut one = sim(1);
     one.body = superseded_by_body(2);
     let mut three = sim(3);
@@ -4695,38 +4983,326 @@ fn a_successor_that_did_not_land_leaves_it_to_a_person_and_nothing_closes_it() {
         ..Default::default()
     };
     let q = w.queue();
-    for (n, why, word) in [
-        (1, R::SuccessorNotLanded { number: 2 }, "closed unmerged"),
-        (3, R::SuccessorNotLanded { number: 4 }, "squash"),
+    let supersession = |n: u64| {
+        q.get(n)
+            .unwrap()
+            .evidence
+            .iter()
+            .find(|e| e.kind == "supersession")
+            .unwrap()
+            .clone()
+    };
+    // a successor closed unmerged replaces nothing: the hold is released, and #1 is its own
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::Ready,
+        "{:?}",
+        a.reasons
+    );
+    assert!(
+        !a.reasons.contains(&R::SuccessorNotLanded { number: 2 }),
+        "{:?}",
+        a.reasons
+    );
+    assert_eq!(a.superseded_by, None);
+    let s = supersession(1);
+    assert_eq!(s.status, "not_landed");
+    assert!(s.detail.contains("closed unmerged"), "{}", s.detail);
+    // one the forge calls merged that master does not contain is a person's to decide
+    let a = q.get(3).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::PossiblyRedundant);
+    assert_eq!(a.reasons[0], R::SuccessorNotLanded { number: 4 });
+    assert_eq!(a.superseded_by, None);
+    let s = supersession(3);
+    assert_eq!(s.status, "not_landed");
+    assert!(s.detail.contains("is merged, but master"), "{}", s.detail);
+    let a = q.get(5).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+    assert_eq!(a.reasons[0].to_string(), "successor_unread:#9");
+    // weak evidence and an unread successor: nothing is closed, the weak one is listed
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let by: BTreeMap<u64, &str> = items.iter().map(|i| (i.pr, i.action.as_str())).collect();
+    assert_eq!(by, BTreeMap::from([(3, "left_for_a_person")]));
+    assert_eq!(w.close_calls, 0);
+    assert!(drain::events(&root).is_empty());
+}
+
+/// The possible supersessions an assessment carries, as their details.
+fn possible_supersessions(a: &PullRequestAssessment) -> Vec<&str> {
+    a.evidence
+        .iter()
+        .filter(|e| e.kind == "supersession" && e.status == "possible_supersession")
+        .map(|e| e.detail.as_str())
+        .collect()
+}
+
+/// What a declaration by somebody the repository does not let declare one does to the pull
+/// request it names, while the declarer is open and once it merged: nothing, but for evidence.
+fn a_declaration_that_does_not_count(declarer: Sim, names: &str) {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), declarer],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::Ready,
+        "{:?}",
+        a.reasons
+    );
+    assert!(
+        !a.reasons.iter().any(|r| r.code().starts_with("successor_")),
+        "it is not held: {:?}",
+        a.reasons
+    );
+    let said = possible_supersessions(a);
+    assert_eq!(said.len(), 1, "{:?}", a.evidence);
+    assert!(said[0].contains(names), "{}", said[0]);
+    assert!(
+        q.next_merge.is_some(),
+        "the queue is not held either: {:?}",
+        q.diagnostics
+    );
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::Ready);
+    // the declarer merges: master contains its head, and #1 is still decided on its own
+    w.gone_as(2, Gone::Merged);
+    w.merged.push(2);
+    let obs = w.observation();
+    assert!(
+        obs.resolved.contains_key(&2),
+        "its cross-references still name the declarer: {:?}",
+        obs.resolved
+    );
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::Ready,
+        "{:?}",
+        a.reasons
+    );
+    assert_eq!(a.superseded_by, None);
+    assert_eq!(possible_supersessions(a).len(), 1);
+    assert!(drain::cleanup_plan(&q).is_empty());
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert!(items.is_empty(), "{items:?}");
+    assert_eq!(w.close_calls, 0);
+    assert!(w.open.iter().any(|s| s.number == 1), "#1 is still open");
+}
+
+#[test]
+fn an_unauthorised_supersedes_neither_holds_nor_closes() {
+    let mut outsider = sim(2);
+    outsider.association = "CONTRIBUTOR";
+    outsider.body = "Supersedes #1".into();
+    a_declaration_that_does_not_count(
+        outsider,
+        "#2 by someone (CONTRIBUTOR) says it supersedes #1",
+    );
+    // an association the forge did not report is nobody's
+    let mut unread = sim(2);
+    unread.association = "";
+    unread.body = "Supersedes #1".into();
+    a_declaration_that_does_not_count(unread, "#2 by someone (association unread)");
+}
+
+#[test]
+fn a_forks_supersedes_decides_nothing() {
+    let mut fork = sim(2);
+    fork.cross_repository = true;
+    fork.body = "Supersedes #1".into();
+    assert_eq!(fork.association, "OWNER", "whoever its author is");
+    a_declaration_that_does_not_count(fork, "#2 by someone (OWNER, from a fork)");
+}
+
+#[test]
+fn only_what_a_bodys_author_states_is_a_supersession() {
+    use crate::integration::classify::{declared_supersessions, stated_lines};
+    // someone else's words, an example and a template's hint are not the author's statement
+    for body in [
+        "> Supersedes #1\nno, it does not",
+        "  > Superseded by #1",
+        "```\nSupersedes #1\n```",
+        "~~~text\nSuperseded by #1\n~~~",
+        "```\n~~~\nSupersedes #1\n~~~\n```",
+        "<!--\nSupersedes #1\n-->",
+        "<!-- say what this replaces:\nSupersedes #1 -->",
+        "an unclosed fence takes the rest\n```\nSupersedes #1",
+        "an unclosed comment takes the rest <!--\nSupersedes #1",
+    ] {
+        assert_eq!(declared_supersessions(body), Default::default(), "{body:?}");
+    }
+    // what stands outside them is stated, before and after
+    let s = declared_supersessions(
+        "Supersedes #1\n```\nSupersedes #2\n```\nSupersedes #3 <!-- note -->\n<!--\nSupersedes #4\n--> Supersedes #5\nSuperseded by #6\n> Supersedes #7",
+    );
+    assert_eq!((s.supersedes, s.superseded_by), (vec![1, 3], vec![6]));
+    assert_eq!(
+        stated_lines("a\n> quoted\n```\nfenced\n```\nb <!--\nhint\n-->\nc"),
+        "a\nb <!--\nc"
+    );
+    // a dependency keeps the lenient reading: it can only make a pull request wait
+    assert_eq!(
+        crate::integration::declared_dependencies("> Depends on #4"),
+        vec![4]
+    );
+}
+
+#[test]
+fn a_successor_whose_head_proves_nothing_closes_nothing() {
+    // An owner's #1 says a contributor's fork #2 replaces it, and #3 says the same of #4, a
+    // branch of this repository. Each successor was closed unmerged with its head on master:
+    // #2's fork could point there at will, and #4 was reset onto master and changes no file.
+    let root = scratch();
+    let mut one = sim(1);
+    one.body = superseded_by_body(2);
+    let mut three = sim(3);
+    three.body = superseded_by_body(4);
+    let mut fork = sim(2);
+    fork.cross_repository = true;
+    fork.association = "CONTRIBUTOR";
+    let mut w = World {
+        open: vec![one, three],
+        gone: vec![(fork, Gone::Batched), (sim(4), Gone::Reset)],
+        ..Default::default()
+    };
+    let obs = w.observation();
+    assert!(obs.resolved[&2].cross_repository && !obs.resolved[&2].merged);
+    assert_eq!(obs.resolved[&4].changed_files, 0);
+    let q = w.queue();
+    for (n, successor, said) in [
+        (1, 2, "its head lives in a fork"),
+        (3, 4, "the forge names no file it changes"),
     ] {
         let a = q.get(n).unwrap();
-        assert_eq!(
-            a.disposition,
-            PullRequestDisposition::PossiblyRedundant,
-            "#{n}"
-        );
-        assert_eq!(a.reasons[0], why, "#{n}");
-        assert_eq!(a.superseded_by, None);
+        assert_eq!(a.disposition, PullRequestDisposition::Ready, "#{n}");
+        assert_eq!(a.superseded_by, None, "#{n}");
         let s = a
             .evidence
             .iter()
             .find(|e| e.kind == "supersession")
             .unwrap();
-        assert_eq!(s.status, "not_landed");
-        assert!(s.detail.contains(word), "{}", s.detail);
+        assert_eq!(s.status, "not_landed", "#{n}");
+        assert!(s.detail.contains(said), "{}", s.detail);
+        assert!(
+            s.detail.contains(&format!("#{successor} ("))
+                && s.detail.contains("decided on its own"),
+            "{}",
+            s.detail
+        );
     }
-    let a = q.get(5).unwrap();
-    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
-    assert_eq!(a.reasons[0].to_string(), "successor_unread:#9");
-    // weak evidence and an unread successor: nothing is closed, the weak ones are listed
     let items = drain::cleanup(&root, &mut w, true).unwrap();
-    let by: BTreeMap<u64, &str> = items.iter().map(|i| (i.pr, i.action.as_str())).collect();
-    assert_eq!(
-        by,
-        BTreeMap::from([(1, "left_for_a_person"), (3, "left_for_a_person")])
-    );
+    assert!(items.iter().all(|i| i.action != "closed"), "{items:?}");
     assert_eq!(w.close_calls, 0);
-    assert!(drain::events(&root).is_empty());
+}
+
+#[test]
+fn a_successor_that_landed_inside_a_batch_supersedes() {
+    let root = scratch();
+    // #2 was closed, not merged: a batch carried its head into master
+    let mut replaced = sim(1);
+    replaced.body = superseded_by_body(2);
+    let mut w = World {
+        open: vec![replaced],
+        gone: vec![(sim(2), Gone::Batched)],
+        ..Default::default()
+    };
+    let obs = w.observation();
+    assert!(!obs.resolved[&2].merged, "the forge calls it closed");
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+    assert_eq!(a.superseded_by, Some(2));
+    let s = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == "supersession")
+        .unwrap();
+    assert_eq!(s.status, "landed");
+    assert!(
+        s.detail.contains("is closed, and master contains its head"),
+        "{}",
+        s.detail
+    );
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert_eq!(items[0].action, "closed");
+    assert_eq!(w.close_calls, 1);
+}
+
+#[test]
+fn a_truncated_reference_read_holds_and_nothing_closes_it() {
+    use crate::integration::{CrossReferenceRead, ReasonCode as R};
+    let root = scratch();
+    // #1's successor #3 landed, and would close it — but the pull requests that mention #1
+    // were read in part, so nothing about #1 is decided
+    let mut held = sim(1);
+    held.body = superseded_by_body(3);
+    held.references = CrossReferenceRead::Truncated;
+    let mut w = World {
+        open: vec![held, sim(2)],
+        merged: vec![3],
+        gone: vec![(sim(3), Gone::Merged)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+    assert_eq!(a.reasons[0], R::DeclarationsUnread);
+    assert_eq!(a.superseded_by, None);
+    assert!(
+        q.diagnostics
+            .iter()
+            .any(|d| d
+                .contains("the pull requests that mention #1 were not all read (truncated: #1)")),
+        "{:?}",
+        q.diagnostics
+    );
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert_eq!(report.merged, vec![2], "never #1");
+    assert!(w.open.iter().any(|s| s.number == 1));
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert!(items.is_empty(), "{items:?}");
+    assert_eq!(w.close_calls, 0);
+    // read whole, the same world closes it
+    w.open[0].references = CrossReferenceRead::Whole;
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert_eq!(items[0].action, "closed");
+}
+
+#[test]
+fn the_closing_comment_of_a_superseded_one_does_not_claim_its_work_is_on_master() {
+    let root = scratch();
+    let mut replaced = sim(1);
+    replaced.body = superseded_by_body(2);
+    let mut w = World {
+        open: vec![replaced],
+        merged: vec![2],
+        gone: vec![(sim(2), Gone::Merged)],
+        ..Default::default()
+    };
+    drain::cleanup(&root, &mut w, true).unwrap();
+    let c = &w.close_comments[0];
+    assert!(c.starts_with("Superseded by #2, which landed.\n\n"), "{c}");
+    assert!(!c.contains("its work is already on"), "{c}");
+    assert!(
+        c.contains("#2 was declared its replacement by someone this repository lets declare one, and `master` contains it."),
+        "{c}"
+    );
+    assert!(
+        c.contains("Evidence: superseded_by:#2 (master m0, head h1.0)."),
+        "{c}"
+    );
+    // one closed on git's own proof is told its work is there
+    let mut w = superseded_two();
+    drain::cleanup(&scratch(), &mut w, true).unwrap();
+    let c = &w.close_comments[0];
+    assert!(
+        c.starts_with("Closed by `majordomus prs cleanup`: its work is already on `master`."),
+        "{c}"
+    );
 }
 
 #[test]
@@ -4782,7 +5358,7 @@ fn a_successor_that_landed_outranks_one_still_open_and_a_self_reference_is_nothi
 #[test]
 fn a_supersession_is_a_line_anchored_declaration() {
     use crate::integration::classify::declared_supersessions;
-    let s = declared_supersessions("Supersedes #12 and #14.\n> superseded by #20");
+    let s = declared_supersessions("Supersedes #12 and #14.\n  superseded by #20");
     assert_eq!(s.supersedes, vec![12, 14]);
     assert_eq!(s.superseded_by, vec![20]);
     for prose in [
@@ -4814,7 +5390,8 @@ fn the_forge_reads_only_what_a_supersession_of_an_open_pull_request_names() {
     let open = vec![one, observe_pr(&sim(2))];
     let closed = json!([
         // supersedes an open one: read
-        {"number": 5, "state": "MERGED", "headRefOid": "h5", "body": "Supersedes #2"},
+        {"number": 5, "state": "MERGED", "headRefOid": "h5", "body": "Supersedes #2",
+         "authorAssociation": "MEMBER", "isCrossRepository": false},
         // supersedes only what is not open: not needed
         {"number": 6, "state": "MERGED", "headRefOid": "h6", "body": "Supersedes #40"},
         // mentions the word in prose: no declaration
@@ -4836,6 +5413,21 @@ fn the_forge_reads_only_what_a_supersession_of_an_open_pull_request_names() {
     assert!(resolved[&5].merged);
     assert!(!resolved[&7].merged);
     assert_eq!(resolved[&5].head_sha, "h5");
+    // a source of a cross-reference says who declared; a view does not, and declares nothing
+    assert_eq!(
+        (
+            resolved[&5].author_association.as_str(),
+            resolved[&5].cross_repository
+        ),
+        ("MEMBER", false)
+    );
+    assert_eq!(
+        (
+            resolved[&7].author_association.as_str(),
+            resolved[&7].cross_repository
+        ),
+        ("", true)
+    );
     // a successor the forge cannot show is left out: unread, never landed
     let none = resolved_for(&open, &json!([]), |_| None);
     assert!(none.is_empty());
@@ -6046,6 +6638,17 @@ fn only_a_closed_or_merged_pull_request_with_a_head_is_resolved() {
         (n, r.merged, r.head_sha.as_str(), r.body.as_str()),
         (7, false, "h", "")
     );
+    // what a reading does not say fails closed: nobody's, from a fork, merged nowhere
+    assert_eq!(
+        (
+            r.merge_commit.as_str(),
+            r.author.as_str(),
+            r.author_association.as_str(),
+            r.cross_repository,
+            r.base_ref.as_str()
+        ),
+        ("", "", "", true, "")
+    );
 }
 
 // ---------------------------------------------------------------- what every path says
@@ -6713,4 +7316,154 @@ fn an_applied_repair_says_each_write_it_could_not_make() {
     let mut w = repair_world();
     w.refresh_fails = true;
     assert!(apply(&mut w, 1, 3).unwrap_err().contains("trail refused"));
+}
+
+/// Write `record` where `prs refresh` records the observation of `root`.
+fn recorded_observation(root: &std::path::Path, record: &serde_json::Value) {
+    let path = crate::integration::state_path(root, crate::integration::OBSERVATION_FILE);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, serde_json::to_string_pretty(record).unwrap()).unwrap();
+}
+
+#[test]
+fn an_observation_of_another_schema_is_refused_older_or_newer() {
+    let root = scratch();
+    let w = World::default();
+    let current = serde_json::to_value(w.observation()).unwrap();
+    assert_eq!(current["schema"], OBSERVATION_SCHEMA);
+    recorded_observation(&root, &current);
+    assert_eq!(
+        crate::integration::load_observation(&root).unwrap(),
+        Some(w.observation())
+    );
+    // 3 is what 0.14.0 recorded; 5 stands for a newer executable's record met by this one,
+    // as this one's record is met by 0.14.0. Neither is read as empty, and neither as current
+    for other in [OBSERVATION_SCHEMA - 1, OBSERVATION_SCHEMA + 1] {
+        let mut record = current.clone();
+        record["schema"] = serde_json::json!(other);
+        // a newer record may hold what this one cannot parse: its number is read first
+        record["pull_requests"] = serde_json::json!("whatever schema it is, not this one's");
+        recorded_observation(&root, &record);
+        let refused = crate::integration::load_observation(&root).unwrap_err();
+        assert!(
+            refused.contains(&format!("schema {other}, this reads {OBSERVATION_SCHEMA}")),
+            "{refused}"
+        );
+        assert!(refused.contains("majordomus prs refresh"), "{refused}");
+        let queue = crate::integration::queue_of(&root).unwrap_err();
+        assert_eq!(queue, refused, "no queue is built from it");
+    }
+    // a record that names no schema, or is not JSON, is no observation either
+    let mut unnamed = current.clone();
+    unnamed.as_object_mut().unwrap().remove("schema");
+    recorded_observation(&root, &unnamed);
+    let refused = crate::integration::load_observation(&root).unwrap_err();
+    assert!(refused.contains("missing field `schema`"), "{refused}");
+    recorded_observation(&root, &serde_json::json!("not an observation"));
+    assert!(crate::integration::load_observation(&root).is_err());
+    let path = crate::integration::state_path(&root, crate::integration::OBSERVATION_FILE);
+    std::fs::write(&path, "{").unwrap();
+    assert!(crate::integration::load_observation(&root).is_err());
+}
+
+/// The trail lines 0.14.0 wrote, one per shape it had: every field it could write, and the
+/// fields it left out when empty.
+const TRAIL_OF_0_14_0: &str = r##"{"at":"2026-10-06T10:00:00Z","actor":"t <t@example.com> (pid 41 on h)","action":"selected","pr":1,"master_before":"m0","head_sha":"h1","master_after":null,"reasons":["contains_master"],"detail":"#1 is the next merge","passed_over":[2,3]}
+{"at":"2026-10-06T10:00:01Z","actor":"t <t@example.com> (pid 41 on h)","action":"merge_attempted","pr":1,"master_before":"m0","head_sha":"h1","master_after":null,"reasons":["contains_master"],"detail":"gh pr merge 1","evidence":[{"kind":"relation_to_master","status":"up_to_date","detail":"contains master m0","source":{"kind":"git","master_sha":"m0","head_sha":"h1"}},{"kind":"required_checks","status":"passed","detail":"ci","source":{"kind":"forge","observed_at":"2026-10-06T09:59:00Z"}}]}
+{"at":"2026-10-06T10:00:09Z","actor":"t <t@example.com> (pid 41 on h)","action":"merge_succeeded","pr":1,"master_before":"m0","head_sha":"h1","master_after":"m1","reasons":["contains_master"],"detail":"master is m1","evidence":[{"kind":"supersession","status":"none","detail":"no successor is declared"}],"merge_commit":"m1"}
+{"at":"2026-10-06T10:01:00Z","actor":"t <t@example.com> (pid 41 on h)","action":"refreshed","pr":2,"master_before":"m1","head_sha":"h2","master_after":null,"reasons":["behind_master:1"],"detail":"pushed","head_after":"h2b"}
+{"at":"2026-10-06T10:02:00Z","actor":"t <t@example.com> (pid 41 on h)","action":"merge_failed","pr":3,"master_before":"m1","head_sha":"h3","master_after":null,"reasons":["contains_master"],"detail":"head moved","class":"stale"}
+{"at":"2026-10-06T10:03:00Z","actor":"t <t@example.com> (pid 41 on h)","action":"closed_superseded","pr":4,"master_before":"m1","head_sha":"h4","master_after":null,"reasons":["superseded_by:#1","successor_not_landed:#9"],"detail":"closed"}
+{"at":"2026-10-06T10:04:00Z","actor":"t <t@example.com> (pid 41 on h)","action":"idle","pr":null,"master_before":"m1","head_sha":null,"master_after":null,"reasons":[],"detail":"nothing to do"}
+"##;
+
+#[test]
+fn the_trail_0_14_0_wrote_is_still_read_and_no_event_needs_a_new_field() {
+    use crate::integration::ReasonCode;
+    let root = scratch();
+    let trail = trail_of(&root);
+    std::fs::create_dir_all(trail.parent().unwrap()).unwrap();
+    std::fs::write(&trail, TRAIL_OF_0_14_0).unwrap();
+    let events = drain::events(&root);
+    assert_eq!(
+        trail_actions(&root),
+        [
+            "selected",
+            "merge_attempted",
+            "merge_succeeded",
+            "refreshed",
+            "merge_failed",
+            "closed_superseded",
+            "idle"
+        ],
+        "every line 0.14.0 wrote is an event"
+    );
+    // the verified merge a continuous drain counts is read with what it carried
+    let merged = &events[2];
+    assert_eq!(
+        (merged.pr, merged.merge_commit.as_deref()),
+        (Some(1), Some("m1"))
+    );
+    assert_eq!(merged.reasons, [ReasonCode::ContainsMaster]);
+    assert_eq!(events[0].passed_over, [2, 3]);
+    assert_eq!(events[1].evidence.len(), 2);
+    assert_eq!(events[3].head_after.as_deref(), Some("h2b"));
+    assert_eq!(
+        events[5].reasons[0].to_string(),
+        "superseded_by:#1",
+        "a reason it wrote reads back verbatim"
+    );
+    // read and written again, each line is the line it was: nothing is added to an old event
+    for (line, event) in TRAIL_OF_0_14_0.lines().zip(&events) {
+        let was: serde_json::Value = serde_json::from_str(line).unwrap();
+        assert_eq!(serde_json::to_value(event).unwrap(), was, "{line}");
+    }
+
+    // an event that carries the reason this version added has the fields 0.14.0's had, and
+    // the reason is a string: 0.14.0 reads a code it does not know as an unrecognised one,
+    // verbatim, as this reader reads one it does not know
+    let known: BTreeSet<&str> = [
+        "at",
+        "actor",
+        "action",
+        "pr",
+        "master_before",
+        "head_sha",
+        "master_after",
+        "reasons",
+        "detail",
+        "passed_over",
+        "head_after",
+        "evidence",
+        "class",
+        "merge_commit",
+    ]
+    .into_iter()
+    .collect();
+    let mut newer = events[1].clone();
+    newer.reasons = vec![ReasonCode::DeclarationsUnread];
+    newer.evidence[0].kind = crate::integration::EvidenceKind::Supersession;
+    newer.evidence[0].status = "possible_supersession".into();
+    let wire = serde_json::to_value(&newer).unwrap();
+    let fields: BTreeSet<&str> = wire
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect();
+    assert!(fields.is_subset(&known), "{fields:?}");
+    assert_eq!(wire["reasons"], serde_json::json!(["declarations_unread"]));
+    let evidence: BTreeSet<&str> = wire["evidence"][0]
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect();
+    assert_eq!(
+        evidence.into_iter().collect::<Vec<_>>(),
+        ["detail", "kind", "source", "status"]
+    );
+    let unknown: ReasonCode = serde_json::from_value(serde_json::json!("a_later_code:#7")).unwrap();
+    assert_eq!(unknown, ReasonCode::Unrecognised("a_later_code:#7".into()));
+    assert_eq!(serde_json::to_value(&unknown).unwrap(), "a_later_code:#7");
 }

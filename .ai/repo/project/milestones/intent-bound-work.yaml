@@ -1,0 +1,57 @@
+id: intent-bound-work
+title: A task is bound to the intent it serves
+slug: intent-bound-work
+order: 120
+priority: p1
+problem: "The intent engine can say which intent an issue or a set of paths serves (intent preflight), and nothing asks it. `start` takes a description and a scope; the task record names no issue and no intent; the context a worker is handed says nothing of the criteria the work is for; a handover carries a commit and no trace of the intent it was written under. Work under an intent whose plan was never critiqued is found by `intent validate` after it began, not refused before."
+outcome: "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift."
+current_state: "intents.preflight exists with no caller. The task record has no issue, intent or exemption field. No exemption class exists anywhere. Nothing computes a revision of an intent, its plan or its critique."
+desired_state: "One derivation, `Intents::binding`, answered by `intents.binding` on every surface and asked by start, context and handover."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/capability/builtin/continuity.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/policy.rs
+  - apps/majordomus-cli/tests
+  - lib/start.sh
+  - lib/context.sh
+  - lib/handover.sh
+  - lib/common.sh
+  - lib/intent_binding.sh
+  - lib/plan.sh
+  - apps/majordomus-cli/src/plan.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - share
+  - .ai/repo/policy.yaml
+  - .ai/repo/project
+  - .ai/repo/adrs
+  - .ai/repo/rules/project
+  - docs
+  - test/cases
+non_scope:
+  - Refusing a finish on unmet criteria
+  - Producing or executing a critique
+  - Moving the task lifecycle from shell to Rust (ADR 0047)
+acceptance_criteria:
+  - "A task started with --issue, --intent or by scope resolves through intents.binding, and an ambiguous or refused binding does not start where the policy requires binding"
+  - "An exemption is a policy-declared class with a reason, recorded in the task record and the ledger"
+  - "The context of a bound task carries the intent section, from the binding"
+  - "A handover carries the binding revision and --resolve reports drift"
+  - "The command line, HTTP and MCP answer the same binding"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent_binding
+  - bash test/run.sh 960_a_task_starts_bound_to_what_it_serves
+  - bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved
+evidence_required: []
+depends_on:
+  - intent-planning
+risks:
+  - "The records, the ADR and the tests they name land in one change: a criterion whose evidence reference does not resolve fails intent validate, so no part of this milestone reaches the trunk without the rest."
+  - "Requiring binding in this repository refuses the scope-only `start` every session uses today; the refusal must name the three ways through (an issue, an intent, an exemption) or it reads as the tool being broken."
+  - "A pin stored in a task is one step from stored intent state; it must stay a hash compared on read and never a stage or a verdict (rule project.an-intent-outlives-its-sessions)."
+created_at: 2026-10-07
+updated_at: 2026-10-07

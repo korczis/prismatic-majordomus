@@ -1394,6 +1394,23 @@
       "tool": "majordomus_intent_realization"
     },
     {
+      "api_anchor": "/docs/api/intents/#op-intents-binding",
+      "claims": [],
+      "cli": "majordomus intent binding",
+      "id": "intents.binding",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-binding/",
+      "slug": "intents-binding",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "What a piece of work is bound to before it starts",
+      "tool": "majordomus_intent_binding"
+    },
+    {
       "api_anchor": "/docs/api/intents/#op-intents-coverage",
       "claims": [],
       "cli": "majordomus intent coverage",
@@ -3387,6 +3404,13 @@
         "test": "apps/majordomus-cli/tests/intent_realization.rs"
       },
       {
+        "id": "intent-refused-at-plan-start",
+        "implementation": "apps/majordomus-cli/src/intent_binding.rs",
+        "route": "/guarantees/intent-refused-at-plan-start/",
+        "status": "guaranteed",
+        "test": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -3883,11 +3907,11 @@
     ]
   },
   "counts": {
-    "capabilities": 183,
-    "claims": 88,
+    "capabilities": 184,
+    "claims": 89,
     "modules": 53
   },
-  "generator": "majordomus-cli 0.17.0",
+  "generator": "majordomus-cli 0.19.0",
   "modules": [
     {
       "capabilities": [
@@ -4569,6 +4593,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "intents.binding",
+          "route": "/registry/capabilities/intents-binding/",
+          "slug": "intents-binding"
+        },
         {
           "id": "intents.coverage",
           "route": "/registry/capabilities/intents-coverage/",
