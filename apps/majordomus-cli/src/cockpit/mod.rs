@@ -22,6 +22,7 @@
 //! visual views. With no JavaScript at all, every page still shows everything it knows.
 
 pub mod assets;
+pub mod figure;
 pub mod html;
 pub(crate) mod intents;
 pub(crate) mod mcp;

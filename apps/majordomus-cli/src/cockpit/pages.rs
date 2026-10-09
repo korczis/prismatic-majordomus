@@ -4468,16 +4468,19 @@ pub fn activity(ctx: &Context) -> Page {
         .map(|m| {
             m.iter()
                 .map(|(k, v)| {
-                    let count = v.get("count").and_then(Value::as_u64).unwrap_or(0);
-                    let nanos = v.get("total_nanos").and_then(Value::as_u64).unwrap_or(0);
+                    // a phase the counters did not report a number for is unknown, not
+                    // zero: the absent count never renders as "0" or as "0.000 ms"
+                    let count = v.get("count").and_then(Value::as_u64);
+                    let nanos = v.get("total_nanos").and_then(Value::as_u64);
+                    let ms = |n: u64| format!("{:.3} ms", n as f64 / 1e6);
                     row(vec![
                         cell(mono(k)),
-                        text_cell(count.to_string()),
-                        text_cell(format!("{:.3} ms", nanos as f64 / 1e6)),
-                        text_cell(if count == 0 {
-                            "-".to_string()
-                        } else {
-                            format!("{:.3} ms", nanos as f64 / 1e6 / count as f64)
+                        text_cell(count.map_or_else(|| "unknown".to_string(), |c| c.to_string())),
+                        text_cell(nanos.map_or_else(|| "unknown".to_string(), ms)),
+                        text_cell(match (count, nanos) {
+                            (Some(0), Some(_)) => "-".to_string(),
+                            (Some(c), Some(n)) => format!("{:.3} ms", n as f64 / 1e6 / c as f64),
+                            _ => "unknown".to_string(),
                         }),
                     ])
                 })
@@ -7132,21 +7135,29 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
     };
     let references = edge_rows(true);
     let referenced_by = edge_rows(false);
+    let figure = relations_figure(&view);
+    let tables = el("div")
+        .child(el("h3").class("mj-subheading").text("References"))
+        .child(if references.is_empty() {
+            nothing("This entity declares no reference.")
+        } else {
+            table(&["Relation", "Kind", "Target", ""], references)
+        })
+        .child(el("h3").class("mj-subheading").text("Referenced by"))
+        .child(if referenced_by.is_empty() {
+            nothing("Nothing in this layer names it. Backlinks are derived, never declared.")
+        } else {
+            table(&["Relation", "Kind", "Declared by", ""], referenced_by)
+        });
     let relations_card = card(
         "What it is joined to",
-        el("div")
-            .child(el("h3").class("mj-subheading").text("References"))
-            .child(if references.is_empty() {
-                nothing("This entity declares no reference.")
-            } else {
-                table(&["Relation", "Kind", "Target", ""], references)
-            })
-            .child(el("h3").class("mj-subheading").text("Referenced by"))
-            .child(if referenced_by.is_empty() {
-                nothing("Nothing in this layer names it. Backlinks are derived, never declared.")
-            } else {
-                table(&["Relation", "Kind", "Declared by", ""], referenced_by)
-            }),
+        match figure {
+            Some(mut f) => {
+                f.data = Some(tables);
+                f.render()
+            }
+            None => tables,
+        },
     );
 
     let surfaces_card = card(
@@ -7204,6 +7215,167 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
         (&view.kind, Some(&view.kind_route)),
         (&view.identity, None),
     ])
+    .script("flow.js")
+}
+
+/// The entity's relations as an evidence figure (ADR 0122): what names it on the left,
+/// the entity in the middle, what it names on the right. A box stands for every relation
+/// of one name in one direction, so the drawing stays readable however many objects there
+/// are; the objects are the box's subtree, and the tables under the drawing hold every
+/// edge. An entity joined to nothing gets no figure, only the tables that say so.
+fn relations_figure(
+    view: &crate::capability::builtin::entity::EntityView,
+) -> Option<super::figure::Flow> {
+    use super::figure::{Claim, Column, Flow, FlowEdge, FlowNode, Member};
+    use crate::entity::Direction;
+    use std::collections::BTreeMap;
+
+    if view.relations.is_empty() {
+        return None;
+    }
+    let mut groups: BTreeMap<(bool, &str), Vec<&crate::entity::Edge>> = BTreeMap::new();
+    for e in &view.relations {
+        groups
+            .entry((e.direction == Direction::Outgoing, e.edge.as_str()))
+            .or_default()
+            .push(e);
+    }
+    let kinds = |edges: &[&crate::entity::Edge]| -> String {
+        let mut count: BTreeMap<&str, usize> = BTreeMap::new();
+        for e in edges {
+            *count.entry(e.kind.as_str()).or_default() += 1;
+        }
+        count
+            .iter()
+            .map(|(k, n)| {
+                if *n == 1 {
+                    (*k).to_string()
+                } else {
+                    format!("{k} ×{n}")
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" · ")
+    };
+    let claim_of = |e: &crate::entity::Edge| match (&e.direction, e.external) {
+        (Direction::Incoming, _) => Claim::Derived,
+        (Direction::Outgoing, true) => Claim::External,
+        (Direction::Outgoing, false) => Claim::Declared,
+    };
+
+    let mut named_by = Vec::new();
+    let mut names = Vec::new();
+    let mut lines = Vec::new();
+    for ((outgoing, relation), edges) in &groups {
+        let key = format!("{}-{relation}", if *outgoing { "out" } else { "in" });
+        // a backlink box is derived; a reference box is declared while it holds one object
+        // of the layer, and external only when everything it names is outside the layer
+        let claim = if !*outgoing {
+            Claim::Derived
+        } else if edges.iter().all(|e| e.external) {
+            Claim::External
+        } else {
+            Claim::Declared
+        };
+        let label = match edges.as_slice() {
+            [one] => one.label.clone(),
+            many => match kinds(many) {
+                k if !k.contains(" · ") => k,
+                _ => format!("{} objects", many.len()),
+            },
+        };
+        let note = if *outgoing {
+            format!(
+                "This {} names {} under `{}` in its own front matter. Declared: the reference is written where the object lives.",
+                view.kind,
+                edges.len(),
+                edges[0].field
+            )
+        } else {
+            format!(
+                "{} object(s) of this layer name this one under `{relation}`. Derived: a backlink is read from every other object's references and is never declared.",
+                edges.len()
+            )
+        };
+        let members = edges
+            .iter()
+            .map(|e| {
+                let detail = match &e.title {
+                    Some(t) => format!("{} · {t}", e.kind),
+                    None => e.kind.clone(),
+                };
+                let m = Member::new(&e.label, claim_of(e)).detail(detail);
+                match &e.route {
+                    Some(r) => m.href(r),
+                    None => m,
+                }
+            })
+            .collect();
+        let mut node = FlowNode::new(&key, label, claim)
+            .detail(format!("{relation} · {}", kinds(edges)))
+            .note(note)
+            .members(members);
+        if let [one] = edges.as_slice() {
+            if let Some(route) = &one.route {
+                node = node.href(route);
+            }
+        }
+        if *outgoing {
+            lines.push(
+                FlowEdge::new("self", &key, *relation, claim)
+                    .note(format!("Declared under `{}`.", edges[0].field)),
+            );
+            names.push(node);
+        } else {
+            lines.push(
+                FlowEdge::new(&key, "self", *relation, Claim::Derived)
+                    .note("A backlink: derived from the other object's own declaration."),
+            );
+            named_by.push(node);
+        }
+    }
+
+    use crate::capability::builtin::entity::EvidenceState;
+    let ev = &view.evidence;
+    // the object is in the tree, so it is declared; only artefacts it names and the tree
+    // does not hold make it missing. Naming none is not "could not be read".
+    let subject_claim = match ev.state {
+        EvidenceState::Resolved | EvidenceState::Unclaimed => Claim::Declared,
+        EvidenceState::Dangling => Claim::Missing,
+    };
+    let subject = FlowNode::new("self", &view.identity, subject_claim)
+        .detail(&view.kind)
+        .note(ev.meaning.clone())
+        .members(
+            ev.artifacts
+                .iter()
+                .map(|a| {
+                    Member::new(
+                        &a.path,
+                        if a.present {
+                            Claim::Declared
+                        } else {
+                            Claim::Missing
+                        },
+                    )
+                    .detail(format!("named under {}", a.field))
+                })
+                .collect(),
+        )
+        .focused();
+
+    Some(Flow {
+        id: "relations".into(),
+        question: format!("What names this {}, and what does it name?", view.kind),
+        caption: "Solid lines are references this object declares in its own front matter; dashed lines are backlinks, derived by reading every other object. The middle box carries what can be said about the object's own evidence. A count on a box opens the objects it stands for below the drawing.".into(),
+        columns: vec![
+            Column::new("Named by", named_by),
+            Column::new(format!("This {}", view.kind), vec![subject]),
+            Column::new("Names", names),
+        ],
+        edges: lines,
+        data: None,
+    })
 }
 
 #[cfg(test)]

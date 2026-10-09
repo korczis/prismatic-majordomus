@@ -4153,7 +4153,14 @@
       "members": [
         "command:entity show"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:1010_a_figure_is_a_map_of_its_evidence",
+          "path": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -22264,6 +22271,29 @@
         }
       ],
       "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.figures-are-maps-of-evidence": {
+      "kind": "rule",
+      "id": "project.figures-are-maps-of-evidence",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1010_a_figure_is_a_map_of_its_evidence",
+          "path": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+            ".ai/repo/rules/project/figures-are-maps-of-evidence.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "apps/majordomus-cli/src/cockpit/figure.rs"
+      ],
       "findings": []
     },
     "rule:project.finding-carries-reproduce": {

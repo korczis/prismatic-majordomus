@@ -999,3 +999,51 @@ fn the_other_machines_card_says_so_when_the_state_cannot_be_read() {
         "the card answered as if it had read the store"
     );
 }
+
+#[test]
+fn an_entity_page_draws_its_relations_as_a_figure_that_explains_every_element() {
+    // ADR 0122: beta declares a reference to alpha and names a test the tree does not hold;
+    // alpha is named by beta, so it has a backlink and no reference of its own
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/rules/project/beta.v1.md",
+        "---\nid: project.beta\nversion: 1\nkind: rule\ntitle: Beta\ndescription: Names alpha.\n\
+         statement: A fixture MUST name alpha.\nstatus: active\nclass: advisory\n\
+         depends_on: [project.alpha@1]\ntags: [fixture]\n\nx-majordomus:\n  tests: [test/cases/0_absent.sh]\n---\n\n# Rationale\n\nBeta.\n",
+    );
+    f.commit("add beta");
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, beta) = html(&s, "/cockpit/objects/rule/project-beta-1");
+    assert_eq!(status, 200);
+    assert!(beta.contains(r#"data-mj-figure="relations""#), "{beta}");
+    assert!(beta.contains("flow.js"), "a page that draws a figure loads its script");
+    // the declared reference is a solid declared line out of the subject
+    assert!(
+        beta.contains(r#"data-claim="declared" data-from="self" data-to="out-depends_on""#),
+        "{beta}"
+    );
+    // the subject names an artefact the tree does not hold: missing, not declared
+    assert!(
+        beta.contains(r#"class="mj-flow-node mj-status--missing mj-flow-node--focus" data-k="self""#),
+        "{beta}"
+    );
+    // every drawn element carries its explanation, and the relations stay a table
+    for key in ["self", "out-depends_on", "e0"] {
+        assert!(
+            beta.contains(&format!(r#"<template data-mj-note="{key}">"#)),
+            "{key} has no explanation"
+        );
+    }
+    assert!(beta.contains(r#"<details class="mj-figure-data" open>"#));
+
+    let (status, alpha) = html(&s, "/cockpit/objects/rule/project-alpha-1");
+    assert_eq!(status, 200);
+    // named by beta: a derived, dashed line into the subject
+    assert!(
+        alpha.contains(r#"data-claim="derived" data-from="in-depends_on" data-to="self""#),
+        "{alpha}"
+    );
+    assert!(alpha.contains(r#"stroke-dasharray="6 4""#));
+    assert!(alpha.contains(r#"data-mj-claim="derived""#), "the legend names the backlink's claim");
+}

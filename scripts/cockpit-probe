@@ -19,6 +19,7 @@
 #
 #   scripts/cockpit-probe             both sweeps
 #   scripts/cockpit-probe --quick     the status sweep in full, one of each family in the browser
+#   scripts/cockpit-probe --interactions  the status sweep, then only the interactions in the browser
 #   scripts/cockpit-probe --status    the status sweep alone; no browser needed
 #   COCKPIT_PROBE_URL=http://...      probe a server that is already running, and start none
 #   COCKPIT_PROBE_PORT=N              the port to bind (default: a free one the OS picks)
@@ -35,6 +36,7 @@ CRATE="$ROOT/apps/majordomus-cli"
 MODE=full
 case "${1:-}" in
   --quick) MODE=quick ;;
+  --interactions) MODE=interactions ;;
   --status) MODE=status ;;
   '') ;;
   *) echo "cockpit-probe: unknown option $1" >&2; exit 2 ;;

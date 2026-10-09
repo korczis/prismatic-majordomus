@@ -6,23 +6,23 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "c285118fb99a4fdd5f44e3b615aaea5a3bd0e327af8585b6d8f71d4093a7ed4d",
+    "fingerprint": "51e5800de40a389ab965229aba2119bee86f495d1e33acbb244263a29b97f7a3",
     "summary": {
-      "total": 2089,
+      "total": 2097,
       "builtin": 184,
-      "declarative": 1905,
+      "declarative": 1913,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1905
+        "resource": 1913
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1913
+        "implemented": 1921
       },
       "mcp_tools": 177,
-      "mcp_resources": 1959,
+      "mcp_resources": 1967,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -74952,7 +74952,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 84,
+        "capabilities": 85,
         "capability_ids": []
       },
       {
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 262,
+        "capabilities": 266,
         "capability_ids": []
       },
       {
@@ -75534,7 +75534,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": []
       },
       {
@@ -75918,7 +75918,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 163,
+        "capabilities": 164,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 409,
+        "capabilities": 410,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "141a08ade943bca88870686447f47cfd77e2c913b7c66b6252343bc927086042",
+    "fingerprint": "b2fd68cb39552eafb8c5228e38d7a01e4198ce003696e3405ff48a131604bd2f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76174,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 84,
+      "adr": 85,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76190,8 +76190,8 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 262,
-      "knowledge": 1,
+      "issue": 266,
+      "knowledge": 2,
       "mesh-declaration": 1,
       "milestone": 25,
       "moment": 38,
@@ -76199,12 +76199,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 16,
-      "rule": 163,
+      "rule": 164,
       "scope": 1,
       "session": 84,
       "skill": 7,
       "taxonomy": 10,
-      "test": 409,
+      "test": 410,
       "use-case": 48,
       "workspace": 1
     },
@@ -77593,6 +77593,24 @@
           "session",
           "handover",
           "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0122",
+        "kind": "adr",
+        "identity": "adr-0122",
+        "title": "A figure is a map of its evidence",
+        "description": "A figure is a map of its evidence",
+        "path": ".ai/repo/adrs/0122-a-figure-is-a-map-of-its-evidence.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7378,
+        "tags": [
+          "architecture",
+          "cockpit",
+          "ui",
+          "evidence",
+          "design"
         ]
       },
       {
@@ -81312,7 +81330,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 46627
+        "bytes": 48987
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -81402,7 +81420,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 20081
+        "bytes": 20757
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -81654,7 +81672,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 97316
+        "bytes": 100360
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87836,6 +87854,68 @@
         "bytes": 2091
       },
       {
+        "uri": "majordomus://issue/I2110",
+        "kind": "issue",
+        "identity": "I2110",
+        "title": "An entity's relations are drawn as an evidence figure that explains every element",
+        "description": "Render the relation view of every entity page through the evidence-figure component of ADR 0122. What names the entity goes on the left, the entity in the middle with its own evidence as its subtree, and what it names on the right. Each box and line carries a claim in a word and a dash and explains itself when chosen, and the existing tables become the figure's data.",
+        "path": ".ai/repo/project/issues/I2110.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2539
+      },
+      {
+        "uri": "majordomus://issue/I2111",
+        "kind": "issue",
+        "identity": "I2111",
+        "title": "An intent and a milestone are drawn as evidence figures of the work that realises them",
+        "description": "Draw the intent page (criteria, milestones, issues, tasks) and the milestone page (issues by wave, blockers) with the evidence-figure component. A criterion's evidence state is the claim of its box: declared when its evidence is fresh, missing when it names evidence that does not resolve, and unknown when the ledger could not be read.",
+        "path": ".ai/repo/project/issues/I2111.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1706
+      },
+      {
+        "uri": "majordomus://issue/I2112",
+        "kind": "issue",
+        "identity": "I2112",
+        "title": "The public site draws the same evidence figure the Cockpit does",
+        "description": "Project the entity relation figure into the static site's object pages from the generated registry, using the same component markup and the same claim vocabulary. The site and the Cockpit then render one grammar, and no Tera template restates it.",
+        "path": ".ai/repo/project/issues/I2112.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1594
+      },
+      {
+        "uri": "majordomus://issue/I2113",
+        "kind": "issue",
+        "identity": "I2113",
+        "title": "A drawing outside the evidence-figure component is refused by a gate",
+        "description": "Extend the ui-integrity scan so that an <svg> drawing emitted by a Cockpit page outside cockpit::figure (and outside the declared exceptions: icons, the brand mark, the legend swatches) is a finding. Rule project.figures-are-maps-of-evidence then has a gate for its first sentence rather than a review.",
+        "path": ".ai/repo/project/issues/I2113.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1555
+      },
+      {
+        "uri": "majordomus://knowledge/evidence-figures",
+        "kind": "knowledge",
+        "identity": "evidence-figures",
+        "title": "What porting the due-diligence figure taught, and the defects it was not allowed to bring along",
+        "description": "Where the evidence-figure grammar came from, which of the source report's techniques were kept, which were deliberately left behind, and the defects found in the source that the port corrects.",
+        "path": ".ai/repo/knowledge/curated/evidence-figures.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 4300,
+        "tags": [
+          "ui",
+          "cockpit",
+          "figure",
+          "evidence",
+          "lesson"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -90573,6 +90653,25 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.figures-are-maps-of-evidence@1",
+        "kind": "rule",
+        "identity": "project.figures-are-maps-of-evidence@1",
+        "title": "A figure is a map of its evidence, and every element on it explains itself",
+        "description": "Every figure an interface draws names the question it answers, gives each box and line a claim (declared, derived, estimated, external, historical, missing, unknown) in a status word and a dash, makes each element a control that explains what it is, how sure the figure is of it and where it came from, keeps detail in subtrees rather than in the drawing, and has the same data in a table under it.",
+        "path": ".ai/repo/rules/project/figures-are-maps-of-evidence.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4341,
+        "tags": [
+          "ui",
+          "cockpit",
+          "figure",
+          "evidence",
+          "accessibility",
+          "design"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.finding-carries-reproduce@1",
         "kind": "rule",
         "identity": "project.finding-carries-reproduce@1",
@@ -92863,6 +92962,14 @@
         "path": "test/cases/100_execution_plane.sh",
         "source_class": "case",
         "bytes": 11695
+      },
+      {
+        "uri": "majordomus://test/test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+        "kind": "test",
+        "identity": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+        "path": "test/cases/1010_a_figure_is_a_map_of_its_evidence.sh",
+        "source_class": "case",
+        "bytes": 5875
       },
       {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
@@ -96589,7 +96696,7 @@
       "identity": [
         "id"
       ],
-      "objects": 84
+      "objects": 85
     },
     {
       "name": "application",
@@ -96742,7 +96849,7 @@
       "identity": [
         "id"
       ],
-      "objects": 262
+      "objects": 266
     },
     {
       "name": "knowledge",
@@ -96752,7 +96859,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1
+      "objects": 2
     },
     {
       "name": "mesh-declaration",
@@ -96839,7 +96946,7 @@
         "id",
         "version"
       ],
-      "objects": 163
+      "objects": 164
     },
     {
       "name": "scope",
@@ -96894,7 +97001,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 409
+      "objects": 410
     },
     {
       "name": "use-case",

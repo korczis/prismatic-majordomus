@@ -1,0 +1,28 @@
+id: I2112
+milestone: capability-graph
+title: The public site draws the same evidence figure the Cockpit does
+slug: the-site-draws-the-same-evidence-figure
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Project the entity relation figure into the static site's object pages from the generated registry, using the same component markup and the same claim vocabulary. The site and the Cockpit then render one grammar, and no Tera template restates it."
+why: "The capability-graph milestone has two projections of one graph, the runtime Cockpit and the static site. A figure grammar that exists on only one of them is a second design waiting to diverge."
+current_state: "The site's object pages list relations as text, and the component renders only at request time inside the Cockpit."
+desired_state: "The generator writes each object's figure markup from the same Rust component. The site embeds it with the figure styles from the shared design sheets, and the site's homepage weight budget still holds."
+scope:
+  - apps/majordomus-cli/src/generate.rs
+  - apps/majordomus-cli/src/cockpit/figure.rs
+  - site/templates
+  - share/design
+depends_on:
+  - I2110
+acceptance_criteria:
+  - A site object page with relations carries the figure markup the Cockpit renders for the same object
+  - The homepage weight budget is unchanged
+validation:
+  - scripts/site-check
+evidence_required:
+  - site_figure_matches_cockpit_figure
+risk: "The homepage is within 1.5 KB of its weight budget. The figure styles must load only on object pages."
+created_at: 2026-10-09
+updated_at: 2026-10-09
