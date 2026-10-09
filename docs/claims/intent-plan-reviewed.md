@@ -6,18 +6,18 @@ Planning starts from two records a worker writes: a gap, which answers every cri
 
 ## How it works
 
-`apps/majordomus-cli/src/intent_review.rs` validates both records against the intent and the plan, and the findings join `majordomus intent validate`, which the `intent-check` gate runs. The judgment is made after the start: an issue that `plan start` has already moved is what fails.
+`apps/majordomus-cli/src/intent_review.rs` validates both records against the intent and the plan, and the findings join `majordomus intent validate`, which the `intent-check` gate runs. This judgment is made after the start: an issue that `plan start` has already moved is what fails. Whether the start itself is refused is the policy's choice, and a different claim.
 
 ## How to see it
 
 ```bash
-majordomus plan start I0001     # succeeds: the start is not refused here
+majordomus plan start I0001     # succeeds where the policy does not require binding
 majordomus intent validate      # FAIL executing_without_critique, exit 10
 ```
 
 ## What it does not cover
 
-`plan start` does not refuse the start; refusing it there is `intent-refused-at-plan-start`, which is planned. Majordomus writes neither the gap nor the critique and runs no opposition pass of its own.
+This claim is the judgment after the start. Refusing the start itself is [`intent-refused-at-plan-start`](intent-refused-at-plan-start.md), which holds where the policy says `intent.binding: required`; with the key absent, `off` or `advisory` the start succeeds and this is what names the work. Majordomus writes neither the gap nor the critique and runs no opposition pass of its own.
 
 ## Why it exists
 
