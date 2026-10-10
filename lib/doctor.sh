@@ -200,8 +200,42 @@ mj_validate_wiring() {
             *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" \
                  "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
           esac ;;
+        toolchain)
+          # A gate whose script builds the executable cannot be wired by a file: the thing it
+          # needs is on the machine, and nothing in git says so. `scripts/derive` (and with it
+          # `majordomus prs repair --apply`, the pre-commit derived-current gate and the
+          # integration executor) builds the Rust executable, and on a machine with no cargo
+          # it fails late — after the merge, after the lock — with `env: cargo: No such file`.
+          # On 2026-10-10 nine repairs were refused that way on one clone while the other
+          # two machines of the mesh held the toolchain. The target names the file that pins
+          # the channel, so the toolchain doctor asks for is the toolchain CI uses.
+          local tfile="$MJ_ROOT/$target" tchan tcargo tver
+          tchan="$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$tfile" 2>/dev/null | head -1)"
+          tcargo="$(command -v cargo 2>/dev/null || true)"
+          [ -z "$tcargo" ] && [ -x "$HOME/.cargo/bin/cargo" ] && tcargo="$HOME/.cargo/bin/cargo"
+          if [ ! -f "$tfile" ]; then
+            mj_doctrine_fail wiring "$name" "toolchain file $target does not exist" "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")"
+          elif [ -z "$tchan" ]; then
+            mj_doctrine_fail wiring "$name" "$target pins no channel, so the toolchain this machine builds with is nobody's decision" "grep -n channel $target"
+          elif [ -z "$tcargo" ]; then
+            mj_doctrine_fail wiring "$name" "cargo is not installed on this machine, so $prog cannot build the executable and every derive and \`prs repair --apply\` here fails" \
+              "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal"
+          else
+            # rustup keeps the pinned channel as its own installation; asking it is the only
+            # answer that does not trigger an install as a side effect of the question.
+            local trustup; trustup="$(dirname "$tcargo")/rustup"; [ -x "$trustup" ] || trustup="$(command -v rustup 2>/dev/null || true)"
+            if [ -n "$trustup" ]; then
+              if "$trustup" toolchain list 2>/dev/null | grep -q "^${tchan}\b"; then
+                mj_doctrine_ok wiring "$name" "pinned toolchain $tchan installed ($tcargo)"
+              else mj_doctrine_fail wiring "$name" "cargo is present but the pinned toolchain $tchan is not installed, and a derive here would fetch it mid-merge" "rustup toolchain install $tchan"; fi
+            else
+              tver="$("$tcargo" --version 2>/dev/null | awk '{print $2}')"
+              if [ "$tver" = "$tchan" ]; then mj_doctrine_ok wiring "$name" "cargo $tver is the pinned $tchan ($tcargo)"
+              else mj_doctrine_fail wiring "$name" "cargo is $tver and $target pins $tchan; without rustup the pin cannot be fetched" "install rust $tchan"; fi
+            fi
+          fi ;;
         manual) mj_doctrine_skip wiring "$name" "wired_by: manual — documented, not verified" ;;
-        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" \
+        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | git-config:<key> | ci:<path> | provider-hook:<provider>[:session] | toolchain:<file> | manual)" \
              "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
       esac
     fi

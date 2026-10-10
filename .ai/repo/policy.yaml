@@ -268,6 +268,15 @@ enforcement:
     path: scripts/merge-derived
     args: []
     wired_by: git-config:merge.derived.driver
+  # `scripts/derive` builds the Rust executable, and with it everything that regenerates
+  # derived data: the pre-commit gate, `majordomus prs repair --apply`, the integration
+  # executor. On a machine without the pinned toolchain each of them fails late, after the
+  # merge and the lock, naming `cargo` and nothing about this repository. Declaring it here
+  # makes doctor — and therefore the pre-commit hook — refuse that clone before it starts.
+  - name: derive-toolchain
+    path: scripts/derive
+    args: []
+    wired_by: toolchain:rust-toolchain.toml
   - name: prompt-capture
     path: bin/majordomus
     args: [capture, prompt]
