@@ -30307,6 +30307,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I2161",
+        "kind": "issue",
+        "label": "I2161",
+        "summary": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "route": "/cockpit/objects/issue/i2161",
+        "source": ".ai/repo/project/issues/I2161.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log",
+            "A handover body containing a credential shape is redacted or refused before it is signed into the journal",
+            "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
+            "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Only generated documents and tracked text are scanned; responses, logs and frames are not.",
+          "depends_on": [],
+          "evidence_required": [
+            "credential_never_echoed_test",
+            "eventbody_allowlist_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/mesh/handover.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "scripts/ci/mesh-check",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "test/cases"
+          ],
+          "slug": "no-credential-leaves-the-runtime",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test redaction",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2165",
         "kind": "issue",
         "label": "I2165",
@@ -30737,6 +30782,65 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "label": "architecture-is-enforced",
+        "summary": "A violated invariant fails a gate, and green means every required check ran",
+        "route": "/cockpit/objects/milestone/architecture-is-enforced",
+        "source": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A scheduled run that ends red or cancelled produces a visible record naming the failing jobs",
+            "rule-proof reports each rule from recorded runs, and the not-run count of blocking rules is printed",
+            "A credential-shaped value sent to the server never appears in a response, an MCP error or server.log",
+            "CI installs a release archive, starts its shared server in a fresh foreign repository and reads its readiness"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "desired_state": "Each row of the audit's enforcement table (plan/RUNTIME_BASELINE.md) is gated in CI with a fixture that makes the gate fail, and the session briefing shows the last full-plan verdict.",
+          "evidence_required": [
+            "full_plan_alarm",
+            "rule_proof_from_runs",
+            "secret_never_echoed",
+            "installed_release_dogfood"
+          ],
+          "non_scope": [
+            "Shortening the slowest case, which is I2115 (milestone ci-critical-path).",
+            "The evidence publication's use of public_text, which is I1955 (test-evidence).",
+            "A second CI pipeline; checks join the existing gates.yaml plan."
+          ],
+          "order": 143,
+          "priority": "p1",
+          "risks": [
+            "Raising every cancelled scheduled run will be noisy until bench and macos fit their timeouts; that is the point, and the first runs should be read rather than silenced.",
+            "Opening GitHub issues from CI is an outward mutation; it must go through scripts/github-sync and be idempotent."
+          ],
+          "scope": [
+            "scripts/ci",
+            ".github/workflows/validate.yml",
+            ".github/workflows/release.yml",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/execution/redact.rs",
+            "apps/majordomus-cli/tests/executions.rs",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "architecture-is-enforced",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/core-check",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
           ]
         }
       },
@@ -35023,6 +35127,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.19.1"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.20.0",
+        "kind": "release-record",
+        "label": "v0.20.0",
+        "summary": "v0.20.0",
+        "route": "/cockpit/objects/release-record/v0-20-0",
+        "source": ".ai/repo/releases/v0.20.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "c8f0e4c5017cd2aefa434a12c6fa95c615a3f9a8",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.20.0",
+          "published_at": "2026-10-10T16:46:14Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.20.0"
         }
       },
       {
@@ -66510,6 +66637,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2161",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2161",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2165",
         "target": "kind:issue",
         "kind": "is_a"
@@ -66566,6 +66703,11 @@
       },
       {
         "source": "majordomus://milestone/adopter-upgrades",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/architecture-is-enforced",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -67026,6 +67168,11 @@
       },
       {
         "source": "majordomus://release-record/v0.19.1",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.20.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -75316,8 +75463,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2492,
-      "edges": 5445,
+      "nodes": 2495,
+      "edges": 5449,
       "acyclic": false,
       "truncated": false
     }
