@@ -9,9 +9,16 @@
 #                                   second generation for the same answer (scripts/pages does,
 #                                   by fingerprint; the site job of validate.yml does, by the
 #                                   `generate-site-data --check` step that precedes the build).
+#   scripts/site-check --since-deploy REPO   only check 19's half that needs no build: that REPO
+#                                   does not track the build-time since-deploy record (for the cases)
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
+SINCE_REPO=""
+if [ "${1:-}" = --since-deploy ]; then
+  [ $# -ge 2 ] || { echo "site-check: --since-deploy REPO" >&2; exit 2; }
+  SINCE_REPO="$2"; shift 2
+fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
@@ -28,6 +35,34 @@ LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 SRC_REF="$(jq -r 'if (.commit // "unknown") != "unknown" and (.dirty | not) then .commit else "master" end' \
   "$SITE/data/build.json" 2>/dev/null || echo master)"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
+# 19. since-deploy (the function; it runs last below). What moved since the previous deployment is a
+# fact of one build — scripts/site-build composes it from the commit that deployment was built from
+# to the one being built — so it lives in an ignored file beside build.json. Tracked, it would be
+# stale at the next commit by construction and every commit would change its bytes; so a tracked
+# or unignored copy is refused, and the built changelog page must say the state the file records
+# (or `absent` without one), with the homepage's trust strip linking it.
+since_deploy_check() {   # <repository> [<built public dir>]
+  local repo="$1" pub="${2:-}" rel=site/data/since-deploy.json sdbad=0 state
+  if git -C "$repo" ls-files --error-unmatch "$rel" >/dev/null 2>&1; then
+    bad since-deploy "$rel is tracked; it is a fact of one build and must never be committed (git rm --cached $rel)"; sdbad=1
+  elif ! git -C "$repo" check-ignore -q "$rel"; then
+    bad since-deploy "$rel is not ignored, so a build would leave it for a commit to pick up"; sdbad=1
+  fi
+  if [ -n "$pub" ]; then
+    state=absent
+    [ -f "$repo/$rel" ] && state="$(jq -r '.state // "unreadable"' "$repo/$rel" 2>/dev/null || echo unreadable)"
+    grep -qF "data-since-deploy=\"$state\"" "$pub/changelog/index.html" 2>/dev/null \
+      || { bad since-deploy "/changelog/ does not show the since-deploy state the build recorded ($state)"; sdbad=1; }
+    grep -qF 'data-since-deploy-link' "$pub/index.html" 2>/dev/null \
+      || { bad since-deploy "the homepage's trust strip does not link what changed since the last deploy"; sdbad=1; }
+  fi
+  [ "$sdbad" = 0 ] && ok since-deploy "$rel is ignored and untracked${pub:+, and /changelog/ shows the state it records ($state)}"
+  return 0
+}
+if [ -n "$SINCE_REPO" ]; then
+  since_deploy_check "$SINCE_REPO"
+  [ "$fails" = 0 ] && exit 0 || exit 10
+fi
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 # The pages this check judges are the site's own. scripts/site-build composes the other
@@ -1296,5 +1331,8 @@ for route in $served; do
 done
 grep -qF 'while a server runs' "$PUB/docs/api/index.html" || { bad surface "/docs/api/ does not say which routes need a server"; surfbad=1; }
 [ "$surfbad" = 0 ] && ok surface "every served-only route is named on /docs/api/ and linked from nowhere: $(printf '%s ' $served)"
+
+# 19. since-deploy: the record is never committed, and the pages show what it states (above)
+since_deploy_check "$ROOT" "$PUB"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

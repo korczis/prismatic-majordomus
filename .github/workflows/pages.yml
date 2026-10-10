@@ -364,9 +364,54 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: scripts/pages evidence --commit "$GITHUB_SHA"
 
-      # the committed derived data proved current by hash, then rendered; no generation
+      # What moved since the deployment this run replaces is a fact of this build (scripts/site-build
+      # `since_deploy`, the "Since the last deploy" section of /changelog/), measured by the
+      # executable, which this job does not build: validate.yml's rust job keeps it as the artifact
+      # majordomus-cli-<triple> of the commit it built. The one of this commit or its nearest
+      # ancestor is fetched; site-build refuses one that does not describe this commit (its analysis
+      # against the registry committed here finds a movement), and without one the page says the
+      # delta is unknown. The previous deployment is read from gh-pages, whose every commit names
+      # its source. Composed here, before the build, so the build row keeps measuring rendering;
+      # the build adopts the record only when it names this commit. Never a gate.
+      - name: since the last deploy
+        id: since
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch -q origin gh-pages || echo "::notice::gh-pages could not be fetched; the changelog will say what moved since the last deploy is unknown"
+          dir="$RUNNER_TEMP/since-deploy"; mkdir -p "$dir"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=majordomus-cli-x86_64-unknown-linux-gnu&per_page=100" \
+            --jq '.artifacts[] | select(.expired | not) | select(.workflow_run.head_branch == "master") | "\(.id)\t\(.workflow_run.head_sha)"' \
+            > "$dir/list" 2>/dev/null || : > "$dir/list"
+          # the nearest ancestor, not the newest upload, as the evidence step chooses
+          while IFS="$(printf '\t')" read -r aid sha; do
+            [ -n "$sha" ] && git merge-base --is-ancestor "$sha" "$GITHUB_SHA" 2>/dev/null || continue
+            printf '%s\t%s\n' "$(git rev-list --count "$sha")" "$aid"
+          done < "$dir/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$dir/candidates"
+          best="$(head -1 "$dir/candidates" | cut -f2)"
+          bin=""
+          if [ -n "$best" ] && gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$best/zip" > "$dir/cli.zip" 2>/dev/null \
+             && unzip -qo "$dir/cli.zip" -d "$dir/cli" && chmod +x "$dir/cli/majordomus"; then
+            bin="$dir/cli/majordomus"
+            echo "the executable of $(jq -r '.commit // "an unrecorded commit"' "$dir/cli/majordomus-cli.json" 2>/dev/null) measures what moved since the last deploy"
+          else
+            echo "::notice::no executable of this commit or an ancestor is kept; the changelog will say what moved since the last deploy is unknown"
+          fi
+          # never a build here: without a kept executable the record says the delta is unknown
+          if MJ_SITE_PREVIOUS_DEPLOY=origin/gh-pages MAJORDOMUS_BIN="$bin" MAJORDOMUS_NO_BUILD=1 \
+               scripts/site-build --since-deploy "$PWD" "$dir/since-deploy.json"; then
+            echo "record=$dir/since-deploy.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::what moved since the last deploy could not be composed; the changelog will say it is unknown"
+          fi
+
+      # the committed derived data proved current by hash, then rendered; no generation. What moved
+      # since the last deploy is the record the step above composed, adopted when it names this commit
       - name: build
         timeout-minutes: 3
+        env:
+          MJ_SITE_SINCE_DEPLOY_RECORD: ${{ steps.since.outputs.record }}
         run: scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml

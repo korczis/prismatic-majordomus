@@ -14,6 +14,16 @@
 #   scripts/site-build --output-dir DIR   write the build into DIR instead of site/public
 #   scripts/site-build --pin-source-refs DIR BUILD_JSON   only the source-ref pass below, over a
 #                                 built DIR with the provenance BUILD_JSON records (for the cases)
+#   scripts/site-build --previous-commit SHA   the commit the deployment this build replaces was
+#                                 built from; the changelog page then shows what moved since it
+#   scripts/site-build --previous-deploy REF   the same, read from the deploy branch REF (default:
+#                                 $MJ_SITE_PREVIOUS_DEPLOY): the newest `source:` its commits name
+#                                 that is not the commit being built
+#   scripts/site-build --since-deploy-record FILE   adopt that record, composed beforehand by the
+#                                 pass below for the commit being built (default: $MJ_SITE_SINCE_DEPLOY_RECORD;
+#                                 the Pages workflow composes it in a step of its own)
+#   scripts/site-build --since-deploy REPO OUT   only the since-deploy composition below, for REPO's
+#                                 HEAD against the previous commit the two options above name, into OUT
 #
 # Every build, published or served, also COMPOSES the other published static surfaces into
 # its output at their mounts (ADR 0086): each surface of docs/generated/web.json of kind
@@ -31,6 +41,8 @@ MJ_VERSION="site-build"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export 
 # where a build for the running server goes and what it is mounted at; the same two values
 # the executable reads from web::discover (DOCS_ARTIFACT, DOCS_MOUNT)
 SERVE_OUT="target/web/docs"; SERVE_MOUNT="/docs"
+PREVIOUS=""; PREVIOUS_SET=0; PREVIOUS_DEPLOY="${MJ_SITE_PREVIOUS_DEPLOY:-}"
+SINCE_RECORD="${MJ_SITE_SINCE_DEPLOY_RECORD:-}"
 while [ $# -gt 0 ]; do case "$1" in
   --no-css) NOCSS=1; shift ;;
   --no-data) NODATA=1; shift ;;
@@ -39,6 +51,11 @@ while [ $# -gt 0 ]; do case "$1" in
   --serve) SERVE=1; shift ;;
   --pin-source-refs) [ $# -ge 3 ] || { echo "site-build: --pin-source-refs DIR BUILD_JSON" >&2; exit 2; }
     PIN_DIR="$2"; PIN_BUILD="$3"; shift 3 ;;
+  --previous-commit) PREVIOUS="$2"; PREVIOUS_SET=1; shift 2 ;;
+  --previous-deploy) PREVIOUS_DEPLOY="$2"; shift 2 ;;
+  --since-deploy-record) SINCE_RECORD="$2"; shift 2 ;;
+  --since-deploy) [ $# -ge 3 ] || { echo "site-build: --since-deploy REPO OUT" >&2; exit 2; }
+    DELTA_REPO="$2"; DELTA_OUT="$3"; shift 3 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
 # pin_source_refs <built dir> <build.json>: a committed page's link into its own source names the
@@ -70,7 +87,164 @@ pin_source_refs() {
   printf '  %s file(s) name %s as the ref of their source links\n' \
     "$(printf '%s' "$files" | grep -c . || true)" "$ref"
 }
+# since_deploy <repository> <previous commit or ""> <out> [<why there is none>]: what moved between
+# the commit the deployment this build replaces was built from and the commit being built, as the
+# changelog page renders it (site/templates/partials/since-deploy.html). A fact of one deployment,
+# like build.json beside it: written to an ignored file and never committed, because a committed
+# file composed up to HEAD is stale at the next commit by construction (release/changelog.rs
+# `compose_published`). Nothing here differs two trees of its own:
+#   capabilities   `release analyze --since <previous>`: the executable's measurement of the public
+#                  contract against the registry committed there; and the same against each release
+#                  record inside the range, so a movement the record's tree already holds is labelled
+#                  released with its tag and one it does not hold is not yet released
+#   documentation  `release changelog`: the composed changes of kind docs whose commit is in the
+#                  range, labelled with the section the composition put them in
+#   claims         the claims projection committed at each end (site/data/generated/capabilities.json,
+#                  generated from docs/CLAIMS.yaml), compared by id; a claim that is planned at the
+#                  built commit is no movement, it stays in the homepage's planned block
+# The previous commit must be an ancestor of the built one, and the executable must describe the
+# built commit (its own analysis against it finds nothing); otherwise the delta is unknown, says
+# why, and lists nothing. The executable is bin/majordomus-cli, which honours MAJORDOMUS_BIN.
+since_unknown() {   # <out> <built> <previous> <reason>
+  jq -n --arg built "$2" --arg previous "$3" --arg reason "$4" \
+    '{schema: 1, state: "unknown", reason: $reason,
+      previous: (if $previous == "" then null else $previous end),
+      built: (if $built == "" then null else $built end), releases: [], groups: [], other_changes: 0}' \
+    > "$1" || { echo "site-build: could not write $1" >&2; exit 12; }
+  echo "  since the last deploy: unknown: $4"
+}
+since_deploy() {
+  local tmp rc=0
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-since-deploy.XXXXXX")"
+  since_deploy_in "$tmp" "$@" || rc=$?
+  rm -rf "$tmp"
+  return "$rc"
+}
+since_deploy_in() {
+  local tmp="$1" repo="$2" previous="$3" out="$4" none="${5:-no previously deployed commit was named}"
+  local cli="$ROOT/bin/majordomus-cli" built prev n i tag commit
+  built="$(git -C "$repo" rev-parse --verify --quiet HEAD)" || built=""
+  # unknown <reason>: the delta cannot be stated; the page says so and lists nothing
+  unknown() { since_unknown "$out" "$built" "$previous" "$1"; }
+  [ -n "$built" ] || { unknown "the built commit cannot be read"; return 0; }
+  [ -n "$previous" ] || { unknown "$none"; return 0; }
+  prev="$(git -C "$repo" rev-parse --verify --quiet "$previous^{commit}")" \
+    || { unknown "the previously deployed commit $previous is not in this clone"; return 0; }
+  git -C "$repo" merge-base --is-ancestor "$prev" "$built" 2>/dev/null \
+    || { unknown "the previously deployed commit ${prev:0:12} is not an ancestor of the built commit ${built:0:12}"; return 0; }
+  previous="$prev"
+  # analysis <ref> <file>: the movements of the contract since <ref>; 10 is a verdict, not a failure
+  analysis() {
+    local a=0
+    "$cli" release analyze --repo "$repo" --since "$1" --format json > "$tmp/plan.json" 2> "$tmp/err" || a=$?
+    if [ "$a" != 0 ] && [ "$a" != 10 ]; then return 1; fi
+    jq -e '.changes | arrays' "$tmp/plan.json" > "$2" 2>/dev/null
+  }
+  if ! analysis "$built" "$tmp/at-built.json"; then
+    unknown "the executable could not measure the public contract: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0
+  fi
+  n="$(jq length "$tmp/at-built.json")"
+  [ "$n" = 0 ] || { unknown "the executable is not the built commit's: it differs from the registry committed at ${built:0:12} by $n movement(s)"; return 0; }
+  analysis "$prev" "$tmp/at-prev.json" \
+    || { unknown "the public contract at ${prev:0:12} could not be measured: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0; }
+  "$cli" release changelog --repo "$repo" --format json > "$tmp/changelog.json" 2> "$tmp/err" \
+    && jq -e '.sections | arrays' "$tmp/changelog.json" >/dev/null 2>&1 \
+    || { unknown "the changelog could not be composed: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0; }
+  # the release records inside the range, oldest first: in the built commit's history and not in
+  # the previous one's
+  : > "$tmp/records.tsv"
+  jq -r '[.sections[] | select(.unreleased | not) | select(.commit != null)] | reverse | .[]
+         | [.version, (.tag // .version), .commit] | @tsv' "$tmp/changelog.json" > "$tmp/sections.tsv"
+  while IFS="$MJ_TAB" read -r i tag commit; do
+    [ -n "$commit" ] || continue
+    git -C "$repo" merge-base --is-ancestor "$commit" "$built" 2>/dev/null || continue
+    git -C "$repo" merge-base --is-ancestor "$commit" "$prev" 2>/dev/null && continue
+    printf '%s\t%s\t%s\n' "$i" "$tag" "$commit" >> "$tmp/records.tsv"
+  done < "$tmp/sections.tsv"
+  jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {version: .[0], tag: .[1], commit: .[2]})' \
+    "$tmp/records.tsv" > "$tmp/records.json"
+  # claims_at <ref> <file>: the committed claims projection there, or null when it has none
+  claims_at() {
+    git -C "$repo" show "$1:site/data/generated/capabilities.json" 2>/dev/null | jq -c '.claims | arrays' > "$2" 2>/dev/null \
+      || echo null > "$2"
+  }
+  claims_at "$prev" "$tmp/claims-prev.json"; claims_at "$built" "$tmp/claims-built.json"
+  echo '[]' > "$tmp/at-records.json"; echo '[]' > "$tmp/claims-records.json"
+  while IFS="$MJ_TAB" read -r i tag commit; do
+    [ -n "$commit" ] || continue
+    analysis "$commit" "$tmp/at-record.json" \
+      || { unknown "the public contract at $tag could not be measured: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0; }
+    claims_at "$commit" "$tmp/claims-record.json"
+    jq -c --slurpfile x "$tmp/at-record.json" '. + $x' "$tmp/at-records.json" > "$tmp/next" && mv "$tmp/next" "$tmp/at-records.json"
+    jq -c --slurpfile x "$tmp/claims-record.json" '. + $x' "$tmp/claims-records.json" > "$tmp/next" && mv "$tmp/next" "$tmp/claims-records.json"
+  done < "$tmp/records.tsv"
+  git -C "$repo" rev-list --no-merges "$prev..$built" | jq -R -s 'split("\n") | map(select(length > 0))' > "$tmp/range.json"
+  jq -n --arg built "$built" --arg previous "$prev" \
+    --slurpfile records "$tmp/records.json" --slurpfile atprev "$tmp/at-prev.json" \
+    --slurpfile atrec "$tmp/at-records.json" --slurpfile cl "$tmp/changelog.json" \
+    --slurpfile range "$tmp/range.json" --slurpfile cprev "$tmp/claims-prev.json" \
+    --slurpfile cbuilt "$tmp/claims-built.json" --slurpfile crec "$tmp/claims-records.json" '
+    $records[0] as $records | $range[0] as $range
+    # the first record, oldest first, whose tree no longer owes the movement; null: none does
+    | def released($pending): ([range(0; $records | length) | select($pending[.] | not)] | .[0]) as $i
+        | if $i == null then null else $records[$i].tag end;
+    def key: "\(.direction) \(.surface) \(.id)";
+    def index: if . == null then null else map({key: .id, value: {status, claim}}) | from_entries end;
+    ($cprev[0] | index) as $cp | ($cbuilt[0] | index) as $cb | ($crec[0] | map(index)) as $cr
+    | ($atprev[0] | map(. as $c | ($c | key) as $k
+        | $c + {release: released([$atrec[0][] | any(.[]; key == $k)])})
+        | group_by(.capability)
+        | map({capability: .[0].capability,
+               movements: map({direction, surface, id, impact, detail, release})})) as $capabilities
+    | (if $cp == null or $cb == null then []
+       else [(($cp | keys) + ($cb | keys) | unique)[] as $id | $cp[$id] as $b | $cb[$id] as $a
+         | (if $b == null then "added" elif $a == null then "removed"
+            elif $a.status != $b.status then "status" elif $a.claim != $b.claim then "reworded"
+            else null end) as $m
+         | select($m != null)
+         | select((if $a == null then $b.status else $a.status end) != "planned")
+         | {id: $id, claim: ($a // $b).claim, movement: $m, from: ($b.status // null), to: ($a.status // null),
+            release: released([$cr[] | . == null or .[$id] != $a])}]
+       end) as $claims
+    | [$cl[0].sections[] | . as $s | .groups[].changes[]
+        | select(.commit as $c | any($range[]; startswith($c)))
+        | . + {release: (if $s.unreleased then null else $s.tag end)}] as $changes
+    | {schema: 1, state: "known", reason: null, previous: $previous, built: $built,
+       releases: $records,
+       groups: [
+         {id: "capabilities", heading: "Capabilities", items: $capabilities},
+         ({id: "claims", heading: "Claims", items: $claims}
+           + (if $cp == null or $cb == null
+              then {unreadable: "the claims projection is not committed at both ends"} else {} end)),
+         {id: "documentation", heading: "Documentation",
+          items: [$changes[] | select(.kind == "docs") | {subject, scope, commit, url, release}]}],
+       other_changes: ([$changes[] | select(.kind != "docs")] | length)}' > "$out" \
+    || { unknown "the movements could not be composed"; return 0; }
+  printf '  since the last deploy: %s..%s, %s capability(ies), %s claim(s), %s document change(s), %s record(s)\n' \
+    "${prev:0:12}" "${built:0:12}" \
+    "$(jq '.groups[0].items | length' "$out")" "$(jq '.groups[1].items | length' "$out")" \
+    "$(jq '.groups[2].items | length' "$out")" "$(jq '.releases | length' "$out")"
+}
+# previous_deploy <repository> <deploy ref> <built commit>: the newest source commit a deploy of
+# <ref> names (scripts/site-deploy writes `source: <sha>` into every one) that is not the commit
+# being built, so a second publication of the same commit still shows what the one before it moved
+previous_deploy() {
+  git -C "$1" log -n 500 --format=%B "$2" -- 2>/dev/null \
+    | sed -n 's/^source: \([0-9a-f]\{40\}\)$/\1/p' | grep -vx "$3" | head -1
+}
 if [ -n "${PIN_DIR:-}" ]; then pin_source_refs "$PIN_DIR" "$PIN_BUILD"; exit 0; fi
+# the previous commit the options name, for <repository> building <commit>; NONE says why there is none
+previous_of() {   # <repository> <commit>
+  NONE="no previously deployed commit was named (--previous-commit, --previous-deploy)"
+  if [ "$PREVIOUS_SET" = 0 ] && [ -n "$PREVIOUS_DEPLOY" ]; then
+    PREVIOUS="$(previous_deploy "$1" "$PREVIOUS_DEPLOY" "$2")"
+    NONE="the deploy branch $PREVIOUS_DEPLOY names no source commit other than the one being built"
+  fi
+}
+if [ -n "${DELTA_REPO:-}" ]; then
+  previous_of "$DELTA_REPO" "$(git -C "$DELTA_REPO" rev-parse --verify --quiet HEAD || true)"
+  since_deploy "$DELTA_REPO" "$PREVIOUS" "$DELTA_OUT" "$NONE"; exit 0
+fi
 if [ "$SERVE" = 1 ]; then
   [ -n "$BASE" ] || BASE="$SERVE_MOUNT"
   [ -n "$OUT" ] || OUT="$SERVE_OUT"
@@ -140,6 +314,19 @@ jq -n --arg commit "$commit" --argjson dirty "$dirty" \
     surfaces: $surfaces}' \
   > "$SITE/data/build.json"
 cp "$SITE/data/build.json" "$SITE/static/build.json"
+# what moved since the deployment this build replaces, beside build.json and ignored like it
+# — or the record a step before the build composed for this commit, adopted only when it says so
+if [ -n "$SINCE_RECORD" ]; then
+  if jq -e --arg c "$commit" '.schema == 1 and .built == $c and (.state | type == "string")' "$SINCE_RECORD" >/dev/null 2>&1; then
+    cp "$SINCE_RECORD" "$SITE/data/since-deploy.json"
+    echo "  since the last deploy: $(jq -r .state "$SINCE_RECORD"), the record composed before the build"
+  else
+    since_unknown "$SITE/data/since-deploy.json" "$commit" "" "the record $SINCE_RECORD was not composed for the built commit ${commit:0:12}"
+  fi
+else
+  previous_of "$ROOT" "$commit"
+  since_deploy "$ROOT" "$PREVIOUS" "$SITE/data/since-deploy.json" "$NONE"
+fi
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"

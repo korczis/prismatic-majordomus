@@ -57,6 +57,9 @@
   </div>
   {%- endif %}
 
+  {#- what moved since the deployment this one replaced: a fact of the build, never committed -#}
+  {% include "partials/since-deploy.html" %}
+
   {%- if log.diagnostics | length > 0 %}
   <h2 id="diagnostics" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">What could not be read</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">The generator says what it could not resolve rather than hiding it: a repository with no git history, a release record that names no commit, a tag that is not in this clone.</p>

@@ -73,7 +73,9 @@ if [ "$SKIP_BUILD" != 1 ]; then
   else
     echo "     (cargo absent: the Rust generate --check is CI's; the site check below still runs)"
   fi
-  step "build"; scripts/site-build
+  # the changelog's "Since the last deploy" starts at the source the deploy branch names
+  git fetch -q "$REMOTE" "$BRANCH" 2>/dev/null || true
+  step "build"; scripts/site-build --previous-deploy "$REMOTE/$BRANCH"
   step "check"; scripts/site-check
   if [ "$PROBE" = 1 ]; then step "probe"; scripts/site-probe; fi
   # the build rewrote site/data/generated/source.json with its generation time; a tree that
