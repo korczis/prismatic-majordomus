@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "6df0b12081a27264e3a1c8a110bf331f0372192eae9b7f961b6ebbac0fbd8da4",
+    "fingerprint": "9e4acbc1c5f5e9c5fc84ef39298ef2a885699b3b87db36d89c570725a71a5399",
     "summary": {
-      "total": 2110,
+      "total": 2113,
       "builtin": 184,
-      "declarative": 1926,
+      "declarative": 1929,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1926
+        "resource": 1929
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1934
+        "implemented": 1937
       },
       "mcp_tools": 177,
-      "mcp_resources": 1980,
+      "mcp_resources": 1983,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -74952,7 +74952,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 270,
+        "capabilities": 271,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 412,
+        "capabilities": 413,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c51f991ae6e5191f6494548c0887ba0e7677151ba8f4c0ac040384c72001f6ff",
+    "fingerprint": "960301595adff99a6f653f26a15225cb42145c193ce291ec8fd8cce1a084483f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76174,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76190,7 +76190,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 270,
+      "issue": 271,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 26,
@@ -76204,7 +76204,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
@@ -77609,6 +77609,23 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0131",
+        "kind": "adr",
+        "identity": "adr-0131",
+        "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "description": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "path": ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5427,
+        "tags": [
+          "release",
+          "distribution",
+          "pages",
+          "throughput"
         ]
       },
       {
@@ -81436,7 +81453,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 28692
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81670,7 +81687,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125653
+        "bytes": 128931
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87948,6 +87965,17 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2303",
+        "kind": "issue",
+        "identity": "I2303",
+        "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "description": "Make majordomus.dev serve a release's releases/latest.json and releases/<tag>.json from the release run itself, minutes after its archives are published, instead of after its record's pull request has passed its ci, without the site ever going back a release.",
+        "path": ".ai/repo/project/issues/I2303.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3785
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -93126,6 +93154,14 @@
         "bytes": 32804
       },
       {
+        "uri": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
+        "kind": "test",
+        "identity": "test/cases/1041_a_release_publishes_its_metadata.sh",
+        "path": "test/cases/1041_a_release_publishes_its_metadata.sh",
+        "source_class": "case",
+        "bytes": 6790
+      },
+      {
         "uri": "majordomus://test/test/cases/104_published_site.sh",
         "kind": "test",
         "identity": "test/cases/104_published_site.sh",
@@ -95699,7 +95735,7 @@
         "identity": "test/cases/87_release_pipeline.sh",
         "path": "test/cases/87_release_pipeline.sh",
         "source_class": "case",
-        "bytes": 11068
+        "bytes": 11727
       },
       {
         "uri": "majordomus://test/test/cases/87b_release_archive_shape.sh",
@@ -96818,7 +96854,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96971,7 +97007,7 @@
       "identity": [
         "id"
       ],
-      "objects": 270
+      "objects": 271
     },
     {
       "name": "knowledge",
@@ -97123,7 +97159,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 412
+      "objects": 413
     },
     {
       "name": "use-case",

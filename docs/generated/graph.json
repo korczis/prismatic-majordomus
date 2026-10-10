@@ -2023,6 +2023,14 @@
         "external": true
       },
       {
+        "id": "file:.github/workflows/release.yml",
+        "kind": "file",
+        "label": "release.yml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".github/workflows/release.yml",
+        "external": true
+      },
+      {
         "id": "file:.github/workflows/validate.yml",
         "kind": "file",
         "label": "validate.yml",
@@ -6371,6 +6379,32 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0131",
+        "kind": "adr",
+        "label": "adr-0131",
+        "summary": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "route": "/cockpit/objects/adr/adr-0131",
+        "source": ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:scripts/site-deploy",
+            "file:.github/workflows/release.yml",
+            "file:docs/DISTRIBUTION.md",
+            "file:.ai/repo/project/issues/I2303.yaml",
+            "test:test/cases/1041_a_release_publishes_its_metadata.sh",
+            "test:test/cases/96_site_deploy.sh"
+          ],
+          "tags": [
+            "release",
+            "distribution",
+            "pages",
+            "throughput"
           ]
         }
       },
@@ -30346,6 +30380,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I2303",
+        "kind": "issue",
+        "label": "I2303",
+        "summary": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "route": "/cockpit/objects/issue/i2303",
+        "source": ".ai/repo/project/issues/I2303.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "release_metadata_published_ahead_of_record_case",
+            "decision_recorded"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Shortening the build and the publish job, which the 15-minute bound also needs: the macOS x86_64 package step, the second derivation and the rebuilt executable of the publish job.",
+            "The staging line release.yml's publish step fails on since /dist/ is ignored: I2302."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-deploy",
+            ".github/workflows/release.yml",
+            "docs/DISTRIBUTION.md",
+            ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+            ".ai/repo/project/issues/I2303.yaml",
+            "test/cases/1041_a_release_publishes_its_metadata.sh",
+            "test/cases/87_release_pipeline.sh",
+            "docs/generated",
+            "docs/PLAN_STATUS.md",
+            "docs/PAGES_STATUS.md",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-release-publishes-its-metadata",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bash test/run.sh 1041_a_release_publishes_its_metadata",
+            "MJ_TEST_JOBS=3 bash test/run.sh 87_release_pipeline 26_ci_wiring 996_the_record_pull_request_gets_its_verdict",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42945,6 +43023,13 @@
         "source": "test/cases/103_release_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
+        "kind": "test",
+        "label": "test/cases/1041_a_release_publishes_its_metadata.sh",
+        "route": "/cockpit/objects/test/test-cases-1041-a-release-publishes-its-metadata-sh",
+        "source": "test/cases/1041_a_release_publishes_its_metadata.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/104_published_site.sh",
         "kind": "test",
         "label": "test/cases/104_published_site.sh",
@@ -54668,6 +54753,41 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "file:.github/workflows/release.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "file:scripts/site-deploy",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://issue/I2303",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://test/test/cases/96_site_deploy.sh",
         "kind": "put_in_force"
       },
       {
@@ -66501,6 +66621,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2303",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2303",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69592,6 +69722,11 @@
       },
       {
         "source": "majordomus://test/test/cases/103_release_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75287,8 +75422,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2491,
-      "edges": 5443,
+      "nodes": 2495,
+      "edges": 5453,
       "acyclic": false,
       "truncated": false
     }

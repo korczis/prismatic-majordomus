@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 270
+      "count": 271
     },
     {
       "kind": "knowledge",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 412
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -6417,6 +6417,67 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0131",
+      "identity": "adr-0131",
+      "slug": "adr-0131",
+      "cockpit": "/cockpit/objects/adr/adr-0131",
+      "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "distribution",
+        "pages",
+        "throughput"
+      ],
+      "source": ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/release.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-deploy",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/DISTRIBUTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I2303",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1041_a_release_publishes_its_metadata.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/96_site_deploy.sh",
           "kind": "test",
           "route": null,
           "external": false
