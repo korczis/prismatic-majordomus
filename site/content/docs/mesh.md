@@ -585,6 +585,31 @@ the same capabilities from their Capabilities pages.
    ([Compaction](#compaction)), not a divergence of anything live.
 5. Server logs carry `runtime_id`, `peer`, `link_id`, `session_id`, `repository_id` and the
    refusal `code` on every link event.
+6. **Two servers of one checkout.** A server whose lease was taken over keeps the sessions it
+   already had (`docs/MCP.md`), and they keep reading its board. On 2026-10-10 a superseded
+   server on `127.0.0.1:8741` (`leaseholder: false`, the previous release) and the
+   leaseholder on another port both served the primary checkout: sessions attached to the
+   old one never saw announcements made on the new one, two sessions took one ADR number and
+   one case number, and a session reading their journals found that the two servers, sharing
+   the machine's runtime key, answered each other's syncs `unknown_link` and resent about 950
+   events a round. Ask every port of the
+   checkout with `curl -s -H 'Accept: application/json' http://127.0.0.1:<port>/` and read
+   `leaseholder` and `version`; read the board of each (`/api/v1/peers`) and the mesh before
+   relying on silence. A session that must be reached is asked directly as well.
+7. **Numbers are taken on the board.** An issue, ADR or case number is allocated in no file
+   until a branch carrying it lands, so two sessions reading only the refs take the same one.
+   That happened four times on 2026-10-09 and 2026-10-10. Announce the number with
+   `majordomus_announce` before writing it anywhere, after reading both the board of every
+   server and `mesh state` for a claim on it (`project.work-is-claimed-before-it-is-built`).
+8. **An answer too large to read.** `mesh state` carries every claim, handover and review the
+   journal holds, about 430 KiB on this repository on 2026-10-10, past what an MCP client
+   shows of one tool result. Save it and query the file:
+   `curl -s http://127.0.0.1:<port>/api/v1/mesh/state > state.json`, then `jq` over it.
+9. **A long announcement re-opens its session.** The board's projection onto the mesh stores
+   an intent clipped to 512 bytes and compares it with the unclipped one
+   (`Cooperation::project_board`), so an intent longer than that is a change at every
+   projection and re-opens the session each time; a session's read of the journal on
+   2026-10-10 found 994 of its last 1000 events to be such re-openings. Keep an announcement under 512 bytes until that comparison is fixed.
 
 ## Testing and evidence
 

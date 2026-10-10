@@ -17,3 +17,9 @@ milestone rests on, or when a person reprioritised. Not because it looked more u
 Trivial exceptions are a typo, a broken link, or a fix forced from outside the repository.
 
 A repository with no `project/` section populated has no plan, and `plan` says so.
+
+Write an issue's `scope` as the files it changes, or the narrowest directory holding them.
+A directory scope overlaps every path another issue names inside it, and the plan status
+prints that path, existing or not, where the reference gate reads it (*Execution waves* in
+`docs/PLANNING.md`). Editing another, already published issue to fix its scope drifts its
+forge issue and fails the projection check; fix the scope of the issue your branch adds.

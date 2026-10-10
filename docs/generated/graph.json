@@ -12880,12 +12880,28 @@
         "source": ".ai/repo/workflows/continuity.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/workflows/landing-train.md",
+        "kind": "document",
+        "label": ".ai/repo/workflows/landing-train.md",
+        "summary": "The landing train",
+        "route": "/cockpit/objects/document/ai-repo-workflows-landing-train-md",
+        "source": ".ai/repo/workflows/landing-train.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/workflows/plan.md",
         "kind": "document",
         "label": ".ai/repo/workflows/plan.md",
         "summary": "Taking work from the plan",
         "route": "/cockpit/objects/document/ai-repo-workflows-plan-md",
         "source": ".ai/repo/workflows/plan.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/workflows/release-verification.md",
+        "kind": "document",
+        "label": ".ai/repo/workflows/release-verification.md",
+        "summary": "Verifying a release after its tag",
+        "route": "/cockpit/objects/document/ai-repo-workflows-release-verification-md",
+        "source": ".ai/repo/workflows/release-verification.md"
       },
       {
         "id": "majordomus://document/.ai/repo/workflows/task-lifecycle.md",
@@ -30387,6 +30403,26 @@
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/derive-offload",
+        "kind": "knowledge",
+        "label": "derive-offload",
+        "summary": "A derive can run on an idle machine and come back staged, by a script that lives outside this repository",
+        "route": "/cockpit/objects/knowledge/derive-offload",
+        "source": ".ai/repo/knowledge/curated/derive-offload.md",
+        "status": "verified",
+        "facts": {
+          "class": "lesson",
+          "date": "2026-10-10",
+          "epistemics": "observed",
+          "tags": [
+            "derive",
+            "performance",
+            "cluster",
+            "integration"
           ]
         }
       },
@@ -60280,7 +60316,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/workflows/landing-train.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/workflows/plan.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/workflows/release-verification.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66613,6 +66659,11 @@
         "source": "majordomus://issue/I2165",
         "target": "majordomus://milestone/safe-self-update",
         "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://knowledge/derive-offload",
+        "target": "kind:knowledge",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://knowledge/start-here",
@@ -75406,8 +75457,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2496,
+      "edges": 5449,
       "acyclic": false,
       "truncated": false
     }

@@ -109,6 +109,16 @@ their declared `scope` paths overlap — one equal to, inside, or containing ano
 overlap is reported and they serialise. The direction is deliberate: a false serialisation
 costs time, a false parallel costs a conflict discovered after the work is done.
 
+The report names the narrower of the two paths, and it is printed into `docs/PLAN_STATUS.md`,
+whose paths `scripts/ci/reference-check` holds to the tree. So a scope that names a directory
+inherits every path another issue's scope names inside it, including one that does not exist.
+On 2026-10-10 an issue added on a branch named `apps/majordomus-cli/src/capability`; I1900
+names a file under it that was never written, the plan status printed a `scope_conflict` row
+naming that file, and `core-check` failed on every head that carried the new issue, until it
+named its six files instead. A scope names the files an issue
+changes, or the narrowest directory that holds them, and a scope naming a path that no longer
+exists is corrected in its own issue.
+
 ## Evidence
 
 An issue declares `evidence_required` as a list of tokens. `majordomus plan evidence`

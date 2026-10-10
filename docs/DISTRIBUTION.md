@@ -328,6 +328,19 @@ gh release delete v0.3.0 --yes    # then rerun the workflow
 Nothing here needs the tag to be moved. A tag that points at the wrong commit is a different
 problem, and the answer to it is a new version, not a moved tag.
 
+One failure in `publish` a rerun cannot repair is the workflow's own. v0.20.0's run published
+and attested every archive and then stopped in the step that stages the proposal: `git add
+-A -- . ':(exclude)dist'` exits 1 once `/dist/` is ignored, which it has been since #855. A
+rerun runs the workflow as it is at the tag, so it fails the same way. The record was
+proposed by hand instead (#901): `gh release download`, the archives checked against
+`SHA256SUMS`, `scripts/release-record` over them, the record derived, committed and opened as
+a pull request by a person, whose run starts as any other's. A change to `.gitignore` is
+therefore a change to the release pipeline, and is read against `release.yml` before it
+lands.
+
+What is read back after a release, archive by archive, machine by machine and hub by hub, is
+[`.ai/repo/workflows/release-verification.md`](../.ai/repo/workflows/release-verification.md).
+
 ### Testing it without publishing
 
 ```bash

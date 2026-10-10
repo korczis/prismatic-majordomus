@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "52a7dcdd5c232ce4baadd5c25e47fad6c70e9deecf6c779b7646fe04ea1c1cb4",
     "summary": {
-      "total": 2112,
+      "total": 2115,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1931,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1931
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1939
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1985,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75257,7 +75257,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 327,
+        "capabilities": 329,
         "capability_ids": []
       },
       {
@@ -75534,7 +75534,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "436b4b307df3d3de59e0cc6efa817769869759b564c0bc6fa602bb37ce6d04a5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76184,14 +76184,14 @@
       "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 329,
       "domain": 6,
       "feature": 27,
       "gap": 2,
       "implementation": 52,
       "intent": 3,
       "issue": 271,
-      "knowledge": 1,
+      "knowledge": 2,
       "mesh-declaration": 1,
       "milestone": 27,
       "moment": 38,
@@ -80971,7 +80971,7 @@
         "path": ".ai/repo/workflows/README.md",
         "section": "workflows",
         "source_class": "context",
-        "bytes": 943
+        "bytes": 1305
       },
       {
         "uri": "majordomus://context/ai.repo.workspaces",
@@ -81175,6 +81175,16 @@
         "bytes": 2051
       },
       {
+        "uri": "majordomus://document/.ai/repo/workflows/landing-train.md",
+        "kind": "document",
+        "identity": ".ai/repo/workflows/landing-train.md",
+        "title": "The landing train",
+        "path": ".ai/repo/workflows/landing-train.md",
+        "section": "workflows",
+        "source_class": "workflow",
+        "bytes": 9280
+      },
+      {
         "uri": "majordomus://document/.ai/repo/workflows/plan.md",
         "kind": "document",
         "identity": ".ai/repo/workflows/plan.md",
@@ -81182,7 +81192,17 @@
         "path": ".ai/repo/workflows/plan.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 1127
+        "bytes": 1578
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/workflows/release-verification.md",
+        "kind": "document",
+        "identity": ".ai/repo/workflows/release-verification.md",
+        "title": "Verifying a release after its tag",
+        "path": ".ai/repo/workflows/release-verification.md",
+        "section": "workflows",
+        "source_class": "workflow",
+        "bytes": 4970
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/task-lifecycle.md",
@@ -81436,7 +81456,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 28361
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81625,7 +81645,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 44419
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81661,7 +81681,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 30777
+        "bytes": 31531
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -87957,6 +87977,23 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2285
+      },
+      {
+        "uri": "majordomus://knowledge/derive-offload",
+        "kind": "knowledge",
+        "identity": "derive-offload",
+        "title": "A derive can run on an idle machine and come back staged, by a script that lives outside this repository",
+        "description": "Why scripts/derive is offloaded on a loaded machine, how the current script does it, its traps, and the typed capability that is owed instead.",
+        "path": ".ai/repo/knowledge/curated/derive-offload.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3650,
+        "tags": [
+          "derive",
+          "performance",
+          "cluster",
+          "integration"
+        ]
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -96936,7 +96973,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 327
+      "objects": 329
     },
     {
       "name": "domain",
@@ -97003,7 +97040,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1
+      "objects": 2
     },
     {
       "name": "mesh-declaration",
