@@ -34,5 +34,15 @@ mkdir -p .ai/repo/mesh
   fi
 } > .ai/repo/mesh/majordomus.yaml
 
+# The node's operator commits its declaration: a working tree may only narrow what the
+# trunk's copy trusts (ADR 0050, I2135), so a declaration left uncommitted beside the
+# repository's own deny_unknown would be read as deny_unknown, and the nodes, which know no
+# key of each other, would refuse to link.
+if ! git diff --quiet -- .ai/repo/mesh/majordomus.yaml \
+  || ! git ls-files --error-unmatch .ai/repo/mesh/majordomus.yaml >/dev/null 2>&1; then
+  git add .ai/repo/mesh/majordomus.yaml
+  git -c user.email=lab@mesh.invalid -c user.name=mesh-lab commit -q -m "mesh lab declaration"
+fi
+
 # stdin is not a pipe here, so with --idle 0 the server runs until the container stops.
 exec majordomus serve --host 0.0.0.0 --port 8741 --idle 0 --discovery filesystem

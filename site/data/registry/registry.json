@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "4059d400c55549138f03b00031442e068894e6949636407ea9672e85d0dc9904",
     "summary": {
-      "total": 2112,
+      "total": 2126,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1942,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1942
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1950
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1996,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -1011,6 +1011,10 @@
                   "concurrency": {
                     "$ref": "#/$defs/ExecutionConcurrency",
                     "description": "Whether two of them may overlap."
+                  },
+                  "signed_input": {
+                    "type": "boolean",
+                    "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
                   }
                 },
                 "required": [
@@ -25433,7 +25437,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -26436,7 +26440,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -26718,7 +26722,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -27361,7 +27365,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -28110,7 +28114,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -28423,7 +28427,7 @@
           "policy": "disabled"
         },
         "execution": {
-          "effect": "process_state",
+          "effect": "repository_mutation",
           "cancellable": false,
           "concurrency": "serial"
         },
@@ -41940,6 +41944,20 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "The highest Lamport stamp seen."
+                  },
+                  "write_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+                    "default": 0
+                  },
+                  "unreadable": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+                    "default": 0
                   }
                 },
                 "required": [
@@ -42971,7 +42989,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -43182,7 +43201,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -45399,7 +45419,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -74952,7 +74973,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75526,7 +75547,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 278,
         "capability_ids": []
       },
       {
@@ -75639,7 +75660,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 30,
         "capability_ids": []
       },
       {
@@ -76061,7 +76082,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 412,
+        "capabilities": 415,
         "capability_ids": []
       },
       {
@@ -76151,7 +76172,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "df3db92353406a0e0c17e12803dd4f2056e2ed06c29f79510c6e542e89b26144",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76195,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76190,10 +76211,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 278,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 30,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -76204,7 +76225,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 415,
       "use-case": 48,
       "workspace": 1
     },
@@ -77609,6 +77630,23 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0126",
+        "kind": "adr",
+        "identity": "adr-0126",
+        "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "description": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "path": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6458,
+        "tags": [
+          "security",
+          "mesh",
+          "mcp",
+          "http"
         ]
       },
       {
@@ -81292,7 +81330,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 44346
+        "bytes": 44447
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -81436,7 +81474,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 28338
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81616,7 +81654,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58914
+        "bytes": 60072
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81625,7 +81663,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 45502
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +81708,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 157644
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87937,6 +87975,61 @@
         "bytes": 2884
       },
       {
+        "uri": "majordomus://issue/I2123",
+        "kind": "issue",
+        "identity": "I2123",
+        "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "description": "Refuse every capability that changes something to a request from an address that is not loopback, unless the capability's input is a signed message its handler verifies, on the HTTP routes and on MCP over HTTP alike.",
+        "path": ".ai/repo/project/issues/I2123.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2951
+      },
+      {
+        "uri": "majordomus://issue/I2124",
+        "kind": "issue",
+        "identity": "I2124",
+        "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "description": "Apply the same trust predicate to events reloaded from the journal file as to events arriving over a link, and refuse an event whose Lamport stamp is further ahead of the receiver's clock than a declared bound.",
+        "path": ".ai/repo/project/issues/I2124.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2293
+      },
+      {
+        "uri": "majordomus://issue/I2135",
+        "kind": "issue",
+        "identity": "I2135",
+        "title": "The trust root is read from the default branch, not from whatever the checkout holds",
+        "description": "Let a working tree narrow the mesh's trust and never widen it: obey the working tree's declaration with every widening of the trunk's committed copy removed, report each ignored line, and refuse a committed declaration that trusts on first use.",
+        "path": ".ai/repo/project/issues/I2135.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3186
+      },
+      {
+        "uri": "majordomus://issue/I2137",
+        "kind": "issue",
+        "identity": "I2137",
+        "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "description": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+        "path": ".ai/repo/project/issues/I2137.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3430
+      },
+      {
+        "uri": "majordomus://issue/I2151",
+        "kind": "issue",
+        "identity": "I2151",
+        "title": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "description": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+        "path": ".ai/repo/project/issues/I2151.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3518
+      },
+      {
         "uri": "majordomus://issue/I2161",
         "kind": "issue",
         "identity": "I2161",
@@ -87948,6 +88041,17 @@
         "bytes": 3307
       },
       {
+        "uri": "majordomus://issue/I2162",
+        "kind": "issue",
+        "identity": "I2162",
+        "title": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "description": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+        "path": ".ai/repo/project/issues/I2162.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2498
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -87957,6 +88061,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2285
+      },
+      {
+        "uri": "majordomus://issue/I2282",
+        "kind": "issue",
+        "identity": "I2282",
+        "title": "The record pull request's dispatched verdict does not satisfy branch protection",
+        "description": "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is.",
+        "path": ".ai/repo/project/issues/I2282.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3972
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -87979,7 +88094,7 @@
         "identity": "majordomus",
         "path": ".ai/repo/mesh/majordomus.yaml",
         "source_class": "mesh-declaration",
-        "bytes": 3153
+        "bytes": 3385
       },
       {
         "uri": "majordomus://milestone/M000",
@@ -88180,6 +88295,17 @@
         "bytes": 2652
       },
       {
+        "uri": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "identity": "mesh-journal-converges",
+        "title": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "description": "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once.",
+        "path": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5484
+      },
+      {
         "uri": "majordomus://milestone/public-proof",
         "kind": "milestone",
         "identity": "public-proof",
@@ -88213,6 +88339,17 @@
         "bytes": 1571
       },
       {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
+      },
+      {
         "uri": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "identity": "safe-self-update",
@@ -88233,6 +88370,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1441
+      },
+      {
+        "uri": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "identity": "surfaces-never-disagree",
+        "title": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "description": "A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped.",
+        "path": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4606
       },
       {
         "uri": "majordomus://milestone/test-evidence",
@@ -93124,6 +93272,30 @@
         "bytes": 3019
       },
       {
+        "uri": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "identity": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "path": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "source_class": "case",
+        "bytes": 3603
+      },
+      {
+        "uri": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "kind": "test",
+        "identity": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "path": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "source_class": "case",
+        "bytes": 2776
+      },
+      {
+        "uri": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "kind": "test",
+        "identity": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "path": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "source_class": "case",
+        "bytes": 6034
+      },
+      {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "identity": "test/cases/102_completion_shell.sh",
@@ -94289,7 +94461,7 @@
         "identity": "test/cases/368_mesh_handover_resolves.sh",
         "path": "test/cases/368_mesh_handover_resolves.sh",
         "source_class": "case",
-        "bytes": 5397
+        "bytes": 5791
       },
       {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -95721,7 +95893,7 @@
         "identity": "test/cases/87_release_pipeline.sh",
         "path": "test/cases/87_release_pipeline.sh",
         "source_class": "case",
-        "bytes": 11068
+        "bytes": 12457
       },
       {
         "uri": "majordomus://test/test/cases/87b_release_archive_shape.sh",
@@ -95873,7 +96045,7 @@
         "identity": "test/cases/924_one_executor_across_machines.sh",
         "path": "test/cases/924_one_executor_across_machines.sh",
         "source_class": "case",
-        "bytes": 6390
+        "bytes": 6524
       },
       {
         "uri": "majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh",
@@ -96840,7 +97012,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96993,7 +97165,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 278
     },
     {
       "name": "knowledge",
@@ -97023,7 +97195,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 30
     },
     {
       "name": "moment",
@@ -97145,7 +97317,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 412
+      "objects": 415
     },
     {
       "name": "use-case",
@@ -127523,10 +127695,10 @@
         "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
         "kind": "command",
         "read_only": false,
-        "effect": "process_state",
+        "effect": "repository_mutation",
         "hints": {
           "read_only": false,
-          "destructive": false,
+          "destructive": true,
           "idempotent": false,
           "open_world": false
         },
