@@ -29207,7 +29207,7 @@ capabilities:
     module: mesh
     kind: command
     title: Claim a scope across the mesh
-    description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only."
+    description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own, and an exclusive claim admitted meanwhile records it in `supersedes`, so if that runtime beats again its revived claim is the one in conflict. Writes this runtime's journal only."
     input:
       name: ClaimInput
       schema:
@@ -31385,6 +31385,11 @@ capabilities:
               state:
                 "$ref": "#/$defs/ClaimState"
                 description: Its standing.
+              supersedes:
+                type: array
+                items:
+                  type: string
+                description: "The claims it was admitted against while their runtimes had stopped beating, which\ntherefore come after it in the exclusivity order even when they revive (I2138)."
             required:
               - key
               - stream
@@ -31395,7 +31400,7 @@ capabilities:
               - acquired_lamport
               - acquired_seq
               - state
-            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
+            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
           StreamId:
             type: string
             description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
@@ -32010,6 +32015,11 @@ capabilities:
               state:
                 "$ref": "#/$defs/ClaimState"
                 description: Its standing.
+              supersedes:
+                type: array
+                items:
+                  type: string
+                description: "The claims it was admitted against while their runtimes had stopped beating, which\ntherefore come after it in the exclusivity order even when they revive (I2138)."
             required:
               - key
               - stream
@@ -32020,7 +32030,7 @@ capabilities:
               - acquired_lamport
               - acquired_seq
               - state
-            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
+            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
           StreamId:
             type: string
             description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
@@ -32329,7 +32339,7 @@ capabilities:
     module: mesh
     kind: command
     title: Release a claim
-    description: "Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Writes this runtime's journal only."
+    description: "Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Over MCP the calling session must be the claim's own (or `session` names it); another session's claim is refused as `not_own`. Writes this runtime's journal only."
     input:
       name: ReleaseInput
       schema:
@@ -32339,6 +32349,11 @@ capabilities:
           claim:
             type: string
             description: "The claim's key, `<stream>/<claim>`, as `mesh.claim` answered it."
+          session:
+            type:
+              - string
+              - "null"
+            description: "The session releasing it; over MCP, the calling session when omitted. A claim held\nby another session is refused as `not_own`. The command line and plain HTTP name no\nsession and release any claim of this runtime's run, as its operator."
         required:
           - claim
         description: "The input of `mesh.release`."
@@ -32985,6 +33000,11 @@ capabilities:
               state:
                 "$ref": "#/$defs/ClaimState"
                 description: Its standing.
+              supersedes:
+                type: array
+                items:
+                  type: string
+                description: "The claims it was admitted against while their runtimes had stopped beating, which\ntherefore come after it in the exclusivity order even when they revive (I2138)."
             required:
               - key
               - stream
@@ -32995,7 +33015,7 @@ capabilities:
               - acquired_lamport
               - acquired_seq
               - state
-            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
+            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
           ClaimMode:
             oneOf:
               - type: string
@@ -33069,7 +33089,7 @@ capabilities:
               - first
               - second
               - paths
-            description: "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused.\n\nAn overlap is information, not a verdict — it is how two workers find out they are in\nthe same place without either being stopped. The meeting paths are listed pairwise\nrather than summarized, because the useful question is which path of mine meets which\npath of theirs.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimOverlap};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nfor (claim, session, mode) in [\n    (\"c1\", \"s1\", ClaimMode::Exclusive),\n    (\"c2\", \"s2\", ClaimMode::Advisory),\n] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),\n        scope: vec![\"apps\".into()], intent: None, mode, issue: None }).unwrap();\n}\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet overlap: &ClaimOverlap = &state.overlaps[0];\nassert_ne!(overlap.first, overlap.second, \"two claims, two sessions\");\nassert_eq!(overlap.paths, [(\"apps\".to_string(), \"apps\".to_string())]);\n```"
+            description: "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused.\n\nAn overlap is information, not a verdict — it is how two workers find out they are in\nthe same place without either being stopped. The meeting paths are listed pairwise\nrather than summarized, because the useful question is which path of mine meets which\npath of theirs.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimOverlap};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nfor (claim, session, mode) in [\n    (\"c1\", \"s1\", ClaimMode::Exclusive),\n    (\"c2\", \"s2\", ClaimMode::Advisory),\n] {\n    j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: claim.into(), session: session.into(),\n        scope: vec![\"apps\".into()], intent: None, mode, issue: None }).unwrap();\n}\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet overlap: &ClaimOverlap = &state.overlaps[0];\nassert_ne!(overlap.first, overlap.second, \"two claims, two sessions\");\nassert_eq!(overlap.paths, [(\"apps\".to_string(), \"apps\".to_string())]);\n```"
           HandoverView:
             type: object
             properties:

@@ -111,7 +111,9 @@ use super::link::{
 };
 use super::registry::{MeshRegistry, NodeRecord, Presence};
 use super::repository::MeshRepositoryIdentity;
-use super::state::{admission_conflicts, fold, ClaimView, CooperationState, HandoverView};
+use super::state::{
+    admission_conflicts, fenced_at_admission, fold, ClaimView, CooperationState, HandoverView,
+};
 use super::trust::{self, TrustState};
 
 /// The most peers one runtime links to.
@@ -3310,6 +3312,7 @@ impl Cooperation {
         let _admission = self.admission.lock().expect("claim admission");
         let state = self.state();
         let conflicts = admission_conflicts(&state, &self.own(&session.session), &scope, mode);
+        let supersedes = fenced_at_admission(&state, &self.own(&session.session), &scope, mode);
         if !conflicts.is_empty() {
             self.counters.claims_refused.fetch_add(1, Ordering::Relaxed);
             let conflicts: Vec<ClaimView> = conflicts.into_iter().cloned().collect();
@@ -3328,6 +3331,7 @@ impl Cooperation {
                 intent,
                 mode,
                 issue,
+                supersedes,
             },
             self.own(&claim),
         )
@@ -3371,6 +3375,45 @@ impl Cooperation {
     /// cooperation.release("somebody-0000000000000002/c-abc").expect_err("not its author");
     /// ```
     pub fn release(&self, claim_key: &str) -> Result<Written, CooperationError> {
+        self.release_as(claim_key, None)
+    }
+
+    /// [`Cooperation::release`], by a named session: a claim held by another session of
+    /// this runtime is refused as not its own. An MCP caller always has a session, so one
+    /// agent cannot withdraw another's claim through the same server; the command line and
+    /// plain HTTP name none and stay the operator's own hands (I2138).
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::cooperation::CooperationError;
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// let held = cooperation
+    ///     .claim(&SessionInfo::named("s1", "mcp"), vec!["apps".into()], None, ClaimMode::Exclusive, None)
+    ///     .unwrap();
+    /// // another session of the same runtime is refused, and the holder is not
+    /// let refused = cooperation.release_as(&held.key, Some("s2")).unwrap_err();
+    /// assert!(matches!(refused, CooperationError::NotOwn(_)));
+    /// cooperation.release_as(&held.key, Some("s1")).unwrap();
+    /// ```
+    pub fn release_as(
+        &self,
+        claim_key: &str,
+        session: Option<&str>,
+    ) -> Result<Written, CooperationError> {
         let own_prefix = format!("{}/", self.journal.own_stream());
         let Some(local) = claim_key.strip_prefix(&own_prefix) else {
             return Err(CooperationError::NotOwn(format!(
@@ -3378,8 +3421,17 @@ impl Cooperation {
             )));
         };
         let state = self.state();
-        if !state.claims.iter().any(|c| c.key == claim_key) {
+        let Some(claim) = state.claims.iter().find(|c| c.key == claim_key) else {
             return Err(CooperationError::NotFound(format!("no claim {claim_key}")));
+        };
+        if let Some(session) = session {
+            let asker = self.own(session);
+            if claim.session != asker {
+                return Err(CooperationError::NotOwn(format!(
+                    "{claim_key} is held by session {}, not {asker}; only the session that holds a claim releases it",
+                    claim.session
+                )));
+            }
         }
         self.write(
             EventBody::ClaimReleased {

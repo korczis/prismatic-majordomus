@@ -498,6 +498,14 @@ pub enum EventBody {
         /// The issue the claim is for.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         issue: Option<String>,
+        /// The claims (`<stream>/<claim>`) whose scope this one meets and which were
+        /// expired when it was admitted — their runtimes had stopped beating. A stream that
+        /// beats again revives its claims in a fold that only reads liveness, so this is the
+        /// evidence that keeps a revived claim from beating the one admitted in its absence:
+        /// every fold orders a fenced claim after the live claim that fenced it (I2138).
+        /// Absent on the wire when empty, and ignored by an executable that predates it.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        supersedes: Vec<String>,
     },
     /// A claim was released by its holder.
     ClaimReleased {
@@ -604,7 +612,7 @@ impl EventBody {
     /// assert!(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }.validate().is_ok());
     ///
     /// // a scope that is not repository-relative is refused
-    /// let escaping = EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+    /// let escaping = EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(), session: "s1".into(),
     ///     scope: vec!["../../etc".into()], intent: None, mode: Default::default(), issue: None };
     /// assert!(escaping.validate().is_err());
     ///
@@ -644,11 +652,18 @@ impl EventBody {
                 scope,
                 intent,
                 issue,
+                supersedes,
                 ..
             } => {
                 ident("claim", claim)?;
                 ident("session", session)?;
                 paths(scope, true)?;
+                if supersedes.len() > MAX_SCOPE_PATHS {
+                    return Err(format!("supersedes more than {MAX_SCOPE_PATHS} claims"));
+                }
+                for fenced in supersedes {
+                    text("supersedes", fenced, 256)?;
+                }
                 if let Some(v) = intent {
                     text("intent", v, 512)?;
                 }
@@ -1456,7 +1471,7 @@ impl Journal {
     /// assert_eq!(first.stream, *j.own_stream());
     ///
     /// // out of bounds is refused before anything is signed or stored
-    /// let escaping = EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+    /// let escaping = EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(), session: "s1".into(),
     ///     scope: vec!["/etc".into()], intent: None, mode: Default::default(), issue: None };
     /// assert!(j.append_own(escaping).is_err());
     /// assert_eq!(j.events().len(), 2, "and nothing was written");
@@ -2530,6 +2545,7 @@ mod tests {
     fn bounds_are_checked_before_signing() {
         let j = journal("0000000000000001");
         let err = j.append_own(EventBody::ClaimAcquired {
+            supersedes: vec![],
             claim: "c1".into(),
             session: "s1".into(),
             scope: vec!["../outside".into()],
@@ -3029,6 +3045,7 @@ mod tests {
             observer.merge_marks(&laptop.marks(), &|_| true, expiry);
         };
         let claim = |claim: &str, scope: &str| EventBody::ClaimAcquired {
+            supersedes: vec![],
             claim: claim.into(),
             session: "s1".into(),
             scope: vec![scope.into()],
@@ -3132,6 +3149,7 @@ mod tests {
         };
         let mut out = vec![opened(j, "s1")];
         let acquired = EventBody::ClaimAcquired {
+            supersedes: vec![],
             claim: "c1".into(),
             session: "s1".into(),
             scope: vec![SCOPES[scope].into()],

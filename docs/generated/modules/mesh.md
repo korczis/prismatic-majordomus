@@ -9,7 +9,7 @@ Stability: experimental. Capabilities: 21.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
-Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.
+Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own, and an exclusive claim admitted meanwhile records it in `supersedes`, so if that runtime beats again its revived claim is the one in conflict. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -289,7 +289,7 @@ Output: `RegisterAnswer`.
 
 ## `mesh.release` — Release a claim
 
-Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Writes this runtime's journal only.
+Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Over MCP the calling session must be the claim's own (or `session` names it); another session's claim is refused as `not_own`. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -305,6 +305,9 @@ Release a claim this runtime's current run holds, by its key. A claim written el
 | input | type | required | description |
 |---|---|---|---|
 | `claim` | string | yes | The claim's key, `<stream>/<claim>`, as `mesh.claim` answered it. |
+| `session` | string or null | no | The session releasing it; over MCP, the calling session when omitted. A claim held
+by another session is refused as `not_own`. The command line and plain HTTP name no
+session and release any claim of this runtime's run, as its operator. |
 
 Output: `Written`.
 

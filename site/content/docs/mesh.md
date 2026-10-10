@@ -206,7 +206,8 @@ The guarantees, exactly:
   nothing. Not exactly-once.
 - **Order:** within a stream, sequence order; an early arrival waits (up to 256 per stream) for
   its gap. Across streams the fold orders by `(lamport, stream, seq)`. Arrival order never
-  changes state (a property test permutes and duplicates deliveries).
+  changes state (property tests permute and duplicate deliveries of random histories over
+  three streams, with claims, releases, closed sessions, fences and dead streams).
 - **Forward compatibility:** an event of a kind this executable does not know is stored and
   relayed, not interpreted. An event of a known kind out of bounds is refused.
 - **Bounds:** 48 KiB per event, 32 KiB per handover body, 64 paths per claim, 64 streams per
@@ -245,7 +246,15 @@ meets `apps/majordomus-cli`; `app` does not.
   partition, or the same heartbeat) both enter the journal. The fold names one winner — the
   lowest `(lamport, stream, seq)` of acquisition — on every runtime, and lists the other as
   `conflicted` with the winner's key. Never "last packet wins".
-- **Release:** only the holder's current run releases a claim (`not_own` otherwise); a dead
+- **Revival:** expiry is a verdict about a stream that is silent *now*, so a stream that beats
+  again — a laptop waking, a process resumed — brings its claims back. A claim admitted while
+  the one it meets was expired records that claim in `supersedes`, and every fold orders a
+  claim after the live claim that fenced it: the revived claim is `conflicted`, naming the claim
+  admitted in its absence, on every runtime; it does not win its scope back by being older. A
+  fence lapses with the claim that set it (I2138).
+- **Release:** only the holder's current run releases a claim (`not_own` otherwise), and over
+  MCP only the session that holds it — another session of the same server is refused as
+  `not_own`; the command line and plain HTTP name no session and act as the operator. A dead
   holder's claim expires instead.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.

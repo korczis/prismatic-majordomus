@@ -1,6 +1,6 @@
 +++
 title = "mesh.claim"
-description = "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only."
+description = "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own, and an exclusive claim admitted meanwhile records it in `supersedes`, so if that runtime beats again its revived claim is the one in conflict. Writes this runtime's journal only."
 weight = 95
 slug = "mesh-claim"
 [extra]

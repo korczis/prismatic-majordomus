@@ -26,7 +26,7 @@
 //!
 //! let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 //!     "repo".into(), None).unwrap();
-//! j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+//! j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(), session: "s1".into(),
 //!     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None }).unwrap();
 //! let state = fold(&j.events(), &|_| StreamLiveness::Own);
 //! assert_eq!(state.claims[0].state, ClaimState::Held);
@@ -178,7 +178,7 @@ impl ClaimState {
 ///
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
-/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+/// j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(), session: "s1".into(),
 ///     scope: vec!["apps/majordomus-cli".into()], intent: Some("document the mesh".into()),
 ///     mode: ClaimMode::Exclusive, issue: Some("#184".into()) }).unwrap();
 ///
@@ -215,6 +215,10 @@ pub struct ClaimView {
     pub acquired_seq: u64,
     /// Its standing.
     pub state: ClaimState,
+    /// The claims it was admitted against while their runtimes had stopped beating, which
+    /// therefore come after it in the exclusivity order even when they revive (I2138).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub supersedes: Vec<String>,
 }
 
 impl ClaimView {
@@ -250,7 +254,7 @@ impl ClaimView {
 ///     ("c1", "s1", ClaimMode::Exclusive),
 ///     ("c2", "s2", ClaimMode::Advisory),
 /// ] {
-///     j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),
+///     j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: claim.into(), session: session.into(),
 ///         scope: vec!["apps".into()], intent: None, mode, issue: None }).unwrap();
 /// }
 ///
@@ -487,7 +491,7 @@ pub struct CooperationState {
 ///
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
-/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+/// j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(), session: "s1".into(),
 ///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
 ///     .unwrap();
 ///
@@ -560,6 +564,7 @@ pub fn fold(
                 intent,
                 mode,
                 issue,
+                supersedes,
             } => {
                 let k = key(&claim);
                 claims.insert(
@@ -576,6 +581,7 @@ pub fn fold(
                         acquired_lamport: event.lamport,
                         acquired_seq: event.seq,
                         state: ClaimState::Held,
+                        supersedes,
                     },
                 );
             }
@@ -673,11 +679,25 @@ pub fn fold(
 
     // Exclusivity: live exclusive claims in acquisition order; the first to a scope wins.
     // The map is what orders them — the same `(lamport, stream, seq)` on every runtime, so
-    // every runtime names the same winner.
+    // every runtime names the same winner. A claim that a live exclusive claim was admitted
+    // against while it was expired is placed right after that claim instead of at its own
+    // acquisition: revived by a stream that beats again, it meets the claim admitted in its
+    // absence as the later of the two and is the one in conflict (I2138).
+    let fenced: BTreeMap<String, (u64, StreamId, u64)> = claims
+        .values()
+        .filter(|c| c.state.is_live() && c.mode == ClaimMode::Exclusive)
+        .flat_map(|c| c.supersedes.iter().map(move |f| (f.clone(), c.order_key())))
+        .collect();
     let exclusive: Vec<String> = claims
         .values()
         .filter(|c| c.state.is_live() && c.mode == ClaimMode::Exclusive)
-        .map(|c| (c.order_key(), c.key.clone()))
+        .map(|c| {
+            let place = match fenced.get(&c.key) {
+                Some(by) => (by.clone(), 1u8, c.order_key()),
+                None => (c.order_key(), 0u8, c.order_key()),
+            };
+            (place, c.key.clone())
+        })
         .collect::<BTreeMap<_, _>>()
         .into_values()
         .collect();
@@ -795,7 +815,7 @@ fn meeting_paths(a: &[String], b: &[String]) -> Vec<(String, String)> {
 ///
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
-/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+/// j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(), session: "s1".into(),
 ///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
 ///     .unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
@@ -833,6 +853,54 @@ pub fn admission_conflicts<'a>(
         .collect()
 }
 
+/// What an exclusive claim admitted now must record as superseded: the exclusive claims of
+/// other sessions whose scope it meets and which are expired — their runtimes stopped
+/// beating, or their sessions closed. Admission let it through because they were not live;
+/// recorded on the claim, that fact outlives the expiry, so a stream that beats again
+/// cannot bring its claim back ahead of this one (I2138). An advisory claim fences nothing.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fenced_at_admission, fold};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ClaimAcquired { supersedes: vec![], claim: "c1".into(),
+///     session: "s1".into(), scope: vec!["apps".into()], intent: None,
+///     mode: ClaimMode::Exclusive, issue: None }).unwrap();
+/// // its runtime stopped beating: the claim is expired, and a new claim fences it
+/// let dead = fold(&j.events(), &|_| StreamLiveness::Expired);
+/// let fenced = fenced_at_admission(&dead, "s2", &["apps/x".into()], ClaimMode::Exclusive);
+/// assert_eq!(fenced, vec![dead.claims[0].key.clone()]);
+/// // while it is live there is nothing to fence: admission refuses instead
+/// let live = fold(&j.events(), &|_| StreamLiveness::Live);
+/// assert!(fenced_at_admission(&live, "s2", &["apps".into()], ClaimMode::Exclusive).is_empty());
+/// ```
+pub fn fenced_at_admission(
+    state: &CooperationState,
+    session: &str,
+    scope: &[String],
+    mode: ClaimMode,
+) -> Vec<String> {
+    if mode == ClaimMode::Advisory {
+        return Vec::new();
+    }
+    state
+        .claims
+        .iter()
+        .filter(|c| {
+            matches!(c.state, ClaimState::Expired(_))
+                && c.mode == ClaimMode::Exclusive
+                && c.session != session
+                && scopes_meet(&c.scope, scope)
+        })
+        .map(|c| c.key.clone())
+        .take(crate::mesh::journal::MAX_SCOPE_PATHS)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -852,6 +920,7 @@ mod tests {
 
     fn claim(j: &Journal, claim: &str, session: &str, scope: &[&str], mode: ClaimMode) {
         j.append_own(EventBody::ClaimAcquired {
+            supersedes: vec![],
             claim: claim.into(),
             session: session.into(),
             scope: scope.iter().map(|s| s.to_string()).collect(),
@@ -1098,7 +1167,180 @@ mod tests {
         assert!(state.reviews[0].answers.is_empty());
     }
 
+    /// A's claim expired, B was admitted against it and recorded that, and A's stream beats
+    /// again: A's claim is live again and the one in conflict, on any runtime folding these
+    /// events. Without the record the earlier acquisition would win the scope back.
+    #[test]
+    fn a_revived_claim_is_in_conflict_with_the_claim_admitted_in_its_absence() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        claim(&a, "c1", "s1", &["apps"], ClaimMode::Exclusive);
+        b.ingest(&a.events(), &|_| Ok(()));
+        let a_stream = a.own_stream().clone();
+        let a_dead = |s: &StreamId| {
+            if *s == a_stream {
+                StreamLiveness::Expired
+            } else {
+                StreamLiveness::Live
+            }
+        };
+        let gone = fold(&b.events(), &a_dead);
+        let fenced = fenced_at_admission(
+            &gone,
+            &format!("{}/s2", b.own_stream()),
+            &["apps/x".into()],
+            ClaimMode::Exclusive,
+        );
+        assert_eq!(fenced, vec![format!("{}/c1", a.own_stream())]);
+        let admitted = |supersedes: Vec<String>| {
+            let j = journal("0000000000000002");
+            j.ingest(&a.events(), &|_| Ok(()));
+            j.append_own(EventBody::ClaimAcquired {
+                claim: "c2".into(),
+                session: "s2".into(),
+                scope: vec!["apps/x".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+                supersedes,
+            })
+            .unwrap();
+            j
+        };
+        // with the fence: A's revived claim is the one in conflict, named against B's
+        let first_key = format!("{}/c1", a.own_stream());
+        let by_key = |state: &CooperationState, key: &str| {
+            state.claims.iter().find(|c| c.key == key).unwrap().clone()
+        };
+        let b = admitted(fenced);
+        let second_key = format!("{}/c2", b.own_stream());
+        let revived = fold(&b.events(), &all_live);
+        assert_eq!(
+            by_key(&revived, &first_key).state,
+            ClaimState::Conflicted(second_key.clone())
+        );
+        assert_eq!(by_key(&revived, &second_key).state, ClaimState::Held);
+        // without it, the earlier acquisition wins the scope back: the defect this fixes
+        let unfenced = admitted(Vec::new());
+        let state = fold(&unfenced.events(), &all_live);
+        assert_eq!(by_key(&state, &first_key).state, ClaimState::Held);
+    }
+
+    /// A fence held by a claim that is itself no longer live lapses: the fenced claim, live
+    /// again, is ordered by its own acquisition.
+    #[test]
+    fn a_fence_lapses_with_the_claim_that_set_it() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        claim(&a, "c1", "s1", &["apps"], ClaimMode::Exclusive);
+        b.ingest(&a.events(), &|_| Ok(()));
+        b.append_own(EventBody::ClaimAcquired {
+            claim: "c2".into(),
+            session: "s2".into(),
+            scope: vec!["apps".into()],
+            intent: None,
+            mode: ClaimMode::Exclusive,
+            issue: None,
+            supersedes: vec![format!("{}/c1", a.own_stream())],
+        })
+        .unwrap();
+        b.append_own(EventBody::ClaimReleased { claim: "c2".into() })
+            .unwrap();
+        let state = fold(&b.events(), &all_live);
+        let of = |key: String| {
+            state
+                .claims
+                .iter()
+                .find(|c| c.key == key)
+                .unwrap()
+                .state
+                .clone()
+        };
+        assert_eq!(of(format!("{}/c1", a.own_stream())), ClaimState::Held);
+        assert_eq!(of(format!("{}/c2", b.own_stream())), ClaimState::Released);
+    }
+
     proptest::proptest! {
+        /// Random histories over three streams — exclusive and advisory claims, releases,
+        /// closed sessions, claims fencing other streams' claims, any stream dead or live —
+        /// fold to the same state in any order and with any duplicates, and never leave two
+        /// held exclusive claims of different sessions meeting.
+        #[test]
+        fn multi_stream_fold_proptest(
+            ops in proptest::collection::vec((0usize..3, 0usize..5, 0usize..4, 0usize..8), 1..40),
+            dead in proptest::collection::vec(proptest::prelude::any::<bool>(), 3),
+            order in proptest::collection::vec(0usize..256, 0..64),
+        ) {
+            let journals = [journal("0000000000000001"), journal("0000000000000002"), journal("0000000000000003")];
+            let scopes = ["apps", "apps/x", "docs", "apps/x/y"];
+            let mut taken: Vec<(usize, String)> = Vec::new();
+            for (i, (who, kind, scope, pick)) in ops.iter().enumerate() {
+                let j = &journals[*who];
+                let session = format!("s{}", pick % 2);
+                match kind {
+                    0 | 1 => {
+                        let mode = if *kind == 0 { ClaimMode::Exclusive } else { ClaimMode::Advisory };
+                        claim(j, &format!("c{i}"), &session, &[scopes[*scope]], mode);
+                        taken.push((*who, format!("c{i}")));
+                    }
+                    2 => {
+                        let fenced: Vec<String> = taken
+                            .iter()
+                            .filter(|(owner, _)| owner != who)
+                            .nth(*pick % 3)
+                            .map(|(owner, c)| format!("{}/{c}", journals[*owner].own_stream()))
+                            .into_iter()
+                            .collect();
+                        j.append_own(EventBody::ClaimAcquired {
+                            claim: format!("c{i}"),
+                            session,
+                            scope: vec![scopes[*scope].into()],
+                            intent: None,
+                            mode: ClaimMode::Exclusive,
+                            issue: None,
+                            supersedes: fenced,
+                        }).unwrap();
+                        taken.push((*who, format!("c{i}")));
+                    }
+                    3 => {
+                        if let Some((_, c)) = taken.iter().filter(|(owner, _)| owner == who).nth(*pick % 2) {
+                            j.append_own(EventBody::ClaimReleased { claim: c.clone() }).unwrap();
+                        }
+                    }
+                    _ => {
+                        j.append_own(EventBody::SessionClosed { session }).unwrap();
+                    }
+                }
+            }
+            let events: Vec<MeshEvent> = journals.iter().flat_map(|j| j.events()).collect();
+            proptest::prop_assume!(!events.is_empty());
+            let streams: Vec<StreamId> = journals.iter().map(|j| j.own_stream().clone()).collect();
+            let live = |s: &StreamId| match streams.iter().position(|x| x == s) {
+                Some(i) if dead[i] => StreamLiveness::Expired,
+                _ => StreamLiveness::Live,
+            };
+            let reference = fold(&events, &live);
+            let shuffled: Vec<MeshEvent> = order
+                .iter()
+                .map(|i| events[i % events.len()].clone())
+                .chain(events.iter().rev().cloned())
+                .collect();
+            proptest::prop_assert_eq!(fold(&shuffled, &live), reference.clone());
+            let held: Vec<&ClaimView> = reference
+                .claims
+                .iter()
+                .filter(|c| c.state == ClaimState::Held && c.mode == ClaimMode::Exclusive)
+                .collect();
+            for (i, x) in held.iter().enumerate() {
+                for y in &held[i + 1..] {
+                    proptest::prop_assert!(
+                        x.session == y.session || !scopes_meet(&x.scope, &y.scope),
+                        "two held exclusive claims meet: {} and {}", x.key, y.key
+                    );
+                }
+            }
+        }
+
         /// Folding any permutation of the same events, with any duplicates, yields the same
         /// state: arrival order can never change canonical state.
         #[test]

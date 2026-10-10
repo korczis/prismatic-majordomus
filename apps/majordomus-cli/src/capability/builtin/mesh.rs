@@ -811,6 +811,11 @@ fn mesh_claim(ctx: &Context, input: ClaimInput) -> Result<Written, CapabilityErr
 pub struct ReleaseInput {
     /// The claim's key, `<stream>/<claim>`, as `mesh.claim` answered it.
     pub claim: String,
+    /// The session releasing it; over MCP, the calling session when omitted. A claim held
+    /// by another session is refused as `not_own`. The command line and plain HTTP name no
+    /// session and release any claim of this runtime's run, as its operator.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
 }
 
 impl BenchmarkCases for ReleaseInput {
@@ -819,13 +824,21 @@ impl BenchmarkCases for ReleaseInput {
             "unknown",
             ReleaseInput {
                 claim: "none/c-0".into(),
+                session: None,
             },
         )]
     }
 }
 
 fn mesh_release(ctx: &Context, input: ReleaseInput) -> Result<Written, CapabilityError> {
-    cooperation(ctx)?.release(&input.claim).map_err(map_error)
+    let session = input.session.filter(|s| !s.trim().is_empty()).or_else(|| {
+        ctx.caller
+            .as_ref()
+            .map(|peer| format!("board-{}", peer.as_str()))
+    });
+    cooperation(ctx)?
+        .release_as(&input.claim, session.as_deref())
+        .map_err(map_error)
 }
 
 // ---------------------------------------------------------------- mesh.handover.*
@@ -1268,7 +1281,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.claim",
                 kind: CapabilityKind::Command,
                 title: "Claim a scope across the mesh",
-                description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+                description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own, and an exclusive claim admitted meanwhile records it in `supersedes`, so if that runtime beats again its revived claim is the one in conflict. Writes this runtime's journal only.",
                 input: ClaimInput,
                 output: Written,
                 stability: Stability::Experimental,
@@ -1281,7 +1294,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.release",
                 kind: CapabilityKind::Command,
                 title: "Release a claim",
-                description: "Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Writes this runtime's journal only.",
+                description: "Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Over MCP the calling session must be the claim's own (or `session` names it); another session's claim is refused as `not_own`. Writes this runtime's journal only.",
                 input: ReleaseInput,
                 output: Written,
                 stability: Stability::Experimental,
