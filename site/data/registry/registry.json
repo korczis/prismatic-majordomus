@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "cb1010c809bc7161faae4cebb0a70d53af9316ab6a44281872b0ea68ee2cefd1",
+    "fingerprint": "cf9cf9a33b10447ad4465b35bb8dbd43bb060987b586e33cdd942c84fd5e1cdf",
     "summary": {
-      "total": 2103,
+      "total": 2109,
       "builtin": 184,
-      "declarative": 1919,
+      "declarative": 1925,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1919
+        "resource": 1925
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1927
+        "implemented": 1933
       },
       "mcp_tools": 177,
-      "mcp_resources": 1973,
+      "mcp_resources": 1979,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75454,7 +75454,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 269,
+        "capabilities": 270,
         "capability_ids": []
       },
       {
@@ -75918,7 +75918,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 163,
+        "capabilities": 165,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 410,
+        "capabilities": 412,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4448798b0be7db421c1b3037ad45f87fcc31d8966710115e2df85aa012d55c71",
+    "fingerprint": "60029ca337fe8d8428780b23e9088dc4f4ceccf2c5f7eaea91ee69dbab018778",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76188,9 +76188,9 @@
       "domain": 6,
       "feature": 27,
       "gap": 2,
-      "implementation": 51,
+      "implementation": 52,
       "intent": 3,
-      "issue": 269,
+      "issue": 270,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 26,
@@ -76199,12 +76199,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 19,
-      "rule": 163,
+      "rule": 165,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 410,
+      "test": 412,
       "use-case": 48,
       "workspace": 1
     },
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 121800
+        "bytes": 125653
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -84775,6 +84775,14 @@
         "path": "lib/knowledge.sh",
         "source_class": "library",
         "bytes": 87974
+      },
+      {
+        "uri": "majordomus://implementation/lib/machine_lock.sh",
+        "kind": "implementation",
+        "identity": "lib/machine_lock.sh",
+        "path": "lib/machine_lock.sh",
+        "source_class": "library",
+        "bytes": 9407
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -87918,6 +87926,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2114",
+        "kind": "issue",
+        "identity": "I2114",
+        "title": "A task's scope admits what its derive writes",
+        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+        "path": ".ai/repo/project/issues/I2114.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2884
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -90073,6 +90092,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "kind": "rule",
+        "identity": "project.a-derive-sees-what-the-commit-will@1",
+        "title": "A derive sees what the commit will",
+        "description": "scripts/derive refuses, before it waits for the lock or builds anything, when the tree holds an untracked file that is not ignored, because a derive projects only what git tracks and the commit that adds the file would be refused.",
+        "path": ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3372,
+        "tags": [
+          "derived",
+          "machine"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "kind": "rule",
         "identity": "project.a-diagram-is-drawn-not-typed@1",
@@ -91071,6 +91105,22 @@
           "lifecycle",
           "events",
           "integrity"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.one-derive-at-a-time@1",
+        "kind": "rule",
+        "identity": "project.one-derive-at-a-time@1",
+        "title": "One derive at a time per machine, and a stopped derive leaves no orphans",
+        "description": "scripts/derive holds the machine's derive lock for its whole run, yields to a priority marker that names another branch, reclaims a dead owner's lock aloud, and takes its whole process tree down when it is stopped.",
+        "path": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6118,
+        "tags": [
+          "derived",
+          "machine",
+          "coordination"
         ]
       },
       {
@@ -92983,7 +93033,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 8895
+        "bytes": 9096
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -93018,12 +93068,28 @@
         "bytes": 5801
       },
       {
+        "uri": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "kind": "test",
+        "identity": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "path": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "source_class": "case",
+        "bytes": 7728
+      },
+      {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
         "kind": "test",
         "identity": "test/cases/101_command_graph.sh",
         "path": "test/cases/101_command_graph.sh",
         "source_class": "case",
         "bytes": 12197
+      },
+      {
+        "uri": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "kind": "test",
+        "identity": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "path": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "source_class": "case",
+        "bytes": 3019
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -94295,7 +94361,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 13554
+        "bytes": 13989
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -96875,7 +96941,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "intent",
@@ -96895,7 +96961,7 @@
       "identity": [
         "id"
       ],
-      "objects": 269
+      "objects": 270
     },
     {
       "name": "knowledge",
@@ -96992,7 +97058,7 @@
         "id",
         "version"
       ],
-      "objects": 163
+      "objects": 165
     },
     {
       "name": "scope",
@@ -97047,7 +97113,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 410
+      "objects": 412
     },
     {
       "name": "use-case",
