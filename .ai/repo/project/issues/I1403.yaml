@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Apply the projection so that every canonical record exists on GitHub exactly once, adopt the 19 records that already exist rather than duplicating them, and record the run as evidence."
 why: "The gate that follows is only honest against a projection that has been applied. This is the one outward-facing mutation in the milestone: it creates roughly 172 public issues, and it must be a confirmed act with a dry run read first, not a side effect of any other issue."
-current_state: "GitHub holds 8 milestones and 19 issues against 15 milestones and 184 issues canonically. `scripts/github-sync --check` reports 191 findings at 867f3a9."
+current_state: "Measured 2026-10-08 on master 4090b2b8ae: the backfill has been applied. scripts/github-sync --check finds 242 of 257 issues and 23 of 24 milestones in sync; 12 issues and 1 milestone, all records written since, are not on GitHub. .ai/repo/ci/github-drift-baseline.txt still reads missing 192 and adopt 19 as written on 2026-09-10, so the ceiling was never lowered with the run, and no evidence records the run that applied the projection. Still open: project the records that are missing, lower the baseline in the same commit, and record the run."
 desired_state: "`scripts/github-sync --check` exits 0. Every canonical record holds the number it was projected onto. The run is recorded as evidence with its date and the count it created."
 scope:
   - .ai/repo/project
@@ -32,4 +32,4 @@ evidence_required:
   - backfill_applied
 risk: "High and outward-facing. It publishes 172 issues to a public repository in one run and cannot be undone cheaply. It requires the operator's explicit confirmation and must run after I1401, or the pagination ceiling will corrupt it."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-10-08

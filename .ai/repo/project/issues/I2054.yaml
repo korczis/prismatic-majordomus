@@ -1,0 +1,30 @@
+id: I2054
+milestone: development-runtime
+title: A tag does not turn every other pull request red until its record lands
+slug: a-tag-does-not-freeze-the-queue
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "From the moment a release tag is pushed until its release record is on master, a pull request that changes nothing about releases keeps a green structure job. Either scripts/ci/release-check holds a published tag without a record only when no open pull request proposes that record, or the record is proposed before the tag is pushed; the choice is the implementer's and is written down with what it costs."
+why: "scripts/ci/release-check fails the structure job of every branch that does not carry the record of a published version, and the record needs a full CI run of its own to land, so each tag stops the queue for about two hours. With releases cut often, that is most of a working day."
+current_state: "Measured on 2026-10-08 with v0.17.0: pull requests 823, 824, 820 and 821 and the second round of 816 each went red on one finding - the version is published and the layer holds no release record for it - while the record's pull request 822 ran. Reproduced locally at ad3c2b93f4: release-check reports that one finding and nothing else. Case 996 (in pull request 816) gives the record's pull request its checks by a dispatch, which shortens the wait and does not remove it."
+desired_state: "A tag and its record landing are invisible to a pull request that touches no release file; a published version with no record and no pull request proposing one is still refused."
+scope:
+  - scripts/ci/release-check
+  - .github/workflows
+  - .ai/repo/ci
+  - apps/majordomus-cli/src/release
+  - test/cases
+  - docs
+depends_on: []
+acceptance_criteria:
+  - A case publishes a tag in a fixture, leaves its record proposed and not landed, and a branch that changes no release file passes release-check
+  - The same case shows a published version with no record and nothing proposing one is still refused
+  - The document that describes a release says in which order the tag and the record are made and why
+validation:
+  - scripts/ci/release-check
+evidence_required:
+  - a_tag_does_not_freeze_the_queue
+risk: "Loosening the check by reading open pull requests makes a structure gate depend on the forge; proposing the record before the tag changes the release order every session follows."
+created_at: 2026-10-08
+updated_at: 2026-10-08
