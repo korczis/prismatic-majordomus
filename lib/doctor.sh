@@ -56,6 +56,7 @@ mj_cmd_doctor() {
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
+  mj_doctor_bare_checkout
   mj_require_installed
   MJ_DOCTOR_MISSING=0
   local t_start; t_start="$(mj_ms)"
@@ -442,6 +443,7 @@ mj_report_environment() {
   mj_has shellcheck && env="$env, shellcheck present"
   mj_info env "-" "$env"
   mj_report_clone
+  mj_report_git_config
   return 0
 }
 
@@ -473,6 +475,118 @@ EOF
   else
     mj_ok clone "unpushed" "every local commit is on a remote"
   fi
+}
+
+# ---------------------------------------------------------------- a poisoned git configuration
+# The configuration of a repository is shared by every worktree of it and is in no tree, so
+# no gate over a tree can see it. On 2026-10-10 a suite started from a pre-push hook ran its
+# fixtures with git's hook environment still exported, and their `git config` and
+# `git init --bare` wrote into the repository being pushed: a fixture identity, core.bare=true
+# and a merge driver with no command. Every later commit from any worktree carried the
+# fixture's name, the primary checkout stopped answering, and nothing said so for an hour.
+# test/run.sh no longer lets that reach a case (case 1030); what follows names the state if
+# it is ever found again, by whatever road. It reads and never repairs: the finding carries
+# the command, and the person decides. Case 1031 holds each finding and the clean reading.
+
+# Is this address one a fixture gives itself? The suite's fixtures and the tool's own
+# scratch repositories use example.com, t@t and t@e; the domains reserved for examples and
+# tests (example.com, .org and .net, and anything under .example, .invalid, .test or
+# localhost) are nobody's, so no person's identity is ever read as a fixture's.
+mj_fixture_email() {
+  case "$1" in
+    *@example.com|*@example.org|*@example.net|t@t|t@e) return 0 ;;
+    *@*.example|*@*.invalid|*@*.test|*@localhost) return 0 ;;
+  esac
+  return 1
+}
+# Was any commit here written by somebody who is not a fixture? This is what tells a
+# poisoned repository from a fixture: a scratch repository made by a case, by `bench` or by
+# a use-case scenario carries a fixture identity because every commit in it is a fixture's,
+# and that is correct. The walk ends at the first other author, which in a real repository
+# is the first commit read.
+mj_history_by_others() {
+  local a
+  while read -r a; do
+    [ -n "$a" ] || continue
+    mj_fixture_email "$a" || return 0
+  done < <(mj_git log --all --format='%ae' 2>/dev/null)
+  return 1
+}
+# Is this git directory the `.git` of a checkout, with an index of files checked out
+# beside it? A repository that is bare on purpose (`git clone --bare`, also when its
+# directory is named .git and linked worktrees stand around it) has never had one.
+mj_git_dir_of_a_checkout() { [ "${1##*/}" = .git ] && [ -f "$1/index" ]; }
+
+# core.bare=true in a checkout is the one poisoning that stops the repository resolving at
+# all: `git rev-parse --show-toplevel` fails there, so every command of this tool ends with
+# "not inside a git repository" and doctor would never reach a finding. It is therefore
+# asked before the repository is resolved, and named instead of that message. From a linked
+# worktree the repository does resolve, and mj_report_git_config names the same fact.
+mj_doctor_bare_checkout() {
+  local start="${MJ_REPO:-.}" gd
+  git -C "$start" rev-parse --show-toplevel >/dev/null 2>&1 && return 0
+  [ "$(git -C "$start" rev-parse --is-bare-repository 2>/dev/null || true)" = true ] || return 0
+  gd="$(git -C "$start" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  mj_git_dir_of_a_checkout "$gd" || return 0
+  mj_fail git-config core.bare \
+    "true in $gd/config, and ${gd%/.git} is a checkout with an index: git reads it as a bare repository and refuses every command that needs its files, this one included; a fixture's \`git init --bare\` under an inherited GIT_DIR writes exactly this" \
+    "git -C ${gd%/.git} config --local core.bare false"
+  mj_finish_doctor
+}
+
+mj_report_git_config() {
+  local email name fixture="" unset_cmd="" common bad=0
+  git -C "$MJ_ROOT" rev-parse --git-dir >/dev/null 2>&1 || return 0
+
+  # 1. an identity a fixture gave itself, in a repository whose history is somebody else's
+  email="$(mj_git config --local --get user.email 2>/dev/null || true)"
+  name="$(mj_git config --local --get user.name 2>/dev/null || true)"
+  if mj_fixture_email "$email"; then fixture="user.email=$email"; unset_cmd="git config --local --unset user.email"; fi
+  if [ "$name" = t ]; then
+    fixture="${fixture:+$fixture, }user.name=$name"
+    unset_cmd="${unset_cmd:+$unset_cmd && }git config --local --unset user.name"
+  fi
+  if [ -n "$fixture" ] && mj_history_by_others; then
+    mj_fail git-config identity \
+      "$fixture in this repository's own configuration is a test fixture's identity, and the history here was written by others: every commit from any worktree of this repository now carries the fixture's name" \
+      "$unset_cmd"
+    bad=1
+  fi
+
+  # 2. a checkout whose shared configuration calls the repository bare
+  common="$(mj_git_repo_id)"
+  if [ "$(mj_git config --local --bool --get core.bare 2>/dev/null || true)" = true ] \
+      && mj_git_dir_of_a_checkout "$common"; then
+    mj_fail git-config core.bare \
+      "true in $common/config, and ${common%/.git} is a checkout with an index: git reads that checkout as a bare repository and refuses every command that needs its files" \
+      "git -C ${common%/.git} config --local core.bare false"
+    bad=1
+  fi
+
+  # 3. paths marked merge=derived and no driver behind the name. Where the policy declares
+  # the driver as an enforcement entry (wired_by: git-config:merge.derived.driver), the
+  # wiring check decides this fact and names the entry's own program; it is not decided a
+  # second time here. This is for the repository that marks the paths and declares no entry.
+  local marked=0 i=0 decided=0 remedy
+  [ -f "$MJ_ROOT/.gitattributes" ] \
+    && marked="$(grep -cE '^[^#[:space:]].*[[:space:]]merge=derived([[:space:]]|$)' "$MJ_ROOT/.gitattributes" || true)"
+  while [ -n "$(mj_pol "enforcement.$i.name")" ]; do
+    [ "$(mj_pol "enforcement.$i.wired_by")" = git-config:merge.derived.driver ] && decided=1
+    i=$((i+1))
+  done
+  if [ "${marked:-0}" -gt 0 ] && [ "$decided" = 0 ] \
+      && [ -z "$(mj_git config --get merge.derived.driver 2>/dev/null || true)" ]; then
+    remedy="git config merge.derived.driver \"<the driver these paths were marked for> %O %A %B %P\""
+    [ -x "$MJ_ROOT/scripts/merge-derived" ] && remedy="git config merge.derived.driver \"$MJ_ROOT/scripts/merge-derived %O %A %B %P\""
+    mj_fail git-config merge.derived.driver \
+      "unset or empty in this clone while .gitattributes marks $marked pattern(s) merge=derived: git falls back to its default merge in silence and conflicts on every one of those paths" \
+      "$remedy"
+    bad=1
+  fi
+
+  [ "$bad" = 0 ] && mj_ok git-config local \
+    "no fixture identity over another author's history, core.bare agrees with the checkout$([ "${marked:-0}" -gt 0 ] && { [ "$decided" = 1 ] && printf ', the merge=derived driver is decided by wiring' || printf ', merge=derived has a driver'; })"
+  return 0
 }
 
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order

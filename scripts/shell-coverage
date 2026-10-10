@@ -39,6 +39,17 @@
 # bin/ is modified, and nothing about the run changes except that it is slower.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# This builds the cases' fixtures itself (below), so it owes what test/run.sh owes them: no
+# variable git reads its repository from reaches a case. Started from a git hook, a fixture
+# would otherwise run its `git init` and `git config` in the repository the hook belongs to.
+# The reasons, and the two variables that stay, are written in test/run.sh; case 1030 holds
+# this script beside it.
+for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX; do
+  case "$mj_git_local" in GIT_CONFIG_PARAMETERS|GIT_CONFIG_COUNT) continue ;; esac
+  unset "$mj_git_local"
+done
+unset mj_git_local
 FILES="session.sh,capture.sh,checkpoint.sh,handover.sh,derive.sh,common.sh,session_context.sh"
 TRACE=""; CASES=""; ALL=0
 while [ $# -gt 0 ]; do

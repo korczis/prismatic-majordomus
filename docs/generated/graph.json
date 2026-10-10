@@ -8282,6 +8282,22 @@
         }
       },
       {
+        "id": "majordomus://claim/fixture-cannot-write-its-repository",
+        "kind": "claim",
+        "label": "fixture-cannot-write-its-repository",
+        "summary": "A suite started from a git hook cannot write the repository the hook belongs to, and doctor names the git configuration such a write leaves behind",
+        "route": "/cockpit/objects/claim/fixture-cannot-write-its-repository",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A suite started from a git hook cannot write the repository the hook belongs to, and doctor names the git configuration such a write leaves behind",
+          "implementation": "test/run.sh",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md",
+          "test": "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/generated-artifacts-typed",
         "kind": "claim",
         "label": "generated-artifacts-typed",
@@ -14150,6 +14166,14 @@
         "summary": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
         "route": "/cockpit/objects/document/docs-claims-finish-refusal-is-recorded-md",
         "source": "docs/claims/finish-refusal-is-recorded.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/fixture-cannot-write-its-repository.md",
+        "kind": "document",
+        "label": "docs/claims/fixture-cannot-write-its-repository.md",
+        "summary": "A suite started from a git hook cannot write the repository the hook belongs to, and doctor names the git configuration such a write leaves behind",
+        "route": "/cockpit/objects/document/docs-claims-fixture-cannot-write-its-repository-md",
+        "source": "docs/claims/fixture-cannot-write-its-repository.md"
       },
       {
         "id": "majordomus://document/docs/claims/generated-artifacts-typed.md",
@@ -30346,6 +30370,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I2293",
+        "kind": "issue",
+        "label": "I2293",
+        "summary": "A fixture never writes the repository it runs in, and doctor names a poisoned git config",
+        "route": "/cockpit/objects/issue/i2293",
+        "source": ".ai/repo/project/issues/I2293.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "depends_on": [],
+          "evidence_required": [
+            "fixture_cannot_write_case",
+            "doctor_names_poisoned_config_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A pre-push plan runner; that is the unmerged branch the incident came from",
+            "Repairing a poisoned configuration; doctor names it and the person repairs",
+            "Detecting refs a fixture moved or left behind",
+            "The crate's tests under cargo test",
+            "A version bump"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/run.sh",
+            "scripts/ci/run-plan",
+            "scripts/shell-coverage",
+            "lib/doctor.sh",
+            "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+            "test/cases/1031_doctor_names_a_poisoned_git_config.sh",
+            "docs/CLAIMS.yaml",
+            "docs/claims/fixture-cannot-write-its-repository.md"
+          ],
+          "slug": "a-fixture-never-writes-the-repository-it-runs-in",
+          "started_at": "2026-10-10T16:30:50Z",
+          "started_event": "sha256:de9217e371f4a473771f3a409137eaedbc68d3db9cf8402a29b142039e010bdf",
+          "updated_at": "2026-10-10T16:30:50Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 1030_a_fixture_cannot_write_the_repository_it_runs_in",
+            "bash test/run.sh 1031_doctor_names_a_poisoned_git_config",
+            "scripts/ci/claim-proof-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42906,6 +42977,20 @@
         "label": "test/cases/102_completion_shell.sh",
         "route": "/cockpit/objects/test/test-cases-102-completion-shell-sh",
         "source": "test/cases/102_completion_shell.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+        "kind": "test",
+        "label": "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+        "route": "/cockpit/objects/test/test-cases-1030-a-fixture-cannot-write-the-repository-it-runs-in-sh",
+        "source": "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1031_doctor_names_a_poisoned_git_config.sh",
+        "kind": "test",
+        "label": "test/cases/1031_doctor_names_a_poisoned_git_config.sh",
+        "route": "/cockpit/objects/test/test-cases-1031-doctor-names-a-poisoned-git-config-sh",
+        "source": "test/cases/1031_doctor_names_a_poisoned_git_config.sh"
       },
       {
         "id": "majordomus://test/test/cases/103_obligations.sh",
@@ -56493,6 +56578,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/fixture-cannot-write-its-repository",
+        "target": "file:test/run.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/fixture-cannot-write-its-repository",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/fixture-cannot-write-its-repository",
+        "target": "majordomus://rule/project.tests-run-in-disposable-repos@1",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/fixture-cannot-write-its-repository",
+        "target": "majordomus://test/test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/generated-artifacts-typed",
         "target": "file:apps/majordomus-cli/src/generate.rs",
         "kind": "implemented_by"
@@ -60944,6 +61049,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/finish-refusal-is-recorded.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/fixture-cannot-write-its-repository.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66478,6 +66588,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2293",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2293",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69554,6 +69674,16 @@
       },
       {
         "source": "majordomus://test/test/cases/102_completion_shell.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1031_doctor_names_a_poisoned_git_config.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75259,8 +75389,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2490,
-      "edges": 5442,
+      "nodes": 2495,
+      "edges": 5451,
       "acyclic": false,
       "truncated": false
     }

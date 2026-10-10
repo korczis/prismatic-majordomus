@@ -50,6 +50,24 @@
 # `git status` of the checkout changed, the run fails naming the paths.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# A case builds repositories of its own, and git tells a hook which repository it is in
+# through the environment: a pre-push hook run from a linked worktree gets GIT_DIR. A fixture
+# that inherits it runs `git init`, `git branch -M`, `git commit`, `git config` and `git tag`
+# in the repository the suite was started from. On 2026-10-10 that renamed a feature branch
+# to master, moved master and gh-pages onto fixture commits, and left a fixture identity and
+# core.bare=true in the configuration every worktree shares. So every variable git reads its
+# repository from is dropped here, before a case can run: the ones git itself names, and
+# five by name for a git too old to list them. The two that carry `git -c` settings stay,
+# as they do when git enters another repository itself: they name no repository, and
+# test/lib.sh keeps a case's git quiet through them. Case 1030 holds this and removes it to
+# show what it prevents; scripts/ci/run-plan does the same for the gates it dispatches.
+for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX; do
+  case "$mj_git_local" in GIT_CONFIG_PARAMETERS|GIT_CONFIG_COUNT) continue ;; esac
+  unset "$mj_git_local"
+done
+unset mj_git_local
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.

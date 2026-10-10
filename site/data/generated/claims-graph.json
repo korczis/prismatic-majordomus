@@ -2148,6 +2148,15 @@
       "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
     },
     {
+      "id": "claim:fixture-cannot-write-its-repository",
+      "kind": "claim",
+      "label": "A suite started from a git hook cannot write the repository the hook belongs to, and doctor names the git configuration such a write leaves behind",
+      "status": "guaranteed",
+      "route": "/guarantees/fixture-cannot-write-its-repository/",
+      "external": false,
+      "note": "test/run.sh, scripts/ci/run-plan and scripts/shell-coverage drop every variable git reads its repository from before a case or a gate starts; the case pushes from a linked worktree through a real pre-push hook, compares the pushed repository byte for byte, and then removes the guard from a copy of each script to show the fixture renaming the pushed branch and marking the repository bare. The doctor finding is lib/doctor.sh and test/cases/1031_doctor_names_a_poisoned_git_config.sh."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -3100,6 +3109,13 @@
       "external": false
     },
     {
+      "id": "source:.ai/repo/rules/project/tests-run-in-disposable-repos.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/rules/project/web-surface-declared-once.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/web-surface-declared-once.v1.md",
@@ -3560,6 +3576,13 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+      "kind": "test",
+      "label": "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh"
     },
     {
       "id": "test:test/cases/103_obligations.sh",
@@ -5533,6 +5556,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:fixture-cannot-write-its-repository",
+      "target": "source:.ai/repo/rules/project/tests-run-in-disposable-repos.v1.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -6658,6 +6686,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:fixture-cannot-write-its-repository",
+      "target": "impl:test/run.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -7780,6 +7813,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:fixture-cannot-write-its-repository",
+      "target": "test:test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
       "kind": "proved_by"
     }
   ]

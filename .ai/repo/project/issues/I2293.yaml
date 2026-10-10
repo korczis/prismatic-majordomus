@@ -1,0 +1,45 @@
+id: I2293
+milestone: test-evidence
+title: "A fixture never writes the repository it runs in, and doctor names a poisoned git config"
+slug: a-fixture-never-writes-the-repository-it-runs-in
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the suite's runner, the gate dispatcher and the coverage harness drop git's hook environment before anything they start can run, and give doctor one finding that fails on the git configuration a fixture leaves in a real repository."
+why: "On 2026-10-10 at 07:27Z a pre-push hook on an unmerged branch ran the suite's cases while git's hook environment was still exported. The cases' fixtures (`git init`, `git branch -M master`, `git commit`, `git config user.email t@example.com`, `git worktree add`, `git tag`) acted on the repository being pushed: the branch was renamed to master, the local master and gh-pages were moved onto fixture commits, branches and a tag were left behind, and the shared .git/config got user.name=t, user.email=t@example.com and core.bare=true, while merge.derived lost its driver command. Nothing reported it for an hour, and sessions committed under the fixture's identity in the meantime. The rule project.tests-run-in-disposable-repos was true only while every caller started test/run.sh from a clean environment. The owner's order is that this cannot happen again and that tests cover it."
+current_state: "test/run.sh, scripts/ci/run-plan and scripts/shell-coverage pass GIT_DIR and its siblings through to every case and gate. lib/common.sh drops four of them for the tool itself, after it has resolved its repository, which protects nothing a case does with git directly. doctor reads no identity and no core.bare; in a checkout whose configuration says bare it ends at `not inside a git repository` like every other command."
+desired_state: "A case or a gate started from inside a git hook acts on its own fixture: the three scripts unset every variable `git rev-parse --local-env-vars` names except the two that carry `git -c` settings, and five by name. `majordomus doctor` fails, with the command that undoes it, on a fixture identity in a repository whose history is another author's, on core.bare=true in a checkout (also from that checkout itself), and on paths marked merge=derived with no driver where the wiring check does not already decide it. doctor writes nothing. The guarantee is published as the claim fixture-cannot-write-its-repository."
+scope:
+  - "test/run.sh"
+  - "scripts/ci/run-plan"
+  - "scripts/shell-coverage"
+  - "lib/doctor.sh"
+  - "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh"
+  - "test/cases/1031_doctor_names_a_poisoned_git_config.sh"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/fixture-cannot-write-its-repository.md"
+non_scope:
+  - "A pre-push plan runner; that is the unmerged branch the incident came from"
+  - "Repairing a poisoned configuration; doctor names it and the person repairs"
+  - "Detecting refs a fixture moved or left behind"
+  - "The crate's tests under cargo test"
+  - "A version bump"
+depends_on: []
+acceptance_criteria:
+  - "A suite started by a real pre-push hook in a push from a linked worktree leaves the pushed repository byte-identical: refs, both HEADs, the worktree list, the configuration and the files of both checkouts"
+  - "The same holds with GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_COMMON_DIR and GIT_PREFIX exported by hand, for a gate of scripts/ci/run-plan and for a case run by scripts/shell-coverage"
+  - "With the unset removed from a copy of each script the same run writes the repository it was started from, and the case says so"
+  - "doctor exits non-zero and names each of the three states with a command that removes the finding when run as printed"
+  - "doctor reads OK for a fixture whose every commit is a fixture's, for an owner's own identity and for a repository that is bare on purpose, and the configuration is byte-identical after every reading"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 1030_a_fixture_cannot_write_the_repository_it_runs_in"
+  - "bash test/run.sh 1031_doctor_names_a_poisoned_git_config"
+  - "scripts/ci/claim-proof-check"
+evidence_required:
+  - "fixture_cannot_write_case"
+  - "doctor_names_poisoned_config_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10T16:30:50Z
+started_at: 2026-10-10T16:30:50Z
+started_event: sha256:de9217e371f4a473771f3a409137eaedbc68d3db9cf8402a29b142039e010bdf

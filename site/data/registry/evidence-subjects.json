@@ -1384,6 +1384,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:fixture-cannot-write-its-repository",
+      "path": "/evidence/claims/fixture-cannot-write-its-repository/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:generated-artifacts-typed",
       "path": "/evidence/claims/generated-artifacts-typed/"
     },
@@ -7635,6 +7640,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:fixture-cannot-write-its-repository": {
+      "kind": "claim",
+      "id": "fixture-cannot-write-its-repository",
+      "status": "guaranteed",
+      "page": "/evidence/claims/fixture-cannot-write-its-repository/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1030_a_fixture_cannot_write_the_repository_it_runs_in",
+          "path": "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh",
+          "category": "e2e",
+          "inputs": [
+            ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md",
+            "test/run.sh",
+            "test/cases/1030_a_fixture_cannot_write_the_repository_it_runs_in.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:generated-artifacts-typed": {
       "kind": "claim",
       "id": "generated-artifacts-typed",
@@ -12679,6 +12707,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:1031_doctor_names_a_poisoned_git_config",
+          "path": "test/cases/1031_doctor_names_a_poisoned_git_config.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:130_mesh",
           "path": "test/cases/130_mesh.sh",
           "category": "e2e"
@@ -12819,6 +12853,12 @@
           "via": "negative",
           "test": "suite:03_update",
           "path": "test/cases/03_update.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1031_doctor_names_a_poisoned_git_config",
+          "path": "test/cases/1031_doctor_names_a_poisoned_git_config.sh",
           "category": "e2e"
         },
         {
