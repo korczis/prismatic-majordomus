@@ -151,9 +151,26 @@ Trusted: GitHub Pages serving the metadata, GitHub Releases serving the artifact
 pipeline that produced both. Checksums bind an artifact to its metadata; they do not, by
 themselves, prove who wrote the metadata.
 
-Deferred, deliberately: signed provenance (GitHub artifact attestations, Sigstore). It is
-worth adding and it is not claimed here, because a security document that describes
-protections it does not have is worse than one that is short.
+**Provenance, where it can be checked.** The release workflow attests every archive it
+publishes (GitHub artifact attestations, signed with the workflow run's identity), so an
+archive can be traced to this repository's release workflow at its tag. An attestation is
+found by the archive's digest, which means GitHub answers a release published before
+attestations began and an archive that is not the one the workflow built in the same way:
+no attestation for that digest. What each path verifies:
+
+| path | checksum (SHA-256 and size) | provenance (attestation) |
+|---|---|---|
+| `curl … \| sh`, the GitHub CLI installed and signed in | always, fatal on mismatch | asked; a refusal is reported and the install continues on the checksum |
+| the same, with `MAJORDOMUS_REQUIRE_PROVENANCE=1` | always, fatal on mismatch | required; anything short of a verified attestation installs nothing |
+| `curl … \| sh` without the GitHub CLI, or signed out | always, fatal on mismatch | not checked, and the closing report says so |
+| a plain-HTTP fixture origin (the installer's own tests) | always, fatal on mismatch | not checked: no attestation describes a fixture |
+| by hand: `gh attestation verify <archive> --repo korczis/prismatic-majordomus` | `SHA256SUMS` beside the release | yes |
+
+The installer's closing report names which it verified under `Verified:` — `provenance (…)
+and checksum`, or `checksum only — provenance not verified: <why>`. Provenance is not fatal
+by default because a refusal cannot be told apart from an older release; it becomes fatal on
+request. Not claimed: a signature over the metadata itself, or any check of a release older
+than its attestations.
 
 ## Releasing
 
@@ -206,8 +223,9 @@ smoke    scripts/ci/install-check --expect <tag>: the published installer, from 
          target it was built for; no step of it swallows a failure
 ```
 
-Only `publish` has `contents: write`. Nothing else in the run can write anything; `plan`
-reads check-runs (`checks: read`) and nothing more.
+Only `publish` has `contents: write`, and with it the `id-token` and `attestations` writes
+that attest its archives. Nothing else in the run can write anything; `plan` reads
+check-runs (`checks: read`) and nothing more.
 
 A release follows the verdict. v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were published from commits
 whose `ci` check-run concluded failure, because the pipeline asked only whether the tag agreed
