@@ -1,7 +1,7 @@
 +++
 title = "A provider capability is declared once, with the citation it was verified from"
 description = "A provider capability is declared once, with the citation it was verified from"
-weight = 64
+weight = 65
 [extra]
 kind = "rule"
 slug = "project-a-provider-capability-cites-its-evidence-1"
