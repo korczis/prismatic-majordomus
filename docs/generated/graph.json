@@ -30259,6 +30259,38 @@
         }
       },
       {
+        "id": "majordomus://issue/I2282",
+        "kind": "issue",
+        "label": "I2282",
+        "summary": "The record pull request's dispatched verdict does not satisfy branch protection",
+        "route": "/cockpit/objects/issue/i2282",
+        "source": ".ai/repo/project/issues/I2282.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "record_pull_request_mergeable_without_reopen",
+            "distribution_claims_match_pipeline"
+          ],
+          "milestone": "test-evidence",
+          "objective": "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "docs/DISTRIBUTION.md",
+            "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+            ".ai/repo/ci/release.yaml"
+          ],
+          "slug": "the-record-dispatch-is-not-a-verdict",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 996"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -66235,6 +66267,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2282",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2282",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -74976,8 +75018,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2482,
+      "edges": 5431,
       "acyclic": false,
       "truncated": false
     }
