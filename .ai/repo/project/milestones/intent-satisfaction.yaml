@@ -1,0 +1,47 @@
+id: intent-satisfaction
+title: Satisfaction is explained, and held to the invariants
+slug: intent-satisfaction
+order: 130
+priority: p1
+problem: "A criterion's state and an intent's verdict are derived from current evidence (ADR 0107), and the derivation throws away its reasons: the judgement names the inputs that changed and the engine keeps only one word. Every criterion blocks the verdict; an intent cannot say one is optional. And the invariants are prose: they are printed to the worker and judged by nothing, so an intent reads satisfied while what it said must stay true has stopped being true."
+outcome: "Each judged criterion carries an evaluation a reader can check. A criterion may be optional. An intent may declare guards, invariants that name their evidence, and a failing one makes the verdict unsatisfied, naming it."
+current_state: "IntentCriterion carries state, met, proof and reproduce. TestStanding drops Judgement.changed and Judgement.detail. The criterion schema has no optional key. IntentRecord.invariants is a list of strings nothing evaluates."
+desired_state: "The engine's own judgement travels with the criterion; the verdict counts required criteria and judged invariants; intent show, intent explain, the binding and the opposition print what the engine answered."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/intent_opposition.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/intent_review.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - site
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests
+  - share/schemas/majordomus/intent
+  - share/allow
+  - lib
+  - .ai/repo/project
+  - .ai/repo/adrs
+  - docs
+  - test/cases
+non_scope:
+  - Command and deployment evidence
+  - The finish contract
+acceptance_criteria:
+  - "Every criterion carries its evaluation on every surface"
+  - "An optional criterion does not hold the verdict back"
+  - "A failing guard makes the verdict unsatisfied, and one not judged violates nothing"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent_satisfaction
+  - bash test/run.sh 965_a_failing_guard_keeps_an_intent_unsatisfied
+evidence_required: []
+depends_on: []
+risks:
+  - "IntentView is read by the binding, the opposition, the Cockpit and the realization; a changed field shape breaks every reader at once, so new facts are added beside what exists."
+  - "The records, the ADR and the tests they name land in one pull request and one commit to the trunk."
+  - "Every changed line owes an in-process test (project.new-code-is-covered)."
+created_at: 2026-10-08
+updated_at: 2026-10-08

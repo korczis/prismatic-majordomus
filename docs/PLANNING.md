@@ -189,6 +189,49 @@ intent — legitimate operational work, stated as such and never given an invent
 and warns on `intent_not_planned` (no live issue under any milestone it names — where every
 intent starts), `criterion_weakly_covered`, `duplicate_work` and `milestone_contributes_nothing`.
 
+### Satisfaction: explained, optional criteria, and guards
+
+Three things sit beside the verdict (ADR 0113), each derived on every read and stored nowhere.
+
+**The evaluation.** A criterion whose test or claim has a recorded run carries the run that
+decided it — commit, working tree, outcome, time — the inputs that changed since, and the
+evidence module's own sentence. `intent show` prints it under the criterion and `intent
+explain` says it in a sentence. A criterion nothing ran for carries none.
+
+**Optional criteria.** `optional: true` on a criterion keeps it out of the verdict, out of
+`met` and out of the `satisfied` stage; the intent's `optional` says how many there are.
+
+| | required | optional |
+|---|---|---|
+| the verdict and its reasons | counted | not counted |
+| no work serves it | `criterion_uncovered`, a failure | `optional_criterion_uncovered`, a warning |
+| a recorded gap | must answer it | must answer it |
+
+An intent whose criteria are all optional requires nothing, and is refused:
+`intent_without_required_criterion`.
+
+**Guards.** An invariant is a sentence; a guard is an invariant that names its evidence:
+
+```yaml
+guards:
+  - id: engines-stay-identical
+    invariant: The awk plan engine and the Rust plan engine report the same findings
+    evidence: test
+    ref: test/cases/99_plan_capabilities.sh
+```
+
+| the guard's evidence is | the guard |
+|---|---|
+| `failing` | is violated: the verdict is `unsatisfied` and names it in `verdict.guards`, whatever the criteria and the milestones say |
+| `current` | holds |
+| stale, never run, unresolved | is not judged, and violates nothing |
+
+Only a failing run violates a guard, because nothing serves a guard and its evidence would
+read stale after any unrelated change. A guard's id may not repeat a criterion's. A violated
+guard does not refuse work from starting: the work that starts may be the repair. A review
+(below) covers both — making a criterion optional, or adding or changing a guard, makes a
+stamped critique stale.
+
 ### The gap and the critique
 
 Planning starts from two records rather than from a prompt, so that what a worker observed and

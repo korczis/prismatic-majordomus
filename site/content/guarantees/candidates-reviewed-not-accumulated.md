@@ -1,7 +1,7 @@
 +++
 title = "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy"
 description = "The review queue is measured. doctor prints WARN knowledge and exits 0 when more records under candidates/ carry status: candidate than knowledge.candidates_max_files, when a candidate has waited longer than knowledge.candidate_max_age_minutes, or when a candidate is present on disk and not tracked by version control. Each finding names the paths. Both numbers are declared once in .ai/repo/policy.yaml and read by every surface, and a policy that declares neither is reported at the rule's own class, naming the missing key."
-weight = 234
+weight = 236
 [extra]
 claim_id = "candidates-reviewed-not-accumulated"
 status = "guaranteed"

@@ -24048,6 +24048,14 @@ components:
             - string
             - "null"
           description: "The command that produces the evidence again, when one is known."
+        optional:
+          type: boolean
+          description: "Whether the intent declares it optional: shown and evaluated like any other, and\nholding neither the verdict nor the satisfied stage back. Absent when it is required."
+        evaluation:
+          anyOf:
+            - "$ref": "#/components/schemas/IntentEvaluation"
+            - type: "null"
+          description: "The run its evidence was judged by, and what the judgement said; absent when nothing\nwas judged — the evidence never ran, or is of a kind the ledger does not record."
       required:
         - id
         - criterion
@@ -24055,7 +24063,7 @@ components:
         - ref
         - state
         - met
-      description: "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    proof: Some(ProofState::NotRun),\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
+      description: "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    proof: Some(ProofState::NotRun),\n    reproduce: None,\n    optional: false,\n    evaluation: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
     IntentEpisode:
       type: object
       properties:
@@ -24069,6 +24077,37 @@ components:
           type: string
           description: "The provider's own session identity, when recorded."
       description: "One execution episode of a piece of work, and the provider that ran it when a record says.\nA provider is never guessed: an episode opened by hand has none.\n\n```\nuse majordomus_cli::intent_realization::IntentEpisode;\nlet e = IntentEpisode {\n    session: \"s-1\".into(),\n    provider: \"codex\".into(),\n    provider_session: String::new(),\n};\nassert_eq!(e.provider, \"codex\");\n```"
+    IntentEvaluation:
+      type: object
+      properties:
+        commit:
+          type: string
+          description: The commit the run was recorded at.
+        working_tree:
+          type: string
+          description: "The state of the working tree it ran over: `clean`, `dirty` or `unknown`."
+        outcome:
+          type: string
+          description: "What the run reported: `pass`, `fail`, `skip`, `timeout` or `error`."
+        at:
+          type: string
+          description: When it was recorded.
+        changed:
+          type: array
+          items:
+            type: string
+          description: "The inputs of the evidence that changed since the run; empty when none did or the\ncomparison could not be made."
+        detail:
+          type:
+            - string
+            - "null"
+          description: "The evidence module's own sentence for its judgement, when it gave one."
+      required:
+        - commit
+        - working_tree
+        - outcome
+        - at
+      description: "What a criterion's or a guard's evidence was judged by: the latest recorded run, and what\nthe evidence module said of it. Derived with the state it explains and stored nowhere\n(ADR 0113). \"Considered\" is one run — the latest — because that is the only one the\njudgement reads.\n\n```\nuse majordomus_cli::intent::IntentEvaluation;\nlet e = IntentEvaluation {\n    commit: \"abc1234\".into(), working_tree: \"clean\".into(), outcome: \"pass\".into(),\n    at: \"2026-10-08T00:00:00Z\".into(), changed: vec![\"lib/a.sh\".into()],\n    detail: Some(\"an input changed since the run\".into()),\n};\nassert_eq!(serde_json::to_value(&e).unwrap()[\"changed\"][0], \"lib/a.sh\");\n```"
     IntentEvidenceState:
       oneOf:
         - type: string
@@ -24146,6 +24185,45 @@ components:
         - message
         - reproduce
       description: "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
+    IntentGuard:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Unique within the intent, and never a criterion's id."
+        invariant:
+          type: string
+          description: What must stay true.
+        evidence:
+          type: string
+          description: "`test` or `claim`."
+        ref:
+          type: string
+          description: The test or the claim.
+        state:
+          "$ref": "#/components/schemas/IntentEvidenceState"
+          description: The state of its evidence now.
+        violated:
+          type: boolean
+          description: "Whether it is violated: its evidence is failing."
+        reproduce:
+          type:
+            - string
+            - "null"
+          description: "The command that runs its evidence, when there is one."
+        evaluation:
+          anyOf:
+            - "$ref": "#/components/schemas/IntentEvaluation"
+            - type: "null"
+          description: The run it was judged by; absent when nothing was judged.
+      required:
+        - id
+        - invariant
+        - evidence
+        - ref
+        - state
+        - violated
+      description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```"
     IntentLink:
       type: object
       properties:
@@ -24483,6 +24561,11 @@ components:
           items:
             type: string
           description: What must stay true.
+        guards:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentGuard"
+          description: "The guards of the intent, each judged: the invariants that name their evidence\n(ADR 0113). Absent when the intent declares none."
         non_goals:
           type: array
           items:
@@ -24512,7 +24595,7 @@ components:
         - invariants
         - non_goals
         - governance
-      description: "One intent the work is held to, with what a worker needs before touching it: the statement,\nthe criteria the work serves with the live state of their evidence, the invariants and\nnon-goals, the governance, the critique and the gap. Only the intents the work reaches are\ncarried, never every intent.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIntent, IntentStage};\nlet i = IntentPreflightIntent {\n    id: \"x\".into(),\n    title: \"X\".into(),\n    stage: IntentStage::Planned,\n    statement: \"It becomes true.\".into(),\n    criteria: vec![],\n    invariants: vec![],\n    non_goals: vec![],\n    governance: vec![],\n    critique: None,\n    gap: None,\n};\n// no critique recorded is carried as an absence, never as an empty review\nassert!(i.critique.is_none());\n```"
+      description: "One intent the work is held to, with what a worker needs before touching it: the statement,\nthe criteria the work serves with the live state of their evidence, the invariants and\nnon-goals, the governance, the critique and the gap. Only the intents the work reaches are\ncarried, never every intent.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIntent, IntentStage};\nlet i = IntentPreflightIntent {\n    id: \"x\".into(),\n    title: \"X\".into(),\n    stage: IntentStage::Planned,\n    statement: \"It becomes true.\".into(),\n    criteria: vec![],\n    invariants: vec![],\n    guards: vec![],\n    non_goals: vec![],\n    governance: vec![],\n    critique: None,\n    gap: None,\n};\n// no critique recorded is carried as an absence, never as an empty review\nassert!(i.critique.is_none());\n```"
     IntentPreflightIssue:
       type: object
       properties:
@@ -24803,11 +24886,33 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/IntentVerdictReason"
-          description: "Every criterion that is not met, with the state of its evidence."
+          description: "Every required criterion that is not met, with the state of its evidence."
+        guards:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentVerdictGuard"
+          description: "Every guard that is violated: its evidence is failing (ADR 0113). Absent when none\nis, so a verdict over an intent with no guards reads as it always did."
       required:
         - state
         - reasons
       description: "Whether the evidence alone settles an intent, and which criteria hold it back: every\nunmet criterion, in the order the record declares them. Empty when the verdict is\n`satisfied`, and when it is `unknown` because the intent declares no criterion.\n\n```\nuse majordomus_cli::intent::{verdict, IntentVerdict, IntentVerdictState};\n// an intent that declares no criterion cannot be settled by evidence\nlet v: IntentVerdict = verdict(&[]);\nassert_eq!(v.state, IntentVerdictState::Unknown);\nassert!(v.reasons.is_empty());\n```"
+    IntentVerdictGuard:
+      type: object
+      properties:
+        guard:
+          type: string
+          description: "The guard's id."
+        evidence:
+          type: string
+          description: "`test` or `claim`."
+        state:
+          "$ref": "#/components/schemas/IntentEvidenceState"
+          description: "The state of its evidence: `failing`, or it would not be here."
+      required:
+        - guard
+        - evidence
+        - state
+      description: "One violated guard in a verdict: which, the kind of its evidence, and its state.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentVerdictGuard};\nlet g = IntentVerdictGuard {\n    guard: \"engines-agree\".into(),\n    evidence: \"test\".into(),\n    state: IntentEvidenceState::Failing,\n};\nassert_eq!(serde_json::to_value(&g).unwrap()[\"state\"], \"failing\");\n```"
     IntentVerdictReason:
       type: object
       properties:
@@ -24872,6 +24977,16 @@ components:
           format: uint
           minimum: 0
           description: "Derived: how many criteria are met."
+        optional:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many criteria are optional; `met` and the verdict are over the others. Absent\nwhen none is."
+        guards:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentGuard"
+          description: "The guards, each judged. Absent when the intent declares none."
         verdict:
           "$ref": "#/components/schemas/IntentVerdict"
           description: "Derived from the criteria alone, never from the plan: whether the evidence settles the\nintent, and which criteria hold it back."
@@ -24906,7 +25021,7 @@ components:
         - governance
         - non_goals
         - source
-      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, the stage that follows from both, and the verdict that\nfollows from the evidence alone.\n\n```\nuse majordomus_cli::intent::{verdict, IntentStage, IntentVerdictState, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    verdict: verdict(&[]),\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n// and one declaring no criterion cannot be settled by evidence\nassert_eq!(view.verdict.state, IntentVerdictState::Unknown);\n```"
+      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, the stage that follows from both, and the verdict that\nfollows from the evidence alone.\n\n```\nuse majordomus_cli::intent::{verdict, IntentStage, IntentVerdictState, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    optional: 0,\n    guards: vec![],\n    verdict: verdict(&[]),\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n// and one declaring no criterion cannot be settled by evidence\nassert_eq!(view.verdict.state, IntentVerdictState::Unknown);\n```"
     IntentWorkKind:
       oneOf:
         - type: string

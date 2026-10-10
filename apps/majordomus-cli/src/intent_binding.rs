@@ -931,18 +931,44 @@ fn plan_revision(
                 // new is not a change to what the work is for
                 json!({ "findings": findings })
             });
-            let intent = json!({
+            let criteria: Vec<serde_json::Value> = i
+                .criteria
+                .iter()
+                .map(|c| {
+                    let mut criterion = json!({
+                        "id": c.id,
+                        "criterion": c.criterion,
+                        "evidence": c.evidence,
+                        "ref": c.reference,
+                    });
+                    // only where the record says it, so a pin taken before the key existed
+                    // is still the pin of the same plan
+                    if c.optional {
+                        criterion["optional"] = json!(true);
+                    }
+                    criterion
+                })
+                .collect();
+            let mut intent = json!({
                 "statement": i.statement,
                 "invariants": i.invariants,
                 "non_goals": i.non_goals,
-                "criteria": i.criteria.iter().map(|c| json!({
-                    "id": c.id,
-                    "criterion": c.criterion,
-                    "evidence": c.evidence,
-                    "ref": c.reference,
-                })).collect::<Vec<_>>(),
+                "criteria": criteria,
                 "critique": critique,
             });
+            if !i.guards.is_empty() {
+                let guards: BTreeMap<&str, serde_json::Value> = i
+                    .guards
+                    .iter()
+                    .map(|g| {
+                        (
+                            g.id.as_str(),
+                            json!({ "invariant": g.invariant, "evidence": g.evidence, "ref": g.reference }),
+                        )
+                    })
+                    .collect();
+                intent["guards"] = json!(guards);
+            }
             (i.id.as_str(), intent)
         })
         .collect();
@@ -968,9 +994,18 @@ fn evidence_standing(pre: &IntentPreflight) -> String {
         .intents
         .iter()
         .flat_map(|i| {
+            // a guard is in the standing only while it is violated: that is the one change
+            // of a guard a resumed worker must be told of, and an intent with no violated
+            // guard keeps the standing it had before guards existed (ADR 0113)
             i.criteria
                 .iter()
                 .map(move |c| format!("{}#{}={}", i.id, c.id, c.state.as_str()))
+                .chain(
+                    i.guards
+                        .iter()
+                        .filter(|g| g.violated)
+                        .map(move |g| format!("{}!{}=violated", i.id, g.id)),
+                )
         })
         .collect();
     sha256_hex(&states.into_iter().collect::<Vec<_>>().join("\n"))

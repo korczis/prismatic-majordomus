@@ -1,7 +1,7 @@
 +++
 title = "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped"
 description = "majordomus evidence record --crate-output <file> reads what cargo test printed and"
-weight = 240
+weight = 242
 [extra]
 claim_id = "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass"
 status = "guaranteed"

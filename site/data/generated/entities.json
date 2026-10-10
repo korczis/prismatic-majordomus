@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 86,
+      "count": 87,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 86
+      "count": 87
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 237
+      "count": 239
     },
     {
       "kind": "command",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 3
+      "count": 4
     },
     {
       "kind": "deployment",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 329
     },
     {
       "kind": "domain",
@@ -141,7 +141,7 @@
       "route": null,
       "title": null,
       "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-      "count": 3
+      "count": 4
     },
     {
       "kind": "implementation",
@@ -157,7 +157,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 4
+      "count": 5
     },
     {
       "kind": "issue",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 272
+      "count": 275
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "moment",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 412
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -4080,6 +4080,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0112/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0113",
+          "kind": "adr",
+          "route": "/adrs/adr-0113/",
+          "external": false
         }
       ]
     },
@@ -6175,6 +6182,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0111/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0113",
+          "kind": "adr",
+          "route": "/adrs/adr-0113/",
+          "external": false
         }
       ]
     },
@@ -6468,6 +6482,89 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0113",
+          "kind": "adr",
+          "route": "/adrs/adr-0113/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0113",
+      "identity": "adr-0113",
+      "slug": "adr-0113",
+      "cockpit": "/cockpit/objects/adr/adr-0113",
+      "title": "Satisfaction is explained by the run that was judged, an optional criterion holds nothing back, and a failing guard keeps an intent unsatisfied",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "evidence",
+        "satisfaction",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0113-satisfaction-is-explained-and-held-to-its-guards.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0112",
+          "kind": "adr",
+          "route": "/adrs/adr-0112/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "intent-satisfaction",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.completion-never-decides-satisfaction@2",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -10029,6 +10126,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0107/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0113",
+          "kind": "adr",
+          "route": "/adrs/adr-0113/",
+          "external": false
         }
       ]
     },
@@ -10279,6 +10383,13 @@
           "label": "adr-0112",
           "kind": "adr",
           "route": "/adrs/adr-0112/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0113",
+          "kind": "adr",
+          "route": "/adrs/adr-0113/",
           "external": false
         },
         {

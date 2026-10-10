@@ -447,19 +447,37 @@ pub fn reviewed_plan(
             .satisfaction
             .iter()
             .map(|c| {
-                (
-                    c.id.as_str(),
-                    json!({ "criterion": c.criterion, "evidence": c.evidence, "ref": c.reference }),
-                )
+                let mut criterion =
+                    json!({ "criterion": c.criterion, "evidence": c.evidence, "ref": c.reference });
+                // only where the record says it, so a review stamped before the key
+                // existed keeps the revision it was stamped with
+                if c.optional {
+                    criterion["optional"] = json!(true);
+                }
+                (c.id.as_str(), criterion)
             })
             .collect();
-        json!({
+        let mut intent = json!({
             "id": i.id,
             "statement": i.statement,
             "invariants": i.invariants,
             "non_goals": i.non_goals,
             "criteria": criteria,
-        })
+        });
+        if !i.guards.is_empty() {
+            let guards: BTreeMap<&str, serde_json::Value> = i
+                .guards
+                .iter()
+                .map(|g| {
+                    (
+                        g.id.as_str(),
+                        json!({ "invariant": g.invariant, "evidence": g.evidence, "ref": g.reference }),
+                    )
+                })
+                .collect();
+            intent["guards"] = json!(guards);
+        }
+        intent
     });
     let issues: BTreeMap<&str, serde_json::Value> = issues
         .iter()

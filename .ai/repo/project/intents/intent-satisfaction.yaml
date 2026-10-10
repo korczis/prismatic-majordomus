@@ -1,0 +1,39 @@
+id: intent-satisfaction
+title: Whether an intent is satisfied is explained by the evidence that was judged, and held to what must stay true
+statement: "A reader who asks why a criterion is or is not met is shown the evidence the engine judged, the run and the tree it was judged at, what made it stale or failing, and the rule that judged it; a criterion the intent declares optional does not hold the verdict back; and an intent may declare guards — invariants that name their evidence — which the same engine judges, so an intent whose guard is failing is not satisfied whatever its criteria say."
+invariants:
+  - One engine decides a criterion's state, an invariant's state and the verdict; every surface reads its answer and none recomputes it
+  - Nothing about satisfaction is stored; an evaluation is derived on every read from the evidence ledger and the tree
+  - The freshness judgement stays the evidence module's; the intent engine reports it and adds no second table
+  - A plain-text invariant and a criterion without the new keys mean exactly what they meant, and an intent record written before this intent reads exactly as it did
+  - The stage takes whether the evidence is satisfied from the one verdict; nothing derives it a second time
+  - A review stamped before a criterion became optional or a guard changed does not stand: both are part of the plan a review judges
+milestones:
+  - intent-satisfaction
+satisfaction:
+  - id: evaluation-is-explained
+    criterion: A criterion whose evidence was judged carries its evaluation — the latest recorded run with its commit, working tree, outcome and time, the inputs that changed since, and the reason the judgement gave — for a test and for a claim, alike on the command line, HTTP and MCP, and a criterion nothing ran for carries none
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_satisfaction.rs
+  - id: optional-criterion-does-not-block
+    criterion: A criterion declared optional is evaluated and shown like any other, holds neither the verdict nor the satisfied stage back, is counted apart from the required ones, and is a warning rather than a refusal when no work covers it; an intent with no required criterion is refused by intent validate
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_satisfaction.rs
+  - id: guard-is-judged
+    criterion: A guard is judged by the same engine as a criterion; an intent with a failing guard is unsatisfied naming it, although every criterion is met and every milestone is DONE; a guard whose evidence is stale, was never run or does not resolve is named as not judged and violates nothing
+    evidence: test
+    ref: test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh
+governance:
+  - rule:project.derived-once
+  - rule:project.completion-never-decides-satisfaction
+  - adr:adr-0070
+  - adr:adr-0107
+  - adr:adr-0113
+non_goals:
+  - Settling a command or deployment criterion; the ledger records runs of tests and claims, and that claim stays planned
+  - Deciding at finish whether a task may be called completed; that is the completion milestone
+  - Evaluating a plain-text invariant; prose names no evidence, and is judged only once it is written as a guard
+  - Showing evaluations and guards in the Cockpit; the capabilities carry them, and the page is the Cockpit milestone's
+  - Letting an issue serve a guard, or declaring a guard's inputs; a guard is violated by a failing run and by nothing else
+created_at: 2026-10-08
+updated_at: 2026-10-08

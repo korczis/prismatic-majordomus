@@ -20,6 +20,11 @@ reality: the `statement` that must become true, the `invariants` that must stay 
 `milestones` that realise it, and the `satisfaction` criteria that settle it, each naming
 its evidence — a `test`, a `claim`, a `command` or a `deployment` — by `ref`.
 
+An intent may also declare `guards` — invariants that name their evidence, each with an `id`,
+the `invariant`, an `evidence` kind and a `ref` — and mark a satisfaction criterion
+`optional: true`. A guard whose evidence is failing keeps the intent unsatisfied whatever its
+criteria say; an optional criterion holds nothing back (ADR 0113).
+
 No status is stored and nothing transitions an intent. Its stage is derived on every read
 from the status the plan derives for its milestones, and each criterion's state from the
 evidence ledger; a `command` or `deployment` criterion resolves but is never counted as met

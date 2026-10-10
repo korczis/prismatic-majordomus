@@ -3438,6 +3438,20 @@
         "test": "apps/majordomus-cli/tests/intent_realization.rs"
       },
       {
+        "id": "intent-guard-is-judged",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-guard-is-judged/",
+        "status": "guaranteed",
+        "test": "test/cases/965_a_failing_guard_keeps_an_intent_unsatisfied.sh"
+      },
+      {
+        "id": "intent-evaluation-explained",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-evaluation-explained/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/intent_satisfaction.rs"
+      },
+      {
         "id": "intent-refused-at-plan-start",
         "implementation": "apps/majordomus-cli/src/intent_binding.rs",
         "route": "/guarantees/intent-refused-at-plan-start/",
@@ -3942,7 +3956,7 @@
   },
   "counts": {
     "capabilities": 186,
-    "claims": 89,
+    "claims": 91,
     "modules": 54
   },
   "generator": "majordomus-cli 0.20.0",
