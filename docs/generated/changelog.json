@@ -1,9 +1,287 @@
 {
   "schema": "majordomus/changelog/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.18.0",
-  "current": "0.18.0",
+  "generator": "majordomus-cli 0.20.0",
+  "current": "0.20.0",
   "sections": [
+    {
+      "version": "0.19.1",
+      "tag": "v0.19.1",
+      "date": "2026-10-10T01:46:29Z",
+      "commit": "fe0b58b67b63d7a95b15236d9de222ea2dc2fab5",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.19.1",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.19.0...v0.19.1",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.19.1",
+      "decisions": [],
+      "groups": [
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "mcp",
+              "subject": "a refusal from a serving shared server is answered, and elects nobody",
+              "breaking": false,
+              "commit": "8425606a1",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8425606a1"
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "follow the v0.19.0 record",
+              "breaking": false,
+              "commit": "19aa4ff6a",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/19aa4ff6a"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.19.0 and the metadata it publishes",
+              "breaking": false,
+              "commit": "121f7dd87",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/121f7dd87"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "raise to 0.19.1 and derive",
+              "breaking": false,
+              "commit": "8811c8a23",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8811c8a23"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v0.19.1-aarch64-apple-darwin.tar.gz",
+          "sha256": "9fd32a8210695b48104e328cc73384571f52773459c0ea994c2f69c788ef9107"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v0.19.1-x86_64-apple-darwin.tar.gz",
+          "sha256": "01665bd8de68a134eb690a85ba3cc578106da2407504617c2bfacf769ba5efbd"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v0.19.1-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "6271f177b590ad1ba95091205f498ca968b67676793e3e069ab5b96f58a8939d"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v0.19.1-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "3e91ceb9e396767ac28392f9fb032a36ef7d79ed87a8325af411b869efab12bd"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v0.19.1-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "62589191c7cdf93f2f5dc24fece5c1015ab046c8298daa3529bc606ee719e9b3"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v0.19.1-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "d508e4c54d3046497a10e72f1e8acd387b099eec3cd1132328f6e47b763b4b43"
+        }
+      ]
+    },
+    {
+      "version": "0.19.0",
+      "tag": "v0.19.0",
+      "date": "2026-10-09T19:15:34Z",
+      "commit": "3d92c25c1297f70f7b72f16e6cd640950e8f7e45",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.19.0",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.18.0...v0.19.0",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.19.0",
+      "decisions": [],
+      "groups": [
+        {
+          "kind": "feat",
+          "heading": "Added",
+          "rank": 0,
+          "changes": [
+            {
+              "kind": "feat",
+              "scope": "capture",
+              "subject": "the worker is asked for a handover before the window fills",
+              "breaking": false,
+              "commit": "81ce30338",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/81ce30338"
+            }
+          ]
+        },
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "capture",
+              "subject": "remove only what was installed, and type no context figures",
+              "breaking": false,
+              "commit": "46bde5240",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/46bde5240"
+            },
+            {
+              "kind": "fix",
+              "scope": "site",
+              "subject": "the release feed shows the changes that exist, not three it assumes",
+              "breaking": false,
+              "commit": "86312044e",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/86312044e"
+            }
+          ]
+        },
+        {
+          "kind": "docs",
+          "heading": "Documentation",
+          "rank": 4,
+          "changes": [
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "four adopter and runtime findings, and the pages derive writes",
+              "breaking": false,
+              "commit": "d45bdb577",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d45bdb577",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I1996",
+                  "title": "doctor does not fail an adopter on a check written for this repository",
+                  "route": "/plan/i1996/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1997",
+                  "title": "The peer board can be read from the command line",
+                  "route": "/plan/i1997/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1998",
+                  "title": "A health command in an unsupervised repository does not exit 0",
+                  "route": "/plan/i1998/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1999",
+                  "title": "A tracked file a hook regenerates does not refuse a task that never touched it",
+                  "route": "/plan/i1999/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1986",
+                  "title": "The vendored rule package says nothing that is only true of this repository",
+                  "route": "/plan/i1986/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1995",
+                  "title": "Work a session left uncommitted in a worktree is named, not found by luck",
+                  "route": "/plan/i1995/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2059",
+                  "title": "A rebuild never replaces the executable a live lease names",
+                  "route": "/plan/i2059/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "I2059 and I1995, two runtime defects the plan did not hold",
+              "breaking": false,
+              "commit": "10178b6f7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/10178b6f7",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2059",
+                  "title": "A rebuild never replaces the executable a live lease names",
+                  "route": "/plan/i2059/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1995",
+                  "title": "Work a session left uncommitted in a worktree is named, not found by luck",
+                  "route": "/plan/i1995/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "raise to 0.19.0, record the verification episode, derive",
+              "breaking": false,
+              "commit": "5b5367f08",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/5b5367f08"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.18.0 and the metadata it publishes",
+              "breaking": false,
+              "commit": "1e09f7301",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/1e09f7301"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v0.19.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "c5c4e75deab6e0741c6a89b8cb0701aaddbf5b555db93829a8ec2ba0ce877d76"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v0.19.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "dbb82c3d9c2ffc93ce027ce6085e7e6b22273b8fc844779cc640037796bffaf3"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v0.19.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "e8e6c7f6305af1416c6b965fb16c0b821710f0f80b91f52dbab8c522207d3cb7"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v0.19.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "063bfd95327ce1779e77d58f297291dbf78f3d07eddbeaf69e32e179af3b14aa"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v0.19.0-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "af08acfd1c9fd84d6fafd3b03da491cf75d551af1e504980fe8f3301cf903f80"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v0.19.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "48c52e57a5f982a6b7d14a4304841b94638ba44f0145e2e4877e30fe5965cc7b"
+        }
+      ]
+    },
     {
       "version": "0.18.0",
       "tag": "v0.18.0",

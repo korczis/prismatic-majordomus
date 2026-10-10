@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 271
+      "count": 272
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "moment",
@@ -229,7 +229,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 17
+      "count": 19
     },
     {
       "kind": "rule",
@@ -253,7 +253,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 84
+      "count": 85
     },
     {
       "kind": "skill",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 412
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -855,7 +855,15 @@
       ],
       "source": ".ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0123",
+          "kind": "adr",
+          "route": "/adrs/adr-0123/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3330,6 +3338,13 @@
           "label": "adr-0047",
           "kind": "adr",
           "route": "/adrs/adr-0047/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0123",
+          "kind": "adr",
+          "route": "/adrs/adr-0123/",
           "external": false
         }
       ]
@@ -6445,6 +6460,66 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0123",
+      "identity": "adr-0123",
+      "slug": "adr-0123",
+      "cockpit": "/cockpit/objects/adr/adr-0123",
+      "title": "The worker is asked for a handover before the context window fills, by a provider mod the policy switches",
+      "status": "proposed",
+      "tags": [
+        "session",
+        "handover",
+        "provider"
+      ],
+      "source": ".ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/mods/claude-code/majordomus-handover/hooks/register.ts",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0015",
+          "kind": "adr",
+          "route": "/adrs/adr-0015/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/claims/session-lifecycle.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
           "kind": "test",
           "route": null,
           "external": false

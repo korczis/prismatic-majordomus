@@ -1,11 +1,64 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.18.0 -->
+     Generator: majordomus-cli 0.20.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.18.0**
+Current version: **0.20.0**
+
+## v0.19.1 — 2026-10-10
+
+### Fixed
+
+- **mcp**: a refusal from a serving shared server is answered, and elects nobody (`8425606a1`)
+
+### Housekeeping
+
+- **derive**: follow the v0.19.0 record (`19aa4ff6a`)
+- **release**: record v0.19.0 and the metadata it publishes (`121f7dd87`)
+- **release**: raise to 0.19.1 and derive (`8811c8a23`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.19.1-aarch64-apple-darwin.tar.gz (`9fd32a821069`)
+- `macos-x86_64` — majordomus-v0.19.1-x86_64-apple-darwin.tar.gz (`01665bd8de68`)
+- `linux-x86_64-gnu` — majordomus-v0.19.1-x86_64-unknown-linux-gnu.tar.gz (`6271f177b590`)
+- `linux-x86_64-musl` — majordomus-v0.19.1-x86_64-unknown-linux-musl.tar.gz (`3e91ceb9e396`)
+- `linux-aarch64-gnu` — majordomus-v0.19.1-aarch64-unknown-linux-gnu.tar.gz (`62589191c7cd`)
+- `linux-aarch64-musl` — majordomus-v0.19.1-aarch64-unknown-linux-musl.tar.gz (`d508e4c54d30`)
+
+
+## v0.19.0 — 2026-10-09
+
+### Added
+
+- **capture**: the worker is asked for a handover before the window fills (`81ce30338`)
+
+### Fixed
+
+- **capture**: remove only what was installed, and type no context figures (`46bde5240`)
+- **site**: the release feed shows the changes that exist, not three it assumes (`86312044e`)
+
+### Documentation
+
+- **plan**: four adopter and runtime findings, and the pages derive writes (`d45bdb577`)
+- **plan**: I2059 and I1995, two runtime defects the plan did not hold (`10178b6f7`)
+
+### Housekeeping
+
+- **release**: raise to 0.19.0, record the verification episode, derive (`5b5367f08`)
+- **release**: record v0.18.0 and the metadata it publishes (`1e09f7301`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.19.0-aarch64-apple-darwin.tar.gz (`c5c4e75deab6`)
+- `macos-x86_64` — majordomus-v0.19.0-x86_64-apple-darwin.tar.gz (`dbb82c3d9c2f`)
+- `linux-x86_64-gnu` — majordomus-v0.19.0-x86_64-unknown-linux-gnu.tar.gz (`e8e6c7f6305a`)
+- `linux-x86_64-musl` — majordomus-v0.19.0-x86_64-unknown-linux-musl.tar.gz (`063bfd95327c`)
+- `linux-aarch64-gnu` — majordomus-v0.19.0-aarch64-unknown-linux-gnu.tar.gz (`af08acfd1c9f`)
+- `linux-aarch64-musl` — majordomus-v0.19.0-aarch64-unknown-linux-musl.tar.gz (`48c52e57a5f9`)
+
 
 ## v0.18.0 — 2026-10-09
 

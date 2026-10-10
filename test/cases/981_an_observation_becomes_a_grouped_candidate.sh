@@ -93,7 +93,12 @@ grep -q '^about lib/a.sh  route project  awaiting 2  rejected 1  episodes 3$' "$
 # ---------------------------------------------------------------- the Rust reader groups alike
 RB="$(rust_bin)" || { echo "    no executable: install cargo or set MAJORDOMUS_BIN"; exit 1; }
 norm='[.groups[] | {about, route, candidates: (.candidates // []), rejected: (.rejected // []), episodes: (.episodes // [])}]'
-"$RB" knowledge candidates --discovery filesystem --format json 2>/dev/null | jq -c "$norm" > "$S/rust"
+# What the reader said and what it complained of are kept apart and both shown on a failure:
+# with its stderr discarded, a reader that refused the fixture read as one that found nothing.
+rc=0; MAJORDOMUS_SHARE="$ROOT/share" "$RB" knowledge candidates --discovery filesystem --format json > "$S/rust.json" 2> "$S/rust.err" || rc=$?
+[ "$rc" = 0 ] || { echo "    the Rust reader exited $rc:"; sed 's/^/    | /' "$S/rust.err" "$S/rust.json"; exit 1; }
+jq -c "$norm" "$S/rust.json" > "$S/rust" 2> "$S/rust.jq" \
+  || { echo "    the Rust reader's answer has no groups to read:"; sed 's/^/    | /' "$S/rust.jq" "$S/rust.json"; exit 1; }
 "$MJ" knowledge candidates --json | jq -c "$norm" > "$S/shell"
 cmp -s "$S/rust" "$S/shell" || { echo "    the shell and the Rust reader group differently:"; diff "$S/shell" "$S/rust" | sed 's/^/    | /'; exit 1; }
 rm -rf "$S"

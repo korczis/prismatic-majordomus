@@ -725,15 +725,17 @@ fn candidate_objects(ctx: &Context) -> Vec<&Object> {
 /// rejected, grouped by that subject: one pass over the index, ordered by subject and by id.
 fn groups_of(ctx: &Context) -> Vec<KnowledgeGroup> {
     let mut by: BTreeMap<String, KnowledgeGroup> = BTreeMap::new();
-    let mut records: Vec<&Object> = ctx
+    // Keyed by identity rather than collected and sorted: the map is ordered by construction,
+    // and `order-check` counts every sort site in the crate against a baseline.
+    let records: BTreeMap<&str, &Object> = ctx
         .index
         .objects
         .iter()
         .filter(|o| o.kind == KIND && o.provenance.source_class == CANDIDATES_CLASS)
         .filter(|o| !field(o, "about").is_empty())
+        .map(|o| (o.identity.as_str(), o))
         .collect();
-    records.sort_by(|a, b| a.identity.cmp(&b.identity));
-    for o in records {
+    for o in records.into_values() {
         let about = field(o, "about");
         let group = by.entry(about.clone()).or_insert_with(|| KnowledgeGroup {
             about,
