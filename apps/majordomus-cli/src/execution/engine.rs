@@ -457,6 +457,7 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
         ),
         CapabilityError::NotFound(_) => ("not_found", None),
         CapabilityError::Refused(_) => ("refused", None),
+        CapabilityError::Forbidden(_) => ("forbidden", None),
         CapabilityError::Internal(_) => (
             "internal",
             Some(format!("search the server's output for execution_id={id}")),
@@ -468,7 +469,8 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
             CapabilityError::InvalidInput(m)
             | CapabilityError::NotFound(m)
             | CapabilityError::Refused(m)
-            | CapabilityError::Internal(m) => m.clone(),
+            | CapabilityError::Internal(m)
+            | CapabilityError::Forbidden(m) => m.clone(),
         },
         suggestion,
         correlation_id: id.to_string(),
@@ -513,4 +515,31 @@ pub fn runnable(kind: CapabilityKind, stability: crate::capability::Stability) -
         ));
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_forbidden_capability_fails_its_execution_with_the_refusal_it_gave() {
+        let id = ExecutionId::fresh();
+        let e = failure(&id, &CapabilityError::remote("plan.transition"));
+        assert_eq!(e.code, "forbidden");
+        assert!(e.message.contains("plan.transition"), "{}", e.message);
+        assert_eq!(e.suggestion, None);
+        assert_eq!(e.correlation_id, id.to_string());
+        for (error, code) in [
+            (
+                CapabilityError::InvalidInput("m".into()),
+                "validation_error",
+            ),
+            (CapabilityError::NotFound("m".into()), "not_found"),
+            (CapabilityError::Refused("m".into()), "refused"),
+            (CapabilityError::Internal("m".into()), "internal"),
+        ] {
+            let e = failure(&id, &error);
+            assert_eq!((e.code.as_str(), e.message.as_str()), (code, "m"));
+        }
+    }
 }
