@@ -33,7 +33,7 @@
 #                                       sharded run left nothing out and ran nothing twice
 #   MAJORDOMUS_BIN=<path>               the Rust cases drive this prebuilt executable instead
 #                                       of building the crate (see rust_bin in test/lib.sh)
-#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 3600). A
+#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 5300). A
 #                                       case that needs longer declares it itself with
 #                                       "# majordomus-timeout: <seconds>"; 0 disables the
 #                                       bound for a deliberate, supervised run
@@ -63,7 +63,7 @@ MJ_SKIP_STATUS=4
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up.
 # The bound one case runs under: its own "# majordomus-timeout:" header when it declares
-# one, else MJ_TEST_CASE_TIMEOUT, else 3600 seconds. The slowest cases legitimately take
+# one, else MJ_TEST_CASE_TIMEOUT, else 5300 seconds. The slowest cases legitimately take
 # about forty minutes — on CI 95_executable_reference was killed at 2415-2418 s, the 2400 this
 # default used to be plus its grace, in four runs between 2026-09-20 and 2026-09-24, so what it
 # costs there is at least that and not yet measured — so the default is generous; the point of
@@ -83,7 +83,7 @@ case_timeout() {
                             v = $0; sub(/^# majordomus-timeout: */, "", v); sub(/[^0-9].*$/, "", v)
                             print v; exit } ; next }
                    { exit }' "$1" 2>/dev/null | head -n 1)"
-  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-3600}"; fi
+  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-5300}"; fi
 }
 
 # The job a case's skip defers to: "# majordomus-skip-runs-in: <job>" in the header block, read
