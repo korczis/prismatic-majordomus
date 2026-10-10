@@ -1,5 +1,8 @@
-# majordomus-exclusive: edits docs/PLAN_STATUS.md of this checkout and regenerates the derived files
 # The committed derived artifacts match this repository's canonical files.
+#
+# It reads this checkout and writes nothing into it: the mutation at the end is made on a
+# clone. It used to be made here, under the exclusive header, and a case run alone after
+# every other case of its shard was the slowest shard's last 21 minutes on every CI run.
 #
 # Every other case that touches the generator runs it inside a fixture, which is right for
 # testing what it produces and blind to whether what is committed here is current. Three CI
@@ -60,9 +63,15 @@ fi
 # --- the canonical model of this repository validates, which is what CI gates on
 expect_exit 0 "$MJ" --repo "$ROOT" plan validate
 
-# --- the mutation: break the sync and the case must go red, or it proves nothing
-printf "\n" >> "$ROOT/docs/PLAN_STATUS.md"
-rc=0; "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1 || rc=$?
-"$ROOT/scripts/generate-site-data" >/dev/null 2>&1
+# --- the mutation: break the sync and the case must go red, or it proves nothing. It is made
+#     on a clone, as 56_derived_current_gate makes its own: a clone carries the committed tree
+#     and the history the derived data names, and other cases may be reading this checkout
+W="$T/clone"
+git clone -q --no-local "$ROOT" "$W" 2>/dev/null || { echo "    could not clone the checkout"; exit 1; }
+(cd "$W" && git config user.email t@example.com && git config user.name t) \
+  || { echo "    could not configure the clone"; exit 1; }
+printf "\n" >> "$W/docs/PLAN_STATUS.md"
+rc=0; "$W/scripts/generate-site-data" --check >/dev/null 2>&1 || rc=$?
 [ "$rc" = 10 ] || { echo "    --check did not report a hand edit to a generated document"; exit 1; }
-expect_exit 0 "$ROOT/scripts/generate-site-data" --check
+"$W/scripts/generate-site-data" >/dev/null 2>&1
+expect_exit 0 "$W/scripts/generate-site-data" --check

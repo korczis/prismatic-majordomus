@@ -233,7 +233,13 @@ fn answer_http(router: &Router, mut request: tiny_http::Request) {
     } else {
         router.handle(&super::Request::parse_target(&method, &target, body).with_headers(headers))
     };
-    tracing::debug!(method = %method, target = %target, status = response.status, "response");
+    // the target carries the query string, where a careless client puts a token
+    tracing::debug!(
+        method = %method,
+        target = %crate::redaction::redact_secrets(&target).text,
+        status = response.status,
+        "response"
+    );
     respond(request, response, head);
 }
 
