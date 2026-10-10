@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.19.1"
+    "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "47189506a6bc8cea6f7363a3185e2c75e095e97a72ff515b452d5a5d3834f2a8",
+    "fingerprint": "4698db716dc89c2a713b8dbd597fe3546c6842f037ab604137ba18d962e159fc",
     "summary": {
-      "total": 2107,
+      "total": 2109,
       "builtin": 184,
-      "declarative": 1923,
+      "declarative": 1925,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1923
+        "resource": 1925
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1931
+        "implemented": 1933
       },
       "mcp_tools": 177,
-      "mcp_resources": 1977,
+      "mcp_resources": 1979,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 269,
+        "capabilities": 270,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2e6e1a1e5d8ae335c01a618ccf6e284fb34cf72ea5062f4f915aa0c9c30c1ed8",
+    "fingerprint": "e9b13f936b7c8cbf4c503186b096393189b7f20946b6dc8e258976de50bde034",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 269,
+      "issue": 270,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81436,7 +81436,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 25918
+        "bytes": 27445
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81571,7 +81571,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 11087
+        "bytes": 11531
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 122773
+        "bytes": 126001
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -82705,7 +82705,7 @@
         "title": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
         "path": "docs/claims/installer-verifies-before-installing.md",
         "source_class": "claim_page",
-        "bytes": 2628
+        "bytes": 2968
       },
       {
         "uri": "majordomus://document/docs/claims/intent-closes-github-milestones.md",
@@ -87937,6 +87937,17 @@
         "bytes": 2815
       },
       {
+        "uri": "majordomus://issue/I2165",
+        "kind": "issue",
+        "identity": "I2165",
+        "title": "A released archive carries a provenance attestation the installer can check",
+        "description": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
+        "path": ".ai/repo/project/issues/I2165.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2285
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88178,6 +88189,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/safe-self-update",
+        "kind": "milestone",
+        "identity": "safe-self-update",
+        "title": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "description": "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks.",
+        "path": ".ai/repo/project/milestones/safe-self-update.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3948
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -95611,7 +95633,7 @@
         "identity": "test/cases/85_installer.sh",
         "path": "test/cases/85_installer.sh",
         "source_class": "case",
-        "bytes": 19137
+        "bytes": 22973
       },
       {
         "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
@@ -96939,7 +96961,7 @@
       "identity": [
         "id"
       ],
-      "objects": 269
+      "objects": 270
     },
     {
       "name": "knowledge",
@@ -96969,7 +96991,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",
