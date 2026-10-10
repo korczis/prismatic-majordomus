@@ -39,8 +39,12 @@ still to run and to report its own version.
 
 Checksums bind an artifact to its metadata; they do not prove who wrote the metadata. What
 remains trusted is GitHub Pages serving that metadata, GitHub Releases serving the
-artifacts, and the pipeline that produced both. Signed provenance is recorded as a next
-step in `docs/DISTRIBUTION.md` rather than claimed here.
+artifacts, and the pipeline that produced both. Each archive is also attested by the release
+workflow, and the installer verifies that attestation when the GitHub CLI is installed and
+signed in — otherwise it says it verified the checksum only. A refused attestation is not
+fatal unless `MAJORDOMUS_REQUIRE_PROVENANCE=1` asks for it, because GitHub answers an
+archive older than attestations and a substituted one the same way; `docs/DISTRIBUTION.md`
+states what each path verifies.
 
 ## Why it exists
 
