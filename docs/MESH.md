@@ -122,24 +122,34 @@ a link, not a link: discovery never admits one.
 A dialer — the runtime with the lower runtime key, or either one when only one can reach the
 other, or any runtime with a declared seed — posts a signed **hello** to
 `POST /api/v1/mesh/link/hello`: its runtime card (key, runtime, instance, repository, name,
-version, features, endpoints), a 32-hex nonce, a timestamp and its link protocol range. The
-answerer admits it only if, in order:
+version, features, endpoints), a 32-hex nonce, a timestamp, its link protocol range and,
+when the dialer knows whom it dials, the runtime key it means to reach (`to`). The answerer
+admits it only if, in the order the code checks:
 
 1. the message is within 900 KiB and has the shape of a hello;
 2. the Ed25519 signature verifies under the hello domain (a signature over another message
    kind can never be replayed as a hello);
 3. the timestamp is within ±300 s of its clock;
-4. the nonce has not been answered before;
+4. the nonce has 32 hex characters;
 5. the protocol ranges meet (link protocol 1..1 today; the highest common version is chosen);
 6. the peer is not this runtime;
-7. the peer's repository identity equals its own;
-8. the peer's key is trusted by its policy.
+7. a hello that names its recipient names this runtime — a copy captured on its way to
+   another runtime of the repository is refused `misaddressed`;
+8. the peer's repository identity equals its own;
+9. the peer's key is trusted by its policy;
+10. the nonce has not been answered before. It is checked last on purpose: the replay cache
+    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
+    fill it nor evict a real peer's nonce.
+
+A hello without `to` — from a seed, a first contact, or a release before it — is still
+admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
+and the skew window.
 
 It then answers with a signed **welcome** — its own card, a link id, its marks, the echoed
 nonce — and the dialer applies the same checks to the welcome (signature, echoed nonce,
 timestamp, protocol, self, repository, trust). Every failure on either side is a typed
 refusal (`malformed`, `oversized`, `signature`, `stale`, `replay`, `protocol_unsupported`,
-`self_link`, `repository_mismatch`, `untrusted`, `capacity`; a sync can also be refused
+`self_link`, `misaddressed`, `repository_mismatch`, `untrusted`, `capacity`; a sync can also be refused
 `not_active` or `unknown_link`, and an operation `feature_unsupported`),
 counted in `refused_in`/`refused_out` and listed with its detail on `mesh.cooperation`.
 
@@ -334,7 +344,7 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a relay that alters or invents events | the origin's signature fails at every consumer |

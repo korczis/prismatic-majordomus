@@ -1826,6 +1826,18 @@ impl Cooperation {
                 runtime,
             );
         }
+        // An addressed hello is this runtime's only when it names this runtime. The address is
+        // inside the signed bytes, so a copy taken on its way to another runtime of the same
+        // repository cannot be replayed here; refused before the replay cache sees its nonce.
+        if let Some(to) = hello.to.as_deref() {
+            if to != self.own_key {
+                return self.refuse_in(
+                    RefusalCode::Misaddressed,
+                    "the hello is addressed to another runtime".into(),
+                    runtime,
+                );
+            }
+        }
         if hello.card.repo != self.repository.id {
             return self.refuse_in(
                 RefusalCode::RepositoryMismatch,
@@ -2170,12 +2182,24 @@ impl Cooperation {
     /// a.dial(&["a:1".into()]).expect_err("a runtime does not cooperate with itself");
     /// ```
     pub fn dial(&self, endpoints: &[String]) -> Result<String, RoundError> {
+        self.dial_to(None, endpoints)
+    }
+
+    /// [`Cooperation::dial`], addressed: when the dialer knows the runtime key it means to
+    /// reach, the hello names it inside its signed bytes, and any other runtime that receives
+    /// a copy refuses it as `misaddressed`.
+    pub(crate) fn dial_to(
+        &self,
+        to: Option<&str>,
+        endpoints: &[String],
+    ) -> Result<String, RoundError> {
         let hello = Hello {
             proto_min: LINK_PROTOCOL_MIN,
             proto_max: LINK_PROTOCOL_MAX,
             card: self.card.clone(),
             nonce: fresh_token(),
             ts: super::protocol::now(),
+            to: to.map(str::to_string),
         };
         let body =
             serde_json::to_value(&hello).map_err(|e| RoundError::Unreachable(e.to_string()))?;
@@ -2573,7 +2597,9 @@ impl Cooperation {
                         self.sleep(self.heartbeat());
                         continue;
                     }
-                    match self.dial(&target.endpoints) {
+                    // addressed whenever the runtime behind the endpoints is known
+                    let to = learned.as_deref().or(target.key.as_deref());
+                    match self.dial_to(to, &target.endpoints) {
                         Ok(key) => {
                             learned = Some(key.clone());
                             // A fresh link syncs at once: the peer should see this
@@ -3763,6 +3789,51 @@ mod tests {
     }
 
     #[test]
+    fn a_hello_addressed_to_one_runtime_is_refused_by_another() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let c = runtime(&net, "c:1", "root", TrustPolicy::Tofu);
+        let addressed = |to: Option<String>| {
+            let hello = Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: a.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now(),
+                to,
+            };
+            sign(
+                &a.identity,
+                Domain::Hello,
+                serde_json::to_value(&hello).unwrap(),
+            )
+        };
+        // a hello on its way to B, captured and replayed to C: refused, and C links nobody
+        let to_b = addressed(Some(b.runtime_key().to_string()));
+        let refusal = c.accept_hello(&to_b).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Misaddressed);
+        assert!(c.peers().is_empty(), "the replay changed no link of C");
+        // the same hello is B's to accept
+        assert!(
+            b.accept_hello(&to_b).refusal.is_none(),
+            "B accepts what was meant for it"
+        );
+        // a hello that names nobody is still accepted: a seed, a first contact, an older release
+        assert!(c.accept_hello(&addressed(None)).refusal.is_none());
+        // and the dialer addresses what it knows: a dial to B by key reaches B
+        assert_eq!(
+            a.dial_to(Some(b.runtime_key()), &["b:1".into()]).unwrap(),
+            b.runtime_key()
+        );
+        let wrong = a.dial_to(Some(c.runtime_key()), &["b:1".into()]);
+        assert!(
+            matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
+            "{wrong:?}"
+        );
+    }
+
+    #[test]
     fn isolation_version_trust_and_replay_are_typed_refusals() {
         let net = Arc::new(InProcess::default());
         let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
@@ -3792,6 +3863,7 @@ mod tests {
             card: a.card.clone(),
             nonce: fresh_token(),
             ts: crate::mesh::protocol::now(),
+            to: None,
         };
         let signed = sign(
             &a.identity,

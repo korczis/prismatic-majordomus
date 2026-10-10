@@ -435,6 +435,7 @@ impl RuntimeCard {
 ///     },
 ///     nonce: fresh_token(),
 ///     ts: 1_700_000_000,
+///     to: None,
 /// };
 /// assert_eq!(hello.nonce.len(), 32, "32 hex of fresh entropy, echoed by the welcome");
 ///
@@ -453,6 +454,13 @@ pub struct Hello {
     pub nonce: String,
     /// The dialer's clock, seconds since the Unix epoch.
     pub ts: u64,
+    /// The runtime key of the runtime this hello is addressed to, when the dialer knows it:
+    /// inside the signed bytes, so a hello captured on its way to one runtime is refused as
+    /// `misaddressed` by every other. Absent from a dialer that does not know whom it dials
+    /// (a seed, a first contact) and from releases before it existed; such a hello is still
+    /// accepted, and only an addressed one carries the protection.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
 }
 
 /// An answerer's welcome: the mirror of the hello, plus the two things that make the link
@@ -647,6 +655,8 @@ pub enum RefusalCode {
     Capacity,
     /// The peer lacks a feature the operation needs.
     FeatureUnsupported,
+    /// A hello addressed to another runtime: captured on its way there and replayed here.
+    Misaddressed,
 }
 
 impl RefusalCode {
@@ -681,6 +691,7 @@ impl RefusalCode {
             RefusalCode::UnknownLink => "unknown_link",
             RefusalCode::Capacity => "capacity",
             RefusalCode::FeatureUnsupported => "feature_unsupported",
+            RefusalCode::Misaddressed => "misaddressed",
         }
     }
 }
