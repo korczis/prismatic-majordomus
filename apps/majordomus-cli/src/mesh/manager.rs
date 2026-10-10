@@ -11,7 +11,6 @@
 //! status, not a failed server.
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -54,6 +53,10 @@ pub struct Refusals {
     pub signature: u64,
     /// This node's own datagrams, heard back and skipped.
     pub self_heard: u64,
+    /// Observations dropped because the queue to the registry was full: a flood, counted
+    /// rather than held (I2133).
+    #[serde(default)]
+    pub overflow: u64,
 }
 
 #[derive(Default)]
@@ -65,6 +68,8 @@ struct RefusalCounters {
     stale: AtomicU64,
     signature: AtomicU64,
     self_heard: AtomicU64,
+    /// Shared with the providers' queue, which counts its drops here.
+    overflow: Arc<AtomicU64>,
 }
 
 impl RefusalCounters {
@@ -89,6 +94,7 @@ impl RefusalCounters {
             stale: self.stale.load(Ordering::Relaxed),
             signature: self.signature.load(Ordering::Relaxed),
             self_heard: self.self_heard.load(Ordering::Relaxed),
+            overflow: self.overflow.load(Ordering::Relaxed),
         }
     }
 }
@@ -120,7 +126,7 @@ pub struct MeshStatus {
 
 struct Active {
     beacon: Arc<Beacon>,
-    tx: Sender<Observation>,
+    tx: super::provider::ObservationSender,
     stop: Arc<AtomicBool>,
     providers: Vec<Box<dyn MeshProvider>>,
     trust: TrustConfig,
@@ -422,7 +428,10 @@ impl MeshRuntime {
             )
             .with_runtime(runtime),
         );
-        let (tx, rx) = channel::<Observation>();
+        let (tx, rx) = super::provider::ObservationSender::counting(
+            super::provider::OBSERVATION_QUEUE,
+            Arc::clone(&self.refusals.overflow),
+        );
         let stop = Arc::new(AtomicBool::new(false));
         let ctx = ProviderContext {
             tx: tx.clone(),
@@ -620,11 +629,25 @@ impl MeshRuntime {
             Ingest::Replay => Some("replayed".into()),
             Ingest::Refused(r) => Some(r.to_string()),
         };
+        // A refused caller is answered with the refusal alone: it learns nothing of this
+        // node's peers. An admitted one learns this node and the trusted nodes of its own
+        // repositories (I2133).
         let mut candidates = Vec::with_capacity(MAX_CANDIDATES + 1);
-        if let Ok(own_value) = serde_json::to_value(&own_envelope) {
-            candidates.push(own_value);
+        if refusal.is_none() {
+            if let Ok(own_value) = serde_json::to_value(&own_envelope) {
+                candidates.push(own_value);
+            }
+            let repos: Vec<String> = envelope
+                .get("repos")
+                .and_then(|r| r.as_array())
+                .map(|r| {
+                    r.iter()
+                        .filter_map(|v| v.as_str().map(str::to_string))
+                        .collect()
+                })
+                .unwrap_or_default();
+            candidates.extend(self.registry.candidates_for(MAX_CANDIDATES, &repos));
         }
-        candidates.extend(self.registry.candidates(MAX_CANDIDATES));
         let candidates = candidates
             .into_iter()
             .filter_map(|v| serde_json::from_value(v).ok())

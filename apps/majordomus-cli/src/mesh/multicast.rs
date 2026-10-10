@@ -320,7 +320,7 @@ mod tests {
             group: "10.0.0.1".into(),
             ..MulticastConfig::default()
         });
-        let (tx, _rx) = std::sync::mpsc::channel();
+        let (tx, _rx) = crate::mesh::provider::ObservationSender::bounded(64);
         let ctx = crate::mesh::provider::ProviderContext {
             tx,
             stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
@@ -359,7 +359,7 @@ mod tests {
             ..MulticastConfig::default()
         });
         assert_eq!(provider.port(), 0, "no port before the provider starts");
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, rx) = crate::mesh::provider::ObservationSender::bounded(64);
         let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let ctx = crate::mesh::provider::ProviderContext {
             tx,

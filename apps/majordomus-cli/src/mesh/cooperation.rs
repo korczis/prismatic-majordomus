@@ -2560,6 +2560,10 @@ impl Cooperation {
     fn work(&self, target: Target, flag: Arc<AtomicBool>) {
         let mut learned = target.key.clone();
         let mut failures: u32 = 0;
+        // An answerer that restarted forgets the link and answers `unknown_link` once; the
+        // dialer says hello again at once. One that keeps answering it is retried no faster
+        // than a heartbeat, or a peer that welcomes and refuses every sync drives a busy loop.
+        let mut unknown_in_a_row: u32 = 0;
         while !self.stopped() && !flag.load(Ordering::SeqCst) {
             let linked = learned
                 .as_deref()
@@ -2587,11 +2591,17 @@ impl Cooperation {
             let delay = match outcome {
                 Ok(()) => {
                     failures = 0;
+                    unknown_in_a_row = 0;
                     self.heartbeat()
                 }
                 Err(RoundError::Refused(r)) if r.code == RefusalCode::UnknownLink => {
                     failures = 0;
-                    Duration::ZERO
+                    unknown_in_a_row = unknown_in_a_row.saturating_add(1);
+                    if unknown_in_a_row == 1 {
+                        Duration::ZERO
+                    } else {
+                        self.heartbeat()
+                    }
                 }
                 Err(RoundError::Refused(_)) => {
                     failures = failures.saturating_add(3).min(6);

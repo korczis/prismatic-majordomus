@@ -393,3 +393,79 @@ fn an_enabled_declaration_the_server_could_not_activate_fails_the_doctor_and_nam
     );
     assert_eq!(s.stop(), 0);
 }
+
+/// I2133: a rendezvous answers a refused caller with the refusal alone, and an admitted one
+/// with this node and the trusted nodes of the caller's own repositories — never the
+/// strangers it merely observed, nor another repository's topology.
+#[test]
+fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = |name: &str| {
+        NodeIdentity::load_or_create(&dir.path().join(format!("{name}.json"))).unwrap()
+    };
+    let (hub_id, trusted_id, stranger_id, caller_id, other_id) = (
+        key("hub"),
+        key("trusted"),
+        key("stranger"),
+        key("caller"),
+        key("other"),
+    );
+    let mut config = MeshConfig {
+        schema: "mesh/v1".into(),
+        kind: "mesh-declaration".into(),
+        id: "hub".into(),
+        enabled: true,
+        multicast: MulticastConfig {
+            enabled: false,
+            ..MulticastConfig::default()
+        },
+        broadcast: Default::default(),
+        rendezvous: Default::default(),
+        trust: Default::default(),
+        cooperation: Default::default(),
+    };
+    config.trust.allow = vec![trusted_id.public.public_key.clone()];
+    let hub = MeshRuntime::new();
+    hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
+        .unwrap();
+    let envelope = |id: &NodeIdentity, repos: &[&str], port: u16| {
+        let repos: Vec<String> = repos.iter().map(|r| r.to_string()).collect();
+        serde_json::to_value(advertise(
+            id,
+            1,
+            &[format!("127.0.0.1:{port}")],
+            &["http".into()],
+            &repos,
+            "n",
+        ))
+        .unwrap()
+    };
+    // the hub knows a trusted node and a stranger of repository r1
+    assert!(
+        hub.register(&envelope(&trusted_id, &["r1"], 2), "test")
+            .accepted
+    );
+    assert!(
+        hub.register(&envelope(&stranger_id, &["r1"], 3), "test")
+            .accepted
+    );
+
+    // a caller whose envelope is refused learns nothing
+    let refused = hub.register(&json!({ "v": 0 }), "test");
+    assert!(!refused.accepted);
+    assert!(refused.candidates.is_empty(), "{:?}", refused.candidates);
+
+    // a caller of r1 learns the hub and the trusted node, not the stranger
+    let same = hub.register(&envelope(&caller_id, &["r1"], 4), "test");
+    assert!(same.accepted);
+    let keys: Vec<String> = same.candidates.iter().map(|c| c.adv.pk.clone()).collect();
+    assert_eq!(keys.len(), 2, "{keys:?}");
+    assert!(keys.contains(&trusted_id.public.public_key));
+    assert!(!keys.contains(&stranger_id.public.public_key));
+
+    // a caller of another repository learns the hub alone
+    let other = hub.register(&envelope(&other_id, &["r2"], 5), "test");
+    assert!(other.accepted);
+    assert_eq!(other.candidates.len(), 1, "{:?}", other.candidates);
+    hub.stop();
+}

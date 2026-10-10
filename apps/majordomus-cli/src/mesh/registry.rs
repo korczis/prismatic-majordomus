@@ -337,9 +337,17 @@ impl MeshRegistry {
         true
     }
 
-    /// The envelopes of present, unrejected nodes, verbatim as heard, at most `limit`.
-    /// What a rendezvous answers with: each candidate carries its own proof.
-    pub fn candidates(&self, limit: usize) -> Vec<serde_json::Value> {
+    /// The envelopes of present, trusted nodes that serve one of `repos`, verbatim as heard,
+    /// at most `limit`: what a rendezvous answers a registered caller with. A caller learns
+    /// only the nodes of its own repository this node trusts — never the topology of another
+    /// repository or the strangers this node merely observed (I2133).
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::MeshRegistry;
+    /// let empty = MeshRegistry::new();
+    /// assert!(empty.candidates_for(32, &["r1".into()]).is_empty());
+    /// ```
+    pub fn candidates_for(&self, limit: usize, repos: &[String]) -> Vec<serde_json::Value> {
         let now = Instant::now();
         let mut inner = self.inner.lock().expect("mesh registry lock");
         self.expire_locked(&mut inner, now);
@@ -348,7 +356,8 @@ impl MeshRegistry {
             .values()
             .filter(|s| {
                 now.duration_since(s.last_seen) <= PRESENCE_TTL
-                    && !matches!(s.record.trust, TrustState::Rejected(_))
+                    && s.record.trust.is_trusted()
+                    && s.record.repositories.iter().any(|r| repos.contains(r))
                     && !s.raw.is_null()
             })
             .take(limit)

@@ -33491,6 +33491,12 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "This node's own datagrams, heard back and skipped."
+              overflow:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Observations dropped because the queue to the registry was full: a flood, counted\nrather than held (I2133)."
+                default: 0
             required:
               - oversized
               - malformed
