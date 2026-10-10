@@ -1908,11 +1908,7 @@ fn product_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
             summary: Some(f.summary.clone()),
             route: Some(f.route.clone()),
             source: Some(f.source.clone()),
-            status: Some(if f.featured {
-                "featured".into()
-            } else {
-                f.status.clone()
-            }),
+            status: Some(f.status.clone()),
             external: false,
             facts: BTreeMap::new(),
         }) {

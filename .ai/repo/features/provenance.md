@@ -9,7 +9,6 @@ summary: The ledger records every durable event with its task and its head; iden
 status: stable
 weight: 110
 domain: evidence
-featured: true
 areas: [observability, cost]
 audiences: [enterprise, engineering-lead]
 commands: [history, session, capture, watch]

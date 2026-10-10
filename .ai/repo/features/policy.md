@@ -9,7 +9,6 @@ summary: A provider-neutral policy and four execution profiles are the one sourc
 status: stable
 weight: 90
 domain: governance
-featured: false
 areas: [governance, context]
 commands: [init, update, doctor]
 kinds: [policy, profile]

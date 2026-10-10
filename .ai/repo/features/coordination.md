@@ -9,7 +9,6 @@ summary: A task claims its scope before the first edit; check and finish refuse 
 status: stable
 weight: 30
 domain: coordination
-featured: true
 areas: [coordination]
 audiences: [ai-native-team, platform-team]
 modules: [peers, server, worktree, integration]

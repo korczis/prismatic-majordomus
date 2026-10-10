@@ -16,8 +16,8 @@
 //! site's dataset are readers of this one value.
 //!
 //! Two directions are kept apart on purpose, exactly as the Why catalogue keeps them.
-//! **Authored** is what a file says: the headline, the summary, the order, whether the
-//! homepage features it, and the typed references to what the feature is made of.
+//! **Authored** is what a file says: the headline, the summary, the order, and the typed
+//! references to what the feature is made of.
 //! **Derived** is everything else, and none of it may be written into a source file: the
 //! schema refuses a `surfaces` or a `route` key, and this module is where those come from.
 
@@ -74,9 +74,6 @@ pub struct Feature {
     #[serde(default)]
     /// Presentation order, lowest first.
     pub weight: u32,
-    #[serde(default)]
-    /// Whether the homepage shows it as a chapter.
-    pub featured: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// The product domain it belongs to, by id: exactly one. Editorial; the domain's
     /// members are derived from this field and listed nowhere else.
@@ -558,7 +555,6 @@ impl crate::order::Ordered for Domain {
 ///     title: "Done is a contract".into(),
 ///     headline: "A worker does not define its own completion.".into(),
 ///     route: "/features/finish-contract/".into(),
-///     featured: true,
 ///     surfaces: Surfaces::default(),
 ///     claims: 3,
 ///     tested: 2,
@@ -580,8 +576,6 @@ pub struct DomainMember {
     pub headline: String,
     /// `/features/<id>/`.
     pub route: String,
-    /// Whether the homepage shows it as a chapter.
-    pub featured: bool,
     /// The interfaces it is exposed through.
     pub surfaces: Surfaces,
     /// How many claims it names.
@@ -1300,13 +1294,6 @@ impl ProductModel {
             .filter(|r| r.feature.status == STABLE)
             .collect()
     }
-    /// The stable features the homepage shows, in presentation order.
-    pub fn featured(&self) -> Vec<&ResolvedRefs> {
-        self.public()
-            .into_iter()
-            .filter(|r| r.feature.featured)
-            .collect()
-    }
     /// The providers the tool has an adapter for.
     pub fn providers(&self) -> &[ProductProvider] {
         &self.providers
@@ -1570,7 +1557,6 @@ fn resolve_domain(d: Domain, members: &[&ResolvedRefs], why: &Catalogue) -> Reso
             title: r.feature.title.clone(),
             headline: r.feature.headline.clone(),
             route: r.feature.route.clone(),
-            featured: r.feature.featured,
             surfaces: r.surfaces,
             claims: r.claim_refs.len(),
             tested: r.claim_refs.iter().filter(|c| tested(c)).count(),
@@ -1906,20 +1892,6 @@ fn resolve(
                 "'{}' is a route this section owns; a feature may not claim it (reserved: {})",
                 f.id,
                 RESERVED.join(", ")
-            ),
-            did_you_mean: None,
-        });
-    }
-    if f.featured && f.status != STABLE {
-        findings.push(ProductFinding {
-            severity: Severity::Error,
-            code: "featured_draft".into(),
-            path: f.source.clone(),
-            id: Some(f.id.clone()),
-            field: Some("featured".into()),
-            message: format!(
-                "a {} feature may not be featured; the homepage shows stable features only",
-                f.status
             ),
             did_you_mean: None,
         });

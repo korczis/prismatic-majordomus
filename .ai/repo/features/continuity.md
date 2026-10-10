@@ -9,7 +9,6 @@ summary: Task state, checkpoints, handovers, decisions and open questions live i
 status: stable
 weight: 50
 domain: context
-featured: true
 areas: [context, coordination]
 modules: [continuity, lifecycle, session_domain, recover]
 commands: [context, checkpoint, handover, session, capture, prompt, recover]

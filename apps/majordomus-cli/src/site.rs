@@ -987,7 +987,6 @@ pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
     "summary",
     "status",
     "weight",
-    "featured",
     "domain",
     "areas",
     "audiences",

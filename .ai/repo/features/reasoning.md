@@ -9,7 +9,6 @@ summary: share/advisors.yaml declares advisory roles by reference to the provide
 status: stable
 weight: 47
 domain: coordination
-featured: true
 areas: [coordination]
 modules: [reasoning]
 rules: [project.advisors-are-optional, project.review-is-recorded-not-claimed]

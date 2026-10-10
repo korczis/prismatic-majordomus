@@ -476,7 +476,6 @@ headline: 'A feature that exists so every projection has something to project.'
 summary: 'One feature, made of one module, one rule, one claim and one document.'
 status: stable
 weight: 10
-featured: true
 areas: [fixture-area]
 audiences: [fixture-team]
 modules: [repository]

@@ -144,9 +144,9 @@ if [ -f "$PD" ]; then
     jq -e --arg i "$id" '[.domains[]? | select(.id == $i and .status == "stable" and (.features | length) > 0)] | length == 1' "$PD" >/dev/null \
       || { bad product "/domains/$id/ is a page no shown domain produced"; prod_bad=1; }
   done
-  # the homepage renders every featured feature as a chapter, and nothing else as one
-  for id in $(jq -r '.features[] | select(.featured and .status != "draft") | .id' "$PD"); do
-    grep -qF "$PREFIX/features/$id/" "$PUB/index.html" || { bad product "the homepage does not carry featured feature $id"; prod_bad=1; }
+  # the homepage map carries every feature of every domain it draws
+  for id in $(jq -r '.domains[]? | select(.status == "stable") | .features[].id' "$PD"); do
+    grep -qF "$PREFIX/features/$id/" "$PUB/index.html" || { bad product "the homepage map does not carry feature $id of its domain"; prod_bad=1; }
   done
   # every mark on the matrix page is the dataset's: the page shows exactly as many ticks as
   # the model derived, so a template cannot invent a surface or hide a gap

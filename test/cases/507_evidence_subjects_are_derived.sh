@@ -137,7 +137,7 @@ feature() {      # feature <id> <status> <front-matter line...>
   { printf -- '---\nschema: feature/v1\nid: %s\nkind: feature\n' "$id"
     printf "title: 'The feature %s'\nshort_title: '%s'\n" "$id" "$id"
     printf "headline: 'A feature this case declares.'\nsummary: 'A fixture feature.'\n"
-    printf 'status: %s\nweight: 10\nfeatured: false\n' "$status"
+    printf 'status: %s\nweight: 10\n' "$status"
     printf '%s\n' "$@"
     printf -- '---\n\n## What it does\n\nWhat the case says.\n\n## What it does not do\n\nAnything else.\n'
   } > ".ai/repo/features/$id.md"

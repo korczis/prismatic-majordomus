@@ -47,7 +47,6 @@ headline: 'One file was added and nothing else was, and every interface answered
 summary: 'A feature that exists to prove that adding one file is the whole act.'
 status: stable
 weight: 10
-featured: true
 modules: [repository]
 kinds: [rule]
 docs: [.ai/repo/workflows/task-lifecycle.md]
@@ -78,8 +77,8 @@ expect_grep '^valid:'
 # --- the command line answers it, and the filters it declares work
 expect_exit 0 "$RB" product list
 expect_grep '^a-probe-feature'
-expect_exit 0 "$RB" product list --featured
-expect_grep '^a-probe-feature'
+# the homepage placement `--featured` once filtered by is retired: an unknown option
+expect_exit 2 "$RB" product list --featured
 expect_exit 0 "$RB" product list --module repository
 expect_grep '^a-probe-feature'
 expect_exit 0 "$RB" product show a-probe-feature
@@ -191,15 +190,16 @@ expect_exit 10 "$RB" product validate
 expect_grep "not in schema 'majordomus.feature/v1': surfaces"
 git rm -q .ai/repo/features/a-derived-feature.md && git commit -qm "derived key removed"
 
-# only a stable feature may be a chapter of the homepage
-cat > .ai/repo/features/a-draft-chapter.md <<'MD'
+# a homepage placement is not a field: the homepage renders no feature by one, so a file
+# that still asks to be featured is refused as an unknown key rather than obeyed
+cat > .ai/repo/features/a-featured-feature.md <<'MD'
 ---
 schema: feature/v1
-id: a-draft-chapter
+id: a-featured-feature
 kind: feature
-title: 'A draft that asked to be featured'
-headline: 'It is a draft and it asked for the homepage.'
-summary: 'A draft feature that declares itself featured.'
+title: 'A feature that asked for the homepage'
+headline: 'It asked for a homepage chapter the homepage does not render.'
+summary: 'A feature that still sets the retired featured key.'
 status: draft
 featured: true
 modules: [repository]
@@ -214,7 +214,7 @@ Because the case says so.
 
 Nothing.
 MD
-git add -A >/dev/null && git commit -qm "featured draft"
+git add -A >/dev/null && git commit -qm "featured key"
 expect_exit 10 "$RB" product validate
-expect_grep 'a-draft-chapter'
-git rm -q .ai/repo/features/a-draft-chapter.md && git commit -qm "featured draft removed"
+expect_grep "not in schema 'majordomus.feature/v1': featured"
+git rm -q .ai/repo/features/a-featured-feature.md && git commit -qm "featured key removed"

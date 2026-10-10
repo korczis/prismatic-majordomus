@@ -55,7 +55,7 @@ Output: `ResolvedRefs`.
 
 ## `product.features` — The features
 
-Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.
+Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.
 
 | | |
 |---|---|
@@ -72,7 +72,6 @@ Every product feature this repository declares, narrowed by any of the facets th
 
 | input | type | required | description |
 |---|---|---|---|
-| `featured` | boolean or null | no | Only the features the homepage shows. |
 | `status` | string or null | no | Only features of this status. Absent means the stable ones; pass `any` for
 everything the model holds. |
 | `area` | string or null | no | Only features serving this operational area. |
@@ -129,7 +128,7 @@ Output: `ProviderList`.
 
 ## `product.validate` — Validate the model
 
-Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.
+Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.
 
 | | |
 |---|---|

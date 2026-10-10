@@ -9,7 +9,6 @@ summary: A task corpus runs in a real harness twice — without Majordomus and w
 status: stable
 weight: 47
 domain: evidence
-featured: false
 areas: [observability, cost]
 modules: [economics]
 rules: []
