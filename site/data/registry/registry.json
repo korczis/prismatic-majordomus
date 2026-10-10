@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "01ba64fe8916b17676dc5cbb4ef1f2b5c586a907f3a73eab3975d63139ca4ba1",
+    "fingerprint": "eb2270f05c01895c9627ba9e4623d242833840deb2ea32d336beb1b443383165",
     "summary": {
-      "total": 2103,
+      "total": 2114,
       "builtin": 184,
-      "declarative": 1919,
+      "declarative": 1930,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1919
+        "resource": 1930
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1927
+        "implemented": 1938
       },
       "mcp_tools": 177,
-      "mcp_resources": 1973,
+      "mcp_resources": 1984,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -30606,6 +30606,21 @@
                   },
                   {
                     "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
+                  },
+                  {
+                    "type": "string",
                     "const": "repair_selected",
                     "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
                   },
@@ -32054,6 +32069,21 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
                   },
                   {
                     "type": "string",
@@ -33863,6 +33893,21 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
                   },
                   {
                     "type": "string",
@@ -75454,7 +75499,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -75526,7 +75571,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 269,
+        "capabilities": 272,
         "capability_ids": []
       },
       {
@@ -75639,7 +75684,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -75891,7 +75936,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 19,
+        "capabilities": 20,
         "capability_ids": []
       },
       {
@@ -75918,7 +75963,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 163,
+        "capabilities": 165,
         "capability_ids": []
       },
       {
@@ -76061,7 +76106,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 410,
+        "capabilities": 413,
         "capability_ids": []
       },
       {
@@ -76151,7 +76196,7 @@
     ]
   },
   "index": {
-    "fingerprint": "de526979d4aec27274ef293ba7e100381c2ce9b2a50da3db8e90864c1d28a7f6",
+    "fingerprint": "01a6e53f372ff2d72018fd0b2b2ad1c36af6a4e23e50b08ab8ebd94b90aa4bcf",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76188,23 +76233,23 @@
       "domain": 6,
       "feature": 27,
       "gap": 2,
-      "implementation": 51,
+      "implementation": 52,
       "intent": 3,
-      "issue": 269,
+      "issue": 272,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 26,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 19,
-      "rule": 163,
+      "release-record": 20,
+      "rule": 165,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 410,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
@@ -81436,7 +81481,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 28248
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81571,7 +81616,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 11531
+        "bytes": 11636
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -81580,7 +81625,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 53676
+        "bytes": 55527
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -81670,7 +81715,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 121800
+        "bytes": 133591
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -84775,6 +84820,14 @@
         "path": "lib/knowledge.sh",
         "source_class": "library",
         "bytes": 87974
+      },
+      {
+        "uri": "majordomus://implementation/lib/machine_lock.sh",
+        "kind": "implementation",
+        "identity": "lib/machine_lock.sh",
+        "path": "lib/machine_lock.sh",
+        "source_class": "library",
+        "bytes": 9407
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -87918,6 +87971,28 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2114",
+        "kind": "issue",
+        "identity": "I2114",
+        "title": "A task's scope admits what its derive writes",
+        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+        "path": ".ai/repo/project/issues/I2114.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2884
+      },
+      {
+        "uri": "majordomus://issue/I2161",
+        "kind": "issue",
+        "identity": "I2161",
+        "title": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "description": "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist.",
+        "path": ".ai/repo/project/issues/I2161.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3307
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -87927,6 +88002,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2285
+      },
+      {
+        "uri": "majordomus://issue/I2296",
+        "kind": "issue",
+        "identity": "I2296",
+        "title": "The executor reopens a record pull request no run was started for",
+        "description": "Let `majordomus prs drain` close and reopen a release's record pull request itself when the workflow's token opened it and it therefore has no check of its own, so the record lands one validate cycle after publication without a person noticing.",
+        "path": ".ai/repo/project/issues/I2296.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4394
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -88016,6 +88102,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3523
+      },
+      {
+        "uri": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "identity": "architecture-is-enforced",
+        "title": "A violated invariant fails a gate, and green means every required check ran",
+        "description": "A deliberate architectural violation fails a named gate; a red or cancelled full run is raised the day it happens; a rule is reported proven only when its proof ran; a credential shape never leaves through a response, log or frame; an installed release is proven to serve a repository that is not this one.",
+        "path": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4102
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -89110,6 +89207,16 @@
         "bytes": 2442
       },
       {
+        "uri": "majordomus://release-record/v0.20.0",
+        "kind": "release-record",
+        "identity": "v0.20.0",
+        "title": "v0.20.0",
+        "path": ".ai/repo/releases/v0.20.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
         "uri": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "identity": "v0.3.1",
@@ -90070,6 +90177,21 @@
           "campaigns",
           "evidence",
           "records"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "kind": "rule",
+        "identity": "project.a-derive-sees-what-the-commit-will@1",
+        "title": "A derive sees what the commit will",
+        "description": "scripts/derive refuses, before it waits for the lock or builds anything, when the tree holds an untracked file that is not ignored, because a derive projects only what git tracks and the commit that adds the file would be refused.",
+        "path": ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3372,
+        "tags": [
+          "derived",
+          "machine"
         ]
       },
       {
@@ -91071,6 +91193,22 @@
           "lifecycle",
           "events",
           "integrity"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.one-derive-at-a-time@1",
+        "kind": "rule",
+        "identity": "project.one-derive-at-a-time@1",
+        "title": "One derive at a time per machine, and a stopped derive leaves no orphans",
+        "description": "scripts/derive holds the machine's derive lock for its whole run, yields to a priority marker that names another branch, reclaims a dead owner's lock aloud, and takes its whole process tree down when it is stopped.",
+        "path": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6118,
+        "tags": [
+          "derived",
+          "machine",
+          "coordination"
         ]
       },
       {
@@ -92983,7 +93121,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 8895
+        "bytes": 9096
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -93018,6 +93156,14 @@
         "bytes": 5801
       },
       {
+        "uri": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "kind": "test",
+        "identity": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "path": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "source_class": "case",
+        "bytes": 7728
+      },
+      {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
         "kind": "test",
         "identity": "test/cases/101_command_graph.sh",
@@ -93026,12 +93172,28 @@
         "bytes": 12197
       },
       {
+        "uri": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "kind": "test",
+        "identity": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "path": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "source_class": "case",
+        "bytes": 3019
+      },
+      {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "identity": "test/cases/102_completion_shell.sh",
         "path": "test/cases/102_completion_shell.sh",
         "source_class": "case",
         "bytes": 4930
+      },
+      {
+        "uri": "majordomus://test/test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "kind": "test",
+        "identity": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "path": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "source_class": "case",
+        "bytes": 8295
       },
       {
         "uri": "majordomus://test/test/cases/103_obligations.sh",
@@ -94295,7 +94457,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 13554
+        "bytes": 13989
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -94639,7 +94801,7 @@
         "identity": "test/cases/51_derived_artifacts_committed.sh",
         "path": "test/cases/51_derived_artifacts_committed.sh",
         "source_class": "case",
-        "bytes": 3772
+        "bytes": 4381
       },
       {
         "uri": "majordomus://test/test/cases/52_generated_artifact_typing.sh",
@@ -95471,7 +95633,7 @@
         "identity": "test/cases/82_bench_check.sh",
         "path": "test/cases/82_bench_check.sh",
         "source_class": "case",
-        "bytes": 3145
+        "bytes": 3721
       },
       {
         "uri": "majordomus://test/test/cases/83_doctor_budget.sh",
@@ -96875,7 +97037,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "intent",
@@ -96895,7 +97057,7 @@
       "identity": [
         "id"
       ],
-      "objects": 269
+      "objects": 272
     },
     {
       "name": "knowledge",
@@ -96925,7 +97087,7 @@
       "identity": [
         "id"
       ],
-      "objects": 26
+      "objects": 27
     },
     {
       "name": "moment",
@@ -96981,7 +97143,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 19
+      "objects": 20
     },
     {
       "name": "rule",
@@ -96992,7 +97154,7 @@
         "id",
         "version"
       ],
-      "objects": 163
+      "objects": 165
     },
     {
       "name": "scope",
@@ -97047,7 +97209,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 410
+      "objects": 413
     },
     {
       "name": "use-case",
