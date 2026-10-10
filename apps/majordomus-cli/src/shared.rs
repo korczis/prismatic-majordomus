@@ -185,11 +185,12 @@ impl SharedServer {
         // stopped pinging — on every path, not only while the owner waits for peers to
         // leave, so that a dead peer never stays `attached` on the board — and it checks
         // that the lease is still its own. A lease another process took over is that
-        // process's to remove; this one stops claiming it, serves the peers it has, and
-        // ends with them.
+        // process's to remove; this one stops claiming it and retires from the mesh,
+        // serves the peers it has, and ends with them.
         let stopping = Arc::new(AtomicBool::new(false));
         {
             let endpoint = Arc::clone(&endpoint);
+            let mesh = Arc::clone(&ctx_for_mesh.mesh);
             let stopping = Arc::clone(&stopping);
             let path = lease.path().to_path_buf();
             let token = lease.token().to_string();
@@ -210,9 +211,15 @@ impl SharedServer {
                         {
                             lost = true;
                             crate::lease::lost();
+                            // A successor has the same mesh runtime key. Leaving this
+                            // instance active makes both replace each other's links.
+                            // Retire discovery and cooperation, keeping HTTP sessions.
+                            mesh.begin_stop();
+                            mesh.stop();
+                            mesh.decline("the server no longer holds its checkout lease");
                             tracing::warn!(
                                 lease = %path.display(),
-                                "the lease is no longer this server's: another process took it over; this server serves the peers it has and ends with them"
+                                "the lease is no longer this server's: another process took it over; this server leaves the mesh, serves the peers it has and ends with them"
                             );
                         }
                     }

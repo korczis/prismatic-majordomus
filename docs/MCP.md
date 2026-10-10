@@ -116,7 +116,12 @@ lease no longer carries its token:
 | its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
 | the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
 | it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
+| it leaves the mesh | discovery and cooperation stop; the successor alone represents this checkout, so the retired process cannot keep replacing its authenticated links |
 | its open sessions continue | they are its own until they end, and the process ends with them |
+
+`tests/mesh_lease_retirement.rs` proves the takeover with real servers: the retired
+process keeps an attached MCP client, stops participating in the mesh, and the successor
+synchronizes with a remote runtime without repeated reconnects.
 
 A server too old to answer the third question is accepted by the probe. It cannot be told
 from a current one on that endpoint, and refusing it would be the worse failure: a live
