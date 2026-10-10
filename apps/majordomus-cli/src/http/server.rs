@@ -1,8 +1,9 @@
 //! The socket: bind, read requests, hand them to the router, write responses. Loopback by
 //! default; the bound address is reported so that a caller who asked for port 0, or whose
-//! port was taken, learns the one in use. A bound socket is served by a few worker
-//! threads that share the immutable router, so a slow request does not queue the rest
-//! and the owner's stdio session never waits on HTTP. Stopping is cooperative: every
+//! port was taken, learns the one in use. A bound socket is accepted by a few worker
+//! threads, and each request is answered on a thread of its own up to a bound, so a slow
+//! request queues nothing behind it — not even the probe a client sends before it would
+//! take the lease over — and the owner's stdio session never waits on HTTP. Stopping is cooperative: every
 //! worker is unblocked and joined, and an in-flight response is finished first.
 
 use std::io::Read;
@@ -19,8 +20,18 @@ use super::Router;
 /// The largest request body accepted.
 pub const MAX_BODY_BYTES: usize = 1024 * 1024;
 
-/// How many threads answer requests on one socket.
+/// How many threads accept requests on one socket. They only accept: each request is answered
+/// on a thread of its own (up to [`MAX_HANDLERS`]), so a worker is free again at once and a
+/// lease probe is answered while tool calls run (I2126).
 pub const WORKERS: usize = 4;
+
+/// How many requests are answered at once before a worker answers the next one itself. A
+/// bound, so that a flood costs a fixed number of threads; far above what clients of one
+/// checkout send, so that a few slow tool calls never hold the probe up.
+pub const MAX_HANDLERS: usize = 64;
+
+/// Requests being answered right now, on threads of their own.
+static HANDLERS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 /// A socket that is bound and not yet served.
 pub struct Bound {
@@ -147,6 +158,12 @@ impl Running {
         for t in self.threads {
             let _ = t.join();
         }
+        // the requests already handed off are answered before the process goes on to stop,
+        // within a bound: a handler stuck forever does not hold the stop forever
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        while HANDLERS.load(Ordering::SeqCst) > 0 && std::time::Instant::now() < deadline {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
         tracing::info!(address = %self.address, "http stopped");
     }
 }
@@ -154,10 +171,32 @@ impl Running {
 fn worker(server: &Server, router: &Router, stopping: &AtomicBool) {
     loop {
         match server.recv() {
-            Ok(request) => answer(router, request),
+            Ok(request) => hand_off(router, request),
             Err(_) if stopping.load(Ordering::SeqCst) => break,
             Err(e) => tracing::warn!("accepting a connection failed: {e}"),
         }
+    }
+}
+
+/// Answer `request` on a thread of its own while fewer than [`MAX_HANDLERS`] are, so that the
+/// worker accepts the next request at once; past the bound, answer it here.
+fn hand_off(router: &Router, request: tiny_http::Request) {
+    if HANDLERS.fetch_add(1, Ordering::SeqCst) >= MAX_HANDLERS {
+        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        answer(router, request);
+        return;
+    }
+    let router = router.clone();
+    let spawned = std::thread::Builder::new()
+        .name("http-request".into())
+        .spawn(move || {
+            answer(&router, request);
+            HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        });
+    if let Err(e) = spawned {
+        // the request went with the closure; the client sees its connection close
+        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        tracing::warn!("a request could not be given a thread: {e}");
     }
 }
 
