@@ -49,8 +49,10 @@ for v in MJ_CTX_TMP MJ_PJ MJ_BENCH_ARGV MJ_ARCHIVE_TMPD MJ_REC_TMP MJ_TMP_ROOT; 
 done
 # the tool writes only under the AI layer, to projection targets, or the one ignore line in
 # .gitignore: every redirect into a path variable names a layout path (MJ_STATE_DIR and the
-# other MJ_*_DIR/FILE variables), MJ_ROOT/<projection>, the ignore file, or a temp file
-grep -nE '> *"?\$[A-Z_]+' $files | grep -vE 'MJ_STATE_DIR|MJ_POLICY_FILE|MJ_PROFILES_DIR|MJ_PROMPTS_DIR|MJ_PROJECT_DIR|MJ_RULES_DIR|MJ_KNOWLEDGE_DIR|MJ_AI_DIR|MJ_AI_REPO_DIR|MJ_AI_LOCAL_DIR|MJ_CUR|MJ_RULES_FLAT|MJ_KSRC_FLAT|MJ_DOC_FLAT|\$graph|\$fl\b|\$mf\b|\$gi\b|MJ_ROOT/\$tgt|MJ_ROOT/\$always|\$tmp|\$body|\$fm|\$flat|\$oflat|\$out|\$fp|\$fpflat|\$COPY|/dev/null|\$d/|\$MJ_POL_FLAT|\$MJ_PRO_FLAT|\$MJ_CUR_FLAT|\$final|\$MJ_CTX_TMP|\$MJ_CTXD_|\$MJ_TIMING_FILE|\$MJ_BENCH_ARGV|\$MJ_Q|\$rec|\$archive|\$led|\$tmpf|\$MJ_PJ/|\$MJ_ARCHIVE_TMPD|\$MJ_ARCHIVE_DROPPED|\$MJ_REC_TMP' | grep -vE '^[^:]+:[0-9]+:\s*#' && { echo "    write outside allowed paths"; exit 1; }
+# other MJ_*_DIR/FILE variables), MJ_ROOT/<projection>, the ignore file, or a temp file;
+# and the derive lock's owner line (lib/machine_lock.sh), which lives beside the primary
+# checkout by design (project.one-derive-at-a-time) and is the one write outside the layer
+grep -nE '> *"?\$[A-Z_]+' $files | grep -vE 'MJ_STATE_DIR|MJ_POLICY_FILE|MJ_PROFILES_DIR|MJ_PROMPTS_DIR|MJ_PROJECT_DIR|MJ_RULES_DIR|MJ_KNOWLEDGE_DIR|MJ_AI_DIR|MJ_AI_REPO_DIR|MJ_AI_LOCAL_DIR|MJ_CUR|MJ_RULES_FLAT|MJ_KSRC_FLAT|MJ_DOC_FLAT|\$graph|\$fl\b|\$mf\b|\$gi\b|MJ_ROOT/\$tgt|MJ_ROOT/\$always|\$tmp|\$body|\$fm|\$flat|\$oflat|\$out|\$fp|\$fpflat|\$COPY|/dev/null|\$d/|\$MJ_POL_FLAT|\$MJ_PRO_FLAT|\$MJ_CUR_FLAT|\$final|\$MJ_CTX_TMP|\$MJ_CTXD_|\$MJ_TIMING_FILE|\$MJ_BENCH_ARGV|\$MJ_Q|\$rec|\$archive|\$led|\$tmpf|\$MJ_PJ/|\$MJ_ARCHIVE_TMPD|\$MJ_ARCHIVE_DROPPED|\$MJ_REC_TMP|\$MJ_LOCK_DIR/owner' | grep -vE '^[^:]+:[0-9]+:\s*#' && { echo "    write outside allowed paths"; exit 1; }
 
 # ---------------------------------------------------------------- project.commands-run-non-interactively
 # The mechanical half ADR 0039 put here: no automated run of this repository starts a command

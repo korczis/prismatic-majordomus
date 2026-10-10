@@ -502,6 +502,14 @@ pub struct ExecutionPolicy {
     pub cancellable: bool,
     /// Whether two of them may overlap.
     pub concurrency: Concurrency,
+    /// Whether the input authenticates its caller.
+    ///
+    /// A handler whose input is a signed message, and which verifies the signature against
+    /// the trust policy before anything changes, admits its caller by that signature and not
+    /// by the address the request came from. Only such a handler changes state for a caller
+    /// on another host; see [`ExecutionPolicy::admits_remote`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub signed_input: bool,
 }
 
 impl ExecutionPolicy {
@@ -525,12 +533,14 @@ impl ExecutionPolicy {
                 effect: Effect::Read,
                 cancellable: false,
                 concurrency: Concurrency::Unrestricted,
+                signed_input: false,
             },
             // it changes this process's memory, so two of them are made to take turns
             CapabilityKind::Command => ExecutionPolicy {
                 effect: Effect::ProcessState,
                 cancellable: false,
                 concurrency: Concurrency::Serial,
+                signed_input: false,
             },
         }
     }
@@ -573,6 +583,45 @@ impl ExecutionPolicy {
             effect: Effect::RepositoryMutation,
             ..self
         }
+    }
+
+    /// The same policy, for a command whose input is a signed message the handler verifies
+    /// against the trust policy before it changes anything.
+    ///
+    /// The third documented addition, and the narrowest: the mesh's link and registration
+    /// handlers, whose callers are other machines by design and are admitted by a key the
+    /// trust policy names. It never combines with writing the repository: a signature
+    /// proves who sent a message, not that its sender may change tracked files here.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Command).authenticates_its_input();
+    /// assert!(p.signed_input && p.admits_remote());
+    /// ```
+    pub fn authenticates_its_input(self) -> Self {
+        ExecutionPolicy {
+            signed_input: true,
+            ..self
+        }
+    }
+
+    /// May a caller on another host run this?
+    ///
+    /// A request that arrives from an address that is not loopback has proved nothing about
+    /// who sent it: the server has no accounts and no tokens, and the `Origin` check stops a
+    /// browser, not a program. Such a caller reads, and changes nothing, unless the input
+    /// itself authenticates it ([`ExecutionPolicy::authenticates_its_input`]). A command
+    /// that only changes this process's memory is refused too, because some of that memory
+    /// is signed by this node and replicated to every runtime that trusts it (ADR 0126).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// assert!(ExecutionPolicy::classify(CapabilityKind::Query).admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().admits_remote());
+    /// ```
+    pub fn admits_remote(self) -> bool {
+        matches!(self.effect, Effect::Read) || self.signed_input
     }
 
     /// Should a client ask before running this? True for anything that changes something.

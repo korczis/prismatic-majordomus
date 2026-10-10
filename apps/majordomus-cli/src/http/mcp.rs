@@ -136,7 +136,11 @@ impl McpEndpoint {
             }
         };
         *lock(&session.last_seen) = Instant::now();
-        let response = lock(&session.server).handle(message);
+        let response = {
+            let mut server = lock(&session.server);
+            server.set_remote(req.is_remote());
+            server.handle(message)
+        };
         let mut out = match response {
             None => Response::new(202, "application/json", String::new()),
             Some(reply) => Response::new(
