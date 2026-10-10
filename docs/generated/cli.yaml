@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.21.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
-version: "0.20.0"
+generator: majordomus-cli 0.21.0
+version: "0.21.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -13661,7 +13661,7 @@ cli:
           route: /docs/cli/mesh/doctor/
           executable: true
           usage: "majordomus mesh doctor [OPTIONS]"
-          about: "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end"
+          about: "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall"
           args:
             - name: repo
               long: repo
@@ -13735,6 +13735,190 @@ cli:
               setup: []
               expectation: exits 0; prints protocol
           subcommands: []
+        - path:
+            - majordomus
+            - mesh
+            - firewall
+          route: /docs/cli/mesh/firewall/
+          executable: true
+          usage: "majordomus mesh firewall [OPTIONS] [COMMAND]"
+          about: "What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root"
+          args:
+            - name: port
+              long: port
+              positional: false
+              help: "The port this checkout's server listens on beyond loopback, when it does"
+              value_name: PORT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: "`text` for a person, `json` for a machine; both render the same answer"
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: mesh-firewall
+              title: "What the host firewall must admit for the declared mesh, and whether it does"
+              description: "The admissions derived from the declaration and this machine's addresses — the multicast group's port, the hub ports whose address is this machine's, the server's port beyond loopback — the firewall front this host runs, the commands that admit them there, the firewall's own word about them, and what the kernel logged it dropping toward those ports in the last five minutes. Here, with no declaration, nothing is needed and the report says so; a rule observed missing or a logged drop exits 10."
+              argv:
+                - mesh
+                - firewall
+              command: majordomus mesh firewall
+              setup: []
+              expectation: "exits 0; prints backend, verdict"
+          subcommands:
+            - path:
+                - majordomus
+                - mesh
+                - firewall
+                - apply
+              route: /docs/cli/mesh/firewall/apply/
+              executable: true
+              usage: "majordomus mesh firewall apply [OPTIONS]"
+              about: "Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh"
+              args:
+                - name: port
+                  long: port
+                  positional: false
+                  help: "The port this checkout's server listens on beyond loopback, when it does"
+                  value_name: PORT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract)"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: "`text` for a person, `json` for a machine; both render the same answer"
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+              examples:
+                - id: mesh-firewall-apply
+                  title: "Admit the mesh through the host firewall, as root"
+                  description: "Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root."
+                  argv:
+                    - mesh
+                    - firewall
+                    - apply
+                  command: majordomus mesh firewall apply
+                  setup: []
+                  expectation: exits 10
+              subcommands: []
         - path:
             - majordomus
             - mesh

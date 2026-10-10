@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -38,7 +38,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 21 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 23 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
@@ -165,6 +165,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |
 | `mesh.doctor` | `mesh` | query | experimental | `majordomus_mesh_doctor` | — | `GET /api/v1/mesh/doctor` | `majordomus mesh doctor` | — | required |
 | `mesh.events` | `mesh` | query | experimental | `majordomus_mesh_events` | — | `GET /api/v1/mesh/events` | — | — | required |
+| `mesh.firewall` | `mesh` | query | experimental | `majordomus_mesh_firewall` | — | `GET /api/v1/mesh/firewall` | `majordomus mesh firewall` | — | waived (external_dependency) |
+| `mesh.firewall.apply` | `mesh` | command | experimental | — | — | — | `majordomus mesh firewall apply` | — | waived (destructive) |
 | `mesh.handover.consume` | `mesh` | command | experimental | `majordomus_mesh_handover_consume` | — | `POST /api/v1/mesh/handovers/consume` | — | — | waived (transient_state) |
 | `mesh.handover.publish` | `mesh` | command | experimental | `majordomus_mesh_handover_publish` | — | `POST /api/v1/mesh/handovers` | — | — | waived (transient_state) |
 | `mesh.identity` | `mesh` | query | experimental | `majordomus_mesh_identity` | — | `GET /api/v1/mesh/identity` | `majordomus mesh identity` | — | required |

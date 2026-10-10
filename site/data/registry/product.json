@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
-  "fingerprint": "7c2d5a7abf7d77be36396f92246b34f683be850772d3cfb81cba07f232d0426e",
+  "fingerprint": "9d007d586ab5bd5f837288072c6b8a7766376895843f38d4f0b42dd8f51c8c74",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 63,
+        "capabilities": 65,
         "moments": 17
       },
       "evidence": {
@@ -3450,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 237
+          "objects": 238
         }
       ],
       "rule_refs": [
@@ -3723,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 308,
+        "mcp_resources": 309,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 301,
+        "objects": 302,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -5364,6 +5364,22 @@
               "route": "GET /api/v1/mesh/events"
             },
             {
+              "id": "mesh.firewall",
+              "title": "The host firewall, as the mesh needs it",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_firewall",
+              "route": "GET /api/v1/mesh/firewall",
+              "cli": "majordomus mesh firewall"
+            },
+            {
+              "id": "mesh.firewall.apply",
+              "title": "Admit the mesh through the host firewall",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh firewall apply"
+            },
+            {
               "id": "mesh.handover.consume",
               "title": "Consume a handover from the mesh",
               "kind": "command",
@@ -5618,11 +5634,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 21,
-        "mcp_tools": 19,
+        "capabilities": 23,
+        "mcp_tools": 20,
         "mcp_resources": 2,
-        "http_routes": 21,
-        "cli_paths": 2,
+        "http_routes": 22,
+        "cli_paths": 4,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7148,7 +7164,7 @@
         },
         {
           "name": "document",
-          "objects": 327
+          "objects": 328
         }
       ],
       "rule_refs": [
@@ -7421,11 +7437,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 416,
+        "mcp_resources": 417,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 413,
+        "objects": 414,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -14317,7 +14333,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (237)",
+        "title": "claim (238)",
         "features": [
           "declare-once"
         ]
@@ -15373,29 +15389,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2112,
-    "builtin": 184,
-    "declarative": 1928,
+    "capabilities": 2117,
+    "builtin": 186,
+    "declarative": 1931,
     "modules": 53,
-    "mcp_tools": 177,
-    "mcp_resources": 1982,
-    "http_routes": 181,
-    "cli_commands": 190,
+    "mcp_tools": 178,
+    "mcp_resources": 1985,
+    "http_routes": 182,
+    "cli_commands": 192,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1928,
+    "objects": 1931,
     "by_kind": {
       "adr": 85,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 237,
+      "claim": 238,
       "command": 31,
       "context": 36,
       "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 328,
       "domain": 6,
       "feature": 27,
       "gap": 2,
@@ -15415,7 +15431,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
@@ -15433,7 +15449,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 219,
+    "declared": 220,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -16229,6 +16245,12 @@
         "supported": false
       },
       "mesh-declared-is-held": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-firewall-is-derived": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
