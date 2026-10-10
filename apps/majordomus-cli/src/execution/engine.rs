@@ -457,6 +457,7 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
         ),
         CapabilityError::NotFound(_) => ("not_found", None),
         CapabilityError::Refused(_) => ("refused", None),
+        CapabilityError::Forbidden(_) => ("forbidden", None),
         CapabilityError::Internal(_) => (
             "internal",
             Some(format!("search the server's output for execution_id={id}")),
@@ -468,7 +469,8 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
             CapabilityError::InvalidInput(m)
             | CapabilityError::NotFound(m)
             | CapabilityError::Refused(m)
-            | CapabilityError::Internal(m) => m.clone(),
+            | CapabilityError::Internal(m)
+            | CapabilityError::Forbidden(m) => m.clone(),
         },
         suggestion,
         correlation_id: id.to_string(),
