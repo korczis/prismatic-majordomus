@@ -22,9 +22,12 @@ id: majordomus
 repository: https://github.com/korczis/prismatic-majordomus.git
 machines:
   - id: tomass-macbook-pro
-    title: The owner's MacBook Pro (Darwin arm64)
+    title: The owner's MacBook Pro (Darwin arm64), a LAN hub
     node: 5d81b5c94b02767fc07b181613a7fc71
     ssh: [korczis@100.108.237.68]
+    hub:
+      checkout: dev/prismatic-majordomus-hub
+      port: 8791
   - id: tomass-macbook-pro-2
     title: The owner's second MacBook Pro (Darwin arm64), a LAN hub
     node: 641bdb94dae9f62268abf5ca73c11e15

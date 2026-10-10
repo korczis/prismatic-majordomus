@@ -1119,13 +1119,16 @@ fn servers(
         return false;
     }
     let failed = r.get("failed") == Some("yes");
-    let (status, detail) = match (r.log.is_empty(), failed) {
-        (true, _) => (
+    // a restarted server's line names both versions; one left running names one
+    let restarted = r.log.iter().any(|l| l.contains(" → "));
+    let (status, detail) = match (r.log.is_empty(), failed, restarted) {
+        (true, _, _) => (
             StepStatus::Skipped,
             "no server runs another installed version".to_string(),
         ),
-        (false, false) => (StepStatus::Changed, r.log.join("; ")),
-        (false, true) => (StepStatus::Failed, r.log.join("; ")),
+        (false, true, _) => (StepStatus::Failed, r.log.join("; ")),
+        (false, false, true) => (StepStatus::Changed, r.log.join("; ")),
+        (false, false, false) => (StepStatus::Skipped, r.log.join("; ")),
     };
     o.record(Step::Servers, status, detail);
     !failed

@@ -148,7 +148,9 @@ echo "action=restarted"
 /// After an upgrade a server keeps running the tree it was started from, and `serve
 /// ensure` deliberately leaves it (the executable it names was not replaced, it was
 /// superseded). Each one is asked to stop and started again through the launcher on the
-/// port it had. A server built from a checkout is that checkout's, and is left alone.
+/// port it had. A server built from a checkout is that checkout's, and is left alone; so is
+/// one bound beyond loopback (`--host`), which some service or person started on purpose
+/// and which `serve ensure` would bring back on loopback only.
 pub const SERVERS: &str = r#"
 pfx="$HOME/$1/versions/"
 ps -A -o args= 2>/dev/null | grep -E '[m]ajordomus(-cli)? serve' | while IFS= read -r line; do
@@ -160,6 +162,12 @@ ps -A -o args= 2>/dev/null | grep -E '[m]ajordomus(-cli)? serve' | while IFS= re
   port=$(printf '%s\n' "$line" | sed -n 's/.* --port \([0-9][0-9]*\).*/\1/p')
   [ -n "$repo" ] || continue
   [ "$repo" = "$4" ] && continue
+  case "$line" in
+    *" --host "*)
+      echo "log=$repo: $v left running; it is bound beyond loopback and its starter owns it"
+      continue
+      ;;
+  esac
   "$3" serve stop --repo "$repo" >/dev/null 2>&1 || true
   if "$3" serve ensure --repo "$repo" ${port:+--port "$port"} >/dev/null 2>&1; then
     echo "log=$repo: $v → $2"
