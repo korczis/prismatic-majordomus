@@ -468,6 +468,8 @@ pub(crate) fn tool_json(t: &super::surface::Tool) -> Value {
 }
 
 fn error(id: Value, code: i64, message: &str) -> Value {
+    // the one place a JSON-RPC error is made: it may echo a tool name or an argument
+    let message = crate::redaction::redact_secrets(message).text;
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
 }
 

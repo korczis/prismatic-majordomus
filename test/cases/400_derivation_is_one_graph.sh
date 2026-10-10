@@ -25,7 +25,7 @@
 G="$T/graph"; TOOL="$T/tool"; LOG="$T/calls.log"
 mkdir -p "$G/scripts" "$G/lib" "$G/src" "$G/out" "$TOOL"
 cp "$ROOT/scripts/derive" "$ROOT/scripts/derive-check" "$G/scripts/"
-cp "$ROOT/lib/rust_bin.sh" "$G/lib/"
+cp "$ROOT/lib/rust_bin.sh" "$ROOT/lib/machine_lock.sh" "$G/lib/"
 printf 'v1\n' > "$G/src/model.txt"
 
 # stage A and C: majordomus generate [--check] --repo R --strict
@@ -75,6 +75,11 @@ STUB_LOG="$LOG"; export STUB_LOG
 ( cd "$G" && git init -q . && git config user.email t@example.com && git config user.name t \
   && git add -A && git commit -qm sources )
 
+# scripts/derive takes the machine's derive lock (lib/machine_lock.sh); the fixture's lock
+# and priority marker are its own, so this case neither waits for nor blocks a real derive.
+# The fixture's files are untracked in the case's scratch repository by construction.
+export MAJORDOMUS_DERIVE_LOCK="$T/derive.lock" MAJORDOMUS_DERIVE_PRIORITY="$T/derive.priority"
+export MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
 derive()       { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive"; }
 derive_check() { MAJORDOMUS_BIN="$TOOL/majordomus" bash "$G/scripts/derive-check"; }
 tree_state()   { ( cd "$G" && git status --porcelain --untracked-files=all && git diff && cat .gitattributes out/*.txt 2>/dev/null ) || true; }
