@@ -399,6 +399,28 @@ mod tests {
     }
 
     #[test]
+    fn a_declaration_of_another_kind_or_a_cooperation_it_cannot_keep_is_refused() {
+        let refusal = |metadata: serde_json::Value| {
+            MeshConfig::from_metadata(&metadata, "master:m.yaml")
+                .unwrap_err()
+                .to_string()
+        };
+        let kind = refusal(serde_json::json!({
+            "schema": "mesh/v1", "kind": "rule", "id": "x"
+        }));
+        assert!(kind.contains("master:m.yaml: kind rule is not"), "{kind}");
+        let cooperation = refusal(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
+            "cooperation": { "heartbeat_seconds": 5, "expiry_seconds": 6 }
+        }));
+        assert!(
+            cooperation
+                .contains("master:m.yaml: cooperation.expiry_seconds 6 is under three heartbeats"),
+            "{cooperation}"
+        );
+    }
+
+    #[test]
     fn a_minimal_declaration_parses_with_safe_defaults() {
         let config = MeshConfig::parse(&object(serde_json::json!({
             "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true

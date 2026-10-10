@@ -315,6 +315,112 @@ mod tests {
         assert_eq!(narrowed.len(), 1);
     }
 
+    /// The declaration the index found in the working tree.
+    fn working(metadata: serde_json::Value) -> Object {
+        Object {
+            kind: "mesh-declaration".into(),
+            identity: "majordomus".into(),
+            uri: "majordomus://mesh-declaration/majordomus".into(),
+            title: None,
+            description: None,
+            metadata,
+            body: String::new(),
+            content: String::new(),
+            media_type: "application/yaml",
+            provenance: crate::model::Provenance {
+                path: ".ai/repo/mesh/majordomus.yaml".into(),
+                directory: ".ai/repo/mesh".into(),
+                source_class: "mesh-declaration".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    /// A repository whose trunk, `master`, holds `committed` at the declaration's path, or
+    /// holds no declaration at all.
+    fn trunk_holding(committed: Option<&str>) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            let status = std::process::Command::new("git")
+                .args(["-c", "user.email=t@t.invalid", "-c", "user.name=t"])
+                .args(args)
+                .current_dir(dir.path())
+                .output()
+                .unwrap()
+                .status;
+            assert!(status.success(), "git {args:?}");
+        };
+        git(&["init", "-q", "-b", "master"]);
+        std::fs::write(dir.path().join("README.md"), "r\n").unwrap();
+        if let Some(text) = committed {
+            std::fs::create_dir_all(dir.path().join(".ai/repo/mesh")).unwrap();
+            std::fs::write(dir.path().join(".ai/repo/mesh/majordomus.yaml"), text).unwrap();
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "trunk"]);
+        dir
+    }
+
+    const TRUNK: &str =
+        "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\ntrust:\n  policy: deny_unknown\n";
+
+    fn tofu() -> serde_json::Value {
+        serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus",
+            "enabled": true, "trust": { "policy": "tofu" },
+        })
+    }
+
+    #[test]
+    fn the_trunk_copy_narrows_the_working_tree_and_a_copy_that_does_not_parse_refuses() {
+        // committed: the trunk's deny_unknown holds against the working tree's tofu
+        let repo = trunk_holding(Some(TRUNK));
+        let resolved = resolve(repo.path(), Some(&working(tofu())));
+        assert_eq!(resolved.trunk.as_deref(), Some("master"));
+        assert!(resolved.committed);
+        let held = resolved.declaration.unwrap().unwrap();
+        assert_eq!(held.trust.policy, TrustPolicy::DenyUnknown);
+        assert_eq!(resolved.narrowed.len(), 1, "{:?}", resolved.narrowed);
+
+        // a working tree that does not parse is refused, whatever the trunk says
+        let broken = resolve(
+            repo.path(),
+            Some(&working(serde_json::json!({ "schema": "mesh/v0" }))),
+        );
+        assert!(matches!(broken.declaration, Some(Err(_))));
+        assert!(!broken.committed);
+
+        // a trunk copy that does not parse turns the mesh off with the trunk's refusal,
+        // rather than trusting the working tree instead
+        let repo = trunk_holding(Some("schema: mesh/v0\nkind: mesh-declaration\nid: x\n"));
+        let resolved = resolve(repo.path(), Some(&working(tofu())));
+        assert!(resolved.committed);
+        let refusal = resolved.declaration.unwrap().unwrap_err().to_string();
+        assert!(
+            refusal.contains("master:.ai/repo/mesh/majordomus.yaml"),
+            "{refusal}"
+        );
+    }
+
+    #[test]
+    fn a_declaration_the_trunk_does_not_hold_is_read_as_uncommitted() {
+        let repo = trunk_holding(None);
+        let resolved = resolve(repo.path(), Some(&working(tofu())));
+        assert!(!resolved.committed);
+        let held = resolved.declaration.unwrap().unwrap();
+        assert_eq!(held.trust.policy, TrustPolicy::DenyUnknown);
+    }
+
+    #[test]
+    fn loopback_is_named_by_scheme_bracket_or_bare_authority() {
+        assert!(is_loopback("https://127.0.0.1:8791/x"));
+        assert!(is_loopback("http://[::1]:8791"));
+        assert!(is_loopback("localhost:8791"));
+        assert!(!is_loopback("https://[2001:db8::1]:8791"));
+    }
+
     #[test]
     fn a_branch_cannot_switch_on_a_mesh_the_trunk_switched_off() {
         let trunk = config(serde_json::json!({
