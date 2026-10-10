@@ -160,6 +160,11 @@ jobs:
       # to propose the record as a pull request. Without it `gh pr create` is refused, and
       # v0.7.0 published every artifact, pushed its record branch and then failed here.
       pull-requests: write
+      # to attest each archive's provenance (I2165): the OIDC token names this workflow run,
+      # and the attestation is stored with the repository, where `gh attestation verify`
+      # and the installer look it up by the archive's digest
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -211,6 +216,17 @@ jobs:
           ( cd dist && sha256sum ./*.tar.gz > SHA256SUMS && cat SHA256SUMS )
           # derived from immutable assets, so replacing it on a rerun changes nothing it states
           gh release upload '${{ needs.plan.outputs.tag }}' dist/SHA256SUMS --clobber
+
+      # Each archive's provenance, signed by this workflow's identity (I2165). A checksum served
+      # beside an archive proves the transfer, not who built it; this states that the bytes in
+      # dist — the published bytes, adopted or new — were produced by this repository's release
+      # workflow at this tag. `gh attestation verify <archive> --repo <repository>` checks it,
+      # and so does the installer wherever the GitHub CLI is present and signed in. A rerun
+      # attests the same digests again, which adds a record and changes nothing it states.
+      - name: the provenance of every published archive
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/*.tar.gz'
 
       # Staged the moment it exists, before anything derives from it. The layer is what git's
       # index lists (VcsIndex runs `git ls-files`, apps/majordomus-cli/src/discovery/mod.rs):
@@ -439,22 +455,10 @@ jobs:
           echo "::error::$url still does not name $tag after 15 minutes"
           exit 1
 
-      - name: install the published release with the published installer
-        run: |
-          installer="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
-          curl -fsSL --max-time 120 "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
-
-      - name: the installed tool is the release that was published
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          majordomus --version
-          [ "$(majordomus version)" = "majordomus ${{ needs.plan.outputs.version }}" ]
-          majordomus-mcp --help >/dev/null 2>&1 || true
-
-      - name: and it initialises a repository that has none
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          mkdir -p "$RUNNER_TEMP/smoke" && cd "$RUNNER_TEMP/smoke"
-          git init -q .
-          majordomus init
-          test -f .ai/repo/policy.yaml
+      # The published installer installs the published tag, and the installed tool does what
+      # a client configuration asks of it: it initialises a repository that is not this one
+      # and serves it over the shared server, ready and naming that repository (I2162). One
+      # gate, scripts/ci/install-check, measures this for a person, for the nightly run and
+      # here; --expect pins it to this tag, and nothing in this job swallows a failure.
+      - name: the published release installs, initialises and serves a foreign repository
+        run: scripts/ci/install-check --expect "${{ needs.plan.outputs.tag }}"

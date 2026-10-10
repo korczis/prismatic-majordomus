@@ -1,0 +1,31 @@
+id: I2162
+milestone: architecture-is-enforced
+title: "A released archive, installed, serves a foreign repository over the shared server in CI"
+slug: an-installed-release-serves-a-foreign-repository
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure."
+why: "The release smoke checks the version and init only, and swallows the launcher's failure with majordomus-mcp --help >/dev/null 2>&1 || true (.github/workflows/release.yml:452), while docs/DISTRIBUTION.md describes the smoke as installing the release. scripts/ci/install-check runs majordomus-mcp --standalone --repo $ROOT against this repository (scripts/ci/install-check:176). The suite's adopter cases (test/cases/90_mcp_shared_server.sh, apps/majordomus-cli/tests/external_extension.rs) use the checkout's binary. Nothing starts a shared server from an installed release in a foreign repository. Pack M10 asks for injection into a separate minimal foreign repository. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 9 and drift 9."
+current_state: "An installed release is proven to print its version and run init, not to serve."
+desired_state: "install-check, and the release smoke on the published archive, init a temporary foreign repository, start majordomus-mcp without --standalone, run initialize and tools/list over stdio, and read /api/v1/ready and the repository id of the server it started; no smoke step ends in || true."
+scope:
+  - "scripts/ci/install-check"
+  - ".github/workflows/release.yml"
+  - "site/static/install.sh"
+  - "test/cases"
+  - "docs/DISTRIBUTION.md"
+depends_on: []
+acceptance_criteria:
+  - "The release workflow fails when the installed launcher cannot start, proved by a fixture archive whose launcher exits non-zero"
+  - "install-check starts a shared server from the installed binary in a fresh repository and reads its readiness and a repository id that differs from this repository's"
+  - "No step of the release smoke ends in || true"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "installed_release_serves_foreign_repo_case"
+  - "smoke_fails_on_launcher_failure_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

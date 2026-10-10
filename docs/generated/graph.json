@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -2748,6 +2748,14 @@
         "label": "protocol.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mcp/protocol.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mcp/surface.rs",
+        "kind": "file",
+        "label": "surface.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mcp/surface.rs",
         "external": true
       },
       {
@@ -6371,6 +6379,35 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0126",
+        "kind": "adr",
+        "label": "adr-0126",
+        "summary": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "route": "/cockpit/objects/adr/adr-0126",
+        "source": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "rule:project.mesh-cooperation-is-authenticated",
+            "file:apps/majordomus-cli/src/capability/model.rs",
+            "file:apps/majordomus-cli/src/http/router.rs",
+            "file:apps/majordomus-cli/src/mcp/surface.rs",
+            "test:apps/majordomus-cli/tests/remote_callers.rs",
+            "test:test/cases/1022_a_remote_caller_cannot_write.sh"
+          ],
+          "tags": [
+            "security",
+            "mesh",
+            "mcp",
+            "http"
           ]
         }
       },
@@ -17457,6 +17494,13 @@
         "label": "lib/knowledge.sh",
         "route": "/cockpit/objects/implementation/lib-knowledge-sh",
         "source": "lib/knowledge.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/machine_lock.sh",
+        "kind": "implementation",
+        "label": "lib/machine_lock.sh",
+        "route": "/cockpit/objects/implementation/lib-machine-lock-sh",
+        "source": "lib/machine_lock.sh"
       },
       {
         "id": "majordomus://implementation/lib/mermaid.awk",
@@ -30259,6 +30303,125 @@
         }
       },
       {
+        "id": "majordomus://issue/I2114",
+        "kind": "issue",
+        "label": "I2114",
+        "summary": "A task's scope admits what its derive writes",
+        "route": "/cockpit/objects/issue/i2114",
+        "source": ".ai/repo/project/issues/I2114.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A branch whose task scope names only the canonical input it changed passes `finish --check` with the derive's projections of that input committed beside it",
+            "A projection committed without any change to its canonical inputs is still refused as outside the scope",
+            "`majordomus scope widen <paths> --because \\\"<reason>\\\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why",
+            "A path outside both the scope and the declared projection set is refused exactly as before"
+          ],
+          "created_at": "2026-10-09",
+          "evidence_required": [
+            "projection_admitted_case",
+            "scope_widen_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/check.sh",
+            "scripts/gitattributes",
+            "apps/majordomus-cli/src/capability/builtin/scope.rs",
+            "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-tasks-scope-admits-what-its-derive-writes",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2123",
+        "kind": "issue",
+        "label": "I2123",
+        "summary": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "route": "/cockpit/objects/issue/i2123",
+        "source": ".ai/repo/project/issues/I2123.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every HTTP route of a capability that does not admit a remote caller answers 403 forbidden to a request from a non-loopback address, before its handler runs",
+            "A remote MCP message calling a tool that changes something is refused with error code forbidden, and the same session's next message from loopback is not",
+            "A real server bound to 0.0.0.0 refuses plan/transition, executions/start, mesh/claims, mesh/handovers/consume and peers/announce from this machine's LAN address and still answers a read",
+            "The three signed mesh capabilities reach their handlers from a remote address",
+            "executions.start declares repository_mutation, so a local client is told it can write before it runs a writer through it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A remote request is admitted by any route whose browser Origin check it passes; the bind warning says a remote host can only read.",
+          "evidence_required": [
+            "remote_callers_tests",
+            "case_1022_red_on_0_18_0_green_on_branch"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/tests/remote_callers.rs",
+            "test/cases/1022_a_remote_caller_cannot_write.sh",
+            "docs/MCP.md",
+            "docs/MESH.md"
+          ],
+          "slug": "a-remote-caller-cannot-write",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test remote_callers",
+            "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1022_a_remote_caller_cannot_write"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2124",
+        "kind": "issue",
+        "label": "I2124",
+        "summary": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "route": "/cockpit/objects/issue/i2124",
+        "source": ".ai/repo/project/issues/I2124.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A key withdrawn from the allowlist has none of its events believed from the journal file after a restart, and they are believed again when the key is allowed again",
+            "An event whose stamp is more than MAX_LAMPORT_LEAD ahead of the receiver's clock is refused as clock_ahead, and one within the bound is accepted",
+            "The live path and the reload decide trust through one function"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Reload trusts every origin; ingest accepts any stamp.",
+          "evidence_required": [
+            "mesh_trust_reload_red_then_green"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_trust_reload.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-reloaded-event-meets-the-trust-policy",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test mesh_trust_reload --test mesh_cooperation --test mesh_compaction"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2135",
         "kind": "issue",
         "label": "I2135",
@@ -30300,6 +30463,255 @@
             "bin/majordomus plan validate",
             "cargo test --test mesh",
             "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem 494_the_mesh_is_declared_and_held"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2137",
+        "kind": "issue",
+        "label": "I2137",
+        "summary": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "route": "/cockpit/objects/issue/i2137",
+        "source": ".ai/repo/project/issues/I2137.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A journal whose last line is torn reloads every complete event, reports one unreadable line, and the next append is readable on the following reload",
+            "A failed write on a read-only or full file system in a test is counted, reported by mesh doctor, and the event is not acknowledged as durable",
+            "A kill during compaction leaves the old or the new journal, never a mix",
+            "The journal file is created with owner-only permissions"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Writes are best effort and unreported; a torn tail corrupts the next event; unreadable lines vanish on reload.",
+          "depends_on": [],
+          "evidence_required": [
+            "torn_tail_reload_test",
+            "write_failure_reported_test",
+            "compaction_crash_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "objective": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "test/cases",
+            "docs/MESH.md"
+          ],
+          "slug": "the-journal-is-durable",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::journal",
+            "cargo test --test mesh_compaction",
+            "MJ_TEST_JOBS=4 bash test/run.sh 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2151",
+        "kind": "issue",
+        "label": "I2151",
+        "summary": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "route": "/cockpit/objects/issue/i2151",
+        "source": ".ai/repo/project/issues/I2151.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /swagger answers with a Content-Security-Policy that includes frame-ancestors, and every script it loads carries an integrity attribute",
+            "A GET whose Host header names another domain is refused before its handler runs",
+            "A site data value containing a closing script tag renders as text in each template that embeds JSON"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "/swagger trusts a CDN with the write routes' origin; GET answers any Host; three site templates embed JSON unescaped.",
+          "depends_on": [],
+          "evidence_required": [
+            "swagger_csp_test",
+            "rebinding_host_refused_test",
+            "site_script_escape_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "objective": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/swagger.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "site/templates/partials/graph.html",
+            "site/templates/api.html",
+            "site/templates/why-section.html",
+            "apps/majordomus-cli/tests/http_host.rs",
+            "apps/majordomus-cli/tests/http_serve.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "pages-beside-writers-are-hardened",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test http_host --test http_serve",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2161",
+        "kind": "issue",
+        "label": "I2161",
+        "summary": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "route": "/cockpit/objects/issue/i2161",
+        "source": ".ai/repo/project/issues/I2161.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log",
+            "A handover body containing a credential shape is redacted or refused before it is signed into the journal",
+            "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
+            "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Only generated documents and tracked text are scanned; responses, logs and frames are not.",
+          "depends_on": [],
+          "evidence_required": [
+            "credential_never_echoed_test",
+            "eventbody_allowlist_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/mesh/handover.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "scripts/ci/mesh-check",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "test/cases"
+          ],
+          "slug": "no-credential-leaves-the-runtime",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test redaction",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2162",
+        "kind": "issue",
+        "label": "I2162",
+        "summary": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "route": "/cockpit/objects/issue/i2162",
+        "source": ".ai/repo/project/issues/I2162.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The release workflow fails when the installed launcher cannot start, proved by a fixture archive whose launcher exits non-zero",
+            "install-check starts a shared server from the installed binary in a fresh repository and reads its readiness and a repository id that differs from this repository's",
+            "No step of the release smoke ends in || true"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "An installed release is proven to print its version and run init, not to serve.",
+          "depends_on": [],
+          "evidence_required": [
+            "installed_release_serves_foreign_repo_case",
+            "smoke_fails_on_launcher_failure_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "objective": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/install-check",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "an-installed-release-serves-a-foreign-repository",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2165",
+        "kind": "issue",
+        "label": "I2165",
+        "summary": "A released archive carries a provenance attestation the installer can check",
+        "route": "/cockpit/objects/issue/i2165",
+        "source": ".ai/repo/project/issues/I2165.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each archive of a release carries an attestation that gh attestation verify accepts for this repository",
+            "install.sh reports whether it verified provenance or only the checksum",
+            "docs/DISTRIBUTION.md names what each installation path verifies"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "install.sh verifies a checksum served beside the archive; provenance is not verifiable.",
+          "depends_on": [],
+          "evidence_required": [
+            "attested_release",
+            "installer_reports_verification_case"
+          ],
+          "milestone": "safe-self-update",
+          "objective": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "docs/DISTRIBUTION.md",
+            "test/cases/85_installer.sh"
+          ],
+          "slug": "releases-carry-provenance",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2282",
+        "kind": "issue",
+        "label": "I2282",
+        "summary": "The record pull request's dispatched verdict does not satisfy branch protection",
+        "route": "/cockpit/objects/issue/i2282",
+        "source": ".ai/repo/project/issues/I2282.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "record_pull_request_mergeable_without_reopen",
+            "distribution_claims_match_pipeline"
+          ],
+          "milestone": "test-evidence",
+          "objective": "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "docs/DISTRIBUTION.md",
+            "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+            ".ai/repo/ci/release.yaml"
+          ],
+          "slug": "the-record-dispatch-is-not-a-verdict",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 996"
           ]
         }
       },
@@ -30660,6 +31072,65 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "label": "architecture-is-enforced",
+        "summary": "A violated invariant fails a gate, and green means every required check ran",
+        "route": "/cockpit/objects/milestone/architecture-is-enforced",
+        "source": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A scheduled run that ends red or cancelled produces a visible record naming the failing jobs",
+            "rule-proof reports each rule from recorded runs, and the not-run count of blocking rules is printed",
+            "A credential-shaped value sent to the server never appears in a response, an MCP error or server.log",
+            "CI installs a release archive, starts its shared server in a fresh foreign repository and reads its readiness"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "desired_state": "Each row of the audit's enforcement table (plan/RUNTIME_BASELINE.md) is gated in CI with a fixture that makes the gate fail, and the session briefing shows the last full-plan verdict.",
+          "evidence_required": [
+            "full_plan_alarm",
+            "rule_proof_from_runs",
+            "secret_never_echoed",
+            "installed_release_dogfood"
+          ],
+          "non_scope": [
+            "Shortening the slowest case, which is I2115 (milestone ci-critical-path).",
+            "The evidence publication's use of public_text, which is I1955 (test-evidence).",
+            "A second CI pipeline; checks join the existing gates.yaml plan."
+          ],
+          "order": 143,
+          "priority": "p1",
+          "risks": [
+            "Raising every cancelled scheduled run will be noisy until bench and macos fit their timeouts; that is the point, and the first runs should be read rather than silenced.",
+            "Opening GitHub issues from CI is an outward mutation; it must go through scripts/github-sync and be idempotent."
+          ],
+          "scope": [
+            "scripts/ci",
+            ".github/workflows/validate.yml",
+            ".github/workflows/release.yml",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/execution/redact.rs",
+            "apps/majordomus-cli/tests/executions.rs",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "architecture-is-enforced",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/core-check",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
           ]
         }
       },
@@ -31227,6 +31698,59 @@
         }
       },
       {
+        "id": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "label": "mesh-journal-converges",
+        "summary": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "route": "/cockpit/objects/milestone/mesh-journal-converges",
+        "source": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A torn or unreadable journal line is counted and reported by mesh doctor, and no complete event before or after it is lost",
+            "A write failure is reported and the event is not acknowledged as stored",
+            "A claim that expired and revived after a partition is Conflicted, not Held, against a claim admitted during its absence, on every runtime",
+            "Two replicas fed the same authenticated events in any order and with duplicates report equal digests, by a multi-stream property test",
+            "No sync message exceeds MAX_LINK_MESSAGE, and mesh.events pages return every event once"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "journal_durability_tests",
+            "claim_fencing_tests",
+            "multi_stream_convergence_proptest"
+          ],
+          "order": 137,
+          "priority": "p0",
+          "risks": [
+            "Adding an epoch to ClaimAcquired is a wire change; it needs the link or event schema version handled as I2164 prices it, or old runtimes will refuse or misread the new field.",
+            "fsync on every append costs latency on the heartbeat path; the bound chosen must be measured, not assumed.",
+            "I2124 edits the same reload path in apps/majordomus-cli/src/mesh/journal.rs; I2137 should land after it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "test/cases",
+            "test/mesh-lab",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-journal-converges",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh_cooperation --test mesh_compaction --test mesh",
+            "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/public-proof",
         "kind": "milestone",
         "label": "public-proof",
@@ -31430,6 +31954,61 @@
         }
       },
       {
+        "id": "majordomus://milestone/safe-self-update",
+        "kind": "milestone",
+        "label": "safe-self-update",
+        "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "route": "/cockpit/objects/milestone/safe-self-update",
+        "source": ".ai/repo/project/milestones/safe-self-update.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session",
+            "A wire or lease or journal schema change without a version bump fails version-surface",
+            "Each release archive carries an attestation that verifies for this repository"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "version_hand_off_test",
+            "wire_versions_gated",
+            "release_attestation"
+          ],
+          "non_scope": [
+            "A second installer or updater; install.sh stays the one path (pack M11).",
+            "A network fetch on entering a repository.",
+            "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
+          ],
+          "order": 144,
+          "priority": "p2",
+          "risks": [
+            "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server.",
+            "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/mesh/protocol.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "scripts/ci/version-matches-surface",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/fixtures",
+            "test/cases",
+            "docs/DISTRIBUTION.md",
+            "docs/MCP.md"
+          ],
+          "slug": "safe-self-update",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 743_release_version_answers_with_the_contract"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/shared-policy",
         "kind": "milestone",
         "label": "shared-policy",
@@ -31476,6 +32055,65 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "label": "surfaces-never-disagree",
+        "summary": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "route": "/cockpit/objects/milestone/surfaces-never-disagree",
+        "source": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A test over the registry fails when a state-reporting capability answers without observed_at",
+            "The parity test covers every capability with an HTTP route and every capability with a CLI path",
+            "GET /swagger answers with a CSP and integrity hashes, and a foreign Host is refused on GET",
+            "A gate fails on a literal /api/v1/ path or a copied enum value in Cockpit or site code"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "uniform_freshness",
+            "parity_with_writers_and_cli",
+            "no_consumer_catalogue"
+          ],
+          "non_scope": [
+            "Removing the clap tree or cli/local.rs LOCAL; both are measured second declarations (SURFACES F-1, F-4) and this milestone records them rather than rewriting the CLI.",
+            "Writing a static site that claims live state; the site stays a picture labelled as one.",
+            "Reporting a replaced executable, which is I1502."
+          ],
+          "order": 140,
+          "priority": "p1",
+          "risks": [
+            "Adding observed_at to capability outputs changes their schemas and so the public surface; version-surface will price it as a change, which is correct.",
+            "Extending parity to POST routes runs writers in tests; each must run against a synthetic repository, never the checkout."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/live.rs",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/site.rs",
+            "apps/majordomus-cli/src/web/discover.rs",
+            "share/cockpit",
+            "site/templates",
+            "apps/majordomus-cli/tests/properties.rs",
+            "apps/majordomus-cli/tests/dashboard.rs",
+            "test/cases",
+            "docs/SURFACES.md",
+            "docs/COCKPIT.md",
+            ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md"
+          ],
+          "slug": "surfaces-never-disagree",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test properties --test projections --test dashboard --test http_serve --test http_host",
+            "bin/majordomus-cli generate --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 545_every_answer_says_when_it_was_observed 406_one_declaration_every_surface"
           ]
         }
       },
@@ -34917,6 +35555,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.19.1",
+        "kind": "release-record",
+        "label": "v0.19.1",
+        "summary": "v0.19.1",
+        "route": "/cockpit/objects/release-record/v0-19-1",
+        "source": ".ai/repo/releases/v0.19.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "fe0b58b67b63d7a95b15236d9de222ea2dc2fab5",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.19.1",
+          "published_at": "2026-10-10T01:46:29Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.19.1"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -36213,6 +36874,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "kind": "rule",
+        "label": "project.a-derive-sees-what-the-commit-will@1",
+        "summary": "A derive sees what the commit will",
+        "route": "/cockpit/objects/rule/project-a-derive-sees-what-the-commit-will-1",
+        "source": ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-files-regenerated@1",
+            "project.one-derive-at-a-time@1"
+          ],
+          "statement": "Stage every new file before you derive, and ignore or remove what will never be committed. scripts/derive refuses an untracked, non-ignored file before it takes the machine's lock and names each one.",
+          "tags": [
+            "derived",
+            "machine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "kind": "rule",
         "label": "project.a-diagram-is-drawn-not-typed@1",
@@ -37495,6 +38177,24 @@
             "lifecycle",
             "events",
             "integrity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.one-derive-at-a-time@1",
+        "kind": "rule",
+        "label": "project.one-derive-at-a-time@1",
+        "summary": "One derive at a time per machine, and a stopped derive leaves no orphans",
+        "route": "/cockpit/objects/rule/project-one-derive-at-a-time-1",
+        "source": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "derived",
+            "machine",
+            "coordination"
           ]
         }
       },
@@ -42767,6 +43467,13 @@
         "source": "test/cases/1016_the_worker_is_asked_before_compaction.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "kind": "test",
+        "label": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "route": "/cockpit/objects/test/test-cases-1018-one-derive-at-a-time-and-no-orphans-sh",
+        "source": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
         "kind": "test",
         "label": "test/cases/101_command_graph.sh",
@@ -42774,11 +43481,32 @@
         "source": "test/cases/101_command_graph.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "kind": "test",
+        "label": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "route": "/cockpit/objects/test/test-cases-1020-a-derive-sees-what-the-commit-will-sh",
+        "source": "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "route": "/cockpit/objects/test/test-cases-1022-a-remote-caller-cannot-write-sh",
+        "source": "test/cases/1022_a_remote_caller_cannot_write.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
         "kind": "test",
         "label": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
         "route": "/cockpit/objects/test/test-cases-1023-a-branch-cannot-widen-the-mesh-trust-sh",
         "source": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "kind": "test",
+        "label": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "route": "/cockpit/objects/test/test-cases-1024-an-installed-release-serves-a-foreign-repository-sh",
+        "source": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
       },
       {
         "id": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -47923,6 +48651,14 @@
         "label": "product.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/product.rs",
+        "external": true
+      },
+      {
+        "id": "test:apps/majordomus-cli/tests/remote_callers.rs",
+        "kind": "test",
+        "label": "remote_callers.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/remote_callers.rs",
         "external": true
       }
     ],
@@ -54525,6 +55261,56 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/capability/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/http/router.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/mcp/surface.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0040",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "test:apps/majordomus-cli/tests/remote_callers.rs",
         "kind": "put_in_force"
       },
       {
@@ -61923,6 +62709,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/machine_lock.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/mermaid.awk",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -66333,6 +67124,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2114",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2114",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2123",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2123",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2124",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2124",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2135",
         "target": "kind:issue",
         "kind": "is_a"
@@ -66340,6 +67161,66 @@
       {
         "source": "majordomus://issue/I2135",
         "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2137",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2137",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2151",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2151",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2161",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2161",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2162",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2162",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2282",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2282",
+        "target": "majordomus://milestone/test-evidence",
         "kind": "belongs_to"
       },
       {
@@ -66379,6 +67260,11 @@
       },
       {
         "source": "majordomus://milestone/adopter-upgrades",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/architecture-is-enforced",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -66468,6 +67354,11 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://milestone/mesh-journal-converges",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/public-proof",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -66508,6 +67399,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/safe-self-update",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/shared-policy",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -66521,6 +67417,11 @@
         "source": "majordomus://milestone/shared-policy",
         "target": "majordomus://milestone/routing-recommendations",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/surfaces-never-disagree",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/test-evidence",
@@ -66834,6 +67735,11 @@
       },
       {
         "source": "majordomus://release-record/v0.19.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.19.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -67445,6 +68351,21 @@
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "target": "majordomus://rule/project.one-derive-at-a-time@1",
         "kind": "depends_on"
       },
       {
@@ -68226,6 +69147,11 @@
         "source": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
         "target": "majordomus://rule/project.development-semantics-are-canonical@1",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.one-derive-at-a-time@1",
+        "target": "kind:rule",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://rule/project.operation-transport-parity@1",
@@ -69378,12 +70304,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/101_command_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75094,8 +76040,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2484,
-      "edges": 5433,
+      "nodes": 2508,
+      "edges": 5475,
       "acyclic": false,
       "truncated": false
     }
