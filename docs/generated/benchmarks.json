@@ -1,28 +1,28 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 184,
-      "covered": 160,
+      "required": 186,
+      "covered": 162,
       "missing": 0,
       "waived": 24,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 181,
-      "covered": 160,
+      "required": 183,
+      "covered": 162,
       "missing": 0,
       "waived": 21,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 177,
-      "covered": 156,
+      "required": 179,
+      "covered": 158,
       "missing": 0,
       "waived": 21,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 555,
-      "covered": 489,
+      "required": 561,
+      "covered": 495,
       "missing": 0,
       "waived": 66,
       "inapplicable": 0
@@ -975,6 +975,30 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "intent_opposition.record",
+      "module": "intent_opposition",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "check-first-intent"
+      ]
+    },
+    {
+      "id": "intent_opposition.review",
+      "module": "intent_opposition",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-intent"
       ]
     },
     {

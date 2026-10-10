@@ -260,6 +260,7 @@ $ majordomus-cli intent validate
 $ majordomus-cli intent coverage
 $ majordomus-cli intent preflight --issue <id>
 $ majordomus-cli intent binding --issue <id>
+$ majordomus-cli intent oppose <id>
 $ majordomus-cli intent realization
 $ majordomus-cli intent explain <id>
 ```

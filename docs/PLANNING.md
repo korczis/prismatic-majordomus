@@ -215,9 +215,55 @@ and while a blocking finding is open, `executing_with_open_blocker`. Both are fa
 policy's choice (`intent.binding`, under [Binding](#binding-what-a-task-serves-asked-before-it-starts)
 below): where it is `required`, the issue never becomes `ACTIVE`.
 
-**Majordomus judges these records; it does not write them.** A person or a worker — Claude,
-Codex, Gemini — does the observing and the criticising, and the repository refuses the result
-when it does not hold together. Nothing here derives a plan from an intent automatically.
+**A reviewer writes the findings; Majordomus runs the structural half and stamps the review.**
+A person or a worker does the observing and the criticising, and the
+repository refuses the result when it does not hold together. Nothing here derives a plan from
+an intent automatically.
+
+### Opposition: the review is run, and it is of one plan
+
+`majordomus-cli intent oppose <intent>` is the review as something the tool does (ADR 0112),
+and the brief a reviewing session works from; `intent_opposition.review` answers the same
+value over HTTP and MCP. It carries the plan a reviewer reads — statement, invariants,
+non-goals, criteria with the state of their evidence, every live issue serving the intent with
+its links, dependencies, scope and required evidence, the gap's conditions — and two kinds of
+finding:
+
+| | where it comes from | stored |
+|---|---|---|
+| `structural` | every finding the coverage, the plan and the gap review derive about this intent now: blocking where that derivation calls it a failure, advisory where a warning | nowhere; derived on every call |
+| `recorded` | what a reviewer wrote in the critique, each with its resolution, and optionally its `source` and who resolved it (`resolved_by`) | the critique record |
+
+One disposition is derived from both and written to no record: `reject` while a structural
+finding is blocking or a recorded blocking finding is `open`; `accept_with_required_changes`
+when recorded blocking findings are each `planned` into live work or `rejected` with a reason;
+`accept` otherwise. The command exits `10` on `reject`. No advisor, model or network is
+involved.
+
+`majordomus-cli intent stamp <intent>` records that the review was run: it writes
+`reviewed_revision`, `reviewed_at` and `reviewed_with` into the critique — three lines, and
+every line of the findings is left as the reviewer wrote it — and appends
+`opposition.recorded` to the ledger. The revision is the one the executable derives at that
+moment over what a review judges: the statement, the invariants, the non-goals, each criterion
+with its evidence kind and reference, each serving issue's own milestone, links, dependencies,
+scope and required evidence, and the gap's conditions. A title, an objective, an issue's
+status and a file elsewhere in the repository are not in it. An intent with no critique gets a
+record with no findings, which needs `--by`; a critique whose own findings do not hold is not
+stamped, and a file that is not a readable critique is never replaced.
+
+| the critique is | `intent validate` | the binding |
+|---|---|---|
+| stamped against the plan as it stands | — | binds |
+| stamped against another plan | `critique_stale` | refused, `critique_stale` |
+| not stamped | `critique_not_stamped` | binds, unless opposition is required: `opposition_not_executed` |
+| current, and a structural finding is blocking | that finding | refused, `plan_rejected` |
+
+The two findings of `intent validate` are warnings, and failures where the policy says
+`intent.opposition: required`; there a `planned` or `rejected` resolution that names no
+resolver fails too (`resolution_names_no_resolver`). A stamp is evidence that the command ran
+and that the stamp was not edited carelessly afterwards. It is a hash of public content and
+proves nothing against an author determined to forge it; what makes the review executed is
+that the structural half is derived again at every ask.
 
 ### Preflight: may this work proceed, and what is it held to
 

@@ -1,0 +1,45 @@
+id: I2013
+milestone: intent-opposition
+title: A stale review, a rejected plan and an unexecuted record authorise nothing
+slug: a-review-of-another-plan-authorises-nothing
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-opposition#stale-review-authorises-nothing
+  - intent-opposition#disposition-gates-execution
+objective: "Have the preflight, and through it the binding, start and plan start, derive the opposition for each intent served and refuse work when the critique's reviewed_revision is not the current reviewed-plan revision (critique_stale), when the derived disposition is reject for a reason the existing causes do not already name (plan_rejected), and, under policy intent.opposition: required, when the critique carries no stamp (opposition_not_executed); elsewhere an unstamped critique is the warning critique_not_stamped of intent validate. Show the review's revision, state, disposition and who stamped it in the binding, the context section and intent explain. State the matrix of intent.binding and intent.opposition in the planning guide, and amend the claims and the prose case 892 pins."
+why: "A critique of an earlier plan authorises the current one, and a record with an empty findings list that nobody ran anything over reads the same as a review."
+current_state: "The preflight refuses intent_not_critiqued and open_blocking_finding and compares no revision. Its refusals reach start and plan start only where intent.binding is required; this repository is advisory."
+desired_state: "The three causes exist on every surface that answers a binding, with a severity fixed for each policy state; a critique from before this change is a warning where opposition is not required, so no adopter's gate turns red on upgrade."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/intent_review.rs
+  - apps/majordomus-cli/src/policy.rs
+  - share/schemas/majordomus/policy
+  - share/skeleton
+  - share/allow
+  - lib/intent_binding.sh
+  - .ai/repo/policy.yaml
+  - test/cases/964_a_review_of_another_plan_authorises_nothing.sh
+  - docs
+  - site
+depends_on:
+  - I2012
+acceptance_criteria:
+  - After a criterion is added, work serving the intent is refused as critique_stale until the review is stamped again, and a title edit or an issue becoming DONE refuses nothing
+  - A structural failure that appears after the stamp refuses the work although the stamp is current, because the structural half is derived at the ask
+  - Under intent.opposition required an unstamped critique refuses as opposition_not_executed; with the key absent it is the warning critique_not_stamped and work starts as before, in cases 386 and 893 unchanged
+  - The context of a bound task and intent explain name the review's state, revision, disposition and who stamped it
+  - docs/CLAIMS.yaml says what is now true of who writes a critique, and case 892 passes
+validation:
+  - bash test/run.sh 964_a_review_of_another_plan_authorises_nothing
+  - bash test/run.sh 386_a_plan_is_held_to_its_intent
+  - bash test/run.sh 893_preflight_follows_what_an_issue_serves
+  - bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says
+evidence_required:
+  - a_stale_review_refuses_and_a_title_edit_does_not
+created_at: 2026-10-07
+updated_at: 2026-10-07

@@ -1,0 +1,45 @@
+id: intent-opposition
+title: The opposition to a plan is executed by the tool, names the plan it reviewed, and stops authorising work when that plan changes
+statement: "Before work on an intent starts, Majordomus itself runs the opposition to its plan: every structural challenge it can decide from the records is decided, findings a reviewer or an advisor supplies are admitted as typed findings with their source, and the review is stamped with the revision of the plan it reviewed and who and what stamped it. The structural half is derived again every time work asks to start, so a review authorises work only for the plan as it now stands: a review of an earlier plan, a plan the checks or an open finding reject, and a record nobody executed authorise nothing."
+invariants:
+  - The opposition's verdict over what the records can decide is deterministic and needs no provider, model or network; an advisor adds findings and never replaces a check
+  - One critique record per intent remains the only record of a review, with git as its history; it stores what a reviewer found and how each finding was resolved, and the stamp of what was reviewed
+  - No structural finding and no disposition is stored: both are derived on every read by one function that calls the coverage, the plan findings and the gap review and re-derives none of them
+  - The stamp is written by one declared writing capability with a ledger event; reading capabilities stay read-only, and a seal is evidence of tampering, never proof of execution
+  - A critique recorded before this intent keeps its meaning where the policy does not require opposition
+milestones:
+  - intent-opposition
+satisfaction:
+  - id: opposition-is-run
+    criterion: Asked to oppose an intent, the executable derives every structural finding over its plan, the recorded findings with their resolutions, one disposition and the revision of the plan, and emits them as the bounded brief a reviewer works from, with no advisor present, alike on the command line, HTTP and MCP
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_opposition.rs
+  - id: findings-are-admitted-typed
+    criterion: A finding a reviewing session records is held to a known class, a subject that resolves against the intent and the plan, and a resolution that names who resolved it; a planned resolution into a cancelled issue and a rejection without a reason are refused, and no advisor is required for any of it
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_opposition.rs
+  - id: review-names-what-it-reviewed
+    criterion: Recording a review stamps the critique with the plan revision reviewed, the commit, the actor and the tool through one writing capability that appends a ledger event and refuses a record whose findings do not validate; the stamp is the only thing the tool writes
+    evidence: test
+    ref: test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh
+  - id: stale-review-authorises-nothing
+    criterion: A review of a plan revision that is no longer the plan's refuses the binding of work serving the intent, and an edit that changes no criterion, invariant, link or dependency leaves the review standing
+    evidence: test
+    ref: test/cases/964_a_review_of_another_plan_authorises_nothing.sh
+  - id: disposition-gates-execution
+    criterion: Work serving an intent is refused while the derived disposition is reject, and where the policy requires opposition while its critique carries no stamp at all; where the policy does not, an unstamped critique is a warning and work starts as before
+    evidence: test
+    ref: test/cases/964_a_review_of_another_plan_authorises_nothing.sh
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.derived-once
+  - adr:adr-0073
+  - adr:adr-0070
+  - adr:adr-0111
+  - adr:adr-0112
+non_goals:
+  - Requiring any advisor, model or second session for the opposition to run or for work to start
+  - Deriving the plan or its issues; the opposition judges a plan somebody wrote
+  - Judging whether a criterion is met; that stays with the evidence
+created_at: 2026-10-07
+updated_at: 2026-10-07

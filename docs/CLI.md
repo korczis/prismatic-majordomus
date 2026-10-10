@@ -1835,6 +1835,8 @@ majordomus intent coverage                 which work carries which criterion, a
 majordomus intent preflight --issue <id>   may the work on an issue proceed, held to what
 majordomus intent preflight --path <p>     the same for the open issues covering a path
 majordomus intent binding --issue <id>     what a task naming that issue is bound to, with its pins
+majordomus intent oppose <id>              the opposition to an intent's plan, and a reviewer's brief
+majordomus intent stamp <id>               stamp its critique with the plan revision reviewed
 majordomus intent realization              which work realises which intent, and whether reality agrees
 majordomus intent explain <id>             why an intent stands where it stands
 ```

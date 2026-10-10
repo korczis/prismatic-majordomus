@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.20.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 184 | 160 | 0 | 24 |
-| http | 181 | 160 | 0 | 21 |
-| mcp | 177 | 156 | 0 | 21 |
+| direct | 186 | 162 | 0 | 24 |
+| http | 183 | 162 | 0 | 21 |
+| mcp | 179 | 158 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 555 | 489 | 0 | 66 |
+| total | 561 | 495 | 0 | 66 |
 
 ## Capabilities
 
@@ -96,6 +96,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
 | `integration.prove_dry_run` | integration | query | — | waived | waived | waived | — |
 | `integration.queue` | integration | query | — | covered | covered | covered | `default` |
+| `intent_opposition.record` | intent_opposition | command | — | covered | covered | covered | `check-first-intent` |
+| `intent_opposition.review` | intent_opposition | query | — | covered | covered | covered | `first-intent` |
 | `intent_realization.explain` | intent_realization | query | — | covered | covered | covered | `first-intent` |
 | `intent_realization.work` | intent_realization | query | — | covered | covered | covered | `every-intent`, `first-intent` |
 | `intents.binding` | intents | query | — | covered | covered | covered | `first-issue` |

@@ -1360,6 +1360,40 @@
       "tool": "majordomus_pull_requests"
     },
     {
+      "api_anchor": "/docs/api/intent-opposition/#op-intent_opposition-record",
+      "claims": [],
+      "cli": "majordomus intent stamp",
+      "id": "intent_opposition.record",
+      "kind": "command",
+      "module": "intent_opposition",
+      "module_route": "/registry/modules/intent-opposition/",
+      "resource": null,
+      "route": "/registry/capabilities/intent-opposition-record/",
+      "slug": "intent-opposition-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+      "tests": [],
+      "title": "Stamp the review of an intent's plan with the plan it was run over",
+      "tool": "majordomus_intent_opposition_record"
+    },
+    {
+      "api_anchor": "/docs/api/intent-opposition/#op-intent_opposition-review",
+      "claims": [],
+      "cli": "majordomus intent oppose",
+      "id": "intent_opposition.review",
+      "kind": "query",
+      "module": "intent_opposition",
+      "module_route": "/registry/modules/intent-opposition/",
+      "resource": null,
+      "route": "/registry/capabilities/intent-opposition-review/",
+      "slug": "intent-opposition-review",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+      "tests": [],
+      "title": "The opposition to one intent's plan, and the brief a reviewer works from",
+      "tool": "majordomus_intent_opposition"
+    },
+    {
       "api_anchor": "/docs/api/intent-realization/#op-intent_realization-explain",
       "claims": [],
       "cli": "majordomus intent explain",
@@ -3907,11 +3941,11 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
+    "capabilities": 186,
     "claims": 89,
-    "modules": 53
+    "modules": 54
   },
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "modules": [
     {
       "capabilities": [
@@ -4569,6 +4603,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
       "title": "Pull-request integration"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "intent_opposition.record",
+          "route": "/registry/capabilities/intent-opposition-record/",
+          "slug": "intent-opposition-record"
+        },
+        {
+          "id": "intent_opposition.review",
+          "route": "/registry/capabilities/intent-opposition-review/",
+          "slug": "intent-opposition-review"
+        }
+      ],
+      "claims": [],
+      "id": "intent_opposition",
+      "route": "/registry/modules/intent-opposition/",
+      "slug": "intent-opposition",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+      "title": "Opposition"
     },
     {
       "capabilities": [

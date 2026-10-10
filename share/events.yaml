@@ -97,6 +97,13 @@ events:
     public: true
     note: The ledger's own maintenance, recorded in the ledger. Nothing is deleted; the archive path is part of the record so the rotation can be followed.
 
+  - id: opposition.recorded
+    title: Review stamped
+    summary: The opposition to an intent's plan was derived and its critique stamped with the plan revision reviewed.
+    emitted_by: intent_binding
+    requires: [intent, reviewed_revision, disposition]
+    public: true
+
   - id: plan_start
     title: Issue started
     summary: Execution of one issue in the project model began.

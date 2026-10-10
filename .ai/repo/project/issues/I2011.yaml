@@ -1,0 +1,33 @@
+id: I2011
+milestone: intent-opposition
+title: A recorded finding is held to its class, its subject and who resolved it
+slug: a-recorded-finding-is-held
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-opposition#findings-are-admitted-typed
+objective: "Extend the critique finding additively with source (who found it) and its resolution with resolved_by; add the classes invariant_conflict and dependency_order; have the review refuse a planned resolution whose issue is cancelled and, where the policy requires opposition, a resolution that names no resolver; state in the ADR which class carries each category a review is asked for."
+why: "A worker can reject its own blocking finding with any sentence and the record keeps no trace of who did, and two things a review is asked to find have no class to be written under."
+current_state: "A finding has id, class, subject, finding, blocking and a resolution of state, issue and because. Seven classes. A planned resolution is checked to name an issue that exists and serves the intent."
+desired_state: "intent validate names a finding whose class is unknown, whose subject resolves to nothing, whose planned issue is cancelled or whose rejection has no reason; under required opposition it names a resolution with no resolver."
+scope:
+  - apps/majordomus-cli/src/intent_review.rs
+  - share/schemas/majordomus/critique
+  - share/allow
+  - apps/majordomus-cli/tests/intent_opposition.rs
+  - .ai/repo/project/critiques
+depends_on:
+  - I2010
+acceptance_criteria:
+  - A planned resolution into a cancelled issue fails intent validate, and into a DONE issue does not
+  - invariant_conflict and dependency_order are accepted classes and an unknown one is still refused
+  - A finding's source and a resolution's resolved_by are read, shown by the opposition and required of a resolution only under required opposition
+  - The two critiques this repository holds carry both fields
+validation:
+  - cargo test --lib intent_review
+  - cargo test --test intent_opposition
+evidence_required:
+  - a_resolution_names_who_resolved_it
+created_at: 2026-10-07
+updated_at: 2026-10-07

@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 2
+      "count": 3
     },
     {
       "kind": "deployment",
@@ -141,7 +141,7 @@
       "route": null,
       "title": null,
       "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-      "count": 2
+      "count": 3
     },
     {
       "kind": "implementation",
@@ -157,7 +157,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 3
+      "count": 4
     },
     {
       "kind": "issue",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 268
+      "count": 272
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 25
+      "count": 26
     },
     {
       "kind": "moment",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 410
+      "count": 412
     },
     {
       "kind": "use-case",
@@ -4073,6 +4073,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0111/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0112",
+          "kind": "adr",
+          "route": "/adrs/adr-0112/",
+          "external": false
         }
       ]
     },
@@ -4236,6 +4243,13 @@
           "label": "adr-0111",
           "kind": "adr",
           "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0112",
+          "kind": "adr",
+          "route": "/adrs/adr-0112/",
           "external": false
         }
       ]
@@ -6357,6 +6371,103 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/962_plan_start_asks_the_binding_in_both_engines.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0112",
+          "kind": "adr",
+          "route": "/adrs/adr-0112/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0112",
+      "identity": "adr-0112",
+      "slug": "adr-0112",
+      "cockpit": "/cockpit/objects/adr/adr-0112",
+      "title": "The opposition to a plan is executed by the tool, and a review authorises only the plan it reviewed",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "planning",
+        "critique",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0112-the-opposition-to-a-plan-is-executed-and-revision-bound.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/intent_opposition.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent_opposition.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0073",
+          "kind": "adr",
+          "route": "/adrs/adr-0073/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0111",
+          "kind": "adr",
+          "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "intent-opposition",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/963_an_opposition_is_executed_and_names_the_plan_it_reviewed.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/964_a_review_of_another_plan_authorises_nothing.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -10161,6 +10272,13 @@
           "label": "adr-0111",
           "kind": "adr",
           "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0112",
+          "kind": "adr",
+          "route": "/adrs/adr-0112/",
           "external": false
         },
         {
@@ -14306,6 +14424,13 @@
           "label": "adr-0111",
           "kind": "adr",
           "route": "/adrs/adr-0111/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0112",
+          "kind": "adr",
+          "route": "/adrs/adr-0112/",
           "external": false
         },
         {

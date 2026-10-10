@@ -1,0 +1,35 @@
+id: I2010
+milestone: intent-opposition
+title: "The opposition is one derivation: structural findings, recorded findings, one disposition"
+slug: the-opposition-is-one-derivation
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-opposition#opposition-is-run
+objective: "Add intent_opposition::oppose for one intent: the reviewed-plan revision (statement, invariants, non-goals, criteria with their evidence kind and reference, each live serving issue's own milestone, serves, depends_on, scope and evidence_required, and the gap's conditions; no critique, no status, no wave), the structural findings taken from coverage, the plan's findings and the gap review without re-deriving any, each classed blocking when its source calls it a failure and advisory when a warning, the recorded findings with their resolutions, and one derived disposition; answer it as the read-only capability intent_opposition.review, which is also the bounded brief a reviewer works from."
+why: "Every structural challenge to a plan is computed by three commands and none of them is the review of one intent, none says which plan it was asked about, and a reviewer is handed no bounded input."
+current_state: "Coverage, plan findings and gap findings are derived separately. The only revision is the binding's, which hashes what one task reaches and includes the critique."
+desired_state: "intent_opposition.review answers revision, structural findings, recorded findings, disposition and review state for one intent on every surface with no advisor; the binding's own pin stops hashing the review's stamp."
+scope:
+  - apps/majordomus-cli/src/intent_opposition.rs
+  - apps/majordomus-cli/src/intent_binding.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/tests/intent_opposition.rs
+depends_on: []
+acceptance_criteria:
+  - Every failure coverage, the plan and the gap review report about the intent appears once as a blocking structural finding, and every warning as an advisory one, each naming its subject and the code it came from
+  - The disposition is reject while a structural finding is blocking or a recorded blocking finding is open, accept_with_required_changes when recorded blocking findings exist and each is planned or rejected with a reason, and accept otherwise
+  - The reviewed-plan revision moves when a criterion, an invariant, a serving issue's links, dependencies, scope or required evidence, or a gap condition changes, and not when a title, an objective, an issue's status or an issue serving another intent does
+  - The command line, HTTP and MCP answer the same value with no advisor configured
+  - Re-stamping a critique does not move the binding's plan_revision
+validation:
+  - cargo test --lib intent_opposition
+  - cargo test --test intent_opposition
+evidence_required:
+  - the_opposition_runs_without_an_advisor
+  - the_reviewed_plan_moves_only_with_the_plan
+created_at: 2026-10-07
+updated_at: 2026-10-07

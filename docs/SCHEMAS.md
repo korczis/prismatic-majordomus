@@ -1469,6 +1469,7 @@ Events and their extra fields:
 | `plan_verify` | `issue` |
 | `plan_evidence` | `issue`, `covers` (the requirement it satisfies), `type` |
 | `plan_done` | `issue` |
+| `opposition.recorded` | `intent`, `reviewed_revision` (the plan revision stamped), `disposition` (derived at that moment), `state` |
 | `layout.migrated` | `from`, `to`, `backup` (the copy of local state made before it moved, or empty) |
 | `rules.vendored` | `package` (the revision of the package now vendored) |
 | `adr.proposed` | `adr` (the identity written), `title`; never written for an acceptance, which is a person's edit to the file |

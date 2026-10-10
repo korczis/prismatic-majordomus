@@ -903,7 +903,7 @@
       "status": "guaranteed",
       "route": "/guarantees/intent-plan-reviewed/",
       "external": false,
-      "note": "The refusal is `majordomus intent validate` and the intent-check gate, after the start. `plan start` itself succeeds; refusing the start is intent-refused-at-plan-start, which is planned. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together."
+      "note": "The refusal is `majordomus intent validate` and the intent-check gate, after the start. Whether the start itself is refused is the policy's choice, and that half is intent-refused-at-plan-start. A reviewer writes the findings; `majordomus-cli intent stamp` writes only the stamp of which plan was reviewed, and a critique stamped against another plan refuses the binding (ADR 0112). A worker observes and criticises, and the repository refuses what does not hold together."
     },
     {
       "id": "claim:intent-realization-held-to-evidence",

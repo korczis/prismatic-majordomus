@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.19.1",
+    "version": "0.20.0",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -121,6 +121,10 @@
     {
       "name": "integration",
       "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
+    },
+    {
+      "name": "intent_opposition",
+      "description": "The opposition to an intent's plan, executed (ADR 0112): the structural findings the coverage, the plan and the gap review derive about one intent now, the findings a reviewer recorded with their resolutions, the one disposition both derive, and the revision of the plan a review judges against the stamp its critique carries. Reading is the brief a reviewer works from; recording stamps which plan a review was run over, and writes nothing else."
     },
     {
       "name": "intent_realization",
@@ -7681,6 +7685,212 @@
           "tool": "majordomus_intent_explain"
         },
         "x-majordomus-cli": "intent explain"
+      }
+    },
+    "/api/v1/intents/opposition": {
+      "get": {
+        "operationId": "intent_opposition.review",
+        "summary": "The opposition to one intent's plan, and the brief a reviewer works from",
+        "description": "For one intent: its statement, invariants, non-goals and criteria with the state of their evidence; every live issue serving it with its links, dependencies, scope and required evidence; the recorded gap's conditions; `structural`, every finding the intent engine and the plan derive about it now, blocking where that derivation calls it a failure and advisory where a warning; `recorded`, every finding a reviewer wrote in its critique with its resolution, source and resolver; `disposition` — `reject` while a structural finding is blocking or a recorded blocking finding is open, `accept_with_required_changes` when recorded blocking findings are each planned or rejected with a reason, `accept` otherwise — with the findings that reject it; `reviewed_plan`, the revision of what a review judges; and `review`, the critique's stamp and whether it is `none`, `not_stamped`, `current` or `stale` against that revision. Nothing structural and no disposition is stored: both are derived on every call, with no advisor, model or network.",
+        "tags": [
+          "intent_opposition"
+        ],
+        "parameters": [
+          {
+            "name": "intent",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The intent whose plan is opposed, by id.",
+            "examples": {
+              "first-intent": {
+                "value": "intent-bound-work"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The opposition to one intent's plan, and the brief a reviewer works from: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentOpposition"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intent_opposition.review",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intent_opposition"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intent_opposition"
+        },
+        "x-majordomus-cli": "intent oppose"
+      }
+    },
+    "/api/v1/intents/opposition/record": {
+      "post": {
+        "operationId": "intent_opposition.record",
+        "summary": "Stamp the review of an intent's plan with the plan it was run over",
+        "description": "Derive the opposition to one intent's plan and stamp its critique with what was reviewed: `reviewed_revision`, the plan's revision as derived at that moment and never one a caller supplies; `reviewed_at`, the commit; and `reviewed_with`, the tool and its version. An intent with no critique gets a record with no findings, which needs `reviewed_by`. The stamp is three top-level lines and every other line of the record is left as it is: findings are a reviewer's to write. A critique whose own findings do not hold — an unknown class or resolution, a duplicate, a rejection without a reason, a resolution planned into an issue that does not exist, serves another intent or is cancelled — is refused and nothing is written. The event `opposition.recorded` is appended to the ledger with the intent, the revision and the disposition derived then; the disposition is not written to the record. With `check`, the answer is what would be stamped and nothing is written.",
+        "tags": [
+          "intent_opposition"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `intent_opposition.record`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OppositionRecordInput"
+              },
+              "examples": {
+                "check-first-intent": {
+                  "value": {
+                    "intent": "intent-bound-work",
+                    "check": true,
+                    "reviewed_by": "a benchmark"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stamp the review of an intent's plan with the plan it was run over: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OppositionRecorded"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "intent_opposition.record",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intent_opposition"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "repository_mutation",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_intent_opposition_record"
+        },
+        "x-majordomus-cli": "intent stamp"
       }
     },
     "/api/v1/intents/preflight": {
@@ -19823,6 +20033,21 @@
             "type": "string",
             "const": "exemption_names_work",
             "description": "An exemption was given beside an issue or an intent: work is one or the other."
+          },
+          {
+            "type": "string",
+            "const": "critique_stale",
+            "description": "The critique of an intent the work serves was stamped against a plan that has since\nchanged: it reviewed another plan (ADR 0112)."
+          },
+          {
+            "type": "string",
+            "const": "plan_rejected",
+            "description": "The opposition rejects the plan of an intent the work serves for a reason no other\ncause names: a structural finding about it is a failure."
+          },
+          {
+            "type": "string",
+            "const": "opposition_not_executed",
+            "description": "The policy requires opposition and the critique of an intent the work serves was\nnever stamped: nobody ran the review."
           }
         ],
         "description": "Why a binding was refused, as a word a reader greps for. The first seven are the\npreflight's own causes, carried through unchanged; the rest are what only a binding can\nfind.\n\n```\nuse majordomus_cli::intent::IntentPreflightCause;\nuse majordomus_cli::intent_binding::BindingCause;\n// a preflight cause keeps its word\nassert_eq!(\n    serde_json::to_string(&BindingCause::from(IntentPreflightCause::IntentNotCritiqued)).unwrap(),\n    serde_json::to_string(&IntentPreflightCause::IntentNotCritiqued).unwrap(),\n);\n```"
@@ -19914,6 +20139,37 @@
           }
         },
         "description": "What a worker named when it asked what its work serves. Every field is optional and the\ncombinations are judged, not assumed: an issue alone, an intent alone, an issue beside\nthe intent it should serve, paths alone, or an exemption with its reason.\n\n```\nuse majordomus_cli::intent_binding::BindingRequest;\nlet by_issue = BindingRequest { issue: Some(\"I0001\".into()), ..Default::default() };\nassert!(!by_issue.names_nothing());\n// blanks are what a query string or a shell variable leaves behind, and name nothing\nlet blank = BindingRequest { issue: Some(\"  \".into()), ..Default::default() }.trimmed();\nassert!(blank.names_nothing());\n```"
+      },
+      "BindingReview": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "The intent."
+          },
+          "state": {
+            "$ref": "#/components/schemas/OppositionReviewState",
+            "description": "`none`, `not_stamped`, `current` or `stale`."
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/OppositionDisposition",
+            "description": "The disposition derived now."
+          },
+          "reviewed_revision": {
+            "type": "string",
+            "description": "The plan revision the critique was stamped against; empty when it was not."
+          },
+          "reviewed_by": {
+            "type": "string",
+            "description": "Who reviewed."
+          }
+        },
+        "required": [
+          "intent",
+          "state",
+          "disposition"
+        ],
+        "description": "Where the review of one served intent stands: what a worker is told beside the criteria.\n\n```\nuse majordomus_cli::intent_binding::BindingReview;\nuse majordomus_cli::intent_opposition::{OppositionDisposition, OppositionReviewState};\nlet r = BindingReview {\n    intent: \"x\".into(), state: OppositionReviewState::Stale, disposition: OppositionDisposition::Accept,\n    reviewed_revision: \"abc\".into(), reviewed_by: \"a session\".into(),\n};\nassert_eq!(r.state.as_str(), \"stale\");\n```"
       },
       "BindingStanding": {
         "oneOf": [
@@ -24889,6 +25145,16 @@
             "type": "string",
             "const": "delivery_verification",
             "description": "Which deployment or runtime verification is required?"
+          },
+          {
+            "type": "string",
+            "const": "invariant_conflict",
+            "description": "Which invariant of the intent would the plan break? (ADR 0112)"
+          },
+          {
+            "type": "string",
+            "const": "dependency_order",
+            "description": "Which work is ordered wrongly, or depends on what it should not? (ADR 0112)"
           }
         ],
         "description": "The class of a critique finding: the question the adversarial pass asked. Closed, so that a\nreview's findings can be counted by question rather than read as prose.\n\n```\nuse majordomus_cli::intent_review::CritiqueClass;\nassert_eq!(\n    serde_json::to_string(&CritiqueClass::DeliveryVerification).unwrap(),\n    \"\\\"delivery_verification\\\"\"\n);\n```"
@@ -24949,6 +25215,14 @@
           "because": {
             "type": "string",
             "description": "Why, when rejected."
+          },
+          "source": {
+            "type": "string",
+            "description": "Who or what found it, when the record says (ADR 0112); empty in a record written\nbefore findings named their source."
+          },
+          "resolved_by": {
+            "type": "string",
+            "description": "Who resolved it, when the record says; empty when it does not."
           }
         },
         "required": [
@@ -35021,6 +35295,13 @@
             "type": "string",
             "description": "The pin of where the served criteria's evidence stands; empty when no intent was\nreached."
           },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BindingReview"
+            },
+            "description": "The review of each intent served, as it stands against the plan now (ADR 0112)."
+          },
           "notes": {
             "type": "array",
             "items": {
@@ -35433,6 +35714,113 @@
           "resolved"
         ],
         "description": "One milestone an intent names, as the plan derives it. A milestone that does not resolve is\ncarried with `resolved: false` rather than dropped, because a name that points at nothing is\na finding and not an absence.\n\n```\nuse majordomus_cli::intent::IntentMilestone;\nlet named = IntentMilestone { id: \"no-such\".into(), resolved: false, status: None };\nassert!(!named.resolved);\nassert!(named.status.is_none());\n```"
+      },
+      "IntentOpposition": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "The intent."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line."
+          },
+          "stage": {
+            "$ref": "#/components/schemas/IntentStage",
+            "description": "Its derived stage."
+          },
+          "statement": {
+            "type": "string",
+            "description": "What must become true."
+          },
+          "invariants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What must stay true."
+          },
+          "non_goals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What is deliberately not required."
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntentCriterion"
+            },
+            "description": "Every criterion, with the state of its evidence now."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OppositionIssue"
+            },
+            "description": "Every live issue serving the intent."
+          },
+          "gap": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The recorded gap's conditions, as `<criterion> <state>`; empty when no gap is recorded."
+          },
+          "reviewed_plan": {
+            "type": "string",
+            "description": "The revision of the plan a review judges: what a stamp is compared with."
+          },
+          "review": {
+            "$ref": "#/components/schemas/OppositionReview",
+            "description": "The critique's stamp and where it stands."
+          },
+          "structural": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OppositionFinding"
+            },
+            "description": "What the derivations find about this intent's plan now."
+          },
+          "recorded": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OppositionFinding"
+            },
+            "description": "What a reviewer recorded, each finding with its resolution."
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/OppositionDisposition",
+            "description": "`accept`, `accept_with_required_changes` or `reject`."
+          },
+          "rejecting": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The findings that reject the plan, as `<origin> <id> <subject>`; empty unless the\ndisposition is `reject`."
+          }
+        },
+        "required": [
+          "intent",
+          "title",
+          "stage",
+          "statement",
+          "invariants",
+          "non_goals",
+          "criteria",
+          "issues",
+          "gap",
+          "reviewed_plan",
+          "review",
+          "structural",
+          "recorded",
+          "disposition",
+          "rejecting"
+        ],
+        "description": "The opposition to one intent's plan: the brief a reviewer works from, and the verdict\nderived from what is found.\n\n```\nuse majordomus_cli::intent::Intents;\nuse majordomus_cli::intent_opposition::{oppose, IntentOpposition};\nuse majordomus_cli::plan::Plan;\n# let plan: Plan = serde_json::from_value(serde_json::json!({\n#     \"project\": {\"name\": \"p\", \"repository\": \"o/p\", \"default_branch\": \"master\",\n#                 \"active_milestone\": \"\"},\n#     \"statuses\": {\"issue\": [], \"milestone\": []},\n#     \"milestones\": [], \"issues\": [], \"waves\": [], \"edges\": [],\n#     \"milestone_edges\": [], \"findings\": []})).unwrap();\nlet intents = Intents { intents: vec![], findings: vec![] };\n// an intent this repository does not hold has no opposition to derive\nlet none: Option<IntentOpposition> = oppose(&intents, &plan, &[], &[], \"absent\");\nassert!(none.is_none());\n```"
       },
       "IntentPreflight": {
         "type": "object",
@@ -40629,6 +41017,278 @@
           "cli_local"
         ],
         "description": "What the canonical operations look like against the transports that project them."
+      },
+      "OppositionDisposition": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "accept",
+            "description": "No blocking finding of either half."
+          },
+          {
+            "type": "string",
+            "const": "accept_with_required_changes",
+            "description": "A reviewer found something blocking, and each such finding is planned into work or\nrejected with a reason: the plan stands with the changes it has taken on."
+          },
+          {
+            "type": "string",
+            "const": "reject",
+            "description": "A structural finding is blocking, or a recorded blocking finding is still open."
+          }
+        ],
+        "description": "What a review concludes about a plan. Derived from the findings by `disposition`;\nnever written to a record.\n\n```\nuse majordomus_cli::intent_opposition::OppositionDisposition;\nassert_eq!(\n    serde_json::to_string(&OppositionDisposition::AcceptWithRequiredChanges).unwrap(),\n    \"\\\"accept_with_required_changes\\\"\"\n);\nassert!(OppositionDisposition::Accept.permits_execution());\nassert!(!OppositionDisposition::Reject.permits_execution());\n```"
+      },
+      "OppositionFinding": {
+        "type": "object",
+        "properties": {
+          "origin": {
+            "type": "string",
+            "description": "`structural` — derived now from the plan — or `recorded` — written by a reviewer."
+          },
+          "id": {
+            "type": "string",
+            "description": "The code of the derivation that made it, or the reviewer's id for it."
+          },
+          "class": {
+            "type": "string",
+            "description": "The class a reviewer gave it; empty for a structural finding, whose code says it."
+          },
+          "subject": {
+            "type": "string",
+            "description": "What it is about: `<intent>#<criterion>`, an issue, a milestone or the intent."
+          },
+          "finding": {
+            "type": "string",
+            "description": "The finding."
+          },
+          "blocking": {
+            "type": "boolean",
+            "description": "Whether it stands in the way of execution."
+          },
+          "resolution": {
+            "type": "string",
+            "description": "`open`, `planned` or `rejected` for a recorded finding; empty for a structural one,\nwhich is resolved by changing the plan and by nothing a record can say."
+          },
+          "issue": {
+            "type": "string",
+            "description": "The issue that carries it, when planned."
+          },
+          "because": {
+            "type": "string",
+            "description": "Why, when rejected or planned."
+          },
+          "source": {
+            "type": "string",
+            "description": "Who found it, when the record says."
+          },
+          "resolved_by": {
+            "type": "string",
+            "description": "Who resolved it, when the record says."
+          }
+        },
+        "required": [
+          "origin",
+          "id",
+          "subject",
+          "finding",
+          "blocking"
+        ],
+        "description": "One finding of the opposition, of either half.\n\n```\nuse majordomus_cli::intent_opposition::OppositionFinding;\nlet f = OppositionFinding::structural(\"WARN\", \"criterion_weakly_covered\", \"x#a\", \"no evidence required\");\nassert_eq!(f.origin, \"structural\");\nassert!(!f.blocking, \"a warning advises\");\nassert!(!f.is_open_blocker());\n```"
+      },
+      "OppositionIssue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The issue."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "Its milestone."
+          },
+          "status": {
+            "type": "string",
+            "description": "Its derived status."
+          },
+          "serves": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The criteria it says it serves."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What it depends on."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Where it may write."
+          },
+          "evidence_need": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "How many evidence tokens it requires before it can be DONE."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line."
+          }
+        },
+        "required": [
+          "id",
+          "milestone",
+          "status",
+          "serves",
+          "depends_on",
+          "scope",
+          "evidence_need",
+          "title"
+        ],
+        "description": "One issue serving the intent, as a reviewer needs it: its links and its place, and\nnothing of its prose.\n\n```\nuse majordomus_cli::intent_opposition::OppositionIssue;\nlet i = OppositionIssue {\n    id: \"I0001\".into(), milestone: \"m\".into(), status: \"READY\".into(),\n    serves: vec![\"x#a\".into()], depends_on: vec![], scope: vec![\"lib\".into()],\n    evidence_need: 1, title: \"The work\".into(),\n};\nassert_eq!(i.serves, [\"x#a\"]);\n```"
+      },
+      "OppositionRecordInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "The intent whose review is stamped, by id."
+          },
+          "check": {
+            "type": "boolean",
+            "description": "Answer what would be stamped and write nothing.",
+            "default": false
+          },
+          "reviewed_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who reviewed, for a critique this call creates; an existing record keeps the\nreviewer it names."
+          }
+        },
+        "required": [
+          "intent"
+        ],
+        "description": "The input of `intent_opposition.record`: which intent's review to stamp.\n\nThere is no revision field and no disposition field. The revision stamped is the plan's\nas the executable derives it at that moment, never one a caller supplies, because a\nstamp a caller can choose is a signature anyone can forge by asking.\n\n```\nuse majordomus_cli::capability::builtin::intent_opposition::OppositionRecordInput;\nlet i: OppositionRecordInput =\n    serde_json::from_str(r#\"{\"intent\":\"x\",\"check\":true}\"#).unwrap();\nassert!(i.check && i.reviewed_by.is_none());\nassert!(serde_json::from_str::<OppositionRecordInput>(\n    r#\"{\"intent\":\"x\",\"reviewed_revision\":\"abc\"}\"#).is_err());\n```"
+      },
+      "OppositionRecorded": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "The intent."
+          },
+          "source": {
+            "type": "string",
+            "description": "The critique record, repository-relative."
+          },
+          "reviewed_revision": {
+            "type": "string",
+            "description": "The plan revision stamped."
+          },
+          "reviewed_at": {
+            "type": "string",
+            "description": "The commit stamped."
+          },
+          "reviewed_with": {
+            "type": "string",
+            "description": "The tool and version stamped."
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/OppositionDisposition",
+            "description": "The disposition derived at that moment; reported and appended to the ledger, never\nwritten to the record."
+          },
+          "created": {
+            "type": "boolean",
+            "description": "Whether the intent had no critique, so the record is new."
+          },
+          "written": {
+            "type": "boolean",
+            "description": "Whether anything was written: false for a check."
+          },
+          "event": {
+            "type": "string",
+            "description": "The ledger event appended; empty for a check."
+          }
+        },
+        "required": [
+          "intent",
+          "source",
+          "reviewed_revision",
+          "reviewed_at",
+          "reviewed_with",
+          "disposition",
+          "created",
+          "written"
+        ],
+        "description": "What a stamp did, or — for a check — would do.\n\n```\nuse majordomus_cli::capability::builtin::intent_opposition::OppositionRecorded;\nuse majordomus_cli::intent_opposition::OppositionDisposition;\nlet r = OppositionRecorded {\n    intent: \"x\".into(), source: \".ai/repo/project/critiques/x.yaml\".into(),\n    reviewed_revision: \"0\".repeat(64), reviewed_at: \"abc1234\".into(),\n    reviewed_with: \"majordomus-cli 0.0.0\".into(), disposition: OppositionDisposition::Accept,\n    created: true, written: false, event: String::new(),\n};\nassert!(r.created && !r.written, \"a check creates nothing\");\n```"
+      },
+      "OppositionReview": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/OppositionReviewState",
+            "description": "`none`, `not_stamped`, `current` or `stale`."
+          },
+          "source": {
+            "type": "string",
+            "description": "The critique record; empty when there is none."
+          },
+          "reviewed_revision": {
+            "type": "string",
+            "description": "The plan revision it was stamped against."
+          },
+          "reviewed_at": {
+            "type": "string",
+            "description": "The commit it was reviewed at."
+          },
+          "reviewed_by": {
+            "type": "string",
+            "description": "Who reviewed it."
+          },
+          "reviewed_with": {
+            "type": "string",
+            "description": "The tool that stamped it."
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "description": "The stamp a critique carries, with where it stands against the plan now.\n\n```\nuse majordomus_cli::intent_opposition::{OppositionReview, OppositionReviewState};\nlet none = OppositionReview::absent();\nassert_eq!(none.state, OppositionReviewState::None);\nassert!(none.source.is_empty());\n```"
+      },
+      "OppositionReviewState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "none",
+            "description": "No critique record exists for the intent."
+          },
+          {
+            "type": "string",
+            "const": "not_stamped",
+            "description": "A critique exists and nobody stamped it: it says nothing of which plan it reviewed."
+          },
+          {
+            "type": "string",
+            "const": "current",
+            "description": "The critique was stamped against the plan as it now stands."
+          },
+          {
+            "type": "string",
+            "const": "stale",
+            "description": "The critique was stamped against a plan that has since changed."
+          }
+        ],
+        "description": "Where a critique stands against the plan it is about.\n\n```\nuse majordomus_cli::intent_opposition::OppositionReviewState;\nassert_eq!(serde_json::to_string(&OppositionReviewState::NotStamped).unwrap(), \"\\\"not_stamped\\\"\");\nassert_eq!(OppositionReviewState::judge(None, \"abc\"), OppositionReviewState::None);\nassert_eq!(OppositionReviewState::judge(Some(\"\"), \"abc\"), OppositionReviewState::NotStamped);\nassert_eq!(OppositionReviewState::judge(Some(\"abc\"), \"abc\"), OppositionReviewState::Current);\nassert_eq!(OppositionReviewState::judge(Some(\"old\"), \"abc\"), OppositionReviewState::Stale);\n```"
       },
       "Origin": {
         "oneOf": [
@@ -56490,7 +57150,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.19.1",
+    "generator": "majordomus-cli 0.20.0",
     "infrastructure": [
       {
         "id": "home",
@@ -56560,5 +57220,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.19.1"
+  "x-majordomus-generator": "majordomus-cli 0.20.0"
 }

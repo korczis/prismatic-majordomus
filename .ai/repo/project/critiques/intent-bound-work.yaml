@@ -1,6 +1,8 @@
 intent: intent-bound-work
-reviewed_at: f7b9d6d4c8
+reviewed_at: 4f4136ea60
 reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fcbeae95 with the plan records and the requirement and none of the author's reasoning; same model and operator session as the author, so independent of the authoring context and not of its blind spots. Disposition: accept with required changes; findings 1 to 9 were required and each is planned or rejected below."
+reviewed_revision: e62d18758a90f48b81019f36c8b9fd86721fb17140b672231da22ff217d49f00
+reviewed_with: "majordomus-cli 0.15.0"
 findings:
   - id: policy-key-rejected-by-doctor
     class: surface_missing
@@ -9,6 +11,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2001
       because: "The policy schema, the regenerated allowlist and the skeleton are in I2001's scope, with doctor passing as an acceptance criterion."
   - id: task-record-fields-not-in-schema
@@ -18,6 +21,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2001
       because: "The current schema, share/events.yaml and the generated allowlists are in I2001's scope."
   - id: stored-intent-id-contradicts-rule-v2
@@ -27,6 +31,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2000
       because: "I2000 delivers v3 of the rule: a name a worker declared and a hash compared on read are not intent state; stage, verdict and criteria stay derived and stored nowhere."
   - id: adr-0111-does-not-exist
@@ -36,6 +41,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2000
       because: "ADR 0111 is a deliverable of I2000 and lands with the intent record, status proposed."
   - id: records-fail-intent-validate-until-last-issue
@@ -45,6 +51,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2000
       because: "The milestone records state that the records, the ADR and the tests land in one change; nothing reaches the trunk without the rest."
   - id: other-entry-points-unbound
@@ -54,6 +61,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2004
       because: "I2004 gates the start transition in both plan engines; the criterion start-is-gated now names plan start."
   - id: stale-critique-not-refused
@@ -63,6 +71,7 @@ findings:
     blocking: true
     resolution:
       state: rejected
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       because: "A critique records the commit it was written at and no revision of the plan it reviewed, so staleness has nothing to be judged against; the opposition milestone gives the record that revision and its refusal reuses the plan_revision I2000 computes. Named as a non-goal of this intent."
   - id: realization-and-binding-disagree
     class: regression_risk
@@ -71,6 +80,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2001
       because: "Realization reads the ledger's issue as a declared link, with a test that both capabilities agree about one task."
   - id: one-revision-or-two
@@ -80,6 +90,7 @@ findings:
     blocking: true
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2000
       because: "Two pins with stated contents: plan_revision over statement, invariants, criteria, links and critique; evidence_standing over the served criteria's evidence states."
   - id: paths-mode-nearly-always-refused
@@ -89,6 +100,7 @@ findings:
     blocking: false
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2001
       because: "The binding rate of scope-only starts is measured against this repository's plan before its policy is set to required."
   - id: issue-id-as-password
@@ -98,6 +110,7 @@ findings:
     blocking: false
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2001
       because: "The binding notes a scope outside the issue's scope and start prints it; a refusal would punish issues whose scope omits generated projections."
   - id: required-without-binary-locks-out
@@ -107,6 +120,7 @@ findings:
     blocking: false
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2001
       because: "Each policy value's behaviour without the executable and without jq is an acceptance criterion with a case; required is a choice a repository makes with the executable built."
   - id: handover-identity-guard
@@ -116,6 +130,7 @@ findings:
     blocking: false
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2003
       because: "The guard covers both pins and a checkpoint carries neither."
   - id: context-section-order
@@ -125,5 +140,6 @@ findings:
     blocking: false
     resolution:
       state: planned
+      resolved_by: "claude-code (session fcbeae95), the author of the plan"
       issue: I2002
       because: "After PROFILE, JSON id intent, gap conditions dropped first under budget, never dropped whole."

@@ -1261,6 +1261,81 @@ impl Intents {
         out.findings.extend(coverage(&outlines, plan).findings);
         out.findings
             .extend(review(&outlines, plan, &gaps, &critiques));
+        // the stamp of each critique against the plan as it now stands (ADR 0112): a review
+        // of another plan, and a review nobody ran, are failures where the policy requires
+        // opposition and warnings where it does not
+        let required = crate::intent_binding::policy_of(index)
+            .opposition
+            .is_required();
+        let level = if required { FAIL } else { WARN };
+        let stamps: Vec<IntentFinding> = critiques
+            .iter()
+            .filter(|c| {
+                out.intent(&c.intent).is_some_and(|i| {
+                    !matches!(i.stage, IntentStage::Cancelled | IntentStage::Superseded)
+                })
+            })
+            .filter_map(|c| {
+                crate::intent_opposition::revision_of(&out, plan, &gaps, &c.intent)
+                    .map(|now| (c, now))
+            })
+            .filter_map(|(c, now)| {
+                let (code, message) = if c.reviewed_revision.is_empty() {
+                    (
+                        "critique_not_stamped",
+                        format!(
+                            "its critique carries no stamp, so nothing says which plan it reviewed; run `majordomus-cli intent stamp {}`",
+                            c.intent
+                        ),
+                    )
+                } else if c.reviewed_revision != now {
+                    (
+                        "critique_stale",
+                        format!(
+                            "its critique reviewed another plan (stamped {}, the plan is now {}); review it again and run `majordomus-cli intent stamp {}`",
+                            c.reviewed_revision.chars().take(12).collect::<String>(),
+                            now.chars().take(12).collect::<String>(),
+                            c.intent
+                        ),
+                    )
+                } else {
+                    return None;
+                };
+                Some(IntentFinding {
+                    level: level.into(),
+                    code: code.into(),
+                    subject: c.intent.clone(),
+                    message,
+                    reproduce: "majordomus intent validate".into(),
+                })
+            })
+            .collect();
+        out.findings.extend(stamps);
+        // where opposition is required, a resolution says who made it: a blocking finding
+        // dismissed or planned by nobody in particular is a required change nobody accepted
+        if required {
+            let unnamed: Vec<IntentFinding> = critiques
+                .iter()
+                .flat_map(|c| c.findings.iter().map(move |x| (c, x)))
+                .filter(|(_, x)| {
+                    matches!(
+                        x.resolution,
+                        Some(ResolutionState::Planned | ResolutionState::Rejected)
+                    ) && x.resolved_by.trim().is_empty()
+                })
+                .map(|(c, x)| IntentFinding {
+                    level: FAIL.into(),
+                    code: "resolution_names_no_resolver".into(),
+                    subject: format!("{}:{}", c.intent, x.id),
+                    message: format!(
+                        "is {} and names nobody who resolved it; add resolved_by to its resolution",
+                        x.resolution_text
+                    ),
+                    reproduce: "majordomus intent validate".into(),
+                })
+                .collect();
+            out.findings.extend(unnamed);
+        }
         out
     }
 
@@ -3200,7 +3275,9 @@ mod tests {
                 retired,
             ],
             &p,
-            &Table::new(),
+            // the criteria's test is known and has not run: nothing structural stands in the
+            // way of the plan, so what refuses below is what each request names
+            &Table::new().with_test("suite:1_x", IntentEvidenceState::NotRun),
         );
         let reviewed = [critique("x", &[]), critique("y", &[]), critique("z", &[])];
         let policy = IntentPolicy::default();
@@ -3335,5 +3412,107 @@ mod tests {
                 "the word changed on the way"
             );
         }
+    }
+    /// The opposition (ADR 0112) over an in-memory plan: what the engine already found about
+    /// one intent is its structural half, once; what a reviewer recorded keeps its
+    /// resolution, whatever it is; and the gap's conditions are in the brief and the revision.
+    #[test]
+    fn the_opposition_selects_what_was_found_and_derives_nothing() {
+        use crate::intent_opposition::{
+            oppose, revision_of, OppositionDisposition, OppositionReviewState,
+        };
+
+        let p = plan(
+            vec![milestone("m", "ACTIVE"), milestone("n", "ACTIVE")],
+            vec![
+                serving("I1", "m", &["lib"], &["x#case"]),
+                serving("I3", "n", &["docs"], &["y#case"]),
+            ],
+        );
+        let mut i = Intents::derive(
+            vec![record("x", &["m"], &[CASE]), record("y", &["n"], &[CASE])],
+            &p,
+            &Table::new().with_test("suite:1_x", IntentEvidenceState::NotRun),
+        );
+        // the same finding said twice — by the engine and by the plan — is one finding;
+        // one about another intent is not this intent's; one about the review is not its own
+        for (level, code, subject) in [
+            (FAIL, "criterion_uncovered", "x#other"),
+            (FAIL, "criterion_uncovered", "x#other"),
+            (WARN, "criterion_weakly_covered", "x#case"),
+            (FAIL, "criterion_uncovered", "y#other"),
+            (WARN, "plan_not_critiqued", "x"),
+            (FAIL, "scope_conflict", "I1"),
+        ] {
+            i.findings.push(IntentFinding {
+                level: level.into(),
+                code: code.into(),
+                subject: subject.into(),
+                message: "said".into(),
+                reproduce: REPRODUCE.into(),
+            });
+        }
+        let gap = GapRecord::from_metadata(
+            ".ai/repo/project/gaps/x.yaml",
+            &serde_json::json!({"intent": "x", "observed_at": "abc",
+                "conditions": [{"criterion": "case", "state": "missing"}]}),
+        );
+        let reviewed = CritiqueRecord::from_metadata(
+            ".ai/repo/project/critiques/x.yaml",
+            &serde_json::json!({"intent": "x", "reviewed_at": "c0ffee", "reviewed_by": "r",
+            "reviewed_revision": "0000",
+            "findings": [
+                {"id": "a", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": true, "resolution": {"state": "rejected", "because": "b"}},
+                {"id": "b", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": false, "resolution": {"state": "someday"}},
+                {"id": "c", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": false, "resolution": {"state": "open"}},
+                {"id": "d", "class": "regression_risk", "subject": "x", "finding": "f",
+                 "blocking": true, "resolution": {"state": "planned", "issue": "I1"}}
+            ]}),
+        );
+        let gaps = [gap];
+        let critiques = [reviewed];
+        let o = oppose(&i, &p, &gaps, &critiques, "x").expect("x is declared");
+
+        let structural: Vec<(&str, &str, bool)> = o
+            .structural
+            .iter()
+            .map(|f| (f.id.as_str(), f.subject.as_str(), f.blocking))
+            .collect();
+        assert_eq!(
+            structural,
+            [
+                ("criterion_uncovered", "x#other", true),
+                ("criterion_weakly_covered", "x#case", false),
+                ("scope_conflict", "I1", true),
+            ]
+        );
+        let resolutions: Vec<&str> = o.recorded.iter().map(|f| f.resolution.as_str()).collect();
+        assert_eq!(resolutions, ["rejected", "someday", "open", "planned"]);
+        assert_eq!(o.gap, ["case missing"]);
+        assert_eq!(
+            o.issues.len(),
+            1,
+            "only the issues serving x: {:?}",
+            o.issues
+        );
+        assert_eq!(o.disposition, OppositionDisposition::Reject);
+        assert_eq!(
+            o.rejecting,
+            [
+                "structural criterion_uncovered x#other",
+                "structural scope_conflict I1"
+            ]
+        );
+        // stamped against something that is not this plan
+        assert_eq!(o.review.state, OppositionReviewState::Stale);
+        assert_eq!(
+            revision_of(&i, &p, &gaps, "x").as_deref(),
+            Some(o.reviewed_plan.as_str())
+        );
+        // the gap's conditions are part of what a review judges
+        assert_ne!(revision_of(&i, &p, &[], "x"), Some(o.reviewed_plan));
     }
 }

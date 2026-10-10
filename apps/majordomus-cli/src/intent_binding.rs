@@ -148,6 +148,15 @@ pub enum BindingCause {
     ExemptionWithoutReason,
     /// An exemption was given beside an issue or an intent: work is one or the other.
     ExemptionNamesWork,
+    /// The critique of an intent the work serves was stamped against a plan that has since
+    /// changed: it reviewed another plan (ADR 0112).
+    CritiqueStale,
+    /// The opposition rejects the plan of an intent the work serves for a reason no other
+    /// cause names: a structural finding about it is a failure.
+    PlanRejected,
+    /// The policy requires opposition and the critique of an intent the work serves was
+    /// never stamped: nobody ran the review.
+    OppositionNotExecuted,
 }
 
 impl From<IntentPreflightCause> for BindingCause {
@@ -293,6 +302,33 @@ pub struct BindingExemption {
     pub because: String,
 }
 
+/// Where the review of one served intent stands: what a worker is told beside the criteria.
+///
+/// ```
+/// use majordomus_cli::intent_binding::BindingReview;
+/// use majordomus_cli::intent_opposition::{OppositionDisposition, OppositionReviewState};
+/// let r = BindingReview {
+///     intent: "x".into(), state: OppositionReviewState::Stale, disposition: OppositionDisposition::Accept,
+///     reviewed_revision: "abc".into(), reviewed_by: "a session".into(),
+/// };
+/// assert_eq!(r.state.as_str(), "stale");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct BindingReview {
+    /// The intent.
+    pub intent: String,
+    /// `none`, `not_stamped`, `current` or `stale`.
+    pub state: crate::intent_opposition::OppositionReviewState,
+    /// The disposition derived now.
+    pub disposition: crate::intent_opposition::OppositionDisposition,
+    /// The plan revision the critique was stamped against; empty when it was not.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub reviewed_revision: String,
+    /// Who reviewed.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub reviewed_by: String,
+}
+
 /// What a piece of work is bound to: its standing, what was named, the issues and intents
 /// it resolved to with what each intent asks of the worker, the two pins, and every refusal.
 ///
@@ -338,6 +374,9 @@ pub struct IntentBinding {
     /// The pin of where the served criteria's evidence stands; empty when no intent was
     /// reached.
     pub evidence_standing: String,
+    /// The review of each intent served, as it stands against the plan now (ADR 0112).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reviews: Vec<BindingReview>,
     /// What a worker should know and no gate refuses on.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub notes: Vec<String>,
@@ -366,6 +405,7 @@ impl IntentBinding {
             governance: Vec::new(),
             plan_revision: String::new(),
             evidence_standing: String::new(),
+            reviews: Vec::new(),
             notes: Vec::new(),
             refusals,
             refusal,
@@ -574,6 +614,70 @@ pub fn bind(
         ));
     }
 
+    // the review of each intent reached, judged against the plan as it now stands
+    let mut reviews = Vec::new();
+    let opposed = pre.intents.iter().filter_map(|held| {
+        crate::intent_opposition::oppose(intents, plan, gaps, critiques, &held.id)
+            .map(|opposition| (held, opposition))
+    });
+    for (held, opposition) in opposed {
+        reviews.push(BindingReview {
+            intent: held.id.clone(),
+            state: opposition.review.state,
+            disposition: opposition.disposition,
+            reviewed_revision: opposition.review.reviewed_revision.clone(),
+            reviewed_by: opposition.review.reviewed_by.clone(),
+        });
+        match opposition.review.state {
+            crate::intent_opposition::OppositionReviewState::Stale => {
+                refusals.push(BindingRefusal::new(
+                    None,
+                    BindingCause::CritiqueStale,
+                    format!(
+                    "the critique of intent {} reviewed another plan: it is stamped {} and the \
+                     plan is now {}; review it again and run `majordomus-cli intent stamp {}`",
+                    held.id,
+                    short(&opposition.review.reviewed_revision),
+                    short(&opposition.reviewed_plan),
+                    held.id
+                ),
+                ))
+            }
+            crate::intent_opposition::OppositionReviewState::NotStamped
+                if policy.opposition.is_required() =>
+            {
+                refusals.push(BindingRefusal::new(
+                    None,
+                    BindingCause::OppositionNotExecuted,
+                    format!(
+                        "the critique of intent {} was never stamped, and the policy requires \
+                         opposition: run `majordomus-cli intent oppose {}` and then `intent \
+                         stamp {}`",
+                        held.id, held.id, held.id
+                    ),
+                ))
+            }
+            _ => {}
+        }
+        let structural: Vec<String> = opposition
+            .structural
+            .iter()
+            .filter(|f| f.is_open_blocker())
+            .map(|f| format!("{} {}", f.id, f.subject))
+            .collect();
+        if !structural.is_empty() {
+            refusals.push(BindingRefusal::new(
+                None,
+                BindingCause::PlanRejected,
+                format!(
+                    "the opposition rejects the plan of intent {}: {}",
+                    held.id,
+                    structural.join(", ")
+                ),
+            ));
+        }
+    }
+
     let mut notes = Vec::new();
     if !by_paths && !named.paths.is_empty() {
         let outside: Vec<&str> = named
@@ -620,6 +724,7 @@ pub fn bind(
         governance: pre.governance,
         plan_revision,
         evidence_standing,
+        reviews,
         notes,
         refusals,
         refusal,
@@ -646,12 +751,7 @@ pub fn bind(
 /// assert_eq!(start_refusal(&index, &plan, "I0001"), None);
 /// ```
 pub fn start_refusal(index: &Index, plan: &Plan, issue: &str) -> Option<String> {
-    let root = std::path::PathBuf::from(&index.repository.root);
-    let policy = crate::repository::Repository::open(&root)
-        .ok()
-        .and_then(|repo| crate::policy::LoadedPolicy::load(&repo).ok())
-        .map(|loaded| loaded.policy.intent)
-        .unwrap_or_default();
+    let policy = policy_of(index);
     if policy.binding != BindingMode::Required {
         return None;
     }
@@ -734,6 +834,7 @@ fn exempt(policy: &IntentPolicy, named: BindingRequest, class: &str) -> IntentBi
             governance: Vec::new(),
             plan_revision: String::new(),
             evidence_standing: String::new(),
+            reviews: Vec::new(),
             notes: Vec::new(),
             refusals: Vec::new(),
             refusal: None,
@@ -761,6 +862,22 @@ fn judge_named_intent(intents: &Intents, id: &str, refusals: &mut Vec<BindingRef
         }
         Some(_) => {}
     }
+}
+
+/// The first twelve characters of a revision: enough to tell two apart in a sentence.
+fn short(revision: &str) -> String {
+    revision.chars().take(12).collect()
+}
+
+/// The policy's `intent:` block for the repository an index was built from, or its default
+/// when the repository or its policy cannot be read.
+pub(crate) fn policy_of(index: &Index) -> IntentPolicy {
+    let root = std::path::PathBuf::from(&index.repository.root);
+    crate::repository::Repository::open(&root)
+        .ok()
+        .and_then(|repo| crate::policy::LoadedPolicy::load(&repo).ok())
+        .map(|loaded| loaded.policy.intent)
+        .unwrap_or_default()
 }
 
 fn is_open(i: &PlanIssue) -> bool {
@@ -810,7 +927,9 @@ fn plan_revision(
                         (f.id.as_str(), finding)
                     })
                     .collect();
-                json!({ "reviewed_at": c.reviewed_at, "findings": findings })
+                // the findings, and not the stamp: re-stamping a review that found nothing
+                // new is not a change to what the work is for
+                json!({ "findings": findings })
             });
             let intent = json!({
                 "statement": i.statement,
@@ -858,7 +977,7 @@ fn evidence_standing(pre: &IntentPreflight) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::policy::ExemptionClass;
 
@@ -983,7 +1102,7 @@ mod tests {
     }
     /// A synthetic repository with a plan: one intent `x` over milestone `m`, one issue
     /// serving it, one maintenance issue, and a policy that requires binding.
-    fn planned() -> crate::synthetic::SyntheticRepository {
+    pub(crate) fn planned() -> crate::synthetic::SyntheticRepository {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let root = repo.root().to_path_buf();
         let write = |rel: &str, text: &str| {
@@ -1020,13 +1139,15 @@ mod tests {
             ".ai/repo/project/issues/I0001.yaml",
             &issue("I0001", "m", "serves:\n  - x#case\n"),
         );
+        // the test the criterion names, so that nothing structural rejects the plan
+        write("test/cases/01_x.sh", "true\n");
         write(
             ".ai/repo/project/issues/I0002.yaml",
             &issue("I0002", "ops", ""),
         );
         write(
             ".ai/repo/project/intents/x.yaml",
-            "id: x\ntitle: The x is true\nstatement: \"x holds.\"\ninvariants:\n  - Nothing else breaks\nmilestones:\n  - m\nsatisfaction:\n  - id: case\n    criterion: The case passes\n    evidence: test\n    ref: docs/DOC_0.md\n",
+            "id: x\ntitle: The x is true\nstatement: \"x holds.\"\ninvariants:\n  - Nothing else breaks\nmilestones:\n  - m\nsatisfaction:\n  - id: case\n    criterion: The case passes\n    evidence: test\n    ref: test/cases/01_x.sh\n",
         );
         repo
     }
