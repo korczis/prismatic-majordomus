@@ -393,6 +393,17 @@ impl Server {
                     " {silent} attached peer(s) have announced nothing, so the board understates who is here."
                 ));
             }
+            // the mesh, as work: who works where on every machine and what waits here, so a
+            // client of any provider starts knowing it (ADR 0128, I2287). Bounded: the fold is
+            // summarised in one paragraph whatever the journal holds.
+            if let Some(cooperation) = self.surface.context().mesh.cooperation() {
+                let briefing = crate::mesh::briefing::brief(
+                    &cooperation.state(),
+                    cooperation.runtime_key(),
+                    3,
+                );
+                text.push_str(&crate::mesh::briefing::summarize(&briefing));
+            }
             let departed = peers.iter().filter(|p| !p.attached).count();
             if departed > 0 {
                 text.push_str(&format!(

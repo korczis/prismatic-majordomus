@@ -293,6 +293,44 @@ fn objective_of(body: &str) -> String {
     line.chars().take(160).collect()
 }
 
+/// The briefing as one paragraph for a client's first read — the MCP `initialize`
+/// instructions (I2287): how many work where, what waits here, and the four calls of the
+/// protocol. Bounded whatever the mesh holds.
+///
+/// ```
+/// use majordomus_cli::mesh::briefing::{summarize, MeshBriefing, MeshBriefingMachine};
+/// let mut b = MeshBriefing::default();
+/// b.machines.push(MeshBriefingMachine { node: "5d81".into(), this_machine: false,
+///     sessions: vec![], more: 2 });
+/// let text = summarize(&b);
+/// assert!(text.contains("2 live session(s) on 1 other machine(s)"));
+/// assert!(text.contains("majordomus_mesh_claim"));
+/// assert!(text.contains("majordomus_mesh_briefing"));
+/// ```
+pub fn summarize(b: &MeshBriefing) -> String {
+    let count = |m: &MeshBriefingMachine| m.sessions.len() + m.more;
+    let here: usize = b
+        .machines
+        .iter()
+        .filter(|m| m.this_machine)
+        .map(count)
+        .sum();
+    let remote: Vec<&MeshBriefingMachine> = b.machines.iter().filter(|m| !m.this_machine).collect();
+    let elsewhere: usize = remote.iter().map(|m| count(m)).sum();
+    let handovers = b.handovers.len() + b.handovers_more;
+    let reviews = b.reviews.len() + b.reviews_more;
+    let addressed = b.reviews.iter().filter(|r| r.addressed_here).count();
+    let mut text = format!(
+        " This repository's mesh links its runtimes on every machine: {here} live session(s) on this machine and {elsewhere} live session(s) on {} other machine(s); {handovers} handover(s) wait to be taken here and {reviews} review(s) are open",
+        remote.len()
+    );
+    if addressed > 0 {
+        text.push_str(&format!(", {addressed} of them asked of this machine"));
+    }
+    text.push_str(". Before you build, claim the paths you will change with majordomus_mesh_claim (exclusive; a refusal names who holds them on any machine); take a handover meant for you with majordomus_mesh_handover_consume; answer a review with majordomus_mesh_review_answer; majordomus_mesh_briefing says who works where and what waits here (ADR 0128).");
+    text
+}
+
 /// The briefing as the lines a starting session reads: one per machine with its sessions,
 /// then the handovers and reviews waiting here, each with the call that acts on it.
 ///

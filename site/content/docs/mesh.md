@@ -261,6 +261,14 @@ runtimes, those addressed to this one first, each with the call that answers it.
 bounded (`limit`, 5 by default) and says how much it left out. A runtime is never told to take a
 handover it published itself. ADR 0128 makes it what every session is told at start (I2285).
 
+Every MCP client reads the briefing before its first call: on a server whose mesh runs, the
+`initialize` instructions carry it as one paragraph — the live sessions on this machine and on
+the others, the handovers waiting here, the open reviews and how many are asked of this machine
+— and name the protocol: claim the paths you will change with `majordomus_mesh_claim` before
+building, take a handover meant for you with `majordomus_mesh_handover_consume`, answer a review
+with `majordomus_mesh_review_answer`, ask `majordomus_mesh_briefing` for the whole picture. A
+client of any provider is told it, with or without a lifecycle adapter (I2287).
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.
