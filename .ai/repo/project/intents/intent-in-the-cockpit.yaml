@@ -1,0 +1,35 @@
+id: intent-in-the-cockpit
+title: A person reading the Cockpit sees why an intent stands where it does, without opening a record
+statement: "For one intent, the Cockpit shows the verdict and what holds it back, each criterion with the run that judged it, each guard and whether it is violated, the review of its plan with every finding of both halves and how each was resolved, and the recorded gap — and for all intents, the verdict beside the stage — each fact taken from the capability that derives it."
+invariants:
+  - The Cockpit derives no stage, verdict, guard standing, disposition, review state or evidence state; it renders the word a capability answered and chooses only the colour it is read in
+  - An accepting disposition is never drawn as healthy unless the review it belongs to is current
+  - No page reads the index directly, and no figure is shown that a capability did not answer
+  - No control on these pages marks a criterion, a guard or an intent satisfied
+  - A status is never told by colour alone; every badge carries its word
+milestones:
+  - intent-in-the-cockpit
+satisfaction:
+  - id: verdict-is-explained-on-the-page
+    criterion: The page of one intent shows its verdict with every required criterion holding it back and every violated guard, each criterion with whether it is optional and the run it was judged by, and each guard in the standing the engine answers for it, each reason linked to its row, and the invariants, non-goals and governance the record declares
+    evidence: test
+    ref: apps/majordomus-cli/tests/cockpit_intents.rs
+  - id: review-is-on-the-page
+    criterion: The page of one intent shows the review of its plan — its state against the plan, the disposition, the stamp, every structural and recorded finding with whether it blocks and how it was resolved — and the conditions of the recorded gap, from the opposition capability
+    evidence: test
+    ref: apps/majordomus-cli/tests/cockpit_intents.rs
+  - id: list-says-the-verdict
+    criterion: The list of intents shows each intent's verdict beside its stage from the one answer it already asks for, with met counted over the required criteria, and links each to its page
+    evidence: test
+    ref: apps/majordomus-cli/tests/cockpit_intents.rs
+governance:
+  - rule:project.derived-once
+  - adr:adr-0107
+  - adr:adr-0112
+  - adr:adr-0113
+non_goals:
+  - Showing how an intent's plan is projected to GitHub; that is the reconciliation milestone
+  - Running or stamping a review from the page; the page reads
+  - A graph of the plan; the plan pages are another pull request's
+created_at: 2026-10-08
+updated_at: 2026-10-08

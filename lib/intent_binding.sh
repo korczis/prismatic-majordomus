@@ -125,7 +125,7 @@ mj_binding_section() {
             "statement    \(.statement)",
             (.criteria[]? | crit),
             (.invariants[]? | "invariant    \(.)"),
-            (.guards[]? | "guard        \(.id)  \(if .violated then "violated" elif .state == "current" then "holds" else "not judged" end)  \(.state)  — \(.invariant)"),
+            (.guards[]? | "guard        \(.id)  \(.standing | gsub("_"; " "))  \(.state)  — \(.invariant)"),
             (if .critique then
                "critique     reviewed at \(.critique.reviewed_at); open blocking: \(
                  if (.critique.open_blocking | length) == 0 then "none"

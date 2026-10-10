@@ -1,0 +1,34 @@
+id: I2032
+milestone: intent-in-the-cockpit
+title: The list shows the verdict, and the documents say what the pages show
+slug: the-intent-list-shows-the-verdict
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - intent-in-the-cockpit#list-says-the-verdict
+objective: "In the list of intents add the verdict beside the stage, carried by intent_realization.work on each intent's view (IntentRealizationView.verdict) so the list asks one capability; show met over the required criteria as the realization answers it, on both pages; update docs/COCKPIT.md and the claim intent-cockpit-pages to say what the two pages now show."
+why: "The list shows a stage and a count, and an intent can be at stage verifying because a guard is failing while the count reads complete."
+current_state: "The list renders intent_realization.work: stage, met, work, providers, findings, title."
+desired_state: "Each row carries the verdict's word from the answer the list already has; one test compares the page's words with the command line's answer on one fixture."
+scope:
+  - apps/majordomus-cli/src
+  - apps/majordomus-cli/tests
+  - lib/intent_binding.sh
+  - .ai/repo/project
+  - docs
+  - site
+depends_on:
+  - I2031
+acceptance_criteria:
+  - Each row shows its intent's verdict by word, from intent_realization.work
+  - The verdict, each criterion state and each guard standing on the page are the ones intent explain answers on the same fixture
+  - docs/COCKPIT.md and the claim say what the pages show, and the Cockpit's gates pass
+  - The generated OpenAPI and the derived copies of the claim are regenerated
+validation:
+  - cargo test --lib cockpit::intents
+  - cargo test --test cockpit_intents
+evidence_required:
+  - the_intent_list_shows_the_verdict
+created_at: 2026-10-08
+updated_at: 2026-10-08

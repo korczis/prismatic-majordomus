@@ -376,6 +376,7 @@ pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
 /// let guard = |state| IntentGuard {
 ///     id: "g".into(), invariant: "stays true".into(), evidence: "test".into(),
 ///     reference: "test/cases/2_y.sh".into(), state, violated: state == IntentEvidenceState::Failing,
+///     standing: majordomus_cli::intent::IntentGuardStanding::of(state),
 ///     reproduce: None, evaluation: None,
 /// };
 /// // a failing guard outranks met criteria; a stale one is not judged
@@ -1095,18 +1096,87 @@ pub struct IntentCriterion {
     pub evaluation: Option<IntentEvaluation>,
 }
 
+/// Where a guard stands, as one word every surface prints: derived from the state of its
+/// evidence by [`IntentGuardStanding::of`] and by nothing else (ADR 0113).
+///
+/// ```
+/// use majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};
+/// assert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);
+/// assert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);
+/// // stale, never run, unresolved: nothing was judged, and nothing is violated
+/// assert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);
+/// assert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), "\"not_judged\"");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IntentGuardStanding {
+    /// Its evidence is failing.
+    Violated,
+    /// Its evidence is current.
+    Holds,
+    /// Its evidence is stale, was never run, does not resolve or cannot be derived.
+    NotJudged,
+}
+
+impl IntentGuardStanding {
+    /// The standing that follows from the state of a guard's evidence.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};
+    /// assert_eq!(IntentGuardStanding::of(IntentEvidenceState::NotRun).as_str(), "not_judged");
+    /// ```
+    pub fn of(state: IntentEvidenceState) -> Self {
+        match state {
+            IntentEvidenceState::Failing => IntentGuardStanding::Violated,
+            IntentEvidenceState::Current => IntentGuardStanding::Holds,
+            _ => IntentGuardStanding::NotJudged,
+        }
+    }
+
+    /// The word the JSON of every surface spells for this standing, the same one serde
+    /// writes, so a reader can match a page or a briefing line back to the answer.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::IntentGuardStanding;
+    /// assert_eq!(IntentGuardStanding::Holds.as_str(), "holds");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntentGuardStanding::Violated => "violated",
+            IntentGuardStanding::Holds => "holds",
+            IntentGuardStanding::NotJudged => "not_judged",
+        }
+    }
+
+    /// The same word as a person reads it.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::IntentGuardStanding;
+    /// assert_eq!(IntentGuardStanding::NotJudged.words(), "not judged");
+    /// ```
+    pub fn words(self) -> &'static str {
+        match self {
+            IntentGuardStanding::NotJudged => "not judged",
+            other => other.as_str(),
+        }
+    }
+}
+
 /// A guard, judged: an invariant with the state of the evidence that would fail if it
 /// stopped being true (ADR 0113). `violated` is true for a failing run and for nothing
 /// else: a guard that is stale, was never run or does not resolve is not judged.
 ///
 /// ```
-/// use majordomus_cli::intent::{IntentEvidenceState, IntentGuard};
+/// use majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};
 /// let g = IntentGuard {
 ///     id: "engines-agree".into(), invariant: "The plan engines stay identical".into(),
 ///     evidence: "test".into(), reference: "test/cases/99_plan_capabilities.sh".into(),
-///     state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,
+///     state: IntentEvidenceState::Stale, violated: false,
+///     standing: IntentGuardStanding::of(IntentEvidenceState::Stale),
+///     reproduce: None, evaluation: None,
 /// };
 /// assert!(!g.violated, "stale is not judged, and violates nothing");
+/// assert_eq!(g.standing.words(), "not judged");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentGuard {
@@ -1123,6 +1193,9 @@ pub struct IntentGuard {
     pub state: IntentEvidenceState,
     /// Whether it is violated: its evidence is failing.
     pub violated: bool,
+    /// Where it stands — `violated`, `holds` or `not_judged` — so no surface works the
+    /// word out again.
+    pub standing: IntentGuardStanding,
     /// The command that runs its evidence, when there is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reproduce: Option<String>,
@@ -1796,6 +1869,7 @@ impl Intents {
                         evidence: judged.evidence,
                         reference: judged.reference,
                         violated: judged.state == IntentEvidenceState::Failing,
+                        standing: IntentGuardStanding::of(judged.state),
                         state: judged.state,
                         reproduce: judged.reproduce,
                         evaluation: judged.evaluation,
@@ -2603,6 +2677,43 @@ fn open_blocking(c: &CritiqueRecord) -> impl Iterator<Item = &CritiqueFinding> {
 mod tests {
     use super::*;
     use crate::plan::{PlanCounts, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary};
+
+    /// The standing of a guard is one word per state of its evidence, spelled as serde
+    /// spells it and read with a space where a person reads it.
+    #[test]
+    fn a_guards_standing_is_one_word_derived_from_the_state_of_its_evidence() {
+        for (state, standing, word, read) in [
+            (
+                IntentEvidenceState::Failing,
+                IntentGuardStanding::Violated,
+                "violated",
+                "violated",
+            ),
+            (
+                IntentEvidenceState::Current,
+                IntentGuardStanding::Holds,
+                "holds",
+                "holds",
+            ),
+            (
+                IntentEvidenceState::Stale,
+                IntentGuardStanding::NotJudged,
+                "not_judged",
+                "not judged",
+            ),
+            (
+                IntentEvidenceState::Unresolved,
+                IntentGuardStanding::NotJudged,
+                "not_judged",
+                "not judged",
+            ),
+        ] {
+            assert_eq!(IntentGuardStanding::of(state), standing, "{state:?}");
+            assert_eq!(standing.as_str(), word);
+            assert_eq!(standing.words(), read);
+            assert_eq!(serde_json::to_value(standing).unwrap(), word);
+        }
+    }
 
     struct Table {
         tests: BTreeMap<String, TestStanding>,

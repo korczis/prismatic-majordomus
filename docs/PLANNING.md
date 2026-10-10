@@ -226,6 +226,10 @@ guards:
 | `current` | holds |
 | stale, never run, unresolved | is not judged, and violates nothing |
 
+Each guard carries that standing as one word, `standing` — `violated`, `holds` or
+`not_judged` — which the engine derives and the command line, the briefing and the Cockpit
+print without working it out again.
+
 Only a failing run violates a guard, because nothing serves a guard and its evidence would
 read stale after any unrelated change. A guard's id may not repeat a criterion's. A violated
 guard does not refuse work from starting: the work that starts may be the repair. A review
@@ -429,10 +433,15 @@ verdict is `satisfied` while the stage is `planned` or `executing`) and
 `closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
 the criteria holding it back).
 
-In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
-and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
-object it names and to the issues serving it, and each unit of work with the provenance of its
-link. Both pages render the capabilities above and decide nothing themselves.
+In the Cockpit, `/cockpit/intents` lists every intent with its stage, its verdict and the work
+realising it, and `/cockpit/intents/<id>` shows one: why its verdict is what it is — each required
+criterion holding it back and each violated guard, linked to its row — each criterion with
+whether it is optional, its evidence state and the run it was judged by, linked to the test
+object it names and to the issues serving it; each guard with its standing; the review of its
+plan with its state against the plan, the disposition, the stamp, every finding of both halves
+and the recorded gap; and each unit of work with the provenance of its link. Both pages render
+the capabilities above and decide nothing themselves: the page chooses the colour a word is
+read in, and an accepting disposition is coloured only under a review that is current.
 
 `test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
 to end: declared, realised across two providers and a handover, closed while one case fails,

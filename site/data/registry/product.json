@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.20.0"
   },
-  "fingerprint": "eb63b38f33d123c53643612463077fd7291db00497b9e028bc3e0e058112c27b",
+  "fingerprint": "1863390225eef700e6782c7dcbc41414d579fb14d885d4bedfecb958ac2bcf59",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -927,9 +927,9 @@
         },
         {
           "id": "intent-cockpit-pages",
-          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "claim": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
           "status": "guaranteed",
-          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+          "test": "apps/majordomus-cli/tests/cockpit_intents.rs"
         },
         {
           "id": "intent-criteria-covered",
@@ -10497,15 +10497,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 27
+          "objects": 28
         },
         {
           "name": "issue",
-          "objects": 275
+          "objects": 278
         },
         {
           "name": "intent",
-          "objects": 5
+          "objects": 6
         }
       ],
       "rule_refs": [
@@ -10631,9 +10631,9 @@
         },
         {
           "id": "intent-cockpit-pages",
-          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "claim": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
           "status": "guaranteed",
-          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+          "test": "apps/majordomus-cli/tests/cockpit_intents.rs"
         }
       ],
       "use_case_refs": [
@@ -10703,11 +10703,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 310,
+        "mcp_resources": 315,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 307,
+        "objects": 312,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14343,7 +14343,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (4)",
+        "title": "critique (5)",
         "features": []
       },
       {
@@ -14374,19 +14374,19 @@
       },
       {
         "id": "gap",
-        "title": "gap (4)",
+        "title": "gap (5)",
         "features": []
       },
       {
         "id": "intent",
-        "title": "intent (5)",
+        "title": "intent (6)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (275)",
+        "title": "issue (278)",
         "features": [
           "planning"
         ]
@@ -14407,7 +14407,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (27)",
+        "title": "milestone (28)",
         "features": [
           "planning"
         ]
@@ -15378,17 +15378,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2126,
+    "capabilities": 2133,
     "builtin": 186,
-    "declarative": 1940,
+    "declarative": 1947,
     "modules": 54,
     "mcp_tools": 179,
-    "mcp_resources": 1994,
+    "mcp_resources": 2001,
     "http_routes": 183,
     "cli_commands": 192,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1940,
+    "objects": 1947,
     "by_kind": {
       "adr": 87,
       "application": 5,
@@ -15397,19 +15397,19 @@
       "claim": 239,
       "command": 31,
       "context": 36,
-      "critique": 4,
+      "critique": 5,
       "deployment": 1,
       "distribution-model": 1,
       "document": 329,
       "domain": 6,
       "feature": 27,
-      "gap": 4,
+      "gap": 5,
       "implementation": 51,
-      "intent": 5,
-      "issue": 275,
+      "intent": 6,
+      "issue": 278,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 28,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -16019,8 +16019,8 @@
       },
       "intent-cockpit-pages": {
         "status": "guaranteed",
-        "state": "stale",
-        "label": "stale",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "intent-command-deployment-evidence": {

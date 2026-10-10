@@ -43,7 +43,8 @@ use serde::{Deserialize, Serialize};
 use crate::capability::builtin::continuity::{document, read_task};
 use crate::index::Index;
 use crate::intent::{
-    IntentEvidenceState, IntentFinding, IntentStage, IntentVerdictState, IntentView, Intents, WARN,
+    IntentEvidenceState, IntentFinding, IntentGuardStanding, IntentStage, IntentVerdictState,
+    IntentView, Intents, WARN,
 };
 use crate::intent_plan::{CoverageStrength, CriterionCoverage, IntentCoverage};
 use crate::ledger::Entry;
@@ -602,9 +603,11 @@ impl Ordered for IntentWorkRef {
 /// use majordomus_cli::intent_realization::IntentRealizationView;
 /// let v = IntentRealizationView {
 ///     intent: "x".into(), title: "X".into(), stage: IntentStage::Verifying,
+///     verdict: majordomus_cli::intent::IntentVerdictState::Unsatisfied,
 ///     criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],
 /// };
 /// assert!(v.met < v.criteria);
+/// assert_eq!(serde_json::to_value(&v).unwrap()["verdict"], "unsatisfied");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentRealizationView {
@@ -614,7 +617,10 @@ pub struct IntentRealizationView {
     pub title: String,
     /// Its derived stage.
     pub stage: IntentStage,
-    /// How many criteria it declares.
+    /// What the evidence alone says, as the intent's own verdict says it: a list can show
+    /// it beside the stage without asking a second capability.
+    pub verdict: IntentVerdictState,
+    /// How many criteria it requires.
     pub criteria: usize,
     /// How many have current evidence.
     pub met: usize,
@@ -915,6 +921,7 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
             intent: view.id.clone(),
             title: view.title.clone(),
             stage: view.stage,
+            verdict: view.verdict.state,
             criteria: view.satisfaction.len() - view.optional,
             met: view.met,
             unmet,
@@ -1112,12 +1119,12 @@ pub fn explain(
     }
     // the guards: what must stay true, judged — violated only by a failing run
     for g in &view.guards {
-        let mut s = if g.violated {
+        let mut s = if g.standing == IntentGuardStanding::Violated {
             format!(
                 "guard `{}` is violated: its {} `{}` is failing, so the intent is not satisfied whatever its criteria say",
                 g.id, g.evidence, g.reference
             )
-        } else if g.state == IntentEvidenceState::Current {
+        } else if g.standing == IntentGuardStanding::Holds {
             format!(
                 "guard `{}` holds: its {} `{}` has current evidence",
                 g.id, g.evidence, g.reference
@@ -1145,6 +1152,7 @@ pub fn explain(
             intent: view.id.clone(),
             title: view.title.clone(),
             stage: view.stage,
+            verdict: view.verdict.state,
             criteria: total,
             met: view.met,
             unmet: Vec::new(),
@@ -1974,6 +1982,7 @@ mod tests {
             reference: format!("suite:{id}"),
             state,
             violated: state == IntentEvidenceState::Failing,
+            standing: crate::intent::IntentGuardStanding::of(state),
             reproduce: None,
             evaluation: (id == "broken").then(|| IntentEvaluation {
                 outcome: "fail".into(),

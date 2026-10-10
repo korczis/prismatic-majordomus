@@ -1328,16 +1328,16 @@
     },
     {
       "id": "intent-cockpit-pages",
-      "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+      "claim": "The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>",
       "source": "docs/COCKPIT.md",
       "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
-      "test": "apps/majordomus-cli/tests/intent_realization.rs",
+      "test": "apps/majordomus-cli/tests/cockpit_intents.rs",
       "status": "guaranteed",
-      "note": "Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.",
+      "note": "Both pages render what `intent_realization` and `intent_opposition.review` answer and decide nothing themselves; the test compares the words on the served page with the command line's answer on one repository. Each criterion links the test object it names and the issue serving it, each reason of the verdict links its row, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.",
       "responsibility": "plan",
       "source_route": "/docs/cockpit/",
       "command": null,
-      "test_case": "apps/majordomus-cli/tests/intent_realization.rs"
+      "test_case": "apps/majordomus-cli/tests/cockpit_intents.rs"
     },
     {
       "id": "intent-guard-is-judged",

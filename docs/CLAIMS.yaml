@@ -923,13 +923,13 @@ claims:
     note: "`majordomus intent preflight --issue <id>` (or `--path`) follows the criteria the issue declares in `serves`, never its milestone alone, and judges each link by the coverage `intent validate` reports from. It answers `serves` (exit 0) when every link holds and each intent served has a critique with no blocking finding open, `maintenance` (exit 0) for an issue that serves nothing under a milestone no live intent names, and `refused` (exit 10) naming its cause: unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued or open_blocking_finding. The MCP tool answers the same. `majordomus start` and `plan start` ask the same join through `intents.binding` (intent-in-session-context, intent-refused-at-plan-start)."
 
   - id: intent-cockpit-pages
-    claim: The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>
+    claim: The Cockpit shows every intent with its derived stage and verdict at /cockpit/intents, and one intent's verdict with what holds it back, its criteria, guards, evidence, the review of its plan, serving issues and realising work at /cockpit/intents/<id>
     source: docs/COCKPIT.md
     implementation: apps/majordomus-cli/src/cockpit/intents.rs
-    test: apps/majordomus-cli/tests/intent_realization.rs
+    test: apps/majordomus-cli/tests/cockpit_intents.rs
     status: guaranteed
     responsibility: plan
-    note: Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.
+    note: Both pages render what `intent_realization` and `intent_opposition.review` answer and decide nothing themselves; the test compares the words on the served page with the command line's answer on one repository. Each criterion links the test object it names and the issue serving it, each reason of the verdict links its row, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404.
 
   - id: intent-guard-is-judged
     claim: An intent's guard — an invariant that names its evidence — is judged by the engine that judges its criteria, and a failing one keeps the intent unsatisfied whatever its criteria and milestones say

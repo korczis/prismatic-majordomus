@@ -581,6 +581,7 @@
     "schema-IntentExplanation": "docs/api/intent-realization/",
     "schema-IntentFinding": "docs/api/shared/",
     "schema-IntentGuard": "docs/api/shared/",
+    "schema-IntentGuardStanding": "docs/api/shared/",
     "schema-IntentLink": "docs/api/intent-realization/",
     "schema-IntentLinkProvenance": "docs/api/intent-realization/",
     "schema-IntentLinkVia": "docs/api/intent-realization/",
@@ -1146,7 +1147,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 183,
-    "schemas": 905,
+    "schemas": 906,
     "tags": 54
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1817,6 +1818,7 @@
     "IntentExplanation": "intent-realization",
     "IntentFinding": "shared",
     "IntentGuard": "shared",
+    "IntentGuardStanding": "shared",
     "IntentLink": "intent-realization",
     "IntentLinkProvenance": "intent-realization",
     "IntentLinkVia": "intent-realization",
@@ -24726,7 +24728,7 @@
       "variants": []
     },
     {
-      "description": "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```",
+      "description": "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false,\n    standing: IntentGuardStanding::of(IntentEvidenceState::Stale),\n    reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\nassert_eq!(g.standing.words(), \"not judged\");\n```",
       "home": "shared",
       "is_enum": false,
       "name": "IntentGuard",
@@ -24776,6 +24778,15 @@
           "type": "boolean"
         },
         {
+          "description": "Where it stands — `violated`, `holds` or `not_judged` — so no surface works the\nword out again.",
+          "name": "standing",
+          "refs": [
+            "IntentGuardStanding"
+          ],
+          "required": true,
+          "type": "IntentGuardStanding"
+        },
+        {
           "description": "The command that runs its evidence, when there is one.",
           "name": "reproduce",
           "refs": [],
@@ -24799,6 +24810,33 @@
         "IntentView"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a guard stands, as one word every surface prints: derived from the state of its\nevidence by `IntentGuardStanding::of` and by nothing else (ADR 0113).\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);\n// stale, never run, unresolved: nothing was judged, and nothing is violated\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);\nassert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), \"\\\"not_judged\\\"\");\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "IntentGuardStanding",
+      "properties": [],
+      "type": "\"violated\" | \"holds\" | \"not_judged\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentGuard"
+      ],
+      "values": [
+        {
+          "description": "Its evidence is failing.",
+          "value": "violated"
+        },
+        {
+          "description": "Its evidence is current.",
+          "value": "holds"
+        },
+        {
+          "description": "Its evidence is stale, was never run, does not resolve or cannot be derived.",
+          "value": "not_judged"
+        }
+      ],
       "variants": []
     },
     {
@@ -25687,7 +25725,7 @@
       "variants": []
     },
     {
-      "description": "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```",
+      "description": "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    verdict: majordomus_cli::intent::IntentVerdictState::Unsatisfied,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\nassert_eq!(serde_json::to_value(&v).unwrap()[\"verdict\"], \"unsatisfied\");\n```",
       "home": "intent-realization",
       "is_enum": false,
       "name": "IntentRealizationView",
@@ -25716,7 +25754,16 @@
           "type": "IntentStage"
         },
         {
-          "description": "How many criteria it declares.",
+          "description": "What the evidence alone says, as the intent's own verdict says it: a list can show\nit beside the stage without asking a second capability.",
+          "name": "verdict",
+          "refs": [
+            "IntentVerdictState"
+          ],
+          "required": true,
+          "type": "IntentVerdictState"
+        },
+        {
+          "description": "How many criteria it requires.",
           "name": "criteria",
           "refs": [],
           "required": true,
@@ -26100,6 +26147,7 @@
       "type": "\"satisfied\" | \"unsatisfied\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "IntentRealizationView",
         "IntentVerdict"
       ],
       "values": [

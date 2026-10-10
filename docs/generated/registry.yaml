@@ -25355,6 +25355,9 @@ capabilities:
               violated:
                 type: boolean
                 description: "Whether it is violated: its evidence is failing."
+              standing:
+                "$ref": "#/$defs/IntentGuardStanding"
+                description: "Where it stands — `violated`, `holds` or `not_judged` — so no surface works the\nword out again."
               reproduce:
                 type:
                   - string
@@ -25372,7 +25375,20 @@ capabilities:
               - ref
               - state
               - violated
-            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```"
+              - standing
+            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false,\n    standing: IntentGuardStanding::of(IntentEvidenceState::Stale),\n    reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\nassert_eq!(g.standing.words(), \"not judged\");\n```"
+          IntentGuardStanding:
+            oneOf:
+              - type: string
+                const: violated
+                description: Its evidence is failing.
+              - type: string
+                const: holds
+                description: Its evidence is current.
+              - type: string
+                const: not_judged
+                description: "Its evidence is stale, was never run, does not resolve or cannot be derived."
+            description: "Where a guard stands, as one word every surface prints: derived from the state of its\nevidence by `IntentGuardStanding::of` and by nothing else (ADR 0113).\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);\n// stale, never run, unresolved: nothing was judged, and nothing is violated\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);\nassert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), \"\\\"not_judged\\\"\");\n```"
           IntentVerdict:
             type: object
             properties:
@@ -25518,11 +25534,14 @@ capabilities:
               stage:
                 "$ref": "#/$defs/IntentStage"
                 description: Its derived stage.
+              verdict:
+                "$ref": "#/$defs/IntentVerdictState"
+                description: "What the evidence alone says, as the intent's own verdict says it: a list can show\nit beside the stage without asking a second capability."
               criteria:
                 type: integer
                 format: uint
                 minimum: 0
-                description: How many criteria it declares.
+                description: How many criteria it requires.
               met:
                 type: integer
                 format: uint
@@ -25552,13 +25571,14 @@ capabilities:
               - intent
               - title
               - stage
+              - verdict
               - criteria
               - met
               - unmet
               - work
               - providers
               - findings
-            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```"
+            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    verdict: majordomus_cli::intent::IntentVerdictState::Unsatisfied,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\nassert_eq!(serde_json::to_value(&v).unwrap()[\"verdict\"], \"unsatisfied\");\n```"
           IntentUnmetCriterion:
             type: object
             properties:
@@ -25896,11 +25916,14 @@ capabilities:
               stage:
                 "$ref": "#/$defs/IntentStage"
                 description: Its derived stage.
+              verdict:
+                "$ref": "#/$defs/IntentVerdictState"
+                description: "What the evidence alone says, as the intent's own verdict says it: a list can show\nit beside the stage without asking a second capability."
               criteria:
                 type: integer
                 format: uint
                 minimum: 0
-                description: How many criteria it declares.
+                description: How many criteria it requires.
               met:
                 type: integer
                 format: uint
@@ -25930,13 +25953,14 @@ capabilities:
               - intent
               - title
               - stage
+              - verdict
               - criteria
               - met
               - unmet
               - work
               - providers
               - findings
-            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```"
+            description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    verdict: majordomus_cli::intent::IntentVerdictState::Unsatisfied,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\nassert_eq!(serde_json::to_value(&v).unwrap()[\"verdict\"], \"unsatisfied\");\n```"
           IntentStage:
             oneOf:
               - type: string
@@ -25961,6 +25985,18 @@ capabilities:
                 const: superseded
                 description: The record names the intent that replaced it.
             description: "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+          IntentVerdictState:
+            oneOf:
+              - type: string
+                const: satisfied
+                description: Every criterion has current evidence.
+              - type: string
+                const: unsatisfied
+                description: "A criterion the ledger or the claim join can settle (`test`, `claim`) is not met."
+              - type: string
+                const: unknown
+                description: "Every unmet criterion is of a kind the ledger cannot yet settle (`command`,\n`deployment`), or the intent declares no criterion: the evidence cannot answer."
+            description: "What the evidence alone says about an intent, as a word: derived from its criteria and\nnever from the plan, so it can read `satisfied` while a milestone is still open (ADR 0107).\n\n```\nuse majordomus_cli::intent::IntentVerdictState;\nlet word = serde_json::to_string(&IntentVerdictState::Unsatisfied).unwrap();\nassert_eq!(word, \"\\\"unsatisfied\\\"\");\nassert_eq!(IntentVerdictState::Satisfied.as_str(), \"satisfied\");\n```"
           IntentUnmetCriterion:
             type: object
             properties:
@@ -26692,6 +26728,9 @@ capabilities:
               violated:
                 type: boolean
                 description: "Whether it is violated: its evidence is failing."
+              standing:
+                "$ref": "#/$defs/IntentGuardStanding"
+                description: "Where it stands — `violated`, `holds` or `not_judged` — so no surface works the\nword out again."
               reproduce:
                 type:
                   - string
@@ -26709,7 +26748,20 @@ capabilities:
               - ref
               - state
               - violated
-            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```"
+              - standing
+            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false,\n    standing: IntentGuardStanding::of(IntentEvidenceState::Stale),\n    reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\nassert_eq!(g.standing.words(), \"not judged\");\n```"
+          IntentGuardStanding:
+            oneOf:
+              - type: string
+                const: violated
+                description: Its evidence is failing.
+              - type: string
+                const: holds
+                description: Its evidence is current.
+              - type: string
+                const: not_judged
+                description: "Its evidence is stale, was never run, does not resolve or cannot be derived."
+            description: "Where a guard stands, as one word every surface prints: derived from the state of its\nevidence by `IntentGuardStanding::of` and by nothing else (ADR 0113).\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);\n// stale, never run, unresolved: nothing was judged, and nothing is violated\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);\nassert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), \"\\\"not_judged\\\"\");\n```"
           IntentPreflightCritique:
             type: object
             properties:
@@ -27569,6 +27621,9 @@ capabilities:
               violated:
                 type: boolean
                 description: "Whether it is violated: its evidence is failing."
+              standing:
+                "$ref": "#/$defs/IntentGuardStanding"
+                description: "Where it stands — `violated`, `holds` or `not_judged` — so no surface works the\nword out again."
               reproduce:
                 type:
                   - string
@@ -27586,7 +27641,20 @@ capabilities:
               - ref
               - state
               - violated
-            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```"
+              - standing
+            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false,\n    standing: IntentGuardStanding::of(IntentEvidenceState::Stale),\n    reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\nassert_eq!(g.standing.words(), \"not judged\");\n```"
+          IntentGuardStanding:
+            oneOf:
+              - type: string
+                const: violated
+                description: Its evidence is failing.
+              - type: string
+                const: holds
+                description: Its evidence is current.
+              - type: string
+                const: not_judged
+                description: "Its evidence is stale, was never run, does not resolve or cannot be derived."
+            description: "Where a guard stands, as one word every surface prints: derived from the state of its\nevidence by `IntentGuardStanding::of` and by nothing else (ADR 0113).\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);\n// stale, never run, unresolved: nothing was judged, and nothing is violated\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);\nassert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), \"\\\"not_judged\\\"\");\n```"
           IntentVerdict:
             type: object
             properties:
@@ -28054,6 +28122,9 @@ capabilities:
               violated:
                 type: boolean
                 description: "Whether it is violated: its evidence is failing."
+              standing:
+                "$ref": "#/$defs/IntentGuardStanding"
+                description: "Where it stands — `violated`, `holds` or `not_judged` — so no surface works the\nword out again."
               reproduce:
                 type:
                   - string
@@ -28071,7 +28142,20 @@ capabilities:
               - ref
               - state
               - violated
-            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```"
+              - standing
+            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false,\n    standing: IntentGuardStanding::of(IntentEvidenceState::Stale),\n    reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\nassert_eq!(g.standing.words(), \"not judged\");\n```"
+          IntentGuardStanding:
+            oneOf:
+              - type: string
+                const: violated
+                description: Its evidence is failing.
+              - type: string
+                const: holds
+                description: Its evidence is current.
+              - type: string
+                const: not_judged
+                description: "Its evidence is stale, was never run, does not resolve or cannot be derived."
+            description: "Where a guard stands, as one word every surface prints: derived from the state of its\nevidence by `IntentGuardStanding::of` and by nothing else (ADR 0113).\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);\n// stale, never run, unresolved: nothing was judged, and nothing is violated\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);\nassert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), \"\\\"not_judged\\\"\");\n```"
           IntentPreflightCritique:
             type: object
             properties:
@@ -28617,6 +28701,9 @@ capabilities:
               violated:
                 type: boolean
                 description: "Whether it is violated: its evidence is failing."
+              standing:
+                "$ref": "#/$defs/IntentGuardStanding"
+                description: "Where it stands — `violated`, `holds` or `not_judged` — so no surface works the\nword out again."
               reproduce:
                 type:
                   - string
@@ -28634,7 +28721,20 @@ capabilities:
               - ref
               - state
               - violated
-            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false, reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\n```"
+              - standing
+            description: "A guard, judged: an invariant with the state of the evidence that would fail if it\nstopped being true (ADR 0113). `violated` is true for a failing run and for nothing\nelse: a guard that is stale, was never run or does not resolve is not judged.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuard, IntentGuardStanding};\nlet g = IntentGuard {\n    id: \"engines-agree\".into(), invariant: \"The plan engines stay identical\".into(),\n    evidence: \"test\".into(), reference: \"test/cases/99_plan_capabilities.sh\".into(),\n    state: IntentEvidenceState::Stale, violated: false,\n    standing: IntentGuardStanding::of(IntentEvidenceState::Stale),\n    reproduce: None, evaluation: None,\n};\nassert!(!g.violated, \"stale is not judged, and violates nothing\");\nassert_eq!(g.standing.words(), \"not judged\");\n```"
+          IntentGuardStanding:
+            oneOf:
+              - type: string
+                const: violated
+                description: Its evidence is failing.
+              - type: string
+                const: holds
+                description: Its evidence is current.
+              - type: string
+                const: not_judged
+                description: "Its evidence is stale, was never run, does not resolve or cannot be derived."
+            description: "Where a guard stands, as one word every surface prints: derived from the state of its\nevidence by `IntentGuardStanding::of` and by nothing else (ADR 0113).\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentGuardStanding};\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Failing), IntentGuardStanding::Violated);\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Current), IntentGuardStanding::Holds);\n// stale, never run, unresolved: nothing was judged, and nothing is violated\nassert_eq!(IntentGuardStanding::of(IntentEvidenceState::Stale), IntentGuardStanding::NotJudged);\nassert_eq!(serde_json::to_string(&IntentGuardStanding::NotJudged).unwrap(), \"\\\"not_judged\\\"\");\n```"
           IntentVerdict:
             type: object
             properties:
