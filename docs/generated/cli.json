@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
-  "version": "0.19.1",
+  "generator": "majordomus-cli 0.20.0",
+  "version": "0.20.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -11633,6 +11633,210 @@
                 "command": "majordomus worktree cleanup",
                 "setup": [],
                 "expectation": "exits 0; prints cleanup-eligible"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "reconcile"
+            ],
+            "route": "/docs/cli/worktree/reconcile/",
+            "executable": true,
+            "usage": "majordomus worktree reconcile [OPTIONS] [SELECTOR]",
+            "about": "What becomes of every branch and every worktree: one state each (active, dirty, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it and the one step it permits. With a selector, that one subject and why. Changes nothing without --apply",
+            "args": [
+              {
+                "name": "selector",
+                "positional": true,
+                "help": "One branch, or the path of one detached worktree: print its state and every reason",
+                "value_name": "SELECTOR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Take the steps whose proof is complete, each measured again first: remove the clean worktree of a branch the trunk contains, and delete a branch whose every commit a remote holds and whose merge would change nothing. Uncommitted work, a worktree a process works in and an unpublished commit are never touched",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "include_scratch",
+                "long": "include-scratch",
+                "positional": false,
+                "help": "With --apply, also remove scratch checkouts and detached worktrees whose proof is complete. Without it they are listed and left to whoever made them",
+                "value_name": "INCLUDE_SCRATCH",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-reconcile-plan",
+                "title": "What becomes of every branch and worktree",
+                "description": "Every non-trunk branch and every detached worktree with the one state git supports for it and the one step that state permits. A branch cut from the trunk and never published is `unstarted` and kept: it reads exactly like one that landed, and only having been published tells them apart. Nothing is changed without `--apply`.",
+                "argv": [
+                  "worktree",
+                  "reconcile"
+                ],
+                "command": "majordomus worktree reconcile",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints unstarted, feature/improve-cli, nothing to reconcile"
+              },
+              {
+                "id": "worktree-reconcile-explain",
+                "title": "Why is this worktree still here?",
+                "description": "With a selector the answer is one subject: its state, its step, and every reading that decided it, one per line.",
+                "argv": [
+                  "worktree",
+                  "reconcile",
+                  "feature/improve-cli"
+                ],
+                "command": "majordomus worktree reconcile feature/improve-cli",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints unstarted, the trunk reaches the branch"
+              },
+              {
+                "id": "worktree-reconcile-apply",
+                "title": "Carry out what is proven, and nothing else",
+                "description": "`--apply` takes only the steps whose proof is complete, each subject measured again immediately before it goes. Here nothing is removable on proof, so it removes nothing; run twice, the second run reads the same.",
+                "argv": [
+                  "worktree",
+                  "reconcile",
+                  "--apply"
+                ],
+                "command": "majordomus worktree reconcile --apply",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints 0 worktree(s) removed, 0 branch(es) deleted, 0 refused"
               }
             ],
             "subcommands": []

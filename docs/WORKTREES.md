@@ -162,6 +162,8 @@ majordomus worktree migrate --plan             # what would move; changes nothin
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
 majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
+majordomus worktree reconcile                  # one state and one next step for every branch and worktree
+majordomus worktree reconcile --apply          # takes the proven steps, each measured again first
 ```
 
 | command | what it does | exit 10 when |
@@ -181,6 +183,8 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
+| `worktree reconcile [<branch\|path>]` | every non-trunk branch and detached worktree with one state, the readings that decided it and the one step it permits; with a selector, that one subject and why | |
+| `worktree reconcile --apply [--include-scratch]` | removes the clean worktree of a branch the trunk contains, and deletes a branch whose every commit a remote holds and whose merge changes nothing; each subject measured again first | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 `wt` is an alias for `worktree`. `--format json` is available everywhere and is the same
@@ -211,7 +215,7 @@ flowchart TD
   worktree["canonical worktree<br>majordomus worktree create &lt;branch&gt;<br>→ &lt;repo&gt;-wt/&lt;branch&gt;"]
   session["session / agent<br>majordomus context, start, checkpoint, handover<br>— in that worktree"]
   commit["commit / PR<br>the pre-commit hook asks the guard;<br>push and open the PR from there"]
-  cleanup["cleanup<br>majordomus worktree cleanup → worktree remove,<br>git branch -d, by a person"]
+  cleanup["cleanup<br>majordomus worktree reconcile → --apply<br>removes what is proven, names the rest"]
   issue --> branch
   branch --> worktree
   worktree --> session
@@ -262,9 +266,10 @@ for the container, so the disk is what says stop — and it says it in whatever 
 the next subsystem to fail happens to use. Three said their content was wrong. See ADR 0021
 for why the mechanism is absent rather than missing.
 
-If you hold a worktree whose branch has landed, `worktree cleanup` tells you; `git worktree
-remove <path>` and `git branch -d <branch>` are the two commands, and the `target/`
-directory inside it is usually most of what it costs.
+If you hold a worktree whose branch has landed, `worktree reconcile` tells you and
+`worktree reconcile --apply` removes it with its branch; the `target/` directory inside it is
+usually most of what it costs. What `reconcile` leaves — a dirty tree, an unpublished commit,
+a conflict — it names, with the step that would move it.
 
 ## Enforcement
 
@@ -365,6 +370,52 @@ topology changes outside the process.
 | the gate | `scripts/ci/worktree-check`, gate `worktree-topology` in `.ai/repo/ci/gates.yaml` |
 | the tests | `apps/majordomus-cli/tests/worktree.rs`, `test/cases/96_worktree_topology.sh` |
 | the decision and the rule | ADR 21, `.ai/repo/rules/project/worktree-topology.v1.md` |
+
+## Reconciling
+
+`worktree cleanup` answers one question — what is merged and clean — and is silent about
+everything else, which on 2026-10-10 was most of 274 worktrees and 297 branches.
+`majordomus worktree reconcile` gives every non-trunk branch and every detached worktree one
+state and one next step, decided from git and from the kernel and never from an age:
+
+| state | what was read | step |
+|---|---|---|
+| `active` | a process has its working directory inside the worktree | keep |
+| `dirty` | the worktree holds files no commit carries | commit |
+| `unreadable` | a reading could not be taken | keep: not knowing is not permission |
+| `unstarted` | the trunk reaches the branch and it was never published | keep: a branch cut a minute ago reads the same as one that landed |
+| `merged` | the trunk reaches it, and it was published | remove the worktree, delete the branch |
+| `equivalent` | merging it produces the trunk's own tree | remove the worktree; delete the branch when a remote holds every commit of it |
+| `unpublished` | it holds a commit no remote-tracking ref reaches | publish |
+| `orphaned` | a detached worktree is at a commit no ref holds | name it |
+| `conflicted` | merging it conflicts with the trunk | resolve, or decide it is superseded |
+| `stale` | it merges cleanly and the trunk has moved | refresh |
+| `ready` | it merges cleanly and the trunk has not moved | integrate |
+
+The questions are asked in that order, so a process inside outranks a dirty tree and a dirty
+tree outranks anything about commits. The relation to the trunk is decided against the
+remote-tracking branch the trunk follows: reachability first, then
+`git merge-tree --write-tree`, which performs the merge in memory and leaves no index and no
+working tree behind.
+
+`majordomus worktree reconcile feature/improve-cli` prints one subject with every reading
+that decided it, which is the answer to "why is this still here".
+
+`--apply` takes only the steps that remove something on a complete proof. Each subject is
+measured again immediately before it goes and acted on only if it reaches the same step at
+the same commit; a worktree is removed without `--force`, and a branch is deleted by
+`git update-ref -d` naming the commit that was judged, so one that moved is refused. The
+report names the commit of every deleted branch, and `git branch <name> <commit>` brings it
+back. It never removes the worktree the call came from, and it leaves a scratch checkout or a
+detached worktree to whoever made it unless `--include-scratch` is given. Run twice, the
+second run does nothing.
+
+It differs from `cleanup --remove` in one refusal. That command refuses a branch whose
+upstream is gone, because it does not read whether a remote holds the commits; a forge that
+deletes the head branch of a merged pull request leaves every landed branch in that state.
+`reconcile` reads the thing itself — the remote trunk reaches the head — and removes it. The
+decision is ADR 127; `test/cases/612_every_worktree_has_a_disposition.sh` plants one branch in
+each state and runs the act twice.
 
 ## Reclaiming
 

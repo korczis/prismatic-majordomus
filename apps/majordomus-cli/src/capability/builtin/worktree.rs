@@ -24,8 +24,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
-    migrate, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, WorktreeError,
-    WorktreeService,
+    migrate, Detail, InspectReport, MigrationPlan, Reconciliation, RepositoryTopology,
+    StatusReport, WorktreeError, WorktreeService,
 };
 use crate::{capability, module};
 
@@ -150,6 +150,10 @@ fn worktree_migration_plan(ctx: &Context, _: Empty) -> Result<MigrationPlan, Cap
     migrate::plan(&service_of(ctx)?).map_err(refused)
 }
 
+fn worktree_reconciliation(ctx: &Context, _: Empty) -> Result<Reconciliation, CapabilityError> {
+    service_of(ctx)?.reconciliation().map_err(refused)
+}
+
 // ---------------------------------------------------------------- the module
 
 /// The `worktree` module: the topology, projected once.
@@ -227,6 +231,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: worktree_migration_plan,
             },
+            capability! {
+                id: "worktree.reconciliation",
+                title: "What becomes of every branch and every worktree",
+                description: "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits and the command that takes it, and whether `majordomus worktree reconcile --apply` would take that step on its own. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: removing anything is the command line's `--apply`, which measures each subject again first.",
+                input: Empty,
+                output: Reconciliation,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_reconciliation"),
+                    http: get("/api/v1/worktrees/reconciliation"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "reconcile".into()] }),
+                },
+                tags: ["worktree", "git", "topology", "reconciliation"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_reconciliation,
+            },
         ],
     }
 }
@@ -261,6 +281,11 @@ mod tests {
                 "worktree.migration_plan",
                 "majordomus_worktree_migration_plan",
                 "/api/v1/worktrees/migration",
+            ),
+            (
+                "worktree.reconciliation",
+                "majordomus_worktree_reconciliation",
+                "/api/v1/worktrees/reconciliation",
             ),
         ];
         let ids: Vec<&str> = m

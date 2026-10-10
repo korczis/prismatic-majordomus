@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.19.1"
+    "version": "0.20.0"
   },
-  "fingerprint": "b7f27ad79f721b9f287ae5ae17c40fc4c3218fb4be844128d44b42caf36e3ab3",
+  "fingerprint": "195c4812717945571257d65fe070051047ff81b2a81a5b65e494aa4c7a8e043a",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 63,
+        "capabilities": 64,
         "moments": 17
       },
       "evidence": {
@@ -4656,6 +4656,15 @@
               "cli": "majordomus worktree migrate"
             },
             {
+              "id": "worktree.reconciliation",
+              "title": "What becomes of every branch and every worktree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_reconciliation",
+              "route": "GET /api/v1/worktrees/reconciliation",
+              "cli": "majordomus worktree reconcile"
+            },
+            {
               "id": "worktree.status",
               "title": "Where this is, and whether that is where it belongs",
               "kind": "query",
@@ -4988,11 +4997,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 12,
-        "mcp_tools": 12,
+        "capabilities": 13,
+        "mcp_tools": 13,
         "mcp_resources": 2,
-        "http_routes": 12,
-        "cli_paths": 9,
+        "http_routes": 13,
+        "cli_paths": 10,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5103,6 +5112,15 @@
               "tool": "majordomus_worktree_migration_plan",
               "route": "GET /api/v1/worktrees/migration",
               "cli": "majordomus worktree migrate"
+            },
+            {
+              "id": "worktree.reconciliation",
+              "title": "What becomes of every branch and every worktree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_reconciliation",
+              "route": "GET /api/v1/worktrees/reconciliation",
+              "cli": "majordomus worktree reconcile"
             },
             {
               "id": "worktree.status",
@@ -5225,11 +5243,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 1,
-        "http_routes": 4,
-        "cli_paths": 4,
+        "http_routes": 5,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -7140,7 +7158,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 85
+          "objects": 86
         },
         {
           "name": "knowledge",
@@ -7421,11 +7439,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 416,
+        "mcp_resources": 417,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 413,
+        "objects": 414,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -10501,7 +10519,7 @@
         },
         {
           "name": "issue",
-          "objects": 268
+          "objects": 269
         },
         {
           "name": "intent",
@@ -10703,11 +10721,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 299,
+        "mcp_resources": 300,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 296,
+        "objects": 297,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14289,7 +14307,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (85)",
+        "title": "adr (86)",
         "features": [
           "knowledge"
         ]
@@ -14381,7 +14399,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (268)",
+        "title": "issue (269)",
         "features": [
           "planning"
         ]
@@ -15373,19 +15391,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2101,
-    "builtin": 184,
-    "declarative": 1917,
+    "capabilities": 2105,
+    "builtin": 185,
+    "declarative": 1920,
     "modules": 53,
-    "mcp_tools": 177,
-    "mcp_resources": 1971,
-    "http_routes": 181,
-    "cli_commands": 190,
+    "mcp_tools": 178,
+    "mcp_resources": 1974,
+    "http_routes": 182,
+    "cli_commands": 191,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1917,
+    "objects": 1920,
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -15401,7 +15419,7 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 25,
@@ -15415,7 +15433,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 410,
+      "test": 411,
       "use-case": 48,
       "workspace": 1
     },

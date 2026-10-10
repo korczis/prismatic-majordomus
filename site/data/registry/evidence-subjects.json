@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.19.1"
+    "version": "0.20.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -951,6 +951,11 @@
       "kind": "capability",
       "subject": "capability:worktree.migration_plan",
       "path": "/evidence/capabilities/worktree-migration-plan/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:worktree.reconciliation",
+      "path": "/evidence/capabilities/worktree-reconciliation/"
     },
     {
       "kind": "capability",
@@ -3206,6 +3211,11 @@
       "kind": "command",
       "subject": "command:worktree path",
       "path": "/evidence/commands/worktree-path/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree reconcile",
+      "path": "/evidence/commands/worktree-reconcile/"
     },
     {
       "kind": "command",
@@ -5684,6 +5694,18 @@
       "programs": [],
       "members": [
         "command:worktree migrate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.reconciliation": {
+      "kind": "capability",
+      "id": "worktree.reconciliation",
+      "page": "/evidence/capabilities/worktree-reconciliation/",
+      "programs": [],
+      "members": [
+        "command:worktree reconcile"
       ],
       "routes": [],
       "mechanisms": [],
@@ -17043,6 +17065,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:worktree reconcile": {
+      "kind": "command",
+      "id": "worktree reconcile",
+      "page": "/evidence/commands/worktree-reconcile/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:worktree remove": {
       "kind": "command",
       "id": "worktree remove",
@@ -19951,6 +19992,18 @@
       "programs": [],
       "members": [
         "capability:worktree.migration_plan"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_worktree_reconciliation": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_reconciliation",
+      "alias_of": "capability:worktree.reconciliation",
+      "programs": [],
+      "members": [
+        "capability:worktree.reconciliation"
       ],
       "routes": [],
       "mechanisms": [],
@@ -25726,6 +25779,7 @@
     "suite:599_a_silent_check_is_not_a_pass",
     "suite:59_reference_integrity",
     "suite:611_the_reclaim_refuses_what_it_cannot_prove",
+    "suite:612_every_worktree_has_a_disposition",
     "suite:617_a_case_can_name_what_it_covers",
     "suite:620_mcp_tools_are_invoked_and_answer",
     "suite:623_a_ref_verdict_needs_the_refs",

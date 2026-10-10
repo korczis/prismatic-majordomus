@@ -52,6 +52,7 @@ pub(crate) mod lock;
 pub(crate) mod migrate;
 pub(crate) mod model;
 pub(crate) mod path;
+pub mod reconcile;
 pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
@@ -70,6 +71,10 @@ pub use model::{
     SCHEMA,
 };
 pub use path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
+pub use reconcile::{
+    DeletedBranch, ReconcileEntry, ReconcileOptions, ReconcileOutcome, ReconcileRefusal,
+    ReconcileStep, Reconciliation, TrunkRelation, WorkState, RECONCILE_SCHEMA,
+};
 pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
 pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
 pub use trace::{

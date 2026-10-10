@@ -1,0 +1,37 @@
+id: I2283
+milestone: development-runtime
+title: "Every branch and every worktree has one state and one next step, and the proven ones are carried out"
+slug: every-worktree-has-a-disposition
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give every non-trunk branch and every detached worktree one typed state and one next step, decided from git and the kernel, and let one command carry out the steps whose proof is complete, so that finished work stops accumulating as worktrees and branches nobody can tell from live ones."
+why: "On 2026-10-10 this repository held 274 registered worktrees and 297 local branches. Measured against origin/master: 81 branches were ancestors of the trunk, and 64 of those held a dirty worktree, so `worktree cleanup` never nominated them; `worktree cleanup --remove` refuses a branch whose upstream is gone, which is the state of every branch a forge deletes after merging it, so the usual landed branch was the refused one; 23 branches merged to the trunk's own tree and 125 conflicted with it, and both read as unmerged, the word a branch being worked on that minute reads as; 53 scratch checkouts under `.claude/worktrees/` were about four weeks old, because the listing excludes them and nothing else removes them. Creation is one command and automatic; nothing was its inverse, and what was safe to remove could only be found by a person measuring each one by hand."
+current_state: "`majordomus worktree cleanup` lists branches merged into the trunk whose worktree is clean, and `--remove` removes those worktrees after refusing on upstream, occupancy and cleanliness. `majordomus convergence` says where work is held (integrated, published, local_only, uncommitted). Nothing says whether an unmerged branch is a duplicate, conflicted, stale or ready, nothing deletes a landed branch, and no reading says what the next step for a subject is."
+desired_state: "`majordomus worktree reconcile` prints, for every non-trunk branch and detached worktree, one state (active, dirty, unreadable, unstarted, merged, equivalent, unpublished, orphaned, conflicted, stale, ready), the readings that decided it, and the one step it permits; with a selector it explains one subject. `--apply` takes only the steps whose proof is complete — it removes the clean worktree of a branch the remote trunk contains and deletes a branch whose every commit a remote holds and whose merge changes nothing — each subject measured again first, a worktree removed without force, a branch deleted by compare-and-delete on the commit that was judged. A second `--apply` does nothing. The same reading is the capability `worktree.reconciliation` on MCP and HTTP."
+scope:
+  - "apps/majordomus-cli/src/worktree/reconcile.rs"
+  - "apps/majordomus-cli/src/worktree/state.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/WORKTREES.md"
+  - ".ai/repo/adrs"
+  - "test/cases"
+acceptance_criteria:
+  - "A branch the remote trunk reaches, published once, with a clean worktree nothing works in, is `merged`, and `reconcile --apply` removes its worktree and deletes the branch even when its upstream is gone"
+  - "A branch whose merge into the trunk produces the trunk's own tree is `equivalent`, and is deleted only when a remote-tracking ref reaches every commit of it"
+  - "Uncommitted work, a worktree a process has its working directory in, a commit no remote holds, the worktree the call came from and a scratch checkout are never removed by `--apply` without `--include-scratch`"
+  - "A branch cut from the trunk and never published is `unstarted` and kept"
+  - "A subject that changed between the listing and the act is refused and named"
+  - "A second `reconcile --apply` removes nothing and reports nothing refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 612_every_worktree_has_a_disposition"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::reconcile"
+evidence_required:
+  - "every_state_is_decided_from_git_case"
+  - "apply_takes_only_the_proven_steps_case"
+  - "second_apply_does_nothing_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

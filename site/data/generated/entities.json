@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 268
+      "count": 269
     },
     {
       "kind": "knowledge",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 410
+      "count": 411
     },
     {
       "kind": "use-case",
@@ -1124,7 +1124,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3605,7 +3613,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6417,6 +6433,80 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0127",
+      "identity": "adr-0127",
+      "slug": "adr-0127",
+      "cockpit": "/cockpit/objects/adr/adr-0127",
+      "title": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+      "status": "proposed",
+      "tags": [
+        "worktrees",
+        "operations",
+        "safety"
+      ],
+      "source": ".ai/repo/adrs/0127-every-branch-and-worktree-has-one-state-and-the-proven-ones-are-removed.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/worktree/reconcile.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0021",
+          "kind": "adr",
+          "route": "/adrs/adr-0021/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0055",
+          "kind": "adr",
+          "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/WORKTREES.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.reclaim-only-what-you-own@1",
+          "kind": "rule",
+          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.worktree-topology@1",
+          "kind": "rule",
+          "route": "/rules/project-worktree-topology-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/612_every_worktree_has_a_disposition.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -13019,6 +13109,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
@@ -14384,6 +14481,13 @@
           "label": "adr-0055",
           "kind": "adr",
           "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0127",
+          "kind": "adr",
+          "route": "/adrs/adr-0127/",
           "external": false
         },
         {

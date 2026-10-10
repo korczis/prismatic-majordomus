@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1707,6 +1707,15 @@
         "status": "query"
       },
       {
+        "id": "capability:worktree.reconciliation",
+        "kind": "capability",
+        "label": "worktree.reconciliation",
+        "summary": "What becomes of every branch and every worktree",
+        "route": "/cockpit/capabilities/worktree.reconciliation",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:worktree.status",
         "kind": "capability",
         "label": "worktree.status",
@@ -3100,6 +3109,14 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/worktree/reconcile.rs",
+        "kind": "file",
+        "label": "reconcile.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/worktree/reconcile.rs",
         "external": true
       },
       {
@@ -6371,6 +6388,33 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0127",
+        "kind": "adr",
+        "label": "adr-0127",
+        "summary": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+        "route": "/cockpit/objects/adr/adr-0127",
+        "source": ".ai/repo/adrs/0127-every-branch-and-worktree-has-one-state-and-the-proven-ones-are-removed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
+            "file:.ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+            "rule:project.reclaim-only-what-you-own",
+            "rule:project.worktree-topology",
+            "file:apps/majordomus-cli/src/worktree/reconcile.rs",
+            "file:docs/WORKTREES.md",
+            "test:test/cases/612_every_worktree_has_a_disposition.sh",
+            "test:test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
+          ],
+          "tags": [
+            "worktrees",
+            "operations",
+            "safety"
           ]
         }
       },
@@ -30259,6 +30303,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I2283",
+        "kind": "issue",
+        "label": "I2283",
+        "summary": "Every branch and every worktree has one state and one next step, and the proven ones are carried out",
+        "route": "/cockpit/objects/issue/i2283",
+        "source": ".ai/repo/project/issues/I2283.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "every_state_is_decided_from_git_case",
+            "apply_takes_only_the_proven_steps_case",
+            "second_apply_does_nothing_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree/reconcile.rs",
+            "apps/majordomus-cli/src/worktree/state.rs",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/WORKTREES.md",
+            ".ai/repo/adrs",
+            "test/cases"
+          ],
+          "slug": "every-worktree-has-a-disposition",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 612_every_worktree_has_a_disposition",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::reconcile"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -44386,6 +44467,13 @@
         "source": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
       },
       {
+        "id": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
+        "kind": "test",
+        "label": "test/cases/612_every_worktree_has_a_disposition.sh",
+        "route": "/cockpit/objects/test/test-cases-612-every-worktree-has-a-disposition-sh",
+        "source": "test/cases/612_every_worktree_has_a_disposition.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
         "kind": "test",
         "label": "test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -51028,6 +51116,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:worktree.status",
         "target": "projection:cli",
         "kind": "projects"
@@ -54450,6 +54558,51 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "file:apps/majordomus-cli/src/worktree/reconcile.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://adr/adr-0021",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://adr/adr-0055",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://document/docs/WORKTREES.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://test/test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
         "kind": "put_in_force"
       },
       {
@@ -66258,6 +66411,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2283",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2283",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -70494,6 +70657,11 @@
       },
       {
         "source": "majordomus://test/test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74994,6 +75162,11 @@
       },
       {
         "source": "module:worktree",
+        "target": "capability:worktree.reconciliation",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
         "target": "capability:worktree.status",
         "kind": "composes"
       },
@@ -75004,8 +75177,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2482,
-      "edges": 5430,
+      "nodes": 2487,
+      "edges": 5447,
       "acyclic": false,
       "truncated": false
     }

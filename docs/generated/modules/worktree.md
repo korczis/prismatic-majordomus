@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `worktree` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.20.0 -->
 # Module `worktree` — Worktree topology
 
 Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 5.
 
 ## `worktree.inspect` — One branch: where its worktree belongs and what is there
 
@@ -49,6 +49,26 @@ One step per misplaced worktree with a branch: where it is, where it belongs, ho
 Input: none.
 
 Output: `MigrationPlan`.
+
+## `worktree.reconciliation` — What becomes of every branch and every worktree
+
+Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits and the command that takes it, and whether `majordomus worktree reconcile --apply` would take that step on its own. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: removing anything is the command line's `--apply`, which measures each subject again first.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_worktree_reconciliation` |
+| HTTP | `GET /api/v1/worktrees/reconciliation` |
+| CLI | `majordomus worktree reconcile` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::worktree |
+| tags | worktree, git, topology, reconciliation |
+
+Input: none.
+
+Output: `Reconciliation`.
 
 ## `worktree.status` — Where this is, and whether that is where it belongs
 

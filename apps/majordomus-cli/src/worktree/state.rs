@@ -401,6 +401,110 @@ pub fn merged_into(primary: &Path, trunk: &str) -> Result<BTreeSet<String>> {
         .collect())
 }
 
+/// The commits that are on a local branch and on no remote-tracking ref.
+///
+/// One call: `git rev-list --branches --not --remotes`. Asking per branch would be one
+/// subprocess per branch, and a repository worked on by many sessions has hundreds of them.
+/// `--no-walk` is deliberately *not* used — it drops the exclusion, and the probe then
+/// reports that nothing is unpublished no matter what is unpublished. A remote-tracking ref
+/// is what this checkout last fetched, which is the question: whether the work left this
+/// disk, not whether the remote still has it.
+///
+/// ```
+/// use majordomus_cli::worktree::state::commits_no_remote_reaches;
+/// use std::process::Command;
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let out = Command::new("git")
+///         .arg("-C")
+///         .arg(dir.path())
+///         .args(["-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"])
+///         .args(args)
+///         .output()
+///         .unwrap();
+///     assert!(out.status.success(), "git {args:?}");
+///     String::from_utf8_lossy(&out.stdout).trim().to_string()
+/// };
+/// git(&["init", "-q", "-b", "main"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+/// // no remote has seen anything, so the one commit there is is on this disk only
+/// let head = git(&["rev-parse", "HEAD"]);
+/// assert!(commits_no_remote_reaches(dir.path()).unwrap().contains(&head));
+/// ```
+pub fn commits_no_remote_reaches(primary: &Path) -> Result<BTreeSet<String>> {
+    let out = git::run(primary, &["rev-list", "--branches", "--not", "--remotes"])?;
+    Ok(out
+        .text()?
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
+/// Every working directory a process on this machine has, or `None` when the kernel could
+/// not be asked.
+///
+/// `lsof -a -d cwd` is the only reading of "is somebody working here" that is true at the
+/// moment it is taken. The mtime of a worktree is not: two of the four swept on 2026-09-15
+/// looked untouched for three days and had live processes inside them. A missing `lsof` is
+/// not "nothing is running" — it is not knowing, and a caller refuses on `None`.
+///
+/// ```
+/// use majordomus_cli::worktree::state::{is_occupied, working_directories};
+/// // where `lsof` exists, this process's own working directory is among the answers
+/// if let Some(dirs) = working_directories() {
+///     let here = std::env::current_dir().unwrap();
+///     assert!(is_occupied(&here, &dirs));
+/// }
+/// ```
+pub fn working_directories() -> Option<Vec<String>> {
+    let out = std::process::Command::new("lsof")
+        .args(["-a", "-d", "cwd", "-Fn"])
+        .output()
+        .ok()?;
+    Some(parse_working_directories(&String::from_utf8_lossy(
+        &out.stdout,
+    )))
+}
+
+/// The `n` fields of `lsof -Fn`: one path per line that begins with `n`.
+///
+/// ```
+/// use majordomus_cli::worktree::state::parse_working_directories;
+/// let dirs = parse_working_directories("p812\nfcwd\nn/srv/repo-wt/feature/x\np90\nfcwd\nn/\n");
+/// assert_eq!(dirs, vec!["/srv/repo-wt/feature/x".to_string(), "/".to_string()]);
+/// ```
+pub fn parse_working_directories(text: &str) -> Vec<String> {
+    text.lines()
+        .filter_map(|l| l.strip_prefix('n'))
+        .map(str::to_string)
+        .collect()
+}
+
+/// Is any of `working_directories` inside `worktree`? The worktree is resolved first: the
+/// kernel reports real paths, and a worktree under a symlinked temporary directory would
+/// otherwise never match.
+///
+/// ```
+/// use majordomus_cli::worktree::state::is_occupied;
+/// let dir = tempfile::tempdir().unwrap();
+/// let real = dir.path().canonicalize().unwrap();
+/// let inside = format!("{}/apps", real.display());
+/// assert!(is_occupied(dir.path(), &[inside]));
+/// // a sibling whose name merely starts the same way is not inside it
+/// assert!(!is_occupied(dir.path(), &[format!("{}-other", real.display())]));
+/// assert!(!is_occupied(dir.path(), &[]));
+/// ```
+pub fn is_occupied(worktree: &Path, working_directories: &[String]) -> bool {
+    let real = std::fs::canonicalize(worktree).unwrap_or_else(|_| worktree.to_path_buf());
+    let real = real.to_string_lossy();
+    let below = format!("{real}/");
+    working_directories
+        .iter()
+        .any(|p| *p == real || p.starts_with(&below))
+}
+
 /// The issue ids this repository's project model declares: the file names under
 /// `.ai/repo/project/issues/`, read from the primary checkout. A filesystem read, not an
 /// index build, so the topology stays cheap.
