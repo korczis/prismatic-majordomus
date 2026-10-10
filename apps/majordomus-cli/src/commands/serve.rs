@@ -69,6 +69,8 @@ pub fn run(args: ServeArgs) -> Result<u8> {
 
 /// Become the server, or say who already is.
 fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
+    // the declared lease timings, read before the election reads them (I2129)
+    let _ = crate::policy::LoadedPolicy::load(repo);
     let elected = lease::elect(repo);
     // Whatever the election decided, the process `ensure` started to hold it has now
     // decided: the claim it was started under is spent, and the next `ensure` reads the
@@ -325,10 +327,13 @@ fn spawn_claim_path(repo: &Repository) -> PathBuf {
 
 /// The longest a started process can legitimately take between being started and removing
 /// its claim: the election is bounded by [`lease::JOIN_TIMEOUT`], and a lease may be
-/// binding for [`lease::BIND_GRACE`] before anybody may count it as abandoned. A claim older
-/// than both no longer describes a process that is about to decide.
-const SPAWN_CLAIM_BOUND: Duration =
-    Duration::from_secs(lease::JOIN_TIMEOUT.as_secs() + lease::BIND_GRACE.as_secs());
+/// binding for the bind grace before anybody may count it as abandoned — both as the policy
+/// declares them ([`lease::timings`]). A claim older than both no longer describes a process
+/// that is about to decide.
+fn spawn_claim_bound() -> Duration {
+    let timings = lease::timings();
+    timings.join_timeout + timings.bind_grace
+}
 
 /// What an existing start claim says about the process it names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -349,13 +354,13 @@ enum SpawnClaim {
 /// can be reused by an unrelated process and an age bound is what keeps that from holding
 /// every later start off for good.
 fn spawn_claim_standing(content: &str, age: Duration, alive: impl Fn(u32) -> bool) -> SpawnClaim {
-    if age > SPAWN_CLAIM_BOUND {
+    if age > spawn_claim_bound() {
         return SpawnClaim::Abandoned;
     }
     match content.trim().parse::<u32>() {
         Ok(pid) if pid > 0 && alive(pid) => SpawnClaim::Pending,
         Ok(_) => SpawnClaim::Abandoned,
-        Err(_) if age > lease::BIND_GRACE => SpawnClaim::Abandoned,
+        Err(_) if age > lease::timings().bind_grace => SpawnClaim::Abandoned,
         Err(_) => SpawnClaim::Pending,
     }
 }
@@ -961,7 +966,11 @@ mod tests {
             SpawnClaim::Pending
         );
         assert_eq!(
-            spawn_claim_standing("", lease::BIND_GRACE + Duration::from_secs(1), |_| true),
+            spawn_claim_standing(
+                "",
+                lease::timings().bind_grace + Duration::from_secs(1),
+                |_| true
+            ),
             SpawnClaim::Abandoned
         );
     }
@@ -970,7 +979,9 @@ mod tests {
     fn a_live_pid_does_not_hold_a_start_off_past_the_bound() {
         // a pid reused by an unrelated process must not block every later start for good
         assert_eq!(
-            spawn_claim_standing("4242", SPAWN_CLAIM_BOUND + Duration::from_secs(1), |_| true),
+            spawn_claim_standing("4242", spawn_claim_bound() + Duration::from_secs(1), |_| {
+                true
+            }),
             SpawnClaim::Abandoned
         );
     }

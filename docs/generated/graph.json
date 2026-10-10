@@ -30259,6 +30259,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I2129",
+        "kind": "issue",
+        "label": "I2129",
+        "summary": "The lease timings the policy declares are the ones the mcp and serve elections use",
+        "route": "/cockpit/objects/issue/i2129",
+        "source": ".ai/repo/project/issues/I2129.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A real-process test that declares a busy grace different from the default observes the election wait the declared value, in both mcp and serve",
+            "No reader of a lease timing names a compiled constant directly",
+            "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Declared lease timings reach env enter only; mcp, serve, standing_of and the spawn claim use compiled values.",
+          "depends_on": [],
+          "evidence_required": [
+            "declared_timings_reach_the_election_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "objective": "Load the policy before mcp and serve elect, make every reader of a lease timing read the declared value, and declare the idle timeout beside the other server timings.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "apps/majordomus-cli/tests/lease_declared.rs",
+            "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
+            "docs/MCP.md"
+          ],
+          "slug": "declared-lease-timings-are-used",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test lease_declared",
+            "MJ_TEST_JOBS=4 bash test/run.sh 354_a_lease_contest_is_judged_by_a_declaration"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31335,6 +31381,63 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/runtime-lifecycle",
+        "kind": "milestone",
+        "label": "runtime-lifecycle",
+        "summary": "One usable server per checkout starts, attaches, stops and reports its state without races or hidden kills",
+        "route": "/cockpit/objects/milestone/runtime-lifecycle",
+        "source": ".ai/repo/project/milestones/runtime-lifecycle.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server whose four workers are busy with tool calls is never taken over by a client that started meanwhile",
+            "A server that lost its lease has no session left after a declared grace and exits by itself",
+            "No process removes a lease file whose token is not its own, proved under a SIGTERM racing a takeover",
+            "`serve stop` runs the ordered stop and leaves no open episode",
+            "A lease timing declared in policy.yaml is the one the mcp and serve elections wait",
+            "server.status reports stopping, failed and degraded, each from a test that produces the state",
+            "A server used only through the Cockpit or /events is not stopped as idle"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "lifecycle_fault_tests",
+            "typed_server_standing",
+            "docs_describe_the_shipped_server"
+          ],
+          "non_scope": [
+            "A `majordomus ui` command, unless I2131's record decides one is needed beyond `serve ensure`.",
+            "One server for all repositories. ADR 0044 decided one per checkout and the board is gathered across them.",
+            "Graceful termination inside the production container, which is I0906 (fly-deployment).",
+            "The bridge's resend of a tool call, which is I2145 (mcp-transports-are-reliable)."
+          ],
+          "order": 136,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/MCP.md",
+            "README.md"
+          ],
+          "slug": "runtime-lifecycle",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared --test serve_lifecycle --test lease_busy --test lease_lost --test lease_declared --test server_status",
+            "MJ_TEST_JOBS=4 bash test/run.sh 90_mcp_shared_server 113_shared_server_survives_a_crash 191_entry_races 192_entry_across_checkouts_and_clients"
           ]
         }
       },
@@ -66235,6 +66338,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2129",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2129",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66393,6 +66506,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/runtime-lifecycle",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -74976,8 +75094,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2483,
+      "edges": 5432,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "0.19.1"
   },
   "registry": {
-    "fingerprint": "b459423e77e8088e3b83fab43af4fd9edc1835bab0e4a78618f26a860dfcaed1",
+    "fingerprint": "7733703ccc432114327f9b6499d202396448b9cd92c38851aeeddc0e2be95c9a",
     "summary": {
-      "total": 2100,
+      "total": 2102,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1918,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1918
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1926
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1972,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e9591b2f048ec354a0c3d23c9df8d92178161c8eb289bd0a64aaeec46f4cd38",
+    "fingerprint": "4e808f3ee7749020108a464dfcee39f62086a521c9a148c2d2dd29712b4c3379",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81616,7 +81616,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58914
+        "bytes": 59149
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 122472
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87918,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2129",
+        "kind": "issue",
+        "identity": "I2129",
+        "title": "The lease timings the policy declares are the ones the mcp and serve elections use",
+        "description": "Load the policy before mcp and serve elect, make every reader of a lease timing read the declared value, and declare the idle timeout beside the other server timings.",
+        "path": ".ai/repo/project/issues/I2129.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3365
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88159,6 +88170,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/runtime-lifecycle",
+        "kind": "milestone",
+        "identity": "runtime-lifecycle",
+        "title": "One usable server per checkout starts, attaches, stops and reports its state without races or hidden kills",
+        "description": "Entering a checkout, opening the Cockpit, or starting any number of MCP clients converges on one server for that checkout, which is taken over only when it is dead, stops in order when asked, removes only its own lease, reports a typed state every surface reads, and stays up while any surface uses it.",
+        "path": ".ai/repo/project/milestones/runtime-lifecycle.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6715
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -96863,7 +96885,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96915,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",

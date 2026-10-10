@@ -316,7 +316,7 @@ instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
 ### What a contest is judged by
 
 Four numbers decide which process owns the lease. They are **declared**, in
-`.ai/repo/policy.yaml`'s `server:` block, and read once when the repository is opened:
+`.ai/repo/policy.yaml`'s `server:` block, and read once when the repository is opened: Both `mcp` and `serve` read it before their first election, so the values below are the ones every election in the process uses (I2129); before that, a value read before the policy was the compiled default for the life of the process.
 
 <div class="overflow-x-auto" tabindex="0">
 

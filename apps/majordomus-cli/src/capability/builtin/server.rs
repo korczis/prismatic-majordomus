@@ -66,7 +66,7 @@ use crate::capability::model::{
     CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
-use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, BIND_GRACE};
+use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile};
 use crate::repository::{self, GitIdentity, Repository};
 use crate::{capability, module};
 
@@ -367,7 +367,7 @@ pub fn standing_of(
 ) -> (ServerStanding, Option<String>) {
     let doc = match file {
         LeaseFile::Absent => return (ServerStanding::Absent, None),
-        LeaseFile::Empty if age > BIND_GRACE => {
+        LeaseFile::Empty if age > lease::timings().bind_grace => {
             return (
                 ServerStanding::Stale,
                 Some("empty lease: its owner never wrote it".into()),
@@ -383,7 +383,7 @@ pub fn standing_of(
         LeaseFile::Document(doc) => doc,
     };
     let Some(url) = doc.url.as_deref() else {
-        return if age > BIND_GRACE {
+        return if age > lease::timings().bind_grace {
             (
                 ServerStanding::Stale,
                 Some("abandoned lease: its owner never published a URL".into()),

@@ -134,6 +134,10 @@ impl Heartbeat {
 
 impl Session {
     fn open(args: McpArgs, repo: Repository) -> Result<Self> {
+        // the policy declares the lease timings, and it is read before the first election
+        // reads them: a timing read first is the compiled default for the life of the process
+        // (I2129). A policy that does not parse leaves the defaults; `doctor` reports it.
+        let _ = crate::policy::LoadedPolicy::load(&repo);
         let backend = match lease::elect(&repo) {
             Ok(Role::Server(lease)) => match Self::serve(&args, lease, None) {
                 Ok(backend) => backend,
