@@ -33,3 +33,26 @@ problems = ["context", "coordination", "completion"]
 [budget]
 assets_bytes = 340000
 inline_json_bytes = 8000
+
+# The capability words the hand-written copy (marketing.toml, manifesto.toml) may use only
+# while a claim permits them: word = the docs/CLAIMS.yaml id that permits it, "" when no claim
+# does yet. scripts/ci/homepage-check fails a word in either file unless its claim is
+# guaranteed and supported by a recorded run, fails a declaration naming a claim that does not
+# exist, and fails the name of a feature the product model does not call stable. Every word
+# here is "" today: the repository has no claim that work goes unattended, merges or releases
+# by itself, or repairs itself, so the copy may not say so. A word is matched whole and in any
+# case; comment lines are not copy. Adding a word or a claim is a reviewed change to this file.
+[promises]
+"unattended" = ""
+"autonomous" = ""
+"autonomously" = ""
+"fully automated" = ""
+"self-healing" = ""
+"zero-touch" = ""
+"hands-off" = ""
+"automatic merge" = ""
+"automatic merges" = ""
+"merges automatically" = ""
+"automatic release" = ""
+"automatic releases" = ""
+"releases automatically" = ""

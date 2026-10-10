@@ -13,15 +13,25 @@
 # tools named nowhere, a trust card that disagrees with its dataset, a trust card missing, and a
 # trust card reading as known when its dataset is gone,
 # the homepage's scripts or inline JSON over the declared budget, no budget declared, and a
-# linked asset the build did not produce. Rule: project.homepage-tells-a-declared-story.
+# linked asset the build did not produce, a declared capability word in the hand-written copy
+# whose claim is absent, planned or unsupported by a recorded run, a declaration naming a claim
+# that does not exist, and a draft feature named in the copy.
+# Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
 
 F="$PWD/fixture"
+# the declared promise words: one no claim permits; the promises section below adds two that
+# name claims of its own matrix
+promises() { printf '\n[promises]\n"unattended" = ""\n' >> "$F/site/data/homepage.toml"; }
 fresh() {
   rm -rf "$F"; mkdir -p "$F/site/data/registry" "$F/site/public/plan/i0001" "$F/site/public/features/good" "$F/site/public/features/draft"
   printf 'order = ["hero", "how", "install"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  promises
+  # the hand-written copy, clean: no declared word, no feature that is not stable
+  printf '[hero]\ntitle = "Keep the work moving"\n' > "$F/site/data/marketing.toml"
+  printf '# a comment may say unattended: comments are not copy\n[intro]\nlead = "The repository decides what is done."\n' > "$F/site/data/manifesto.toml"
   mkdir -p "$F/site/public/js" "$F/site/public/docs/plain" "$F/site/public/docs/diagram"
   printf 'x%.0s' $(seq 1 40) > "$F/site/public/js/app.js"
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
@@ -80,7 +90,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty map install runtime providers trust surfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty map install runtime providers trust surfaces evidence declared promises weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -164,6 +174,7 @@ expect_finding 12 'web.json is missing' "a topology that cannot be read"
 domains() { # the model shows domain alpha, whose one member is the stable feature `good`
   printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[{"id":"alpha","route":"/domains/alpha/","status":"stable","features":[{"id":"good","route":"/features/good/"}]},{"id":"empty","route":"/domains/empty/","status":"stable","features":[]}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf 'order = ["hero", "how", "install"]\nproblems = ["alpha"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  promises
   sed -i.bak 's#<section id="how">#<section id="how"><a href="\#domain-alpha" data-problem="alpha">p</a><ol><li id="domain-alpha" data-domain="alpha"><a href="/features/good/">good</a><a href="/domains/alpha/">alpha</a></li></ol>#' "$F/site/public/index.html"
 }
 fresh; domains
@@ -178,4 +189,39 @@ fresh; sed -i.bak 's#"domains":\[\],##' "$F/site/data/registry/product.json"
 expect_finding 10 'carries no domains key' "a model with no domains key is not a model with no domains"
 fresh; domains; printf 'order = ["hero", "how", "install"]\nproblems = ["empty"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
 expect_finding 10 "problem 'empty', which is not a domain the map shows" "a problem whose domain is not shown"
+
+# --- promises: a declared word is held to its claim, and a feature that is not stable is not named
+# Run with --only promises: the claims these mutations add would move the proof band's figure,
+# which is the declared check's business, not this one's.
+promise_finding() { # <exit> <pattern> <what>
+  rc=0; MJ_ROOT="$F" "$CHECK" --only promises > out.txt 2>&1 || rc=$?
+  [ "$rc" = "$1" ] || { echo "    $3: exit $rc, expected $1"; cat out.txt; exit 1; }
+  grep -qE "$2" out.txt || { echo "    $3: no finding matching '$2'"; cat out.txt; exit 1; }
+}
+claims() { # <status of c-ok> <supported true|false>
+  printf '{"status_order":["guaranteed","planned"],"claims":[{"id":"c-ok","status":"%s"},{"id":"c-planned","status":"planned"}]}\n' "$1" > "$F/site/data/generated/capabilities.json"
+  printf '"self-healing" = "c-ok"\n"autonomous" = "c-planned"\n' >> "$F/site/data/homepage.toml"
+  sed -i.bak "s#\"evidence\":{\"available\":false,\"claims\":{}}#\"evidence\":{\"available\":true,\"claims\":{\"c-ok\":{\"supported\":$2}}}#" "$F/site/data/registry/product.json"
+}
+copy() { printf '[hero]\ntitle = "x"\nlead = "%s"\n' "$1" > "$F/site/data/marketing.toml"; }
+fresh; claims guaranteed true
+promise_finding 0 '^OK   promises .*self-healing \(c-ok: permitted\)' "a clean copy with every declaration resolving"
+fresh; claims guaranteed true; copy "It works Autonomous of you."
+promise_finding 10 "site/data/marketing.toml:3 promises 'autonomous': claim 'c-planned' is planned" "a word whose claim is planned"
+fresh; claims guaranteed true; copy "Unattended runs, all night."
+promise_finding 10 "site/data/marketing.toml:3 promises 'unattended': no claim permits it" "a word no claim permits"
+fresh; claims guaranteed true; copy "A self-healing queue."
+promise_finding 0 '^OK   promises ' "a word whose claim is guaranteed and supported by a recorded run"
+fresh; claims guaranteed false; copy "A self-healing queue."
+promise_finding 10 "promises 'self-healing': claim 'c-ok' is guaranteed and no recorded run supports it" "a guaranteed claim no run supports"
+fresh; claims planned true; copy "A self-healing queue."
+promise_finding 10 "promises 'self-healing': claim 'c-ok' is planned" "the same word once its claim is only planned"
+fresh; claims guaranteed true; printf '"zero-touch" = "c-missing"\n' >> "$F/site/data/homepage.toml"
+promise_finding 10 "\[promises\] 'zero-touch' is permitted by claim 'c-missing', which docs/CLAIMS.yaml does not hold" "a declaration naming a claim that does not exist"
+fresh; claims guaranteed true; printf 'order = ["hero", "how", "install"]\n' > "$F/site/data/homepage.toml"
+promise_finding 10 'declares no \[promises\]' "no declaration at all"
+fresh; claims guaranteed true
+sed -i.bak 's#{"id":"draft","route":"/features/draft/","status":"draft"}#{"id":"draft","route":"/features/draft/","status":"draft","short_title":"Deployments"}#' "$F/site/data/registry/product.json"
+printf '[intro]\nlead = "Deployments are one object."\n' > "$F/site/data/manifesto.toml"
+promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployments'\), which the product model calls draft" "a draft feature named in the copy"
 exit 0

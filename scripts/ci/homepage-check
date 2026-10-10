@@ -40,6 +40,10 @@
 #   declared    the homepage proof band gives the declared guaranteed figure of the matrix and,
 #               apart from it, the figure a recorded run supports, or `unknown` when the evidence
 #               is not available; and it never says a test proves it while fewer are supported
+#   promises    a capability word site/data/homepage.toml [promises] declares appears in the
+#               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
+#               guaranteed and supported by a recorded run; a declaration naming a claim that does
+#               not exist fails, and so does the name of a feature the model does not call stable
 #   weight      the scripts and stylesheets the homepage loads from this site, plus any graph data
 #               it carries inline, weigh no more than site/data/homepage.toml's [budget] declares
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
@@ -454,6 +458,68 @@ else:
             bad("declared", w)
     else:
         ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by a recorded run, as the matrix and the evidence give them")
+
+# ---------------------------------------------------------------- promises
+# The site's two hand-written files are the only words on it nothing derives, so they are the
+# only place a capability can be promised that the repository does not have. homepage.toml
+# [promises] declares each such word with the claim that permits it ("" when no claim does
+# yet), and a word is allowed only while that claim is guaranteed and a recorded run supports
+# it. This decides the declared words and the feature names the model gives, and nothing else:
+# whether a sentence is conditional, or what it means, is not something a check can read.
+promise_decl = homepage_decl.get("promises")
+claim_status = {c.get("id"): c.get("status") for c in caps.get("claims") or []}
+ev_claims = ev.get("claims") if isinstance(ev, dict) and isinstance(ev.get("claims"), dict) else {}
+ev_available = isinstance(ev, dict) and ev.get("available") is True
+copy_lines = []
+for rel in ("site/data/marketing.toml", "site/data/manifesto.toml"):
+    load_toml(rel)   # a file that is not TOML, or is missing, is not judged as clean copy
+    for n, line in enumerate(open(os.path.join(root, rel)), 1):
+        if not line.lstrip().startswith("#"):
+            copy_lines.append((rel, n, line))
+problems, permits = [], []
+if not isinstance(promise_decl, dict) or not promise_decl:
+    problems.append("site/data/homepage.toml declares no [promises], so nothing holds the hand-written copy to the claims")
+else:
+    for word, cid in sorted(promise_decl.items()):
+        if not isinstance(cid, str):
+            problems.append(f"site/data/homepage.toml [promises] {word!r} names no claim id (a string, \"\" when none permits it)")
+            continue
+        if cid and cid not in claim_status:
+            problems.append(f"site/data/homepage.toml [promises] {word!r} is permitted by claim {cid!r}, which docs/CLAIMS.yaml does not hold")
+            continue
+        status = claim_status.get(cid) if cid else None
+        supported = ev_available and (ev_claims.get(cid) or {}).get("supported") is True
+        if not cid:
+            why = "no claim permits it"
+        elif status != "guaranteed":
+            why = f"claim {cid!r} is {status}"
+        elif not supported:
+            why = f"claim {cid!r} is guaranteed and no recorded run supports it"
+        else:
+            why = ""
+        permits.append(f"{word} ({cid or 'no claim'}: {'permitted' if not why else why})")
+        pat = re.compile(r"(?<![\w-])" + re.escape(word) + r"(?![\w-])", re.I)
+        for rel, n, line in copy_lines:
+            if why and pat.search(line):
+                problems.append(f"{rel}:{n} promises {word!r}: {why}")
+not_stable_names = []
+for f in product.get("features", []):
+    if f.get("status") == "stable":
+        continue
+    for name in {f.get("title"), f.get("short_title")} - {None, ""}:
+        not_stable_names.append((name, f.get("status"), f.get("id")))
+for name, status, fid in not_stable_names:
+    pat = re.compile(r"(?<![\w-])" + re.escape(name) + r"(?![\w-])")
+    for rel, n, line in copy_lines:
+        if pat.search(line):
+            problems.append(f"{rel}:{n} names feature {fid!r} ({name!r}), which the product model calls {status}")
+if problems:
+    for p in problems[:12]:
+        bad("promises", p)
+    if len(problems) > 12:
+        bad("promises", f"... and {len(problems) - 12} more")
+else:
+    ok("promises", f"the hand-written copy uses no declared word its claim does not permit and names no feature that is not stable: {'; '.join(permits)}")
 
 # ---------------------------------------------------------------- weight
 # Only what this page decides: the same-origin scripts and stylesheets it links, and graph data

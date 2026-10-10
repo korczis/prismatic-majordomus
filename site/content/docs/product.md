@@ -249,6 +249,11 @@ runtime: its map is the domains, as native disclosures, and the composed product
 `/features/`, published at `/graphs/product.json` and fetched when the drawing first comes into
 view; no page loads the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
 every build, so raising a budget is a reviewed change to `homepage.toml`, never a silent one.
+The words are held too: `homepage.toml` `[promises]` declares the capability words the
+hand-written `marketing.toml` and `manifesto.toml` may use only with a claim (unattended,
+autonomous, automatic merge or release, and the like), each with the claim id that permits it,
+and the check fails a word whose claim is absent, not guaranteed or not supported by a recorded
+run, and the name of a feature the product model does not call stable.
 
 To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
 in `homepage.toml`'s `order`, and give it a link or a derived figure. To unlist a section's
