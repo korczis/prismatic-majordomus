@@ -324,6 +324,8 @@ fn the_bridge_client_speaks_to_a_real_socket_and_names_every_failure() {
         "{err}"
     );
     assert!(err.to_string().contains("rejected"));
+    // a server that answered is there: nothing about this refusal calls for an election
+    assert!(!err.calls_for_an_election(), "{err}");
 
     let answer = b.handle(&init()).unwrap().unwrap();
     assert_eq!(answer["result"]["serverInfo"]["name"], "majordomus");
