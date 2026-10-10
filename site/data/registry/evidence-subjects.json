@@ -23750,6 +23750,27 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.ssh-key-access-is-preauthorized": {
+      "kind": "rule",
+      "id": "project.ssh-key-access-is-preauthorized",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:304_a_provider_is_declared_once",
+          "path": "test/cases/304_a_provider_is_declared_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/304_a_provider_is_declared_once.sh",
+            ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.tests-run-in-disposable-repos": {
       "kind": "rule",
       "id": "project.tests-run-in-disposable-repos",
@@ -25672,7 +25693,6 @@
     "suite:301_the_mesh_stays_one_subsystem",
     "suite:302_the_topology_rule_has_one_source",
     "suite:303_one_source_serves_two_mounts",
-    "suite:304_a_provider_is_declared_once",
     "suite:305_a_command_is_claimed_or_classified",
     "suite:310_rustdoc_projection",
     "suite:318_a_partial_sweep_says_so",

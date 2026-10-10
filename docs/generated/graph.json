@@ -37920,6 +37920,24 @@
         }
       },
       {
+        "id": "majordomus://rule/project.ssh-key-access-is-preauthorized@1",
+        "kind": "rule",
+        "label": "project.ssh-key-access-is-preauthorized@1",
+        "summary": "Owner-authorized SSH access persists across clients",
+        "route": "/cockpit/objects/rule/project-ssh-key-access-is-preauthorized-1",
+        "source": ".ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "providers",
+            "authorization",
+            "ssh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.tests-run-in-disposable-repos@1",
         "kind": "rule",
         "label": "project.tests-run-in-disposable-repos@1",
@@ -68403,6 +68421,11 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.ssh-key-access-is-preauthorized@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/project.tests-run-in-disposable-repos@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -75004,8 +75027,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2482,
-      "edges": 5430,
+      "nodes": 2483,
+      "edges": 5431,
       "acyclic": false,
       "truncated": false
     }

@@ -251,6 +251,10 @@ use_cases:
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.
 enforcement:
+  - name: ssh-permissions-on-commit
+    path: scripts/ci/providers-check
+    args: [--permissions-only]
+    wired_by: git-hook:pre-commit
   - name: doctor-on-commit
     path: bin/majordomus
     args: [doctor]
