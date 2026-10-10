@@ -30391,6 +30391,246 @@
         }
       },
       {
+        "id": "majordomus://issue/I2410",
+        "kind": "issue",
+        "label": "I2410",
+        "summary": "A trusted machine on the tailnet is found through Tailscale, with no address written by hand",
+        "route": "/cockpit/objects/issue/i2410",
+        "source": ".ai/repo/project/issues/I2410.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a stubbed `tailscale status --json` naming two online peers, the provider offers exactly their tailnet addresses on the declared port",
+            "An offline peer, a peer without a tailnet IP and a missing tailscale CLI each produce no candidate and a doctor line",
+            "A candidate the trust list does not name is refused by the link, as any other candidate is"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Tailnet peers are dialed only through hand-written rendezvous endpoints.",
+          "evidence_required": [
+            "tailscale_provider_stubbed_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/tailscale.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "share/schemas/majordomus/mesh-declaration",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "the-tailnet-is-a-discovery-provider",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::tailscale"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2411",
+        "kind": "issue",
+        "label": "I2411",
+        "summary": "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer",
+        "route": "/cockpit/objects/issue/i2411",
+        "source": ".ai/repo/project/issues/I2411.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server started with the mesh enabled answers a trusted peer on its tailnet address with no --host",
+            "The same server refuses a write from a non-loopback caller, as runtime-trust requires",
+            "A server with the mesh disabled still binds loopback only"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Cross-machine links exist only through hand-started hubs.",
+          "depends_on": [],
+          "evidence_required": [
+            "mesh_server_reachable_on_tailnet_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/mesh/address.rs",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "a-mesh-server-is-reachable-by-its-peers",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2412",
+        "kind": "issue",
+        "label": "I2412",
+        "summary": "`majordomus init` declares the mesh and enrols this machine's key, so a fresh repository cooperates",
+        "route": "/cockpit/objects/issue/i2412",
+        "source": ".ai/repo/project/issues/I2412.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`majordomus init` in an empty repository writes a mesh declaration that validates",
+            "`majordomus mesh enrol` adds this node's key once, idempotently",
+            "A machine whose key is not enrolled opens no mesh socket (I2261 still holds)"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "A repository has a mesh only if somebody hand-writes .ai/repo/mesh/<name>.yaml and its allowlist.",
+          "desired_state": "init writes the declaration; `majordomus mesh enrol` adds this node's key to the allowlist and says what to commit; nothing trusts a key nobody enrolled.",
+          "evidence_required": [
+            "init_declares_mesh_case"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "init-declares-the-mesh",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 01_init"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2413",
+        "kind": "issue",
+        "label": "I2413",
+        "summary": "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why",
+        "route": "/cockpit/objects/issue/i2413",
+        "source": ".ai/repo/project/issues/I2413.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a linked worktree with no server, `mesh handover publish` and `mesh claim` reach the primary's running runtime",
+            "No command run in a worktree starts a server bound beyond loopback",
+            "A start whose binary is stale prints why no server was ensured and what to run"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "A worktree without its own server is off the mesh; the start hook skips silently.",
+          "desired_state": "A worktree's mesh commands reach the repository's running runtime; a start that ensures nothing prints the reason and the remedy.",
+          "evidence_required": [
+            "worktree_publishes_through_primary_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "lib/capture.sh",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "a-worktree-cooperates-through-the-primary",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2414",
+        "kind": "issue",
+        "label": "I2414",
+        "summary": "mesh.state and mesh.peers answer a filtered summary that fits one tool answer",
+        "route": "/cockpit/objects/issue/i2414",
+        "source": ".ai/repo/project/issues/I2414.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "mesh.state with no input answers under 16 kB on a journal of 20 000 events",
+            "Each filter returns exactly the matching items, proved on a fixture state",
+            "The full answer is still available with an explicit input"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Whole-state answers only; mesh.events is the only paged read.",
+          "desired_state": "A default answer under 16 kB with counts and the newest items; filters that return exactly the asked slice; the full state still available on request.",
+          "evidence_required": [
+            "mesh_state_filtered_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "apps/majordomus-cli/tests/integration_across_machines.rs",
+            "apps/majordomus-cli/tests/reasoning_mesh.rs",
+            "scripts/lib/advisors/mesh-review.mjs",
+            "scripts/lib/advisors/contract.test.mjs",
+            "docs/claims/mesh-liveness-expiry.md",
+            "docs/claims/mesh-three-runtime-convergence.md",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-reads-are-filtered",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib capability::builtin::mesh",
+            "cargo test --lib mesh::page",
+            "cargo test --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2415",
+        "kind": "issue",
+        "label": "I2415",
+        "summary": "A mesh review request carries a body, can be withdrawn, and expires",
+        "route": "/cockpit/objects/issue/i2415",
+        "source": ".ai/repo/project/issues/I2415.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request with an 8 KiB body replicates and folds on two runtimes",
+            "A withdrawn or expired request folds to a closed state on every runtime",
+            "A requester's result note is shown with its request and is not an answer"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Requests stay open until someone else answers; no body, no withdrawal, no expiry.",
+          "desired_state": "body up to 8 KiB; review_withdrawn by the requester; expires_at honoured by the fold; a requester's own result note linked to its request without counting as another session's verdict.",
+          "evidence_required": [
+            "review_lifecycle_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-review-request-ends",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31704,6 +31944,58 @@
             "cargo test --workspace --all-features",
             "majordomus generate --check",
             "scripts/ci/pages-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "milestone",
+        "label": "the-mesh-works-out-of-the-box",
+        "summary": "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn",
+        "route": "/cockpit/objects/milestone/the-mesh-works-out-of-the-box",
+        "source": ".ai/repo/project/milestones/the-mesh-works-out-of-the-box.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two trusted machines on one tailnet, each with a fresh `majordomus init` plus enrolment, link with no address written by hand",
+            "A server whose mesh is enabled is reachable from a trusted peer on the tailnet and refuses an untrusted one",
+            "A worktree of a checkout whose primary runs a server publishes a handover and a claim",
+            "mesh.state and mesh.peers answer a filtered summary under 16 kB",
+            "A review request carries a body, and can be withdrawn or expire"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Multicast on one LAN segment and five hand-written rendezvous hubs; loopback-bound servers; no declaration in a fresh repository; worktrees and review requests outside the loop.",
+          "depends_on": [],
+          "evidence_required": [
+            "two_machines_link_out_of_the_box"
+          ],
+          "non_scope": [
+            "Trusting a machine nobody listed: runtime-trust (I2261) keeps an unlisted clone off the mesh, and nothing here weakens it.",
+            "Session start, briefing and Codex/Gemini participation: every-session-joins-the-mesh (I2285-I2292).",
+            "Assigning and executing work on a peer: mesh-peers-execute-assigned-work (I2332-I2336)."
+          ],
+          "order": 340,
+          "priority": "p0",
+          "risks": [
+            "It builds on runtime-trust and on I2123 (PR #860), which are not on master yet: I2411 lands after them.",
+            "Binding beyond loopback widens what can reach a server: it waits for the remote-caller restrictions of runtime-trust (I2123, #860) and is refused for a node the trust list does not name."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/commands",
+            "share/skeleton",
+            "share/schemas/majordomus/mesh-declaration",
+            "lib/capture.sh",
+            "docs/MESH.md",
+            "test/cases"
+          ],
+          "slug": "the-mesh-works-out-of-the-box",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::"
           ]
         }
       },
@@ -66615,6 +66907,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2410",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2410",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2411",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2411",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2412",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2412",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2413",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2413",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2414",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2414",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2415",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2415",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66801,6 +67153,11 @@
       },
       {
         "source": "majordomus://milestone/test-evidence",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/the-mesh-works-out-of-the-box",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -75406,8 +75763,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2500,
+      "edges": 5459,
       "acyclic": false,
       "truncated": false
     }
