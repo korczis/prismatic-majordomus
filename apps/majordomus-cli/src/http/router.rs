@@ -970,23 +970,27 @@ impl Router {
             Ok(v) => json_response(200, &v),
             // the word is the error's own, the same one an MCP tool result carries; only
             // the status is this transport's
-            Err(e) => {
-                let status = match &e {
-                    CapabilityError::InvalidInput(_) => 400,
-                    CapabilityError::NotFound(_) => 404,
-                    CapabilityError::Refused(_) => 422,
-                    CapabilityError::Internal(_) => 500,
-                    CapabilityError::Forbidden(_) => 403,
-                };
-                let (CapabilityError::InvalidInput(m)
-                | CapabilityError::NotFound(m)
-                | CapabilityError::Refused(m)
-                | CapabilityError::Internal(m)
-                | CapabilityError::Forbidden(m)) = &e;
-                error_response(status, e.code(), m)
-            }
+            Err(e) => failed(&e),
         }
     }
+}
+
+/// A capability's error as an HTTP response: the status is this transport's, the code and
+/// the message are the error's own.
+fn failed(e: &CapabilityError) -> Response {
+    let status = match e {
+        CapabilityError::InvalidInput(_) => 400,
+        CapabilityError::NotFound(_) => 404,
+        CapabilityError::Refused(_) => 422,
+        CapabilityError::Internal(_) => 500,
+        CapabilityError::Forbidden(_) => 403,
+    };
+    let (CapabilityError::InvalidInput(m)
+    | CapabilityError::NotFound(m)
+    | CapabilityError::Refused(m)
+    | CapabilityError::Internal(m)
+    | CapabilityError::Forbidden(m)) = e;
+    error_response(status, e.code(), m)
 }
 
 /// Does this request come from something that would rather have a page than a document?
@@ -1097,6 +1101,33 @@ pub fn percent_decode(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_capability_error_has_its_status_and_keeps_its_word() {
+        for (e, status, code) in [
+            (
+                CapabilityError::InvalidInput("m".into()),
+                400,
+                "invalid_input",
+            ),
+            (CapabilityError::NotFound("m".into()), 404, "not_found"),
+            (CapabilityError::Refused("m".into()), 422, "refused"),
+            (CapabilityError::Internal("m".into()), 500, "internal"),
+            (CapabilityError::remote("plan.transition"), 403, "forbidden"),
+        ] {
+            let r = failed(&e);
+            assert_eq!(r.status, status, "{e:?}");
+            let body: serde_json::Value = serde_json::from_str(&r.body.text()).unwrap();
+            assert_eq!(body["error"]["code"], code, "{body}");
+        }
+        let body: serde_json::Value = serde_json::from_str(
+            &failed(&CapabilityError::remote("plan.transition"))
+                .body
+                .text(),
+        )
+        .unwrap();
+        assert!(body.to_string().contains("plan.transition"), "{body}");
+    }
 
     #[test]
     fn only_an_address_or_localhost_is_a_host_no_rebinding_domain_can_name() {
