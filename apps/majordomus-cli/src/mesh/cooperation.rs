@@ -1337,7 +1337,10 @@ impl Cooperation {
         for peer in peers.iter().filter(|p| p.attached) {
             let session = format!("board-{}", peer.id);
             seen.push(session.clone());
-            let intent = peer.claims.first().map(|c| c.intent.clone());
+            // clipped before it is compared: the projection holds what the journal accepted,
+            // so comparing the board's whole text with it would differ on every pass for an
+            // intent past the bound, and reopen the session each time
+            let intent = peer.claims.first().map(|c| clip(&c.intent, 512));
             let entry = projected.entry(session.clone()).or_default();
             let fresh = entry.info.session.is_empty();
             if fresh || entry.info.intent != intent {
@@ -1350,7 +1353,7 @@ impl Cooperation {
                         .clone()
                         .filter(|t| !t.is_empty())
                         .map(|t| clip(&t, 128)),
-                    intent: intent.clone().map(|i| clip(&i, 512)),
+                    intent: intent.clone(),
                     checkout: self.checkout.id.clone(),
                     branch: self.checkout.git(&["symbolic-ref", "--short", "HEAD"]),
                     head: self.checkout.git(&["rev-parse", "--verify", "HEAD"]),
@@ -4183,6 +4186,28 @@ mod tests {
         let live: Vec<_> = state.claims.iter().filter(|c| c.state.is_live()).collect();
         assert_eq!(live.len(), 1);
         assert_eq!(live[0].scope, vec!["docs".to_string()]);
+
+        // an intent past the journal's bound is projected once, clipped, and then left alone:
+        // compared unclipped it differed from the projection on every pass and reopened the
+        // session each time (986 of 1000 journal events on 2026-10-10)
+        let long = format!("relay the train {}", "x".repeat(600));
+        board.announce(&p, &long, vec!["docs".into()]);
+        a.project_board();
+        let once = a.state();
+        assert_eq!(
+            once.sessions[0].info.intent.as_deref().map(str::len),
+            Some(512),
+            "clipped to the bound"
+        );
+        let events = a.journal().events().len();
+        a.project_board();
+        a.project_board();
+        assert_eq!(
+            a.journal().events().len(),
+            events,
+            "an unchanged long intent writes nothing"
+        );
+        assert_eq!(a.state().digest, once.digest);
 
         board.detach(&p);
         a.project_board();
