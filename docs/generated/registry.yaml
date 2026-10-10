@@ -996,6 +996,9 @@ capabilities:
               concurrency:
                 "$ref": "#/$defs/ExecutionConcurrency"
                 description: Whether two of them may overlap.
+              signed_input:
+                type: boolean
+                description: "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
             required:
               - effect
               - cancellable
@@ -18283,7 +18286,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -18986,7 +18989,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -19186,7 +19189,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -19638,7 +19641,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -20179,7 +20182,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -20396,7 +20399,7 @@ capabilities:
     cache:
       policy: disabled
     execution:
-      effect: process_state
+      effect: repository_mutation
       cancellable: false
       concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
@@ -30610,6 +30613,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
+      signed_input: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.link.sync
     module: mesh
@@ -30750,6 +30754,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
+      signed_input: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.nodes
     module: mesh
@@ -32324,6 +32329,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
+      signed_input: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.release
     module: mesh
