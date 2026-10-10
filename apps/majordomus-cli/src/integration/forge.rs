@@ -1871,21 +1871,17 @@ pub fn unmirrored(root: &Path, obs: &ForgeObservation) -> Vec<u64> {
         .map(|p| p.number)
         .chain(obs.resolved.keys().copied())
         .collect();
-    let mirrored: BTreeSet<u64> = Command::new("git")
+    // git that cannot run lists nothing, and then every pull request is named
+    let listed = Command::new("git")
         .arg("-C")
         .arg(root)
         .args(["for-each-ref", "--format=%(refname)", PR_REF_PREFIX])
         .output()
         .map(|o| o.stdout)
-        .unwrap_or_default()
-        .split(|b| *b == b'\n')
-        .filter_map(|r| {
-            std::str::from_utf8(r)
-                .ok()?
-                .strip_prefix(PR_REF_PREFIX)?
-                .parse()
-                .ok()
-        })
+        .unwrap_or_default();
+    let mirrored: BTreeSet<u64> = String::from_utf8_lossy(&listed)
+        .lines()
+        .filter_map(|r| r.strip_prefix(PR_REF_PREFIX).and_then(|n| n.parse().ok()))
         .collect();
     numbers.difference(&mirrored).copied().collect()
 }
