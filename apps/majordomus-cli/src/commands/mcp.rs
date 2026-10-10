@@ -218,9 +218,10 @@ impl Session {
                 let answer = lock(bridge).handle(&message);
                 match answer {
                     Ok(v) => v.map(Reply::Value),
-                    // a server that answered and refused works: no election, the refusal
-                    Err(e) if !e.calls_for_election() => refused(&message, &e),
-                    Err(e) => self.failover(message, e),
+                    Err(e) if e.calls_for_an_election() => self.failover(message, e),
+                    // the server is there and would not take this request: that is its
+                    // answer, and the client is given it instead of an election
+                    Err(e) => refused(&message, &e),
                 }
             }
         }
@@ -319,7 +320,7 @@ impl Session {
                         v.map(Reply::Value)
                     }
                     Err(_) if !resend => outcome_unknown(&message, &cause),
-                    Err(e) if !e.calls_for_election() => refused(&message, &e),
+                    Err(e) if !e.calls_for_an_election() => refused(&message, &e),
                     Err(e) => unavailable(&message, &e.to_string()),
                 }
             }
@@ -442,7 +443,7 @@ fn refused(message: &Value, cause: &BridgeError) -> Option<Reply> {
     Some(Reply::Value(json!({
         "jsonrpc": "2.0",
         "id": id,
-        "error": { "code": -32603, "message": text, "data": { "request_id": id, "status": status } }
+        "error": { "code": -32600, "message": text, "data": { "request_id": id, "status": status } }
     })))
 }
 

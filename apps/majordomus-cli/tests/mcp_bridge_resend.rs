@@ -461,7 +461,7 @@ fn a_call_that_outlasts_the_timeout_runs_once_and_its_outcome_is_unknown() {
     );
     assert_eq!(server.received(WRITER), 1, "sent once, inside the bridge");
     assert!(
-        err.calls_for_election(),
+        err.calls_for_an_election(),
         "a server that does not answer may be gone"
     );
     assert!(

@@ -181,20 +181,26 @@ pub enum BridgeError {
 }
 
 impl BridgeError {
-    /// Whether this failure calls for electing a server again: the server is gone, broken,
-    /// lost the session (404) or the lease (409). Any other refusal is an answer about the
-    /// message, from a server that works, and is reported to the client as it is.
+    /// Whether this failure says the server is no longer the one to talk to, so that the
+    /// client should elect again: it could not be reached, it took the request and never
+    /// answered, it forgot the session twice running (404), or it said it had lost the lease
+    /// (409).
+    ///
+    /// Any other refusal comes from a server that is there and serving: it read the request
+    /// and would not take it — a request before `initialize`, a body too large. An election
+    /// cannot change that answer; it is relayed to the client.
     ///
     /// ```
     /// use majordomus_cli::mcp::bridge::BridgeError;
     /// let url = "http://127.0.0.1:1".to_string();
     /// let refused = |status| BridgeError::Rejected { url: url.clone(), status, body: String::new() };
-    /// assert!(refused(404).calls_for_election());
-    /// assert!(refused(409).calls_for_election());
-    /// assert!(!refused(413).calls_for_election(), "a message too large is too large anywhere");
-    /// assert!(BridgeError::Unanswered { url: url.clone(), reason: "timed out".into() }.calls_for_election());
+    /// assert!(refused(404).calls_for_an_election());
+    /// assert!(refused(409).calls_for_an_election());
+    /// assert!(!refused(400).calls_for_an_election(), "a serving server's refusal is its answer");
+    /// assert!(!refused(413).calls_for_an_election(), "a message too large is too large anywhere");
+    /// assert!(BridgeError::Unanswered { url: url.clone(), reason: "timed out".into() }.calls_for_an_election());
     /// ```
-    pub fn calls_for_election(&self) -> bool {
+    pub fn calls_for_an_election(&self) -> bool {
         match self {
             BridgeError::Unreachable { .. } | BridgeError::Unanswered { .. } => true,
             BridgeError::Rejected { status, .. } => matches!(status, 404 | 409),
