@@ -1161,7 +1161,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.20.0",
+  "generated_by": "majordomus-cli 0.21.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1170,7 +1170,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "infrastructure": [
     {
@@ -39598,7 +39598,7 @@
       "is_enum": false,
       "name": "RelationToMaster",
       "properties": [],
-      "type": "one of 8 variants",
+      "type": "one of 9 variants",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -39687,6 +39687,33 @@
               "refs": [],
               "required": true,
               "type": "\"up_to_date\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it.",
+          "properties": [
+            {
+              "description": "Commits on master the head does not have.",
+              "name": "behind",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "Authored (non-derived) paths the merge changes.",
+              "name": "authored",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"carries_master\""
             }
           ],
           "type": "object"

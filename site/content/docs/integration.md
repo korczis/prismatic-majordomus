@@ -49,6 +49,17 @@ that range, because a merge's resolution has no patch to compare, nor a clean me
 changes authored paths: there master lacks something the head carries, such as a landed change
 that master has reverted since.
 
+A head that does not contain master is not always behind it. The relation is `carries_master`
+when two things hold: its merge into master is clean and writes the head's own tree, and every
+commit master has and the head lacks is a merge commit. Master then holds nothing the head
+lacks. That is a pull request built on another one's head, once the other has landed (see *A
+train* below). No path is merged in such a merge, so no driver decides one and the forge's
+merge writes the same tree. The second half is there because derived output is composed from
+history as well as from files: the changelog lists every commit that is not a merge, so a
+master that took a change and reverted it has the tree it had and two commits no changelog on
+the head ever listed. One change on master that the head never saw, authored or derived, or
+one commit of master's own that is not a merge, and the head is `behind`.
+
 ## Dispositions
 
 Every open pull request has exactly one. They are decided in the order below, so an earlier
@@ -76,9 +87,9 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
-| `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh`, or `prs repair <n> --apply` for one |
-| `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
-| `ready` | ready | contains master, and every required check passed on this head | `prs drain` |
+| `needs_refresh` | waiting | merges cleanly, and neither contains master nor carries it | `prs drain --refresh`, or `prs repair <n> --apply` for one |
+| `waiting_for_checks` | waiting | contains or carries master; a required check is pending or missing on this head | wait |
+| `ready` | ready | contains or carries master, and every required check passed on this head | `prs drain` |
 
 </div>
 
@@ -127,7 +138,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
-| `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
+| `freshness` | the head contains master, or carries it: merging it writes the head's own tree and it lacks only merge commits | `behind_master:COMMITS`, with `fork_head` for a fork |
 | `required_checks` | every required check passed | `required_checks:STATE` (`pending`, `missing`, or `unknown` when a check run of an app-bound context names no app), `no_required_checks`, `required_checks_unread` |
 
 </div>
@@ -497,6 +508,40 @@ request is refreshed, so one silent check cannot stop every refresh. A check run
 the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
 no head, so a pull request refreshed by an older executor does not hold the pipeline.
 
+### A train
+
+One pull request per run of the required check is the cost of refreshing each head onto
+master alone. A train pays it once for several (ADR 0129). Its links are pull requests whose
+heads are stacked: the second is brought up to date on the first one's refreshed head, not on
+master, the third on the second's, and each says so with a `Stacked on #N` line in its body.
+Every link's required checks run at the same time, each on a head that holds everything below
+it.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| The link | Is |
+|---|---|
+| the lowest, with its checks passed | `ready`, `contains_master` |
+| above an open link | `waiting_for_dependency`, `depends_on:#N`, whatever its checks say |
+| above a link that landed, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
+| above a link that landed after its head moved | `needs_refresh`: master holds what this head never saw |
+| above a link that was closed without a merge | `blocked`, `dependency_closed_unmerged:#N`: a person decides |
+
+</div>
+
+
+The order is the dependency gate's and not a habit: a link merges only after the one it names.
+What makes the second merge safe is the relation, decided by git and never assumed from the
+stacking: the merge of the link into the master that now holds the first must write the link's
+own tree, and the first one's merge commit must be all the link lacks. Then the verdict its
+head already has is a verdict on exactly what master becomes.
+A link that goes red costs the links above it one ordinary refresh after it is fixed and
+lands, which is what every one of them costs without a train, and never a merge of a tree
+nobody judged.
+
+A train is prepared by whoever brings the heads up to date; the executor decides each link on
+what git says of it and does not build one itself yet.
+
 ## Repair
 
 The `repair` lane is a person's. Most pull requests here go `CONFLICTING` on the forge within
@@ -518,6 +563,7 @@ reports is then on a `merge=derived` path, which the regeneration settles.
 | relation `behind` | eligible: master is merged in, derived, committed and pushed |
 | relation `conflicting` | refused with exit 10, naming every authored file that conflicts: they are the owner's to settle |
 | relation `up_to_date` | nothing to repair: the head already contains master |
+| relation `carries_master` | nothing to repair: merging it writes its own tree, and its checks judged that tree |
 | `redundant`, `superseded`, relation `contained`, `superseded`, `patch_ids_upstream` or `derived_only` | nothing to repair: cleanup's lane, or a person's |
 | relation `unknown`, a fork's head, armed auto-merge, another base, not open | refused with exit 10 |
 

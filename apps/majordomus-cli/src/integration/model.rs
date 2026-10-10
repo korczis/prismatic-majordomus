@@ -260,6 +260,18 @@ pub enum RelationToMaster {
         /// Authored (non-derived) paths the merge changes.
         authored: Vec<String>,
     },
+    /// The head does not contain master, yet master holds nothing the head lacks: merging it
+    /// writes the head's own tree, and every commit master has beyond it is a merge commit.
+    /// That is a head stacked on a pull request that has since landed. A verdict on the head
+    /// is then a verdict on what master becomes, tree and listed history alike, exactly as
+    /// when the head contains master; and no path is merged at all, so the forge needs no
+    /// driver for it.
+    CarriesMaster {
+        /// Commits on master the head does not have.
+        behind: u64,
+        /// Authored (non-derived) paths the merge changes.
+        authored: Vec<String>,
+    },
     /// The head does not contain master, but the merge is clean with the derived driver.
     Behind {
         /// Commits on master the head does not have.
@@ -698,7 +710,8 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `relation_unknown:WHY`, \
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
 `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
-`no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
+`no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, \
+`required_checks_passed`, \
 `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
 `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, \
 `dependency_unread:#N`, `declarations_unread`. \
@@ -808,6 +821,9 @@ pub enum ReasonCode {
     RequiredChecksUnread,
     /// `contains_master`: why a ready one is ready.
     ContainsMaster,
+    /// `carries_master`: why a ready one is ready when its head lacks only merge commits of
+    /// master and its merge yields the head's own tree.
+    CarriesMaster,
     /// `required_checks_passed`: why a ready one is ready.
     RequiredChecksPassed,
     /// `required_checks_skipped`: ready, a permitted skip among its checks.
@@ -885,6 +901,7 @@ impl ReasonCode {
             ReasonCode::NoRequiredChecks => "no_required_checks",
             ReasonCode::RequiredChecksUnread => "required_checks_unread",
             ReasonCode::ContainsMaster => "contains_master",
+            ReasonCode::CarriesMaster => "carries_master",
             ReasonCode::RequiredChecksPassed => "required_checks_passed",
             ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
             ReasonCode::ExecutorMergeRefused { .. } => "executor_merge_refused",
@@ -1009,6 +1026,7 @@ impl std::str::FromStr for ReasonCode {
             ("no_required_checks", None) => ReasonCode::NoRequiredChecks,
             ("required_checks_unread", None) => ReasonCode::RequiredChecksUnread,
             ("contains_master", None) => ReasonCode::ContainsMaster,
+            ("carries_master", None) => ReasonCode::CarriesMaster,
             ("required_checks_passed", None) => ReasonCode::RequiredChecksPassed,
             ("required_checks_skipped", None) => ReasonCode::RequiredChecksSkipped,
             ("declarations_unread", None) => ReasonCode::DeclarationsUnread,

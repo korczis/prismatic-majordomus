@@ -331,6 +331,10 @@ pub fn decide(queue: &IntegrationQueue, target: &RepairTarget) -> RepairDecision
         RelationToMaster::UpToDate { .. } => {
             nothing(format!("its head already contains {}", queue.base))
         }
+        RelationToMaster::CarriesMaster { .. } => nothing(format!(
+            "merging it into {} yields its own tree; its checks already judged that tree",
+            queue.base
+        )),
         RelationToMaster::Contained
         | RelationToMaster::Superseded
         | RelationToMaster::PatchIdsUpstream { .. } => nothing(format!(
