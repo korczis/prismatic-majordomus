@@ -6,23 +6,23 @@
     "version": "0.19.1"
   },
   "registry": {
-    "fingerprint": "b459423e77e8088e3b83fab43af4fd9edc1835bab0e4a78618f26a860dfcaed1",
+    "fingerprint": "6ee6767a392358f111e577dafaae31cb51fde91c1547b9a20382827093b83170",
     "summary": {
-      "total": 2100,
+      "total": 2102,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1918,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1918
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1926
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1972,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e9591b2f048ec354a0c3d23c9df8d92178161c8eb289bd0a64aaeec46f4cd38",
+    "fingerprint": "57a6fd965fa6072a76fc2e73857a6c56715399d7b75deb11a70a491e48022c6c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81625,7 +81625,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 42808
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 119728
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87918,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2124",
+        "kind": "issue",
+        "identity": "I2124",
+        "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "description": "Apply the same trust predicate to events reloaded from the journal file as to events arriving over a link, and refuse an event whose Lamport stamp is further ahead of the receiver's clock than a declared bound.",
+        "path": ".ai/repo/project/issues/I2124.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2293
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88159,6 +88170,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -96863,7 +96885,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96915,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",

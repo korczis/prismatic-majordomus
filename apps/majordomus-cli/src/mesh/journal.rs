@@ -108,6 +108,45 @@ pub const MAX_EVENTS_PER_NODE: usize = 20_000;
 /// The most out-of-order events the whole journal holds at once.
 pub const MAX_PENDING_TOTAL: usize = 4096;
 
+/// How far ahead of this runtime's Lamport clock a received event's stamp may be: 2^32.
+///
+/// A Lamport stamp is what its writer says about itself, and every receiver raises its own
+/// clock to the highest stamp it stores. Unbounded, one event from a trusted key stamped
+/// near `u64::MAX` would drag every clock in the mesh to the end of its range in a single
+/// round, after which every event written anywhere carries the same saturated stamp and the
+/// fold no longer orders them causally. A legitimate stamp is never further ahead than the
+/// number of events written in the repository's whole history — each event rises one above
+/// what its writer had seen — so the bound is far above anything a real mesh reaches, a
+/// fresh runtime joining at clock zero included. What it changes is the cost of the attack:
+/// the clock rises at most this much per event stored, so exhausting it takes 2^32 signed,
+/// stored events rather than one. An event past the bound is refused
+/// [`Rejection::ClockAhead`], on arrival and from a reloaded file alike.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, Rejection, MAX_LAMPORT_LEAD};
+///
+/// let writer = Arc::new(NodeIdentity::ephemeral().unwrap());
+/// let a = Journal::open(Arc::clone(&writer), "0000000000000001", "repo".into(), None).unwrap();
+/// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+///     "repo".into(), None).unwrap();
+/// let mut event = a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+///
+/// // signed by a key B trusts, and stamped further ahead of B's clock than the bound allows
+/// event.lamport = MAX_LAMPORT_LEAD + 1;
+/// event.sig = writer.sign(&event.signing_bytes());
+/// let report = b.ingest(&[event.clone()], &|_| Ok(()));
+/// assert_eq!(report.rejected[&Rejection::ClockAhead], 1);
+/// assert_eq!(b.tallies().lamport, 0, "and B's clock did not move");
+///
+/// // exactly at the bound it is an ordinary event
+/// event.lamport = MAX_LAMPORT_LEAD;
+/// event.sig = writer.sign(&event.signing_bytes());
+/// assert_eq!(b.ingest(&[event], &|_| Ok(())).accepted, 1);
+/// ```
+pub const MAX_LAMPORT_LEAD: u64 = 1 << 32;
+
 /// The domain separator of an event signature: a signature over an event can never be
 /// replayed as a signature over an advertisement or a link message.
 const SIGNING_DOMAIN: &[u8] = b"majordomus-mesh-event/v1\n";
@@ -1051,6 +1090,8 @@ pub enum Rejection {
     Bounds,
     /// The journal's stream or pending bound is full.
     Capacity,
+    /// The Lamport stamp is more than [`MAX_LAMPORT_LEAD`] ahead of this runtime's clock.
+    ClockAhead,
 }
 
 /// What one ingest did: how many events were stored, how many were deliveries of something
@@ -1328,6 +1369,7 @@ pub struct Journal {
     path: Option<PathBuf>,
     inner: Mutex<Inner>,
     rotation: std::sync::atomic::AtomicUsize,
+    reloaded: IngestReport,
 }
 
 impl Journal {
@@ -1369,11 +1411,65 @@ impl Journal {
     /// let ephemeral = Arc::new(NodeIdentity::ephemeral().unwrap());
     /// assert!(Journal::open(ephemeral, "nope", "repo".into(), None).is_err());
     /// ```
+    ///
+    /// This opening believes every origin the file holds, which is what a journal without a
+    /// trust policy of its own can do. A runtime that has one opens with
+    /// [`Journal::open_trusting`], so that a key withdrawn from its allowlist is not
+    /// believed again from its own disk.
     pub fn open(
         identity: Arc<NodeIdentity>,
         runtime: &str,
         repo: String,
         path: Option<PathBuf>,
+    ) -> Result<Self, MeshError> {
+        Self::open_trusting(identity, runtime, repo, path, &|_| Ok(()))
+    }
+
+    /// [`Journal::open`], with the trust decision the live path makes applied to every
+    /// event reloaded from `path`.
+    ///
+    /// A journal file is input, the same as a sync round: it holds whatever was trusted
+    /// when it was written, and the policy may have changed since. A key removed from the
+    /// allowlist and a runtime restarted would otherwise bring that key's sessions, claims
+    /// and handovers back from disk — events the live path would refuse the moment they
+    /// arrived over a link. So every reloaded event passes the same checks as a received
+    /// one and then `accept`, the same predicate the caller hands to [`Journal::ingest`];
+    /// an event signed by this node's own key is accepted without asking, because the key
+    /// is the machine's own and a restarted runtime of it is the same machine. What is
+    /// refused is not dropped silently: it is in [`Journal::reload_report`], by reason.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, Rejection};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let path = dir.path().join("journal.jsonl");
+    /// let machine = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// let peer = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()),
+    ///     "0000000000000001", "repo".into(), None).unwrap();
+    /// let peers_event = peer.append_own(EventBody::SessionClosed { session: "p".into() })
+    ///     .unwrap();
+    ///
+    /// // this machine stores a peer's event and one of its own
+    /// let before = Journal::open(Arc::clone(&machine), "0000000000000002", "repo".into(),
+    ///     Some(path.clone())).unwrap();
+    /// before.ingest(&[peers_event], &|_| Ok(()));
+    /// before.append_own(EventBody::SessionClosed { session: "own".into() }).unwrap();
+    ///
+    /// // the peer is no longer trusted when another server of this machine — the same key,
+    /// // another stream, as a restart is — opens the file
+    /// let after = Journal::open_trusting(Arc::clone(&machine), "0000000000000003",
+    ///     "repo".into(), Some(path), &|_| Err(Rejection::Untrusted)).unwrap();
+    /// assert_eq!(after.events().len(), 1, "the machine's own event, and only it");
+    /// assert_eq!(after.reload_report().rejected[&Rejection::Untrusted], 1);
+    /// ```
+    pub fn open_trusting(
+        identity: Arc<NodeIdentity>,
+        runtime: &str,
+        repo: String,
+        path: Option<PathBuf>,
+        accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
     ) -> Result<Self, MeshError> {
         let own = StreamId::new(
             identity.public.node_id.as_str(),
@@ -1385,7 +1481,7 @@ impl Journal {
         })?;
         let mut streams = BTreeMap::new();
         streams.insert(own.clone(), StreamLog::new());
-        let journal = Journal {
+        let mut journal = Journal {
             identity,
             own,
             repo,
@@ -1397,29 +1493,63 @@ impl Journal {
                 tallies: JournalTallies::default(),
             }),
             rotation: std::sync::atomic::AtomicUsize::new(0),
+            reloaded: IngestReport::default(),
         };
         if let Some(path) = journal.path.clone() {
-            journal.reload(&path);
+            journal.reloaded = journal.reload(&path, accept);
         }
         Ok(journal)
     }
 
-    fn reload(&self, path: &Path) {
+    fn reload(
+        &self,
+        path: &Path,
+        accept: &dyn Fn(&MeshEvent) -> Result<(), Rejection>,
+    ) -> IngestReport {
+        let mut report = IngestReport::default();
         let Ok(text) = std::fs::read_to_string(path) else {
-            return;
+            return report;
         };
         let events: Vec<MeshEvent> = text
             .lines()
             .filter_map(|line| serde_json::from_str(line).ok())
             .collect();
-        // Reloaded events pass the same checks as received ones: a file is input too.
+        // Reloaded events pass the same checks and the same trust decision as received
+        // ones: a file is input too, written under a policy that may have changed since.
+        // This node's own key is its own, whatever the policy says of other keys.
+        let own_key = self.identity.public.public_key.as_str();
+        let trusted = |event: &MeshEvent| {
+            if event.pk == own_key {
+                Ok(())
+            } else {
+                accept(event)
+            }
+        };
         let mut inner = self.inner.lock().expect("journal lock");
-        let mut report = IngestReport::default();
         for event in events {
-            self.ingest_locked(&mut inner, event, &|_| Ok(()), &mut report, false);
+            self.ingest_locked(&mut inner, event, &trusted, &mut report, false);
         }
         inner.tallies.received = 0;
         inner.tallies.duplicates = 0;
+        report
+    }
+
+    /// What reloading the journal file did when this journal was opened: how many events
+    /// came back, and how many were refused and why — a key no longer trusted is refused
+    /// [`Rejection::Untrusted`] here rather than believed again from disk. Empty for a
+    /// journal without a file, or one whose file did not exist yet.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::Journal;
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// assert_eq!(j.reload_report().accepted + j.reload_report().rejected_total(), 0);
+    /// ```
+    pub fn reload_report(&self) -> &IngestReport {
+        &self.reloaded
     }
 
     /// This runtime's own stream: the one stream this journal may write to, and the prefix
@@ -1877,6 +2007,11 @@ impl Journal {
         }
         if let Err(why) = accept(&event) {
             return refuse(inner, report, why);
+        }
+        if event.lamport > inner.lamport.saturating_add(MAX_LAMPORT_LEAD) {
+            // A trusted key's stamp, but further ahead of this clock than any history
+            // reaches: storing it would carry every clock that hears it towards u64::MAX.
+            return refuse(inner, report, Rejection::ClockAhead);
         }
         if event.stream == self.own {
             // Our own events coming back through a relay: we hold them already, or they

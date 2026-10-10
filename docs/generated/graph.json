@@ -30259,6 +30259,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I2124",
+        "kind": "issue",
+        "label": "I2124",
+        "summary": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "route": "/cockpit/objects/issue/i2124",
+        "source": ".ai/repo/project/issues/I2124.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A key withdrawn from the allowlist has none of its events believed from the journal file after a restart, and they are believed again when the key is allowed again",
+            "An event whose stamp is more than MAX_LAMPORT_LEAD ahead of the receiver's clock is refused as clock_ahead, and one within the bound is accepted",
+            "The live path and the reload decide trust through one function"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Reload trusts every origin; ingest accepts any stamp.",
+          "evidence_required": [
+            "mesh_trust_reload_red_then_green"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_trust_reload.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-reloaded-event-meets-the-trust-policy",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test mesh_trust_reload --test mesh_cooperation --test mesh_compaction"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31335,6 +31370,52 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "label": "runtime-trust",
+        "summary": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "route": "/cockpit/objects/milestone/runtime-trust",
+        "source": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request from an address that is not loopback runs only a capability that reads or whose input is a signed message, on every transport that knows the caller's address",
+            "Every event the journal holds passed the trust policy in force, whether it arrived over a link or was reloaded from disk",
+            "A trusted key cannot order its claim before claims already admitted, and an expired claim does not return as live",
+            "Every bound the security model names is enforced on the input it names, with a test that sends one more"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "remote_write_refused",
+            "reload_is_trust_checked"
+          ],
+          "non_scope": [
+            "Encrypting the transport. ADR 0032 decided no TLS dependency; confidentiality stays the network's.",
+            "Accounts or a login. A remote writer, when one is needed, is admitted by a key the trust policy names."
+          ],
+          "order": 135,
+          "priority": "p0",
+          "risks": [
+            "A remote MCP client loses writes it used to have (announce, mesh sessions). The route that remains is a tunnel that ends on loopback."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability",
+            "docs/MESH.md",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "runtime-trust",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test remote_callers --test mesh_cooperation"
           ]
         }
       },
@@ -66235,6 +66316,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2124",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2124",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66393,6 +66484,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/runtime-trust",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -74976,8 +75072,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2483,
+      "edges": 5432,
       "acyclic": false,
       "truncated": false
     }
