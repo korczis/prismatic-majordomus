@@ -261,6 +261,14 @@ runtimes, those addressed to this one first, each with the call that answers it.
 bounded (`limit`, 5 by default) and says how much it left out. A runtime is never told to take a
 handover it published itself. ADR 0128 makes it what every session is told at start (I2285).
 
+A task is on the mesh while it works: `majordomus start` claims the task's scope on this
+checkout's running server as an advisory claim of the mesh session `task-<id>`, with the task's
+title as its intent and its issue, and keeps the claim's key on the task record; `finish` closes
+the session, which ends its claims on every runtime. Every linked machine sees what the task works
+on and reports an overlap. An exclusive claim before building stays the worker's own act
+(`majordomus_mesh_claim`). With no server, or a mesh that does not run, nothing is claimed and
+nothing fails (I2288, case 1026).
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.

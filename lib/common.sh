@@ -1591,3 +1591,44 @@ mj_web_composed() {
             | .artifact as $host | $c[] | $host + .mount)
       end' "$mj_wc_web" || { mj_err "$mj_wc_web does not parse as a web topology"; return 12; }
 }
+
+# A task is on the mesh while it works (ADR 0128, I2288). `start` claims the task's scope as an
+# advisory claim of the mesh session `task-<id>` on this checkout's running server, so every
+# linked runtime on every machine sees what the task works on and reports an overlap; the key is
+# kept on the task record. `finish` closes the session, which ends its claims everywhere. An
+# exclusive claim before building stays the worker's own act. Silent, and never a failure, when
+# no server serves this checkout or its mesh does not run: the task is the repository's, the
+# mesh only tells others about it.
+mj_mesh_task_bin() {
+  mj_has jq || return 1
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  MJ_MESH_BIN="$(mj_rust_bin "$MJ_HOME")"; [ -x "$MJ_MESH_BIN" ] || return 1
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  return 0
+}
+
+mj_mesh_task_claim() { # <task id> <scope, one path per word> <intent> <issue>
+  local id="$1" scope="$2" intent="$3" issue="$4" out key
+  mj_mesh_task_bin || return 0
+  set -- --session "task-$id" --advisory --task "$id" --repo "$MJ_ROOT" --format json
+  [ -n "$intent" ] && set -- "$@" --intent "$intent"
+  [ -n "$issue" ] && set -- "$@" --issue "$issue"
+  # shellcheck disable=SC2086 # the scope is one path per word
+  out="$("$MJ_MESH_BIN" mesh claim $scope "$@" 2>/dev/null)" || true
+  key="$(printf '%s' "$out" | jq -r '.key // empty' 2>/dev/null || true)"
+  [ -n "$key" ] || return 0
+  printf 'mesh_claim: %s
+' "$key" >> "$MJ_CUR"
+  mj_info mesh "task-$id" "the scope is claimed on every linked runtime (advisory) as $key" "majordomus mesh briefing"
+  return 0
+}
+
+mj_mesh_task_release() { # <task id>
+  local id="$1"
+  grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null || return 0
+  mj_mesh_task_bin || return 0
+  "$MJ_MESH_BIN" mesh session close --session "task-$id" --repo "$MJ_ROOT" --format json >/dev/null 2>&1 || true
+  return 0
+}

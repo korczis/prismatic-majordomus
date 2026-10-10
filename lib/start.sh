@@ -158,6 +158,7 @@ H
     mj_binding_get '.notes[]? | "note     " + .'
   fi
   mj_report_overlap "$norm"
+  mj_mesh_task_claim "$id" "$(printf '%s' "$norm" | sed 's/^ //')" "$task" "$issue"
   # continuity: name the prior record this checkout would resolve to, without injecting it
   if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then
     mj_info handover "${MJ_RES_PATH#"$MJ_ROOT/"}" \
