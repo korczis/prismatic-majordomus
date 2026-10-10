@@ -443,6 +443,9 @@ refreshed pull request waits for its checks, no other is refreshed, because merg
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.
 
+What that asks of a session that is not the executor, and what may be prepared ahead of a
+head's turn, is in [`WORKING_BESIDE_OTHER_SESSIONS.md`](WORKING_BESIDE_OTHER_SESSIONS.md).
+
 Only a run the executor started holds the pipeline: the required check of the head a
 `refreshed` event recorded as pushed (`head_after`), while it is *pending* or *missing*. Both
 count, because the forge creates no check run for an aggregate job such as this repository's

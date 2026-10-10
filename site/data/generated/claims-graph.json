@@ -2148,6 +2148,22 @@
       "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
     },
     {
+      "id": "claim:sessions-read-how-to-work-beside-others",
+      "kind": "claim",
+      "label": "Every bootstrap this repository generates leads a worker to one workflow for working beside other sessions; the layer discovers that workflow, and every tool, command and script it tells a worker to use exists",
+      "status": "guaranteed",
+      "route": "/guarantees/sessions-read-how-to-work-beside-others/",
+      "external": false,
+      "note": "The workflow states five instructions learned on 2026-10-09 and 2026-10-10 — read the mesh as well as the board, ask for an approval in the session that acts, leave a head to the integration lane until its turn, hold pushes while a release tag has no record, look at a lock after stopping its holder. The case holds that the shell tool and the registry both discover it, that AGENTS.md and CLAUDE.md and their templates name it, that project.mesh-is-observation-not-authority states the clause about a reported approval, and that each name in it resolves in the capability registry, the command graph or the tree; it breaks a copy of the template and a copy of the workflow to prove each check refuses. Whether a session does what it read is not observable and is not claimed."
+    },
+    {
+      "id": "impl:.ai/repo/workflows/working-beside-other-sessions.md",
+      "kind": "implementation",
+      "label": ".ai/repo/workflows/working-beside-other-sessions.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -3338,6 +3354,13 @@
       "external": false
     },
     {
+      "id": "source:docs/WORKING_BESIDE_OTHER_SESSIONS.md",
+      "kind": "source",
+      "label": "docs/WORKING_BESIDE_OTHER_SESSIONS.md",
+      "route": "/docs/working-beside-other-sessions/",
+      "external": false
+    },
+    {
       "id": "source:docs/WORKTREES.md",
       "kind": "source",
       "label": "docs/WORKTREES.md",
@@ -3560,6 +3583,13 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh",
+      "kind": "test",
+      "label": "test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh"
     },
     {
       "id": "test:test/cases/103_obligations.sh",
@@ -5533,6 +5563,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:sessions-read-how-to-work-beside-others",
+      "target": "source:docs/WORKING_BESIDE_OTHER_SESSIONS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -6658,6 +6693,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:sessions-read-how-to-work-beside-others",
+      "target": "impl:.ai/repo/workflows/working-beside-other-sessions.md",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -7780,6 +7820,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:sessions-read-how-to-work-beside-others",
+      "target": "test:test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh",
       "kind": "proved_by"
     }
   ]

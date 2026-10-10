@@ -2014,6 +2014,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:sessions-read-how-to-work-beside-others",
+      "path": "/evidence/claims/sessions-read-how-to-work-beside-others/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:shared-policy",
       "path": "/evidence/claims/shared-policy/"
     },
@@ -10502,6 +10507,29 @@
             "docs/SCHEMAS.md",
             "lib/session.sh",
             "test/cases/63_session_records.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:sessions-read-how-to-work-beside-others": {
+      "kind": "claim",
+      "id": "sessions-read-how-to-work-beside-others",
+      "status": "guaranteed",
+      "page": "/evidence/claims/sessions-read-how-to-work-beside-others/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1034_working_beside_other_sessions_is_written_where_it_is_read",
+          "path": "test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/WORKING_BESIDE_OTHER_SESSIONS.md",
+            ".ai/repo/workflows/working-beside-other-sessions.md",
+            "test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh"
           ]
         }
       ],
@@ -22845,6 +22873,16 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/mesh.rs",
+            ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1034_working_beside_other_sessions_is_written_where_it_is_read",
+          "path": "test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh",
             ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
           ]
         },

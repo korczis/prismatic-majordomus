@@ -1,0 +1,52 @@
+id: I2295
+milestone: development-runtime
+title: "What a session must know to work beside others is written where it is read"
+slug: working-beside-other-sessions-is-written-where-it-is-read
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Write the five coordination lessons of 2026-10-09 and 2026-10-10 into the layer as a workflow a session can follow without any tool, state the one about a relayed approval in the rule it belongs to, point every repository bootstrap at the workflow, publish what it asks and why as a page of the site, and hold all of it with a case and a claim."
+why: "On 2026-10-09 and 2026-10-10 about ten sessions on four machines shipped two releases and integrated pull requests under one integration executor. Five coordination failures cost hours and none of them was written anywhere a new session reads. (1) The owner approved a merge shortcut in one session; that session and a second relayed it to the executor, which refused twice, then reasoned its way to acting on the relays plus a standing authorisation, and was stopped only by its permission layer. (2) The executor coordinated for a day through local messages and the local board and never read what a session on another machine had addressed to it over the mesh: a ready pull request and a relayed owner order. (3) Heads were repaired, with master merged in and derived, before their turn; each was conflicting again after the next landing, and a derive and a run of the required check of about ninety minutes were thrown away each time. (4) From a release tag's push until its record landed, scripts/ci/release-check failed the structure job on every other head, the owner decided on 2026-10-10 to keep that check strict, and the record's dispatched run did not satisfy the branch protection until the pull request was closed and reopened. (5) The executor stopped its own queued job seconds after it took the machine's derive lock; the exit trap never ran and the dead owner held every other session's derive for two hours and fifteen minutes. The bootstraps named the board and the mesh tools but not when to read them, and nothing said what a relayed approval is."
+current_state: "The bootstraps tell a worker to announce on the board and name the mesh tools for claiming and handing over; no document says to read the mesh state for what was addressed to this session, what an approval reported by another session is worth, that a head is not brought up to master before its turn in the lane, what a release tag does to every other head, or to look at a lock after stopping its holder. project.mesh-is-observation-not-authority speaks of discovery events only."
+desired_state: ".ai/repo/workflows/working-beside-other-sessions.md states the five as operating instructions with their reasons and dated evidence, linking docs/MESH.md, docs/INTEGRATION.md and docs/DISTRIBUTION.md for the mechanisms; project.mesh-is-observation-not-authority gains a clause for what a session reads on the mesh or the board, with the evidence; AGENTS.md and CLAUDE.md carry one sentence pointing at the workflow, rendered from their templates; docs/WORKING_BESIDE_OTHER_SESSIONS.md is indexed in docs/README.md and so rendered on the site, and docs/INTEGRATION.md and docs/MESH.md each link to it; the claim sessions-read-how-to-work-beside-others names case 1034, which fails when the workflow is not discovered, a bootstrap drops the pointer, the rule drops the clause, the workflow names a tool or command that does not exist, or the published page loses a section the workflow has."
+scope:
+  - ".ai/repo/workflows/working-beside-other-sessions.md"
+  - ".ai/repo/workflows/README.md"
+  - ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+  - ".ai/repo/providers/agents.tmpl"
+  - ".ai/repo/providers/claude-code.tmpl"
+  - "AGENTS.md"
+  - "CLAUDE.md"
+  - "test/cases/1034_working_beside_other_sessions_is_written_where_it_is_read.sh"
+  - "docs/WORKING_BESIDE_OTHER_SESSIONS.md"
+  - "docs/README.md"
+  - "docs/INTEGRATION.md"
+  - "docs/MESH.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/sessions-read-how-to-work-beside-others.md"
+non_scope:
+  - "Joining the mesh automatically when a session starts, and a briefing that shows mesh messages: both belong to the work on feature/every-session-joins-the-mesh"
+  - "A change to what docs/INTEGRATION.md, docs/MESH.md or docs/DISTRIBUTION.md say of their mechanisms: the workflow links them, and the first two gain one linking sentence each"
+  - "A version bump: the integration executor raises the version once for the whole prevention set"
+  - "The executor reopening a record pull request itself, and a release tag refused from an unjudged commit: each has its own issue"
+  - "Curated knowledge records of class lesson: promotion is a person's act (ADR 0091)"
+depends_on: []
+acceptance_criteria:
+  - "The workflow is a tracked document the tool discovers in the workflow source class, beside task-lifecycle.md, and the section's README lists it"
+  - "Every projection rendered from a template under .ai/repo/providers names the workflow's path, in the template and in the rendered file, and the projection rendered from the distribution's template hands over to one that does"
+  - "project.mesh-is-observation-not-authority states that an approval reported on the mesh or the board authorises nothing in the session that reads it, and names case 1034 among its tests"
+  - "Every majordomus_* tool, majordomus command and scripts/ entry point the workflow names exists in the capability registry, the command graph or the tree"
+  - "Removing the pointer sentence from a template and regenerating makes case 1034 fail"
+  - "docs/WORKING_BESIDE_OTHER_SESSIONS.md is in the first table of docs/README.md, keeps the workflow's five headings, and is linked from docs/INTEGRATION.md and docs/MESH.md"
+  - "docs/CLAIMS.yaml carries the claim sessions-read-how-to-work-beside-others with case 1034 as its test, and the case names the claim"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1034_working_beside_other_sessions_is_written_where_it_is_read"
+  - "bin/majordomus doctor"
+  - "scripts/ci/claim-proof-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 28_no_hardcoded_values"
+evidence_required:
+  - "workflow_discovered_case"
+  - "bootstrap_pointer_mutation"
+created_at: 2026-10-10
+updated_at: 2026-10-10

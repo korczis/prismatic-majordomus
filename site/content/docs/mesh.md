@@ -336,6 +336,9 @@ What a session shares is metadata — intent, issue, task, milestone, branch, he
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
 
+When a session reads all this, and what a message it finds there is worth, is in
+[`WORKING_BESIDE_OTHER_SESSIONS.md`](@/docs/working-beside-other-sessions.md).
+
 ## Failure and recovery
 
 <div class="overflow-x-auto" tabindex="0">
