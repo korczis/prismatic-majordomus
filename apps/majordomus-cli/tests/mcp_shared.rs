@@ -727,6 +727,50 @@ fn a_bridged_peer_takes_over_when_its_server_dies() {
     assert!(!lease_path(&f).exists());
 }
 
+/// A bridged client that asks before it has said `initialize` is refused by the server it
+/// is bridged to, and is told so. The server is there and serving, so nobody is elected:
+/// an election would find the same server, attach to it again and be refused again. The
+/// session then opens as any other does, on the same server.
+#[test]
+fn a_request_a_serving_server_refuses_is_answered_and_elects_nobody() {
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    a.wait_log("listening on http://");
+    a.initialize("claude-code");
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    b.wait_log("bridging this stdio session");
+
+    // a notification the server refuses has no answer to carry the refusal, and gets none
+    b.send(&json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }));
+    let early = b.request("ping", json!({}));
+    assert_eq!(early["error"]["code"], -32600, "{early}");
+    let said = early["error"]["message"].as_str().unwrap_or_default();
+    assert!(said.contains("session_required"), "{said}");
+    assert!(said.contains("(400)"), "{said}");
+
+    // the session opens on the server it was bridged to, which is still the server
+    let init = b.initialize("codex");
+    assert!(
+        init["result"]["instructions"]
+            .as_str()
+            .unwrap()
+            .contains("You are peer p2"),
+        "{init}"
+    );
+    let peers = b.call("majordomus_peers", json!({}));
+    assert_eq!(peers["structuredContent"]["count"], 2, "{peers}");
+    assert_eq!(b.close(), 0);
+    let log = b.drain_log();
+    assert!(
+        !log.contains("electing again"),
+        "a refusal from a serving server started an election:\n{log}"
+    );
+    assert!(
+        a.alive(),
+        "the server the client was bridged to is still serving"
+    );
+}
+
 #[test]
 fn a_bridged_peer_re_attaches_when_another_process_took_the_lease_first() {
     let f = Fixture::new();
