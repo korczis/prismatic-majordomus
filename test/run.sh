@@ -68,6 +68,12 @@ for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
   unset "$mj_git_local"
 done
 unset mj_git_local
+# The interface a server binds is the operator's choice for this machine, not a case's:
+# .envrc.local exports MAJORDOMUS_HTTP_HOST=0.0.0.0 where the owner wants the shared
+# server on the LAN, and a case that starts a server with it inherits a wildcard bind
+# and fails what it measures about the default (case 85). A case that wants another
+# interface states it itself.
+unset MAJORDOMUS_HTTP_HOST
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
