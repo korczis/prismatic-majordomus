@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mcp` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.18.0 -->
+     Generator: majordomus-cli 0.19.1 -->
 # Module `mcp` — MCP projection
 
 The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers.

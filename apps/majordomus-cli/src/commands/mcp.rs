@@ -218,7 +218,10 @@ impl Session {
                 let answer = lock(bridge).handle(&message);
                 match answer {
                     Ok(v) => v.map(Reply::Value),
-                    Err(e) => self.failover(message, e),
+                    Err(e) if e.calls_for_an_election() => self.failover(message, e),
+                    // the server is there and would not take this request: that is its
+                    // answer, and the client is given it instead of an election
+                    Err(e) => refused(&message, &e),
                 }
             }
         }
@@ -380,6 +383,17 @@ fn unavailable(message: &Value, reason: &str) -> Option<Reply> {
         "jsonrpc": "2.0",
         "id": id,
         "error": { "code": -32603, "message": format!("shared server unavailable: {reason}") }
+    })))
+}
+
+/// The JSON-RPC answer for a request a serving shared server would not take; nothing for a
+/// notification. An invalid request, in the server's own words: what it refused and why.
+fn refused(message: &Value, cause: &BridgeError) -> Option<Reply> {
+    let id = message.get("id").cloned().filter(|i| !i.is_null())?;
+    Some(Reply::Value(json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "error": { "code": -32600, "message": cause.to_string() }
     })))
 }
 
