@@ -66,7 +66,9 @@ use crate::capability::model::{
     CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
-use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, BIND_GRACE};
+use crate::lease::{
+    self, ExecutableIdentity, LeaseDocument, LeaseFile, VersionVerdict, BIND_GRACE,
+};
 use crate::repository::{self, GitIdentity, Repository};
 use crate::{capability, module};
 
@@ -302,7 +304,8 @@ pub struct ServerView {
 /// use majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};
 /// let status = ServerStatus { checkout_id: "c".into(), git: None,
 ///     desired: Desired { host: "127.0.0.1".into(), port: 8741, version: "1.0.0".into(), executable: None },
-///     this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };
+///     this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),
+///     connections: None };
 /// let text = serde_json::to_string(&status).unwrap();
 /// assert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);
 /// ```
@@ -324,6 +327,11 @@ pub struct ServerStatus {
     /// Every checkout of the repository, the primary first, each with its server. One entry
     /// — this checkout — where git cannot be asked.
     pub servers: Vec<ServerView>,
+    /// What this process's HTTP server did to connections that held it without a request:
+    /// the read deadline it applies, the connections that deadline closed, and the requests
+    /// refused because every handler was busy. Absent when this process serves no HTTP.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connections: Option<crate::http::deadline::ConnectionCounts>,
 }
 
 /// Decide where a server stands from what its lease file holds, how old the file is,
@@ -407,20 +415,33 @@ pub fn standing_of(
     {
         return (ServerStanding::Outdated, Some(reason));
     }
-    match doc.version.as_deref() {
-        None => (
+    let theirs = doc.version.as_deref().unwrap_or_default();
+    match lease::version_verdict(doc.version.as_deref(), version) {
+        VersionVerdict::Same => (ServerStanding::Ready, None),
+        VersionVerdict::Unpublished => (
             ServerStanding::Outdated,
             Some(format!(
                 "the server published no version, so it is older than this executable ({version})"
             )),
         ),
-        Some(theirs) if theirs != version => (
+        VersionVerdict::ServerOlder => (
+            ServerStanding::Outdated,
+            Some(format!(
+                "the server is serving version {theirs}, older than this executable ({version}); the next client or `serve ensure` of this executable replaces it"
+            )),
+        ),
+        VersionVerdict::ServerNewer => (
+            ServerStanding::Outdated,
+            Some(format!(
+                "the server is serving version {theirs}, newer than this executable ({version}); clients of this executable attach to it and say they are older"
+            )),
+        ),
+        VersionVerdict::Unordered => (
             ServerStanding::Outdated,
             Some(format!(
                 "the server is serving version {theirs}; this executable is {version}"
             )),
         ),
-        Some(_) => (ServerStanding::Ready, None),
     }
 }
 
@@ -586,6 +607,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         this_process: lease::held().as_ref().map(LeaseView::of),
         standing,
         servers,
+        connections: crate::http::deadline::counts(),
     })
 }
 

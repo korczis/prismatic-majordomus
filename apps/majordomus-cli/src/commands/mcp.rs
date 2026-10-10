@@ -217,6 +217,9 @@ impl Session {
             Backend::Remote { bridge, .. } => {
                 let answer = lock(bridge).handle(&message);
                 match answer {
+                    Ok(v) if message["method"] == "initialize" => {
+                        v.map(|v| Reply::Value(told_of_version(v, crate::VERSION)))
+                    }
                     Ok(v) => v.map(Reply::Value),
                     Err(e) if e.calls_for_an_election() => self.failover(message, e),
                     // the server is there and would not take this request: that is its
@@ -376,6 +379,35 @@ impl Session {
     }
 }
 
+/// The `initialize` answer a bridged client relays, with what its client must know when the
+/// shared server is a newer release than this executable (`mine`): the answers come from
+/// the newer server, while this process — the bridge, its command line — is the older one
+/// until it is started from the newer executable. Said in the instructions, which every
+/// client shows its model, because an older client that attached in silence is how a
+/// version difference went unseen (I2163). Any other answer is relayed as it is.
+fn told_of_version(mut answer: Value, mine: &str) -> Value {
+    let served = answer["result"]["serverInfo"]["version"]
+        .as_str()
+        .map(str::to_string);
+    if lease::version_verdict(served.as_deref(), mine) != lease::VersionVerdict::ServerNewer {
+        return answer;
+    }
+    let theirs = served.unwrap_or_default();
+    let note = format!(
+        "This client is majordomus {mine}; the shared server it is bridged to runs {theirs}, a newer release. Its answers are the newer server's; this client process is the older one until it is started from the newer executable."
+    );
+    tracing::warn!("{note}");
+    if let Some(result) = answer.get_mut("result").and_then(Value::as_object_mut) {
+        let instructions = result
+            .get("instructions")
+            .and_then(Value::as_str)
+            .map(|i| format!("{note}\n\n{i}"))
+            .unwrap_or(note);
+        result.insert("instructions".into(), Value::String(instructions));
+    }
+    answer
+}
+
 /// The JSON-RPC answer for a request that no server could take; nothing for a notification.
 fn unavailable(message: &Value, reason: &str) -> Option<Reply> {
     let id = message.get("id").cloned().filter(|i| !i.is_null())?;
@@ -529,6 +561,35 @@ fn inspect(surface: &Surface, format: OutputFormat) -> Result<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn initialized(version: &str) -> Value {
+        json!({"jsonrpc": "2.0", "id": 1, "result": {
+            "serverInfo": {"name": "majordomus", "version": version},
+            "instructions": "The projection of a repository's AI layer."
+        }})
+    }
+
+    #[test]
+    fn older_client_told_test() {
+        // bridged to a newer release, the client is told, before what the server said
+        let told = told_of_version(initialized("0.21.0"), "0.20.0");
+        let instructions = told["result"]["instructions"].as_str().unwrap();
+        assert!(instructions.starts_with("This client is majordomus 0.20.0"));
+        assert!(instructions.contains("runs 0.21.0, a newer release"));
+        assert!(instructions.ends_with("The projection of a repository's AI layer."));
+        // the same release, or an older one, is relayed as it is
+        assert_eq!(
+            told_of_version(initialized("0.20.0"), "0.20.0"),
+            initialized("0.20.0")
+        );
+        assert_eq!(
+            told_of_version(initialized("0.19.1"), "0.20.0"),
+            initialized("0.19.1")
+        );
+        // and an error answer has nothing to be told in
+        let error = json!({"jsonrpc": "2.0", "id": 1, "error": {"code": -32600}});
+        assert_eq!(told_of_version(error.clone(), "0.20.0"), error);
+    }
 
     #[test]
     fn a_diagnostic_is_introduced_by_the_verdict_word_of_its_severity() {

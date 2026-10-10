@@ -135,6 +135,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let mut idle_since = Instant::now();
         loop {
             std::thread::sleep(Duration::from_secs(1));
+            if superseded_and_alone(&shared) {
+                break;
+            }
             // in use: an MCP session attached, a request answered within the last second, or a
             // live channel open — the Cockpit and the REST API count as much as a client (I2131)
             if shared.peers_attached() > 0
@@ -154,11 +157,24 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         loop {
             std::thread::sleep(Duration::from_secs(1));
             shared.endpoint().reap();
+            if superseded_and_alone(&shared) {
+                break;
+            }
         }
     }
     shared.wait_until_peers_leave();
     shared.stop();
     Ok(0)
+}
+
+/// A server whose lease another process took, once its last session has been handed on, has
+/// nothing left to serve and ends (I2127).
+fn superseded_and_alone(shared: &crate::shared::SharedServer) -> bool {
+    let alone = lease::was_lost() && shared.peers_attached() == 0;
+    if alone {
+        tracing::info!("this server lost the lease and its last session was handed on; stopping");
+    }
+    alone
 }
 
 /// `serve status`: the projection of `server.status`, asked of the running server when
@@ -556,13 +572,21 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
             }
             ServerStanding::Absent | ServerStanding::Stale => {}
             ServerStanding::Outdated => {
-                let takes_over = doc
+                // this executable replaces the server when it is the file the server was
+                // started from, rebuilt since, or a newer release than the server's: the
+                // election the started process runs reaches the same verdict (I2163)
+                let rebuilt = doc
                     .as_ref()
                     .and_then(|d| d.executable.as_ref())
                     .is_some_and(|e| {
                         e.replaced().is_some()
                             && std::env::current_exe().ok().as_deref() == Some(e.path.as_path())
                     });
+                let newer = doc.as_ref().is_some_and(|d| {
+                    lease::version_verdict(d.version.as_deref(), crate::VERSION)
+                        == lease::VersionVerdict::ServerOlder
+                });
+                let takes_over = rebuilt || newer;
                 if takes_over && !started {
                     spawn_server(repo, port, idle, &log, None)?;
                     started = true;
