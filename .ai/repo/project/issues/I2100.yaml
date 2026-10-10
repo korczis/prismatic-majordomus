@@ -1,0 +1,28 @@
+id: I2100
+milestone: mobile-first
+title: the site phone menu opens into 50 links over two thousand pixels
+slug: site-menu-height-on-a-phone
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: Below md, present the navbar's groups as disclosures rather than every group's items inline, keeping site/data/nav.toml the one declaration.
+why: 'Measured on majordomus.dev: opened at 320x640 the menu is 2,318px tall (50 visible links), 2,174px at 390x844 and in landscape at 667x375; the dropdown toggles are hidden below md, so every group is expanded at once.'
+current_state: Open. The menu fits the width and every target is at least 24px; it is the length that fails a phone.
+desired_state: The opened menu fits within about one screen at 390x844 and every group remains reachable in at most one more tap.
+scope:
+- site/templates/partials/navbar.html
+- site/nav.js
+- scripts/lib/interaction-specs
+depends_on:
+- I2097
+acceptance_criteria:
+- At 390x844 the opened menu is no taller than the viewport
+- Every link the declaration lists is still reachable
+- project.navigation-is-declared-once still holds
+validation:
+- scripts/interaction-probe
+- scripts/ci/nav-check
+evidence_required:
+- site_menu_operable_on_a_phone
+created_at: '2026-10-09'
+updated_at: '2026-10-09'

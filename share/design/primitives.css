@@ -44,8 +44,13 @@
     border: 1px solid var(--mj-line);
     color: var(--mj-muted);
   }
+  /* max-w-full and min-w-0 because a flex item does not shrink below its content: a mark
+     carrying a long identifier would otherwise hold the row wider than the screen. */
   .mj-marks {
-    @apply inline-flex flex-wrap items-center gap-1;
+    @apply inline-flex max-w-full flex-wrap items-center gap-1;
+  }
+  .mj-marks > * {
+    @apply min-w-0;
   }
 
   /* An alert: a sentence with a status. The left rule is the status's text colour. */
@@ -175,11 +180,21 @@
   /* --------------------------------------------------------------------- chips */
 
   /* The way into a long listing: its own parts, each with how many it holds. */
+  /* A row of filters wraps where there is room for it and scrolls sideways where there is
+     not. Wrapped at a phone's width, the Cockpit's 87 module filters stood 1,048px tall at
+     320 and pushed the first row of the listing two screens down; as one scrolling row they
+     take one line, every filter is still a link the keyboard reaches, and the row scrolls
+     inside itself rather than widening the page. */
   .mj-chips {
     @apply flex flex-wrap items-center gap-1.5;
+    @apply max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:overscroll-x-contain max-sm:pb-1.5;
+    scrollbar-width: thin;
+  }
+  .mj-chips > li {
+    @apply max-sm:shrink-0;
   }
   .mj-chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-small no-underline;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-small no-underline whitespace-nowrap;
     background: var(--mj-raised);
     border: 1px solid var(--mj-line);
     color: var(--mj-fg);
@@ -210,9 +225,20 @@
   .mj-link:hover {
     @apply decoration-2;
   }
+  /* An inline identifier, path or command breaks where it must rather than widening the
+     page: `overflow-wrap: anywhere` breaks a token only when the line cannot hold it, so a
+     short one is untouched, and copying it still copies it whole. At 320 the plan issue
+     pages' paths and commands held the page up to 700px wide. In a table it keeps its line:
+     a table scrolls inside its own container, and an identifier broken across lines is what
+     makes a table unreadable. */
   .mj-mono {
     @apply font-mono text-small;
     color: var(--mj-fg);
+    overflow-wrap: anywhere;
+  }
+  td .mj-mono,
+  th .mj-mono {
+    overflow-wrap: normal;
   }
   a.mj-mono {
     @apply break-all;

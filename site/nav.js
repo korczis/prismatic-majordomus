@@ -1,5 +1,6 @@
 /* The navbar's two behaviours, wired by the data attributes partials/navbar.html carries:
-   `data-collapse-toggle="<id>"` opens and closes the mobile menu it names, and
+   `data-collapse-toggle="<id>"` opens and closes the mobile menu it names (Escape closes it
+   too, when no dropdown is open), and
    `data-dropdown-toggle="<id>"` opens and closes the menu it names beneath its toggle. Each
    sets `aria-expanded` and toggles the target's `hidden` class, so the page's CSS and the
    probes read the same state. One dropdown is open at a time; a click elsewhere or Escape
@@ -19,9 +20,11 @@
   }
 
   function init() {
+    var collapses = [];
     document.querySelectorAll('[data-collapse-toggle]').forEach(function (button) {
       var target = document.getElementById(button.getAttribute('data-collapse-toggle'));
       if (!target) { return; }
+      collapses.push([button, target]);
       button.setAttribute('aria-expanded', target.classList.contains('hidden') ? 'false' : 'true');
       button.addEventListener('click', function () { toggle(button, target); });
     });
@@ -45,8 +48,19 @@
         if (!d[1].classList.contains('hidden') && !d[1].contains(event.target)) { toggle(d[0], d[1], false); }
       });
     });
+    // Escape closes an open dropdown first; with none open it closes the mobile menu, which on
+    // a phone is several screens tall, and hands focus back to its toggle
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') { closeAll(); }
+      if (event.key !== 'Escape') { return; }
+      var dropdownOpen = dropdowns.some(function (d) { return !d[1].classList.contains('hidden'); });
+      closeAll();
+      if (dropdownOpen) { return; }
+      collapses.forEach(function (c) {
+        if (!c[1].classList.contains('hidden') && c[0].getClientRects().length) {
+          toggle(c[0], c[1], false);
+          c[0].focus();
+        }
+      });
     });
   }
 

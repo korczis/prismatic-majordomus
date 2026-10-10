@@ -1,0 +1,32 @@
+id: I2099
+milestone: mobile-first
+title: every assertion of the drawer probe kills a mutant of the behaviour it guards
+slug: drawer-mutants-are-killed
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: Run the 22 mutants of cockpit.js and cockpit.css against the drawer probe, each on a fresh server over an isolated share copy, and turn every survivor into an assertion or a recorded equivalent.
+why: A probe that passes is only evidence if it would fail without the behaviour; mutation shows which assertions are decoration.
+current_state: "24 of 24 mutants killed in one run against probe digest c01a515497371212 (15 of cockpit.js, 7 of the stylesheet, 2 for the #mj-nav ownership fix), each served from its own server over a copy of share/. The first pass killed 14 of 22; the survivors became assertions on effects rather than classes (computed overflow and overscroll-behavior), a fresh load with #mj-nav, a pinned regression seed, Ctrl+K over the open drawer, a synchronous read of the drawer on an entry click, and a back-forward-cache restore delivered as its pageshow event, because a Playwright-driven Chrome reloads on back instead of restoring (measured)."
+desired_state: Every non-equivalent mutant is killed; each equivalent one is named with the reason it cannot be observed.
+scope:
+- scripts/lib/cockpit-probe.mjs
+depends_on:
+- I2098
+acceptance_criteria:
+- The kill rate and the list of survivors are recorded as evidence
+- No surviving mutant changes behaviour a person can observe
+validation:
+- scripts/cockpit-probe --drawer
+evidence_required:
+- every_assertion_kills_a_mutant
+created_at: '2026-10-09'
+updated_at: 2026-10-09T01:39:44Z
+evidence:
+  - covers: every_assertion_kills_a_mutant
+    type: test
+    command: "mutation runner: per mutant cp -R share target/mutants/share, apply, rebuild css, MAJORDOMUS_SHARE=... majordomus serve, node scripts/lib/cockpit-probe.mjs <url> drawer"
+    result: "24/24 killed against probe sha256 c01a515497371212; first pass 14/22 with survivors M04 M06 M07 M14 M15 C01 C05 C07, each turned into an assertion"
+    artifact: "scripts/lib/cockpit-probe.mjs@c01a515497371212"
+    commit: aa995d5249bd688205024e6c860556e758db3ff0
+    recorded_at: 2026-10-09T01:39:44Z

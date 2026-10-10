@@ -1,0 +1,49 @@
+id: mobile-first
+title: The Cockpit and the site are usable on a phone, and a narrow screen is measured rather than assumed
+slug: mobile-first
+order: 125
+priority: p0
+problem: "Below the lg width the Cockpit's sidebar was `hidden lg:block` with nothing that showed it, so a phone had no section navigation at all, and every check that looked at narrow widths passed: the overflow sweep at 320 and 390 measured a page that had nothing on it to overflow. The site's phone menu worked but could not be closed with Escape and opens into a list several screens tall. Nothing asserted what a person on a phone can reach and do; the checks asserted only what does not go wrong."
+outcome: "Every navigation surface is reachable and operable at every width the design declares, on a touch screen, with the keyboard and without JavaScript; the drawer that carries the Cockpit's sections below lg is one element, one catalogue and one state owner; and the probes that hold it are adversarial: a seeded random walk against a model of the drawer, a chaos case with Alpine blocked, the accessibility engine over the drawer open and closed, and a mutation run that proves each assertion fails when the behaviour it guards is broken."
+current_state: "The drawer, the site menu's Escape and the drawer's grey-box probes are implemented on feature/cockpit-mobile-navigation (I2096-I2098). Mutation survivors (I2099), the site menu's height (I2100), the worktrees page's latency (I2101), mobile WebKit coverage (I2102) and the narrow-width audit of the Cockpit's dense surfaces (I2103) are open."
+desired_state: "A person on a supported phone opens the Cockpit, reaches any section, inspects a record, runs a capability the runner offers and returns, without fighting the interface; a change that breaks any of that fails a probe in CI before it merges."
+scope:
+  - apps/majordomus-cli/src/cockpit
+  - share/cockpit
+  - share/design
+  - site/nav.js
+  - site/templates/partials
+  - scripts/cockpit-probe
+  - scripts/lib/cockpit-probe.mjs
+  - scripts/lib/interaction-specs
+  - .ai/repo/rules/project
+  - docs/COCKPIT.md
+non_scope:
+  - A separate mobile application, route tree, navigation inventory or API
+  - A second frontend framework; the Cockpit stays server-rendered HTML with the one Alpine component
+  - Claims of physical-device validation from browser emulation
+acceptance_criteria:
+  - At every width the design declares below lg, and in phone landscape, the Cockpit's sections are reachable by touch, by keyboard and with JavaScript disabled
+  - Every way of closing the drawer leaves no scroll lock, no inert element and no covering layer, and a seeded random walk agrees with a model of the drawer at every step
+  - Each assertion of the drawer probe is shown to fail by at least one mutant of the behaviour it guards
+  - The site's phone menu closes on Escape and opens to something a phone can take in without scrolling past several screens
+  - Mobile WebKit is exercised wherever the browser engine can be installed, and a run that could not use it says NOT RUN
+validation:
+  - scripts/cockpit-probe --drawer
+  - scripts/cockpit-probe
+  - scripts/interaction-probe --spec nav-collapse
+  - cargo test --lib cockpit::
+  - scripts/cockpit-assets --check
+  - bin/majordomus plan validate
+evidence_required:
+  - sections_reachable_on_a_phone
+  - drawer_agrees_with_its_model
+  - every_assertion_kills_a_mutant
+  - site_menu_operable_on_a_phone
+  - mobile_webkit_exercised
+depends_on: []
+risks:
+  - "Emulated touch in Chrome is not a phone. Every report of this milestone names the engine and says emulation; a physical-device result is recorded only when one was run."
+  - "A random walk that only takes actions the model allows cannot find a state the model forgot. The model is written from what a person can do, not from what the controller handles."
+created_at: 2026-10-09
+updated_at: 2026-10-09

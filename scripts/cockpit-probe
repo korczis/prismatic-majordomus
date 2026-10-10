@@ -20,6 +20,10 @@
 #   scripts/cockpit-probe             both sweeps
 #   scripts/cockpit-probe --quick     the status sweep in full, one of each family in the browser
 #   scripts/cockpit-probe --status    the status sweep alone; no browser needed
+#   scripts/cockpit-probe --drawer    the narrow-width navigation drawer alone, in the browser
+#   scripts/cockpit-probe --phone     the drawer, the runner, the graph, the filters and the
+#                                     longest tokens at a phone's width
+#   COCKPIT_PROBE_ENGINE=webkit       drive Playwright's WebKit (Safari's engine) instead of Chrome
 #   COCKPIT_PROBE_URL=http://...      probe a server that is already running, and start none
 #   COCKPIT_PROBE_PORT=N              the port to bind (default: a free one the OS picks)
 #
@@ -36,6 +40,8 @@ MODE=full
 case "${1:-}" in
   --quick) MODE=quick ;;
   --status) MODE=status ;;
+  --drawer) MODE=drawer ;;
+  --phone) MODE=phone ;;
   '') ;;
   *) echo "cockpit-probe: unknown option $1" >&2; exit 2 ;;
 esac
@@ -99,6 +105,12 @@ if ! curl -sf -o /dev/null "$BASE/cockpit"; then
   exit 12
 fi
 ok server "$BASE"
+
+# --drawer and --phone are the browser's questions alone, asked fast: the route set, the
+# status sweep and the served projection are the full and quick modes' answers, and the CI
+# job that runs a phone mode has already run one of those against the same server.
+case "$MODE" in drawer|phone) BROWSER_ONLY=1 ;; *) BROWSER_ONLY=0 ;; esac
+if [ "$BROWSER_ONLY" = 0 ]; then
 
 # ---------------------------------------------------------------- the routes
 # Derived from the server, in the same order the browser sweep derives them, so the two
@@ -180,6 +192,7 @@ printf '%s' "$hdr" | tr 'A-Z' 'a-z' | sed -n 's/.*script-src \([^;]*\).*/\1/p' |
 ok headers "the policy is strict and the response headers are what the pages declare"
 
 [ "$MODE" = status ] && { printf 'cockpit-probe: %s finding(s)\n' "$fails"; [ "$fails" = 0 ] || exit 10; exit 0; }
+fi
 
 # ---------------------------------------------------------------- browser sweep
 command -v node >/dev/null || { echo "SKIP cockpit-probe: node absent; the status sweep passed"; [ "$fails" = 0 ] || exit 10; exit 0; }
@@ -188,6 +201,9 @@ CHROME=0
 for c in "${CHROME_BIN:-}" google-chrome google-chrome-stable chromium chromium-browser "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do
   [ -n "$c" ] && { command -v "$c" >/dev/null 2>&1 || [ -x "$c" ]; } && { CHROME=1; break; }
 done
+# WebKit is Playwright's own build (npx playwright install webkit), not an installed browser,
+# so a WebKit run asks for no Chrome; the module reports an engine that will not launch.
+[ "${COCKPIT_PROBE_ENGINE:-chrome}" = webkit ] && CHROME=1
 [ "$CHROME" = 1 ] || { echo "SKIP cockpit-probe: no Chrome found (set CHROME_BIN); the status sweep passed"; [ "$fails" = 0 ] || exit 10; exit 0; }
 
 set +e

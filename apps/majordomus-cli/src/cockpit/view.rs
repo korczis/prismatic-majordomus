@@ -89,23 +89,29 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
         .child(skip_link())
         .child(header(shell))
         .child(
-            el("div").class("mj-layout").child(sidebar(shell)).child(
-                el("main")
-                    .attr("id", "main")
-                    .class("mj-main")
-                    .when(!shell.assets_present, |m| m.child(alert("warn", NO_ASSETS)))
-                    .child(breadcrumbs(&shell.breadcrumbs))
-                    .child(
-                        el("header")
-                            .class("mj-page-head")
-                            .child(el("h1").class("mj-page-title").text(shell.title))
-                            .node(match &shell.subtitle {
-                                Some(s) => Node::Element(el("p").class("mj-page-subtitle").text(s)),
-                                None => empty(),
-                            }),
-                    )
-                    .child(main),
-            ),
+            el("div")
+                .class("mj-layout")
+                .child(sidebar(shell))
+                .child(nav_backdrop())
+                .child(
+                    el("main")
+                        .attr("id", "main")
+                        .class("mj-main")
+                        .when(!shell.assets_present, |m| m.child(alert("warn", NO_ASSETS)))
+                        .child(breadcrumbs(&shell.breadcrumbs))
+                        .child(
+                            el("header")
+                                .class("mj-page-head")
+                                .child(el("h1").class("mj-page-title").text(shell.title))
+                                .node(match &shell.subtitle {
+                                    Some(s) => {
+                                        Node::Element(el("p").class("mj-page-subtitle").text(s))
+                                    }
+                                    None => empty(),
+                                }),
+                        )
+                        .child(main),
+                ),
         )
         .child(palette())
         .child(footer(shell));
@@ -139,9 +145,48 @@ fn skip_link() -> El {
         .text("Skip to content")
 }
 
+/// The id the sidebar carries, so the topbar's trigger can name it and `:target` can open
+/// it on a page whose script never ran.
+const NAV_ID: &str = "mj-nav";
+
+/// Three bars, drawn in `currentColor`: the trigger's icon. Its name is the text beside it.
+const NAV_ICON: &str = r#"<svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>"#;
+
+/// The control that opens the sidebar as a drawer below the `lg` width, where the sidebar
+/// does not sit beside the page. It is a link to the sidebar, not a button, so that it
+/// works without the script: the stylesheet opens the sidebar while it is the `:target`.
+/// With the script, the one component owns the state and the link is never followed.
+fn nav_trigger() -> El {
+    el("a")
+        .class("mj-nav-open")
+        .attr("href", format!("#{NAV_ID}"))
+        .attr("aria-controls", NAV_ID)
+        .attr("aria-expanded", "false")
+        .attr("x-ref", "navOpen")
+        .attr("x-on:click.prevent", "openNav")
+        .child(
+            el("span")
+                .class("mj-nav-open-icon")
+                .attr("aria-hidden", "true")
+                .raw(NAV_ICON),
+        )
+        .child(el("span").class("mj-nav-open-label").text("Sections"))
+}
+
+/// What covers the page while the drawer is open, and closes it when touched. It follows the
+/// drawer in the document so the stylesheet shows it exactly while the drawer is open, and
+/// never at the width where the sidebar is not a drawer.
+fn nav_backdrop() -> El {
+    el("div")
+        .class("mj-nav-backdrop")
+        .attr("aria-hidden", "true")
+        .attr("x-on:click", "closeNav")
+}
+
 fn header(shell: &Shell<'_>) -> El {
     el("header")
         .class("mj-topbar")
+        .child(nav_trigger())
         .child(
             el("a")
                 .class("mj-brand")
@@ -184,9 +229,28 @@ fn header(shell: &Shell<'_>) -> El {
 }
 
 fn sidebar(shell: &Shell<'_>) -> El {
+    // The same element is the sidebar at `lg` and the drawer below it: one catalogue, one
+    // rendering, two placements. The component gives it a dialog's role only while it is
+    // open as a drawer, so the sidebar beside the page is never announced as modal.
     let mut nav = el("nav")
         .class("mj-sidebar")
-        .attr("aria-label", "Cockpit sections");
+        .attr("id", NAV_ID)
+        .attr("aria-label", "Cockpit sections")
+        .attr("x-ref", "nav")
+        .child(
+            el("div")
+                .class("mj-nav-drawer-head")
+                .child(el("span").class("mj-nav-drawer-title").text("Sections"))
+                .child(
+                    el("a")
+                        .class("mj-nav-close")
+                        .attr("href", "#main")
+                        .attr("aria-label", "Close sections")
+                        .attr("x-ref", "navClose")
+                        .attr("x-on:click.prevent", "closeNav")
+                        .child(el("span").attr("aria-hidden", "true").text("×")),
+                ),
+        );
     for section in shell.navigation.sections() {
         let mut list = el("ul").class("mj-nav-list");
         // A grouped section shows its headings as the group changes. The items arrive in
@@ -786,6 +850,64 @@ fn css_word(word: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn shell_page() -> String {
+        let navigation = Navigation::empty();
+        let shell = Shell {
+            title: "Overview",
+            subtitle: None,
+            area: Area::Overview,
+            breadcrumbs: Vec::new(),
+            navigation: &navigation,
+            stylesheet: "/cockpit/assets/cockpit.css".into(),
+            scripts: Vec::new(),
+            assets_present: true,
+            version: "0.0.0",
+        };
+        page(&shell, el("div"))
+    }
+
+    // Below `lg` the sidebar used to be `hidden` with nothing that showed it, so a phone had
+    // no section navigation. The shell now carries the way to it; the browser probe
+    // (scripts/cockpit-probe --drawer) holds what it does, and this holds that it is there.
+    #[test]
+    fn the_sidebar_can_be_reached_where_it_does_not_sit_beside_the_page() {
+        let html = shell_page();
+        // the trigger names the sidebar, and is a link to it, so it works without a script
+        assert!(
+            html.contains(r##"class="mj-nav-open" href="#mj-nav""##),
+            "{html}"
+        );
+        assert!(html.contains(r#"aria-controls="mj-nav""#), "{html}");
+        assert!(html.contains(r#"aria-expanded="false""#), "{html}");
+        assert!(html.contains(r#"id="mj-nav""#), "{html}");
+        // the drawer can be closed from inside it, by a control with a name
+        assert!(html.contains(r#"aria-label="Close sections""#), "{html}");
+        // and the backdrop follows the sidebar, which is what the stylesheet's
+        // `[data-open] + .mj-nav-backdrop` depends on
+        let sidebar = html
+            .find(r#"<nav class="mj-sidebar""#)
+            .expect("the sidebar renders");
+        let nav_end = sidebar + html[sidebar..].find("</nav>").expect("the sidebar closes");
+        assert!(
+            html[nav_end..].starts_with(r#"</nav><div class="mj-nav-backdrop""#),
+            "the backdrop must follow the sidebar directly: {}",
+            &html[nav_end..(nav_end + 80).min(html.len())]
+        );
+    }
+
+    // The sidebar beside the page is navigation, not a dialog: the component gives it the
+    // dialog's role only while it is open as a drawer.
+    #[test]
+    fn the_sidebar_is_not_rendered_as_a_dialog() {
+        let html = shell_page();
+        let start = html
+            .find(r#"<nav class="mj-sidebar""#)
+            .expect("the sidebar renders");
+        let tag = &html[start..start + html[start..].find('>').unwrap()];
+        assert!(!tag.contains("role="), "{tag}");
+        assert!(!tag.contains("aria-modal"), "{tag}");
+    }
 
     #[test]
     fn a_status_word_cannot_build_a_class_it_is_not() {

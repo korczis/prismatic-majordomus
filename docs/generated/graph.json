@@ -30259,6 +30259,313 @@
         }
       },
       {
+        "id": "majordomus://issue/I2096",
+        "kind": "issue",
+        "label": "I2096",
+        "summary": "the Cockpit sections are reachable on a phone through one drawer",
+        "route": "/cockpit/objects/issue/i2096",
+        "source": ".ai/repo/project/issues/I2096.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/cockpit-probe --drawer passes at 320x740, 390x740 and 667x375 on touch and with JavaScript disabled",
+            "The same check fails against master's shell with 'no visible trigger; the sections are unreachable'",
+            "cockpit::view unit tests hold the trigger, the close control, the backdrop's position and the sidebar never rendered as a dialog"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "sections_reachable_on_a_phone"
+          ],
+          "milestone": "mobile-first",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "apps/majordomus-cli/src/cockpit/nav.rs",
+            "share/cockpit/cockpit.js",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "docs/COCKPIT.md"
+          ],
+          "slug": "cockpit-sections-on-a-phone",
+          "started_at": "2026-10-08T23:43:20Z",
+          "started_event": "sha256:2f344281ea2a157d915ae1663bdd1eeac0b844faebc4b75d44b98a7be7c3dc3e",
+          "updated_at": "2026-10-09T00:51:06Z",
+          "validation": [
+            "scripts/cockpit-probe --drawer",
+            "cargo test --lib cockpit::view",
+            "scripts/cockpit-assets --check"
+          ],
+          "verified_at": "2026-10-08T23:43:40Z",
+          "verified_event": "sha256:accc560a308f6f0ebfd1787398b6987c9205bf13fbeccd60e6b5b4d50929caa0",
+          "why": "The sidebar was `hidden lg:block` with nothing that showed it, so a phone had no section navigation; the overflow sweep at 320 and 390 passed because an empty page does not overflow."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2097",
+        "kind": "issue",
+        "label": "I2097",
+        "summary": "the site phone menu closes on Escape and returns focus to its toggle",
+        "route": "/cockpit/objects/issue/i2097",
+        "source": ".ai/repo/project/issues/I2097.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The nav-collapse spec fails on the published site and passes on the build",
+            "Escape with a dropdown open closes the dropdown and leaves the phone menu as it was"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "site/nav.js and scripts/lib/interaction-specs/nav-collapse.mjs changed on feature/cockpit-mobile-navigation; verified against the live site's own markup with the new script substituted.",
+          "depends_on": [],
+          "desired_state": "Escape closes the phone menu, aria-expanded reads false and focus is on the toggle; a desktop dropdown still closes first and the desktop menu is untouched.",
+          "evidence_required": [
+            "site_menu_operable_on_a_phone"
+          ],
+          "milestone": "mobile-first",
+          "objective": "Make Escape close the site's open phone menu when no dropdown is open, set the toggle's aria-expanded back and focus the toggle; extend the nav-collapse spec to assert it.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/nav.js",
+            "scripts/lib/interaction-specs/nav-collapse.mjs"
+          ],
+          "slug": "site-menu-closes-on-escape",
+          "started_at": "2026-10-08T23:43:25Z",
+          "started_event": "sha256:b2354e3a1dcdc6443bf9ab7a9c5e54475b9b0fb102de0a85c27678493f270064",
+          "updated_at": "2026-10-08T23:43:45Z",
+          "validation": [
+            "scripts/interaction-probe --spec nav-collapse"
+          ],
+          "verified_at": "2026-10-08T23:43:45Z",
+          "verified_event": "sha256:560f95a1bc297dd6324a64cc04396066c348c7dea3d2aba2f6922a10816b5bca",
+          "why": "On majordomus.dev at 320, 390 and 667 wide, Escape left the open phone menu open with aria-expanded=true; the menu is several screens tall, so the only way out was scrolling back to its toggle."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2098",
+        "kind": "issue",
+        "label": "I2098",
+        "summary": "the drawer probe is adversarial: a seeded walk against a model, Alpine blocked, the accessibility engine",
+        "route": "/cockpit/objects/issue/i2098",
+        "source": ".ai/repo/project/issues/I2098.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A failing walk prints its seed, its path and COCKPIT_PROBE_SEED=<n> scripts/cockpit-probe --drawer",
+            "Seed 1017 fails against the left-aligned skip link and passes against the centred one",
+            "With Alpine blocked the trigger still opens and closes the sections"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [
+            "I2096"
+          ],
+          "desired_state": "Every CI run of the Cockpit probe walks seeds that change daily and prints the seed and path of any failure with a replay command.",
+          "evidence_required": [
+            "drawer_agrees_with_its_model"
+          ],
+          "milestone": "mobile-first",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/cockpit-probe.mjs",
+            "scripts/cockpit-probe",
+            "share/cockpit/src/cockpit.css"
+          ],
+          "slug": "drawer-probe-is-adversarial",
+          "updated_at": "2026-10-08T23:43:38Z",
+          "validation": [
+            "scripts/cockpit-probe --drawer",
+            "COCKPIT_PROBE_WALKS=12 COCKPIT_PROBE_STEPS=60 scripts/cockpit-probe --drawer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2099",
+        "kind": "issue",
+        "label": "I2099",
+        "summary": "every assertion of the drawer probe kills a mutant of the behaviour it guards",
+        "route": "/cockpit/objects/issue/i2099",
+        "source": ".ai/repo/project/issues/I2099.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The kill rate and the list of survivors are recorded as evidence",
+            "No surviving mutant changes behaviour a person can observe"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [
+            "I2098"
+          ],
+          "desired_state": "Every non-equivalent mutant is killed; each equivalent one is named with the reason it cannot be observed.",
+          "evidence_required": [
+            "every_assertion_kills_a_mutant"
+          ],
+          "milestone": "mobile-first",
+          "objective": "Run the 22 mutants of cockpit.js and cockpit.css against the drawer probe, each on a fresh server over an isolated share copy, and turn every survivor into an assertion or a recorded equivalent.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/cockpit-probe.mjs"
+          ],
+          "slug": "drawer-mutants-are-killed",
+          "updated_at": "2026-10-09T01:39:44Z",
+          "validation": [
+            "scripts/cockpit-probe --drawer"
+          ],
+          "why": "A probe that passes is only evidence if it would fail without the behaviour; mutation shows which assertions are decoration."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2100",
+        "kind": "issue",
+        "label": "I2100",
+        "summary": "the site phone menu opens into 50 links over two thousand pixels",
+        "route": "/cockpit/objects/issue/i2100",
+        "source": ".ai/repo/project/issues/I2100.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "At 390x844 the opened menu is no taller than the viewport",
+            "Every link the declaration lists is still reachable",
+            "project.navigation-is-declared-once still holds"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Open. The menu fits the width and every target is at least 24px; it is the length that fails a phone.",
+          "depends_on": [
+            "I2097"
+          ],
+          "desired_state": "The opened menu fits within about one screen at 390x844 and every group remains reachable in at most one more tap.",
+          "evidence_required": [
+            "site_menu_operable_on_a_phone"
+          ],
+          "milestone": "mobile-first",
+          "objective": "Below md, present the navbar's groups as disclosures rather than every group's items inline, keeping site/data/nav.toml the one declaration.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/navbar.html",
+            "site/nav.js",
+            "scripts/lib/interaction-specs"
+          ],
+          "slug": "site-menu-height-on-a-phone",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "scripts/interaction-probe",
+            "scripts/ci/nav-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2101",
+        "kind": "issue",
+        "label": "I2101",
+        "summary": "the Cockpit landing and worktrees pages take seconds to answer on this repository",
+        "route": "/cockpit/objects/issue/i2101",
+        "source": ".ai/repo/project/issues/I2101.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The cause is named with a measurement",
+            "The page loads within the probe's timeout at every declared width"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "sections_reachable_on_a_phone"
+          ],
+          "milestone": "mobile-first",
+          "objective": "Find what /cockpit and /cockpit/worktrees spend their seconds on with this repository's data, remove or defer it, and hold both pages to a latency budget in the probe and the UI audit.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "share/cockpit/worktrees.js"
+          ],
+          "slug": "worktrees-page-latency",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "scripts/cockpit-probe"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2102",
+        "kind": "issue",
+        "label": "I2102",
+        "summary": "mobile WebKit is exercised, or the run says it was not",
+        "route": "/cockpit/objects/issue/i2102",
+        "source": ".ai/repo/project/issues/I2102.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A WebKit run of the drawer probe passes in CI",
+            "A run without WebKit prints NOT RUN for it rather than nothing"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Open. Chrome passes at 320x568, 360x640, 375x667, 390x844, 430x932, 568x320, 667x375 and 768x1024; WebKit: NOT RUN.",
+          "depends_on": [
+            "I2098"
+          ],
+          "desired_state": "CI runs the drawer probe in WebKit as well as Chrome, and a local run without WebKit says so in its output.",
+          "evidence_required": [
+            "mobile_webkit_exercised"
+          ],
+          "milestone": "mobile-first",
+          "objective": "Run the drawer and the site menu specs in Playwright's WebKit with a phone profile wherever the engine is installed, and report NOT RUN where it is not.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/cockpit-probe.mjs",
+            "scripts/lib/browser.mjs",
+            ".github/workflows"
+          ],
+          "slug": "mobile-webkit-is-exercised",
+          "updated_at": "2026-10-09T11:53:17Z",
+          "validation": [
+            "scripts/cockpit-probe --drawer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2103",
+        "kind": "issue",
+        "label": "I2103",
+        "summary": "the Cockpit dense surfaces are audited and operable at a phone width",
+        "route": "/cockpit/objects/issue/i2103",
+        "source": ".ai/repo/project/issues/I2103.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each route family's primary action is exercised at 390 in the probe",
+            "Each finding is fixed or filed with its measurement"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [
+            "I2096"
+          ],
+          "desired_state": "Every family of Cockpit route has an interaction check at a phone width in the probe.",
+          "evidence_required": [
+            "sections_reachable_on_a_phone"
+          ],
+          "milestone": "mobile-first",
+          "objective": "Audit the Cockpit's tables, graphs, runner forms, code and log blocks, filters and pagination at 320 and 390 by interaction, not only by overflow, and fix what a person cannot do there.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "share/cockpit",
+            "scripts/lib/cockpit-probe.mjs"
+          ],
+          "slug": "cockpit-dense-surfaces-on-a-phone",
+          "updated_at": "2026-10-09T09:37:21Z",
+          "validation": [
+            "scripts/cockpit-probe"
+          ],
+          "why": "The overflow sweep passes on 139 routes at five widths, which says nothing scrolls sideways; it does not say a runner form can be submitted, a graph selected or a table read on a phone."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31178,6 +31485,65 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/mobile-first",
+        "kind": "milestone",
+        "label": "mobile-first",
+        "summary": "The Cockpit and the site are usable on a phone, and a narrow screen is measured rather than assumed",
+        "route": "/cockpit/objects/milestone/mobile-first",
+        "source": ".ai/repo/project/milestones/mobile-first.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "At every width the design declares below lg, and in phone landscape, the Cockpit's sections are reachable by touch, by keyboard and with JavaScript disabled",
+            "Every way of closing the drawer leaves no scroll lock, no inert element and no covering layer, and a seeded random walk agrees with a model of the drawer at every step",
+            "Each assertion of the drawer probe is shown to fail by at least one mutant of the behaviour it guards",
+            "The site's phone menu closes on Escape and opens to something a phone can take in without scrolling past several screens",
+            "Mobile WebKit is exercised wherever the browser engine can be installed, and a run that could not use it says NOT RUN"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "sections_reachable_on_a_phone",
+            "drawer_agrees_with_its_model",
+            "every_assertion_kills_a_mutant",
+            "site_menu_operable_on_a_phone",
+            "mobile_webkit_exercised"
+          ],
+          "non_scope": [
+            "A separate mobile application, route tree, navigation inventory or API",
+            "A second frontend framework; the Cockpit stays server-rendered HTML with the one Alpine component",
+            "Claims of physical-device validation from browser emulation"
+          ],
+          "order": 125,
+          "priority": "p0",
+          "risks": [
+            "Emulated touch in Chrome is not a phone. Every report of this milestone names the engine and says emulation; a physical-device result is recorded only when one was run.",
+            "A random walk that only takes actions the model allows cannot find a state the model forgot. The model is written from what a person can do, not from what the controller handles."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "share/cockpit",
+            "share/design",
+            "site/nav.js",
+            "site/templates/partials",
+            "scripts/cockpit-probe",
+            "scripts/lib/cockpit-probe.mjs",
+            "scripts/lib/interaction-specs",
+            ".ai/repo/rules/project",
+            "docs/COCKPIT.md"
+          ],
+          "slug": "mobile-first",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "scripts/cockpit-probe --drawer",
+            "scripts/cockpit-probe",
+            "scripts/interaction-probe --spec nav-collapse",
+            "cargo test --lib cockpit::",
+            "scripts/cockpit-assets --check",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -37218,6 +37584,31 @@
             "navigation",
             "projections",
             "documentation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.navigation-reaches-every-width@1",
+        "kind": "rule",
+        "label": "project.navigation-reaches-every-width@1",
+        "summary": "Every navigation surface is reachable and operable at every width the design declares",
+        "route": "/cockpit/objects/rule/project-navigation-reaches-every-width-1",
+        "source": ".ai/repo/rules/project/navigation-reaches-every-width.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.every-link-and-control-is-tested@1",
+            "project.navigation-is-declared-once@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "cockpit",
+            "site",
+            "navigation",
+            "mobile",
+            "accessibility",
+            "testing"
           ]
         }
       },
@@ -66235,6 +66626,111 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2096",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2096",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2097",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2097",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2098",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2098",
+        "target": "majordomus://issue/I2096",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2098",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2099",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2099",
+        "target": "majordomus://issue/I2098",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2099",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2100",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2100",
+        "target": "majordomus://issue/I2097",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2100",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2101",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2101",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2102",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2102",
+        "target": "majordomus://issue/I2098",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2102",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2103",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2103",
+        "target": "majordomus://issue/I2096",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2103",
+        "target": "majordomus://milestone/mobile-first",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66358,6 +66854,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/mobile-first",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -68042,6 +68543,26 @@
       {
         "source": "majordomus://rule/project.navigation-is-declared-once@1",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-reaches-every-width@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-reaches-every-width@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-reaches-every-width@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.navigation-reaches-every-width@1",
+        "target": "majordomus://rule/project.navigation-is-declared-once@1",
         "kind": "depends_on"
       },
       {
@@ -74976,8 +75497,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2491,
+      "edges": 5455,
       "acyclic": false,
       "truncated": false
     }
