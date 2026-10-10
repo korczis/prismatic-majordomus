@@ -261,6 +261,11 @@ runtimes, those addressed to this one first, each with the call that answers it.
 bounded (`limit`, 5 by default) and says how much it left out. A runtime is never told to take a
 handover it published itself. ADR 0128 makes it what every session is told at start (I2285).
 
+The start of every session with a lifecycle adapter prints it: under the start briefing's
+`Mesh: active — …` line come the briefing's lines, indented, from the running server — in a mesh
+where nobody else works, the one line that says so. The health line stays the only line that
+starts `Mesh:`; a mesh that is off, or not active, prints no briefing (I2286, case 1025).
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.

@@ -1652,7 +1652,8 @@ mj_capture_mesh_line() {
   # exit 10 is a failed check, and the report is printed either way
   out="$("$bin" mesh doctor --repo "$MJ_ROOT" --format json 2>/dev/null)" || true
   [ -n "$out" ] || return 0
-  printf '%s' "$out" | jq -r --arg decl "$decl" '
+  local line
+  line="$(printf '%s' "$out" | jq -r --arg decl "$decl" '
     def check($n): [.checks[]? | select(.check == $n)][0];
     check("declaration") as $d | check("runtime") as $rt | check("trust") as $tr
     | if $d == null or $rt == null then empty
@@ -1666,7 +1667,18 @@ mj_capture_mesh_line() {
         "DECLARED ENABLED BUT NOT ACTIVE — "
         + ($rt.detail | sub("^the declaration is enabled and this server.s mesh is not active — "; ""))
       elif ($rt.detail | startswith("off, as declared")) then "off, as declared"
-      else empty end' 2>/dev/null || true
+      else empty end' 2>/dev/null || true)"
+  [ -n "$line" ] || return 0
+  printf '%s\n' "$line"
+  # An active mesh is also told as work: who works where on every machine, the handovers
+  # waiting here and the open reviews, each with the call that acts on it (ADR 0128, I2286).
+  # The running server answers, as for the doctor; the lines are indented under `Mesh:` so the
+  # one-line health verdict above stays the line a reader and a case look for.
+  case "$line" in
+    active*)
+      "$bin" mesh briefing --repo "$MJ_ROOT" --format json 2>/dev/null \
+        | jq -r '.text // empty' 2>/dev/null | sed 's/^/  /' || true ;;
+  esac
   return 0
 }
 
