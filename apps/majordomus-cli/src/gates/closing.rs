@@ -137,15 +137,6 @@ pub(crate) fn debt(root: &Path, base: &str) -> Result<Vec<DebtReading>, String> 
     if base.is_empty() || base == "NONE" {
         return Err("the task records no commit it started at".into());
     }
-    let known = crate::git::read_only(root)
-        .args(["cat-file", "-e", &format!("{base}^{{commit}}")])
-        .output()
-        .map_err(|e| format!("git cat-file: {e}"))?;
-    if !known.status.success() {
-        return Err(format!(
-            "the commit the task started at ({base}) is not in this repository"
-        ));
-    }
     let directory = root.join(DEBT_DIRECTORY);
     let names: BTreeSet<String> = match std::fs::read_dir(&directory) {
         Ok(listing) => listing
@@ -160,7 +151,16 @@ pub(crate) fn debt(root: &Path, base: &str) -> Result<Vec<DebtReading>, String> 
         .iter()
         .map(|name| format!("{DEBT_DIRECTORY}/{name}"))
         .collect();
-    let then = blobs_at(root, base, &paths)?;
+    // The commit itself is the first object asked for, so that one batch both proves the
+    // start exists and reads every baseline as it stood there.
+    let mut asked = vec![format!("{base}^{{commit}}")];
+    asked.extend(paths.iter().map(|path| format!("{base}:{path}")));
+    let mut then = batch(root, &asked)?.into_iter();
+    if then.next().flatten().is_none() {
+        return Err(format!(
+            "the commit the task started at ({base}) is not in this repository"
+        ));
+    }
     let mut readings = Vec::with_capacity(paths.len());
     for (path, before) in paths.into_iter().zip(then) {
         let now = std::fs::read_to_string(root.join(&path)).map_err(|e| format!("{path}: {e}"))?;
@@ -173,41 +173,42 @@ pub(crate) fn debt(root: &Path, base: &str) -> Result<Vec<DebtReading>, String> 
     Ok(readings)
 }
 
-/// The text of each of `paths` at `commit`, in order; `None` for a path that commit lacks.
+/// The body of each object `asked` names, in order; `None` for one the repository lacks.
 ///
 /// One `git cat-file --batch` for all of them: this is read on every `majordomus check`, and
-/// a process per baseline would be paid there sixteen times over in this repository.
-fn blobs_at(root: &Path, commit: &str, paths: &[String]) -> Result<Vec<Option<String>>, String> {
+/// a process per baseline would be paid there sixteen times over in this repository. Whatever
+/// goes wrong on the way — git absent, a write cut short, a directory that is no repository —
+/// ends in an answer that is not a whole batch, and that is the one refusal.
+fn batch(root: &Path, asked: &[String]) -> Result<Vec<Option<String>>, String> {
     use std::io::Write;
     use std::process::Stdio;
 
-    if paths.is_empty() {
-        return Ok(Vec::new());
-    }
-    let mut child = crate::git::read_only(root)
+    let request: String = asked.iter().map(|object| format!("{object}\n")).collect();
+    let answer = crate::git::read_only(root)
         .args(["cat-file", "--batch"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
-        .map_err(|e| format!("git cat-file: {e}"))?;
-    let asked: String = paths
-        .iter()
-        .map(|path| format!("{commit}:{path}\n"))
-        .collect();
-    // the request is a few hundred bytes and is written whole before anything is read; the
-    // pipe is closed by the drop, which is what ends the batch
-    child
-        .stdin
-        .take()
-        .ok_or("git cat-file: no standard input")?
-        .write_all(asked.as_bytes())
-        .map_err(|e| format!("git cat-file: {e}"))?;
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("git cat-file: {e}"))?;
-    parse_batch(&out.stdout, paths.len())
-        .ok_or_else(|| "git cat-file --batch answered something that is not a batch".to_string())
+        .and_then(|mut child| {
+            // the request is a few hundred bytes, written whole before anything is read; the
+            // pipe closes when `input` is dropped, which is what ends the batch, and a write
+            // cut short leaves an answer that is refused below
+            let _ = child
+                .stdin
+                .take()
+                .map(|mut input| input.write_all(request.as_bytes()));
+            child.wait_with_output()
+        })
+        .map(|out| out.stdout)
+        .unwrap_or_default();
+    parse_batch(&answer, asked.len()).ok_or_else(|| {
+        format!(
+            "git cat-file --batch did not answer for {} object(s) in {}",
+            asked.len(),
+            root.display()
+        )
+    })
 }
 
 /// The bodies of a `git cat-file --batch` answer: `<oid> <type> <size>\n<body>\n` for an
@@ -222,7 +223,8 @@ pub(crate) fn parse_batch(mut answer: &[u8], expected: usize) -> Option<Vec<Opti
             bodies.push(None);
             continue;
         }
-        let size: usize = header.rsplit(' ').next()?.parse().ok()?;
+        let (_, size) = header.rsplit_once(' ')?;
+        let size: usize = size.parse().ok()?;
         let body = answer.get(..size)?;
         bodies.push(Some(String::from_utf8_lossy(body).into_owned()));
         // the body is followed by one newline of the protocol's own
@@ -237,47 +239,50 @@ pub(crate) fn parse_batch(mut answer: &[u8], expected: usize) -> Option<Vec<Opti
 /// hold spaces, so the two fields are taken from the end of what precedes the tab.
 pub(crate) fn first_recorded(reflog: &str) -> Option<u64> {
     let line = reflog.lines().next()?;
-    let head = line.split('\t').next()?;
+    let head = line.split_once('\t').map_or(line, |(head, _)| head);
     let mut fields = head.split_whitespace().rev();
     let _zone = fields.next()?;
     fields.next()?.parse().ok()
 }
 
-/// What git answers to `args` in `root`, or the reason it did not: one reading of "run git and
-/// refuse a failure" for every question asked of it here.
+/// What git answers to `args` in `root`, or the reason it did not. A git that cannot be
+/// started and a git that refuses are one answer here: neither said anything to read.
 fn git_text(root: &Path, args: &[&str]) -> Result<String, String> {
-    let out = crate::git::read_only(root)
+    crate::git::read_only(root)
         .args(args)
         .output()
-        .map_err(|e| format!("git {}: {e}", args.join(" ")))?;
-    if !out.status.success() {
-        return Err(format!(
-            "git {} did not answer in {}",
-            args.join(" "),
-            root.display()
-        ));
-    }
-    Ok(String::from_utf8_lossy(&out.stdout).into_owned())
-}
-
-/// Git's directory shared by every worktree of the repository `root` is a checkout of.
-fn common_directory(root: &Path) -> Result<PathBuf, String> {
-    let text = git_text(
-        root,
-        &["rev-parse", "--path-format=absolute", "--git-common-dir"],
-    )?;
-    Ok(PathBuf::from(text.trim()))
+        .ok()
+        .filter(|out| out.status.success())
+        .map(|out| String::from_utf8_lossy(&out.stdout).into_owned())
+        .ok_or_else(|| {
+            format!(
+                "git {} did not answer in {}",
+                args.join(" "),
+                root.display()
+            )
+        })
 }
 
 /// The branches and linked worktrees created at or after `started` that still exist.
 pub(crate) fn accumulated(root: &Path, started: u64) -> Result<Accumulated, String> {
-    let common = common_directory(root)?;
-    let listed = git_text(
+    // one question: the directory every worktree shares, then every local branch by name
+    let answer = git_text(
         root,
-        &["for-each-ref", "--format=%(refname:short)", "refs/heads"],
+        &[
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-common-dir",
+            "--symbolic-full-name",
+            "--branches",
+        ],
     )?;
+    let mut lines = answer.lines();
+    let common = PathBuf::from(lines.next().unwrap_or_default().trim());
+    let branches: Vec<&str> = lines
+        .filter_map(|line| line.strip_prefix("refs/heads/"))
+        .collect();
     let mut found = Accumulated::default();
-    for branch in listed.lines().filter(|name| !name.is_empty()) {
+    for branch in branches {
         found.branches_now += 1;
         let log = common.join("logs/refs/heads").join(branch);
         match std::fs::read_to_string(&log)
@@ -497,6 +502,12 @@ mod tests {
         assert!(parse_batch(answer, 4).is_none());
         assert!(parse_batch(b"1111 blob 99\nshort\n", 1).is_none());
         assert!(parse_batch(b"no newline", 1).is_none());
+        // a header that is not text, has no size, or names a size that is not a number
+        assert!(parse_batch(b"\xff\xfe\n", 1).is_none());
+        assert!(parse_batch(b"headerwithnospace\n", 1).is_none());
+        assert!(parse_batch(b"1111 blob many\n", 1).is_none());
+        // a body that is all there but lacks the protocol's closing newline
+        assert!(parse_batch(b"1111 blob 1\na", 1).is_none());
         assert_eq!(parse_batch(b"", 0).unwrap(), Vec::new());
     }
 
@@ -507,10 +518,60 @@ mod tests {
         assert!(git_text(nowhere, &["rev-parse", "HEAD"])
             .unwrap_err()
             .contains("did not answer"));
-        assert!(common_directory(nowhere).is_err());
-        assert!(accumulated(nowhere, 0).is_err());
-        // the debt reading meets the missing commit before anything else
-        assert!(debt(nowhere, "0123456789012345678901234567890123456789").is_err());
+        assert!(accumulated(nowhere, 0)
+            .unwrap_err()
+            .contains("did not answer"));
+        let refused = debt(nowhere, "0123456789012345678901234567890123456789").unwrap_err();
+        assert!(
+            refused.contains("cat-file --batch did not answer"),
+            "{refused}"
+        );
+    }
+
+    #[test]
+    fn a_baseline_that_cannot_be_read_is_an_error_and_not_an_empty_one() {
+        let (_dir, root, base) = repository();
+        // a directory with a baseline's name is listed, and cannot be read as one
+        std::fs::create_dir_all(root.join(".ai/repo/odd-baseline.txt")).unwrap();
+        let refused = debt(&root, &base).unwrap_err();
+        assert!(refused.contains("odd-baseline.txt"), "{refused}");
+    }
+
+    #[test]
+    fn a_worktree_git_has_no_creation_record_for_is_counted_on_neither_side() {
+        let (_dir, root, _) = repository();
+        let wt = root.parent().unwrap().join("wt");
+        git(
+            &root,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "feature/held",
+                wt.to_str().unwrap(),
+            ],
+        );
+        let admin = std::fs::read_dir(root.join(".git/worktrees"))
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        std::fs::remove_file(admin.join("logs/HEAD")).unwrap();
+        let found = accumulated(&root, 0).unwrap();
+        assert!(found.worktrees.is_empty());
+        assert_eq!((found.worktrees_now, found.undated), (1, 1));
+    }
+
+    #[test]
+    fn an_observation_that_cannot_be_read_is_the_backlogs_error() {
+        let (_dir, root, base) = repository();
+        let path = crate::integration::state_path(&root, crate::integration::OBSERVATION_FILE);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, "not json\n").unwrap();
+        let read = read(&root, &base, "2026-10-10T12:00:00Z");
+        assert!(read.backlog.unwrap_err().contains("observation.json"));
     }
 
     #[test]
@@ -548,6 +609,9 @@ mod tests {
         assert_eq!(first_recorded(line), Some(1_788_000_000));
         assert_eq!(first_recorded(""), None);
         assert_eq!(first_recorded("not a reflog line\n"), None);
+        // a line with one field, or none, holds no moment
+        assert_eq!(first_recorded("lonely\n"), None);
+        assert_eq!(first_recorded("   \tmessage only\n"), None);
     }
 
     #[test]

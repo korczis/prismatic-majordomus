@@ -54,6 +54,13 @@ remains, with the totals now. It does not say who created a branch, because git 
 the readings are the repository's. It removes nothing and refuses no `finish`. The backlog
 reading is as old as the last `majordomus prs refresh`, and says when that was.
 
+Two readings are coarser than the question. Debt is counted in entries, so one entry taken
+out and another put in reads as no change; only growth is seen. And a branch or worktree is
+dated by the first line its reflog still holds, so one whose older entries git has expired
+— thirty days for commits a rewrite left unreachable — reads as younger than it is, and can
+be named as created since the task started when it was not. Both err towards asking again,
+never towards a pass that was not earned.
+
 ## Why it exists
 
 On 2026-10-10 one session was asked the closing question seven times and answered seven

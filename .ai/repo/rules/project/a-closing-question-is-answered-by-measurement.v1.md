@@ -79,6 +79,12 @@ of them is a pass, and a worker does not turn one into a yes by explaining it.
 leaves no record, so the readings name what was added and remains, and state the totals
 now. They do not claim the difference of two totals, and neither does a worker.
 
+**A reading is as fine as its record, and says no more.** Debt is counted in entries: one
+entry taken out and another put in is not seen, only growth. A branch or a worktree is
+dated by the first line its reflog still holds: where git has expired the older entries it
+reads as younger than it is, and may be named as created since the task started when it was
+not. Both limits lean towards a question asked again and never towards a pass.
+
 # Failure behaviour
 
 `gates.completion` answers; `majordomus check` reports each question that is neither `pass`
