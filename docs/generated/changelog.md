@@ -7,6 +7,28 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.20.0**
 
+## v0.19.1 — 2026-10-10
+
+### Fixed
+
+- **mcp**: a refusal from a serving shared server is answered, and elects nobody (`8425606a1`)
+
+### Housekeeping
+
+- **derive**: follow the v0.19.0 record (`19aa4ff6a`)
+- **release**: record v0.19.0 and the metadata it publishes (`121f7dd87`)
+- **release**: raise to 0.19.1 and derive (`8811c8a23`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.19.1-aarch64-apple-darwin.tar.gz (`9fd32a821069`)
+- `macos-x86_64` — majordomus-v0.19.1-x86_64-apple-darwin.tar.gz (`01665bd8de68`)
+- `linux-x86_64-gnu` — majordomus-v0.19.1-x86_64-unknown-linux-gnu.tar.gz (`6271f177b590`)
+- `linux-x86_64-musl` — majordomus-v0.19.1-x86_64-unknown-linux-musl.tar.gz (`3e91ceb9e396`)
+- `linux-aarch64-gnu` — majordomus-v0.19.1-aarch64-unknown-linux-gnu.tar.gz (`62589191c7cd`)
+- `linux-aarch64-musl` — majordomus-v0.19.1-aarch64-unknown-linux-musl.tar.gz (`d508e4c54d30`)
+
+
 ## v0.19.0 — 2026-10-09
 
 ### Decisions
