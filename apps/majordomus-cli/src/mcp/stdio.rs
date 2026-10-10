@@ -7,13 +7,17 @@
 //! shared server of another process, is a function from a message to an optional
 //! response, and the loop drives whichever it is given.
 
-use std::io::{BufRead, Write};
+use std::io::{BufRead, Read, Write};
 
 use serde_json::Value;
 
 use crate::error::{Error, Result};
 
 use super::protocol::Server;
+
+/// The longest message a client may send on one line: the bound a request body has over
+/// HTTP, so that both transports refuse the same message (I2147).
+pub const MAX_LINE_BYTES: usize = crate::http::server::MAX_BODY_BYTES;
 
 /// Serve until the input ends, answering every message through `handle`. Returns the
 /// number of messages answered.
@@ -37,14 +41,35 @@ where
     M: serde::Serialize,
 {
     let mut answered = 0;
-    for line in input.lines() {
-        let line = match line {
+    let mut input = input;
+    loop {
+        // one line at most MAX_LINE_BYTES long: a longer one is skipped to its newline without
+        // being held, answered as a parse error, and the session goes on (I2147)
+        let mut raw = Vec::new();
+        let read = (&mut input)
+            .take(MAX_LINE_BYTES as u64 + 1)
+            .read_until(b'\n', &mut raw)
+            .map_err(Error::Transport)?;
+        if read == 0 {
+            break;
+        }
+        if raw.len() > MAX_LINE_BYTES && !raw.ends_with(b"\n") {
+            input.skip_until(b'\n').map_err(Error::Transport)?;
+            write_line(
+                &mut output,
+                &Server::parse_error(&format!(
+                    "the message is over the {MAX_LINE_BYTES}-byte bound and was not read"
+                )),
+            )?;
+            answered += 1;
+            continue;
+        }
+        let line = match String::from_utf8(raw) {
             Ok(l) => l,
-            Err(e) if e.kind() == std::io::ErrorKind::InvalidData => {
+            Err(_) => {
                 write_line(&mut output, &Server::parse_error("input is not UTF-8"))?;
                 continue;
             }
-            Err(e) => return Err(Error::Transport(e)),
         };
         if line.trim().is_empty() {
             continue;

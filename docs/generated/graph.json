@@ -30259,6 +30259,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2147",
+        "kind": "issue",
+        "label": "I2147",
+        "summary": "The MCP transports bound what they read and follow the Streamable HTTP rules they claim",
+        "route": "/cockpit/objects/issue/i2147",
+        "source": ".ai/repo/project/issues/I2147.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stdin line, a request body and a response body each one byte over the declared bound are refused with a typed error, and the session survives",
+            "A request naming an unsupported MCP-Protocol-Version is answered 400",
+            "A session whose single request runs longer than the reap interval is not reaped",
+            "Session ids are drawn from the operating system's random source"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "One oversized line or response can exhaust a client or a server; a long request can lose its session.",
+          "depends_on": [],
+          "evidence_required": [
+            "transport_bounds_test",
+            "protocol_version_header_test",
+            "long_request_not_reaped_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp/stdio.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/tests/mcp_conformance.rs",
+            "apps/majordomus-cli/tests/mcp_conformance_http.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "mcp-transports-are-bounded",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_stdio"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31178,6 +31221,59 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "milestone",
+        "label": "mcp-transports-are-reliable",
+        "summary": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation",
+        "route": "/cockpit/objects/milestone/mcp-transports-are-reliable",
+        "source": ".ai/repo/project/milestones/mcp-transports-are-reliable.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A mutating tool call that outlasts the bridge timeout is executed exactly once",
+            "notifications/cancelled stops a running call within a bound",
+            "One declared message bound applies to stdin, request bodies and bridge responses, each with a test one byte over it",
+            "The three client launch configurations are generated and their diagnosis parses them"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "at_most_once_tool_calls",
+            "cancellation_test",
+            "transport_bounds_tests"
+          ],
+          "non_scope": [
+            "A GET/SSE stream on the Streamable HTTP endpoint; docs/MCP.md documents its absence and no client here needs it.",
+            "Authorization and remote callers, which are I2123.",
+            "A second tool list or MCP-specific capability metadata; the registry stays the one source."
+          ],
+          "order": 139,
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+            "share/providers.yaml",
+            "lib/update.sh",
+            ".mcp.json",
+            ".gemini/settings.json",
+            ".codex/config.toml",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "mcp-transports-are-reliable",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared --test mcp_conformance --test mcp_conformance_http --test shared_units --test providers_projection",
+            "MJ_TEST_JOBS=4 bash test/run.sh 620_mcp_tools_are_invoked_and_answer 940_mcp_says_nothing_its_capability_does_not"
           ]
         }
       },
@@ -66235,6 +66331,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2147",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2147",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66358,6 +66464,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/mcp-transports-are-reliable",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -74976,8 +75087,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2483,
+      "edges": 5432,
       "acyclic": false,
       "truncated": false
     }

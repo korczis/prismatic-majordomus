@@ -10,7 +10,6 @@
 //! directly are peers of one board, and `peers.announce` knows who spoke.
 
 use std::collections::BTreeMap;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
@@ -45,7 +44,6 @@ pub struct McpEndpoint {
     version: &'static str,
     url: String,
     sessions: Mutex<BTreeMap<String, Arc<Session>>>,
-    seq: AtomicU64,
 }
 
 impl std::fmt::Debug for McpEndpoint {
@@ -65,7 +63,6 @@ impl McpEndpoint {
             version,
             url,
             sessions: Mutex::new(BTreeMap::new()),
-            seq: AtomicU64::new(0),
         }
     }
 
@@ -93,6 +90,20 @@ impl McpEndpoint {
     }
 
     fn post(&self, req: &Request) -> Response {
+        // a client names the protocol version it negotiated on every request after
+        // `initialize`; one this server does not speak is refused rather than guessed at
+        if let Some(version) = req.header("mcp-protocol-version") {
+            if !crate::mcp::protocol::PROTOCOL_VERSIONS.contains(&version) {
+                return Response::error(
+                    400,
+                    "unsupported_protocol_version",
+                    &format!(
+                        "MCP-Protocol-Version {version} is not one this server speaks ({})",
+                        crate::mcp::protocol::PROTOCOL_VERSIONS.join(", ")
+                    ),
+                );
+            }
+        }
         let message: Value = match serde_json::from_slice(&req.body) {
             Ok(v) => v,
             Err(e) => {
@@ -137,6 +148,9 @@ impl McpEndpoint {
         };
         *lock(&session.last_seen) = Instant::now();
         let response = lock(&session.server).handle(message);
+        // stamped again once answered: a request that ran longer than the reap interval must
+        // not find its session reaped behind it (I2147)
+        *lock(&session.last_seen) = Instant::now();
         let mut out = match response {
             None => Response::new(202, "application/json", String::new()),
             Some(reply) => Response::new(
@@ -151,12 +165,9 @@ impl McpEndpoint {
 
     fn open(&self) -> (String, Arc<Session>) {
         let peer = self.surface.context().peers.attach(Transport::Http);
-        let seq = self.seq.fetch_add(1, Ordering::SeqCst) + 1;
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.subsec_nanos())
-            .unwrap_or(0);
-        let id = format!("{}-{seq}-{nanos:08x}", std::process::id());
+        // the session id is the client's only credential to its session: 128 bits from the
+        // operating system's random source, never a pid, a counter and a clock (I2147)
+        let id = crate::mesh::link::fresh_token();
         let server = Server::new(self.surface.for_peer(peer.clone()), self.version)
             .with_endpoint(Some(self.url.clone()));
         let session = Arc::new(Session {

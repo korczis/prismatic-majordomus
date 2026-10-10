@@ -48,6 +48,11 @@ impl Reply {
     }
 }
 
+/// The largest reply [`request`] reads. Far above what an answer of this server weighs — a
+/// `tools/list` of every capability is a few megabytes — and finite, so that a peer, a
+/// rendezvous hub or a broken proxy that never stops sending costs a bounded buffer (I2147).
+pub const MAX_REPLY_BYTES: usize = 32 * 1024 * 1024;
+
 /// One HTTP/1.1 request to `base_url` (`http://host:port`), with `Connection: close`.
 pub fn request(
     base_url: &str,
@@ -82,7 +87,15 @@ pub fn request(
     text.push_str(body);
     stream.write_all(text.as_bytes())?;
     let mut raw = Vec::new();
-    stream.read_to_end(&mut raw)?;
+    (&mut stream)
+        .take(MAX_REPLY_BYTES as u64 + 1)
+        .read_to_end(&mut raw)?;
+    if raw.len() > MAX_REPLY_BYTES {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("the reply is over the {MAX_REPLY_BYTES}-byte bound and was not read"),
+        ));
+    }
     parse_reply(&raw)
 }
 

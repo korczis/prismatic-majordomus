@@ -6,23 +6,23 @@
     "version": "0.19.1"
   },
   "registry": {
-    "fingerprint": "b459423e77e8088e3b83fab43af4fd9edc1835bab0e4a78618f26a860dfcaed1",
+    "fingerprint": "cc96c1e1a030d185c212aaad792ebe78783b694dc82237644e9e2a24a59cfdbf",
     "summary": {
-      "total": 2100,
+      "total": 2102,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1918,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1918
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1926
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1972,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e9591b2f048ec354a0c3d23c9df8d92178161c8eb289bd0a64aaeec46f4cd38",
+    "fingerprint": "ff2ca5a7c22801cd9047ef90af6e962291d3b22b2c37f944b9f8675742794fe4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81616,7 +81616,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58914
+        "bytes": 59462
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 119807
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87918,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2147",
+        "kind": "issue",
+        "identity": "I2147",
+        "title": "The MCP transports bound what they read and follow the Streamable HTTP rules they claim",
+        "description": "Apply one declared message bound to stdin lines, request bodies and every response the bridge reads, validate MCP-Protocol-Version, issue unpredictable session ids, and never reap a session whose request is still running.",
+        "path": ".ai/repo/project/issues/I2147.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3107
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88126,6 +88137,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "milestone",
+        "identity": "mcp-transports-are-reliable",
+        "title": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation",
+        "description": "A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it.",
+        "path": ".ai/repo/project/milestones/mcp-transports-are-reliable.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4834
       },
       {
         "uri": "majordomus://milestone/public-proof",
@@ -96863,7 +96885,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96915,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",
