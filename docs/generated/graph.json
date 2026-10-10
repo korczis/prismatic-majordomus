@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -17496,6 +17496,13 @@
         "source": "lib/knowledge.sh"
       },
       {
+        "id": "majordomus://implementation/lib/machine_lock.sh",
+        "kind": "implementation",
+        "label": "lib/machine_lock.sh",
+        "route": "/cockpit/objects/implementation/lib-machine-lock-sh",
+        "source": "lib/machine_lock.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/mermaid.awk",
         "kind": "implementation",
         "label": "lib/mermaid.awk",
@@ -30296,6 +30303,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I2114",
+        "kind": "issue",
+        "label": "I2114",
+        "summary": "A task's scope admits what its derive writes",
+        "route": "/cockpit/objects/issue/i2114",
+        "source": ".ai/repo/project/issues/I2114.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A branch whose task scope names only the canonical input it changed passes `finish --check` with the derive's projections of that input committed beside it",
+            "A projection committed without any change to its canonical inputs is still refused as outside the scope",
+            "`majordomus scope widen <paths> --because \\\"<reason>\\\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why",
+            "A path outside both the scope and the declared projection set is refused exactly as before"
+          ],
+          "created_at": "2026-10-09",
+          "evidence_required": [
+            "projection_admitted_case",
+            "scope_widen_case"
+          ],
+          "milestone": "development-runtime",
+          "objective": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/check.sh",
+            "scripts/gitattributes",
+            "apps/majordomus-cli/src/capability/builtin/scope.rs",
+            "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-tasks-scope-admits-what-its-derive-writes",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2123",
         "kind": "issue",
         "label": "I2123",
@@ -30335,6 +30383,90 @@
           "validation": [
             "cargo test --test remote_callers",
             "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1022_a_remote_caller_cannot_write"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2161",
+        "kind": "issue",
+        "label": "I2161",
+        "summary": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "route": "/cockpit/objects/issue/i2161",
+        "source": ".ai/repo/project/issues/I2161.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log",
+            "A handover body containing a credential shape is redacted or refused before it is signed into the journal",
+            "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check",
+            "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Only generated documents and tracked text are scanned; responses, logs and frames are not.",
+          "depends_on": [],
+          "evidence_required": [
+            "credential_never_echoed_test",
+            "eventbody_allowlist_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/mesh/handover.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "scripts/ci/mesh-check",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "test/cases"
+          ],
+          "slug": "no-credential-leaves-the-runtime",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test redaction",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2165",
+        "kind": "issue",
+        "label": "I2165",
+        "summary": "A released archive carries a provenance attestation the installer can check",
+        "route": "/cockpit/objects/issue/i2165",
+        "source": ".ai/repo/project/issues/I2165.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each archive of a release carries an attestation that gh attestation verify accepts for this repository",
+            "install.sh reports whether it verified provenance or only the checksum",
+            "docs/DISTRIBUTION.md names what each installation path verifies"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "install.sh verifies a checksum served beside the archive; provenance is not verifiable.",
+          "depends_on": [],
+          "evidence_required": [
+            "attested_release",
+            "installer_reports_verification_case"
+          ],
+          "milestone": "safe-self-update",
+          "objective": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "docs/DISTRIBUTION.md",
+            "test/cases/85_installer.sh"
+          ],
+          "slug": "releases-carry-provenance",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
           ]
         }
       },
@@ -30695,6 +30827,65 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "label": "architecture-is-enforced",
+        "summary": "A violated invariant fails a gate, and green means every required check ran",
+        "route": "/cockpit/objects/milestone/architecture-is-enforced",
+        "source": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A scheduled run that ends red or cancelled produces a visible record naming the failing jobs",
+            "rule-proof reports each rule from recorded runs, and the not-run count of blocking rules is printed",
+            "A credential-shaped value sent to the server never appears in a response, an MCP error or server.log",
+            "CI installs a release archive, starts its shared server in a fresh foreign repository and reads its readiness"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "desired_state": "Each row of the audit's enforcement table (plan/RUNTIME_BASELINE.md) is gated in CI with a fixture that makes the gate fail, and the session briefing shows the last full-plan verdict.",
+          "evidence_required": [
+            "full_plan_alarm",
+            "rule_proof_from_runs",
+            "secret_never_echoed",
+            "installed_release_dogfood"
+          ],
+          "non_scope": [
+            "Shortening the slowest case, which is I2115 (milestone ci-critical-path).",
+            "The evidence publication's use of public_text, which is I1955 (test-evidence).",
+            "A second CI pipeline; checks join the existing gates.yaml plan."
+          ],
+          "order": 143,
+          "priority": "p1",
+          "risks": [
+            "Raising every cancelled scheduled run will be noisy until bench and macos fit their timeouts; that is the point, and the first runs should be read rather than silenced.",
+            "Opening GitHub issues from CI is an outward mutation; it must go through scripts/github-sync and be idempotent."
+          ],
+          "scope": [
+            "scripts/ci",
+            ".github/workflows/validate.yml",
+            ".github/workflows/release.yml",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/execution/redact.rs",
+            "apps/majordomus-cli/tests/executions.rs",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "architecture-is-enforced",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/core-check",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
           ]
         }
       },
@@ -31461,6 +31652,61 @@
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test remote_callers --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/safe-self-update",
+        "kind": "milestone",
+        "label": "safe-self-update",
+        "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "route": "/cockpit/objects/milestone/safe-self-update",
+        "source": ".ai/repo/project/milestones/safe-self-update.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session",
+            "A wire or lease or journal schema change without a version bump fails version-surface",
+            "Each release archive carries an attestation that verifies for this repository"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "version_hand_off_test",
+            "wire_versions_gated",
+            "release_attestation"
+          ],
+          "non_scope": [
+            "A second installer or updater; install.sh stays the one path (pack M11).",
+            "A network fetch on entering a repository.",
+            "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
+          ],
+          "order": 144,
+          "priority": "p2",
+          "risks": [
+            "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server.",
+            "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/mesh/protocol.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "scripts/ci/version-matches-surface",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/fixtures",
+            "test/cases",
+            "docs/DISTRIBUTION.md",
+            "docs/MCP.md"
+          ],
+          "slug": "safe-self-update",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 743_release_version_answers_with_the_contract"
           ]
         }
       },
@@ -34952,6 +35198,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.19.1",
+        "kind": "release-record",
+        "label": "v0.19.1",
+        "summary": "v0.19.1",
+        "route": "/cockpit/objects/release-record/v0-19-1",
+        "source": ".ai/repo/releases/v0.19.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "fe0b58b67b63d7a95b15236d9de222ea2dc2fab5",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.19.1",
+          "published_at": "2026-10-10T01:46:29Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.19.1"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -36248,6 +36517,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "kind": "rule",
+        "label": "project.a-derive-sees-what-the-commit-will@1",
+        "summary": "A derive sees what the commit will",
+        "route": "/cockpit/objects/rule/project-a-derive-sees-what-the-commit-will-1",
+        "source": ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-files-regenerated@1",
+            "project.one-derive-at-a-time@1"
+          ],
+          "statement": "Stage every new file before you derive, and ignore or remove what will never be committed. scripts/derive refuses an untracked, non-ignored file before it takes the machine's lock and names each one.",
+          "tags": [
+            "derived",
+            "machine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "kind": "rule",
         "label": "project.a-diagram-is-drawn-not-typed@1",
@@ -37530,6 +37820,24 @@
             "lifecycle",
             "events",
             "integrity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.one-derive-at-a-time@1",
+        "kind": "rule",
+        "label": "project.one-derive-at-a-time@1",
+        "summary": "One derive at a time per machine, and a stopped derive leaves no orphans",
+        "route": "/cockpit/objects/rule/project-one-derive-at-a-time-1",
+        "source": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "derived",
+            "machine",
+            "coordination"
           ]
         }
       },
@@ -42802,11 +43110,25 @@
         "source": "test/cases/1016_the_worker_is_asked_before_compaction.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "kind": "test",
+        "label": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "route": "/cockpit/objects/test/test-cases-1018-one-derive-at-a-time-and-no-orphans-sh",
+        "source": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/101_command_graph.sh",
         "kind": "test",
         "label": "test/cases/101_command_graph.sh",
         "route": "/cockpit/objects/test/test-cases-101-command-graph-sh",
         "source": "test/cases/101_command_graph.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "kind": "test",
+        "label": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "route": "/cockpit/objects/test/test-cases-1020-a-derive-sees-what-the-commit-will-sh",
+        "source": "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
       },
       {
         "id": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
@@ -62016,6 +62338,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/machine_lock.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/mermaid.awk",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -66426,6 +66753,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2114",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2114",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2123",
         "target": "kind:issue",
         "kind": "is_a"
@@ -66433,6 +66770,26 @@
       {
         "source": "majordomus://issue/I2123",
         "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2161",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2161",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "majordomus://milestone/safe-self-update",
         "kind": "belongs_to"
       },
       {
@@ -66472,6 +66829,11 @@
       },
       {
         "source": "majordomus://milestone/adopter-upgrades",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/architecture-is-enforced",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -66597,6 +66959,11 @@
       },
       {
         "source": "majordomus://milestone/runtime-trust",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/safe-self-update",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -66927,6 +67294,11 @@
       },
       {
         "source": "majordomus://release-record/v0.19.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.19.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -67538,6 +67910,21 @@
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "target": "majordomus://rule/project.one-derive-at-a-time@1",
         "kind": "depends_on"
       },
       {
@@ -68319,6 +68706,11 @@
         "source": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
         "target": "majordomus://rule/project.development-semantics-are-canonical@1",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.one-derive-at-a-time@1",
+        "target": "kind:rule",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://rule/project.operation-transport-parity@1",
@@ -69471,7 +69863,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/101_command_graph.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75187,8 +75589,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2487,
-      "edges": 5443,
+      "nodes": 2498,
+      "edges": 5459,
       "acyclic": false,
       "truncated": false
     }
