@@ -30568,13 +30568,27 @@
           "scope": [
             "apps/majordomus-cli/src/capability/builtin/mesh.rs",
             "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "apps/majordomus-cli/tests/integration_across_machines.rs",
+            "apps/majordomus-cli/tests/reasoning_mesh.rs",
+            "scripts/lib/advisors/mesh-review.mjs",
+            "scripts/lib/advisors/contract.test.mjs",
+            "docs/claims/mesh-liveness-expiry.md",
+            "docs/claims/mesh-three-runtime-convergence.md",
             "docs/MESH.md"
           ],
           "slug": "mesh-reads-are-filtered",
           "updated_at": "2026-10-10",
           "validation": [
             "bin/majordomus plan validate",
-            "cargo test --lib capability::builtin::mesh"
+            "cargo test --lib capability::builtin::mesh",
+            "cargo test --lib mesh::page",
+            "cargo test --test mesh_cooperation"
           ]
         }
       },
