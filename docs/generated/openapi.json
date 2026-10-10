@@ -36543,6 +36543,20 @@
             "format": "uint64",
             "minimum": 0,
             "description": "The highest Lamport stamp seen."
+          },
+          "write_failures": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+            "default": 0
+          },
+          "unreadable": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+            "default": 0
           }
         },
         "required": [

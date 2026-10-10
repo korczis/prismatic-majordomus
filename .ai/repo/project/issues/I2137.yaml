@@ -1,0 +1,35 @@
+id: I2137
+milestone: mesh-journal-converges
+title: "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently"
+slug: the-journal-is-durable
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event."
+why: "Journal::persist ignores write errors (apps/majordomus-cli/src/mesh/journal.rs:1984, let _ = file.write_all) and never fsyncs; reload reads the whole file with read_to_string and drops every unparsable line silently (apps/majordomus-cli/src/mesh/journal.rs:1407-1413); an append after a torn tail with no trailing newline fuses the next event into the corrupt line (apps/majordomus-cli/src/mesh/journal.rs:1969-1984), so one crash also loses the event after it. The compaction rewrite (apps/majordomus-cli/src/mesh/journal.rs:2250-2264) has the same properties, and the file is created at the default umask. The only reload test uses a clean file (apps/majordomus-cli/src/mesh/journal.rs:2655, a_reloaded_journal_keeps_events_and_resurrects_no_liveness). Disk full is handled nowhere on this path; the only sync_all in the crate is apps/majordomus-cli/src/economics/runner.rs:1035. The journal holds other runtimes' events and handover bodies (apps/majordomus-cli/src/mesh/journal.rs:1961-1985), so a lost line is lost cooperation. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 4 and the failure-class rows disk full, truncated journal and partial write."
+current_state: "Writes are best effort and unreported; a torn tail corrupts the next event; unreadable lines vanish on reload."
+desired_state: "An append writes a missing trailing newline first (a torn tail stays one unreadable line), syncs, and counts a failure in JournalTallies.write_failures instead of discarding it; reload counts unreadable lines (JournalTallies.unreadable); compaction writes a synced file and renames it over the old one, then syncs the directory; the file is created owner-only (0600); mesh doctor fails its journal check while either count is nonzero. Not done here: a reload size bound, and refusing to acknowledge an own event whose append failed (it is held in memory and replicated, and the loss is reported)."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_compaction.rs"
+  - "test/cases"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "A journal whose last line is torn reloads every complete event, reports one unreadable line, and the next append is readable on the following reload"
+  - "A failed write on a read-only or full file system in a test is counted, reported by mesh doctor, and the event is not acknowledged as durable"
+  - "A kill during compaction leaves the old or the new journal, never a mix"
+  - "The journal file is created with owner-only permissions"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::journal"
+  - "cargo test --test mesh_compaction"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 493_mesh_compaction_keeps_what_is_live"
+evidence_required:
+  - "torn_tail_reload_test"
+  - "write_failure_reported_test"
+  - "compaction_crash_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

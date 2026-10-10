@@ -124,21 +124,41 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
     // The runtime's verdict is reported only where a shared server made one: in the
     // command line's process nothing activates the mesh, and that absence is not news.
     let runtime = ctx.mesh.decided().then(|| ctx.mesh.status());
-    Ok(crate::mesh::doctor::doctor_at(
-        declaration(ctx),
-        Some(root),
-        runtime.as_ref(),
-    ))
+    let resolved = resolved_declaration(ctx);
+    let source = crate::mesh::doctor::declaration_source(&resolved);
+    let mut report =
+        crate::mesh::doctor::doctor_at(resolved.declaration, Some(root), runtime.as_ref());
+    if let Some(check) = source {
+        report.checks.push(check);
+    }
+    // the journal is judged only where a runtime holds one
+    if let Some(cooperation) = ctx.mesh.cooperation() {
+        report.checks.push(crate::mesh::doctor::journal_check(
+            &cooperation.journal().tallies(),
+        ));
+    }
+    // one conjunction over every check, so neither added check's failure can be lost
+    report.ok = report.checks.iter().all(|c| c.ok);
+    Ok(report)
 }
 
-/// The repository's mesh declaration, as the index discovered it: `None` when no object
-/// of the kind exists, the parse verdict when one does.
+/// The repository's mesh declaration in force: `None` when no object of the kind exists,
+/// the parse verdict when one does — the working tree's copy with every widening of the
+/// trunk's copy removed ([`crate::mesh::root`]). Every reader of the declaration asks this,
+/// so the runtime, the doctor and every status agree on what is obeyed.
 pub fn declaration(ctx: &Context) -> Option<Result<MeshConfig, crate::mesh::MeshError>> {
-    ctx.index
+    resolved_declaration(ctx).declaration
+}
+
+/// [`declaration`], with the trunk it was held against and what was narrowed.
+pub(crate) fn resolved_declaration(ctx: &Context) -> crate::mesh::root::Resolved {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let working = ctx
+        .index
         .objects
         .iter()
-        .find(|o| o.kind == crate::mesh::KIND)
-        .map(MeshConfig::parse)
+        .find(|o| o.kind == crate::mesh::KIND);
+    crate::mesh::root::resolve(root, working)
 }
 
 // ---------------------------------------------------------------- mesh.register

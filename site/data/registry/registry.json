@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "fc58ce90b2c2f05dee7be55433558fd2f25ff796fc9012d842c48b7fc29dbc0f",
+    "fingerprint": "c2e02bd7cc7cdf009f4de9454a4f885710e58a87674e7f7c7ca9d2e9908c8294",
     "summary": {
-      "total": 2118,
+      "total": 2128,
       "builtin": 184,
-      "declarative": 1934,
+      "declarative": 1944,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1934
+        "resource": 1944
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1942
+        "implemented": 1952
       },
       "mcp_tools": 177,
-      "mcp_resources": 1988,
+      "mcp_resources": 1998,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -41944,6 +41944,20 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "The highest Lamport stamp seen."
+                  },
+                  "write_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+                    "default": 0
+                  },
+                  "unreadable": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+                    "default": 0
                   }
                 },
                 "required": [
@@ -75533,7 +75547,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 273,
+        "capabilities": 279,
         "capability_ids": []
       },
       {
@@ -75646,7 +75660,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 29,
+        "capabilities": 31,
         "capability_ids": []
       },
       {
@@ -76068,7 +76082,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 413,
+        "capabilities": 415,
         "capability_ids": []
       },
       {
@@ -76158,7 +76172,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5083e2867820e9d0f68f862ac46699f07220a2be036c1cad5a17cd7d3a79b6fe",
+    "fingerprint": "a52c203599b6335195b486f845b9cd9865009286e99d06ca024909e322ee43da",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76197,10 +76211,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 273,
+      "issue": 279,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 29,
+      "milestone": 31,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -76211,7 +76225,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 413,
+      "test": 415,
       "use-case": 48,
       "workspace": 1
     },
@@ -81460,7 +81474,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 28338
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81640,7 +81654,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 59576
+        "bytes": 60072
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81649,7 +81663,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42560
+        "bytes": 45502
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81694,7 +81708,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 139014
+        "bytes": 163100
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87972,6 +87986,17 @@
         "bytes": 2951
       },
       {
+        "uri": "majordomus://issue/I2124",
+        "kind": "issue",
+        "identity": "I2124",
+        "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "description": "Apply the same trust predicate to events reloaded from the journal file as to events arriving over a link, and refuse an event whose Lamport stamp is further ahead of the receiver's clock than a declared bound.",
+        "path": ".ai/repo/project/issues/I2124.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2293
+      },
+      {
         "uri": "majordomus://issue/I2126",
         "kind": "issue",
         "identity": "I2126",
@@ -87981,6 +88006,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3029
+      },
+      {
+        "uri": "majordomus://issue/I2135",
+        "kind": "issue",
+        "identity": "I2135",
+        "title": "The trust root is read from the default branch, not from whatever the checkout holds",
+        "description": "Let a working tree narrow the mesh's trust and never widen it: obey the working tree's declaration with every widening of the trunk's committed copy removed, report each ignored line, and refuse a committed declaration that trusts on first use.",
+        "path": ".ai/repo/project/issues/I2135.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3186
+      },
+      {
+        "uri": "majordomus://issue/I2137",
+        "kind": "issue",
+        "identity": "I2137",
+        "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "description": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+        "path": ".ai/repo/project/issues/I2137.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3430
+      },
+      {
+        "uri": "majordomus://issue/I2151",
+        "kind": "issue",
+        "identity": "I2151",
+        "title": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "description": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+        "path": ".ai/repo/project/issues/I2151.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3518
       },
       {
         "uri": "majordomus://issue/I2161",
@@ -87994,6 +88052,17 @@
         "bytes": 3307
       },
       {
+        "uri": "majordomus://issue/I2162",
+        "kind": "issue",
+        "identity": "I2162",
+        "title": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "description": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+        "path": ".ai/repo/project/issues/I2162.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2498
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -88003,6 +88072,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2285
+      },
+      {
+        "uri": "majordomus://issue/I2282",
+        "kind": "issue",
+        "identity": "I2282",
+        "title": "The record pull request's dispatched verdict does not satisfy branch protection",
+        "description": "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is.",
+        "path": ".ai/repo/project/issues/I2282.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3972
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -88025,7 +88105,7 @@
         "identity": "majordomus",
         "path": ".ai/repo/mesh/majordomus.yaml",
         "source_class": "mesh-declaration",
-        "bytes": 3153
+        "bytes": 3385
       },
       {
         "uri": "majordomus://milestone/M000",
@@ -88226,6 +88306,17 @@
         "bytes": 2652
       },
       {
+        "uri": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "identity": "mesh-journal-converges",
+        "title": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "description": "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once.",
+        "path": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5484
+      },
+      {
         "uri": "majordomus://milestone/public-proof",
         "kind": "milestone",
         "identity": "public-proof",
@@ -88301,6 +88392,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1441
+      },
+      {
+        "uri": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "identity": "surfaces-never-disagree",
+        "title": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "description": "A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped.",
+        "path": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4606
       },
       {
         "uri": "majordomus://milestone/test-evidence",
@@ -93200,6 +93302,22 @@
         "bytes": 3603
       },
       {
+        "uri": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "kind": "test",
+        "identity": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "path": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "source_class": "case",
+        "bytes": 2776
+      },
+      {
+        "uri": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "kind": "test",
+        "identity": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "path": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "source_class": "case",
+        "bytes": 6034
+      },
+      {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "identity": "test/cases/102_completion_shell.sh",
@@ -94365,7 +94483,7 @@
         "identity": "test/cases/368_mesh_handover_resolves.sh",
         "path": "test/cases/368_mesh_handover_resolves.sh",
         "source_class": "case",
-        "bytes": 5397
+        "bytes": 5791
       },
       {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -95797,7 +95915,7 @@
         "identity": "test/cases/87_release_pipeline.sh",
         "path": "test/cases/87_release_pipeline.sh",
         "source_class": "case",
-        "bytes": 11068
+        "bytes": 12457
       },
       {
         "uri": "majordomus://test/test/cases/87b_release_archive_shape.sh",
@@ -95949,7 +96067,7 @@
         "identity": "test/cases/924_one_executor_across_machines.sh",
         "path": "test/cases/924_one_executor_across_machines.sh",
         "source_class": "case",
-        "bytes": 6390
+        "bytes": 6524
       },
       {
         "uri": "majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh",
@@ -97069,7 +97187,7 @@
       "identity": [
         "id"
       ],
-      "objects": 273
+      "objects": 279
     },
     {
       "name": "knowledge",
@@ -97099,7 +97217,7 @@
       "identity": [
         "id"
       ],
-      "objects": 29
+      "objects": 31
     },
     {
       "name": "moment",
@@ -97221,7 +97339,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 413
+      "objects": 415
     },
     {
       "name": "use-case",
