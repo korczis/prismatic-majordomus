@@ -1255,15 +1255,10 @@ impl QueueSummary {
 pub fn refresh(root: &Path) -> Result<ForgeObservation, String> {
     use forge::Forge;
     let obs = forge::GhForge { root }.observe().map_err(|e| e.0)?;
-    let unserved = forge::fetch(root, &obs).map_err(|e| e.0)?;
+    forge::fetch(root, &obs).map_err(|e| e.0)?;
     store_observation(root, &obs)?;
     // a head the forge does not serve is unknown to its relation, and the trail says which
-    let unfetched = if unserved.is_empty() {
-        String::new()
-    } else {
-        let list: Vec<String> = unserved.iter().map(|n| format!("#{n}")).collect();
-        format!("; the forge serves no head for {}", list.join(", "))
-    };
+    let unfetched = unserved_note(&forge::unmirrored(root, &obs));
     drain::record(
         root,
         drain::IntegrationEvent {
@@ -1278,6 +1273,16 @@ pub fn refresh(root: &Path) -> Result<ForgeObservation, String> {
         },
     )?;
     Ok(obs)
+}
+
+/// What the trail's `observed` event adds about the heads the forge does not serve: nothing
+/// when it serves every one.
+fn unserved_note(unserved: &[u64]) -> String {
+    let list: Vec<String> = unserved.iter().map(|n| format!("#{n}")).collect();
+    match list.is_empty() {
+        true => String::new(),
+        false => format!("; the forge serves no head for {}", list.join(", ")),
+    }
 }
 
 fn short(sha: &str) -> &str {
@@ -1318,6 +1323,15 @@ mod queue_branches {
             resolved,
             delete_branch_on_merge: None,
         }
+    }
+
+    #[test]
+    fn the_trail_names_each_unserved_head_and_nothing_when_all_are_served() {
+        assert_eq!(unserved_note(&[]), "");
+        assert_eq!(
+            unserved_note(&[857, 2]),
+            "; the forge serves no head for #857, #2"
+        );
     }
 
     fn unknown(_: &PullRequestObservation) -> RelationToMaster {

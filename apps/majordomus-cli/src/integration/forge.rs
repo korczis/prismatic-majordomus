@@ -1832,24 +1832,62 @@ fn served_pull_heads(root: &Path, numbers: &BTreeSet<u64>) -> Result<BTreeSet<u6
         .iter()
         .map(|n| format!("refs/pull/{n}/head"))
         .collect();
-    let listed = super::retry::forge(|| {
-        let out = Command::new("git")
-            .arg("-C")
+    super::retry::forge(|| {
+        let mut ls = Command::new("git");
+        ls.arg("-C")
             .arg(root)
             .args(["ls-remote", "origin"])
-            .args(&wanted)
-            .output()
-            .map_err(|e| format!("git ls-remote could not run: {e}"))?;
-        if out.status.success() {
-            Ok(String::from_utf8_lossy(&out.stdout).into_owned())
-        } else {
-            Err(format!(
-                "git ls-remote failed: {}",
-                String::from_utf8_lossy(&out.stderr).trim()
-            ))
-        }
-    })?;
-    Ok(served_pull_heads_of(&listed))
+            .args(&wanted);
+        output_of(ls, "git ls-remote").and_then(|out| stdout_of(out, "git ls-remote"))
+    })
+    .map(|listed| served_pull_heads_of(&listed))
+}
+
+/// What `cmd` answered, or why it could not run, naming `what` was run.
+fn output_of(mut cmd: Command, what: &str) -> Result<std::process::Output, String> {
+    cmd.output()
+        .map_err(|e| format!("{what} could not run: {e}"))
+}
+
+/// The standard output of a command that succeeded; for one that failed, what it said.
+fn stdout_of(out: std::process::Output, what: &str) -> Result<String, String> {
+    if out.status.success() {
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    } else {
+        Err(format!(
+            "{what} failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ))
+    }
+}
+
+/// The pull requests of `obs`, open and resolved, that have no mirror in this clone. After
+/// [`fetch`] these are exactly the heads the forge does not serve: a served head is fetched
+/// into its mirror, and an unserved one's mirror is removed.
+pub fn unmirrored(root: &Path, obs: &ForgeObservation) -> Vec<u64> {
+    let numbers: BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.number)
+        .chain(obs.resolved.keys().copied())
+        .collect();
+    let mirrored: BTreeSet<u64> = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["for-each-ref", "--format=%(refname)", PR_REF_PREFIX])
+        .output()
+        .map(|o| o.stdout)
+        .unwrap_or_default()
+        .split(|b| *b == b'\n')
+        .filter_map(|r| {
+            std::str::from_utf8(r)
+                .ok()?
+                .strip_prefix(PR_REF_PREFIX)?
+                .parse()
+                .ok()
+        })
+        .collect();
+    numbers.difference(&mirrored).copied().collect()
 }
 
 /// The pull request numbers of `git ls-remote` output whose ref is exactly
@@ -2752,6 +2790,11 @@ mod tests {
         assert_eq!(mirror(1), Some(one.clone()), "the served head is fetched");
         assert_eq!(mirror(2), None, "the unserved head's mirror is gone");
         assert_eq!(
+            unmirrored(&work, &obs),
+            [2],
+            "what the trail names is what was not fetched"
+        );
+        assert_eq!(
             git(&work, &["rev-parse", "refs/remotes/origin/master"]).len(),
             40,
             "the base is fetched"
@@ -2777,6 +2820,110 @@ mod tests {
                 "a\trefs/pull/1/head\nb\trefs/x/refs/pull/2/head\nc\trefs/pull/3/merge\n"
             ),
             BTreeSet::from([1])
+        );
+    }
+
+    /// The fallback's own failures: an origin that answers neither fetch nor ls-remote is the
+    /// first fetch's error, a base that is gone as well as a head fails the second fetch, and
+    /// a command that cannot start says which.
+    #[test]
+    fn a_fallback_that_cannot_ask_or_fetch_fails_with_the_cause() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let base = tmp.path();
+        git(
+            base,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(base, &["init", "-q", "-b", "master", "work"]);
+        let work = base.join("work");
+        git(
+            &work,
+            &[
+                "remote",
+                "add",
+                "origin",
+                base.join("origin.git").to_str().unwrap(),
+            ],
+        );
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/master"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/pull/1/head"]);
+        let pr = |n: u64| {
+            pull_request_of(&json!({
+                "number": n, "title": "t", "author": {"login": "a"},
+                "headRefName": format!("fix/{n}"), "headRefOid": "h", "baseRefName": "master",
+                "isDraft": false, "labels": [], "createdAt": "2026-10-01T00:00:00Z",
+                "updatedAt": "2026-10-01T00:00:00Z", "body": "", "statusCheckRollup": [],
+                "reviewDecision": "", "autoMergeRequest": null, "isCrossRepository": false
+            }))
+            .unwrap()
+        };
+        let mut obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "gone".into(),
+            base_sha: String::new(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: vec![pr(1), pr(2)],
+            resolved: BTreeMap::new(),
+            delete_branch_on_merge: None,
+        };
+        // #2 is unserved, so the heads are fetched again with the base, which is gone too
+        let second = fetch(&work, &obs).map_err(|e| e.0);
+        assert!(
+            second
+                .as_ref()
+                .is_err_and(|e| e.contains("refs/heads/gone")),
+            "{second:?}"
+        );
+        // an origin that cannot be reached at all: ls-remote fails, and the first fetch's
+        // error is the answer
+        obs.base = "master".into();
+        git(
+            &work,
+            &[
+                "remote",
+                "set-url",
+                "origin",
+                base.join("absent.git").to_str().unwrap(),
+            ],
+        );
+        let unreachable = fetch(&work, &obs).map_err(|e| e.0);
+        assert!(
+            unreachable
+                .as_ref()
+                .is_err_and(|e| e.starts_with("git fetch failed")),
+            "{unreachable:?}"
+        );
+        assert!(
+            served_pull_heads(&work, &BTreeSet::from([1]))
+                .is_err_and(|e| e.starts_with("git ls-remote failed")),
+            "an ls-remote git refuses is a failure that says so"
+        );
+        let missing = output_of(
+            Command::new("/nonexistent/majordomus-no-git"),
+            "git ls-remote",
+        );
+        assert!(
+            missing.is_err_and(|e| e.starts_with("git ls-remote could not run")),
+            "a command that cannot start names itself"
         );
     }
 
