@@ -65,6 +65,9 @@ cp "$GATE" "$W/scripts/ci/backlog-check"
 cp "$ROOT/.ai/repo/rules/project/accumulation-is-measured.v2.md" "$W/.ai/repo/rules/project/"
 cp "$ROOT/test/cases/131_backlog_hygiene.sh" "$W/test/cases/"
 cp "$ROOT/test/cases/276_disk_is_bounded.sh" "$W/test/cases/"
+cp "$ROOT/test/run.sh" "$W/test/run.sh"
+mkdir -p "$W/.cargo" && cp "$ROOT/.cargo/config.toml" "$W/.cargo/config.toml"
+cp "$ROOT/scripts/build-slot" "$W/scripts/build-slot" && chmod +x "$W/scripts/build-slot"
 # the fifth quantity's half: the floor lives in the library, and the paths that start a
 # build ask it. The gate reads all four, so the fixture carries all four.
 cp "$ROOT/lib/rust_bin.sh" "$W/lib/rust_bin.sh"
@@ -95,6 +98,31 @@ sed 's/mj_rust_space_check/mj_nothing_at_all/' "$ROOT/.just/build.just" > "$W/.j
 MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
 expect_grep 'start a build without asking whether there is room'
 cp "$ROOT/.just/build.just" "$W/.just/build.just"
+
+# a reaper that reclaims only what has merged: pushed branches waiting to land hold the disk
+sed "s/'for-each-ref --contains' //; s/for-each-ref --contains/for-each-ref/" "$REAPER" > "$W/scripts/reap-orphans"
+chmod +x "$W/scripts/reap-orphans"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'no longer tests .for-each-ref --contains.'
+cp "$REAPER" "$W/scripts/reap-orphans"; chmod +x "$W/scripts/reap-orphans"
+
+# a space check that only refuses: nothing reclaims until the floor stops every build
+sed 's/^  mj_rust_reclaim "\$mj_sc_root"/  : "$mj_sc_root"/' "$ROOT/lib/rust_bin.sh" > "$W/lib/rust_bin.sh"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'no longer reclaims below a mark before the floor'
+cp "$ROOT/lib/rust_bin.sh" "$W/lib/rust_bin.sh"
+
+# cargo no longer routes compilations through the cap: builds are unbounded again
+printf '[build]\n' > "$W/.cargo/config.toml"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'build concurrency is unbounded'
+cp "$ROOT/.cargo/config.toml" "$W/.cargo/config.toml"
+
+# a runner that lets a case's build sweep the machine it runs on
+grep -v '^MAJORDOMUS_RECLAIM_BELOW_MB=0' "$ROOT/test/run.sh" > "$W/test/run.sh"
+MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+expect_grep 'does not turn the build-side reclaim off'
+cp "$ROOT/test/run.sh" "$W/test/run.sh"
 
 mv "$W/lib/rust_bin.sh" "$W/lib/rust_bin.sh.away"
 MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"

@@ -1,0 +1,120 @@
+#!/bin/sh
+# build-slot — at most MAJORDOMUS_BUILD_SLOTS builds of this repository's crates compile at
+# once on one machine (default 2), whoever started them: a script, a person, an agent.
+#
+# Wired as cargo's `build.rustc-workspace-wrapper` in .cargo/config.toml, so every `cargo
+# build`, `test`, `clippy`, `run`, `llvm-cov` of a workspace member in any checkout of this
+# repository passes through here, and dependencies never do. On 2026-10-10 three sessions'
+# builds of majordomus_cli ran at once, each rustc at ~500% CPU, and the machine's load
+# reached 50: every session's derive, case and hook slowed together. The repository had a
+# convention for two build slots (~/dev/.build-slots.README) and nothing that held it.
+#
+# A build is one target directory being compiled into, read from rustc's `--out-dir`: every
+# rustc of one `cargo test` shares one slot, and a slot belongs to whichever build holds it
+# while any of its compilers is alive. Liveness is the process, never a clock: this script
+# execs rustc, so the pid recorded in the slot IS the compiler, and a slot whose pids are all
+# gone is free — a killed build cannot strand one.
+#
+# Wrapper protocol. cargo calls `<this> <rustc> <args>`; with RUSTC_WRAPPER set (sccache here)
+# it calls `sccache <this> <rustc> <args>`, and sccache, taking this script for the compiler,
+# also probes it as `<this> -vV` and `<this> -E ...` with no rustc in front. Both are handled:
+# a first argument that is an executable path is the compiler, anything else goes to rustc.
+#
+#   MAJORDOMUS_BUILD_SLOTS=N        builds that may compile at once (default 2; 0 = no limit)
+#   MAJORDOMUS_BUILD_SLOT_WAIT_S=S  how long a build waits for a slot before it is refused
+#                                   (default 3600; project.every-wait-is-bounded)
+#   MAJORDOMUS_BUILD_SLOT_DIR=D     where the slots live (default ~/.cache/majordomus/build-slots)
+#
+# Exit: rustc's own, or 75 (EX_TEMPFAIL) when no slot came free within the wait.
+set -u
+
+if [ -n "${1:-}" ] && [ "${1#*/}" != "$1" ] && [ -x "$1" ]; then
+  compiler="$1"; shift
+else
+  compiler="${RUSTC:-rustc}"
+fi
+
+slots="${MAJORDOMUS_BUILD_SLOTS:-2}"
+case "$slots" in ''|*[!0-9]*) slots=2 ;; esac
+
+# Only a compilation takes a slot: a probe (-vV, --print, -E) costs nothing and must not wait.
+key=""; prev=""
+for a in "$@"; do
+  [ "$prev" = "--out-dir" ] && key="$a"
+  prev="$a"
+done
+[ "$slots" -gt 0 ] && [ -n "$key" ] || exec "$compiler" "$@"
+# one build is its profile's directory: target/debug/deps -> target/debug
+key="${key%/deps}"
+
+dir="${MAJORDOMUS_BUILD_SLOT_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/majordomus/build-slots}"
+wait_s="${MAJORDOMUS_BUILD_SLOT_WAIT_S:-3600}"
+case "$wait_s" in ''|*[!0-9]*) wait_s=3600 ;; esac
+mkdir -p "$dir" 2>/dev/null || exec "$compiler" "$@"   # nowhere to count: do not stop the build
+
+alive() { [ -n "$1" ] && kill -0 "$1" 2>/dev/null; }
+
+# A slot is free when none of its pids is alive. Pruned here, under the lock, so a dead build
+# frees its slot the next time anybody asks.
+slot_live() {
+  for p in "$1"/pid.*; do
+    [ -e "$p" ] || continue
+    if alive "${p##*/pid.}"; then return 0; fi
+    rm -f "$p"
+  done
+  return 1
+}
+
+# The critical section is the choice of a slot, a few file operations: a mkdir lock, broken
+# when its holder is gone, never by age.
+lock() {
+  while ! mkdir "$dir/lock" 2>/dev/null; do
+    holder="$(cat "$dir/lock/pid" 2>/dev/null || true)"
+    if [ -n "$holder" ] && ! alive "$holder"; then rm -rf "$dir/lock"; continue; fi
+    sleep 0.2
+  done
+  echo $$ > "$dir/lock/pid"
+}
+unlock() { rm -rf "$dir/lock"; }
+
+take() {   # 0 with $slot set when this build has a slot, 1 when every slot is another's
+  i=1
+  while [ "$i" -le "$slots" ]; do
+    s="$dir/slot-$i"
+    if [ -d "$s" ] && [ "$(cat "$s/key" 2>/dev/null)" = "$key" ] && slot_live "$s"; then
+      slot="$s"; return 0
+    fi
+    i=$((i + 1))
+  done
+  i=1
+  while [ "$i" -le "$slots" ]; do
+    s="$dir/slot-$i"
+    if [ ! -d "$s" ] || ! slot_live "$s"; then
+      rm -rf "$s"; mkdir -p "$s" && printf '%s\n' "$key" > "$s/key"
+      slot="$s"; return 0
+    fi
+    i=$((i + 1))
+  done
+  return 1
+}
+
+start="$(date +%s)"; said=0; slot=""
+while :; do
+  lock
+  if take; then
+    : > "$slot/pid.$$"
+    unlock
+    exec "$compiler" "$@"
+  fi
+  unlock
+  if [ "$said" = 0 ]; then
+    printf 'build-slot: %s builds are compiling on this machine; %s waits for one to finish:\n' "$slots" "$key" >&2
+    for s in "$dir"/slot-*; do [ -d "$s" ] && printf '  %s\n' "$(cat "$s/key" 2>/dev/null)" >&2; done
+    said=1
+  fi
+  if [ $(( $(date +%s) - start )) -ge "$wait_s" ]; then
+    printf 'build-slot: no slot came free in %ss; %s is refused (MAJORDOMUS_BUILD_SLOTS, MAJORDOMUS_BUILD_SLOT_WAIT_S)\n' "$wait_s" "$key" >&2
+    exit 75
+  fi
+  sleep 2
+done

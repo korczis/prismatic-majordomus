@@ -12,8 +12,13 @@
 #   - `scripts/reap-orphans` exists, is executable, and matches processes by predicate —
 #     a `pkill`/`killall` by name would kill the servers live peers are attached to
 #   - the same reaper still deletes only build directories, still holds all three conditions
-#     for reclaiming one, and still refuses when liveness cannot be measured
-#   - every path that starts a build asks the one shared free-space check before it does
+#     for reclaiming one (landed or pushed, not live, clean), and still refuses when liveness
+#     cannot be measured
+#   - every path that starts a build asks the one shared free-space check before it does, and
+#     that check runs the reaper's reclaim below its mark before the floor decides — while the
+#     test runner turns that off, so no case sweeps the machine it runs on
+#   - cargo routes every workspace compilation through scripts/build-slot, at most two builds
+#     compiling at once per machine
 #   - `.gitattributes` declares `merge=derived` and the driver it names is committed and
 #     executable, and a recipe installs it (the declaration and its installer are one
 #     relation; checking only one side is how this class of defect survives)
@@ -83,9 +88,9 @@ if [ -x "$REAPER" ]; then
   else
     ok "the reaper removes build directories and never a worktree"
   fi
-  for predicate in 'merge-base --is-ancestor' 'ps -Ao command=' '\-d cwd' 'status --porcelain'; do
+  for predicate in 'merge-base --is-ancestor' 'for-each-ref --contains' 'ps -Ao command=' '\-d cwd' 'status --porcelain'; do
     grep -qE "$predicate" "$REAPER" \
-      || fail "$REAPER no longer tests '$predicate': merged, not live and idle are all three required"
+      || fail "$REAPER no longer tests '$predicate': landed or pushed, not live and idle are all three required"
   done
   grep -q 'no-optional-locks' "$REAPER" \
     || fail "$REAPER reads a worktree's status without --no-optional-locks: a status sweep that refreshes an index fakes liveness for every tree it touches"
@@ -110,6 +115,26 @@ else
     || fail "$SPACE_LIB states no floor"
   grep -qiE 'measured|KiB|GiB' "$SPACE_LIB" \
     || fail "$SPACE_LIB states a floor with no measurement written beside it"
+  # the floor alone is a cliff edge: below the mark the check reclaims first (2026-10-10, two
+  # machines at 99% with 318GB of unattended build output and nothing running the reaper)
+  if grep -qE 'MJ_RECLAIM_BELOW_MB_DEFAULT=[1-9][0-9]*' "$SPACE_LIB" \
+     && sed -n '/^mj_rust_space_check()/,/^}/p' "$SPACE_LIB" | grep -q 'mj_rust_reclaim' \
+     && sed -n '/^mj_rust_reclaim()/,/^}/p' "$SPACE_LIB" | grep -q 'reap-orphans" --targets --reclaim'; then
+    ok "a build below the reclaim mark runs the reaper's classified reclaim before the floor decides"
+  else
+    fail "$SPACE_LIB no longer reclaims below a mark before the floor: unattended build output grows until the floor refuses every build"
+  fi
+  # build concurrency: cargo itself routes every workspace compilation through the cap
+  if [ -x scripts/build-slot ] \
+     && grep -qE '^rustc-workspace-wrapper *= *"scripts/build-slot"' .cargo/config.toml 2>/dev/null \
+     && grep -qE 'MAJORDOMUS_BUILD_SLOTS:-2' scripts/build-slot \
+     && grep -qE 'MAJORDOMUS_BUILD_SLOT_WAIT_S' scripts/build-slot; then
+    ok "every compilation of a workspace member passes the machine-wide cap of two builds"
+  else
+    fail "build concurrency is unbounded: .cargo/config.toml must name scripts/build-slot as rustc-workspace-wrapper, executable, capping at 2 with a bounded wait"
+  fi
+  grep -qE '^MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB' test/run.sh \
+    || fail "test/run.sh does not turn the build-side reclaim off: a case that builds would sweep the machine it runs on"
   unbounded=""
   for f in bin/majordomus-cli scripts/derive; do
     [ -f "$f" ] || continue

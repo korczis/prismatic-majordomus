@@ -156,8 +156,11 @@ removes the build directory it produced, so nothing ever would have.
 The same reaper answers it, with a second subject and a second consent (`--reclaim`, never
 `--kill`). **It removes `target/` and never a worktree**: a false positive costs somebody a
 rebuild and cannot cost a byte of source. A build directory is reclaimed only when all four
-hold — merged into `origin/master`, nobody working in that worktree, `git status` empty, and
-the directory provably cargo's own and inside that worktree. The primary checkout is
+hold — merged into `origin/master` or pushed (the tip is in a remote-tracking ref), nobody
+working in that worktree, `git status` empty, and the directory provably cargo's own and
+inside that worktree. Pushed was added on 2026-10-10, when the merged-only form could reclaim
+3 of 31 build directories while 270GB sat in branches pushed and waiting in the landing
+queue, or in detached offload trees, and two machines reached 99% at once. The primary checkout is
 excluded by name rather than by predicate, because every other checkout borrows its
 executable.
 
@@ -179,6 +182,15 @@ to *start* a build below **5120MB** free, and the three paths that start one —
 `MAJORDOMUS_MIN_FREE_MB=0` lifts it. A bound whose own input cannot be measured says so and
 lets the build run — the deliberate opposite of the sweep, because refusing every build on a
 machine whose `df` is unreadable stops all work to prevent a hypothetical.
+
+The floor alone is a cliff edge: it refuses once there is nothing left to refuse with, and the
+reaper is a command somebody must remember. So below a high-water mark —
+`MAJORDOMUS_RECLAIM_BELOW_MB`, default 51200MB, ten builds at their median working size — the
+same check first runs `scripts/reap-orphans --targets --reclaim` itself, at most once per ten
+minutes per machine, and only then applies the floor. The sweep happens because builds happen.
+A reaper that is absent or refuses never fails the build. `test/run.sh` sets the mark to 0,
+because a case must not act on the machine it measures; case 276 exercises the reclaim against
+a fixture of its own.
 
 ### The derived trees that were never declared
 

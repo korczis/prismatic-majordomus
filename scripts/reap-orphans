@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # reap-orphans — reclaim what a session that is gone left behind: the majordomus servers
-# nothing owns any more, and the build output of worktrees whose work has landed.
+# nothing owns any more, and the build output of worktrees whose work has landed or is pushed.
 #
 # Two subjects, one discipline. Both are quantities that grow because nothing decided that
 # they should, both are invisible from the place a person looks, and both are reduced by a
@@ -46,14 +46,26 @@
 # a false positive costs somebody a rebuild and cannot cost a byte of source. A build
 # directory is reclaimed only when all four hold:
 #
-#   - merged     — the worktree's tip is an ancestor of origin/master
+#   - published  — the worktree's tip is an ancestor of origin/master, or is contained in a
+#                  remote-tracking ref: its commits are on a remote, so the branch is waiting
+#                  in a queue, not being written
 #   - not live   — no process names that path and no process is standing in it
 #   - idle       — `git status` is empty: nothing uncommitted, nothing untracked
 #   - owned      — a real directory inside that worktree, never a symlink out of it
 #                  (worktrees here have shared one build directory exactly that way),
 #                  carrying cargo's own CACHEDIR.TAG signature
 #
-# Merged-ness alone would be a disaster, and it is worth saying why. A session working in a
+# Merged-ness was the only form of this condition until 2026-10-10, and that evening it was the
+# cliff. Twenty-eight worktrees held 270GB of build output and the sweep could reclaim three:
+# every other branch was pushed and waiting in the landing queue, or was a detached offload
+# tree the executor had pushed and left, and none of them is an ancestor of origin/master until
+# it lands — which with one required run per pull request is hours, and for a superseded one
+# never. The volume reached 99% on two machines at once. A pushed tip is the same fact as a
+# merged one for what this sweep protects: the commits are safe on a remote, and the build
+# directory is regenerable either way. The three conditions below are what keep a session's
+# work-in-progress from being mistaken for a parked branch.
+#
+# Merged-ness (or publication) alone would be a disaster, and it is worth saying why. A session working in a
 # worktree that has not committed yet leaves its tip exactly where the merge left it, so the
 # branch reads as fully merged while somebody is mid-task in it. On the morning this was
 # written `feature/entities-are-routable` was that worktree: an ancestor of origin/master by
@@ -79,7 +91,7 @@
 #   scripts/reap-orphans --servers    only the servers
 #   scripts/reap-orphans --targets    only the build directories
 #   scripts/reap-orphans --kill       end the abandoned servers (TERM, then KILL after --grace)
-#   scripts/reap-orphans --reclaim    remove the build output of landed, unattended worktrees
+#   scripts/reap-orphans --reclaim    remove the build output of landed or pushed, unattended worktrees
 #   scripts/reap-orphans --min-age 2h only consider servers older than two hours
 #
 # `--kill` and `--reclaim` are separate on purpose: the two subjects are consented to
@@ -403,7 +415,7 @@ reap_targets() {
 
   # What every candidate is measured against. Unresolvable means merged-ness is undecidable
   # for everybody, which is a refusal and not an empty result.
-  local base main_wt self_wt wt tip target size st rc
+  local base main_wt self_wt wt tip target size st rc why published
   base="$(git -C "$ROOT" rev-parse --verify --quiet origin/master 2>/dev/null || true)"
   [ -n "$base" ] || die "origin/master cannot be resolved: merged-ness is undecidable, so nothing is reclaimed"
 
@@ -453,15 +465,27 @@ reap_targets() {
 
     rc=0; git -C "$ROOT" merge-base --is-ancestor "$tip" "$base" >/dev/null 2>&1 || rc=$?
     case "$rc" in
-      0) : ;;
-      1) row "$wt" "$(human "$size")" "keep — ${tip:0:9} is not an ancestor of origin/master"
-         tgt_kept=$((tgt_kept + 1)); continue ;;
+      0) why="merged" ;;
+      1) # Not landed: published is the other way its commits are safe. Asked of git as a
+         # count of remote-tracking refs containing the tip, and an unreadable answer is a
+         # skip, never a "no" that a later reader could mistake for a measurement.
+         rc=0; published="$(git -C "$ROOT" for-each-ref --contains "$tip" --count=1 \
+           --format='%(refname:short)' refs/remotes/ 2>/dev/null)" || rc=$?
+         if [ "$rc" -ne 0 ]; then
+           row "$wt" "$(human "$size")" "skip — publication could not be decided (git exit $rc)"
+           unreadable=$((unreadable + 1)); continue
+         fi
+         if [ -z "$published" ]; then
+           row "$wt" "$(human "$size")" "keep — ${tip:0:9} is neither on origin/master nor on any remote"
+           tgt_kept=$((tgt_kept + 1)); continue
+         fi
+         why="published on $published" ;;
       *) row "$wt" "$(human "$size")" "skip — merged-ness could not be decided (git exit $rc)"
          unreadable=$((unreadable + 1)); continue ;;
     esac
 
     if live_in "$wt"; then
-      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it"
+      row "$wt" "$(human "$size")" "keep — $why, but somebody is working in it"
       tgt_kept=$((tgt_kept + 1)); continue
     fi
 
@@ -490,7 +514,7 @@ reap_targets() {
 
     tgt_found=$((tgt_found + 1))
     if [ "$RECLAIM" -eq 0 ]; then
-      row "$wt" "$(human "$size")" "would reclaim — merged, nobody in it, nothing uncommitted"
+      row "$wt" "$(human "$size")" "would reclaim — $why, nobody in it, nothing uncommitted"
       tgt_freed=$((tgt_freed + size))
       continue
     fi
