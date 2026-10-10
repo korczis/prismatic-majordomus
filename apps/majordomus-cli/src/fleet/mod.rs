@@ -308,6 +308,8 @@ pub struct Plan {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Step {
+    /// Ask the mesh whether another session holds the machine (`host:` claims).
+    Claims,
     /// Find a destination that answers.
     Reach,
     /// Ask what the machine is and runs.
@@ -359,6 +361,8 @@ pub enum MachineVerdict {
     Converged,
     /// No destination answered.
     Unreachable,
+    /// Another session holds the machine exclusively on the mesh; nothing was touched.
+    Claimed,
     /// A step was declined or failed; the steps say which.
     Failed,
 }
@@ -645,7 +649,7 @@ pub fn plan(declaration: &Declaration, uri: &str, release: &Release) -> Plan {
             .machines
             .iter()
             .map(|m| {
-                let mut steps = vec![Step::Reach, Step::Probe, Step::Install];
+                let mut steps = vec![Step::Claims, Step::Reach, Step::Probe, Step::Install];
                 if m.hub.is_some() {
                     steps.extend([Step::Checkout, Step::Service]);
                 }
@@ -775,12 +779,14 @@ pub fn rollout(
         .filter(|m| only.is_empty() || only.contains(&m.id))
         .collect();
     let here = local_node();
+    let claims = mesh_claims(declaration, here.as_deref());
     let results = in_parallel(&chosen, |m| {
         roll(
             m,
             here.as_deref() == Some(m.node.as_str()),
             declaration,
             release,
+            &claims,
         )
     });
     let machines: Vec<MachineOutcome> = results.iter().map(|(o, _)| o.clone()).collect();
@@ -819,6 +825,7 @@ fn roll(
     local: bool,
     declaration: &Declaration,
     release: &Release,
+    claims: &Result<Vec<HostClaim>, String>,
 ) -> (MachineOutcome, Option<Transport>) {
     let mut o = MachineOutcome {
         id: m.id.clone(),
@@ -831,6 +838,35 @@ fn roll(
         steps: Vec::new(),
         verdict: MachineVerdict::Failed,
     };
+    // claims: a machine another session holds exclusively is not touched
+    match claims {
+        Err(why) => o.record(Step::Claims, StepStatus::Skipped, why.clone()),
+        Ok(all) => {
+            let mine: Vec<&HostClaim> = all.iter().filter(|c| c.names(m)).collect();
+            if let Some(c) = mine.iter().find(|c| c.exclusive) {
+                o.record(
+                    Step::Claims,
+                    StepStatus::Refused,
+                    format!("held exclusively by {}: {}", c.session, c.intent),
+                );
+                o.verdict = MachineVerdict::Claimed;
+                return (o, None);
+            }
+            if mine.is_empty() {
+                o.record(
+                    Step::Claims,
+                    StepStatus::Ok,
+                    "no session claims this machine".into(),
+                );
+            } else {
+                let who: Vec<String> = mine
+                    .iter()
+                    .map(|c| format!("{} (advisory): {}", c.session, c.intent))
+                    .collect();
+                o.record(Step::Claims, StepStatus::Ok, who.join("; "));
+            }
+        }
+    }
     // reach
     let t = match reach(m, local) {
         Ok(t) => t,
@@ -1145,6 +1181,11 @@ fn sightings(
         .zip(results)
         .filter_map(|(m, (_, t))| Some((*m, t.as_ref()?)))
         .collect();
+    if hubs.len() < 2 {
+        // one hub sees no other hub of this run; whether it sees the rest of the fleet is
+        // `mesh nodes` there, not a verdict of this rollout
+        return Vec::new();
+    }
     let deadline = std::time::Instant::now() + Duration::from_secs(MESH_SECONDS);
     loop {
         let seen: Vec<(String, Vec<(String, String)>)> = hubs
@@ -1213,6 +1254,98 @@ fn present_nodes(body: &str) -> Vec<(String, String)> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+// ---------------------------------------------------------------- claims
+
+/// A held `host:` claim, as the mesh state carries it.
+#[derive(Debug, Clone)]
+pub struct HostClaim {
+    /// The `host:` scopes, without the prefix.
+    pub hosts: Vec<String>,
+    /// The session holding it.
+    pub session: String,
+    /// Whether it is exclusive rather than advisory.
+    pub exclusive: bool,
+    /// What it is for, shortened.
+    pub intent: String,
+}
+
+impl HostClaim {
+    /// Does this claim name this machine: by its fleet id, or by a name carrying its node
+    /// id's first eight characters (`host:macbook-5d81b5c9`)?
+    pub fn names(&self, m: &MachineDeclaration) -> bool {
+        let short = &m.node[..8.min(m.node.len())];
+        self.hosts.iter().any(|h| h == &m.id || h.contains(short))
+    }
+}
+
+/// The held `host:` claims of the mesh, read from the first hub of the fleet that answers
+/// (every linked runtime converges on one state). An error says why none could be asked;
+/// the rollout then goes on and says that it could not ask.
+fn mesh_claims(declaration: &Declaration, here: Option<&str>) -> Result<Vec<HostClaim>, String> {
+    let mut why = Vec::new();
+    for m in declaration.machines.iter().filter(|m| m.hub.is_some()) {
+        let port = m.hub.as_ref().map_or(DEFAULT_HUB_PORT, |h| h.port);
+        let t = match reach(m, here == Some(m.node.as_str())) {
+            Ok(t) => t,
+            Err(e) => {
+                why.push(format!("{}: {e}", m.id));
+                continue;
+            }
+        };
+        let r = t.run(
+            "curl -fsS -m 5 \"http://127.0.0.1:$1/api/v1/mesh/state\" | tr -d '\\n' | sed 's/^/state=/'",
+            &[&port.to_string()],
+            PROBE_BUDGET,
+        );
+        match r.get("state").map(parse_host_claims) {
+            Some(Some(claims)) => return Ok(claims),
+            _ => why.push(format!("{}: its hub gave no mesh state", m.id)),
+        }
+    }
+    Err(format!(
+        "the mesh could not be asked who holds which machine ({})",
+        if why.is_empty() {
+            "the fleet declares no hub".to_string()
+        } else {
+            why.join("; ")
+        }
+    ))
+}
+
+/// The held `host:` claims a `/api/v1/mesh/state` answer carries; `None` when it is not one.
+pub fn parse_host_claims(body: &str) -> Option<Vec<HostClaim>> {
+    let v: Value = serde_json::from_str(body).ok()?;
+    let claims = v.get("state")?.get("claims")?.as_array()?;
+    Some(
+        claims
+            .iter()
+            .filter(|c| c["state"]["state"].as_str() == Some("held"))
+            .filter_map(|c| {
+                let hosts: Vec<String> = c["scope"]
+                    .as_array()?
+                    .iter()
+                    .filter_map(|s| s.as_str()?.strip_prefix("host:").map(str::to_string))
+                    .collect();
+                if hosts.is_empty() {
+                    return None;
+                }
+                let intent: String = c["intent"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .chars()
+                    .take(120)
+                    .collect();
+                Some(HostClaim {
+                    hosts,
+                    session: c["session"].as_str().unwrap_or_default().to_string(),
+                    exclusive: c["mode"].as_str() == Some("exclusive"),
+                    intent,
+                })
+            })
+            .collect(),
+    )
 }
 
 // ---------------------------------------------------------------- services
@@ -1403,6 +1536,27 @@ mod tests {
         let body = r#"{"count":2,"nodes":[{"node_id":"a","presence":"present","version":"0.17.0"},{"node_id":"b","presence":"expired"}]}"#;
         assert_eq!(present_nodes(body), vec![("a".into(), "0.17.0".into())]);
         assert!(present_nodes("not json").is_empty());
+    }
+
+    #[test]
+    fn a_held_host_claim_names_a_machine_by_id_or_node() {
+        let body = r#"{"state":{"claims":[
+            {"scope":["host:lundra"],"session":"s1","mode":"exclusive","intent":"derive","state":{"state":"held"}},
+            {"scope":["host:macbook-01234567"],"session":"s2","mode":"advisory","intent":"x","state":{"state":"held"}},
+            {"scope":["host:a"],"session":"s3","mode":"exclusive","intent":"y","state":{"state":"released"}},
+            {"scope":["apps/x"],"session":"s4","mode":"exclusive","intent":"z","state":{"state":"held"}}]}}"#;
+        let claims = parse_host_claims(body).unwrap();
+        assert_eq!(claims.len(), 2, "released and non-host claims are not read");
+        let d = declaration(ONE).unwrap();
+        let mut m = d.machines[0].clone();
+        m.id = "lundra".into();
+        assert!(claims[0].names(&m) && claims[0].exclusive);
+        assert!(
+            claims[1].names(&d.machines[0]),
+            "named by the node's first eight characters"
+        );
+        assert!(!claims[1].exclusive);
+        assert!(parse_host_claims("nope").is_none());
     }
 
     #[test]

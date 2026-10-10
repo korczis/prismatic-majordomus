@@ -60,6 +60,8 @@ them were known only to an operator's notes.
    - `fleet.plan` reaches nothing.
    - `fleet.status` asks each machine what it runs.
    - `fleet.rollout`, on each machine in parallel:
+     - asks the mesh who holds the machine, and leaves untouched one another session holds
+       exclusively (`host:` claims), reporting advisory ones;
      - installs the release with the published, verifying installer;
      - fast-forwards each hub's checkout, never rewriting work;
      - writes the hub's service as a systemd user unit or a launchd agent, and restarts it;

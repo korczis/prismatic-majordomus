@@ -6,7 +6,7 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "d3d8043196e02df17be8462101d6b6698d12a54894be278e62b1e7795905d44b",
+    "fingerprint": "7e70c9bd0c1db43609ffe208d27ffaaadbc4aac868c7d8ed0c8c4cf5e39498be",
     "summary": {
       "total": 2117,
       "builtin": 187,
@@ -28597,6 +28597,11 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "claims",
+                    "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                  },
+                  {
+                    "type": "string",
                     "const": "reach",
                     "description": "Find a destination that answers."
                   },
@@ -28837,6 +28842,11 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "claims",
+                    "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                  },
+                  {
+                    "type": "string",
                     "const": "reach",
                     "description": "Find a destination that answers."
                   },
@@ -28914,6 +28924,11 @@
                     "type": "string",
                     "const": "unreachable",
                     "description": "No destination answered."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "Another session holds the machine exclusively on the mesh; nothing was touched."
                   },
                   {
                     "type": "string",
@@ -76973,7 +76988,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c0b5d554f967d9c01a215df7ed56d31f6c4337c07a206bb4085019218f90a457",
+    "fingerprint": "94718571a2a00826837d154edd908f65593bd2c6aaa92404d7ed2c3ff32927e7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -78427,7 +78442,7 @@
         "path": ".ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 5151,
+        "bytes": 5304,
         "tags": [
           "architecture",
           "mesh",
@@ -82386,7 +82401,7 @@
         "title": "Majordomus Fleet",
         "path": "docs/FLEET.md",
         "source_class": "document",
-        "bytes": 6589
+        "bytes": 7012
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -93917,7 +93932,7 @@
         "identity": "test/cases/1003_the_fleet_is_rolled_out.sh",
         "path": "test/cases/1003_the_fleet_is_rolled_out.sh",
         "source_class": "case",
-        "bytes": 7230
+        "bytes": 7239
       },
       {
         "uri": "majordomus://test/test/cases/100_environment.sh",

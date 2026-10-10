@@ -29003,6 +29003,11 @@
               "oneOf": [
                 {
                   "type": "string",
+                  "const": "claims",
+                  "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                },
+                {
+                  "type": "string",
                   "const": "reach",
                   "description": "Find a destination that answers."
                 },
@@ -29243,6 +29248,11 @@
               "oneOf": [
                 {
                   "type": "string",
+                  "const": "claims",
+                  "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                },
+                {
+                  "type": "string",
                   "const": "reach",
                   "description": "Find a destination that answers."
                 },
@@ -29320,6 +29330,11 @@
                   "type": "string",
                   "const": "unreachable",
                   "description": "No destination answered."
+                },
+                {
+                  "type": "string",
+                  "const": "claimed",
+                  "description": "Another session holds the machine exclusively on the mesh; nothing was touched."
                 },
                 {
                   "type": "string",

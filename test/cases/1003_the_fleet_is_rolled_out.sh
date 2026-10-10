@@ -82,7 +82,7 @@ fail() { echo "    $1"; [ -z "${2:-}" ] || head -c 1500 "$2"; echo; exit 1; }
 "$RB" fleet plan --version "$VERSION" --format json > "$S/plan.json" 2>"$S/err" || fail "fleet plan failed:" "$S/err"
 jq -e --arg v "$VERSION" '.version == $v and (.machines | length) == 2' "$S/plan.json" >/dev/null \
   || fail "the plan does not name the version and both machines:" "$S/plan.json"
-jq -e '.machines[0].steps == ["reach","probe","install","verify","servers"]
+jq -e '.machines[0].steps == ["claims","reach","probe","install","verify","servers"]
        and .machines[0].destinations == ["lab@10.0.0.9","lab@10.0.0.1"] and .machines[0].local == false' \
   "$S/plan.json" >/dev/null || fail "the plan's steps or destinations are not the declared ones:" "$S/plan.json"
 [ ! -e "$S/hosts/lab@10.0.0.1/.local" ] || fail "fleet plan touched a machine"

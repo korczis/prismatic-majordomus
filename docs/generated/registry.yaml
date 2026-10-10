@@ -20528,6 +20528,9 @@ capabilities:
           Step:
             oneOf:
               - type: string
+                const: claims
+                description: "Ask the mesh whether another session holds the machine (`host:` claims)."
+              - type: string
                 const: reach
                 description: Find a destination that answers.
               - type: string
@@ -20699,6 +20702,9 @@ capabilities:
           Step:
             oneOf:
               - type: string
+                const: claims
+                description: "Ask the mesh whether another session holds the machine (`host:` claims)."
+              - type: string
                 const: reach
                 description: Find a destination that answers.
               - type: string
@@ -20746,6 +20752,9 @@ capabilities:
               - type: string
                 const: unreachable
                 description: No destination answered.
+              - type: string
+                const: claimed
+                description: Another session holds the machine exclusively on the mesh; nothing was touched.
               - type: string
                 const: failed
                 description: A step was declined or failed; the steps say which.

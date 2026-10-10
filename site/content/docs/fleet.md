@@ -71,6 +71,7 @@ order. On each machine:
 
 | step | what it does | declined when |
 |---|---|---|
+| `claims` | asks the mesh, through the first hub that answers, who holds the machine: a held `host:<id>` claim, or one naming the node's first eight characters (`host:macbook-5d81b5c9`), from another session | another session holds it exclusively: the machine is `claimed` and nothing is touched; advisory claims are reported and the rollout goes on |
 | `reach` | the first destination that answers `ssh -o BatchMode=yes` (this machine: directly) | none answers; no password is ever asked for |
 | `probe` | platform, home, the launcher's version, the hub checkout's state, the version the hub answers at, every `majordomus serve` running | |
 | `install` | the published installer, `--version` pinned; it verifies the archive's digest before touching anything | that version is installed, or a newer one is and no version was named |
@@ -84,7 +85,8 @@ order. On each machine:
 
 A machine that cannot be reached, or whose step is declined or fails, stops there and is
 reported; the others go on. Last, the converged hubs are asked which nodes they see, for up
-to 75 seconds, until every hub is seen by every other. The verdict is `converged` when every
+to 75 seconds, until every hub is seen by every other. A machine another session holds
+exclusively on the mesh is `claimed`. The verdict is `converged` when every
 machine converged and the hubs see each other, `partial` when some did, `failed` when none did.
 
 ## What it is allowed to do
