@@ -38,7 +38,7 @@
 #                                             the-commit-will); MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
 #                                             lets a derive run past it
 #   (lib/machine_lock.sh lists the MAJORDOMUS_DERIVE_* variables that move or bound them)
-set -eu
+set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 PROFILE="${MAJORDOMUS_BUILD_PROFILE:-debug}"
