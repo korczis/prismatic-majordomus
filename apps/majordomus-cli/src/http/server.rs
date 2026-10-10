@@ -181,22 +181,44 @@ fn worker(server: &Server, router: &Router, stopping: &AtomicBool) {
 /// Answer `request` on a thread of its own while fewer than [`MAX_HANDLERS`] are, so that the
 /// worker accepts the next request at once; past the bound, answer it here.
 fn hand_off(router: &Router, request: tiny_http::Request) {
-    if HANDLERS.fetch_add(1, Ordering::SeqCst) >= MAX_HANDLERS {
-        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+    let Some(slot) = Slot::take(&HANDLERS, MAX_HANDLERS) else {
         answer(router, request);
         return;
-    }
+    };
     let router = router.clone();
     let spawned = std::thread::Builder::new()
         .name("http-request".into())
         .spawn(move || {
+            let _slot = slot;
             answer(&router, request);
-            HANDLERS.fetch_sub(1, Ordering::SeqCst);
         });
     if let Err(e) = spawned {
-        // the request went with the closure; the client sees its connection close
-        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        // the request and the slot went with the closure: the client sees its connection
+        // close, and the slot is given back as the closure is dropped
         tracing::warn!("a request could not be given a thread: {e}");
+    }
+}
+
+/// One request being answered on a thread of its own: counted while it lives and given back
+/// when it ends, however it ends. The count was decremented after the handler returned, so a
+/// handler that panicked kept its slot forever; enough of them sent every request back onto
+/// the workers and made [`Running::stop`] wait its whole bound (review of #884, I2126).
+struct Slot(&'static std::sync::atomic::AtomicUsize);
+
+impl Slot {
+    /// A slot of `counter`, or none when `bound` are taken.
+    fn take(counter: &'static std::sync::atomic::AtomicUsize, bound: usize) -> Option<Slot> {
+        if counter.fetch_add(1, Ordering::SeqCst) >= bound {
+            counter.fetch_sub(1, Ordering::SeqCst);
+            return None;
+        }
+        Some(Slot(counter))
+    }
+}
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
     }
 }
 
@@ -338,4 +360,33 @@ pub fn stdin_is_a_pipe() -> bool {
 #[cfg(not(unix))]
 pub fn stdin_is_a_pipe() -> bool {
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicUsize;
+
+    /// A handler that panics gives its slot back, and a full bound refuses the next one.
+    #[test]
+    fn a_slot_is_given_back_whatever_happens_to_its_handler() {
+        static COUNT: AtomicUsize = AtomicUsize::new(0);
+        let panicked = std::thread::spawn(|| {
+            let _slot = Slot::take(&COUNT, 2).expect("a free slot");
+            panic!("the handler fails");
+        })
+        .join();
+        assert!(panicked.is_err());
+        assert_eq!(
+            COUNT.load(Ordering::SeqCst),
+            0,
+            "the panic gave the slot back"
+        );
+        let a = Slot::take(&COUNT, 2).expect("first");
+        let b = Slot::take(&COUNT, 2).expect("second");
+        assert!(Slot::take(&COUNT, 2).is_none(), "the bound holds");
+        assert_eq!(COUNT.load(Ordering::SeqCst), 2, "a refusal takes nothing");
+        drop((a, b));
+        assert_eq!(COUNT.load(Ordering::SeqCst), 0);
+    }
 }
