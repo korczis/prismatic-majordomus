@@ -78,6 +78,83 @@ impl DoctorCheck {
     }
 }
 
+/// The `trust-root` check: which copy of the declaration is obeyed, and every line of the
+/// working tree's copy this runtime ignores because the trunk's copy does not say it
+/// ([`super::root`]). `None` when there is no declaration to judge.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::declaration_source;
+/// use majordomus_cli::mesh::root::Resolved;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let config = MeshConfig::from_metadata(
+///     &serde_json::json!({"schema": "mesh/v1", "kind": "mesh-declaration", "id": "x"}), "x").unwrap();
+/// let ignored = Resolved {
+///     declaration: Some(Ok(config)),
+///     trunk: Some("master".into()),
+///     committed: true,
+///     narrowed: vec!["trust.allow: bb is not on the trunk".into()],
+/// };
+/// let check = declaration_source(&ignored).unwrap();
+/// assert!(!check.ok && check.detail.contains("bb is not on the trunk"));
+/// let nothing = Resolved { declaration: None, trunk: None, committed: false, narrowed: vec![] };
+/// assert!(declaration_source(&nothing).is_none());
+/// ```
+pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorCheck> {
+    resolved.declaration.as_ref()?;
+    let trunk = resolved.trunk.as_deref().unwrap_or("the trunk");
+    if resolved.narrowed.is_empty() {
+        let detail = if resolved.committed {
+            format!("obeyed as {trunk} holds it; the working tree widens nothing")
+        } else {
+            format!("not committed on {trunk}; obeyed as written, since it widens nothing a committed copy would have to")
+        };
+        return Some(DoctorCheck::pass("trust-root", detail));
+    }
+    Some(DoctorCheck::fail(
+        "trust-root",
+        format!(
+            "this checkout's runtime ignores {} line(s) of the working tree's declaration: {}",
+            resolved.narrowed.len(),
+            resolved.narrowed.join("; ")
+        ),
+        "a working tree may narrow trust and never widen it: a key, an address or a looser policy takes effect only once the trunk's copy says it",
+        &format!("commit the change on {trunk} (merge it), or revert it here"),
+    ))
+}
+
+/// The `journal` check: whether the cooperation journal's file holds what the journal
+/// holds. A failed append keeps the event in memory and in replication and loses it from this
+/// machine's disk; an unreadable line is one the last reload could not use.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::journal_check;
+/// use majordomus_cli::mesh::journal::JournalTallies;
+/// assert!(journal_check(&JournalTallies::default()).ok);
+/// let lost = JournalTallies { write_failures: 2, ..Default::default() };
+/// let check = journal_check(&lost);
+/// assert!(!check.ok && check.detail.contains("2 event(s)"));
+/// ```
+pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
+    if tallies.write_failures == 0 && tallies.unreadable == 0 {
+        return DoctorCheck::pass(
+            "journal",
+            format!(
+                "{} event(s) held, every append synced to disk, no unreadable line on reload",
+                tallies.events
+            ),
+        );
+    }
+    DoctorCheck::fail(
+        "journal",
+        format!(
+            "{} event(s) did not reach the journal file; {} line(s) of it did not read on reload",
+            tallies.write_failures, tallies.unreadable
+        ),
+        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it",
+        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read",
+    )
+}
+
 /// The whole self-check.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshDoctorReport {

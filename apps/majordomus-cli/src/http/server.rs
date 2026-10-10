@@ -60,7 +60,7 @@ pub fn bind(host: &str, port: u16) -> Result<Bound> {
     {
         tracing::warn!(
             address = %address,
-            "bound to {address}, which is not a loopback address: every host that can reach this interface can read this repository's AI layer, its diagnostics and its peers; bind 127.0.0.1 unless that is intended"
+            "bound to {address}, which is not a loopback address: every host that can reach this interface can read this repository's AI layer, its diagnostics and its peers, unencrypted; it can change nothing but through a signed mesh message (ADR 0126); bind 127.0.0.1 unless that is intended"
         );
     }
     Ok(Bound { server, address })
@@ -203,8 +203,7 @@ fn worker(server: &Server, router: &Router, watch: &Arc<Watch>, stopping: &Atomi
 /// worker accepts the next request at once. Past the bound the probe is answered here and
 /// anything else is refused 503: a worker that read a slow body itself would be held by it.
 fn hand_off(router: &Router, watch: &Arc<Watch>, request: tiny_http::Request) {
-    if HANDLERS.fetch_add(1, Ordering::SeqCst) >= MAX_HANDLERS {
-        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+    let Some(slot) = Slot::take(&HANDLERS, MAX_HANDLERS) else {
         let probe = matches!(
             request.method(),
             tiny_http::Method::Get | tiny_http::Method::Head
@@ -223,19 +222,42 @@ fn hand_off(router: &Router, watch: &Arc<Watch>, request: tiny_http::Request) {
             respond(request, busy, false);
         }
         return;
-    }
+    };
     let router = router.clone();
     let watch = Arc::clone(watch);
     let spawned = std::thread::Builder::new()
         .name("http-request".into())
         .spawn(move || {
+            let _slot = slot;
             answer(&router, &watch, request);
-            HANDLERS.fetch_sub(1, Ordering::SeqCst);
         });
     if let Err(e) = spawned {
-        // the request went with the closure; the client sees its connection close
-        HANDLERS.fetch_sub(1, Ordering::SeqCst);
+        // the request and the slot went with the closure: the client sees its connection
+        // close, and the slot is given back as the closure is dropped
         tracing::warn!("a request could not be given a thread: {e}");
+    }
+}
+
+/// One request being answered on a thread of its own: counted while it lives and given back
+/// when it ends, however it ends. The count was decremented after the handler returned, so a
+/// handler that panicked kept its slot forever; enough of them sent every request back onto
+/// the workers and made [`Running::stop`] wait its whole bound (review of #884, I2126).
+struct Slot(&'static std::sync::atomic::AtomicUsize);
+
+impl Slot {
+    /// A slot of `counter`, or none when `bound` are taken.
+    fn take(counter: &'static std::sync::atomic::AtomicUsize, bound: usize) -> Option<Slot> {
+        if counter.fetch_add(1, Ordering::SeqCst) >= bound {
+            counter.fetch_sub(1, Ordering::SeqCst);
+            return None;
+        }
+        Some(Slot(counter))
+    }
+}
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
     }
 }
 
@@ -266,7 +288,8 @@ fn upgrade(
         .collect();
     let probe =
         super::Request::parse_target(&request.method().to_string(), request.url(), Vec::new())
-            .with_headers(headers);
+            .with_headers(headers)
+            .with_remote(request.remote_addr().map(|a| a.ip()));
     let accepted = match router.websocket(&probe) {
         None => return Some(request),
         Some(Ok(accepted)) => accepted,
@@ -298,6 +321,7 @@ fn answer_http(router: &Router, watch: &Watch, mut request: tiny_http::Request) 
     let head = method == "HEAD";
     let method = if head { "GET".to_string() } else { method };
     let target = request.url().to_string();
+    let remote = request.remote_addr().map(|a| a.ip());
     let headers: Vec<(String, String)> = request
         .headers()
         .iter()
@@ -325,9 +349,19 @@ fn answer_http(router: &Router, watch: &Watch, mut request: tiny_http::Request) 
             &format!("the body is over {MAX_BODY_BYTES} bytes"),
         )
     } else {
-        router.handle(&super::Request::parse_target(&method, &target, body).with_headers(headers))
+        router.handle(
+            &super::Request::parse_target(&method, &target, body)
+                .with_headers(headers)
+                .with_remote(remote),
+        )
     };
-    tracing::debug!(method = %method, target = %target, status = response.status, "response");
+    // the target carries the query string, where a careless client puts a token
+    tracing::debug!(
+        method = %method,
+        target = %crate::redaction::redact_secrets(&target).text,
+        status = response.status,
+        "response"
+    );
     respond(request, response, head);
 }
 
@@ -393,4 +427,33 @@ pub fn stdin_is_a_pipe() -> bool {
 #[cfg(not(unix))]
 pub fn stdin_is_a_pipe() -> bool {
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicUsize;
+
+    /// A handler that panics gives its slot back, and a full bound refuses the next one.
+    #[test]
+    fn a_slot_is_given_back_whatever_happens_to_its_handler() {
+        static COUNT: AtomicUsize = AtomicUsize::new(0);
+        let panicked = std::thread::spawn(|| {
+            let _slot = Slot::take(&COUNT, 2).expect("a free slot");
+            panic!("the handler fails");
+        })
+        .join();
+        assert!(panicked.is_err());
+        assert_eq!(
+            COUNT.load(Ordering::SeqCst),
+            0,
+            "the panic gave the slot back"
+        );
+        let a = Slot::take(&COUNT, 2).expect("first");
+        let b = Slot::take(&COUNT, 2).expect("second");
+        assert!(Slot::take(&COUNT, 2).is_none(), "the bound holds");
+        assert_eq!(COUNT.load(Ordering::SeqCst), 2, "a refusal takes nothing");
+        drop((a, b));
+        assert_eq!(COUNT.load(Ordering::SeqCst), 0);
+    }
 }
