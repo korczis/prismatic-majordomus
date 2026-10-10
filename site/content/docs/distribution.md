@@ -289,7 +289,7 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
-| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (the pipeline asked for that verdict; if it could not, `gh workflow run validate.yml --ref release/record-<tag> -f plan=change`), then rerun `smoke` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (`majordomus prs drain` reopens it so that its own run starts; by hand, `gh pr close <n>` then `gh pr reopen <n>`), then rerun `smoke` | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
 </div>
@@ -313,6 +313,16 @@ required check read. A dispatch that cannot be started is a warning naming the r
 does not fail the job, because the release is published either way and `smoke` must still
 run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
 workflows to this.
+
+That dispatch has not, by itself, made a record mergeable. On `v0.19.1` its `ci` passed at
+the record's head and the merge was still refused; the record landed only after a person
+closed and reopened the pull request, 3.4 hours after it was proposed, with every open head
+red meanwhile (I2282). So the integration executor does that part: `majordomus prs drain`
+closes and reopens a `release/record-<tag>` pull request that the workflow's token opened
+and that has no check of its own, once per head, and the run its reopening starts is the one
+the merge waits for ([INTEGRATION.md](@/docs/integration.md), "The record pull request it reopens";
+`test/cases/1036_the_executor_reopens_a_record_pull_request.sh`). Without a drain running,
+the remedy is the same two commands by hand: `gh pr close <n>` and `gh pr reopen <n>`.
 
 #### Why the release asks Pages to publish
 

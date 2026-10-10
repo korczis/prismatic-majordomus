@@ -171,6 +171,15 @@ struct World {
     outages: Vec<String>,
     /// Every closure comment that reached the forge.
     close_comments: Vec<String>,
+    /// Record pull requests the forge shows as opened with the workflow's token, old enough
+    /// and without a check of their own; any other is `NotYet`.
+    record_reopenable: BTreeSet<u64>,
+    /// How many times a record's standing was asked of the forge.
+    standing_calls: usize,
+    /// The forge closes these and then refuses to reopen them.
+    reopen_refuses: BTreeSet<u64>,
+    /// How many times a reopen reached the forge.
+    reopen_calls: usize,
     /// On this observation (1-based) the queue's policy names no merge method, whatever
     /// its pull requests say: an observation that contradicts itself.
     no_method_on: Option<usize>,
@@ -205,6 +214,10 @@ impl Default for World {
             trail_root: None,
             outages: Vec::new(),
             close_comments: Vec::new(),
+            record_reopenable: BTreeSet::new(),
+            standing_calls: 0,
+            reopen_refuses: BTreeSet::new(),
+            reopen_calls: 0,
             no_method_on: None,
         }
     }
@@ -535,6 +548,40 @@ impl Integrator for World {
             return Err(format!("#{pr}'s head moved to {}", s.head));
         }
         self.gone_as(pr, Gone::Closed);
+        Ok(())
+    }
+
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> drain::RecordStanding {
+        self.standing_calls += 1;
+        match self.open.iter().find(|s| s.number == pr) {
+            Some(s) if s.head != head_sha => {
+                drain::RecordStanding::NotYet(format!("its head moved to {}", s.head))
+            }
+            Some(_) if self.record_reopenable.contains(&pr) => drain::RecordStanding::Reopenable,
+            Some(_) => drain::RecordStanding::NotYet("a person opened it".into()),
+            None => drain::RecordStanding::NotYet("it is CLOSED on the forge, not open".into()),
+        }
+    }
+
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        self.reopen_calls += 1;
+        self.close_comments.push(comment.to_string());
+        let s = self
+            .open
+            .iter()
+            .find(|s| s.number == pr)
+            .ok_or("not open")?;
+        // the forge side of the guard, as for a closure
+        if s.head != head_sha {
+            return Err(format!("#{pr}'s head moved to {}", s.head));
+        }
+        if self.reopen_refuses.contains(&pr) {
+            self.gone_as(pr, Gone::Closed);
+            return Err(format!(
+                "#{pr} was closed and could not be reopened (HTTP 403: Resource not accessible by integration)"
+            ));
+        }
+        // open again at the same head: the run its reopening started has reported nothing yet
         Ok(())
     }
 }
@@ -1383,6 +1430,12 @@ fn cleanup_lists_only_what_is_provably_on_master() {
             unreachable!()
         }
         fn close(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
+            unreachable!()
+        }
+        fn record_standing(&mut self, _: u64, _: &str) -> drain::RecordStanding {
+            unreachable!()
+        }
+        fn reopen(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
             unreachable!()
         }
     }
@@ -2473,6 +2526,12 @@ fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
         fn close(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
             unreachable!()
         }
+        fn record_standing(&mut self, _: u64, _: &str) -> drain::RecordStanding {
+            unreachable!()
+        }
+        fn reopen(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
+            unreachable!()
+        }
     }
     let stop = std::sync::atomic::AtomicBool::new(false);
     let report = drain::continuous(
@@ -2673,7 +2732,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 31] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -2695,6 +2754,9 @@ const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
     drain::IntegrationAction::ClosedRedundant,
     drain::IntegrationAction::ClosedSuperseded,
     drain::IntegrationAction::CloseFailed,
+    drain::IntegrationAction::ReopenAttempted,
+    drain::IntegrationAction::Reopened,
+    drain::IntegrationAction::ReopenFailed,
     drain::IntegrationAction::RepairSelected,
     drain::IntegrationAction::RepairAttempted,
     drain::IntegrationAction::Repaired,
@@ -2730,6 +2792,9 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::ClosedSuperseded
         | A::ClosedRedundant
         | A::CloseFailed
+        | A::ReopenAttempted
+        | A::Reopened
+        | A::ReopenFailed
         | A::RepairSelected
         | A::RepairAttempted
         | A::Repaired
@@ -3028,6 +3093,14 @@ fn run_scenario(root: &std::path::Path, scenario: &str) -> World {
             w.meanwhile.push((2, Meanwhile::Closes(1)));
             drop(drain::cleanup(root, &mut w, true));
         }
+        "reopen" | "reopen_fails" => {
+            w.open = vec![record_sim(1)];
+            w.record_reopenable.insert(1);
+            if scenario == "reopen_fails" {
+                w.reopen_refuses.insert(1);
+            }
+            drop(drain::drain(root, &mut w, 2, false, false));
+        }
         // "lease": taken and given back
         _ => drop(drain::IntegrationLease::acquire(root, "master")),
     }
@@ -3085,6 +3158,8 @@ fn every_trail_write_can_fail_and_no_act_goes_unrecorded() {
         "reconcile_never",
         "reconcile_unproved",
         "cleanup_stale",
+        "reopen",
+        "reopen_fails",
     ] {
         // the k-th write fails, for every k until a run makes fewer than k writes
         for k in 1..64 {
@@ -3098,6 +3173,7 @@ fn every_trail_write_can_fail_and_no_act_goes_unrecorded() {
             assert!(w.merge_calls <= count("merge_attempted"), "{at}: {trail:?}");
             assert!(w.refresh_calls <= count("refresh_attempted"), "{at}");
             assert!(w.close_calls <= count("close_attempted"), "{at}");
+            assert!(w.reopen_calls <= count("reopen_attempted"), "{at}");
             if unspent > 0 {
                 assert!(k > 1, "{scenario} wrote nothing at all");
                 break;
@@ -3306,6 +3382,12 @@ impl Integrator for Shared {
     }
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
         self.0.lock().unwrap().close(pr, head_sha, comment)
+    }
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> drain::RecordStanding {
+        self.0.lock().unwrap().record_standing(pr, head_sha)
+    }
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        self.0.lock().unwrap().reopen(pr, head_sha, comment)
     }
 }
 
@@ -6367,6 +6449,12 @@ fn an_applied_repair_records_its_selection_and_attempt_before_the_push_and_its_o
         fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
             self.world.close(pr, head, comment)
         }
+        fn record_standing(&mut self, pr: u64, head: &str) -> drain::RecordStanding {
+            self.world.record_standing(pr, head)
+        }
+        fn reopen(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.world.reopen(pr, head, comment)
+        }
     }
     let root = scratch();
     let mut w = Watching {
@@ -6463,6 +6551,12 @@ fn an_applied_repair_whose_push_is_refused_records_the_class_and_reports_it() {
         }
         fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
             self.0.close(pr, head, comment)
+        }
+        fn record_standing(&mut self, pr: u64, head: &str) -> drain::RecordStanding {
+            self.0.record_standing(pr, head)
+        }
+        fn reopen(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.0.reopen(pr, head, comment)
         }
     }
     let root = scratch();
@@ -7466,4 +7560,265 @@ fn the_trail_0_14_0_wrote_is_still_read_and_no_event_needs_a_new_field() {
     let unknown: ReasonCode = serde_json::from_value(serde_json::json!("a_later_code:#7")).unwrap();
     assert_eq!(unknown, ReasonCode::Unrecognised("a_later_code:#7".into()));
     assert_eq!(serde_json::to_value(&unknown).unwrap(), "a_later_code:#7");
+}
+
+// ---------------------------------------------------------------- the record it reopens
+
+/// A release's record as the forge lists it: on its `release/record-<tag>` branch, containing
+/// master, and without a report of the required check.
+fn record_sim(number: u64) -> Sim {
+    Sim {
+        head_ref: "release/record-v9.9.9".into(),
+        ci_unreported: true,
+        ..sim(number)
+    }
+}
+
+#[test]
+fn a_record_no_run_was_started_for_is_reopened_once_trail_first() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert!(
+        matches!(report.steps.as_slice(), [DrainStepOutcome::Reopened { pr: 7, head }] if head == "h7.0"),
+        "{:?}",
+        report.steps
+    );
+    assert!(report.stopped.contains("closed and reopened"), "{report:?}");
+    assert_eq!((w.standing_calls, w.reopen_calls), (1, 1));
+    assert_eq!(w.close_comments, [drain::RECORD_REOPEN_COMMENT]);
+    let trail = trail_actions(&root);
+    let at = |a: &str| trail.iter().position(|x| x == a);
+    assert!(at("reopen_attempted") < at("reopened"), "{trail:?}");
+    let attempted = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action == drain::IntegrationAction::ReopenAttempted)
+        .unwrap();
+    assert_eq!(
+        (attempted.pr, attempted.head_sha.as_deref()),
+        (Some(7), Some("h7.0"))
+    );
+    assert!(attempted.detail.contains("release/record-v9.9.9"));
+
+    // the reopened record still reads `missing` until its run's last job exists: the same
+    // head is not asked after again, let alone closed again
+    let again = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert!(
+        matches!(again.steps.as_slice(), [DrainStepOutcome::Idle { .. }]),
+        "{:?}",
+        again.steps
+    );
+    assert_eq!((w.standing_calls, w.reopen_calls), (1, 1));
+
+    // and when its check passes it is merged like any other
+    w.open[0].ci_unreported = false;
+    let merged = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(merged.merged, [7], "{:?}", merged.steps);
+}
+
+#[test]
+fn a_dry_run_names_the_reopen_and_takes_no_act() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, true, false).unwrap();
+    assert!(
+        matches!(
+            report.steps.as_slice(),
+            [DrainStepOutcome::WouldReopen { pr: 7 }]
+        ),
+        "{:?}",
+        report.steps
+    );
+    assert!(report.stopped.contains("would be closed and reopened"));
+    assert_eq!(w.reopen_calls, 0);
+    assert!(trail_actions(&root)
+        .iter()
+        .all(|a| !a.starts_with("reopen")));
+}
+
+#[test]
+fn a_record_that_is_not_in_that_state_is_left_alone() {
+    // a person opened it, or it has a check of its own: the forge says so, nothing is done
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.standing_calls, w.reopen_calls), (1, 0));
+    assert!(trail_actions(&root)
+        .iter()
+        .all(|a| !a.starts_with("reopen")));
+
+    // any other branch waiting for a check that never reported is not even asked after
+    let root = scratch();
+    let mut w = World {
+        open: vec![Sim {
+            ci_unreported: true,
+            ..sim(8)
+        }],
+        record_reopenable: BTreeSet::from([8]),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.standing_calls, w.reopen_calls), (0, 0));
+
+    // and a record whose head moved since the queue was built is not this one
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    assert!(matches!(
+        w.record_standing(7, "another-head"),
+        drain::RecordStanding::NotYet(why) if why.contains("moved")
+    ));
+    assert!(matches!(
+        w.record_standing(99, "h99.0"),
+        drain::RecordStanding::NotYet(why) if why.contains("not open")
+    ));
+    assert!(w
+        .reopen(7, "another-head", "x")
+        .unwrap_err()
+        .contains("moved"));
+    drop(root);
+}
+
+#[test]
+fn a_reopen_that_fails_is_recorded_classed_and_not_tried_again() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        reopen_refuses: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    let [DrainStepOutcome::ReopenFailed {
+        pr: 7,
+        reason,
+        class,
+    }] = report.steps.as_slice()
+    else {
+        panic!("{:?}", report.steps)
+    };
+    assert!(
+        reason.contains("was closed and could not be reopened"),
+        "{reason}"
+    );
+    assert_eq!(*class, drain::FailureClass::PolicyViolation);
+    assert!(report.stopped.contains("reopening #7 failed"), "{report:?}");
+    let failed = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action == drain::IntegrationAction::ReopenFailed)
+        .unwrap();
+    assert_eq!(failed.class, Some(drain::FailureClass::PolicyViolation));
+    assert_eq!(w.reopen_calls, 1);
+}
+
+#[test]
+fn a_reopen_the_trail_cannot_name_is_not_made() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    // every write before `reopen_attempted` succeeds on a first, undisturbed run
+    let before = {
+        let probe = scratch();
+        let mut p = World {
+            open: vec![record_sim(7)],
+            record_reopenable: BTreeSet::from([7]),
+            ..Default::default()
+        };
+        drain::step(&probe, &mut p, false, false).unwrap();
+        trail_actions(&probe)
+            .iter()
+            .position(|a| a == "reopen_attempted")
+            .unwrap()
+    };
+    drain::FAIL_WRITE.with(|n| n.set(before + 1));
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    drain::FAIL_WRITE.with(|n| n.set(0));
+    assert!(
+        matches!(
+            &out,
+            DrainStepOutcome::TrailUnwritable { pr: 7, unrecorded, .. }
+                if *unrecorded == drain::IntegrationAction::ReopenAttempted
+        ),
+        "{out:?}"
+    );
+    assert_eq!(
+        w.reopen_calls, 0,
+        "the forge was asked without a trail line"
+    );
+}
+
+#[test]
+fn a_record_is_reopenable_only_in_the_one_state() {
+    use drain::{record_standing_of, RecordStanding};
+    let now = crate::peers::epoch_seconds("2026-10-10T02:00:00Z").unwrap();
+    let view = |patch: serde_json::Value| {
+        let mut v = serde_json::json!({
+            "state": "OPEN", "headRefOid": "abc", "createdAt": "2026-10-10T01:56:10Z",
+            "author": {"is_bot": true, "login": drain::WORKFLOW_TOKEN_AUTHOR},
+            "statusCheckRollup": []
+        });
+        for (k, val) in patch.as_object().unwrap() {
+            v[k] = val.clone();
+        }
+        v
+    };
+    let why = |patch| match record_standing_of(&view(patch), "abc", now) {
+        RecordStanding::NotYet(why) => why,
+        RecordStanding::Reopenable => panic!("reopenable"),
+    };
+    assert_eq!(
+        record_standing_of(&view(serde_json::json!({})), "abc", now),
+        RecordStanding::Reopenable
+    );
+    assert!(why(serde_json::json!({"state": "CLOSED"})).contains("CLOSED"));
+    assert!(why(serde_json::json!({"headRefOid": "def"})).contains("moved to def"));
+    assert!(why(serde_json::json!({"author": {"login": "someone"}})).contains("someone opened it"));
+    assert!(
+        why(serde_json::json!({"statusCheckRollup": [{"name": "plan"}]})).contains("1 check(s)")
+    );
+    assert!(why(serde_json::json!({"createdAt": "soon"})).contains("no readable creation time"));
+    // inside the grace an empty rollup is not yet a fact about the pull request
+    let early = crate::peers::epoch_seconds("2026-10-10T01:57:00Z").unwrap();
+    assert!(matches!(
+        record_standing_of(&view(serde_json::json!({})), "abc", early),
+        RecordStanding::NotYet(why) if why.contains("opened 50s ago")
+    ));
+    assert_eq!(drain::RECORD_REOPEN_GRACE.as_secs(), 120);
+    assert!("release/record-v0.19.1".starts_with(drain::RECORD_BRANCH_PREFIX));
+}
+
+#[test]
+fn a_record_a_person_opened_does_not_hide_the_stranded_one_behind_it() {
+    let root = scratch();
+    // #6 ranks first and is not in that state; #7 is
+    let mut w = World {
+        open: vec![record_sim(6), record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(&out, DrainStepOutcome::Reopened { pr: 7, .. }),
+        "{out:?}"
+    );
+    assert_eq!((w.standing_calls, w.reopen_calls), (2, 1));
 }
