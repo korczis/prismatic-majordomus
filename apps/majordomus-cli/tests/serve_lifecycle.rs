@@ -300,6 +300,49 @@ fn stop_answers_for_the_server_it_named_even_when_the_lease_is_taken_again_at_on
     let _ = std::fs::remove_file(&lease);
 }
 
+/// A server stops on `serve stop` however it was started, and only the server that held the
+/// lease removes it (I2128). `ensure` always starts one with an idle bound and no pipe; the
+/// two other ways a server waits — reading a parent's pipe, and running until it is stopped —
+/// answer the same signal, and are started here by hand.
+#[test]
+fn a_server_stops_on_a_signal_whether_it_reads_a_pipe_or_runs_unbounded() {
+    use std::process::Stdio;
+    for piped in [true, false] {
+        let f = Fixture::new();
+        let mut child = Command::new(BIN)
+            .args(["serve", "--port", "0"])
+            .current_dir(f.root())
+            .env("MAJORDOMUS_SHARE", dist_share())
+            .env_remove("MAJORDOMUS_HTTP_HOST")
+            .stdin(if piped { Stdio::piped() } else { Stdio::null() })
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("spawn serve");
+        // the pipe stays open on this side; the child is reaped the moment it ends, as a
+        // parent shell or launcher would, because `serve stop` reads an unreaped child as a
+        // process still running
+        let pipe = child.stdin.take();
+        let ended = std::thread::spawn(move || child.wait().expect("wait for serve"));
+        let lease = lease_path(&f);
+        wait_until(
+            "the server publishes its address",
+            Duration::from_secs(30),
+            || matches!(LeaseFile::read(&lease), LeaseFile::Document(d) if d.url.is_some()),
+        );
+        let (code, out, err) = mj(&f.root(), &["serve", "stop", "--wait", "10"]);
+        assert_eq!(code, 0, "piped={piped}: {out}{err}");
+        assert!(out.starts_with("stopped "), "piped={piped}: {out}");
+        ended.join().expect("the server ended");
+        assert!(
+            !lease.exists(),
+            "piped={piped}: the server that held the lease removed it"
+        );
+        // the pipe was still open: it was the signal, not stdin closing, that ended it
+        drop(pipe);
+    }
+}
+
 /// `serve ensure` bounded by `wait` seconds, for a call that is expected not to converge.
 fn ensure_waiting(cwd: &Path, wait: u64) -> (i32, Value, String) {
     let wait = wait.to_string();
