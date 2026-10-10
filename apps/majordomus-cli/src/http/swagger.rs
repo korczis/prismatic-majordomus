@@ -31,6 +31,19 @@ use std::sync::LazyLock;
 /// The Swagger UI distribution version the page pins.
 pub const SWAGGER_UI_VERSION: &str = "5.17.14";
 
+/// The subresource integrity of the pinned bundle: the browser runs the script only when its
+/// bytes hash to this, so a substituted file on the CDN never runs beside the write routes.
+/// Computed from `https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js`.
+pub const SWAGGER_BUNDLE_SRI: &str =
+    "sha384-wmyclcVGX/WhUkdkATwhaK1X1JtiNrr2EoYJ+diV3vj4v6OC5yCeSu+yW13SYJep";
+
+/// The subresource integrity of the pinned stylesheet, for the same reason.
+pub const SWAGGER_CSS_SRI: &str =
+    "sha384-wxLW6kwyHktdDGr6Pv1zgm/VGJh99lfUbzSn6HNHBENZlCN7W602k9VkGdxuFvPn";
+
+/// The one inline script the page runs: it starts the widget on the specification.
+const BOOT: &str = "window.ui = SwaggerUIBundle({ url: \"/openapi.json\", dom_id: \"#swagger-ui\", deepLinking: true });";
+
 /// The path the page loads the specification from.
 pub const SPEC_PATH: &str = "/openapi.json";
 
@@ -49,7 +62,7 @@ static PAGE: LazyLock<String> = LazyLock::new(|| {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Majordomus API</title>
-<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui.css">
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui.css" integrity="{css_sri}" crossorigin="anonymous">
 <style>
 {tokens}
 /* The frame: the page around the widget, in this repository's type and colour. */
@@ -76,15 +89,15 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
 <body>
 <h1 class="mj-api-title">Majordomus API</h1>
 <main id="swagger-ui" data-mj-foreign="swagger-ui-dist@{v}"></main>
-<script src="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui-bundle.js" crossorigin></script>
-<script>
-window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking: true }});
-</script>
+<script src="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui-bundle.js" integrity="{bundle_sri}" crossorigin="anonymous"></script>
+<script>{boot}</script>
 </body>
 </html>
 "##,
         v = SWAGGER_UI_VERSION,
-        spec = SPEC_PATH,
+        css_sri = SWAGGER_CSS_SRI,
+        bundle_sri = SWAGGER_BUNDLE_SRI,
+        boot = BOOT,
         tokens = crate::web::html::TOKENS
     )
 });
@@ -120,6 +133,33 @@ pub fn offered_by_a_publication() -> bool {
         .iter()
         .find(|r| r.path == SWAGGER_PATH)
         .is_some_and(|r| r.linkable())
+}
+
+/// The Content-Security-Policy the page is served with: the pinned CDN files (whose integrity
+/// the page also names) and the one inline script, by its digest; requests to this server
+/// alone; no frame may embed it. The page shares an origin with every write route, so a
+/// script it did not ship must not run on it.
+///
+/// ```
+/// use majordomus_cli::http::swagger;
+/// let policy = swagger::csp();
+/// assert!(policy.starts_with("default-src 'none'"));
+/// assert!(policy.contains("frame-ancestors 'none'"));
+/// assert!(policy.contains("script-src https://unpkg.com/swagger-ui-dist@"));
+/// assert!(!policy.contains("unsafe-eval"));
+/// ```
+pub fn csp() -> &'static str {
+    static POLICY: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    POLICY.get_or_init(|| {
+        use sha2::{Digest, Sha256};
+        let digest = crate::cockpit::base64(&Sha256::digest(BOOT.as_bytes()));
+        let cdn = format!("https://unpkg.com/swagger-ui-dist@{SWAGGER_UI_VERSION}/");
+        format!(
+            "default-src 'none'; script-src {cdn} 'sha256-{digest}'; \
+             style-src {cdn} 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; \
+             font-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'"
+        )
+    })
 }
 
 #[cfg(test)]
