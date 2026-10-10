@@ -10,7 +10,12 @@ why: "On 2026-10-09 the hub on 8791 and two servers of the primary checkout list
 current_state: "A remote request is admitted by any route whose browser Origin check it passes; the bind warning says a remote host can only read."
 desired_state: "ExecutionPolicy::admits_remote decides it once from the declared effect and the declared signed input; the router and the MCP endpoint refuse with forbidden/403 per request; mesh.link.hello, mesh.link.sync and mesh.register stay reachable because they authenticate their input."
 scope:
-  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/registry.rs"
   - "apps/majordomus-cli/src/http"
   - "apps/majordomus-cli/src/mcp"
   - "apps/majordomus-cli/src/execution/engine.rs"
