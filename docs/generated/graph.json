@@ -24,6 +24,7 @@
       "domain": "an object of kind `domain`",
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
+      "fleet-declaration": "an object of kind `fleet-declaration`",
       "gap": "an object of kind `gap`",
       "implementation": "an object of kind `implementation`",
       "intent": "an object of kind `intent`",
@@ -652,6 +653,33 @@
         "route": "/cockpit/capabilities/executions.start",
         "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
         "status": "command"
+      },
+      {
+        "id": "capability:fleet.plan",
+        "kind": "capability",
+        "label": "fleet.plan",
+        "summary": "What a rollout would do on every machine",
+        "route": "/cockpit/capabilities/fleet.plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:fleet.rollout",
+        "kind": "capability",
+        "label": "fleet.rollout",
+        "summary": "Bring every machine of the fleet to this release, and form the mesh",
+        "route": "/cockpit/capabilities/fleet.rollout",
+        "source": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:fleet.status",
+        "kind": "capability",
+        "label": "fleet.status",
+        "summary": "What every machine of the fleet runs",
+        "route": "/cockpit/capabilities/fleet.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+        "status": "query"
       },
       {
         "id": "capability:gates.completion",
@@ -2103,6 +2131,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/fleet.rs",
+        "kind": "file",
+        "label": "fleet.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
         "kind": "file",
         "label": "graph.rs",
@@ -2556,6 +2592,22 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/execution/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/fleet/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/fleet/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/fleet/scripts.rs",
+        "kind": "file",
+        "label": "scripts.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/fleet/scripts.rs",
         "external": true
       },
       {
@@ -3719,6 +3771,14 @@
         "external": true
       },
       {
+        "id": "file:share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+        "kind": "file",
+        "label": "fleet-declaration.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+        "external": true
+      },
+      {
         "id": "file:share/schemas/majordomus/intent/intent.v1.schema.json",
         "kind": "file",
         "label": "intent.v1.schema.json",
@@ -4051,6 +4111,12 @@
         "kind": "kind",
         "label": "feature",
         "summary": "every object of kind `feature`"
+      },
+      {
+        "id": "kind:fleet-declaration",
+        "kind": "kind",
+        "label": "fleet-declaration",
+        "summary": "every object of kind `fleet-declaration`"
       },
       {
         "id": "kind:gap",
@@ -6346,6 +6412,37 @@
             "session",
             "handover",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0121",
+        "kind": "adr",
+        "label": "adr-0121",
+        "summary": "The fleet is declared, and rolled out by a typed capability",
+        "route": "/cockpit/objects/adr/adr-0121",
+        "source": ".ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-08",
+          "related": [
+            "file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+            "file:.ai/repo/fleet/majordomus.yaml",
+            "file:share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+            "file:apps/majordomus-cli/src/fleet/mod.rs",
+            "file:apps/majordomus-cli/src/fleet/scripts.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/fleet.rs",
+            "file:apps/majordomus-cli/src/capability/model.rs",
+            "file:apps/majordomus-cli/src/capability/registry.rs",
+            "file:docs/FLEET.md",
+            "file:docs/MESH.md"
+          ],
+          "tags": [
+            "architecture",
+            "mesh",
+            "distribution",
+            "capabilities",
+            "safety"
           ]
         }
       },
@@ -12189,6 +12286,32 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.fleet",
+        "kind": "context",
+        "label": "ai.repo.fleet",
+        "summary": "Fleet",
+        "route": "/cockpit/objects/context/ai-repo-fleet",
+        "source": ".ai/repo/fleet/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+            "share/kinds.yaml",
+            "docs/FLEET.md"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "label": "ai.repo.knowledge",
@@ -13190,6 +13313,14 @@
         "summary": "Extraction Report — Prismatic Majordomus v0.1 design phase",
         "route": "/cockpit/objects/document/docs-extraction-report-md",
         "source": "docs/EXTRACTION_REPORT.md"
+      },
+      {
+        "id": "majordomus://document/docs/FLEET.md",
+        "kind": "document",
+        "label": "docs/FLEET.md",
+        "summary": "Majordomus Fleet",
+        "route": "/cockpit/objects/document/docs-fleet-md",
+        "source": "docs/FLEET.md"
       },
       {
         "id": "majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -17207,6 +17338,16 @@
             "resume-in-the-right-worktree"
           ],
           "weight": 40
+        }
+      },
+      {
+        "id": "majordomus://fleet-declaration/majordomus",
+        "kind": "fleet-declaration",
+        "label": "majordomus",
+        "route": "/cockpit/objects/fleet-declaration/majordomus",
+        "source": ".ai/repo/fleet/majordomus.yaml",
+        "facts": {
+          "repository": "https://github.com/korczis/prismatic-majordomus.git"
         }
       },
       {
@@ -42859,6 +43000,13 @@
         "source": "test/cases/09_site_mobile_first.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1003_the_fleet_is_rolled_out.sh",
+        "kind": "test",
+        "label": "test/cases/1003_the_fleet_is_rolled_out.sh",
+        "route": "/cockpit/objects/test/test-cases-1003-the-fleet-is-rolled-out-sh",
+        "source": "test/cases/1003_the_fleet_is_rolled_out.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/100_environment.sh",
         "kind": "test",
         "label": "test/cases/100_environment.sh",
@@ -47809,6 +47957,11 @@
         "label": "executions"
       },
       {
+        "id": "module:fleet",
+        "kind": "module",
+        "label": "fleet"
+      },
+      {
         "id": "module:gates",
         "kind": "module",
         "label": "gates"
@@ -49225,6 +49378,36 @@
       {
         "source": "capability:executions.start",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:fleet.plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:fleet.plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:fleet.rollout",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:fleet.rollout",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:fleet.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:fleet.status",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -54613,6 +54796,61 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0121",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/fleet.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "file:apps/majordomus-cli/src/capability/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "file:apps/majordomus-cli/src/capability/registry.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "file:apps/majordomus-cli/src/fleet/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "file:apps/majordomus-cli/src/fleet/scripts.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "file:share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "majordomus://adr/adr-0059",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "majordomus://document/docs/FLEET.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0121",
+        "target": "majordomus://fleet-declaration/majordomus",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0123",
         "target": "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
         "kind": "put_in_force"
@@ -59773,6 +60011,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.fleet",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.fleet",
+        "target": "file:share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.fleet",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.fleet",
+        "target": "majordomus://document/docs/FLEET.md",
+        "kind": "tracks"
+      },
+      {
         "source": "majordomus://context/ai.repo.knowledge",
         "target": "file:share/knowledge-sources.yaml",
         "kind": "tracks"
@@ -60344,6 +60602,11 @@
       },
       {
         "source": "majordomus://document/docs/EXTRACTION_REPORT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/FLEET.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -61875,6 +62138,11 @@
       {
         "source": "majordomus://feature/worktrees",
         "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://fleet-declaration/majordomus",
+        "target": "kind:fleet-declaration",
         "kind": "is_a"
       },
       {
@@ -69523,6 +69791,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1003_the_fleet_is_rolled_out.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/100_environment.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -74663,6 +74936,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:fleet",
+        "target": "capability:fleet.plan",
+        "kind": "composes"
+      },
+      {
+        "source": "module:fleet",
+        "target": "capability:fleet.rollout",
+        "kind": "composes"
+      },
+      {
+        "source": "module:fleet",
+        "target": "capability:fleet.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:gates",
         "target": "capability:gates.completion",
         "kind": "composes"
@@ -75259,8 +75547,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2490,
-      "edges": 5442,
+      "nodes": 2504,
+      "edges": 5469,
       "acyclic": false,
       "truncated": false
     }

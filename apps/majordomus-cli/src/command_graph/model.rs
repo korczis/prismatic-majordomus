@@ -164,6 +164,7 @@ impl Effect {
             crate::capability::Effect::Read => Effect::ReadOnly,
             crate::capability::Effect::ProcessState => Effect::LocalMutation,
             crate::capability::Effect::RepositoryMutation => Effect::RepositoryMutation,
+            crate::capability::Effect::RemoteMutation => Effect::NetworkMutation,
         }
     }
 

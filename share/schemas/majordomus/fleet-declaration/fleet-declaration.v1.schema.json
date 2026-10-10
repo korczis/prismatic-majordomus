@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+  "x-majordomus-schema": "majordomus.fleet-declaration/v1",
+  "title": "Fleet",
+  "description": "The fleet of a repository, under .ai/repo/fleet/: the machines that run its mesh, the ssh destinations the operator reaches each one by, and the hub each one serves, if any. `majordomus fleet plan` reads it and changes nothing; `majordomus fleet rollout` installs the release on each machine with the published installer, fast-forwards each hub's checkout, writes and restarts the hub's service, and verifies that the hub answers at the version and that the mesh sees the node (ADR 0121). Nothing secret belongs here: an ssh destination is user@address or a host alias of the operator's own ssh configuration, and every address is private or on a tailnet.",
+  "x-majordomus-allow": "fleet-declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "id", "machines"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "fleet/v1"
+    },
+    "kind": {
+      "const": "fleet-declaration"
+    },
+    "id": {
+      "description": "The declaration's identity within the kind.",
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "description": "The URL a hub's checkout is cloned from when the machine has none. An https URL, so that a machine with no key for the forge can still clone it.",
+      "type": "string",
+      "pattern": "^https://"
+    },
+    "machines": {
+      "description": "Every machine of the fleet, in the order a rollout visits them.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "node", "ssh"],
+        "properties": {
+          "id": {
+            "description": "The machine's name in this fleet: letters, digits and hyphens.",
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "title": {
+            "description": "How a person names it.",
+            "type": "string"
+          },
+          "node": {
+            "description": "The machine's mesh node id: 32 hex characters, as `majordomus mesh identity` prints it. The machine whose node is the operator's own is reached without ssh, and the rollout's verdict asks the mesh for this node.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "ssh": {
+            "description": "The ssh destinations that reach it, tried in order until one answers: user@address or a host alias of the operator's ssh configuration.",
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[A-Za-z0-9._@:-]+$" }
+          },
+          "hub": {
+            "description": "The rendezvous hub this machine serves: a dedicated checkout of the repository served beyond loopback by an always-on service. Absent, the machine runs no hub and the rollout only installs the release there.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["checkout"],
+            "properties": {
+              "checkout": {
+                "description": "The hub's checkout, relative to the machine's home directory. Dedicated to the hub: a session's checkout has its own server, and two servers never serve one checkout.",
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._/-]+$"
+              },
+              "port": {
+                "description": "The port the hub listens on, on every interface.",
+                "type": "integer",
+                "minimum": 1024,
+                "maximum": 65535
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

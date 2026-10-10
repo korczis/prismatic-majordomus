@@ -51,6 +51,7 @@ pub mod environment;
 pub mod episodes;
 pub mod evidence;
 pub(crate) mod executions;
+pub(crate) mod fleet;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
@@ -194,6 +195,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         rules,
         executions,
         mesh,
+        fleet,
         models,
         reasoning,
         episodes,
