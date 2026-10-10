@@ -649,13 +649,17 @@ pub fn render(
                     if let Some(group) = &rule.destination {
                         argv.extend(["ip".into(), "daddr".into(), group.clone()]);
                     }
+                    // nft parses the joined words in its own grammar, where a comment is a
+                    // quoted string: the quotes are part of the word it is handed. Without
+                    // them it answers "syntax error, unexpected string" and adds nothing
+                    // (run on nftables 1.1.3, 2026-10-10).
                     argv.extend([
                         proto.clone(),
                         "dport".into(),
                         port.clone(),
                         "accept".into(),
                         "comment".into(),
-                        note.clone(),
+                        format!("\"{note}\""),
                     ]);
                     out.push(command(rule, argv));
                 }
@@ -981,12 +985,23 @@ fn judge_with(
 type Runner<'a> = &'a dyn Fn(&str, &[&str]) -> std::result::Result<String, String>;
 
 fn run(program: &str, args: &[&str]) -> std::result::Result<String, String> {
+    run_to_its_end(program, args).map(|(_, text)| text)
+}
+
+/// A command run for its effect: whether it exited 0, and what it printed.
+type Exec<'a> = &'a dyn Fn(&str, &[&str]) -> std::result::Result<(bool, String), String>;
+
+/// [`run`], keeping how the command ended. A question is judged by what the tool printed,
+/// which is why [`run`] drops the status; a command that changes the firewall is judged by
+/// its exit, because each tool words a failure differently (`ERROR` from ufw, `Error:` from
+/// nft) and a word looked for in the output misses the one nobody thought of.
+fn run_to_its_end(program: &str, args: &[&str]) -> std::result::Result<(bool, String), String> {
     let program = find_tool(program).unwrap_or_else(|| PathBuf::from(program));
     match Command::new(&program).args(args).output() {
         Ok(output) => {
             let mut text = String::from_utf8_lossy(&output.stdout).into_owned();
             text.push_str(&String::from_utf8_lossy(&output.stderr));
-            Ok(text)
+            Ok((output.status.success(), text))
         }
         Err(e) => Err(format!("{} could not run: {e}", program.display())),
     }
@@ -1344,12 +1359,17 @@ fn is_root() -> bool {
 /// assert_eq!(a.observation, a.before.observation);
 /// ```
 pub fn apply(before: FirewallReport) -> FirewallApplyReport {
-    apply_with(before, is_root(), &run)
+    apply_with(before, is_root(), &run, &run_to_its_end)
 }
 
 /// [`apply`] with the privilege and the asker given: `root` is whether this process may
 /// change the firewall, and `run` is what runs each command and asks the firewall after.
-fn apply_with(before: FirewallReport, root: bool, run: Runner<'_>) -> FirewallApplyReport {
+fn apply_with(
+    before: FirewallReport,
+    root: bool,
+    run: Runner<'_>,
+    exec: Exec<'_>,
+) -> FirewallApplyReport {
     let refuse = |before: FirewallReport, reason: String| FirewallApplyReport {
         ok: false,
         refused: Some(reason),
@@ -1369,6 +1389,14 @@ fn apply_with(before: FirewallReport, root: bool, run: Runner<'_>) -> FirewallAp
             "the plan needs no admission on this host; nothing to apply".into(),
         );
     }
+    if before.observation.state == FirewallObservationState::Inactive {
+        // Nothing filters, so nothing is dropped and no rule is owed; and on nftables there
+        // is then no `inet filter` table or `input` chain for a rule to be added to.
+        return refuse(
+            before,
+            "the host firewall is inactive: nothing filters, so there is nothing to apply".into(),
+        );
+    }
     if !root {
         return refuse(
             before,
@@ -1380,8 +1408,8 @@ fn apply_with(before: FirewallReport, root: bool, run: Runner<'_>) -> FirewallAp
     for command in &before.commands {
         let program = command.argv.first().cloned().unwrap_or_default();
         let args: Vec<&str> = command.argv.iter().skip(1).map(String::as_str).collect();
-        let (ok, output) = match run(&program, &args) {
-            Ok(text) => (!text.contains("ERROR"), text),
+        let (ok, output) = match exec(&program, &args) {
+            Ok((succeeded, text)) => (succeeded, text),
             Err(e) => (false, e),
         };
         all_ok &= ok;
@@ -1742,6 +1770,17 @@ mod tests {
                 .ok_or_else(|| format!("{program} could not run: no such tool on this host"))
         }
 
+        /// The same answer with an exit status: the fake tools fail the way the real ones
+        /// do, by printing their refusal (`ERROR` from ufw, `Error:` from nft).
+        fn exec(
+            &self,
+            program: &str,
+            args: &[&str],
+        ) -> std::result::Result<(bool, String), String> {
+            self.run(program, args)
+                .map(|text| (!(text.contains("ERROR") || text.contains("Error:")), text))
+        }
+
         fn asked(&self) -> Vec<String> {
             self.asked.borrow().clone()
         }
@@ -2047,8 +2086,64 @@ mod tests {
         {
             assert!(command.line.starts_with(head), "{}", command.line);
             assert_eq!(command.rule, rule.label());
-            assert_eq!(command.argv.last().map(String::as_str), Some(comment));
+            // The word nft is handed carries its own quotes: nft parses a comment as a quoted
+            // string, and answers a bare one with "syntax error, unexpected string".
+            assert_eq!(command.argv.last().cloned(), Some(format!("\"{comment}\"")));
         }
+    }
+
+    #[test]
+    fn a_command_is_ok_by_its_exit_and_never_by_a_word_in_what_it_printed() {
+        // nft words its refusal "Error:", which the old reading — look for "ERROR" — took for
+        // success, and printed `ok` beside a rule that was never added.
+        let bare = Script::new(&[
+            (
+                "nft list ruleset",
+                "table inet filter {\n chain input {\n }\n}\n",
+            ),
+            ("journalctl", JOURNAL_QUIET),
+        ]);
+        let before = hub_report("linux", Backend::Nftables, None, &bare);
+        assert_eq!(before.observation.state, FirewallObservationState::Missing);
+        assert!(!before.commands.is_empty());
+        let refusing = Script::new(&[
+            ("nft add rule", "Error: syntax error, unexpected string\n"),
+            (
+                "nft list ruleset",
+                "table inet filter {\n chain input {\n }\n}\n",
+            ),
+        ]);
+        let a = apply_with(
+            before,
+            true,
+            &|program, args| refusing.run(program, args),
+            &|program, args| refusing.exec(program, args),
+        );
+        assert!(!a.ok && a.refused.is_none());
+        assert!(
+            a.applied.iter().all(|c| !c.ok),
+            "a command nft refused was recorded ok: {:#?}",
+            a.applied
+        );
+    }
+
+    #[test]
+    fn an_inactive_firewall_is_not_applied_to_because_nothing_filters() {
+        // An empty nft ruleset filters nothing and has no `inet filter input` to add to: the
+        // commands could only fail, and nothing is owed.
+        let empty = Script::new(&[("nft list ruleset", ""), ("journalctl", JOURNAL_QUIET)]);
+        let before = hub_report("linux", Backend::Nftables, None, &empty);
+        assert_eq!(before.observation.state, FirewallObservationState::Inactive);
+        assert!(!before.commands.is_empty(), "the plan still has rules");
+        let untouched = Script::new(&[]);
+        let a = apply_with(
+            before,
+            true,
+            &|program, args| untouched.run(program, args),
+            &|program, args| untouched.exec(program, args),
+        );
+        assert!(a.refused.is_some() && a.applied.is_empty());
+        assert!(untouched.asked().is_empty(), "{:?}", untouched.asked());
     }
 
     #[test]
@@ -2654,7 +2749,12 @@ mod tests {
     fn apply_refuses_without_a_backend_without_commands_and_without_root_and_runs_nothing() {
         let host = Script::new(&[("ufw", "Rule added\n")]);
         let apply_as = |before: FirewallReport, root: bool| {
-            apply_with(before, root, &|program, args| host.run(program, args))
+            apply_with(
+                before,
+                root,
+                &|program, args| host.run(program, args),
+                &|program, args| host.exec(program, args),
+            )
         };
 
         let nowhere = hub_report("freebsd", Backend::None, None, &Script::new(&[]));
@@ -2698,7 +2798,12 @@ mod tests {
         let rendered: Vec<String> = before.commands.iter().map(|c| c.argv.join(" ")).collect();
         let lines: Vec<String> = before.commands.iter().map(|c| c.line.clone()).collect();
         let host = Script::new(&[("ufw allow", "Rule added\n"), ("ufw status", UFW_ADMITTED)]);
-        let a = apply_with(before, true, &|program, args| host.run(program, args));
+        let a = apply_with(
+            before,
+            true,
+            &|program, args| host.run(program, args),
+            &|program, args| host.exec(program, args),
+        );
         assert!(a.ok);
         assert_eq!(a.refused, None);
         assert_eq!(a.applied.len(), 3);
@@ -2724,7 +2829,12 @@ mod tests {
             ("proto udp", "ERROR: Invalid syntax\n"),
             ("ufw status", UFW_ADMITTED),
         ]);
-        let a = apply_with(dropping(), true, &|program, args| host.run(program, args));
+        let a = apply_with(
+            dropping(),
+            true,
+            &|program, args| host.run(program, args),
+            &|program, args| host.exec(program, args),
+        );
         assert!(!a.ok, "a refused command is never a run that held");
         assert_eq!(a.refused, None, "it ran: that is not a refusal to run");
         assert_eq!(a.observation.state, FirewallObservationState::Present);
@@ -2742,7 +2852,12 @@ mod tests {
     #[test]
     fn commands_that_all_ran_do_not_hold_while_the_firewall_still_drops_the_mesh() {
         let still = Script::new(&[("ufw allow", "Rule added\n"), ("ufw status", UFW_BARE)]);
-        let a = apply_with(dropping(), true, &|program, args| still.run(program, args));
+        let a = apply_with(
+            dropping(),
+            true,
+            &|program, args| still.run(program, args),
+            &|program, args| still.exec(program, args),
+        );
         assert!(a.applied.iter().all(|c| c.ok));
         assert_eq!(a.observation.state, FirewallObservationState::Missing);
         assert!(!a.ok, "the verdict is the firewall's, not the exit codes'");
@@ -2752,13 +2867,23 @@ mod tests {
             ("ufw allow", "Rules updated\n"),
             ("ufw status", "Status: inactive\n"),
         ]);
-        let a = apply_with(dropping(), true, &|program, args| off.run(program, args));
+        let a = apply_with(
+            dropping(),
+            true,
+            &|program, args| off.run(program, args),
+            &|program, args| off.exec(program, args),
+        );
         assert_eq!(a.observation.state, FirewallObservationState::Inactive);
         assert!(a.ok);
 
         // and one that cannot be asked afterwards has not been seen to admit anything
         let blind = Script::new(&[("ufw allow", "Rule added\n"), ("ufw status", UFW_ROOT)]);
-        let a = apply_with(dropping(), true, &|program, args| blind.run(program, args));
+        let a = apply_with(
+            dropping(),
+            true,
+            &|program, args| blind.run(program, args),
+            &|program, args| blind.exec(program, args),
+        );
         assert_eq!(a.observation.state, FirewallObservationState::Unobservable);
         assert!(!a.ok);
     }
@@ -2793,7 +2918,12 @@ mod tests {
             ("--getglobalstate", FIREWALL_ON),
             ("--listapps", APPS_ALLOWED),
         ]);
-        let a = apply_with(before, true, &|program, args| host.run(program, args));
+        let a = apply_with(
+            before,
+            true,
+            &|program, args| host.run(program, args),
+            &|program, args| host.exec(program, args),
+        );
         assert!(a.ok, "{a:?}");
         assert_eq!(a.applied.len(), 2);
         assert_eq!(a.observation.state, FirewallObservationState::Present);

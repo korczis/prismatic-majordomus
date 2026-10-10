@@ -531,8 +531,13 @@ the kernel logged it dropping toward those ports in the last five minutes, which
 without root on a machine whose user is in `adm`; it exits 10 when a rule is observed missing
 or a drop was logged. `sudo majordomus mesh firewall apply` runs those commands and asks the
 firewall again, so the verdict afterwards is the firewall's; it refuses, running nothing,
-without root or without a backend. Every rule it writes carries the comment `majordomus mesh:
-…`, so it can be told from an operator's own and removed as a set. It is offered on the
+without root, without a backend, or when the firewall is inactive, because nothing filters
+then and no rule is owed. Each command it ran is reported with its own exit, ok or not, and
+the tool's words beside it. On nftables the rules are added to the `input` chain of the `inet
+filter` table, which the plan presupposes and does not create: a host that filters in another
+table gets nft's refusal for each command and the verdict `missing`. Every rule it writes
+carries the comment `majordomus mesh: …`, so it can be told from an operator's own and
+removed as a set. It is offered on the
 command line only: it runs a privileged host tool, which nothing reachable over HTTP or MCP
 may do. The doctor's `firewall` check, between the process's checks and the server's
 `runtime` verdict, is the same report as one line.
