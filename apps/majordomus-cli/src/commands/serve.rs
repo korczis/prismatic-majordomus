@@ -135,7 +135,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let mut idle_since = Instant::now();
         loop {
             std::thread::sleep(Duration::from_secs(1));
-            if shared.peers_attached() > 0 {
+            // in use: an MCP session attached, a request answered within the last second, or a
+            // live channel open — the Cockpit and the REST API count as much as a client (I2131)
+            if shared.peers_attached() > 0
+                || crate::http::server::used_within(Duration::from_secs(1))
+            {
                 idle_since = Instant::now();
             } else if idle_since.elapsed() >= idle {
                 tracing::info!(

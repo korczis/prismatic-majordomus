@@ -6,7 +6,7 @@
 //! worker is unblocked and joined, and an in-flight response is finished first.
 
 use std::io::Read;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
@@ -21,6 +21,42 @@ pub const MAX_BODY_BYTES: usize = 1024 * 1024;
 
 /// How many threads answer requests on one socket.
 pub const WORKERS: usize = 4;
+
+/// When this process last answered a request, in milliseconds since this process started;
+/// zero before the first. Read by the idle timer, so that a person reading the Cockpit or a
+/// client calling the REST API keeps the server they are using (I2131).
+static LAST_REQUEST_MS: AtomicU64 = AtomicU64::new(0);
+
+/// Live `/events` channels open right now: a person watching an execution is using the server
+/// for as long as the socket stays open, whether or not they send anything.
+static OPEN_CHANNELS: AtomicUsize = AtomicUsize::new(0);
+
+fn epoch() -> std::time::Instant {
+    static START: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+    *START.get_or_init(std::time::Instant::now)
+}
+
+fn note_request() {
+    let ms = epoch().elapsed().as_millis() as u64;
+    LAST_REQUEST_MS.store(ms.max(1), Ordering::Relaxed);
+}
+
+/// Whether this process was used over HTTP within the last `window`: a request answered in
+/// it, or a live channel open now. The idle timer asks this beside the MCP sessions.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::http::server::used_within;
+/// // a process that has answered nothing over HTTP and holds no channel has not been used
+/// assert!(!used_within(Duration::from_secs(60)));
+/// ```
+pub fn used_within(window: std::time::Duration) -> bool {
+    if OPEN_CHANNELS.load(Ordering::Relaxed) > 0 {
+        return true;
+    }
+    let last = LAST_REQUEST_MS.load(Ordering::Relaxed);
+    last != 0 && epoch().elapsed().as_millis() as u64 <= last + window.as_millis() as u64
+}
 
 /// A socket that is bound and not yet served.
 pub struct Bound {
@@ -162,6 +198,7 @@ fn worker(server: &Server, router: &Router, stopping: &AtomicBool) {
 }
 
 fn answer(router: &Router, request: tiny_http::Request) {
+    note_request();
     if let Some(request) = upgrade(router, request) {
         answer_http(router, request);
     }
@@ -198,7 +235,12 @@ fn upgrade(router: &Router, request: tiny_http::Request) -> Option<tiny_http::Re
     let socket = request.upgrade("websocket", response);
     let spawned = std::thread::Builder::new()
         .name("events".into())
-        .spawn(move || accepted.serve(Box::new(socket)));
+        .spawn(move || {
+            OPEN_CHANNELS.fetch_add(1, Ordering::Relaxed);
+            accepted.serve(Box::new(socket));
+            OPEN_CHANNELS.fetch_sub(1, Ordering::Relaxed);
+            note_request();
+        });
     if let Err(e) = spawned {
         tracing::warn!("a live channel could not be started: {e}");
     }

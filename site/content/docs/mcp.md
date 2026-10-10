@@ -203,8 +203,10 @@ shells at once, the election lets one of the three servers bind and the others d
 call is bounded by `--wait`; a server that did not become ready in time is reported with
 the standing it reached and exit 10.
 
-A server `ensure` starts has no client of its own. It ends when no peer has been attached
-for `--idle` seconds (fifteen minutes by default), which is what keeps ADR 0003's line —
+A server `ensure` starts has no client of its own. It ends when nothing has used it for
+`--idle` seconds (fifteen minutes by default) — no MCP session attached, no HTTP request
+answered and no live `/events` channel open, so a person reading the Cockpit or calling the
+REST API keeps the server they are using (I2131) — which is what keeps ADR 0003's line —
 there is no process without a client — true in time rather than at every instant: an
 agent's entry is owed a server before its first attach, and a checkout nobody works in
 does not keep one.
