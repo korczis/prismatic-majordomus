@@ -1311,7 +1311,11 @@ fn refresh_step(
     let within = REFRESHED_HEAD_REPORTS_WITHIN.as_secs() as i64;
     if let Some(waiting) = first.assessments.iter().find(|a| {
         a.disposition == PullRequestDisposition::WaitingForChecks
-            && matches!(a.relation, super::RelationToMaster::UpToDate { .. })
+            && matches!(
+                a.relation,
+                super::RelationToMaster::UpToDate { .. }
+                    | super::RelationToMaster::CarriesMaster { .. }
+            )
             && pushed
                 .get(&(a.number, a.evaluated_against.head_sha.clone()))
                 .is_some_and(|at| {

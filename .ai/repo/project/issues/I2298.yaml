@@ -1,0 +1,49 @@
+id: I2298
+milestone: test-evidence
+title: "A pull request stacked on one that landed merges on the verdict its head already has"
+slug: the-refresh-pipeline-is-a-train
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the integration queue a typed relation for a head that lacks master's commits and whose merge writes its own tree, so that the links of a stacked train land one after another in a single run of the required check, and record the train as a decision."
+why: "The refresh pipeline is one deep by design (docs/INTEGRATION.md, 'One merge at a time'): throughput is one pull request per run of the required check. Measured on 2026-10-10: a pull request's validate run is 398 job-minutes and 85 to 100 minutes of wall clock, set by the slowest suite shard; this checkout's trail holds 15 verified merges in four days against 52 open pull requests, 23 of them `needs_refresh`. The owner approved a stacked train on 2026-10-10 and one session runs it by hand: each head is brought up to date on the prepared head of the one before. When the lower one lands, the upper head does not contain master's merge commit, so the queue calls it `behind` and wants a refresh: a merge of master that changes no file, a new head, and a second 398 job-minute run for a tree the first run already judged. The executor's only way around it was to ask the owner before passing the freshness gate by hand."
+current_state: "RelationToMaster has `up_to_date` (the head contains master) and `behind` (it does not, and the merge is clean). The freshness gate passes only `up_to_date`. A head stacked on a landed pull request is `behind`, whatever its merge would write. The relation cache keeps an entry forever under its pair of commit ids, with no record of which vocabulary decided it."
+desired_state: "A head whose clean merge into master writes the head's own tree, and which lacks only merge commits of master, is `carries_master`. The freshness gate passes it, a ready one says `carries_master`, `prs repair` has nothing to repair on it, and the executor merges it with no refresh between. One change on master the head never saw, authored or derived, or one commit of master's own that is not a merge, and it is `behind`: the changelog is composed from history. The relation cache drops relations decided under another vocabulary. ADR 0129 records the train: what a link is, what orders the links, what a red link costs, and what is left to a later issue (the executor building the train itself, to a declared depth)."
+scope:
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "docs/INTEGRATION.md"
+  - ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md"
+  - ".ai/repo/project/issues/I2298.yaml"
+  - "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh"
+  - "test/cases/850_integration_drains_cycle_by_cycle.sh"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "The executor refreshing a pull request onto another one's head by itself, and the pipeline depth in .ai/repo/ci/queue.yaml: a later issue, named in ADR 0129."
+  - "The run master's own push starts after every merge: 521 job-minutes for a tree a pull request's run judged. Not decided here."
+  - "Which pull requests are put on a train and in what order: the executor's plan."
+acceptance_criteria:
+  - "`relation_to_master` answers `carries_master` for a head built on another head once that one landed as a merge commit, and `behind` for the same head once master holds one more change, authored or derived, or one more commit that is not a merge; proven on a real repository"
+  - "A `carries_master` head with its required checks passed is `ready`, passes every gate and gives the reasons `carries_master`, `required_checks_passed`"
+  - "`prs drain` merges two stacked pull requests in two steps with no refresh between, through the command line against a scripted forge, and the master it leaves has the second head's tree"
+  - "A relation cached under another vocabulary is asked of git again"
+  - "`prs explain` names every relation by its own word; before this it printed `unknown` for every relation but `behind` and `conflicting`"
+  - "docs/INTEGRATION.md names the relation, the gate and the train, and ADR 0129 is proposed"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "bash test/run.sh 1040_a_stacked_head_lands_on_the_verdict_it_has"
+  - "MJ_TEST_JOBS=3 bash test/run.sh 720_integration_follows_the_current_master 850_integration_drains_cycle_by_cycle 911_repair_decides_and_moves_nothing"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "stacked_head_carries_master_case"
+  - "decision_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

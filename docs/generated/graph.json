@@ -2663,11 +2663,27 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/integration/model.rs",
+        "kind": "file",
+        "label": "model.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/model.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/integration/relation.rs",
         "kind": "file",
         "label": "relation.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/integration/relation.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/repair.rs",
+        "kind": "file",
+        "label": "repair.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/repair.rs",
         "external": true
       },
       {
@@ -6371,6 +6387,40 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0129",
+        "kind": "adr",
+        "label": "adr-0129",
+        "summary": "A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has",
+        "route": "/cockpit/objects/adr/adr-0129",
+        "source": ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "rule:project.integration-follows-the-current-master",
+            "rule:project.land-and-publish",
+            "file:apps/majordomus-cli/src/integration/model.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/integration/classify.rs",
+            "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/repair.rs",
+            "file:apps/majordomus-cli/src/integration/mod.rs",
+            "file:apps/majordomus-cli/src/integration/tests.rs",
+            "file:docs/INTEGRATION.md",
+            "file:.ai/repo/project/issues/I2298.yaml",
+            "test:test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh"
+          ],
+          "tags": [
+            "integration",
+            "git",
+            "github",
+            "ci",
+            "throughput"
           ]
         }
       },
@@ -30346,6 +30396,56 @@
         }
       },
       {
+        "id": "majordomus://issue/I2298",
+        "kind": "issue",
+        "label": "I2298",
+        "summary": "A pull request stacked on one that landed merges on the verdict its head already has",
+        "route": "/cockpit/objects/issue/i2298",
+        "source": ".ai/repo/project/issues/I2298.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "stacked_head_carries_master_case",
+            "decision_recorded"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "The executor refreshing a pull request onto another one's head by itself, and the pipeline depth in .ai/repo/ci/queue.yaml: a later issue, named in ADR 0129.",
+            "The run master's own push starts after every merge: 521 job-minutes for a tree a pull request's run judged. Not decided here.",
+            "Which pull requests are put on a train and in what order: the executor's plan."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/relation.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/repair.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/tests.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "docs/INTEGRATION.md",
+            ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+            ".ai/repo/project/issues/I2298.yaml",
+            "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+            "test/cases/850_integration_drains_cycle_by_cycle.sh",
+            "docs/generated",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-refresh-pipeline-is-a-train",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::",
+            "bash test/run.sh 1040_a_stacked_head_lands_on_the_verdict_it_has",
+            "MJ_TEST_JOBS=3 bash test/run.sh 720_integration_follows_the_current_master 850_integration_drains_cycle_by_cycle 911_repair_decides_and_moves_nothing",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42945,6 +43045,13 @@
         "source": "test/cases/103_release_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "kind": "test",
+        "label": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "route": "/cockpit/objects/test/test-cases-1040-a-stacked-head-lands-on-the-verdict-it-has-sh",
+        "source": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/104_published_site.sh",
         "kind": "test",
         "label": "test/cases/104_published_site.sh",
@@ -54668,6 +54775,76 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/classify.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/drain.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/relation.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/repair.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/tests.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://issue/I2298",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
         "kind": "put_in_force"
       },
       {
@@ -66501,6 +66678,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2298",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2298",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69592,6 +69779,11 @@
       },
       {
         "source": "majordomus://test/test/cases/103_release_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75287,8 +75479,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2491,
-      "edges": 5443,
+      "nodes": 2496,
+      "edges": 5460,
       "acyclic": false,
       "truncated": false
     }
