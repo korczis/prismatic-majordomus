@@ -386,7 +386,8 @@ jobs:
             > "$dir/list" 2>/dev/null || : > "$dir/list"
           # the nearest ancestor, not the newest upload, as the evidence step chooses
           while IFS="$(printf '\t')" read -r aid sha; do
-            [ -n "$sha" ] && git merge-base --is-ancestor "$sha" "$GITHUB_SHA" 2>/dev/null || continue
+            [ -n "$sha" ] || continue
+            git merge-base --is-ancestor "$sha" "$GITHUB_SHA" 2>/dev/null || continue
             printf '%s\t%s\n' "$(git rev-list --count "$sha")" "$aid"
           done < "$dir/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$dir/candidates"
           best="$(head -1 "$dir/candidates" | cut -f2)"
