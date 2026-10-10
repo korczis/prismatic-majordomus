@@ -442,7 +442,7 @@ impl Executable {
         self
     }
 
-    /// Declare that this command's handler changes other machines (ADR 0121).
+    /// Declare that this command's handler changes other machines (ADR 0132).
     pub fn changes_other_machines(mut self) -> Self {
         self.capability.execution = self.capability.execution.changes_other_machines();
         self

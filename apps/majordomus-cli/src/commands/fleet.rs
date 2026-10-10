@@ -16,11 +16,13 @@ use crate::capability::CapabilityError;
 use crate::cli::{FleetArgs, FleetCommand, OutputFormat};
 use crate::error::{Error, Result};
 
+/// A value as the lines a terminal shows, and the exit code those lines mean.
+type Text = fn(&Value) -> (Vec<String>, u8);
+
 /// Run `majordomus fleet`.
 pub fn run(args: FleetArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
-    let (path, input, text): (&[&str], Value, fn(&Value) -> (Vec<String>, u8)) = match &args.command
-    {
+    let (path, input, text): (&[&str], Value, Text) = match &args.command {
         FleetCommand::Plan { machine, version } => (
             &["fleet", "plan"],
             json!({ "machines": machine, "version": version }),

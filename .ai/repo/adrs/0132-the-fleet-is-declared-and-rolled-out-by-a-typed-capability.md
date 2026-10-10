@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0121
+id: adr-0132
 kind: adr
 title: The fleet is declared, and rolled out by a typed capability
 status: proposed
@@ -26,7 +26,7 @@ provenance:
   origin: authored
 ---
 
-# 121. The fleet is declared, and rolled out by a typed capability
+# 132. The fleet is declared, and rolled out by a typed capability
 
 ## Context
 

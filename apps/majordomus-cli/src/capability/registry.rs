@@ -466,7 +466,7 @@ impl Builder {
             // repository, which only a command may — a query that wrote tracked files would
             // be a query in name only, bound to GET and announced to MCP as read-only.
             // Everything else about the policy still follows the kind.
-            // A command may also change other machines (ADR 0121), and that one is
+            // A command may also change other machines (ADR 0132), and that one is
             // projected on the command line only: a person at a terminal runs it, and no
             // agent over MCP and no page over HTTP reaches another machine through this
             // process.
@@ -494,7 +494,7 @@ impl Builder {
                 errors.push(RegistryError::Shape {
                     id: id.clone(),
                     provenance: prov.clone(),
-                    reason: "changes other machines and is projected beyond the command line; a capability that reaches another machine is run by a person at a terminal, never over MCP or HTTP (ADR 0121)".into(),
+                    reason: "changes other machines and is projected beyond the command line; a capability that reaches another machine is run by a person at a terminal, never over MCP or HTTP (ADR 0132)".into(),
                 });
                 continue;
             }

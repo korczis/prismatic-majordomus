@@ -1,6 +1,6 @@
 # majordomus-covers: none
 # majordomus-timeout: 600
-# The fleet is rolled out from one terminal (ADR 0121).
+# The fleet is rolled out from one terminal (ADR 0132).
 #
 # A fleet declaration names the machines that run the mesh and the ssh destinations that
 # reach them. `fleet plan` says what a rollout would do and reaches nothing; `fleet status`

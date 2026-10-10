@@ -2,7 +2,7 @@
 
 The fleet is the set of machines that run a repository's mesh (docs/MESH.md), declared once
 under `.ai/repo/fleet/`, and the one operation that brings every one of them to the release
-this executable is: `majordomus fleet rollout` (ADR 0121).
+this executable is: `majordomus fleet rollout` (ADR 0132).
 
 The mesh declaration says who may link and where the hubs listen. It cannot say how a
 machine gets there: which version it runs, which checkout its hub serves, what keeps that hub

@@ -26,6 +26,6 @@ installer, fast-forwards each hub's checkout, writes and restarts the hub's serv
 verifies that the hub answers at the version and that the mesh sees the node.
 
 The schema is `fleet/v1` (`share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json`); the kind
-`fleet-declaration` is declared in `share/kinds.yaml`; the decision is ADR 0121; the manual is
+`fleet-declaration` is declared in `share/kinds.yaml`; the decision is ADR 0132; the manual is
 `docs/FLEET.md`. Nothing secret belongs here: an ssh destination names a machine, and the
 key that opens it stays in the operator's ssh configuration.

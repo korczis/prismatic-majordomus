@@ -136,6 +136,14 @@
       "count": 27
     },
     {
+      "kind": "fleet-declaration",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "The fleet declaration names the owner's machines and the ssh destinations that reach them. It is the operator's inventory of an installation, not a fact about the product; docs/FLEET.md describes the mechanism.",
+      "count": 1
+    },
+    {
       "kind": "gap",
       "projection": "none",
       "route": null,
@@ -165,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 270
+      "count": 271
     },
     {
       "kind": "knowledge",
@@ -189,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "moment",
@@ -3713,9 +3721,9 @@
       "referenced_by": [
         {
           "edge": "put_in_force",
-          "label": "adr-0121",
+          "label": "adr-0132",
           "kind": "adr",
-          "route": "/adrs/adr-0121/",
+          "route": "/adrs/adr-0132/",
           "external": false
         }
       ]
@@ -6374,10 +6382,70 @@
     },
     {
       "kind": "adr",
-      "id": "majordomus://adr/adr-0121",
-      "identity": "adr-0121",
-      "slug": "adr-0121",
-      "cockpit": "/cockpit/objects/adr/adr-0121",
+      "id": "majordomus://adr/adr-0123",
+      "identity": "adr-0123",
+      "slug": "adr-0123",
+      "cockpit": "/cockpit/objects/adr/adr-0123",
+      "title": "The worker is asked for a handover before the context window fills, by a provider mod the policy switches",
+      "status": "proposed",
+      "tags": [
+        "session",
+        "handover",
+        "provider"
+      ],
+      "source": ".ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/mods/claude-code/majordomus-handover/hooks/register.ts",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0015",
+          "kind": "adr",
+          "route": "/adrs/adr-0015/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0052",
+          "kind": "adr",
+          "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/claims/session-lifecycle.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0132",
+      "identity": "adr-0132",
+      "slug": "adr-0132",
+      "cockpit": "/cockpit/objects/adr/adr-0132",
       "title": "The fleet is declared, and rolled out by a typed capability",
       "status": "proposed",
       "tags": [
@@ -6387,7 +6455,7 @@
         "capabilities",
         "safety"
       ],
-      "source": ".ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
+      "source": ".ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
       "references": [
         {
           "edge": "put_in_force",
@@ -6456,66 +6524,6 @@
           "edge": "put_in_force",
           "label": "majordomus",
           "kind": "fleet-declaration",
-          "route": null,
-          "external": false
-        }
-      ],
-      "referenced_by": []
-    },
-    {
-      "kind": "adr",
-      "id": "majordomus://adr/adr-0123",
-      "identity": "adr-0123",
-      "slug": "adr-0123",
-      "cockpit": "/cockpit/objects/adr/adr-0123",
-      "title": "The worker is asked for a handover before the context window fills, by a provider mod the policy switches",
-      "status": "proposed",
-      "tags": [
-        "session",
-        "handover",
-        "provider"
-      ],
-      "source": ".ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
-      "references": [
-        {
-          "edge": "put_in_force",
-          "label": "share/mods/claude-code/majordomus-handover/hooks/register.ts",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "adr-0015",
-          "kind": "adr",
-          "route": "/adrs/adr-0015/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "adr-0052",
-          "kind": "adr",
-          "route": "/adrs/adr-0052/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/claims/session-lifecycle.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "lib/capture.sh",
-          "kind": "implementation",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
-          "kind": "test",
           "route": null,
           "external": false
         }

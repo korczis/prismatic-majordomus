@@ -1,5 +1,5 @@
 //! The fleet: the machines that run this repository's mesh, and the one operation that
-//! brings every one of them to the repository's latest stable release (ADR 0121, docs/FLEET.md).
+//! brings every one of them to the repository's latest stable release (ADR 0132, docs/FLEET.md).
 //!
 //! The declaration (`.ai/repo/fleet/<id>.yaml`, kind `fleet-declaration`) names each machine's mesh
 //! node, the ssh destinations that reach it and the hub it serves. From it:
@@ -1353,7 +1353,7 @@ pub fn parse_host_claims(body: &str) -> Option<Vec<HostClaim>> {
 /// A hub's systemd user unit.
 pub fn systemd_unit(launcher: &str, checkout: &str, port: u16) -> String {
     format!(
-        "# Written by `majordomus fleet rollout` (ADR 0121). Run that again rather than editing this file.
+        "# Written by `majordomus fleet rollout` (ADR 0132). Run that again rather than editing this file.
 [Unit]
 Description=Majordomus mesh hub — the repository AI layer over HTTP, MCP and the Cockpit, and a rendezvous for the fleet
 Documentation=https://majordomus.dev/docs/
@@ -1397,7 +1397,7 @@ pub fn launchd_agent(launcher: &str, checkout: &str, port: u16, home: &str) -> S
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Written by `majordomus fleet rollout` (ADR 0121). Run that again rather than editing this file. -->
+<!-- Written by `majordomus fleet rollout` (ADR 0132). Run that again rather than editing this file. -->
 <plist version="1.0">
 <dict>
   <key>Label</key>

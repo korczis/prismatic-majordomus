@@ -3,7 +3,7 @@
   "$id": "https://majordomus.dev/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
   "x-majordomus-schema": "majordomus.fleet-declaration/v1",
   "title": "Fleet",
-  "description": "The fleet of a repository, under .ai/repo/fleet/: the machines that run its mesh, the ssh destinations the operator reaches each one by, and the hub each one serves, if any. `majordomus fleet plan` reads it and changes nothing; `majordomus fleet rollout` installs the release on each machine with the published installer, fast-forwards each hub's checkout, writes and restarts the hub's service, and verifies that the hub answers at the version and that the mesh sees the node (ADR 0121). Nothing secret belongs here: an ssh destination is user@address or a host alias of the operator's own ssh configuration, and every address is private or on a tailnet.",
+  "description": "The fleet of a repository, under .ai/repo/fleet/: the machines that run its mesh, the ssh destinations the operator reaches each one by, and the hub each one serves, if any. `majordomus fleet plan` reads it and changes nothing; `majordomus fleet rollout` installs the release on each machine with the published installer, fast-forwards each hub's checkout, writes and restarts the hub's service, and verifies that the hub answers at the version and that the mesh sees the node (ADR 0132). Nothing secret belongs here: an ssh destination is user@address or a host alias of the operator's own ssh configuration, and every address is private or on a tailnet.",
   "x-majordomus-allow": "fleet-declaration",
   "type": "object",
   "additionalProperties": false,

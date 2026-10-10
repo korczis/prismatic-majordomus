@@ -1,5 +1,5 @@
 //! The `fleet` module: the machines that run this repository's mesh, and the operation
-//! that brings every one of them to the repository's latest stable release (ADR 0121).
+//! that brings every one of them to the repository's latest stable release (ADR 0132).
 //!
 //! The domain is [`crate::fleet`]; every handler here reads the declaration and the
 //! distribution model off the index and calls into it. `fleet.plan` reaches nothing.
@@ -151,7 +151,7 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "fleet",
         title: "Fleet",
-        description: "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them, and the one operation that brings every one of them to the latest stable release the repository records: install it with the published installer, fast-forward each hub's checkout, write and restart each hub's service, and verify that each hub answers at the version and that the hubs see each other (ADR 0121).",
+        description: "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them, and the one operation that brings every one of them to the latest stable release the repository records: install it with the published installer, fast-forward each hub's checkout, write and restart each hub's service, and verify that each hub answers at the version and that the hubs see each other (ADR 0132).",
         stability: Stability::Experimental,
         capabilities: [
             capability! {

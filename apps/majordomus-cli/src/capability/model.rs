@@ -463,12 +463,12 @@ pub enum Effect {
     /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     RepositoryMutation,
     /// Other machines change: the handler reaches, over ssh, machines this process does not
-    /// run on, and installs, writes or restarts something there ([ADR 0121]). The strongest
+    /// run on, and installs, writes or restarts something there ([ADR 0132]). The strongest
     /// effect a capability can have, and the only one that is open-world: what it changes
     /// outlives this process, this repository and this machine. A handler says so with
     /// [`ExecutionPolicy::changes_other_machines`].
     ///
-    /// [ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md
+    /// [ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md
     RemoteMutation,
 }
 

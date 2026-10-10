@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "d3079d8d42cb075032decc0601184814565a13cede344635de38c9f016564737",
+    "fingerprint": "0d2f56e85ecb95c2db83e8e2f98bdbe64923eb73ddb04803c0e0c560c138c3f7",
     "summary": {
-      "total": 2118,
+      "total": 2120,
       "builtin": 187,
-      "declarative": 1931,
+      "declarative": 1933,
       "by_kind": {
         "command": 27,
         "query": 160,
-        "resource": 1931
+        "resource": 1933
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 47,
-        "implemented": 1939
+        "implemented": 1941
       },
       "mcp_tools": 177,
-      "mcp_resources": 1985,
+      "mcp_resources": 1987,
       "http_routes": 181,
       "cli_commands": 104,
       "modules": 88,
@@ -1040,7 +1040,7 @@
                   {
                     "type": "string",
                     "const": "remote_mutation",
-                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0121]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -1932,7 +1932,7 @@
                   {
                     "type": "string",
                     "const": "remote_mutation",
-                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0121]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -41420,7 +41420,7 @@
                   {
                     "type": "string",
                     "const": "remote_mutation",
-                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0121]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -41664,7 +41664,7 @@
                   {
                     "type": "string",
                     "const": "remote_mutation",
-                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0121]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0121]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -76209,7 +76209,7 @@
       {
         "id": "fleet",
         "title": "Fleet",
-        "description": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them, and the one operation that brings every one of them to the latest stable release the repository records: install it with the published installer, fast-forward each hub's checkout, write and restart each hub's service, and verify that each hub answers at the version and that the hubs see each other (ADR 0121).",
+        "description": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them, and the one operation that brings every one of them to the latest stable release the repository records: install it with the published installer, fast-forward each hub's checkout, write and restart each hub's service, and verify that each hub answers at the version and that the hubs see each other (ADR 0132).",
         "stability": "experimental",
         "source": "builtin",
         "capabilities": 3,
@@ -76363,7 +76363,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 270,
+        "capabilities": 271,
         "capability_ids": []
       },
       {
@@ -76476,7 +76476,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -76988,7 +76988,7 @@
     ]
   },
   "index": {
-    "fingerprint": "731129dca6e64e25565fcf48417f6f38e0d25d3e4247671232f1411929337e74",
+    "fingerprint": "24bc1d1de9196cd5737e8211352e20a1f860542ccb0bcb247f50080a6c6464ef",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -77028,10 +77028,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 270,
+      "issue": 271,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 26,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -78434,24 +78434,6 @@
         ]
       },
       {
-        "uri": "majordomus://adr/adr-0121",
-        "kind": "adr",
-        "identity": "adr-0121",
-        "title": "The fleet is declared, and rolled out by a typed capability",
-        "description": "The fleet is declared, and rolled out by a typed capability",
-        "path": ".ai/repo/adrs/0121-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 5304,
-        "tags": [
-          "architecture",
-          "mesh",
-          "distribution",
-          "capabilities",
-          "safety"
-        ]
-      },
-      {
         "uri": "majordomus://adr/adr-0123",
         "kind": "adr",
         "identity": "adr-0123",
@@ -78465,6 +78447,24 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0132",
+        "kind": "adr",
+        "identity": "adr-0132",
+        "title": "The fleet is declared, and rolled out by a typed capability",
+        "description": "The fleet is declared, and rolled out by a typed capability",
+        "path": ".ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5304,
+        "tags": [
+          "architecture",
+          "mesh",
+          "distribution",
+          "capabilities",
+          "safety"
         ]
       },
       {
@@ -82545,7 +82545,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125653
+        "bytes": 130267
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -88820,6 +88820,17 @@
         "bytes": 2884
       },
       {
+        "uri": "majordomus://issue/I2161",
+        "kind": "issue",
+        "identity": "I2161",
+        "title": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "description": "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist.",
+        "path": ".ai/repo/project/issues/I2161.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3307
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -88918,6 +88929,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3523
+      },
+      {
+        "uri": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "identity": "architecture-is-enforced",
+        "title": "A violated invariant fails a gate, and green means every required check ran",
+        "description": "A deliberate architectural violation fails a named gate; a red or cancelled full run is raised the day it happens; a rule is reported proven only when its proof ran; a credential shape never leaves through a response, log or frame; an installed release is proven to serve a repository that is not this one.",
+        "path": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4102
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -95606,7 +95628,7 @@
         "identity": "test/cases/51_derived_artifacts_committed.sh",
         "path": "test/cases/51_derived_artifacts_committed.sh",
         "source_class": "case",
-        "bytes": 3772
+        "bytes": 4381
       },
       {
         "uri": "majordomus://test/test/cases/52_generated_artifact_typing.sh",
@@ -97872,7 +97894,7 @@
       "identity": [
         "id"
       ],
-      "objects": 270
+      "objects": 271
     },
     {
       "name": "knowledge",
@@ -97902,7 +97924,7 @@
       "identity": [
         "id"
       ],
-      "objects": 26
+      "objects": 27
     },
     {
       "name": "moment",

@@ -247,6 +247,13 @@ fn every_tool_states_its_effect_and_its_hints_follow_from_it() {
             Effect::Read => (true, true, false),
             Effect::ProcessState => (false, false, false),
             Effect::RepositoryMutation => (false, false, true),
+            // the registry refuses to build with one projected over MCP (ADR 0132)
+            Effect::RemoteMutation => {
+                wrong.push(format!(
+                    "{name}: changes other machines and is projected over MCP"
+                ));
+                continue;
+            }
         };
         let a = &t["annotations"];
         for (hint, want) in [
