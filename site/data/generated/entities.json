@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 163,
+      "count": 165,
       "dir": "rules",
       "statuses": [
         "active"
@@ -149,7 +149,7 @@
       "route": null,
       "title": null,
       "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-      "count": 51
+      "count": 52
     },
     {
       "kind": "intent",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 269
+      "count": 271
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "moment",
@@ -229,7 +229,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 19
+      "count": 20
     },
     {
       "kind": "rule",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 163
+      "count": 165
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 411
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -9212,6 +9212,37 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+      "identity": "project.a-derive-sees-what-the-commit-will@1",
+      "slug": "project-a-derive-sees-what-the-commit-will-1",
+      "cockpit": "/cockpit/objects/rule/project-a-derive-sees-what-the-commit-will-1",
+      "title": "A derive sees what the commit will",
+      "status": "active",
+      "tags": [
+        "derived",
+        "machine"
+      ],
+      "source": ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-files-regenerated@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-files-regenerated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.one-derive-at-a-time@1",
+          "kind": "rule",
+          "route": "/rules/project-one-derive-at-a-time-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
       "identity": "project.a-diagram-is-drawn-not-typed@1",
       "slug": "project-a-diagram-is-drawn-not-typed-1",
@@ -10024,6 +10055,13 @@
           "label": "adr-0091",
           "kind": "adr",
           "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-derive-sees-what-the-commit-will@1",
+          "kind": "rule",
+          "route": "/rules/project-a-derive-sees-what-the-commit-will-1/",
           "external": false
         },
         {
@@ -12639,6 +12677,31 @@
           "label": "adr-0097",
           "kind": "adr",
           "route": "/adrs/adr-0097/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.one-derive-at-a-time@1",
+      "identity": "project.one-derive-at-a-time@1",
+      "slug": "project-one-derive-at-a-time-1",
+      "cockpit": "/cockpit/objects/rule/project-one-derive-at-a-time-1",
+      "title": "One derive at a time per machine, and a stopped derive leaves no orphans",
+      "status": "active",
+      "tags": [
+        "derived",
+        "machine",
+        "coordination"
+      ],
+      "source": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+      "references": [],
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-derive-sees-what-the-commit-will@1",
+          "kind": "rule",
+          "route": "/rules/project-a-derive-sees-what-the-commit-will-1/",
           "external": false
         }
       ]

@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -21334,6 +21334,27 @@
       ],
       "findings": []
     },
+    "rule:project.a-derive-sees-what-the-commit-will": {
+      "kind": "rule",
+      "id": "project.a-derive-sees-what-the-commit-will",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1020_a_derive_sees_what_the_commit_will",
+          "path": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+            ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-diagram-is-drawn-not-typed": {
       "kind": "rule",
       "id": "project.a-diagram-is-drawn-not-typed",
@@ -23240,6 +23261,27 @@
           "inputs": [
             "test/cases/582_the_done_guard_holds_in_both_engines.sh",
             ".ai/repo/rules/project/no-plan-stamp-without-its-event.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.one-derive-at-a-time": {
+      "kind": "rule",
+      "id": "project.one-derive-at-a-time",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1018_one_derive_at_a_time_and_no_orphans",
+          "path": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+            ".ai/repo/rules/project/one-derive-at-a-time.v1.md"
           ]
         }
       ],
@@ -25745,6 +25787,7 @@
     "crate:mcp_stdio",
     "crate:mesh_compaction",
     "crate:metadata_contract",
+    "crate:no_answer_carries_a_credential",
     "crate:objects",
     "crate:pack",
     "crate:peer_claims",
