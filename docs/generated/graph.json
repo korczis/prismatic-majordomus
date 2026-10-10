@@ -30259,6 +30259,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I2164",
+        "kind": "issue",
+        "label": "I2164",
+        "summary": "A change to the mesh wire, the lease schema or a journal event is priced by the version gate",
+        "route": "/cockpit/objects/issue/i2164",
+        "source": ".ai/repo/project/issues/I2164.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Changing LINK_PROTOCOL_MAX or an EventBody field without a version bump fails version-surface",
+            "A recorded v1 advertisement parses under the current reader, proved by a fixture test"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Wire and on-disk schemas can change with no version bump and no gate notices.",
+          "depends_on": [],
+          "desired_state": "release::surface includes the two protocol ranges, the lease schema and the EventBody JSON schema, so compat.rs prices a change; a committed v1 advertisement fixture is parsed by a test.",
+          "evidence_required": [
+            "wire_change_needs_bump_case",
+            "v1_advertisement_fixture_test"
+          ],
+          "milestone": "safe-self-update",
+          "objective": "Add the discovery and link protocol ranges, the lease schema and the journal event schema to the release surface, and prove the reader of the oldest accepted discovery version with a recorded fixture.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release/surface.rs",
+            "apps/majordomus-cli/src/release/compat.rs",
+            "apps/majordomus-cli/src/mesh/protocol.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "scripts/ci/version-matches-surface",
+            "test/fixtures",
+            "test/cases"
+          ],
+          "slug": "wire-changes-need-a-version",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 743_release_version_answers_with_the_contract",
+            "cargo test --lib mesh::protocol"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2165",
         "kind": "issue",
         "label": "I2165",
@@ -66352,6 +66396,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2164",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2164",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2165",
         "target": "kind:issue",
         "kind": "is_a"
@@ -75113,8 +75167,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2484,
-      "edges": 5433,
+      "nodes": 2485,
+      "edges": 5435,
       "acyclic": false,
       "truncated": false
     }

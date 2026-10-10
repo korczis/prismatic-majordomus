@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "cb1010c809bc7161faae4cebb0a70d53af9316ab6a44281872b0ea68ee2cefd1",
+    "fingerprint": "2c49f2784f9fdbafdaeaabd9ed34bcff787413c9da5289d2a68dc4226885a782",
     "summary": {
-      "total": 2103,
+      "total": 2104,
       "builtin": 184,
-      "declarative": 1919,
+      "declarative": 1920,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1919
+        "resource": 1920
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1927
+        "implemented": 1928
       },
       "mcp_tools": 177,
-      "mcp_resources": 1973,
+      "mcp_resources": 1974,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -62545,6 +62545,11 @@
                     "type": "string",
                     "const": "output",
                     "description": "What a caller is promised back."
+                  },
+                  {
+                    "type": "string",
+                    "const": "wire",
+                    "description": "What another release of this executable reads and writes below the capabilities:\nthe mesh protocols, the lease file and the journal events (I2164)."
                   }
                 ],
                 "description": "Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \"a route is gone\" rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \"route\");\n```"
@@ -75526,7 +75531,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 269,
+        "capabilities": 270,
         "capability_ids": []
       },
       {
@@ -76151,7 +76156,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4448798b0be7db421c1b3037ad45f87fcc31d8966710115e2df85aa012d55c71",
+    "fingerprint": "073c9e2e50fab933584e2223e73687e3e00fac378c72d1cb368d0d1b289d904e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,7 +76195,7 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 269,
+      "issue": 270,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 26,
@@ -81670,7 +81675,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 121800
+        "bytes": 125649
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -81724,7 +81729,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 40181
+        "bytes": 41138
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -87916,6 +87921,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3003
+      },
+      {
+        "uri": "majordomus://issue/I2164",
+        "kind": "issue",
+        "identity": "I2164",
+        "title": "A change to the mesh wire, the lease schema or a journal event is priced by the version gate",
+        "description": "Add the discovery and link protocol ranges, the lease schema and the journal event schema to the release surface, and prove the reader of the oldest accepted discovery version with a recorded fixture.",
+        "path": ".ai/repo/project/issues/I2164.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2429
       },
       {
         "uri": "majordomus://issue/I2165",
@@ -96895,7 +96911,7 @@
       "identity": [
         "id"
       ],
-      "objects": 269
+      "objects": 270
     },
     {
       "name": "knowledge",

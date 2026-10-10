@@ -41,6 +41,7 @@ pub mod compat;
 pub mod model;
 pub mod surface;
 pub mod version;
+pub mod wire;
 
 pub use changelog::{compose, compose_published};
 pub use compat::{analyze, Impact, VersionPlan};

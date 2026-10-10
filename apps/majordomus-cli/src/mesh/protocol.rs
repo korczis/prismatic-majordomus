@@ -290,6 +290,21 @@ pub fn now() -> u64 {
 mod tests {
     use super::*;
 
+    /// A version-1 advertisement, signed by a version-1 writer and committed as bytes
+    /// (test/fixtures/mesh/advertisement-v1.json): it carries no runtime slot. The claim that a
+    /// version-2 reader reads both versions is held to the recorded datagram, not to one this
+    /// executable writes for the occasion (I2164).
+    #[test]
+    fn v1_advertisement_fixture_test() {
+        let bytes = include_bytes!("../../../../test/fixtures/mesh/advertisement-v1.json");
+        const { assert!(MIN_PROTOCOL_VERSION <= 1, "version 1 is no longer read") };
+        let envelope = parse_at(bytes, 1_760_000_000).expect("the recorded v1 datagram parses");
+        assert_eq!(envelope.adv.v, 1);
+        assert!(envelope.adv.rt.is_empty(), "version 1 had no runtime slot");
+        assert_eq!(envelope.adv.name, "recorded-v1");
+        assert_eq!(envelope.adv.ep, vec!["http://192.0.2.10:8741".to_string()]);
+    }
+
     fn identity() -> NodeIdentity {
         let dir = tempfile::tempdir().unwrap();
         NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap()

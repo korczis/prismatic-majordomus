@@ -30,6 +30,18 @@ caller can hold is a public capability's identity, its kind, the MCP tool and re
 answers to, the HTTP method and path it is bound to, the command-line path that dispatches
 it, **and both of its schemas**.
 
+Below the capabilities, two releases of this executable also meet each other: on the mesh,
+where discovery datagrams, link handshakes and journal events cross between machines, and in
+the lease file one release writes and another reads. That **wire** is recorded in the same
+manifest (`"wire"`: the discovery and link protocol ranges, the lease schema, and one atom
+per journal event kind, field, field type and required field) and priced the same way: a
+newer protocol version spoken while the older is still read, or an optional event field, is
+minor; a protocol version no longer read or written, another lease schema, a removed or
+retyped event field, or a newly required field of a known event is major. A new event kind is
+minor, because a peer stores a kind it does not know without reading it. A baseline recorded
+before the wire was (any release before I2164) is reported as `wire-baseline-absent` and not
+compared, rather than read as unchanged.
+
 ```text
 something a caller held is gone    major implied   a caller who held it is broken
 a contract narrowed under a caller major implied   a required field, a removed value, a type

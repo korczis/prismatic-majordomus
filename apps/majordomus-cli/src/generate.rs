@@ -1502,6 +1502,9 @@ pub fn registry_manifest(registry: &CapabilityRegistry) -> Value {
         "modules": modules,
         "capabilities": capabilities,
         "declarative_kinds": declarative_kinds,
+        // what another release of this executable reads and writes below the capabilities,
+        // recorded at every commit so that the version gate can price it (I2164)
+        "wire": crate::release::wire::WireSurface::current(),
         "system_benchmark_targets": SystemTarget::ALL.iter().map(|s| serde_json::json!({ "key": s.key(), "transport": s.transport(), "description": s.description() })).collect::<Vec<_>>(),
     })
 }

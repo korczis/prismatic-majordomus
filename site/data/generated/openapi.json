@@ -40735,7 +40735,7 @@
       "is_enum": true,
       "name": "ReleaseSurfaceKind",
       "properties": [],
-      "type": "\"capability\" | \"kind\" | \"mcp_tool\" | \"mcp_resource\" | \"http\" | \"cli\" | \"input\" | \"output\"",
+      "type": "\"capability\" | \"kind\" | \"mcp_tool\" | \"mcp_resource\" | \"http\" | \"cli\" | \"input\" | \"output\" | \"wire\"",
       "used_by": [],
       "used_by_schemas": [
         "ReleaseSurfaceChange"
@@ -40772,6 +40772,10 @@
         {
           "description": "What a caller is promised back.",
           "value": "output"
+        },
+        {
+          "description": "What another release of this executable reads and writes below the capabilities:\nthe mesh protocols, the lease file and the journal events (I2164).",
+          "value": "wire"
         }
       ],
       "variants": []

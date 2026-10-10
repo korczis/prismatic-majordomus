@@ -196,6 +196,9 @@ pub enum SurfaceKind {
     Input,
     /// What a caller is promised back.
     Output,
+    /// What another release of this executable reads and writes below the capabilities:
+    /// the mesh protocols, the lease file and the journal events (I2164).
+    Wire,
 }
 
 impl SurfaceKind {
@@ -219,6 +222,7 @@ impl SurfaceKind {
             SurfaceKind::Cli => "command",
             SurfaceKind::Input => "input",
             SurfaceKind::Output => "output",
+            SurfaceKind::Wire => "wire",
         }
     }
 }
@@ -1673,7 +1677,31 @@ pub fn analyze(
     let baseline = resolve_baseline(root, objects, since, &mut diagnostics)?;
     let base = Surface::read_ref(root, &baseline.read_at)?;
     let head = Surface::of_registry(registry);
-    let changes = diff(&base, &head);
+    let mut changes = diff(&base, &head);
+    // the wire below the capabilities: priced the same way, once the baseline records it
+    match super::wire::WireSurface::read_ref(root, &baseline.read_at) {
+        Some(base_wire) => {
+            changes.extend(super::wire::diff(
+                &base_wire,
+                &super::wire::WireSurface::current(),
+            ));
+            changes.sort_by(|a, b| {
+                b.impact
+                    .cmp(&a.impact)
+                    .then_with(|| a.capability.cmp(&b.capability))
+                    .then_with(|| a.id.cmp(&b.id))
+            });
+        }
+        None => diagnostics.push(Diagnostic {
+            id: "wire-baseline-absent".into(),
+            severity: Severity::Note,
+            message: format!(
+                "the baseline {} records no wire surface (it predates I2164), so the mesh \
+                 protocols, the lease schema and the journal events were not compared",
+                baseline.read_at
+            ),
+        }),
+    }
 
     let implied = changes
         .iter()
@@ -2402,6 +2430,44 @@ mod tests {
         git(&["commit", "-q", "-m", "release"]);
         git(&["tag", &format!("v{version}")]);
         dir
+    }
+
+    /// A change to the wire below the capabilities — here the link protocol this executable
+    /// writes, newer than the release recorded — is priced like a capability's, so a tree
+    /// that still declares the release's version is blocked. The same release recording the
+    /// same wire prices nothing, and one from before the wire was recorded says so (I2164).
+    #[test]
+    fn wire_change_needs_bump_case() {
+        let registry = crate::capability::registry::CapabilityRegistry::builder()
+            .build()
+            .expect("an empty registry");
+        let with_wire = |wire: &crate::release::wire::WireSurface| json!({"schema": "majordomus/capability-registry/v1", "capabilities": [], "wire": wire});
+        let mut older = crate::release::wire::WireSurface::current();
+        older.link.max -= 1;
+        older.link.min = older.link.min.min(older.link.max);
+        let dir = tagged(with_wire(&older), "0.1.0");
+        let plan = analyze(dir.path(), &registry, &[], None).expect("a plan");
+        assert!(
+            plan.changes.iter().any(|c| c.surface == SurfaceKind::Wire),
+            "{:?}",
+            plan.changes
+        );
+        assert_eq!(plan.status, Status::Blocked, "a wire change owes a release");
+
+        let dir = tagged(
+            with_wire(&crate::release::wire::WireSurface::current()),
+            "0.1.0",
+        );
+        let plan = analyze(dir.path(), &registry, &[], None).expect("a plan");
+        assert!(plan.changes.is_empty(), "{:?}", plan.changes);
+
+        let before = json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+        let dir = tagged(before, "0.1.0");
+        let plan = analyze(dir.path(), &registry, &[], None).expect("a plan");
+        assert!(plan
+            .diagnostics
+            .iter()
+            .any(|d| d.id == "wire-baseline-absent"));
     }
 
     /// With no `--since`, and a release git knows and the layer does not record, the

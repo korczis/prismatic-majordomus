@@ -47847,6 +47847,11 @@
             "type": "string",
             "const": "output",
             "description": "What a caller is promised back."
+          },
+          {
+            "type": "string",
+            "const": "wire",
+            "description": "What another release of this executable reads and writes below the capabilities:\nthe mesh protocols, the lease file and the journal events (I2164)."
           }
         ],
         "description": "Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \"a route is gone\" rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \"route\");\n```"
