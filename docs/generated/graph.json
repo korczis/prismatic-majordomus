@@ -30259,6 +30259,86 @@
         }
       },
       {
+        "id": "majordomus://issue/I2162",
+        "kind": "issue",
+        "label": "I2162",
+        "summary": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "route": "/cockpit/objects/issue/i2162",
+        "source": ".ai/repo/project/issues/I2162.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The release workflow fails when the installed launcher cannot start, proved by a fixture archive whose launcher exits non-zero",
+            "install-check starts a shared server from the installed binary in a fresh repository and reads its readiness and a repository id that differs from this repository's",
+            "No step of the release smoke ends in || true"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "An installed release is proven to print its version and run init, not to serve.",
+          "depends_on": [],
+          "evidence_required": [
+            "installed_release_serves_foreign_repo_case",
+            "smoke_fails_on_launcher_failure_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "objective": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/install-check",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "an-installed-release-serves-a-foreign-repository",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2165",
+        "kind": "issue",
+        "label": "I2165",
+        "summary": "A released archive carries a provenance attestation the installer can check",
+        "route": "/cockpit/objects/issue/i2165",
+        "source": ".ai/repo/project/issues/I2165.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each archive of a release carries an attestation that gh attestation verify accepts for this repository",
+            "install.sh reports whether it verified provenance or only the checksum",
+            "docs/DISTRIBUTION.md names what each installation path verifies"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "install.sh verifies a checksum served beside the archive; provenance is not verifiable.",
+          "depends_on": [],
+          "evidence_required": [
+            "attested_release",
+            "installer_reports_verification_case"
+          ],
+          "milestone": "safe-self-update",
+          "objective": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "docs/DISTRIBUTION.md",
+            "test/cases/85_installer.sh"
+          ],
+          "slug": "releases-carry-provenance",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30615,6 +30695,65 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "label": "architecture-is-enforced",
+        "summary": "A violated invariant fails a gate, and green means every required check ran",
+        "route": "/cockpit/objects/milestone/architecture-is-enforced",
+        "source": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A scheduled run that ends red or cancelled produces a visible record naming the failing jobs",
+            "rule-proof reports each rule from recorded runs, and the not-run count of blocking rules is printed",
+            "A credential-shaped value sent to the server never appears in a response, an MCP error or server.log",
+            "CI installs a release archive, starts its shared server in a fresh foreign repository and reads its readiness"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "desired_state": "Each row of the audit's enforcement table (plan/RUNTIME_BASELINE.md) is gated in CI with a fixture that makes the gate fail, and the session briefing shows the last full-plan verdict.",
+          "evidence_required": [
+            "full_plan_alarm",
+            "rule_proof_from_runs",
+            "secret_never_echoed",
+            "installed_release_dogfood"
+          ],
+          "non_scope": [
+            "Shortening the slowest case, which is I2115 (milestone ci-critical-path).",
+            "The evidence publication's use of public_text, which is I1955 (test-evidence).",
+            "A second CI pipeline; checks join the existing gates.yaml plan."
+          ],
+          "order": 143,
+          "priority": "p1",
+          "risks": [
+            "Raising every cancelled scheduled run will be noisy until bench and macos fit their timeouts; that is the point, and the first runs should be read rather than silenced.",
+            "Opening GitHub issues from CI is an outward mutation; it must go through scripts/github-sync and be idempotent."
+          ],
+          "scope": [
+            "scripts/ci",
+            ".github/workflows/validate.yml",
+            ".github/workflows/release.yml",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/execution/redact.rs",
+            "apps/majordomus-cli/tests/executions.rs",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "architecture-is-enforced",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/core-check",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
           ]
         }
       },
@@ -31335,6 +31474,61 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/safe-self-update",
+        "kind": "milestone",
+        "label": "safe-self-update",
+        "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "route": "/cockpit/objects/milestone/safe-self-update",
+        "source": ".ai/repo/project/milestones/safe-self-update.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session",
+            "A wire or lease or journal schema change without a version bump fails version-surface",
+            "Each release archive carries an attestation that verifies for this repository"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "version_hand_off_test",
+            "wire_versions_gated",
+            "release_attestation"
+          ],
+          "non_scope": [
+            "A second installer or updater; install.sh stays the one path (pack M11).",
+            "A network fetch on entering a repository.",
+            "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
+          ],
+          "order": 144,
+          "priority": "p2",
+          "risks": [
+            "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server.",
+            "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/mesh/protocol.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "scripts/ci/version-matches-surface",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/fixtures",
+            "test/cases",
+            "docs/DISTRIBUTION.md",
+            "docs/MCP.md"
+          ],
+          "slug": "safe-self-update",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 743_release_version_answers_with_the_contract"
           ]
         }
       },
@@ -42681,6 +42875,13 @@
         "label": "test/cases/101_command_graph.sh",
         "route": "/cockpit/objects/test/test-cases-101-command-graph-sh",
         "source": "test/cases/101_command_graph.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "kind": "test",
+        "label": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "route": "/cockpit/objects/test/test-cases-1024-an-installed-release-serves-a-foreign-repository-sh",
+        "source": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
       },
       {
         "id": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -66235,6 +66436,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2162",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2162",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66271,6 +66492,11 @@
       },
       {
         "source": "majordomus://milestone/adopter-upgrades",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/architecture-is-enforced",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -66393,6 +66619,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/safe-self-update",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -69266,6 +69497,11 @@
       },
       {
         "source": "majordomus://test/test/cases/101_command_graph.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74976,8 +75212,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2486,
+      "edges": 5436,
       "acyclic": false,
       "truncated": false
     }

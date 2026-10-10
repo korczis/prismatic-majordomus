@@ -439,22 +439,10 @@ jobs:
           echo "::error::$url still does not name $tag after 15 minutes"
           exit 1
 
-      - name: install the published release with the published installer
-        run: |
-          installer="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
-          curl -fsSL --max-time 120 "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
-
-      - name: the installed tool is the release that was published
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          majordomus --version
-          [ "$(majordomus version)" = "majordomus ${{ needs.plan.outputs.version }}" ]
-          majordomus-mcp --help >/dev/null 2>&1 || true
-
-      - name: and it initialises a repository that has none
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          mkdir -p "$RUNNER_TEMP/smoke" && cd "$RUNNER_TEMP/smoke"
-          git init -q .
-          majordomus init
-          test -f .ai/repo/policy.yaml
+      # The published installer installs the published tag, and the installed tool does what
+      # a client configuration asks of it: it initialises a repository that is not this one
+      # and serves it over the shared server, ready and naming that repository (I2162). One
+      # gate, scripts/ci/install-check, measures this for a person, for the nightly run and
+      # here; --expect pins it to this tag, and nothing in this job swallows a failure.
+      - name: the published release installs, initialises and serves a foreign repository
+        run: scripts/ci/install-check --expect "${{ needs.plan.outputs.tag }}"
