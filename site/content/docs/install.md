@@ -10,7 +10,7 @@ source = "docs/INSTALL.md"
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.20.0 -->
 
 ## Quick install
 
@@ -102,10 +102,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.19.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.19.1
 ```
 
-A pinned installation resolves `https://majordomus.dev/releases/v0.19.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v0.19.1.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -113,7 +113,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.19.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.19.1
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -149,7 +149,8 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v0.19.0` (latest) | 2026-10-09 | stable | 6 | [`v0.19.0.json`](https://majordomus.dev/releases/v0.19.0.json) |
+| `v0.19.1` (latest) | 2026-10-10 | stable | 6 | [`v0.19.1.json`](https://majordomus.dev/releases/v0.19.1.json) |
+| `v0.19.0` | 2026-10-09 | stable | 6 | [`v0.19.0.json`](https://majordomus.dev/releases/v0.19.0.json) |
 | `v0.18.0` | 2026-10-09 | stable | 6 | [`v0.18.0.json`](https://majordomus.dev/releases/v0.18.0.json) |
 | `v0.17.0` | 2026-10-08 | stable | 6 | [`v0.17.0.json`](https://majordomus.dev/releases/v0.17.0.json) |
 | `v0.16.0` | 2026-10-08 | stable | 6 | [`v0.16.0.json`](https://majordomus.dev/releases/v0.16.0.json) |
@@ -200,8 +201,13 @@ What is protected, and how:
 
 What remains trusted: GitHub Pages serving the metadata, GitHub Releases serving the
 artifacts, and the release pipeline that produced both. Checksums bind the artifact to the
-metadata; they do not, on their own, prove who wrote the metadata. Signed provenance is a
-recorded next step, not a claim made here — see `docs/DISTRIBUTION.md`.
+metadata; they do not, on their own, prove who wrote the metadata. That is what provenance
+is for: every release archive is attested by the release workflow, and where the GitHub CLI
+is installed and signed in the installer asks it whether this archive was built by this
+repository's workflow. The closing report says which it verified — `provenance (…) and
+checksum`, or `checksum only` with the reason. `MAJORDOMUS_REQUIRE_PROVENANCE=1` installs
+nothing short of verified provenance. By hand: `gh attestation verify <archive> --repo
+<repository>`. What each path verifies is in `docs/DISTRIBUTION.md`.
 
 ## Reading it before running it
 
