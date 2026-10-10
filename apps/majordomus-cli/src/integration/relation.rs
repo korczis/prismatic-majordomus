@@ -490,6 +490,22 @@ mod patch_tests {
 }
 
 #[cfg(test)]
+mod carries_tests {
+    use super::*;
+
+    /// A head git cannot name has no tree to compare, and is never taken to carry master.
+    #[test]
+    fn a_head_git_cannot_name_yields_no_tree_of_its_own() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(!yields_the_heads_tree(
+            dir.path(),
+            "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+            "0000000000000000000000000000000000000000",
+        ));
+    }
+}
+
+#[cfg(test)]
 mod containing_tests {
     use super::*;
 
