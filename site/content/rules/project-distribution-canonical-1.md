@@ -1,7 +1,7 @@
 +++
 title = "Distribution has one canonical model"
 description = "Distribution has one canonical model"
-weight = 88
+weight = 89
 [extra]
 kind = "rule"
 slug = "project-distribution-canonical-1"

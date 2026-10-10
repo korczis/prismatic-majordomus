@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 165,
+      "count": 166,
       "dir": "rules",
       "statuses": [
         "active"
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 237
+      "count": 238
     },
     {
       "kind": "command",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 328
     },
     {
       "kind": "domain",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 270
+      "count": 271
     },
     {
       "kind": "knowledge",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 165
+      "count": 166
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 412
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -9212,6 +9212,53 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+      "identity": "project.a-closing-question-is-answered-by-measurement@1",
+      "slug": "project-a-closing-question-is-answered-by-measurement-1",
+      "cockpit": "/cockpit/objects/rule/project-a-closing-question-is-answered-by-measurement-1",
+      "title": "Whether the work is done is answered by measurement, never by the worker's recollection",
+      "status": "active",
+      "tags": [
+        "process",
+        "integration",
+        "evidence",
+        "agents"
+      ],
+      "source": ".ai/repo/rules/project/a-closing-question-is-answered-by-measurement.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-worker-that-stops-leaves-its-work-behind@2",
+          "kind": "rule",
+          "route": "/rules/project-a-worker-that-stops-leaves-its-work-behind-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.never-reported-is-not-green@1",
+          "kind": "rule",
+          "route": "/rules/project-never-reported-is-not-green-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
       "identity": "project.a-derive-sees-what-the-commit-will@1",
       "slug": "project-a-derive-sees-what-the-commit-will-1",
@@ -9483,6 +9530,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-closing-question-is-answered-by-measurement@1",
+          "kind": "rule",
+          "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.recovery-is-idempotent@1",
           "kind": "rule",
           "route": "/rules/project-recovery-is-idempotent-1/",
@@ -9566,6 +9620,13 @@
           "label": "adr-0101",
           "kind": "adr",
           "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-closing-question-is-answered-by-measurement@1",
+          "kind": "rule",
+          "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
           "external": false
         },
         {
@@ -11653,6 +11714,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-closing-question-is-answered-by-measurement@1",
+          "kind": "rule",
+          "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
           "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
@@ -12181,6 +12249,13 @@
           "label": "adr-0080",
           "kind": "adr",
           "route": "/adrs/adr-0080/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-closing-question-is-answered-by-measurement@1",
+          "kind": "rule",
+          "route": "/rules/project-a-closing-question-is-answered-by-measurement-1/",
           "external": false
         },
         {

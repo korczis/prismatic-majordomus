@@ -1,0 +1,46 @@
+id: I2301
+milestone: development-runtime
+title: "Whether the work is done is answered by measurement: the done invariant asks about debt, what was left behind and the backlog"
+slug: the-closing-question-is-measured
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add to the done invariant the three questions a person asks when a session ends that it does not yet ask — did the recorded debt grow, is a branch or worktree created since the task started still there, is a pull request opened since still open — each read from the record that holds the fact, and state as a project rule that a closing question is answered by that reading and never by a worker's recollection."
+why: "On 2026-10-10 the owner asked one session seven times whether everything was done, merged and deployed, whether debt was added, and whether there were fewer pull requests, branches and worktrees than at the start. Each of the seven answers was written from what the session remembered doing and described only its own footprint. Measured on the eighth: 52 pull requests open against 49 at the session's start, 42 conflicting with the trunk; 117 worktrees where the previous session left 96; 225 local branches, 59 reached by the trunk and 13 holding commits no remote had; 10 stashes unaudited; v0.20.0 untagged. The done invariant (apps/majordomus-cli/src/gates/done.rs) asked nineteen questions of a task and took every answer from its source, but none of the nineteen was about the repository over time, so that half of the question had nowhere to be read from. Owner order of 2026-10-10 16:00Z: enforce it, cover it with tests, in .ai, document it in the pages."
+current_state: "gates.completion carries nineteen questions; `no-stale-topology` reads convergence.report (work held on one disk). Nothing reads whether a debt baseline grew, what was created since the task started, or what the forge's backlog gained. No rule says how a closing question is answered."
+desired_state: "gates.completion carries twenty-two questions. `no-new-debt` compares the entries of every .ai/repo/*-baseline.txt at the commit the task started at with the working tree and refuses on growth, naming the baseline and the numbers; `nothing-accumulated` names the local branches and linked worktrees git's reflogs date since the task started and is owed while one remains; `backlog-not-grown` numbers the pull requests the recorded forge observation dates since the task started. A reading that could not be taken is unknown and says why. `majordomus check` names each as id=status. project.a-closing-question-is-answered-by-measurement states the behaviour and names its cases; docs/CLI.md documents the three questions and the claim the-closing-question-is-measured has its page."
+scope:
+  - "apps/majordomus-cli/src/gates/closing.rs"
+  - "apps/majordomus-cli/src/gates/done.rs"
+  - "apps/majordomus-cli/src/gates/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - ".ai/repo/rules/project"
+  - "lib/gates.sh"
+  - "docs/CLI.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims/the-closing-question-is-measured.md"
+  - "test/cases/1037_the_closing_question_is_measured.sh"
+  - "test/cases/131_completion_gates.sh"
+non_scope:
+  - "A count of branches, worktrees and pull requests recorded at the start, and with it an exact 'fewer than at the start': removals leave no record in git, so that needs a snapshot written when a task or an episode opens, which is a change to the records the shell tool writes and their schemas."
+  - "Attributing a branch or a worktree to the session that created it: git records no creator."
+  - "Refusing `finish` on these questions: the done invariant is reported by `check`, and what refuses completion stays the gates and the obligations."
+  - "Removing anything: reduction is project.accumulation-is-measured's, and pull request 882's."
+depends_on: []
+acceptance_criteria:
+  - "An entry added to a debt baseline since the task's first commit makes `no-new-debt` fail and names the baseline with its entries then and now, whether or not the addition is committed; removing it answers the question"
+  - "A baseline that did not exist at the task's first commit is named as recorded for the first time and is not growth"
+  - "A branch and a linked worktree created after the task started make `nothing-accumulated` queued and are named; it passes once both are gone"
+  - "A pull request the recorded observation dates after the task's start makes `backlog-not-grown` queued and is numbered; an observation older than the task, or none, is unknown with the reason"
+  - "With no task record the three questions are unknown and say that there is no start to measure from"
+  - "`majordomus check` names each of the three that is not answered as id=status"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1037_the_closing_question_is_measured"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 131_completion_gates"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
+evidence_required:
+  - "closing_readings_unit_tests"
+  - "the_closing_question_is_measured_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10
