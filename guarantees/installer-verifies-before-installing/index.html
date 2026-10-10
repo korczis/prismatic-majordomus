@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.20.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -191,15 +191,19 @@ still to run and to report its own version.</p>
 <h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
 <p>Checksums bind an artifact to its metadata; they do not prove who wrote the metadata. What
 remains trusted is GitHub Pages serving that metadata, GitHub Releases serving the
-artifacts, and the pipeline that produced both. Signed provenance is recorded as a next
-step in <code>docs/DISTRIBUTION.md</code> rather than claimed here.</p>
+artifacts, and the pipeline that produced both. Each archive is also attested by the release
+workflow, and the installer verifies that attestation when the GitHub CLI is installed and
+signed in — otherwise it says it verified the checksum only. A refused attestation is not
+fatal unless <code>MAJORDOMUS_REQUIRE_PROVENANCE=1</code> asks for it, because GitHub answers an
+archive older than attestations and a substituted one the same way; <code>docs/DISTRIBUTION.md</code>
+states what each path verifies.</p>
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>The failure mode of an installer is not that it fails. It is that it half-succeeds: a
 partially written binary where a working one was, or an archive that unpacked something
 into a directory nobody looked at. Both are prevented by the same discipline — verify
 first, stage beside, swap atomically — and both are tested by doing them.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/docs/claims/installer-verifies-before-installing.md" class="font-mono underline">docs/claims/installer-verifies-before-installing.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/docs/claims/installer-verifies-before-installing.md" class="font-mono underline">docs/claims/installer-verifies-before-installing.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
     <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="installer-verifies-before-installing">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; the public statement</p>
@@ -209,15 +213,15 @@ first, stage beside, swap atomically — and both are tested by doing them.</p>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; the canonical claim</p>
         <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">installer-verifies-before-installing</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
-<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
-        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/install/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/docs/INSTALL.md" class="font-mono text-fg-brand hover:underline">docs/INSTALL.md</a></p>
+<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/install/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/docs/INSTALL.md" class="font-mono text-fg-brand hover:underline">docs/INSTALL.md</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; the implementation</p>
-        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/share/install/install.sh.in" class="font-mono text-fg-brand hover:underline">share/install/install.sh.in</a></p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/share/install/install.sh.in" class="font-mono text-fg-brand hover:underline">share/install/install.sh.in</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/test/cases/85_installer.sh" class="font-mono text-fg-brand hover:underline">test/cases/85_installer.sh</a></p><p class="mt-1 mb-0 text-body">Executed in <a href="https://majordomus.dev/use-cases/install-the-tool-in-one-command/" class="font-medium text-fg-brand hover:underline">Install the tool in one command, on a machine with no toolchain</a>.</p>
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/test/cases/85_installer.sh" class="font-mono text-fg-brand hover:underline">test/cases/85_installer.sh</a></p><p class="mt-1 mb-0 text-body">Executed in <a href="https://majordomus.dev/use-cases/install-the-tool-in-one-command/" class="font-medium text-fg-brand hover:underline">Install the tool in one command, on a machine with no toolchain</a>.</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the recorded runs</p>
@@ -309,9 +313,9 @@ first, stage beside, swap atomically — and both are tested by doing them.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d9617d603c32a6ecb839e1b1a2320e999e84aa8b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/a804ae2045dd577e91c8ac195566ea509b4bc7a6/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -319,7 +323,7 @@ first, stage beside, swap atomically — and both are tested by doing them.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.19.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d9617d603c32a6ecb839e1b1a2320e999e84aa8b" class="font-mono underline">d9617d6</a> · inputs <span class="font-mono">c817cf804dee</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.20.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a804ae2045dd577e91c8ac195566ea509b4bc7a6" class="font-mono underline">a804ae2</a> · inputs <span class="font-mono">210ffca2ba3c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

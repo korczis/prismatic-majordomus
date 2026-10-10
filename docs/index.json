@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "d9617d603c32a6ecb839e1b1a2320e999e84aa8b",
-  "source_version": "0.19.1",
-  "registry_fingerprint": "d7e58fcf4f5508808eb0bbf8111816db7d0bcf8c2a4cbb08d5178e70ec38fc0d"
+  "commit": "a804ae2045dd577e91c8ac195566ea509b4bc7a6",
+  "source_version": "0.20.0",
+  "registry_fingerprint": "cb1010c809bc7161faae4cebb0a70d53af9316ab6a44281872b0ea68ee2cefd1"
  },
  "counts": {
-  "pages": 1987,
-  "capabilities": 2101,
+  "pages": 1989,
+  "capabilities": 2103,
   "cli_commands": 101,
   "http_routes": 181,
   "mcp_tools": 177,
-  "mcp_resources": 1971,
+  "mcp_resources": 1973,
   "modules": 86
  },
  "kinds": [
@@ -150,7 +150,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 268
+   "count": 269
   },
   {
    "kind": "knowledge",
@@ -174,7 +174,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 25
+   "count": 26
   },
   {
    "kind": "moment",
@@ -5988,6 +5988,11 @@
    "description": "Stop an entry point from rebuilding the executable in place under a running shared server, and make the server that follows a superseded one bind the address the old one was serving, or say that it did not."
   },
   {
+   "route": "/plan/i2165/",
+   "title": "I2165 — A released archive carries a provenance attestation the installer can check",
+   "description": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies."
+  },
+  {
    "route": "/plan/intent-bound-work/",
    "title": "intent-bound-work — A task is bound to the intent it serves",
    "description": "`start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift."
@@ -6041,6 +6046,11 @@
    "route": "/plan/runtime-adapters/",
    "title": "runtime-adapters — Profiles become runtime constraints rather than advice",
    "description": "A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice."
+  },
+  {
+   "route": "/plan/safe-self-update/",
+   "title": "safe-self-update — Clients and servers of different versions meet safely, and a release's provenance can be checked",
+   "description": "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks."
   },
   {
    "route": "/plan/shared-policy/",
@@ -8648,8 +8658,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.19.1 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.19.1, built from commit d9617d603c32a6ecb839e1b1a2320e999e84aa8b: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.20.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.20.0, built from commit a804ae2045dd577e91c8ac195566ea509b4bc7a6: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
