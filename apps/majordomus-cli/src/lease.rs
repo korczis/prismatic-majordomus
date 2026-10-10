@@ -708,6 +708,72 @@ fn superseded(doc: &LeaseDocument) -> Option<String> {
     ))
 }
 
+/// How the version a server published in its lease stands to this executable's.
+///
+/// One verdict, read by the election, by `serve ensure` and by `server.status`, so that the
+/// three never disagree about whether a server is older (I2163). The installer puts each
+/// release in a directory of its own, so an upgrade changes the executable's path and
+/// [`superseded`] — same path, different file — never fires on it: before this verdict a
+/// new client attached to the old server and was served yesterday's code until it idled out.
+///
+/// ```
+/// use majordomus_cli::lease::{version_verdict, VersionVerdict};
+/// // only an older release is replaced; every other verdict attaches
+/// let replaces = |served| version_verdict(served, "0.20.0") == VersionVerdict::ServerOlder;
+/// assert!(replaces(Some("0.19.1")));
+/// assert!(!replaces(Some("0.20.0")) && !replaces(Some("0.21.0")) && !replaces(None));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VersionVerdict {
+    /// The version this executable is.
+    Same,
+    /// An older release than this executable: a client of this executable replaces it.
+    ServerOlder,
+    /// A newer release: a client of this executable attaches to it and says it is older.
+    ServerNewer,
+    /// No version published: a server from before leases carried one. Reported as outdated,
+    /// never taken over on that ground alone.
+    Unpublished,
+    /// Two versions that do not order as releases (a pre-release, a local build tag):
+    /// reported as different, never acted on.
+    Unordered,
+}
+
+/// Decide how `served`, the version in a lease, stands to `mine`.
+///
+/// ```
+/// use majordomus_cli::lease::{version_verdict, VersionVerdict};
+/// assert_eq!(version_verdict(Some("0.19.1"), "0.19.1"), VersionVerdict::Same);
+/// assert_eq!(version_verdict(Some("0.19.1"), "0.20.0"), VersionVerdict::ServerOlder);
+/// assert_eq!(version_verdict(Some("0.9.10"), "0.10.0"), VersionVerdict::ServerOlder);
+/// assert_eq!(version_verdict(Some("1.0.0"), "0.20.0"), VersionVerdict::ServerNewer);
+/// assert_eq!(version_verdict(None, "0.20.0"), VersionVerdict::Unpublished);
+/// // a pre-release is not ordered against its release: different, and left alone
+/// assert_eq!(version_verdict(Some("0.20.0-rc.1"), "0.20.0"), VersionVerdict::Unordered);
+/// ```
+pub fn version_verdict(served: Option<&str>, mine: &str) -> VersionVerdict {
+    fn release(v: &str) -> Option<(u64, u64, u64)> {
+        let mut parts = v.trim_start_matches('v').split('.');
+        let numbers = (
+            parts.next()?.parse().ok()?,
+            parts.next()?.parse().ok()?,
+            parts.next()?.parse().ok()?,
+        );
+        parts.next().is_none().then_some(numbers)
+    }
+    let Some(served) = served else {
+        return VersionVerdict::Unpublished;
+    };
+    if served == mine {
+        return VersionVerdict::Same;
+    }
+    match (release(served), release(mine)) {
+        (Some(theirs), Some(ours)) if theirs < ours => VersionVerdict::ServerOlder,
+        (Some(theirs), Some(ours)) if theirs > ours => VersionVerdict::ServerNewer,
+        _ => VersionVerdict::Unordered,
+    }
+}
+
 /// Read and classify an existing lease file. What was read comes back beside the verdict,
 /// so that a take-over can insist on removing the file it judged and not one that arrived
 /// in the meantime.
@@ -736,6 +802,19 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
     }
     let found = match doc.url.as_deref() {
         Some(url) => match ask(url, root, timings().probe_timeout) {
+            // an older release answering is replaced, not joined: its sessions move on to the
+            // new server once it sees its lease taken (I2127), and nobody is served
+            // yesterday's code because the installer put today's at another path (I2163)
+            Answer::Ours(_)
+                if version_verdict(doc.version.as_deref(), crate::VERSION)
+                    == VersionVerdict::ServerOlder =>
+            {
+                Found::Stale(format!(
+                    "superseded lease: the server at {url} runs version {}, older than this executable's {}",
+                    doc.version.as_deref().unwrap_or_default(),
+                    crate::VERSION
+                ))
+            }
             Answer::Ours(_) => Found::Live(url.to_string()),
             // a live owner that is silent is busy and waited on — unless the process that
             // started this one already waited out that patience on this very lease

@@ -568,13 +568,21 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
             }
             ServerStanding::Absent | ServerStanding::Stale => {}
             ServerStanding::Outdated => {
-                let takes_over = doc
+                // this executable replaces the server when it is the file the server was
+                // started from, rebuilt since, or a newer release than the server's: the
+                // election the started process runs reaches the same verdict (I2163)
+                let rebuilt = doc
                     .as_ref()
                     .and_then(|d| d.executable.as_ref())
                     .is_some_and(|e| {
                         e.replaced().is_some()
                             && std::env::current_exe().ok().as_deref() == Some(e.path.as_path())
                     });
+                let newer = doc.as_ref().is_some_and(|d| {
+                    lease::version_verdict(d.version.as_deref(), crate::VERSION)
+                        == lease::VersionVerdict::ServerOlder
+                });
+                let takes_over = rebuilt || newer;
                 if takes_over && !started {
                     spawn_server(repo, port, idle, &log, None)?;
                     started = true;

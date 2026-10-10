@@ -120,8 +120,27 @@ was started from. `.ai/local/state/mcp/server.json` is still where a person read
 ### The server that is no longer the one
 
 A lease can be taken over while the process that held it is still running and still healthy
-— most often because its executable was replaced by a rebuild, which the election reads as
-"it is serving code that is no longer on disk". The superseded process is not killed. It
+— because its executable was replaced by a rebuild, which the election reads as "it is
+serving code that is no longer on disk", or because it is an older release than the client
+electing. The installer puts each release in a directory of its own, so an upgrade changes
+the executable's path and the rebuild check never sees it; the release check does. One
+verdict (`lease::version_verdict`) decides for the election, `serve ensure` and
+`server.status` alike:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| the server's release is | a client of this executable |
+|---|---|
+| the same | attaches |
+| older | takes the lease over; the older server hands its sessions on as below |
+| newer | attaches, and its `initialize` answer says first that this client is the older one |
+| unpublished, or not ordered as a release (a pre-release) | attaches; `server.status` reports `outdated` |
+
+</div>
+
+
+A newer server is never taken over by an older client, so two releases side by side do not
+fight over the lease: the newer one holds it (I2163). The superseded process is not killed. It
 keeps its socket, its peer board and the generation of the layer it loaded, and it goes on
 serving the sessions it already had until they end. That is deliberate: a client mid-answer
 should not lose its server because somebody ran `cargo build`.
@@ -196,8 +215,8 @@ does, and converges: `ready` is printed and nothing is started; `starting` is wa
 `absent` and `stale` start a server as a process of its own — this executable, `serve
 --fallback --idle S`, its log at `.ai/local/state/mcp/server.log`, in its own process group
 so that it outlives the shell that asked — and wait until it is ready; `outdated` starts one
-only when the election would take the lease over (the same executable, replaced on disk)
-and is otherwise reported with the remedy, because a server of another build that answers
+only when the election would take the lease over (the same executable, replaced on disk, or
+an older release than this executable) and is otherwise reported with the remedy, because a server of another build that answers
 is not this command's to end. Run twice, it starts nothing the second time; run by three
 shells at once, the election lets one of the three servers bind and the others defer. The
 call is bounded by `--wait`; a server that did not become ready in time is reported with

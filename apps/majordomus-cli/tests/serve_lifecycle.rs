@@ -537,6 +537,97 @@ fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
     assert_eq!(code, 0, "serve stop: {out}{err}");
 }
 
+/// A server of another release, answering for this checkout. The installer puts each release
+/// in a directory of its own, so the replaced-on-disk check above never sees an upgrade; the
+/// lease here names no executable at all, so that only the version can decide (I2163).
+fn a_server_of_release(f: &Fixture, version: &str) -> String {
+    let old = TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", old.local_addr().unwrap());
+    let body = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(&f.root()),
+        "leaseholder": true,
+        "version": version,
+    })
+    .to_string();
+    std::thread::spawn(move || {
+        for stream in old.incoming() {
+            let Ok(mut s) = stream else { continue };
+            let mut request = [0u8; 4096];
+            let _ = s.read(&mut request);
+            let _ = write!(
+                s,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+        }
+    });
+    let lease = lease_path(f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        serde_json::json!({
+            "schema": "majordomus-mcp-lease/v1",
+            "pid": std::process::id(),
+            "token": format!("release-{version}"),
+            "root": f.root(),
+            "url": url,
+            "started_at": "2026-09-10T00:00:00Z",
+            "version": version,
+        })
+        .to_string(),
+    )
+    .unwrap();
+    url
+}
+
+#[test]
+fn newer_client_replaces_older_server_test() {
+    // An older release serves this checkout from its own directory. This executable is
+    // newer: `ensure` starts a server, whose election takes the older lease over, and the new
+    // one is what stands there. Before I2163 the older server was "ready" to every new
+    // client until it idled out.
+    let f = Fixture::new();
+    let old_url = a_server_of_release(&f, "0.0.1");
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(a["started"], true, "the older server was replaced: {a}");
+    assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
+    assert!(
+        matches!(LeaseFile::read(&lease_path(&f)), LeaseFile::Document(d) if d.version.as_deref() == Some(majordomus_cli::VERSION)),
+        "the lease is this release's"
+    );
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+#[test]
+fn an_older_client_leaves_a_newer_server_alone_and_says_so() {
+    // The other way round: the server is a newer release. This executable does not take it
+    // over — a newer server is no worse than one of its own — and says which is older.
+    let f = Fixture::new();
+    let newer_url = a_server_of_release(&f, "999.0.0");
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_ne!(code, 0, "an outdated standing is not ready: {a}\n{err}");
+    assert_eq!(a["standing"], "outdated", "{a}");
+    assert_eq!(
+        a["started"], false,
+        "nothing replaced the newer server: {a}"
+    );
+    assert!(
+        a.to_string().contains("newer than this executable"),
+        "the report says which side is older: {a}"
+    );
+    assert!(
+        matches!(LeaseFile::read(&lease_path(&f)), LeaseFile::Document(d) if d.url.as_deref() == Some(newer_url.as_str())),
+        "the lease still names the newer server"
+    );
+    // never `serve stop` here: the lease names this test process, and stop signals its pid
+    std::fs::remove_file(lease_path(&f)).unwrap();
+}
+
 #[test]
 fn a_replacement_that_cannot_be_started_is_an_error_not_a_ready_server() {
     // The same superseded server, but the replacement cannot be started: its log, beside the

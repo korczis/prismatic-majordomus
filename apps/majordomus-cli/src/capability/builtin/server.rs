@@ -66,7 +66,9 @@ use crate::capability::model::{
     CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
-use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, BIND_GRACE};
+use crate::lease::{
+    self, ExecutableIdentity, LeaseDocument, LeaseFile, VersionVerdict, BIND_GRACE,
+};
 use crate::repository::{self, GitIdentity, Repository};
 use crate::{capability, module};
 
@@ -407,20 +409,33 @@ pub fn standing_of(
     {
         return (ServerStanding::Outdated, Some(reason));
     }
-    match doc.version.as_deref() {
-        None => (
+    let theirs = doc.version.as_deref().unwrap_or_default();
+    match lease::version_verdict(doc.version.as_deref(), version) {
+        VersionVerdict::Same => (ServerStanding::Ready, None),
+        VersionVerdict::Unpublished => (
             ServerStanding::Outdated,
             Some(format!(
                 "the server published no version, so it is older than this executable ({version})"
             )),
         ),
-        Some(theirs) if theirs != version => (
+        VersionVerdict::ServerOlder => (
+            ServerStanding::Outdated,
+            Some(format!(
+                "the server is serving version {theirs}, older than this executable ({version}); the next client or `serve ensure` of this executable replaces it"
+            )),
+        ),
+        VersionVerdict::ServerNewer => (
+            ServerStanding::Outdated,
+            Some(format!(
+                "the server is serving version {theirs}, newer than this executable ({version}); clients of this executable attach to it and say they are older"
+            )),
+        ),
+        VersionVerdict::Unordered => (
             ServerStanding::Outdated,
             Some(format!(
                 "the server is serving version {theirs}; this executable is {version}"
             )),
         ),
-        Some(_) => (ServerStanding::Ready, None),
     }
 }
 
