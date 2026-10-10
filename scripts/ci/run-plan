@@ -46,13 +46,19 @@ set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
 
-# The pre-push hook calls this, and git hands a hook its repository through the environment
-# (GIT_DIR, when the push is made from a linked worktree). A gate or a case that builds a
-# repository of its own would then act on the one being pushed. The dispatcher finds its
-# checkout from its own path, so it drops what git exported, once, for everything it runs.
-# shellcheck disable=SC2046
-unset $(git rev-parse --local-env-vars 2>/dev/null) GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE \
-  GIT_COMMON_DIR GIT_PREFIX 2>/dev/null || true
+# Git hands a hook its repository through the environment (GIT_DIR, when the hook runs in a
+# linked worktree), and a gate that builds a repository of its own would then act on that
+# one. This dispatcher finds its checkout from its own path, so it drops what git exported
+# once, for every gate it runs: the variables git names as belonging to one repository, and
+# five by name for a git too old to list them. The two that carry `git -c` settings stay, as
+# they do when git enters another repository itself. test/run.sh does the same for the
+# cases, and case 1030 holds both.
+for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX; do
+  case "$mj_git_local" in GIT_CONFIG_PARAMETERS|GIT_CONFIG_COUNT) continue ;; esac
+  unset "$mj_git_local"
+done
+unset mj_git_local
 
 # A distribution belongs to a checkout. direnv exports the primary checkout's share into
 # every linked worktree, so a gate dispatched from a worktree would read another tree's
