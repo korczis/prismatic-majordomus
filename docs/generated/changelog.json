@@ -5,6 +5,180 @@
   "current": "0.20.0",
   "sections": [
     {
+      "version": "0.20.0",
+      "tag": "v0.20.0",
+      "date": "2026-10-10T16:46:14Z",
+      "commit": "c8f0e4c5017cd2aefa434a12c6fa95c615a3f9a8",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.20.0",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v0.19.1...v0.20.0",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.20.0",
+      "decisions": [],
+      "groups": [
+        {
+          "kind": "feat",
+          "heading": "Added",
+          "rank": 0,
+          "changes": [
+            {
+              "kind": "feat",
+              "scope": "release",
+              "subject": "a released archive carries a provenance attestation the installer checks (I2165)",
+              "breaking": false,
+              "commit": "dd5ec84ac",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/dd5ec84ac",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2165",
+                  "title": "A released archive carries a provenance attestation the installer can check",
+                  "route": "/plan/i2165/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "plan",
+              "subject": "I2114 names the files it touches, and I1900 is left as master has it",
+              "breaking": false,
+              "commit": "192ace8d0",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/192ace8d0",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2114",
+                  "title": "A task's scope admits what its derive writes",
+                  "route": "/plan/i2114/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1900",
+                  "title": "An intent is a typed record whose stage and satisfaction are derived",
+                  "route": "/plan/i1900/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "derive",
+              "subject": "the lock's script holds under pipefail, and its cases see it",
+              "breaking": false,
+              "commit": "7455ed364",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7455ed364",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2114",
+                  "title": "A task's scope admits what its derive writes",
+                  "route": "/plan/i2114/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I1900",
+                  "title": "An intent is a typed record whose stage and satisfaction are derived",
+                  "route": "/plan/i1900/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "derive",
+              "subject": "one derive at a time, no orphans, sees what commits will",
+              "breaking": false,
+              "commit": "6a1e63bbe",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6a1e63bbe",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2114",
+                  "title": "A task's scope admits what its derive writes",
+                  "route": "/plan/i2114/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the derived data follows master a804ae2045 (0.20.0)",
+              "breaking": false,
+              "commit": "f1a892ebc",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f1a892ebc"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "raise to 0.20.0 for the provenance feature, and derive",
+              "breaking": false,
+              "commit": "7fb5e276c",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/7fb5e276c"
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v0.19.1 and the metadata it publishes",
+              "breaking": false,
+              "commit": "03e1d8a59",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/03e1d8a59"
+            },
+            {
+              "kind": "chore",
+              "scope": "ci",
+              "subject": "the case bound and the slowest-case budget are measured, not typed",
+              "breaking": false,
+              "commit": "b1ab190d0",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b1ab190d0"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v0.20.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "74c11b2a46fbe2942835f4e6004d0fbf647d8e5246ed4fbcafb3c45e63607141"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v0.20.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "7eb3e79b512545762621a37a57beecbc78a82d0aed211524eefa063e3ae12437"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v0.20.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "beb2cd4bcf6d994a53dbfe2a0c526d01e9dcbc22ffd2e4338be1097a82a4d06f"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v0.20.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "7e544a0de55d3808158206166eba07208bb762ef6f9d6343a81a7ff496cd1f11"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v0.20.0-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "9bce00acf355ce4b1e1b852902196d1ad3ae63301edcc066e6e48071ee8b881d"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v0.20.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "84b4201b176eaffa292bfcef7ae77265c6ecaa89f1f0387c840e4e34bb10f80b"
+        }
+      ]
+    },
+    {
       "version": "0.19.1",
       "tag": "v0.19.1",
       "date": "2026-10-10T01:46:29Z",

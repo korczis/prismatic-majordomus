@@ -1,7 +1,7 @@
 +++
 title = "Every link the site publishes resolves, and every control on it does what a spec says"
 description = "Every link the site publishes resolves, and every control on it does what a spec says"
-weight = 95
+weight = 96
 [extra]
 kind = "rule"
 slug = "project-every-link-and-control-is-tested-1"

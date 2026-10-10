@@ -1,7 +1,7 @@
 +++
 title = "A verdict states what it is a verdict about"
 description = "A verdict states what it is a verdict about"
-weight = 66
+weight = 67
 [extra]
 kind = "rule"
 slug = "project-a-verdict-states-its-subject-1"

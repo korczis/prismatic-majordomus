@@ -1,7 +1,7 @@
 +++
 title = "A long-lived process serves the repository as it is, never as it was when it started"
 description = "A long-lived process serves the repository as it is, never as it was when it started"
-weight = 151
+weight = 153
 [extra]
 kind = "rule"
 slug = "project-the-server-sees-the-current-tree-1"

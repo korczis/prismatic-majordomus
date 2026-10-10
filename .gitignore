@@ -11,6 +11,11 @@
 # test scratch
 /test/tmp/
 
+# the release job's downloaded artifacts: never committed, and invisible to a derive
+# (project.a-derive-sees-what-the-commit-will refuses a derive over an untracked file that is
+# not ignored, and the release runs scripts/derive with dist/ beside it)
+/dist/
+
 # the generated web root: one directory per web surface, written by its producer, plus the
 # resolved manifest and the composed publication. Derived state, reproducible from source,
 # never read as truth (ADR 0013).

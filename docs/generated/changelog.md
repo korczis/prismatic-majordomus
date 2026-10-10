@@ -7,6 +7,35 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.20.0**
 
+## v0.20.0 — 2026-10-10
+
+### Added
+
+- **release**: a released archive carries a provenance attestation the installer checks (I2165) (`dd5ec84ac`)
+
+### Fixed
+
+- **plan**: I2114 names the files it touches, and I1900 is left as master has it (`192ace8d0`)
+- **derive**: the lock's script holds under pipefail, and its cases see it (`7455ed364`)
+- **derive**: one derive at a time, no orphans, sees what commits will (`6a1e63bbe`)
+
+### Housekeeping
+
+- **derive**: the derived data follows master a804ae2045 (0.20.0) (`f1a892ebc`)
+- **release**: raise to 0.20.0 for the provenance feature, and derive (`7fb5e276c`)
+- **release**: record v0.19.1 and the metadata it publishes (`03e1d8a59`)
+- **ci**: the case bound and the slowest-case budget are measured, not typed (`b1ab190d0`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.20.0-aarch64-apple-darwin.tar.gz (`74c11b2a46fb`)
+- `macos-x86_64` — majordomus-v0.20.0-x86_64-apple-darwin.tar.gz (`7eb3e79b5125`)
+- `linux-x86_64-gnu` — majordomus-v0.20.0-x86_64-unknown-linux-gnu.tar.gz (`beb2cd4bcf6d`)
+- `linux-x86_64-musl` — majordomus-v0.20.0-x86_64-unknown-linux-musl.tar.gz (`7e544a0de55d`)
+- `linux-aarch64-gnu` — majordomus-v0.20.0-aarch64-unknown-linux-gnu.tar.gz (`9bce00acf355`)
+- `linux-aarch64-musl` — majordomus-v0.20.0-aarch64-unknown-linux-musl.tar.gz (`84b4201b176e`)
+
+
 ## v0.19.1 — 2026-10-10
 
 ### Fixed
