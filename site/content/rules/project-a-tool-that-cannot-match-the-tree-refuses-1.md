@@ -1,7 +1,7 @@
 +++
 title = "A generator that cannot match the tree refuses rather than rewriting it"
 description = "A generator that cannot match the tree refuses rather than rewriting it"
-weight = 65
+weight = 66
 [extra]
 kind = "rule"
 slug = "project-a-tool-that-cannot-match-the-tree-refuses-1"

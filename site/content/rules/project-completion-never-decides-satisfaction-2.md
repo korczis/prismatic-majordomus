@@ -1,7 +1,7 @@
 +++
 title = "Completion discharges obligations and never decides whether an intent is satisfied"
 description = "Completion discharges obligations and never decides whether an intent is satisfied"
-weight = 78
+weight = 79
 [extra]
 kind = "rule"
 slug = "project-completion-never-decides-satisfaction-2"
