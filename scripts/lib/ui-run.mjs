@@ -60,6 +60,12 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
     }
   }
 
+  // The reduced-motion pass, counted from the visits that made it rather than from the plan:
+  // a page that never loaded was not measured with the preference, and a run with no such
+  // visit says `measured: 0`, never that nothing moved.
+  const reducedMotion = visits.filter((visit) => visit.reduced_motion === true);
+  const motionFindings = findings.filter((f) => f.rule === 'motion.reduced-motion-ignored').length;
+
   return {
     schema: RESULTS_SCHEMA,
     origin,
@@ -76,6 +82,11 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
     // `localeCompare` would order this report by whoever's machine rendered it.
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))),
     foreign,
+    reduced_motion: {
+      measured: reducedMotion.length,
+      at: "each page's narrowest width, with prefers-reduced-motion: reduce emulated",
+      findings: motionFindings,
+    },
     findings,
   };
 }

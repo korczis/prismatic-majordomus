@@ -30,6 +30,16 @@ problems = ["context", "coordination", "completion"]
 # measured, never aspired to — scripts/ci/homepage-check reports the current weight on every
 # build, and raising a budget is a reviewed change to this file. The HTML is not budgeted here:
 # its size follows the recorded runs the page replays.
+#
+# And how it renders: the largest contentful paint, in milliseconds, and the cumulative layout
+# shift the page itself reports, each the median of three cold loads at the narrowest and the
+# widest width the design declares, measured by scripts/site-probe in the browser its sweep
+# already drives. Provisional, set 2026-10-10 from local runs (paint 76-112 ms, shift 0.000 at
+# 320 and 1600 px, three runs of three loads) with the margin a runner nobody had measured
+# needs: about nine times the paint and an absolute 0.05 of shift. The record asks for three
+# runs on the CI runner; when they are in, the paint budget follows them with a stated margin.
 [budget]
 assets_bytes = 340000
 inline_json_bytes = 8000
+largest_contentful_paint_ms = 1000
+cumulative_layout_shift = 0.05

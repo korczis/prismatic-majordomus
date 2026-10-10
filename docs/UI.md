@@ -127,6 +127,16 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
   run.
+- **`motion.reduced-motion-ignored`** — at each page's narrowest visit the reader's
+  `prefers-reduced-motion: reduce` is emulated, and every element that still animates or
+  transitions for a millisecond or more is named: an animation the browser is running, and an
+  element whose computed style would still move — a hidden menu included, because it slides
+  the moment it opens. The site honours the preference by shortening motion to 0.01ms
+  (`share/design/base.css`), which is the preference honoured, not ignored. One visit per page
+  carries the pass, so it adds no visit; the results document counts those visits under
+  `reduced_motion`, and a run without a browser reports SKIP rather than a page that stopped
+  moving. A script that moves something frame by frame without the animation API (a canvas)
+  is not visible to it and honours the preference in its own code (`site/graph.js`).
 
 ### A subtree that is not ours to fix
 
@@ -261,7 +271,10 @@ page rather than only in the file:
 
 A page: add it. It is audited when it renders.
 
-A width: change the theme. It is visited when the CSS compiles.
+A width: change the theme, or declare it in `share/design/tokens.yaml` (`viewports`). It is
+visited when the CSS compiles or the design is generated. No script holds a width of its own:
+the desktop end is the widest declared width, and the only constant is the reflow floor WCAG
+fixes at 320 CSS pixels.
 
 An invariant: add it to `scripts/lib/ui-audit.mjs` if it needs a browser, or to
 `scripts/lib/ui-static.mjs` if it can be decided from markup, and give it a rule name in the
