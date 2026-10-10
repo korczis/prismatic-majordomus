@@ -592,7 +592,9 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The highest Lamport stamp the journal has seen: the `after` of the next page.
+    /// The `after` of the next page: the stamp of the last event this page carries, or the
+    /// `after` that was asked when it carries none. A page never ends inside a run of equal
+    /// stamps, so resuming after it misses nothing (I2140).
     pub lamport: u64,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
@@ -608,11 +610,12 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
-    let events = c.journal().events_after(input.after.unwrap_or(0), limit);
+    let after = input.after.unwrap_or(0);
+    let events = c.journal().events_after(after, limit);
     Ok(EventList {
         active: true,
         count: events.len(),
-        lamport: c.journal().tallies().lamport,
+        lamport: events.last().map_or(after, |e| e.lamport),
         events,
     })
 }

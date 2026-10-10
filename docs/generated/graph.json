@@ -30259,6 +30259,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2140",
+        "kind": "issue",
+        "label": "I2140",
+        "summary": "Paging mesh.events returns every event exactly once",
+        "route": "/cockpit/objects/issue/i2140",
+        "source": ".ai/repo/project/issues/I2140.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Walking mesh.events with limit 1 over a journal where several streams share a lamport returns every event once, in causal order",
+            "The cursor the schema documents is the cursor the next page accepts"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A client that follows the documented cursor misses events.",
+          "depends_on": [],
+          "desired_state": "Pages are cut by the causal key (lamport, stream, seq) (apps/majordomus-cli/src/mesh/journal.rs:858), the answer carries the last returned key as the next cursor, and mesh events --after accepts it.",
+          "evidence_required": [
+            "events_paging_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "objective": "Page mesh.events by the causal key and return the last key returned as the next cursor.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-events-paging-is-complete",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh",
+            "cargo test --lib mesh::journal"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31178,6 +31218,59 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "label": "mesh-journal-converges",
+        "summary": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "route": "/cockpit/objects/milestone/mesh-journal-converges",
+        "source": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A torn or unreadable journal line is counted and reported by mesh doctor, and no complete event before or after it is lost",
+            "A write failure is reported and the event is not acknowledged as stored",
+            "A claim that expired and revived after a partition is Conflicted, not Held, against a claim admitted during its absence, on every runtime",
+            "Two replicas fed the same authenticated events in any order and with duplicates report equal digests, by a multi-stream property test",
+            "No sync message exceeds MAX_LINK_MESSAGE, and mesh.events pages return every event once"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "journal_durability_tests",
+            "claim_fencing_tests",
+            "multi_stream_convergence_proptest"
+          ],
+          "order": 137,
+          "priority": "p0",
+          "risks": [
+            "Adding an epoch to ClaimAcquired is a wire change; it needs the link or event schema version handled as I2164 prices it, or old runtimes will refuse or misread the new field.",
+            "fsync on every append costs latency on the heartbeat path; the bound chosen must be measured, not assumed.",
+            "I2124 edits the same reload path in apps/majordomus-cli/src/mesh/journal.rs; I2137 should land after it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "test/cases",
+            "test/mesh-lab",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-journal-converges",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh_cooperation --test mesh_compaction --test mesh",
+            "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
           ]
         }
       },
@@ -66235,6 +66328,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2140",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2140",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66358,6 +66461,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/mesh-journal-converges",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -74976,8 +75084,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2481,
-      "edges": 5429,
+      "nodes": 2483,
+      "edges": 5432,
       "acyclic": false,
       "truncated": false
     }

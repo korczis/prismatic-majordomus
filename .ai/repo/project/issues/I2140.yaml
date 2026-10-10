@@ -1,0 +1,29 @@
+id: I2140
+milestone: mesh-journal-converges
+title: "Paging mesh.events returns every event exactly once"
+slug: mesh-events-paging-is-complete
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Page mesh.events by the causal key and return the last key returned as the next cursor."
+why: "EventList.lamport is documented as 'the after of the next page' (apps/majordomus-cli/src/capability/builtin/mesh.rs:594-596) but is the journal's maximum lamport (apps/majordomus-cli/src/mesh/journal.rs:2124-2133), so a truncated page skips the rest of the journal. Paging by the last returned lamport also skips events that share it across streams, because the filter is lamport > after (apps/majordomus-cli/src/capability/builtin/mesh.rs:601-619). No test covers events_after. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 8 and drift 9."
+current_state: "A client that follows the documented cursor misses events."
+desired_state: "Pages are cut by the causal key (lamport, stream, seq) (apps/majordomus-cli/src/mesh/journal.rs:858), the answer carries the last returned key as the next cursor, and mesh events --after accepts it."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/cli/local.rs"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "Walking mesh.events with limit 1 over a journal where several streams share a lamport returns every event once, in causal order"
+  - "The cursor the schema documents is the cursor the next page accepts"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh"
+  - "cargo test --lib mesh::journal"
+evidence_required:
+  - "events_paging_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

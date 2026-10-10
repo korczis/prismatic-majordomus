@@ -6,23 +6,23 @@
     "version": "0.19.1"
   },
   "registry": {
-    "fingerprint": "b459423e77e8088e3b83fab43af4fd9edc1835bab0e4a78618f26a860dfcaed1",
+    "fingerprint": "171df70d4d5826b525b82f068270d331b13425b3d3b1223293f21fed45b91cb3",
     "summary": {
-      "total": 2100,
+      "total": 2102,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1918,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1918
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1926
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1972,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -42165,7 +42165,7 @@
                 "type": "integer",
                 "format": "uint64",
                 "minimum": 0,
-                "description": "The highest Lamport stamp the journal has seen: the `after` of the next page."
+                "description": "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140)."
               },
               "events": {
                 "type": "array",
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e9591b2f048ec354a0c3d23c9df8d92178161c8eb289bd0a64aaeec46f4cd38",
+    "fingerprint": "ceda7d388003091c7ca61b31fa88be3bfb455ec07c8942b87264aa32f2c2e196",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 119738
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87918,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2140",
+        "kind": "issue",
+        "identity": "I2140",
+        "title": "Paging mesh.events returns every event exactly once",
+        "description": "Page mesh.events by the causal key and return the last key returned as the next cursor.",
+        "path": ".ai/repo/project/issues/I2140.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1812
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88126,6 +88137,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "identity": "mesh-journal-converges",
+        "title": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "description": "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once.",
+        "path": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5484
       },
       {
         "uri": "majordomus://milestone/public-proof",
@@ -96863,7 +96885,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96915,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",

@@ -42563,7 +42563,7 @@
               "type": "integer",
               "format": "uint64",
               "minimum": 0,
-              "description": "The highest Lamport stamp the journal has seen: the `after` of the next page."
+              "description": "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140)."
             },
             "events": {
               "type": "array",
