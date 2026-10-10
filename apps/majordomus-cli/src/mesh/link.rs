@@ -66,7 +66,9 @@ pub const FEATURES: &[&str] = &["sessions", "claims", "handovers", "reviews"];
 /// body bound, so the protocol refuses before the transport has to.
 pub const MAX_LINK_MESSAGE: usize = 900 * 1024;
 
-/// The bytes of events one sync message carries at most; the rest follow next round.
+/// The bytes of events one sync message carries at most; the rest follow next round. Never
+/// more than [`MAX_LINK_MESSAGE`] leaves once the rest of the message is serialized: the
+/// marks of a journal at its stream bounds weigh hundreds of kilobytes (I2139).
 pub const SYNC_EVENT_BUDGET: usize = 600 * 1024;
 
 /// How far a hello's or welcome's timestamp may sit from the reader's clock.

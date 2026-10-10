@@ -223,9 +223,16 @@ Replication is a comparison of marks, not a flood. A sync request carries the di
 (per stream: high-water sequence, beat, beat age) and the events the answerer's last marks
 lack; the answer carries the answerer's marks and the events the request's marks lack. One
 round replicates both ways. A runtime joining late — or rejoining after a partition — gets
-exactly what its marks lack in its first rounds (600 KiB per round), which after compaction is
-the live state plus what compaction keeps, not an unbounded history. Once marks agree, rounds
-carry no events: replication stops rather than loops.
+exactly what its marks lack in its first rounds, which after compaction is the live state plus
+what compaction keeps, not an unbounded history. Once marks agree, rounds carry no events:
+replication stops rather than loops.
+
+A round's events get what is left of the 900 KiB message bound once the rest of the message —
+its marks above all — is serialized, and never more than 600 KiB. The marks of a journal at its
+stream bounds weigh hundreds of kilobytes, and with a fixed 600 KiB of events beside them a
+message passed the bound and was refused as oversized, every round, so replication stopped with
+no explanation (I2139). The size is checked on the message as signed, where it is built, by the
+dialer and the answerer alike; an event that would take it over waits for the next round.
 
 `mesh.state` folds the journal: every runtime with the same events and the same liveness
 verdicts computes the same state and the same `digest`.
@@ -298,7 +305,9 @@ mark so that a peer still holding the stream does not send it again, and the bea
 heard at. A late copy of what was held, or an event the stream wrote after it was compacted,
 changes nothing; the mark rises over a later event, so a relay that holds it stops offering it.
 Tombstones live in memory: a restarted runtime has none, may be sent a compacted stream again,
-and drops it again once it has been silent there as long as any stream must be.
+and drops it again once it has been silent there as long as any stream must be. A tombstone is
+told only to a peer whose marks show it holds that stream: to anyone else it says nothing, and
+the four thousand a full journal may keep would only weigh down every message.
 
 **A compacted stream that returns.** A laptop that sleeps past the expiry and the 15 minutes is
 compacted away by its peers; it wakes as the same process, so as the same stream, and goes on
@@ -310,7 +319,7 @@ with it: a claim it took and never released holds again the moment it beats, and
 holding only the part after the mark would admit a claim that conflicts with it, and would
 see releases of claims it never knew. The origin never compacts its own stream, so the whole
 stream is always there to fetch; a return costs one refetch, bounded by the node's quota and
-600 KiB a round. A relay replaying the old beat, however fresh it says it is, lifts nothing.
+a round's event budget. A relay replaying the old beat, however fresh it says it is, lifts nothing.
 
 **Digests while runtimes compact.** Each runtime decides on its own when compaction is due, so
 two runtimes can hold different sets of dead streams for a while: one has forgotten a dead

@@ -2080,24 +2080,88 @@ impl Cooperation {
             &|pk| self.trust_of_key(pk).is_trusted(),
             self.expiry(),
         );
-        let events = self.journal.missing_for(&request.marks, SYNC_EVENT_BUDGET);
         self.counters.syncs_in.fetch_add(1, Ordering::Relaxed);
-        self.counters
-            .events_served
-            .fetch_add(events.len() as u64, Ordering::Relaxed);
         if report.accepted > 0 || report.rejected_total() > 0 {
             tracing::debug!(runtime_id = %self.own_key, peer = %runtime_key, accepted = report.accepted, duplicate = report.duplicate, rejected = report.rejected_total(), "mesh sync ingested");
         }
-        let answer = SyncAnswer {
-            link: request.link,
-            counter: request.counter,
-            marks: self.journal.marks(),
-            events,
-            report,
+        let marks = self.journal.marks_for(&request.marks);
+        let answer =
+            self.sync_within_bound(Domain::SyncAnswer, &request.marks, |events| SyncAnswer {
+                link: request.link.clone(),
+                counter: request.counter,
+                marks: marks.clone(),
+                events,
+                report: report.clone(),
+            });
+        match answer {
+            Ok((signed, served)) => {
+                self.counters
+                    .events_served
+                    .fetch_add(served as u64, Ordering::Relaxed);
+                LinkReply::accepted(signed)
+            }
+            Err(e) => LinkReply::refused(RefusalCode::Oversized, e),
+        }
+    }
+
+    /// Sign a sync message carrying as many of the events `peer` lacks as fit: the bytes
+    /// left under [`MAX_LINK_MESSAGE`] once everything else in the message is serialized,
+    /// and never more than [`SYNC_EVENT_BUDGET`]. Answers the message and how many events it
+    /// carries.
+    ///
+    /// The event budget was a constant that ignored what the marks weigh: a journal at its
+    /// stream bounds sends marks of hundreds of kilobytes, and those with a full budget of
+    /// events made a message the peer refuses as oversized, round after round, so a busy
+    /// journal stopped replicating (I2139). The size is checked on the message as signed,
+    /// where it is built, and an event that would take it over is left for the next round.
+    fn sync_within_bound<T: serde::Serialize>(
+        &self,
+        domain: Domain,
+        peer: &Marks,
+        message: impl Fn(Vec<MeshEvent>) -> T,
+    ) -> Result<(Signed, usize), String> {
+        let signed = |events: Vec<MeshEvent>| -> Result<(Signed, usize), String> {
+            let body = serde_json::to_value(message(events)).map_err(|e| e.to_string())?;
+            let signed = sign(&self.identity, domain, body);
+            let size = serde_json::to_vec(&signed)
+                .map_err(|e| e.to_string())?
+                .len();
+            Ok((signed, size))
         };
-        match serde_json::to_value(&answer) {
-            Ok(body) => LinkReply::accepted(sign(&self.identity, Domain::SyncAnswer, body)),
-            Err(e) => LinkReply::refused(RefusalCode::Malformed, e.to_string()),
+        let (bare, overhead) = signed(Vec::new())?;
+        if overhead > MAX_LINK_MESSAGE {
+            return Err(format!(
+                "a sync message without events is {overhead} bytes, over the {MAX_LINK_MESSAGE}-byte link bound"
+            ));
+        }
+        let budget = (MAX_LINK_MESSAGE - overhead).min(SYNC_EVENT_BUDGET);
+        let mut events = self.journal.missing_for(peer, budget);
+        // compact JSON puts the events in the empty array the bare message carries, one
+        // comma between each two: the size is known before it is serialized again
+        let sizes: Vec<usize> = events
+            .iter()
+            .map(|e| serde_json::to_vec(e).map_or(MAX_LINK_MESSAGE, |b| b.len()))
+            .collect();
+        let mut total = overhead + sizes.iter().sum::<usize>() + sizes.len().saturating_sub(1);
+        while total > MAX_LINK_MESSAGE && !events.is_empty() {
+            events.pop();
+            total -= sizes[events.len()] + usize::from(!events.is_empty());
+        }
+        if events.is_empty() {
+            return Ok((bare, 0));
+        }
+        loop {
+            let count = events.len();
+            let (message, size) = signed(events.clone())?;
+            if size <= MAX_LINK_MESSAGE {
+                return Ok((message, count));
+            }
+            // the budget does not count the separators, and one event always goes: drop
+            // from the end until the message fits; the rest follow next round
+            events.pop();
+            if events.is_empty() {
+                return Ok((bare, 0));
+            }
         }
     }
 
@@ -2396,19 +2460,19 @@ impl Cooperation {
             out.counter += 1;
             (out.clone(), peer.card.pk.clone())
         };
-        let request = SyncRequest {
-            link: out.link.clone(),
-            counter: out.counter,
-            instance: self.card.instance.clone(),
-            marks: self.journal.marks(),
-            events: self
-                .journal
-                .missing_for(&out.remote_marks, SYNC_EVENT_BUDGET),
-        };
-        let sent = request.events.len() as u64;
-        let body =
-            serde_json::to_value(&request).map_err(|e| RoundError::Unreachable(e.to_string()))?;
-        let message = sign(&self.identity, Domain::SyncRequest, body);
+        let marks = self.journal.marks_for(&out.remote_marks);
+        let (message, sent) = self
+            .sync_within_bound(Domain::SyncRequest, &out.remote_marks, |events| {
+                SyncRequest {
+                    link: out.link.clone(),
+                    counter: out.counter,
+                    instance: self.card.instance.clone(),
+                    marks: marks.clone(),
+                    events,
+                }
+            })
+            .map_err(RoundError::Unreachable)?;
+        let sent = sent as u64;
         // The push is counted as the request leaves, not when its answer returns. The peer
         // holds these events from the moment it ingests them, before its answer is written,
         // so a count taken on the answer trails every reading of the peer: in between, the
