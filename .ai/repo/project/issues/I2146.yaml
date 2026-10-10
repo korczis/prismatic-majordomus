@@ -1,0 +1,30 @@
+id: I2146
+milestone: mcp-transports-are-reliable
+title: "A cancelled MCP request stops the work it started"
+slug: mcp-cancellation-stops-work
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Handle notifications/cancelled by stopping the call it names, and let the bridge forward a notification while a call of the same client is in flight."
+why: "Server::notification ignores every notification but initialized (apps/majordomus-cli/src/mcp/protocol.rs:234-238), so notifications/cancelled is dropped. A bridge could not forward one anyway until the previous answer returns, because the stdio loop is sequential and the bridge is held under a mutex (apps/majordomus-cli/src/commands/mcp.rs:218); the per-session Mutex<Server> (apps/majordomus-cli/src/http/mcp.rs:139) serialises an HTTP session as well. The execution engine has its own cancel (executions.cancel) that MCP cancellation does not reach. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 12."
+current_state: "A client cannot stop a call it started."
+desired_state: "notifications/cancelled maps the request id to the execution engine's cancel flag for calls that run as executions and drops the answer for others; the bridge forwards notifications on a second connection without taking the bridge mutex."
+scope:
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance.rs"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A long tool call cancelled by the client over stdio stops within a declared bound and the client receives no answer for it"
+  - "A cancellation sent while another call of the same client is in flight reaches the server before that call returns"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_shared"
+evidence_required:
+  - "cancelled_call_stops_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -1,7 +1,7 @@
 +++
 title = "The crate's reference"
 description = "the crate's rustdoc reference at `/rustdoc`: produced by the invocation its gate proves, declared as a web surface from the crate, served by `majordomus serve`, checked item by item against the crate's own inventory, composed into the site from the topology, deployed with it and verified at the public URL; local use, the gates and cases, and what to run when a page, a link, an asset or the source revision is wrong"
-weight = 65
+weight = 66
 [extra]
 source = "docs/RUSTDOC.md"
 +++

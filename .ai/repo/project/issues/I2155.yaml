@@ -1,0 +1,34 @@
+id: I2155
+milestone: cockpit-control-center
+title: "The Cockpit shows sessions, tasks, handovers, reviews, runtimes and events, each from its capability"
+slug: the-cockpit-shows-coordination
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add Cockpit areas for the coordination objects, each a projection of its capability with freshness, trust and conflicts shown and drilldown to canonical ids."
+why: "Probing the live Cockpit on 2026-10-09, /cockpit/sessions, tasks, handovers, reviews, runtimes and events answered 404: nav::areas() (apps/majordomus-cli/src/cockpit/nav.rs:119-266) has no area for them, although /cockpit/peers exists (apps/majordomus-cli/src/cockpit/mod.rs:96) and docs/SURFACES.md F-5 (and lines 554, 695-696, 719) still says there is none for the peer board. The mesh capabilities already answer sessions, claims, handovers and reviews; tasks have none until I2141. Pack M08 asks that a person complete the primary coordination workflow without a terminal. The mobile layout is milestone mobile-first's (I2096, I2103) and is not repeated here. Baseline audit of 2026-10-09 at master 1fb8d6be44, the Cockpit routes row and drift c-12."
+current_state: "The Cockpit has a peer board and a mesh page, and no area for the objects work is coordinated through."
+desired_state: "Areas for sessions, tasks, handovers, reviews, runtimes and events, each going through Context::execute, each showing observed_at, staleness and trust, linking to canonical ids, with an empty state that says what would fill it and a text list beside any drawing."
+scope:
+  - "apps/majordomus-cli/src/cockpit"
+  - "share/cockpit"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - ".ai/repo/ui-integrity-baseline.txt"
+  - "docs/COCKPIT.md"
+  - "docs/SURFACES.md"
+depends_on:
+  - "I2141"
+acceptance_criteria:
+  - "Each new area answers 200, is listed in nav::areas(), STATIC_ROUTES and docs/COCKPIT.md, and the route-table test passes"
+  - "Each page's data comes from a capability call and the ui-integrity baseline does not grow"
+  - "A claim conflict between two runtimes is visible on the sessions or claims page with both claims named"
+  - "Each area passes the cockpit probe at every declared width"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test cockpit"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 389_cockpit_projection 760_the_cockpit_route_table_is_what_it_serves"
+evidence_required:
+  - "coordination_areas_answer_test"
+  - "conflict_visible_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

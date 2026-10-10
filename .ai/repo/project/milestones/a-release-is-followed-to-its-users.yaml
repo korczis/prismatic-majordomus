@@ -1,0 +1,50 @@
+id: a-release-is-followed-to-its-users
+title: "Every surface can tell which stage a release is at, from the bump to the installer that serves it, and a release in flight is not reported as a lost one"
+slug: a-release-is-followed-to-its-users
+order: 317
+priority: p2
+problem: "Measuring and publishing a release is mechanised and tested: release analyze and release bump (docs/RELEASE.md:515-523, test/cases/743_release_version_answers_with_the_contract.sh), the plan, build, publish and smoke phases (.ai/repo/ci/release.yaml:29-63), the ci verdict before a build (test/cases/362_a_release_follows_the_ci_verdict.sh) and the record pull request's verdict (test/cases/996_the_record_pull_request_gets_its_verdict.sh). What happens between those steps has no owner. The steps after the bump are a person's shell block (docs/DISTRIBUTION.md:158-186). The release module answers changelog, version and analysis only (apps/majordomus-cli/src/capability/builtin/release.rs:107-160). Sessions follow a release with scratch scripts, and on 2026-10-04 one of them polled silently for four hours and never tagged. scripts/ci/release-check fails every tag that has no record yet (scripts/ci/release-check:207-215), with no state for a record that is proposed and waiting for its ci (docs/DISTRIBUTION.md:180-182). It also answers 'ok' for a version declared on master and never tagged (scripts/ci/release-check:136-142), which is how 0.5.0 stayed unshipped. The 0.15.0 release pack of 2026-10-07 asked an agent to drive all of this by hand."
+outcome: "One read capability says, for the declared version and the newest tag, which stage each release is at: declared, verdict, tagged, run, published, record proposed, record on master, served, smoke. Each stage carries pass, pending, fail or unknown, a reason and the next command. release-check tells a record in flight from a lost one. An agent releases by following a workflow that reads that capability."
+current_state: "Absent. The stages exist as separate facts: git tags, .ai/repo/releases/*.yaml, the forge's release and pull request, the site's releases/latest.json, and the served build checked by served.verify (apps/majordomus-cli/src/capability/builtin/served.rs:388-400). No capability composes them. .ai/repo/workflows/README.md lists task-lifecycle, plan, continuity and use-cases, and no release workflow. Owned elsewhere and not duplicated here: the truth, claims, coverage and debt audit before a release (I2070, claims-held-to-evidence); an installed archive serving a repository (I2162); a provenance attestation (I2165); ranking a record ahead of what waits on it (I2060)."
+desired_state: "release.status is declared once with capability! and projected to the CLI, HTTP, OpenAPI and MCP. It reads its stage list from .ai/repo/ci/release.yaml rather than restating it. It never reaches the network itself. Like pull-request integration, it renders the last recorded forge and site observation with its age (apps/majordomus-cli/src/integration/forge.rs:1-8), and only a refresh command named in SECURITY.md fetches one. A case with a stubbed forge drives it through every stage, including declared-but-untagged and tagged-without-record. release-check reports a tag whose record is proposed on origin/release/record-<tag> as in flight until a declared bound, and fails after it. .ai/repo/workflows/release.md is the agent's procedure, built on release.status, with every wait bounded and logged."
+scope:
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "scripts/ci/release-check"
+  - ".ai/repo/ci/release.yaml"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/workflows/release.md"
+  - ".ai/repo/workflows/README.md"
+  - "docs/DISTRIBUTION.md"
+  - "docs/RELEASE.md"
+  - "SECURITY.md"
+  - "test/cases"
+  - "apps/majordomus-cli/tests/"
+non_scope:
+  - "Tagging or releasing automatically. version.yml proposes and never tags, by design (docs/RELEASE.md:545-550, test/cases/353_the_version_bump_has_an_actor.sh)."
+  - "The before-release audit of documents, claims, coverage and debt, which is I2070."
+  - "Release provenance and installed-archive smoke, which are I2165 and I2162."
+  - "Release and deploy latency, which is ci-critical-path."
+acceptance_criteria:
+  - "release.status reports each stage with pass, pending, fail or unknown, a reason and the next command, and unknown is never reported as pass"
+  - "A version declared on master with no tag older than the declared bound is reported failed by release.status"
+  - "A tag whose record is proposed on origin/release/record-<tag> is reported in flight by release-check within the bound and failed after it, proved by a case"
+  - "The stage list is read from .ai/repo/ci/release.yaml, and a phase added there appears in release.status with no code edit"
+  - ".ai/repo/workflows/release.md names every command it uses, and doc-command-check runs them"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test release_status"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 362_a_release_follows_the_ci_verdict 996_the_record_pull_request_gets_its_verdict <the cases this milestone adds>"
+  - "scripts/ci/release-check"
+evidence_required:
+  - "release_status_stage_case"
+  - "in_flight_record_case"
+  - "declared_untagged_case"
+  - "release_workflow_commands_checked"
+risks:
+  - "SECURITY.md allows only `majordomus prs refresh` and `prs drain` to reach the forge (apps/majordomus-cli/src/integration/forge.rs:3-7). A release.status that called gh from an HTTP or MCP request would break that declaration. Fetching must be a separate CLI-only refresh, and SECURITY.md must name it in the same change."
+  - "release-check runs in the structure job with no toolchain and no forge token (scripts/ci/release-check:159-163). In flight must be decided from fetched refs alone, or the gate gains a network dependency it was written to avoid."
+  - "A bound that is too generous turns a lost record into a long green window again, which is the v0.7.0 failure the gate exists for. The bound must be declared in policy and stated in the finding."
+depends_on: []
+created_at: 2026-10-09
+updated_at: 2026-10-09

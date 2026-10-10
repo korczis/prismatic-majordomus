@@ -1,0 +1,30 @@
+id: I2159
+milestone: architecture-is-enforced
+title: "A red or cancelled scheduled full CI run is raised where people look, the day it happens"
+slug: a-red-full-run-is-raised
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Turn the scheduled full plan's verdict into a visible record when it is red or cancelled, count a cancelled required job as not green, and give bench and macos timeouts they can meet."
+why: "All 10 latest scheduled validate.yml runs, the only runs that select every gate including rust-bench, macos, installer-live and mesh-lab, ended cancelled or failure. On 2026-10-09 bench was cancelled after 25 min, macos after 110 min, and suite failed on suite-budget because case 95_executable_reference took 3495 s against a 3450 s per-case cap; ci = failure. Push runs on master are green because they select a subset. Nothing alarms: rule project.never-reported-is-not-green is review-only. The bench job reached no verdict in those 10 runs, so .ai/repo/ci/gates.yaml:327's 'benchmark check against the committed baseline' has not run. The slow case itself is I2115 (milestone ci-critical-path); this issue is the alarm. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 2, premise 6 and drift 10."
+current_state: "The full plan has been red or cancelled for at least ten days and only a reader of the Actions tab would know."
+desired_state: "scripts/ci/verdict of a scheduled run that is red or cancelled opens or updates one GitHub issue through scripts/github-sync, and the session briefing names the last full-plan verdict; a cancelled required job is reported not green; bench and macos run within timeouts they meet, or are split."
+scope:
+  - "scripts/ci/verdict"
+  - ".github/workflows/validate.yml"
+  - "scripts/github-sync"
+  - ".ai/repo/ci/gates.yaml"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A scheduled run that ends cancelled or failed produces a visible record naming the failing jobs, proved against a fixture verdict"
+  - "A cancelled required job in the scheduled plan is reported as not green by scripts/ci/verdict"
+  - "The first scheduled run after this lands reaches a verdict for bench and macos, or the record says why not"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "scheduled_red_is_raised_case"
+  - "cancelled_is_not_green_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

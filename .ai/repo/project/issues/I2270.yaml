@@ -1,0 +1,40 @@
+id: I2270
+milestone: a-browser-is-a-read-only-peer
+title: "The peer board knows a browser peer: what it is, which protocol it speaks, and what it offers"
+slug: the-board-lists-a-browser-peer
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Extend the peer board's typed model so that a peer can be a browser. The browser peer carries the extension's id and version, the browser-peer protocol version, the pairing key id and the capabilities it advertises. Keep it transport-independent and serialise it through the existing schema generation, so that peers.list shows it on every surface with no consumer edit."
+why: "The board is the canonical directory of the clients attached to one server (apps/majordomus-cli/src/peers.rs:1-5) and every surface reads it through peers.list (apps/majordomus-cli/src/capability/builtin/peers.rs:342-352). It knows two transports, Stdio and Http (apps/majordomus-cli/src/peers.rs:132-141), and a client identity that is whatever initialize sent (apps/majordomus-cli/src/peers.rs:91-129). It has nowhere to say that a peer offers capabilities or speaks a protocol version. The pack's 01-browser-peer-protocol.md asks for that model with tests for roundtrip, stable identifiers, duplicates, stale heartbeats, version mismatch, malformed declarations and deterministic ordering. ADR I2269 puts the model on the board, not in the mesh."
+current_state: "A Peer is id, client, transport, connected_at, last_seen_seconds_ago, attached, claims, announcement and checkout (apps/majordomus-cli/src/peers.rs:216-260). There is no peer kind and no capability advertisement."
+desired_state: "A Browser transport, or a typed peer kind beside the transport (the ADR decides which), with a BrowserCard: extension id, extension version, protocol version, pairing key id and advertised capabilities as a sorted, deduplicated list of capability ids checked against the registry. A card from a protocol version outside the supported range is refused with a typed reason. A capability id the registry does not declare is refused. A second attach with the same pairing key replaces the first and does not add a peer. A browser silent for longer than the declared heartbeat bound is listed with attached: false. Existing boards read from sibling checkouts without the new field still parse."
+scope:
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/browser"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/tests/"
+  - "share/schemas"
+  - "docs/BROWSER.md"
+non_scope:
+  - "The host, the extension and any transport. This is the model, attached in tests through the board's own API."
+  - "Mesh registration. A browser is not a mesh node (ADR from I2269)."
+depends_on:
+  - "I2269"
+acceptance_criteria:
+  - "peers.list over the CLI, HTTP and MCP lists a browser peer attached in a test with its card, and its JSON roundtrips"
+  - "A card whose protocol version is unsupported, or whose capability id the registry does not declare, is refused with a typed reason and no peer is added"
+  - "Two attaches with one pairing key leave one browser peer on the board"
+  - "Advertised capabilities are listed in one order whatever order they were declared in"
+  - "A board serialised before this change still deserialises (the sibling-checkout read in apps/majordomus-cli/src/peers.rs:98-101)"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test browser_peer"
+  - "cargo test --lib peers"
+  - "scripts/derive-check"
+evidence_required:
+  - "browser_card_roundtrip_test"
+  - "refused_card_tests"
+  - "old_board_parses_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

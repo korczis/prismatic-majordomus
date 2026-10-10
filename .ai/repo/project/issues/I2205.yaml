@@ -1,0 +1,42 @@
+id: I2205
+milestone: an-outcome-becomes-a-reviewed-plan
+title: "A draft plan is judged as if it were written, and nothing is written"
+slug: a-draft-is-checked-before-it-is-written
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Define the draft: one typed document carrying a draft intent (statement, invariants, criteria with evidence references), its gap, its milestones and its issues with serves and depends_on; give it a JSON Schema; and add intent draft check <file>, backed by a read-only capability, that overlays the draft on the index and runs Intents::derive, the coverage, the gap and critique review, plan validation and scope overlap exactly as they run on the tree, answering every finding and writing nothing. Record the decision in an ADR that supersedes 'derives no plan' (ADR 0073, ADR 0112 branch :98-101) for drafting only."
+why: "Every intent-family record is written by hand and judged only once it is in the tree, so a plan is found not to cover its intent after its records were written, record by record. docs/PLANNING.md:220 says nothing derives a plan. The owner packs ask for a desired outcome to become a validated draft before execution (closure 70_OUTCOME_TO_PLAN_DERIVATION.md sections 2, 4-6; tight-integration 80_DESIRED_OUTCOME_TO_PLAN.md 'Validation')."
+current_state: "Intents::derive (apps/majordomus-cli/src/intent.rs:1323) takes records, a plan and an evidence lookup; the plan and the records are loaded from the index only. No draft kind exists."
+desired_state: "share/schemas/majordomus/draft holds the schema; intent_draft.rs builds records and plan issues from a draft, merges them with the index's, and calls the existing derivations; intent draft check exits 10 on a failure finding, naming each, and 0 otherwise; a test proves the tree is byte-identical after a check."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/plan.rs
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - share/schemas/majordomus
+  - share/kinds.yaml
+  - apps/majordomus-cli/tests
+  - .ai/repo/adrs
+  - docs/PLANNING.md
+non_scope:
+  - "Writing records (I2207)"
+  - "Deriving the draft's content (I2206 briefs, I2208 asks an advisor)"
+depends_on: []
+acceptance_criteria:
+  - "A draft whose criterion no issue serves fails check with criterion_uncovered"
+  - "A draft whose issue under the intent's milestone serves nothing fails with the existing issue-purpose finding"
+  - "A draft with a dependency cycle or an unresolved link fails naming it"
+  - "A draft that checks clean answers no failure, and the working tree is unchanged after any check"
+  - "The command line, HTTP and MCP answer the same check for the same draft"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent_draft
+evidence_required:
+  - draft_check_writes_nothing
+created_at: 2026-10-09
+updated_at: 2026-10-09

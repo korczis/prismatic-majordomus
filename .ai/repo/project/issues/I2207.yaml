@@ -1,0 +1,39 @@
+id: I2207
+milestone: an-outcome-becomes-a-reviewed-plan
+title: "A checked draft is written as records, and an unchecked one is refused"
+slug: a-checked-draft-is-applied
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add intent draft apply <file>, backed by one declared writing capability, that re-runs the check of I2205, refuses on any failure, allocates issue ids above the high-water mark (ADR 0053) and writes the intent, gap, milestone and issue records of the draft, leaving the critique for the opposition; it writes nothing a draft does not name."
+why: "Without a writer a checked draft is still transcribed by hand, record by record, which is where it drifts from what was checked. The owner packs ask that a desired outcome emerge as a typed plan 'without manual creation of every low-level record' (tight-integration 80_DESIRED_OUTCOME_TO_PLAN.md acceptance)."
+current_state: "The writers are pinned by name in apps/majordomus-cli/src/capability/builtin/mod.rs::the_capabilities_that_write_the_repository_are_these; none writes intent-family records."
+desired_state: "One more writer, named in that test and in the ADR of I2205; apply is idempotent on an already-applied draft (it refuses with 'already written' naming the records); the case runs check, apply, intent validate and plan validate in a fresh init."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/tests
+  - test/cases
+  - .ai/repo/adrs
+  - docs/PLANNING.md
+non_scope:
+  - "Stamping or recording a critique"
+  - "Editing records the draft does not name"
+depends_on:
+  - I2205
+acceptance_criteria:
+  - "apply writes exactly the records of a draft that checks clean, and intent validate and plan validate pass afterwards"
+  - "apply of a draft that fails check writes nothing and exits 10 naming the findings"
+  - "Issue ids are above the high-water mark of the tree and of the refs ADR 0053 names"
+  - "A second apply of the same draft writes nothing and names the records already written"
+validation:
+  - majordomus intent validate
+  - majordomus plan validate
+  - cargo test --test intent_draft
+  - "bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - draft_apply_writes_only_a_checked_draft
+created_at: 2026-10-09
+updated_at: 2026-10-09

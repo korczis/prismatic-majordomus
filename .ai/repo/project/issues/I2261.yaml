@@ -1,0 +1,31 @@
+id: I2261
+milestone: runtime-trust
+title: "A clone of this repository on a machine its trust list does not name opens no mesh socket"
+slug: an-unlisted-clone-stays-off-the-mesh
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Measure what a server started from a fresh clone of this public repository does on a machine whose key is not in trust.allow, then make it keep the mesh closed (no multicast, no dial) until the machine's key is listed or the person opts in locally."
+why: "This repository commits .ai/repo/mesh/majordomus.yaml with enabled: true, multicast on and rendezvous endpoints on the owner's LAN and tailnet addresses (.ai/repo/mesh/majordomus.yaml:31-49); docs/MESH.md:394-399 says every server of every worktree announces, listens and links. The mesh doctor reports an unlisted key as failing but says 'this machine can still dial them' (apps/majordomus-cli/src/mesh/doctor.rs:214-233). A contributor's clone opened in an MCP client would announce on its LAN and dial private addresses. Adopters are safe: the skeleton ships no declaration (docs/MESH.md:396-399)."
+current_state: "An unlisted clone activates the mesh the repository declares."
+desired_state: "A server whose own key is not listed keeps the mesh closed and says why on serve status and mesh doctor; a listed machine is unchanged."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "docs/MESH.md"
+  - "test/cases"
+non_scope:
+  - "Removing the endpoints from the declaration; the owner decides what this repository publishes"
+  - "Trust semantics between listed machines (I2132-I2135)"
+depends_on: []
+acceptance_criteria:
+  - "In a test with a declaration that does not list the node's key, no multicast socket is bound and no rendezvous endpoint is dialled"
+  - "mesh doctor and serve status name the reason and the command to list the key"
+  - "With the key listed, the existing mesh_cooperation tests pass unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "unlisted_node_stays_closed_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

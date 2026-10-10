@@ -1,0 +1,36 @@
+id: optional-subsystems-are-measured
+title: "Each optional subsystem has a measured cost, and the task lifecycle needs none of them"
+slug: optional-subsystems-are-measured
+order: 313
+priority: p2
+problem: "Finding F15, re-measured at master 3d92c25c12: the Rust executable has no cargo features (apps/majordomus-cli/Cargo.toml has no [features] table), so mesh, Cockpit, economics, reasoning, integration, models and the site build into every install, and nothing records what each costs in build time, binary size, test time or runtime footprint. Whether the start-check-finish lifecycle runs without any of them has never been shown."
+outcome: "A cost table per optional subsystem is generated from measurement, a case shows the lifecycle in a fresh repository starting no server, opening no socket and reading no optional registry, and a proposed ADR states retain, isolate or retire per subsystem from that table and from observed use."
+current_state: "No cost table, no isolation proof, no decision record."
+desired_state: "Costs measured and published; the lifecycle proved independent; a decision proposed for the owner."
+scope:
+  - apps/majordomus-cli/Cargo.toml
+  - apps/majordomus-cli/src
+  - .ai/repo/benchmarks
+  - .ai/repo/adrs
+  - docs
+  - test/cases
+non_scope:
+  - Deleting a subsystem; a retirement is executed only after the owner accepts the ADR
+  - The Cockpit's content; that is cockpit-control-center
+  - Mesh trust and defaults; that is runtime-trust
+acceptance_criteria:
+  - "A command or script writes the cost table from measurement, and the table names the commit and the machine"
+  - "In a fresh repository, start, check and finish complete with no listening socket opened and no server lease written, asserted by the case"
+  - "A proposed ADR cites the table and the observation records; its status is proposed until the owner accepts it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - subsystem_cost_table
+  - lifecycle_without_optional_subsystems_case
+  - subsystem_decision_adr
+risks:
+  - "Measured on a loaded machine the numbers lie; the table records the load average (memory note nine-sessions-make-the-machine-the-bottleneck)"
+depends_on: []
+created_at: 2026-10-09
+updated_at: 2026-10-09

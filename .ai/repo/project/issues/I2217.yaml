@@ -1,0 +1,45 @@
+id: I2217
+milestone: an-unmet-criterion-is-drafted-into-work
+title: "The evidence half of a gap is drafted from the ledger, and the decision to draft is recorded"
+slug: the-gap-is-drafted-from-the-evidence
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Record an ADR that Majordomus drafts, and never writes, the deterministic half of a gap and of a plan; narrow the non-goal of intent intent-planning accordingly; add the read-only capability intents.draft_gap and the command `majordomus-cli intent draft gap <intent>` that print a gap record whose conditions follow the evidence state of each criterion at the presented commit, each citing the observation it rests on."
+why: "A gap (share/schemas/majordomus/gap/gap.v1.schema.json; apps/majordomus-cli/src/intent_review.rs:195-212) must answer every criterion with satisfied, missing, conflicting or unknown at one commit, and today a worker transcribes that from the ledger by hand. The state of each criterion's evidence is already derived (apps/majordomus-cli/src/intent.rs:143-190, 1059-1150), so the transcription is a second, unchecked derivation. The owner's 2026-10-09 pack (02-session-binding-context-and-gap-discovery.md, issue 02.3) asks for exactly this, with unknowns marked unknown and the commit recorded. The intent intent-planning declares 'Generating issues or a critique from an intent automatically' a non-goal (.ai/repo/project/intents/intent-planning.yaml), so the reversal must be recorded where that sentence is."
+current_state: "No capability drafts a gap. intents.* are all read-only (apps/majordomus-cli/src/capability/builtin/intents.rs:20-21)."
+desired_state: "An ADR (proposed) with the state table: current -> satisfied; failing -> conflicting when a serving issue is DONE, else missing; not_run and unresolved -> missing; stale and not_derivable -> unknown. A pure function in a new module apps/majordomus-cli/src/intent_draft.rs builds the draft from IntentView and the ledger; the capability is declared once and generated to the command line, HTTP and MCP; observations carry source test:<ref>, claim:<id> or command:<argv>, and recorded_by names majordomus and its version; risks and work are left empty for the worker."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests/intent_draft.rs
+  - .ai/repo/adrs
+  - .ai/repo/project/intents
+  - docs/PLANNING.md
+  - docs/claims
+  - docs/CLAIMS.yaml
+  - test/cases
+non_scope:
+  - Writing the gap file; the command prints and the worker commits
+  - Drafting observations of code or prose; only evidence the ledger, the claims matrix or a served observation holds
+  - Drafting work items; that is I2218
+depends_on: []
+acceptance_criteria:
+  - "The printed draft, saved as .ai/repo/project/gaps/<intent>.yaml, passes intent validate with no gap finding in a fresh init fixture and on this repository's own intents"
+  - "Each criterion's condition follows the ADR's table, proved by one fixture per evidence state"
+  - "Every condition that is not unknown names at least one observation, and each observation's source names the ledger execution, claim or served observation it read"
+  - "Two runs on an unchanged tree print identical bytes; a run after a recorded failing execution changes exactly that criterion's condition"
+  - "The draft is identical on the command line, HTTP and MCP, and the repository-mutation writer set is unchanged"
+  - "intent-planning's non-goal says what Majordomus drafts and what it still does not, and the ADR is recorded as proposed"
+validation:
+  - "majordomus intent validate"
+  - "cargo test --test intent_draft"
+  - "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
+  - "bash test/run.sh <the gap-draft case this issue adds>"
+evidence_required:
+  - "gap_draft_follows_the_evidence_test"
+  - "gap_draft_surfaces_agree_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

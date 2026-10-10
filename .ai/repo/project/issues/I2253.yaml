@@ -1,0 +1,31 @@
+id: I2253
+milestone: adoption-is-light
+title: "A new repository's session records are committed, and pushed only when its policy says so"
+slug: a-new-repository-does-not-push-by-default
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Change the skeleton default push_record_on_end to false, keep this repository's own policy pushing, and say so in docs/ADOPTION.md and the release notes."
+why: "share/skeleton/policy.yaml:85-86 sets commit_record_on_end and push_record_on_end true, so an adopter's session end pushes to its remote without the adopter having decided it (finding F15; pack M07-I02 'disable default auto-commit/push', M13-I03 'dangerous defaults'). A push is an external side effect."
+current_state: "Every adopter pushes session records by default."
+desired_state: "A fresh repository commits its record and does not push; the policy key turns push on; this repository keeps push on in .ai/repo/policy.yaml."
+scope:
+  - "share/skeleton/policy.yaml"
+  - ".ai/repo/policy.yaml"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+non_scope:
+  - "commit_record_on_end; committing locally is not an external effect"
+  - "ensure_server_on_start (share/skeleton/policy.yaml:101), measured in optional-subsystems-are-measured"
+depends_on: []
+acceptance_criteria:
+  - "A session end in a fresh fixture repository with a remote commits the record and leaves the remote unchanged"
+  - "With push_record_on_end: true the same session end pushes"
+  - "This repository's effective policy still pushes"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "push_is_opt_in_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

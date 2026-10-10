@@ -1,0 +1,30 @@
+id: I2255
+milestone: adoption-is-light
+title: "A stranger's first change is a journey CI walks: init, start, stray, refused, repair, finish"
+slug: a-strangers-first-change-is-a-case
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add a case that installs the tool the way a stranger does (installed layout, fresh git init), runs init, starts a task, makes an out-of-scope edit that check refuses, repairs it, and finishes with a real verifier, printing the files init created and the seconds each step took."
+why: "No case walks a first change end to end in a fresh repository; docs/ADOPTION_FIRST_RUN.md is a one-off forensic measurement at v0.3.1, and the m00 findings found the first hooked commit after init refused because the README did not name AGENTS.md. The pack's M07-I04 acceptance is exactly this journey."
+current_state: "The journey is untested; regressions in it are found by adopters."
+desired_state: "The case passes in CI on Linux and macOS and its output records the file count and step times."
+scope:
+  - "test/cases"
+  - "test/lib.sh"
+  - "docs/ADOPTION.md"
+non_scope:
+  - "Reducing the file count (I2254)"
+  - "Making doctor fast (I0828)"
+depends_on: []
+acceptance_criteria:
+  - "The case refuses the out-of-scope edit at check with exit 10 and accepts the repaired finish with exit 0"
+  - "The first hooked commit after init succeeds, or the case fails naming the refusal"
+  - "The case prints the number of files init created and each step's seconds"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "stranger_journey_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

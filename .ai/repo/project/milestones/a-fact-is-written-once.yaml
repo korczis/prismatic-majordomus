@@ -1,0 +1,50 @@
+id: a-fact-is-written-once
+title: "A fact is written once, the register of the copies that remain is checked, and an object added anywhere reaches every surface"
+slug: a-fact-is-written-once
+order: 306
+priority: p1
+problem: "docs/HARDCODING_LEDGER.yaml is this repository's register of facts written twice (docs/DYNAMICITY.md:4-6). Nothing reads it: no test, case, script or capability names the file (grep finds it only in prose, docs/CI.md:421 and docs/COCKPIT_IDE_AUDIT.md:430). It has drifted from the tree in both directions. Four of its fourteen open rows are already paid: site-check-generated-file-list is derived at scripts/site-check:59-62, site-tile-route-list's literal list no longer appears in scripts/site-check, schema-allowlists is generated (share/allow/issue.txt:1-3), and derivable-counts-in-prose reproduces nothing. Rows that remain open cite lines that moved: context-provider-lists cites lib/context.sh:258-259, but the lists are at lib/context.sh:399-400. docs-index-tables' reproduce command now prints a JSON escaper. Copies that are still real include the search kinds, written four times in lib/search.sh (:21, :35, :37, :38). Another is the site's product data, which builds its command list and exit codes by parsing bin/majordomus usage text (scripts/generate-site-data:285-288), although share/commands.yaml declares both. The extensibility proof covers only the MCP resource list. apps/majordomus-cli/tests/external_extension.rs:55 adds, removes and breaks an object in a fixture repository, and :165 adds a kind, but no test asserts that the same object reaches HTTP and the Cockpit and then leaves them. Owner pack majordomus-ui-implementation-prompt-pack v1.1 (prompts/02A-ELIMINATE-MANUAL-MAINTENANCE.md) makes this sweep a prerequisite of every UI milestone."
+outcome: "The register of duplicated facts is a checked document: an open row that the tree no longer shows fails a test, as does a row that cites a line which does not hold its text. The copies it still names outside the Cockpit and the site are paid or justified. An object or kind added to a repository reaches the command line, HTTP, MCP and the Cockpit with no consumer edit, and removing it takes it out of all four."
+current_state: "Implemented: one total presentation order (apps/majordomus-cli/src/order.rs:1-30, test order::tests::every_permutation_of_the_fixture_yields_the_same_order at :421, ADR 0025). just recipes are read from just --dump (apps/majordomus-cli/src/environment/workflows.rs:35). Completion is answered from the command graph (apps/majordomus-cli/src/cli.rs:3738-3745). .envrc is an adapter that reads nothing (.envrc:1-12). The Cockpit's ui-integrity gate has a ratchet baseline (.ai/repo/ui-integrity-baseline.txt). MCP-side extensibility is proved (tests/external_extension.rs:55, :165). Partial: the ledger (22 rows, 8 fixed, 14 open, at least 4 of the open ones stale). Absent: any check of the ledger, and a proof that reaches HTTP and the Cockpit."
+desired_state: "A test reads docs/HARDCODING_LEDGER.yaml with the crate's own YAML reader. For every open row it finds the row's witness text in the row's path, and for every fixed row it finds a resolution. Rows the tree has paid are closed with what paid them. The search kinds, the context sections, the site's command list and the exit-code table each have one declaration that the others read. A fixture repository's new object and new kind appear in CLI JSON, an HTTP route, an MCP resource, the Cockpit's object index, entity page and navigation, and are gone from each after removal."
+scope:
+  - "docs/HARDCODING_LEDGER.yaml"
+  - "docs/DYNAMICITY.md"
+  - "apps/majordomus-cli/tests"
+  - "lib/search.sh"
+  - "lib/context.sh"
+  - "scripts/generate-site-data"
+  - "share/commands.yaml"
+  - "bin/majordomus"
+  - "docs/CLI.md"
+  - "test/cases"
+non_scope:
+  - "Consumer catalogues in the Cockpit and the site (lanes, filters, API literals, the site's Cockpit picture), which are I2152 in milestone surfaces-never-disagree."
+  - "Removing the clap tree or cli/local.rs LOCAL, which surfaces-never-disagree records as measured second declarations."
+  - "The synthetic-capability proof, which is I1027 in milestone capability-graph; this milestone proves objects and kinds, not capabilities."
+  - "Generating authored prose, or flagging a primary declaration as a duplicate."
+  - "A new registry that copies lists from the ones that already own them."
+acceptance_criteria:
+  - "A ledger row marked open whose witness no longer occurs in its path fails a test that names the row"
+  - "A row marked fixed without a resolution fails the same test"
+  - "No open row of docs/HARDCODING_LEDGER.yaml is already paid in the tree"
+  - "Adding a kind to the search vocabulary is one edit, and the usage text, default list and validation follow it"
+  - "The site's product data reads its command list and exit codes from share/commands.yaml, not from bin/majordomus usage text"
+  - "An object added to a fixture repository appears in CLI JSON, an HTTP route, an MCP resource and the Cockpit's object index and entity page, and is absent from each after it is removed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test external_extension"
+  - "scripts/generate-site-data --check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 28_no_hardcoded_values 277_entities_are_routable"
+evidence_required:
+  - "ledger_is_checked"
+  - "stale_rows_closed"
+  - "object_reaches_every_surface"
+  - "command_data_has_one_owner"
+risks:
+  - "A witness that is too short matches unrelated text and keeps a paid row open. Each witness is the duplicated literal itself, and the test also requires the path to exist."
+  - "Closing rows is a statement about the tree on one day. The check runs in the suite, so a regression reopens nothing silently, but it also cannot find a copy that nobody recorded. The ledger is a register, not a scanner."
+  - "lib/ is shell under ADR 0069. Paying a row there must not add a new shell unit; it edits existing ones."
+depends_on: []
+created_at: 2026-10-09
+updated_at: 2026-10-09

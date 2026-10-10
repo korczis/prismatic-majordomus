@@ -1,0 +1,38 @@
+id: I2221
+milestone: command-and-deployment-criteria-are-judged
+title: "A deployment criterion is judged from the recorded observations of that deployment"
+slug: a-deployment-criterion-is-judged
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give EvidenceLookup a deployment standing: read the recorded observations of the named deployment, re-judge the newest one with Observation::rejudge against the newest commit that changed the criterion's serving scope, and return current only for ServedVerdict::Served; stale when it served a build that does not contain that commit; not_run when there is no observation; failing for unreachable, malformed, dirty or undecided. Record the decision in an ADR."
+why: "criterion_of returns not_derivable for every deployment criterion whose deployment exists (apps/majordomus-cli/src/intent.rs:1125-1133; EvidenceLookup::deployment answers only whether the object exists, apps/majordomus-cli/src/intent.rs:802-804). The repository already observes deployments and judges them by containment, and a record re-judged later goes stale on its own (apps/majordomus-cli/src/served.rs:15-35, judge at 367, Observation::rejudge at 614, observe at 646; test/cases/384_a_deployment_is_evidence.sh). The owner's pack names this the missing evidence kind (05-evidence-and-satisfaction-engine.md, issue 05.1; ACCEPTANCE-MATRIX.md rows A13, A14) and the claim intent-command-deployment-evidence has been planned since the intent model shipped (docs/CLAIMS.yaml:961-968)."
+current_state: "Observations are recorded and re-judgeable; no criterion reads them."
+desired_state: "RepositoryEvidence loads .ai/local/state/served/observations.jsonl once per read through served::read_all and served::latest (apps/majordomus-cli/src/served.rs:721, 744), which exist and have no caller in the intent engine; the deployment standing is computed by Observation::rejudge and nothing else; the criterion carries the observation's url, served commit and time as its proof; the verdict's ledger_settles includes deployment once judged (apps/majordomus-cli/src/intent.rs:301-303); an ADR (proposed) records why containment of the serving scope's newest commit, not age, is the freshness rule."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/served.rs
+  - apps/majordomus-cli/tests/intent.rs
+  - apps/majordomus-cli/tests/intent_deployment_evidence.rs
+  - .ai/repo/adrs
+  - docs/PLANNING.md
+  - test/cases
+non_scope:
+  - Probing a deployment during a read
+  - Committing observations into the tree
+  - Command criteria (I2222)
+depends_on: []
+acceptance_criteria:
+  - "A deployment criterion with an observation that served a build containing its serving scope's newest commit reads current and meets the criterion"
+  - "The same observation read after a commit to the serving scope reads stale, naming the commit it lacks"
+  - "Unreachable, malformed, dirty and undecided observations each read failing with the observation's reason; no observation reads not_run"
+  - "An intent whose only unmet criterion is a deployment with no observation reads unsatisfied, not unknown"
+  - "The criterion state is the same on the command line, HTTP and MCP"
+validation:
+  - "majordomus intent validate"
+  - "cargo test --test intent --test intent_deployment_evidence"
+  - "bash test/run.sh 384_a_deployment_is_evidence 367_an_intent_is_satisfied_only_by_evidence"
+evidence_required:
+  - "deployment_criterion_judged_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

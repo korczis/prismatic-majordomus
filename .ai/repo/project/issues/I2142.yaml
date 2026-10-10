@@ -1,0 +1,35 @@
+id: I2142
+milestone: work-is-coordinated
+title: "The pre-push hook refuses a push it cannot judge, and an exclusive mesh claim is part of the judgement"
+slug: an-unjudged-push-is-refused
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let the policy require an active task for finish --check, have check and finish report an overlapping exclusive mesh claim of another session, and make the bootstraps and comments say what the hooks enforce."
+why: "lib/finish.sh:41-55 makes finish --check exit 0 with no task, a foreign task or a non-active task, and case 06_finish asserts that exit 0; .githooks/pre-push:13 calls nothing else, so a push from a checkout with no active task is never judged. Nothing in lib/check.sh, lib/finish.sh, lib/start.sh or .githooks/ reads the mesh (the audit's grep found no reference), so an exclusive claim on the pushed paths refuses only another mesh.claim. The bootstraps say 'what refuses a change is the task's own scope, at check, at finish and in the pre-push hook' and tie check --overlap to board announcements, while lib/start.sh:171-184 and lib/check.sh:283-287 compare only local worktrees' current.yaml. lib/check.sh:75-77 says the task record is tracked and travels with the branch; it lives under untracked .ai/local/state/ (lib/start.sh:61-63, .gitignore:62). I1990 decides which pushed refs the hook judges; this issue decides what happens when no task judges them. Baseline audit of 2026-10-09 at master 1fb8d6be44, coordination gap 2 and drift c-4, c-5, c-6."
+current_state: "The pre-push hook passes every push from a checkout with no active task, and no hook consults the mesh."
+desired_state: "A policy key makes finish --check refuse, naming the remedy, when no active task covers the pushed branch; with the key absent nothing changes. check and finish ask the mesh's admission for the changed paths and report an overlapping exclusive claim of another session. The bootstraps (through their provider templates where the text is generated) and lib/check.sh's comments describe what the code does."
+scope:
+  - "lib/finish.sh"
+  - "lib/check.sh"
+  - "lib/start.sh"
+  - ".githooks/pre-push"
+  - ".ai/repo/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - ".ai/repo/providers"
+  - "docs/CLI.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "With the policy key set, a push from a checkout with no active task is refused with exit 10 and a line naming how to start one; with the key absent it passes as today"
+  - "check reports an exclusive mesh claim of another session that overlaps the task's changed paths"
+  - "The bootstraps' sentences about pre-push and check --overlap, and lib/check.sh:75-77, describe what the code does"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 06_finish 04_start_check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "prepush_without_task_case"
+  - "check_reports_mesh_overlap_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

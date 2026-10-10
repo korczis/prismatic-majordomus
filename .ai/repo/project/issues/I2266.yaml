@@ -1,0 +1,31 @@
+id: I2266
+milestone: optional-subsystems-are-measured
+title: "Each optional subsystem has a measured cost table"
+slug: optional-subsystems-have-a-cost-table
+priority: p2
+profile: deep-work
+parallel_safe: true
+objective: "Measure per subsystem (mesh, cockpit, economics, reasoning, integration, models, site, campaigns): lines of code, compile time share, test time share from suite-durations, binary size share, and runtime footprint when idle, and publish the table generated with commit, machine and load."
+why: "Finding F15: no cargo features (apps/majordomus-cli/Cargo.toml has no [features]); every install carries every subsystem; the pack's M13-I01 asks for reproducible metrics before any retain/retire decision."
+current_state: "No cost table."
+desired_state: "A generated table under .ai/repo/benchmarks or docs, reproducible by one command, stating commit, machine and load average."
+scope:
+  - "scripts"
+  - "apps/majordomus-cli/src/commands/bench.rs"
+  - ".ai/repo/benchmarks"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "Changing any subsystem"
+depends_on: []
+acceptance_criteria:
+  - "One command regenerates the table and a case checks its shape"
+  - "Each row cites how each number was measured"
+  - "The table records commit, machine and load average"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "subsystem_cost_table"
+created_at: 2026-10-09
+updated_at: 2026-10-09

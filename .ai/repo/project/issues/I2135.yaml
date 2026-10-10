@@ -1,0 +1,33 @@
+id: I2135
+milestone: runtime-trust
+title: "The trust root is read from the default branch, not from whatever the checkout holds"
+slug: the-trust-root-is-the-default-branch
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Read the mesh's trust list, seeds and rendezvous endpoints from the default branch's tree, report a working tree that differs, and refuse a committed declaration that trusts on first use."
+why: "The server reads .ai/repo/mesh/ from the checkout's working tree once at start (apps/majordomus-cli/src/shared.rs:34-48,164-174). A branch, or an uncommitted edit, can add a key to trust.allow, add seeds or rendezvous.endpoints that make the runtime post its card and envelope to a host of the branch author's choosing, or set policy tofu, and that checkout's runtime obeys it (threat T12); peers judge by their own file, so the damage is local to that checkout, which is the one a reviewer runs a contributor's branch in. docs/MESH.md:365,382-399 and ADR 0050 rule 6 say the declaration is committed; ADR 0059 records this class of incident. No CI gate refuses a committed tofu declaration (enforcement table, 'no unknown remote auto-trust': unit tests only, apps/majordomus-cli/src/mesh/trust.rs:25-35, apps/majordomus-cli/src/mesh/config.rs:397). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 10 and drift 12."
+current_state: "Trust, seeds and rendezvous come from the working tree at server start."
+desired_state: "activate_mesh reads trust, seeds and rendezvous from the default branch's tree; mesh doctor fails, naming each key and endpoint that differs, when the working tree differs; a gate refuses a committed declaration that sets tofu."
+scope:
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "scripts/ci/mesh-check"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "test/cases"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "A working-tree edit that adds a key to trust.allow does not admit that key, and mesh doctor names the difference"
+  - "A branch that adds a rendezvous endpoint does not make its runtime post to it until the change is on the default branch"
+  - "A committed declaration with policy tofu fails scripts/ci/mesh-check"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem 494_the_mesh_is_declared_and_held"
+evidence_required:
+  - "working_tree_trust_edit_ignored_test"
+  - "tofu_declaration_refused_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

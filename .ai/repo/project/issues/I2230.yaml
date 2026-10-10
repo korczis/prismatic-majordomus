@@ -1,0 +1,38 @@
+id: I2230
+milestone: surfaces-never-disagree
+title: "Each Cockpit page declares the capabilities it reads, and which page shows a capability is answered from that declaration"
+slug: a-page-declares-its-sources
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Give every Cockpit route a typed declaration of the capabilities its page executes, check it against what the page actually executes, derive the 'Derived from' column of docs/COCKPIT.md from it, and let capabilities.projections name the Cockpit pages that render each capability."
+why: "Owner pack v1.1 prompts/01-REPOSITORY-AUDIT.md asks for a machine-readable matrix of which UI screen shows which capability. The repository answers half of it. capabilities.projections names the command line, HTTP, MCP tool and MCP resource for each capability (docs/COCKPIT.md /cockpit/mcp row), and every capability has the generic page /cockpit/capabilities/<id>. Nothing states which purpose-built page reads which capability. The route column of docs/COCKPIT.md:46-87 is checked against the dispatcher (cockpit::tests::the_documented_route_table_is_the_dispatchers, apps/majordomus-cli/src/cockpit/mod.rs:469), but its 'Derived from' column is prose. I2152 already finds it understating page data sources. A page that starts reading a new capability, or stops, changes nothing any test reads."
+current_state: "STATIC_ROUTES pairs a route with an area (apps/majordomus-cli/src/cockpit/mod.rs:83). No route declares its sources. The documented sources are unchecked."
+desired_state: "STATIC_ROUTES, or a table beside it that is checked against it, carries each route's source capability ids. A test renders each page with a fresh context and compares the capability ids executed with the declaration, in both directions. The documented route table's source column is checked against the declaration the way its route column is checked against the dispatcher. capabilities.projections answers, per capability, the Cockpit routes that read it."
+scope:
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "docs/COCKPIT.md"
+  - "docs/generated"
+non_scope:
+  - "Removing the five direct registry reads of .ai/repo/ui-integrity-baseline.txt:9-13; that is I2152. A page that reads the registry directly declares the registry as its source until then."
+  - "A second hand-written matrix document."
+depends_on:
+  - "I2152"
+acceptance_criteria:
+  - "A page that executes a capability its declaration does not name fails a test naming the route and the capability, and so does a declared capability the page never executes"
+  - "A source named in docs/COCKPIT.md's 'Derived from' column that the declaration does not hold fails the build"
+  - "capabilities.projections answers the Cockpit routes of a capability identically on the command line, over HTTP and over MCP"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib cockpit::"
+  - "cargo test --test cockpit --test properties"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "page_sources_declared_test"
+  - "documented_sources_checked_test"
+  - "projection_names_cockpit_routes"
+created_at: 2026-10-09
+updated_at: 2026-10-09

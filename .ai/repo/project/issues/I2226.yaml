@@ -1,0 +1,33 @@
+id: I2226
+milestone: a-fact-is-written-once
+title: "The register of duplicated facts is checked against the tree, and the rows the tree has paid are closed"
+slug: the-ledger-is-checked
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give every row of docs/HARDCODING_LEDGER.yaml a witness that a test can find, close the rows the tree has already paid with what paid them, correct the rows whose citations moved, and make a stale row fail the suite."
+why: "Nothing reads docs/HARDCODING_LEDGER.yaml. grep finds it only in prose (docs/CI.md:421, docs/COCKPIT_IDE_AUDIT.md:430, docs/DYNAMICITY.md:4). Four of its fourteen open rows are already paid: site-check-generated-file-list is derived at scripts/site-check:59-62, site-tile-route-list's literal `limitations roadmap why supervises commands` no longer occurs in scripts/site-check, schema-allowlists is generated (share/allow/issue.txt:1-3), and derivable-counts-in-prose's reproduce prints nothing. context-provider-lists cites lib/context.sh:258-259, but the lists are at :399-400. docs-index-tables' reproduce (sed -n '227,233p' scripts/generate-site-data) prints a JSON escaper. A register that is wrong in both directions misleads every audit that trusts it, and owner pack 02A §1 asks for exactly this register to drive a migration."
+current_state: "22 rows: 8 fixed with a prose resolved_by, 14 open, and at least 4 of the open ones stale. No row carries anything a program can check except a shell reproduce command."
+desired_state: "Each open row carries `witness`, the duplicated literal as it occurs in `path`. A test in apps/majordomus-cli/tests reads the ledger with the crate's own YAML reader. It fails, naming the row, when an open row's path does not exist or its witness does not occur in it, and when a fixed row has no resolved_by. Each stale row is re-measured: it is closed with resolved_by naming the commit or file that paid it, or corrected to its current lines. docs/DYNAMICITY.md says the ledger is checked and by what."
+scope:
+  - "docs/HARDCODING_LEDGER.yaml"
+  - "docs/DYNAMICITY.md"
+  - "apps/majordomus-cli/tests"
+non_scope:
+  - "Paying any open row; that is I2228, I2229 and I2152."
+  - "Running the rows' shell reproduce commands from the test."
+  - "A scanner that finds copies nobody recorded."
+depends_on: []
+acceptance_criteria:
+  - "Removing a row's witness from its path makes the ledger test fail with the row id in the message"
+  - "A fixed row without resolved_by makes the ledger test fail"
+  - "site-check-generated-file-list, site-tile-route-list, schema-allowlists and derivable-counts-in-prose are fixed, each with a resolved_by, or left open with a witness the test finds"
+  - "Every open row's lines field agrees with where its witness occurs"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test hardcoding_ledger"
+evidence_required:
+  - "ledger_witness_test"
+  - "stale_rows_closed"
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -1,0 +1,36 @@
+id: I2161
+milestone: architecture-is-enforced
+title: "No answer, log line or mesh frame carries a credential the redactor knows"
+slug: no-credential-leaves-the-runtime
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist."
+why: "The published-artifact guard generate::forbidden_in (apps/majordomus-cli/src/generate.rs:1364,1398) is a substring list (ghp_, AKIA, Bearer, PEM, /Users/) applied to generated documents only, not to HTTP responses, MCP results, mesh frames or logs. Request paths and origins are logged raw (apps/majordomus-cli/src/http/router.rs:731-736) and logging has no redaction layer (apps/majordomus-cli/src/logging.rs:29-37). redaction::public_text (apps/majordomus-cli/src/redaction.rs:223) has no production caller, although the module doc (apps/majordomus-cli/src/redaction.rs:1-7) and case 504_public_text_is_redacted_once.sh say published evidence goes through it; wiring the evidence publication to it is I1955 (test-evidence). The mesh replicates intents, scopes and handover bodies in clear over plain HTTP (apps/majordomus-cli/src/mesh/link.rs:878-908). Pack invariant 9: no token or key in logs, web responses, mesh discovery, telemetry or generated docs. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 7, the redaction rows and drift 1."
+current_state: "Only generated documents and tracked text are scanned; responses, logs and frames are not."
+desired_state: "error_response reasons and the tracing fields that carry request content pass redact_secrets; a handover or review body is redacted or refused before it is signed into the journal; scripts/ci/mesh-check refuses an EventBody field outside a bounded allow-list; apps/majordomus-cli/src/redaction.rs's module doc names only callers that exist."
+scope:
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/src/logging.rs"
+  - "apps/majordomus-cli/src/redaction.rs"
+  - "apps/majordomus-cli/src/mesh/handover.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "scripts/ci/mesh-check"
+  - "apps/majordomus-cli/tests/redaction.rs"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A credential-shaped value in a request is absent from the HTTP error response, the MCP error and server.log"
+  - "A handover body containing a credential shape is redacted or refused before it is signed into the journal"
+  - "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check"
+  - "The module documentation of apps/majordomus-cli/src/redaction.rs names only callers that exist"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test redaction"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "credential_never_echoed_test"
+  - "eventbody_allowlist_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

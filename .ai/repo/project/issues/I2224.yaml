@@ -1,0 +1,40 @@
+id: I2224
+milestone: the-intent-loop-is-proved-end-to-end
+title: "Every scenario of the intent acceptance matrix is a claim with its test, or planned with what is missing"
+slug: every-acceptance-scenario-is-a-claim
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add to docs/CLAIMS.yaml one claim per in-scope scenario A01-A26 of the owner's acceptance matrix that no existing claim already states, each guaranteed with the test that proves it or planned with a note naming what is missing and which issue owns it; write the two tests that are missing for behaviour already on master: work named under a cancelled or superseded intent is refused (apps/majordomus-cli/src/intent_binding.rs:137-138, 755-757) and nothing the mesh or a peer reports can meet a criterion (apps/majordomus-cli/src/intent.rs:1059-1150 reads only the ledger, the claims matrix and repository objects)."
+why: "The owner's matrix (tmp/owner-packs/majordomus-intent-outcome-prompt-pack/majordomus-intent-outcome-pack/ACCEPTANCE-MATRIX.md) requires each row to map to an executed test or to be explicitly unimplemented. The repository already has the one instrument for that, docs/CLAIMS.yaml with its claim pages and case 892; a second inventory beside it would drift. The audit of 2026-10-09 (lane B matrix) found rows proved without a claim (A02, A03, A06, A11, A15), rows with code and no test (A17, A18) and rows absent (A07, A12)."
+current_state: "Eleven intent claims (docs/CLAIMS.yaml:871-968); no claim names A17 or A18 behaviour and neither has a test; no claim states the absent rows as planned."
+desired_state: "Each row maps to exactly one claim id (existing or new), recorded in the claim's note as 'acceptance row Axx'; new guaranteed claims name a test that exists; planned ones name the owning issue; two new tests for A17 and A18; claim pages under docs/claims/ for each new claim."
+scope:
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - site/content/guarantees
+  - apps/majordomus-cli/tests/intent_binding.rs
+  - apps/majordomus-cli/tests/intent.rs
+  - test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh
+non_scope:
+  - Implementing absent behaviour; that is the owning milestone's work
+  - Copying the acceptance matrix into the repository as a file
+depends_on:
+  - I2215
+acceptance_criteria:
+  - "Each of A01-A26 is named in exactly one claim note in docs/CLAIMS.yaml"
+  - "Every new guaranteed claim names a test that exists in the tree and passes"
+  - "A binding naming a cancelled intent and one naming a superseded intent are refused with intent_retired in a test"
+  - "A test shows that a mesh claim, review or peer announcement about a criterion leaves its evidence state unchanged"
+  - "Case 892 passes with the new claims"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test intent_binding --test intent"
+  - "bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says"
+  - "scripts/derive"
+evidence_required:
+  - "acceptance_claims"
+  - "retired_intent_refused_test"
+  - "peer_result_is_not_evidence_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

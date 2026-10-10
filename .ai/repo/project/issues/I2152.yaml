@@ -1,0 +1,44 @@
+id: I2152
+milestone: surfaces-never-disagree
+title: "No surface keeps its own list of what the registry already declares"
+slug: no-consumer-catalogues
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Derive every consumer-side list in the Cockpit and the site from its owner, prove each dashboard card's route resolves, and make ADR 0004, ADR 0003 and the Cockpit documents name the second registries that remain."
+why: "ADR 0004 says nothing has a second registry (.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md:52) and that every call goes through Context::execute (:57-61), and calls a command 'one that changes this process's memory' (:37) while six capabilities carry repository_mutation; apps/majordomus-cli/src/cli/local.rs:52-55 says every projection is read-only. The code holds: native web surfaces in a hand-written registry (apps/majordomus-cli/src/web/discover.rs:150); dashboard card routes as literals checked only for their /cockpit prefix (apps/majordomus-cli/src/capability/builtin/dashboard.rs:480-612, apps/majordomus-cli/tests/dashboard.rs:115-120); integration lane names copied as strings (apps/majordomus-cli/src/cockpit/pages.rs:5291-5299 from apps/majordomus-cli/src/integration/model.rs:469-481), so a new lane shows as 0; kind and provenance filter values copied (apps/majordomus-cli/src/cockpit/pages.rs:780,789); a prose list of mesh action ids missing four (apps/majordomus-cli/src/cockpit/pages.rs:3475); execution end states copied into JS (share/cockpit/plan.js:20, share/cockpit/executions.js:193); hard-coded API paths (apps/majordomus-cli/src/cockpit/pages.rs:4852, share/cockpit/palette.js:49-52); the site's Cockpit navigation with 19 items against 24 in apps/majordomus-cli/src/cockpit/nav.rs (site/templates/screens/cockpit.html:22) while apps/majordomus-cli/src/site.rs:1275-1299 already exports cockpit_areas; five pages read ctx.registry directly (.ai/repo/ui-integrity-baseline.txt:9-13) although apps/majordomus-cli/src/cockpit/pages.rs:4-8 says every page goes through Context::execute; apps/majordomus-cli/src/cockpit/nav.rs:11-13 lists 16 areas where there are 24. docs/COCKPIT.md understates page data sources and omits STATIC_ROUTES and nav::areas() from 'add a page'; docs/HARDCODING_LEDGER.yaml cites a moved line and a half-resolved row. ADR 0003 (accepted) puts Swagger at /docs where the code serves /swagger, and is superseded in code by ADRs 0040 and 0043, both proposed. Baseline audit of 2026-10-09 at master 1fb8d6be44, projections gaps 8 and 12, catalogues 4-12, drift c-1 to c-3 and c-14 to c-17, lifecycle drift 4."
+current_state: "At least nine consumer-side copies of registry or enum values, two of them already drifted."
+desired_state: "Lanes come from IntegrationLane, filters from the enums, mesh actions from capabilities.list by module, API paths from HttpExposure, final execution states from executions.protocol, site navigation from cockpit_areas; apps/majordomus-cli/tests/dashboard.rs requests each card's route and expects 200; a gate refuses a literal /api/v1/ path in Cockpit code; ADR 0003 and ADR 0004 carry notes naming what superseded them and which second registries remain, any status change being the owner's act; the Cockpit and module comments match."
+scope:
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/nav.rs"
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/cli/local.rs"
+  - "share/cockpit"
+  - "site/templates/screens/cockpit.html"
+  - "apps/majordomus-cli/src/site.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - ".ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md"
+  - ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md"
+  - ".ai/repo/ui-integrity-baseline.txt"
+  - "docs/COCKPIT.md"
+  - "docs/HARDCODING_LEDGER.yaml"
+  - "scripts/ci/cockpit-projection-check"
+depends_on: []
+acceptance_criteria:
+  - "Adding a variant to IntegrationLane shows it on the Cockpit integration page with no Cockpit edit"
+  - "Every dashboard card's route answers 200 in apps/majordomus-cli/tests/dashboard.rs"
+  - "The site's Cockpit picture lists exactly the areas nav::areas() declares"
+  - "A literal /api/v1/ path in Cockpit page code or Cockpit scripts fails a gate"
+  - "ADR 0003 and ADR 0004 name what superseded them and the second registries that remain"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test dashboard --test cockpit"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 389_cockpit_projection 547_the_ui_says_only_what_is_derived"
+evidence_required:
+  - "lane_added_without_cockpit_edit_test"
+  - "card_routes_resolve_test"
+  - "api_literal_gate_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

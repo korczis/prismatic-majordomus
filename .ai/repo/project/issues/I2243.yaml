@@ -1,0 +1,31 @@
+id: I2243
+milestone: policy-and-scope-read-exactly
+title: "The shell YAML reader refuses what the Rust reader refuses, and both read the same values"
+slug: the-two-yaml-readers-agree
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the awk flattener refuse duplicated keys and split flow lists only outside quotes, and hold both readers to one differential corpus in a case."
+why: "Finding F05, confirmed at master 3d92c25c12: the awk flattener (lib/common.sh:568-630) has no duplicate check while metadata::yaml refuses 'is given twice' (apps/majordomus-cli/src/metadata/yaml.rs:197-198); the two shell readers then disagree, mj_yget taking the first value (lib/common.sh:696) and mj_yload assigning in order so the last wins (lib/common.sh:673-679); emit_val splits a flow list on every comma including inside quotes (lib/common.sh:585). The m00 findings recorded a duplicated `profiles:` key read as healthy by doctor."
+current_state: "One document can mean two things depending on which reader reads it."
+desired_state: "Both readers accept and refuse the same corpus with the same values; doctor names a duplicated key with its line."
+scope:
+  - "lib/common.sh"
+  - "apps/majordomus-cli/src/metadata/yaml.rs"
+  - "test/cases"
+  - "test/fixtures"
+non_scope:
+  - "Full YAML support; the subset stays the format"
+depends_on: []
+acceptance_criteria:
+  - "A corpus with duplicate keys, quoted commas in flow lists, doubled quotes, a trailing comment and a key repeated at different depths is read by both readers with identical verdicts and values"
+  - "A duplicated key in .ai/repo/policy.yaml is refused by the shell reader with the line number"
+  - "Every tracked .ai record still flattens without error (no record in the tree has a duplicate today, or the case names it)"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 00_yaml_flatten <the case this issue adds>"
+  - "cargo test --lib metadata::yaml"
+evidence_required:
+  - "yaml_reader_differential_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09
