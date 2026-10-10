@@ -11,3 +11,5 @@ while read -r _local_ref _local_sha remote_ref _remote_sha; do
 done
 [ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
 bin/majordomus finish --check || exit $?
+# what CI would find first, within a bound (project.a-push-runs-what-ci-would-find-first)
+scripts/ci/run-plan --before-push || exit $?

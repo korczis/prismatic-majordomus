@@ -36522,6 +36522,23 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "kind": "rule",
+        "label": "project.a-push-runs-what-ci-would-find-first@1",
+        "summary": "A push runs what CI would find first",
+        "route": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
+        "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "ci",
+            "process"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -43026,6 +43043,13 @@
         "label": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
         "route": "/cockpit/objects/test/test-cases-1020-a-derive-sees-what-the-commit-will-sh",
         "source": "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "kind": "test",
+        "label": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "route": "/cockpit/objects/test/test-cases-1021-a-push-runs-what-ci-would-find-first-sh",
+        "source": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh"
       },
       {
         "id": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -67810,6 +67834,11 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -69696,6 +69725,11 @@
       },
       {
         "source": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75406,8 +75440,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2495,
+      "edges": 5448,
       "acyclic": false,
       "truncated": false
     }

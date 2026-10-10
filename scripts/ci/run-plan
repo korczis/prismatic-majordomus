@@ -16,11 +16,49 @@
 #   scripts/ci/run-plan [--full] [ci-plan options...]        compute the plan here, run it
 #   scripts/ci/run-plan --plan plan.json --job <job> [--skip id,id]
 #                                                            one job's gates of a written plan
+#   scripts/ci/run-plan --before-push                        what a push owes first: the plan's
+#                                                            structure gates and the suite's
+#                                                            fast cases, within a stated bound
+#
+# BEFORE A PUSH (project.a-push-runs-what-ci-would-find-first). On 2026-10-09 CI refused a
+# release twice for what a local run finds in seconds: a structure gate (economics-claims,
+# 6 s) and a suite case (08, 1 s). Nothing ran either before the push. The pre-push hook ran
+# `finish --check`, which reports required gates as never reported and runs none, and the
+# cases were chosen by guess. Each refusal cost a CI round trip and another derive. The whole
+# structure job is too long for a hook (about 20 min, and it reaches the network), so a push
+# runs a budget of it, chosen from what CI recorded and never from a list typed by hand:
+#
+#   - the structure gates of this tree's plan that make no network call (`network: true` in
+#     .ai/repo/ci/gates.yaml) and whose recorded seconds (.ai/repo/ci/structure-durations.tsv,
+#     written by `scripts/ci-baseline --structure-durations`) are at most MJ_PUSH_GATE_SECONDS
+#     (default 15), cheapest first, while their sum stays within MJ_PUSH_GATE_BUDGET (default
+#     120);
+#   - the cases .ai/repo/ci/suite-durations.tsv records at most MJ_PUSH_CASE_SECONDS (default
+#     5), four at a time.
+#
+# Every gate left out prints one line naming it and why. The step reports its measured time
+# against MJ_PUSH_BOUND (default 180) seconds. A plan that cannot be computed, or a durations
+# file that is missing, refuses the push: what cannot be measured is not passed. There is no
+# flag that skips it, as there is no --no-verify.
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
+
+# Git hands a hook its repository through the environment (GIT_DIR, when the hook runs in a
+# linked worktree), and a gate that builds a repository of its own would then act on that
+# one. This dispatcher finds its checkout from its own path, so it drops what git exported
+# once, for every gate it runs: the variables git names as belonging to one repository, and
+# five by name for a git too old to list them. The two that carry `git -c` settings stay, as
+# they do when git enters another repository itself. test/run.sh does the same for the
+# cases, and case 1030 holds both.
+for mj_git_local in $(git rev-parse --local-env-vars 2>/dev/null) \
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX; do
+  case "$mj_git_local" in GIT_CONFIG_PARAMETERS|GIT_CONFIG_COUNT) continue ;; esac
+  unset "$mj_git_local"
+done
+unset mj_git_local
 
 # A distribution belongs to a checkout. direnv exports the primary checkout's share into
 # every linked worktree, so a gate dispatched from a worktree would read another tree's
@@ -37,9 +75,10 @@ if [ -z "${MJ_KEEP_SHARE:-}" ]; then
   fi
   unset MAJORDOMUS_SHARE
 fi
-given=""; job=""; skip=""; rest=()
+given=""; job=""; skip=""; rest=(); before_push=0
 while [ $# -gt 0 ]; do
   case "$1" in
+    --before-push) before_push=1; shift ;;
     --plan) given="$2"; shift 2 ;;
     --job) job="$2"; shift 2 ;;
     --skip) skip=",$2,"; shift 2 ;;
@@ -51,7 +90,88 @@ if [ -n "$given" ]; then
   plan="$given"
 else
   plan="$(mktemp "${TMPDIR:-/tmp}/mj-run-plan.XXXXXX")"; trap 'rm -f "$plan"' EXIT
-  scripts/ci-plan ${rest[@]+"${rest[@]}"} > "$plan" || exit $?
+  scripts/ci-plan ${rest[@]+"${rest[@]}"} > "$plan" < /dev/null || {
+    rc=$?; [ "$before_push" = 1 ] && { echo "run-plan: the plan could not be computed (exit $rc), so the push is refused: what cannot be measured is not passed" >&2; exit 12; }
+    exit "$rc"; }
+fi
+
+# ---------------------------------------------------------------- before a push
+if [ "$before_push" = 1 ]; then
+  # MJ_PUSH_DURATIONS and MJ_PUSH_CASES read other files in their place (a case's fixture)
+  durations="${MJ_PUSH_DURATIONS:-.ai/repo/ci/structure-durations.tsv}"; cases_file="${MJ_PUSH_CASES:-.ai/repo/ci/suite-durations.tsv}"
+  for f in "$durations" "$cases_file"; do
+    [ -f "$f" ] || { echo "run-plan: $f is missing, so nothing can be budgeted and the push is refused (scripts/ci-baseline --structure-durations writes the first)" >&2; exit 12; }
+  done
+  per_gate="${MJ_PUSH_GATE_SECONDS:-15}"; budget="${MJ_PUSH_GATE_BUDGET:-120}"
+  per_case="${MJ_PUSH_CASE_SECONDS:-5}"; bound="${MJ_PUSH_BOUND:-180}"
+  t_all="$(date +%s)"; failed=""; chosen=""; spent=0
+  printf 'run-plan --before-push: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
+  # candidates, cheapest first: "<seconds> <id>", or a line saying why a gate is left out
+  while read -r id network; do
+    secs="$(awk -F'\t' -v g="$id" '$1 == g { print $2 }' "$durations")"
+    if [ "$network" = true ]; then printf '  left out %s: it reaches the network; CI runs it\n' "$id"
+    elif [ -z "$secs" ]; then printf '  left out %s: no recorded duration in %s; CI runs it\n' "$id" "$durations"
+    elif [ "$secs" -gt "$per_gate" ]; then printf '  left out %s: CI recorded %ss, over the %ss a push spends on one gate\n' "$id" "$secs" "$per_gate"
+    else printf '%s %s\n' "$secs" "$id" >> "$plan.cand"; fi
+  done < <(jq -r '.gates[] | select(.job == "structure" and .selected) | "\(.id) \(.network // false)"' "$plan")
+  if [ -f "$plan.cand" ]; then
+    while read -r secs id; do
+      if [ $(( spent + secs )) -gt "$budget" ]; then
+        printf '  left out %s: %ss more would pass the %ss budget for gates; CI runs it\n' "$id" "$secs" "$budget"; continue
+      fi
+      spent=$(( spent + secs )); chosen="$chosen $id"
+    done < <(LC_ALL=C sort -n "$plan.cand"); rm -f "$plan.cand"
+  fi
+  # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list
+  for g in $(jq -r '.gates[] | select(.job == "structure" and .selected) | .id' "$plan"); do
+    case " $chosen " in *" $g "*) ;; *) continue ;; esac
+    cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
+    t0="$(date +%s)"
+    if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
+    else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
+      failed="$failed $g"; fi
+    rm -f "$plan.$g.log"
+  done
+  # the fast cases, four at a time. Fast is what CI recorded; local is what the case does. A
+  # case that starts a server (serve_up, mcp_shared, serve ensure or start, the MCP launcher)
+  # or declares that it runs alone measures timing and ports: on a machine nine sessions share
+  # it fails for the load and not for the change, so CI runs it and the push does not.
+  names=""
+  for n in $(awk -F'\t' -v m="$per_case" '$2 ~ /^[0-9]+$/ && $2 <= m { print $1 }' "$cases_file"); do
+    [ -f "test/cases/$n.sh" ] || continue
+    if grep -q '^# majordomus-exclusive:' "test/cases/$n.sh"; then
+      printf '  left out case %s: it declares that it runs alone; CI runs it\n' "$n"; continue; fi
+    if grep -qE '\bserve_up\b|\bmcp_shared\b|\bserve (ensure|start)\b|majordomus-mcp|\$MJ"? mcp\b' "test/cases/$n.sh"; then
+      printf '  left out case %s: it starts a server; CI runs it\n' "$n"; continue; fi
+    names="$names $n"
+  done
+  ncases="$(printf '%s' "$names" | wc -w | tr -d ' ')"
+  if [ "$ncases" -gt 0 ]; then
+    t0="$(date +%s)"
+    # shellcheck disable=SC2086
+    if MJ_TEST_JOBS=4 bash test/run.sh $names < /dev/null > "$plan.cases.log" 2>&1; then
+      printf '  ok     %s case(s) of at most %ss each (%ss)\n' "$ncases" "$per_case" "$(( $(date +%s) - t0 ))"
+      printf '%s %s\n' "$(( $(date +%s) - t0 ))" "the fast cases" >> "$plan.times"
+    else
+      printf '  FAILED cases (%ss):\n' "$(( $(date +%s) - t0 ))"; grep -E '^(FAIL|not ok)|^    ' "$plan.cases.log" | head -n 20 | sed 's/^/         | /'
+      failed="$failed cases"
+    fi
+    rm -f "$plan.cases.log"
+  fi
+  took=$(( $(date +%s) - t_all ))
+  printf 'run-plan --before-push: %s gate(s) and %s case(s) in %ss, against a bound of %ss' \
+    "$(printf '%s' "$chosen" | wc -w | tr -d ' ')" "$ncases" "$took" "$bound"
+  # Over the bound is reported, never refused: a push must not fail because the machine is
+  # busy, or people route around the step. The slowest steps are named so the overrun can be
+  # traced to a gate or to the load.
+  if [ "$took" -gt "$bound" ]; then
+    printf ' (over it by %ss; slowest: %s; this machine is slower than the runner the durations were recorded on, and the push is not refused for that)' \
+      "$(( took - bound ))" "$( [ -f "$plan.times" ] && LC_ALL=C sort -rn "$plan.times" | head -n 3 | awk '{s=$1; $1=""; sub(/^ /,""); printf "%s%s %ss", (NR>1?", ":""), $0, s}')"
+  fi
+  rm -f "$plan.times"
+  if [ -n "$failed" ]; then printf '; failed:%s. CI would refuse this push for the same reason.\n' "$failed"; exit 1; fi
+  printf '; nothing CI would find here first\n'
+  exit 0
 fi
 if [ -n "$job" ]; then
   gates="$(jq -r --arg j "$job" '.gates[] | select(.job == $j and .selected) | .id' "$plan")"
@@ -70,7 +190,7 @@ for g in $gates; do
   fi
   printf '\n==> %s: %s\n' "$g" "$cmd"
   t0="$(date +%s)"
-  if bash -c "$cmd"; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
+  if bash -c "$cmd" < /dev/null; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
   else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; fi
   [ -n "${MJ_CI_TIMINGS:-}" ] && printf '%s\t%s\t%s\n' "${job:-plan}" "$g" "$(( $(date +%s) - t0 ))" >> "$MJ_CI_TIMINGS"
   ran=$((ran+1))

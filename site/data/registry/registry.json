@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "ecf7f69f2a7fb7a8f3db81f96fc80c6b8c7d356ca3cea5eb81bc0e0d67227176",
     "summary": {
-      "total": 2112,
+      "total": 2114,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1930,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1930
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1938
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1984,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75918,7 +75918,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 165,
+        "capabilities": 166,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 412,
+        "capabilities": 413,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "b607b42cb0b5de0ddbc1fef6a7cb722dc7fc1a9760181e1406af25c8e443a673",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76199,12 +76199,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 20,
-      "rule": 165,
+      "rule": 166,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
@@ -88930,7 +88930,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 20714
+        "bytes": 21120
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -90203,6 +90203,21 @@
           "session",
           "capability",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "kind": "rule",
+        "identity": "project.a-push-runs-what-ci-would-find-first@1",
+        "title": "A push runs what CI would find first",
+        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
+        "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5020,
+        "tags": [
+          "ci",
+          "process"
         ]
       },
       {
@@ -93122,6 +93137,14 @@
         "path": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
         "source_class": "case",
         "bytes": 3019
+      },
+      {
+        "uri": "majordomus://test/test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "kind": "test",
+        "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+        "source_class": "case",
+        "bytes": 7294
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -97090,7 +97113,7 @@
         "id",
         "version"
       ],
-      "objects": 165
+      "objects": 166
     },
     {
       "name": "scope",
@@ -97145,7 +97168,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 412
+      "objects": 413
     },
     {
       "name": "use-case",
