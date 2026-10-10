@@ -6,23 +6,23 @@
     "version": "0.19.1"
   },
   "registry": {
-    "fingerprint": "b459423e77e8088e3b83fab43af4fd9edc1835bab0e4a78618f26a860dfcaed1",
+    "fingerprint": "e8dee4efa254e6a8f40b289796313aac9746f0a8c85290e11c51078ede044d4e",
     "summary": {
-      "total": 2100,
+      "total": 2103,
       "builtin": 184,
-      "declarative": 1916,
+      "declarative": 1919,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1916
+        "resource": 1919
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1924
+        "implemented": 1927
       },
       "mcp_tools": 177,
-      "mcp_resources": 1970,
+      "mcp_resources": 1973,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 268,
+        "capabilities": 269,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -76061,7 +76061,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 410,
+        "capabilities": 411,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5e9591b2f048ec354a0c3d23c9df8d92178161c8eb289bd0a64aaeec46f4cd38",
+    "fingerprint": "2de8376c73d53176ebce9b9118e1d60c2b3bf7f5d6a93bd1d95f4106a243a33b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 268,
+      "issue": 269,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 26,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -76204,7 +76204,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 410,
+      "test": 411,
       "use-case": 48,
       "workspace": 1
     },
@@ -81625,7 +81625,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 43874
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 118672
+        "bytes": 123084
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87918,6 +87918,17 @@
         "bytes": 3003
       },
       {
+        "uri": "majordomus://issue/I2135",
+        "kind": "issue",
+        "identity": "I2135",
+        "title": "The trust root is read from the default branch, not from whatever the checkout holds",
+        "description": "Let a working tree narrow the mesh's trust and never widen it: obey the working tree's declaration with every widening of the trunk's committed copy removed, report each ignored line, and refuse a committed declaration that trusts on first use.",
+        "path": ".ai/repo/project/issues/I2135.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3186
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88159,6 +88170,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1571
+      },
+      {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
       },
       {
         "uri": "majordomus://milestone/shared-policy",
@@ -92994,6 +93016,14 @@
         "bytes": 12197
       },
       {
+        "uri": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "kind": "test",
+        "identity": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "path": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "source_class": "case",
+        "bytes": 2776
+      },
+      {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "identity": "test/cases/102_completion_shell.sh",
@@ -94159,7 +94189,7 @@
         "identity": "test/cases/368_mesh_handover_resolves.sh",
         "path": "test/cases/368_mesh_handover_resolves.sh",
         "source_class": "case",
-        "bytes": 5397
+        "bytes": 5791
       },
       {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -95743,7 +95773,7 @@
         "identity": "test/cases/924_one_executor_across_machines.sh",
         "path": "test/cases/924_one_executor_across_machines.sh",
         "source_class": "case",
-        "bytes": 6390
+        "bytes": 6524
       },
       {
         "uri": "majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh",
@@ -96863,7 +96893,7 @@
       "identity": [
         "id"
       ],
-      "objects": 268
+      "objects": 269
     },
     {
       "name": "knowledge",
@@ -96893,7 +96923,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "moment",
@@ -97015,7 +97045,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 410
+      "objects": 411
     },
     {
       "name": "use-case",

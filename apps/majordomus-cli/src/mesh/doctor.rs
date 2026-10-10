@@ -78,6 +78,50 @@ impl DoctorCheck {
     }
 }
 
+/// The `trust-root` check: which copy of the declaration is obeyed, and every line of the
+/// working tree's copy this runtime ignores because the trunk's copy does not say it
+/// ([`super::root`]). `None` when there is no declaration to judge.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::declaration_source;
+/// use majordomus_cli::mesh::root::Resolved;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let config = MeshConfig::from_metadata(
+///     &serde_json::json!({"schema": "mesh/v1", "kind": "mesh-declaration", "id": "x"}), "x").unwrap();
+/// let ignored = Resolved {
+///     declaration: Some(Ok(config)),
+///     trunk: Some("master".into()),
+///     committed: true,
+///     narrowed: vec!["trust.allow: bb is not on the trunk".into()],
+/// };
+/// let check = declaration_source(&ignored).unwrap();
+/// assert!(!check.ok && check.detail.contains("bb is not on the trunk"));
+/// let nothing = Resolved { declaration: None, trunk: None, committed: false, narrowed: vec![] };
+/// assert!(declaration_source(&nothing).is_none());
+/// ```
+pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorCheck> {
+    resolved.declaration.as_ref()?;
+    let trunk = resolved.trunk.as_deref().unwrap_or("the trunk");
+    if resolved.narrowed.is_empty() {
+        let detail = if resolved.committed {
+            format!("obeyed as {trunk} holds it; the working tree widens nothing")
+        } else {
+            format!("not committed on {trunk}; obeyed as written, since it widens nothing a committed copy would have to")
+        };
+        return Some(DoctorCheck::pass("trust-root", detail));
+    }
+    Some(DoctorCheck::fail(
+        "trust-root",
+        format!(
+            "this checkout's runtime ignores {} line(s) of the working tree's declaration: {}",
+            resolved.narrowed.len(),
+            resolved.narrowed.join("; ")
+        ),
+        "a working tree may narrow trust and never widen it: a key, an address or a looser policy takes effect only once the trunk's copy says it",
+        &format!("commit the change on {trunk} (merge it), or revert it here"),
+    ))
+}
+
 /// The whole self-check.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshDoctorReport {

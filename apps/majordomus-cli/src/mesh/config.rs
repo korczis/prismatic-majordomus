@@ -326,18 +326,33 @@ impl MeshConfig {
     /// the wrong schema version, an unknown key, and a zero interval are each refused
     /// with the object's URI in the reason.
     pub fn parse(object: &Object) -> Result<MeshConfig, MeshError> {
-        let parsed: MeshConfig = serde_json::from_value(object.metadata.clone())
-            .map_err(|e| MeshError::Config(format!("{}: {e}", object.uri)))?;
+        Self::from_metadata(&object.metadata, &object.uri)
+    }
+
+    /// [`MeshConfig::parse`] for a declaration that is not an indexed object: the metadata
+    /// mapping as the YAML subset parsed it, and the name to quote in a refusal. The trunk's
+    /// copy of the declaration is read this way (see [`super::root`]).
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::MeshConfig;
+    /// let ok = serde_json::json!({ "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x" });
+    /// assert!(MeshConfig::from_metadata(&ok, "master:x.yaml").is_ok());
+    /// let wrong = serde_json::json!({ "schema": "mesh/v0", "kind": "mesh-declaration", "id": "x" });
+    /// assert!(MeshConfig::from_metadata(&wrong, "master:x.yaml").unwrap_err().to_string().contains("master:x.yaml"));
+    /// ```
+    pub fn from_metadata(metadata: &serde_json::Value, uri: &str) -> Result<MeshConfig, MeshError> {
+        let parsed: MeshConfig = serde_json::from_value(metadata.clone())
+            .map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
         if parsed.schema != SCHEMA_VERSION {
             return Err(MeshError::Config(format!(
                 "{}: schema {} is not {SCHEMA_VERSION}",
-                object.uri, parsed.schema
+                uri, parsed.schema
             )));
         }
         if parsed.kind != KIND {
             return Err(MeshError::Config(format!(
                 "{}: kind {} is not {KIND}",
-                object.uri, parsed.kind
+                uri, parsed.kind
             )));
         }
         if parsed.multicast.interval_seconds == 0
@@ -346,13 +361,13 @@ impl MeshConfig {
         {
             return Err(MeshError::Config(format!(
                 "{}: an interval of 0 would be a busy loop",
-                object.uri
+                uri
             )));
         }
         parsed
             .cooperation
             .validate()
-            .map_err(|e| MeshError::Config(format!("{}: {e}", object.uri)))?;
+            .map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
         Ok(parsed)
     }
 }

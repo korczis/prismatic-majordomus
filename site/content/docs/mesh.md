@@ -136,6 +136,25 @@ This machine's own key is trusted as itself, which is what lets two worktrees li
 reappearing under a different key is rejected under every policy. Trust is a precondition of
 a link, not a link: discovery never admits one.
 
+### Which copy of the declaration is obeyed
+
+A working tree may narrow trust and never widen it. When the trunk holds a committed copy of
+the declaration at the same path, the runtime of a checkout obeys the working tree's copy with
+every widening of the trunk's removed: the mesh is on only if the trunk's copy is on, the
+policy is no looser than the trunk's, and every key in `trust.allow`, every rendezvous
+endpoint, seed and broadcast network is one the trunk's copy also lists — or, for an
+endpoint or a seed, a loopback address, which reaches no other host. When the trunk holds no
+copy (a repository that never committed one, or a directory outside git), the working tree
+is obeyed as written except `tofu`, which is honoured only from a committed trunk copy.
+
+So a contributor's branch, checked out to be reviewed, cannot make that checkout's runtime
+trust its author's key or post its card to its author's host, and an uncommitted edit cannot
+either; a machine or a hub takes effect when its line reaches the trunk. `mesh doctor` fails
+its `trust-root` check naming every line this checkout ignores, and the server logs them when
+it starts. `scripts/ci/mesh-check` refuses a committed declaration that sets `tofu`.
+The trunk is the local branch the repository names as its trunk; a local trunk behind the
+remote is older trust, which is the safe direction.
+
 ## The handshake
 
 A dialer — the runtime with the lower runtime key, or either one when only one can reach the
@@ -366,6 +385,7 @@ What the mesh defends against, and how:
 | a relay that alters or invents events | the origin's signature fails at every consumer |
 | flooding | bounded datagrams, messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
+| a branch or an uncommitted edit that adds a key, a hub, a seed or `tofu` | the declaration in force is the working tree's with every widening of the trunk's committed copy removed; `mesh doctor` names each ignored line (`trust-root`), and `mesh-check` refuses a committed `tofu` (I2135) |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |

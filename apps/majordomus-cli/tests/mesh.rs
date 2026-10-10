@@ -70,6 +70,8 @@ fn post(s: &Served, path: &str, body: &Value) -> (u16, Value) {
 fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     let f = Fixture::new();
     f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_QUIET);
+    // committed: trust on first use is honoured only from the trunk's copy (I2135)
+    f.commit("the mesh declaration");
     let state = f.root().join("xdg-state");
     let mut s = Served::start_with_env(
         &f.root(),
