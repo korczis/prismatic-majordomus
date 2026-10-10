@@ -147,6 +147,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine, runtime and session this checkout's server cooperates with, with each link's state |
 | [`majordomus mesh peer`](#majordomus-mesh-peer) | `/docs/cli/mesh/peer/` | One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here |
 | [`majordomus mesh state`](#majordomus-mesh-state) | `/docs/cli/mesh/state/` | The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest |
+| [`majordomus mesh briefing`](#majordomus-mesh-briefing) | `/docs/cli/mesh/briefing/` | The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews |
 | [`majordomus mesh events`](#majordomus-mesh-events) | `/docs/cli/mesh/events/` | The cooperation journal's events after a Lamport stamp, in Lamport order |
 | [`majordomus mesh verify`](#majordomus-mesh-verify) | `/docs/cli/mesh/verify/` | Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails |
 | [`majordomus mesh claim`](#majordomus-mesh-claim) | `/docs/cli/mesh/claim/` | Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them |
@@ -4027,7 +4028,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh briefing`](#majordomus-mesh-briefing), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
 
 ```text
 majordomus mesh <COMMAND>
@@ -4221,6 +4222,33 @@ Examples:
 
   ```console
   $ majordomus mesh state
+  ```
+
+  Verified: exits 0; prints cooperation inactive.
+
+<a id="majordomus-mesh-briefing"></a>
+## `majordomus mesh briefing`
+
+The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews
+
+```text
+majordomus mesh briefing [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Who works where, and what waits for this machine** — The mesh as a starting session reads it, from this checkout's running server: every machine with a live session, each session's intent, branch, issue and claimed paths, the handovers no session here has taken and the open reviews, each with the call that acts on it. With no server, as here, the answer says so — the mesh lives in the server's memory.
+
+  ```console
+  $ majordomus mesh briefing
   ```
 
   Verified: exits 0; prints cooperation inactive.

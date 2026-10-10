@@ -1,0 +1,26 @@
+id: I2285
+milestone: every-session-joins-the-mesh
+title: "The mesh briefs every session as work"
+slug: mesh-briefing
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "A typed read capability mesh.briefing folds the journal from the starting session's side: live sessions per machine with intent, branch, issue and claimed paths; handovers not taken here; open reviews, addressed-here first; bounded."
+why: "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+current_state: "The start printed the mesh health only; nothing folded the journal from a starting session's side."
+desired_state: "A typed read capability mesh.briefing folds the journal from the starting session's side: live sessions per machine with intent, branch, issue and claimed paths; handovers not taken here; open reviews, addressed-here first; bounded."
+scope:
+  - "apps/majordomus-cli/src/mesh/briefing.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_briefing.rs"
+depends_on: []
+acceptance_criteria:
+  - "A runtime's briefing shows another machine's live session, its exclusive claim, its handover and its review"
+  - "A runtime is never told to take the handover it published"
+  - "Each list is bounded and says how much it left out"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "mesh_briefing_two_nodes_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

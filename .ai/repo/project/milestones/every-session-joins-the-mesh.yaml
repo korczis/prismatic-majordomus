@@ -1,0 +1,41 @@
+id: "every-session-joins-the-mesh"
+title: "Every LLM session joins the Majordomus mesh at start, told the mesh as work"
+order: 145
+priority: "p0"
+problem: "Mesh participation was left to the worker: the start printed one health line (lib/capture.sh mj_capture_mesh_line), MCP initialize instructions never mentioned the mesh (apps/majordomus-cli/src/mcp/protocol.rs), only Claude Code had a lifecycle adapter (lib/capture.sh MJ_CAPTURE_LIFECYCLE), nothing surfaced handovers or reviews waiting for this machine, and no gate noticed a task built outside the mesh. Survey of 2026-10-10 at master a804ae2045."
+outcome: "Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates."
+slug: every-session-joins-the-mesh
+current_state: "Partly automatic: an announcing MCP client is projected as a mesh session with advisory claims; everything else is the worker's memory."
+desired_state: "mesh.briefing at every start and MCP initialize, a mesh session and a claim for every task, a gated rule, projections and the Cockpit, an article."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "lib/capture.sh"
+  - "lib/derive.sh"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/providers"
+  - "docs/MESH.md"
+  - "README.md"
+  - "site/content-src"
+non_scope:
+  - "Changing what the mesh may decide: it stays observation, not authority (ADR 0050)."
+acceptance_criteria:
+  - "A runtime's briefing shows another machine's live session, its exclusive claim, its handover and its review"
+  - "The start briefing of a checkout whose mesh runs carries the briefing lines"
+  - "An MCP initialize answer on a server whose mesh runs names the briefing and the protocol"
+  - "After majordomus start the task's scope is a live claim on every linked runtime"
+  - "finish refuses a task whose scope was never claimed while the mesh was enabled"
+  - "A Codex or Gemini session start runs the same lifecycle, proved against the real tool"
+  - "The provider projections and README name mesh.briefing and the protocol"
+  - "The article is published by the site build and passes site-check"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::briefing"
+  - "cargo test --test mesh_briefing"
+evidence_required:
+  - "mesh_briefing_two_nodes_test"
+depends_on: []
+risks:
+  - "A start that waits on the mesh is a slower start for everyone: the briefing is read within a budget and skipped, not waited for."
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -5,7 +5,28 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 21.
+Stability: experimental. Capabilities: 22.
+
+## `mesh.briefing` — The mesh, as work, for a session that starts
+
+Who works where on every machine of the mesh — each live session with its client, intent, branch, issue and the paths it claims (exclusive ones marked `!`) — the handovers no session of this runtime has taken, and the open reviews, those addressed to this runtime first; bounded per list. The start of every session prints it and every MCP session is told it at `initialize` (ADR 0128). Read-only.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_briefing` |
+| HTTP | `GET /api/v1/mesh/briefing` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, cooperation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `limit` | integer or null | no | At most this many entries in each list (default 5, at most 50). |
+
+Output: `MeshBriefingAnswer`.
 
 ## `mesh.claim` — Claim a scope across the mesh
 

@@ -1,0 +1,27 @@
+id: I2291
+milestone: every-session-joins-the-mesh
+title: "The mesh briefing is projected into every surface"
+slug: briefing-projected
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "AGENTS.md, CLAUDE.md and README say what the start does and the protocol, rendered from the providers' templates; docs/MESH.md has At every start; the Cockpit mesh page shows the briefing."
+why: "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+current_state: "Not done."
+desired_state: "AGENTS.md, CLAUDE.md and README say what the start does and the protocol, rendered from the providers' templates; docs/MESH.md has At every start; the Cockpit mesh page shows the briefing."
+scope:
+  - ".ai/repo/providers"
+  - "README.md"
+  - "docs/MESH.md"
+  - "apps/majordomus-cli/src/cockpit"
+depends_on:
+  - "I2285"
+acceptance_criteria:
+  - "The provider projections and README name mesh.briefing and the protocol"
+  - "The Cockpit mesh page renders the briefing"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_1028"
+created_at: 2026-10-10
+updated_at: 2026-10-10

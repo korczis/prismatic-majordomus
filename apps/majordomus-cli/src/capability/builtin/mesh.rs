@@ -563,6 +563,69 @@ fn mesh_state(ctx: &Context, _: Empty) -> Result<MeshStateAnswer, CapabilityErro
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+/// The input of `mesh.briefing`.
+pub struct MeshBriefingInput {
+    /// At most this many entries in each list (default 5, at most 50).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<usize>,
+}
+
+impl BenchmarkCases for MeshBriefingInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "default",
+            MeshBriefingInput { limit: Some(5) },
+        )]
+    }
+}
+
+/// The answer of `mesh.briefing`: the briefing, and the same as the lines a session reads.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct MeshBriefingAnswer {
+    /// Whether cooperation runs.
+    pub active: bool,
+    /// Why not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The briefing, when cooperation runs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub briefing: Option<crate::mesh::briefing::MeshBriefing>,
+    /// The briefing as text: what the start of a session prints and the MCP instructions say.
+    pub text: String,
+}
+
+fn mesh_briefing(
+    ctx: &Context,
+    input: MeshBriefingInput,
+) -> Result<MeshBriefingAnswer, CapabilityError> {
+    let limit = input.limit.unwrap_or(5).clamp(1, 50);
+    Ok(match ctx.mesh.cooperation() {
+        Some(c) => {
+            let briefing = crate::mesh::briefing::brief(&c.state(), c.runtime_key(), limit);
+            MeshBriefingAnswer {
+                active: true,
+                reason: None,
+                text: crate::mesh::briefing::render_text(&briefing),
+                briefing: Some(briefing),
+            }
+        }
+        None => {
+            let reason = ctx.mesh.cooperation_status().reason;
+            MeshBriefingAnswer {
+                active: false,
+                text: format!(
+                    "the mesh does not run here: {}",
+                    reason.as_deref().unwrap_or("no reason given")
+                ),
+                reason,
+                briefing: None,
+            }
+        }
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 /// The input of `mesh.events`.
 pub struct MeshEventsInput {
     /// Only events whose Lamport stamp is above this.
@@ -1215,6 +1278,21 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_state,
             },
             capability! {
+                id: "mesh.briefing",
+                title: "The mesh, as work, for a session that starts",
+                description: "Who works where on every machine of the mesh — each live session with its client, intent, branch, issue and the paths it claims (exclusive ones marked `!`) — the handovers no session of this runtime has taken, and the open reviews, those addressed to this runtime first; bounded per list. The start of every session prints it and every MCP session is told it at `initialize` (ADR 0128). Read-only.",
+                input: MeshBriefingInput,
+                output: MeshBriefingAnswer,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_briefing"),
+                    http: get("/api/v1/mesh/briefing"),
+                    cli: None,
+                },
+                tags: ["mesh", "coordination", "cooperation"],
+                handler: mesh_briefing,
+            },
+            capability! {
                 id: "mesh.events",
                 title: "The cooperation journal",
                 description: "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
@@ -1423,6 +1501,11 @@ mod tests {
                 "/api/v1/mesh/state",
             ),
             (
+                "mesh.briefing",
+                Some("majordomus_mesh_briefing"),
+                "/api/v1/mesh/briefing",
+            ),
+            (
                 "mesh.events",
                 Some("majordomus_mesh_events"),
                 "/api/v1/mesh/events",
@@ -1514,6 +1597,7 @@ mod tests {
             "mesh.peers",
             "mesh.peer",
             "mesh.state",
+            "mesh.briefing",
             "mesh.events",
         ];
         for e in module().capabilities {

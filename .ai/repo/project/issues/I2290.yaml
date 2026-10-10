@@ -1,0 +1,26 @@
+id: I2290
+milestone: every-session-joins-the-mesh
+title: "Codex and Gemini start on the mesh too"
+slug: other-providers-on-the-mesh
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Lifecycle adapters for Codex and Gemini, only once their hook contracts are exercised against the real tools; until then the briefing reaches them through MCP initialize."
+why: "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+current_state: "Not done."
+desired_state: "Lifecycle adapters for Codex and Gemini, only once their hook contracts are exercised against the real tools; until then the briefing reaches them through MCP initialize."
+scope:
+  - "share/providers.yaml"
+  - "lib/capture.sh"
+  - ".codex"
+  - ".gemini"
+depends_on:
+  - "I2285"
+acceptance_criteria:
+  - "A Codex or Gemini session start runs the same lifecycle, proved against the real tool"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "provider_hook_evidence"
+created_at: 2026-10-10
+updated_at: 2026-10-10

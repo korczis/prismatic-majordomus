@@ -20937,6 +20937,12 @@
           "route": "/docs/cli/mesh/state/"
         },
         {
+          "about": "The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews",
+          "command": "majordomus mesh briefing",
+          "name": "briefing",
+          "route": "/docs/cli/mesh/briefing/"
+        },
+        {
           "about": "The cooperation journal's events after a Lamport stamp, in Lamport order",
           "command": "majordomus mesh events",
           "name": "events",
@@ -21907,6 +21913,135 @@
       ],
       "route": "/docs/cli/mesh/state/",
       "usage": "majordomus mesh state [OPTIONS]"
+    },
+    {
+      "about": "The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh briefing",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "briefing"
+          ],
+          "command": "majordomus mesh briefing",
+          "description": "The mesh as a starting session reads it, from this checkout's running server: every machine with a live session, each session's intent, branch, issue and claimed paths, the handovers no session here has taken and the open reviews, each with the call that acts on it. With no server, as here, the answer says so — the mesh lives in the server's memory.",
+          "expectation": "exits 0; prints cooperation inactive",
+          "id": "mesh-briefing",
+          "setup": [],
+          "title": "Who works where, and what waits for this machine"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "briefing",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "briefing"
+      ],
+      "route": "/docs/cli/mesh/briefing/",
+      "usage": "majordomus mesh briefing [OPTIONS]"
     },
     {
       "about": "The cooperation journal's events after a Lamport stamp, in Lamport order",
@@ -34067,10 +34202,10 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1475,
+    "commands": 217,
+    "examples": 217,
+    "runnable": 191
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.20.0",

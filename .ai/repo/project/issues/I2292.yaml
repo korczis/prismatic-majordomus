@@ -1,0 +1,24 @@
+id: I2292
+milestone: every-session-joins-the-mesh
+title: "The site tells why every session joins the mesh"
+slug: mesh-article
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "An article on the site, written from what landed, linking ADR 0128, docs/MESH.md and the cases."
+why: "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+current_state: "Not done."
+desired_state: "An article on the site, written from what landed, linking ADR 0128, docs/MESH.md and the cases."
+scope:
+  - "site/content-src"
+  - "site/data/nav.toml"
+depends_on:
+  - "I2285"
+acceptance_criteria:
+  - "The article is published by the site build and passes site-check"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "site_check"
+created_at: 2026-10-10
+updated_at: 2026-10-10

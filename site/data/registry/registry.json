@@ -6,27 +6,27 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "cf9cf9a33b10447ad4465b35bb8dbd43bb060987b586e33cdd942c84fd5e1cdf",
+    "fingerprint": "11bf2b317551bfa4f1c4dcbd6036dd9ad2b4996f65931db77e523f65b30a85a7",
     "summary": {
-      "total": 2109,
-      "builtin": 184,
-      "declarative": 1925,
+      "total": 2120,
+      "builtin": 185,
+      "declarative": 1935,
       "by_kind": {
         "command": 26,
-        "query": 158,
-        "resource": 1925
+        "query": 159,
+        "resource": 1935
       },
       "by_stability": {
         "behaviorally_verified": 132,
-        "experimental": 44,
-        "implemented": 1933
+        "experimental": 45,
+        "implemented": 1943
       },
-      "mcp_tools": 177,
-      "mcp_resources": 1979,
-      "http_routes": 181,
+      "mcp_tools": 178,
+      "mcp_resources": 1989,
+      "http_routes": 182,
       "cli_commands": 101,
       "modules": 86,
-      "benchmark_required": 160,
+      "benchmark_required": 161,
       "benchmark_waived": 24,
       "cached": 41
     },
@@ -41042,6 +41042,320 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs"
       },
       {
+        "id": "mesh.briefing",
+        "module": "mesh",
+        "kind": "query",
+        "title": "The mesh, as work, for a session that starts",
+        "description": "Who works where on every machine of the mesh — each live session with its client, intent, branch, issue and the paths it claims (exclusive ones marked `!`) — the handovers no session of this runtime has taken, and the open reviews, those addressed to this runtime first; bounded per list. The start of every session prints it and every MCP session is told it at `initialize` (ADR 0128). Read-only.",
+        "input": {
+          "name": "MeshBriefingInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint",
+                "minimum": 0,
+                "description": "At most this many entries in each list (default 5, at most 50)."
+              }
+            },
+            "description": "The input of `mesh.briefing`.",
+            "title": "MeshBriefingInput"
+          }
+        },
+        "output": {
+          "name": "MeshBriefingAnswer",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "description": "Whether cooperation runs."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not."
+              },
+              "briefing": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/MeshBriefing"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The briefing, when cooperation runs."
+              },
+              "text": {
+                "type": "string",
+                "description": "The briefing as text: what the start of a session prints and the MCP instructions say."
+              }
+            },
+            "required": [
+              "active",
+              "text"
+            ],
+            "description": "The answer of `mesh.briefing`: the briefing, and the same as the lines a session reads.",
+            "title": "MeshBriefingAnswer",
+            "$defs": {
+              "MeshBriefing": {
+                "type": "object",
+                "properties": {
+                  "runtime": {
+                    "type": "string",
+                    "description": "This runtime, `<node>-<runtime>`."
+                  },
+                  "machines": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/MeshBriefingMachine"
+                    },
+                    "description": "Every machine with a live session, this one first."
+                  },
+                  "handovers": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/MeshBriefingHandover"
+                    },
+                    "description": "Handovers waiting to be taken here, newest first."
+                  },
+                  "handovers_more": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many the limit left out."
+                  },
+                  "reviews": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/MeshBriefingReview"
+                    },
+                    "description": "Open reviews of other runtimes, those addressed here first."
+                  },
+                  "reviews_more": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many the limit left out."
+                  }
+                },
+                "required": [
+                  "runtime",
+                  "machines",
+                  "handovers",
+                  "handovers_more",
+                  "reviews",
+                  "reviews_more"
+                ],
+                "description": "What a starting session is told about the mesh.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefing;\nlet b = MeshBriefing::default();\nassert_eq!(b.handovers_more + b.reviews_more, 0);\n```"
+              },
+              "MeshBriefingMachine": {
+                "type": "object",
+                "properties": {
+                  "node": {
+                    "type": "string",
+                    "description": "The node id."
+                  },
+                  "this_machine": {
+                    "type": "boolean",
+                    "description": "Whether it is the machine this runtime runs on."
+                  },
+                  "sessions": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/MeshBriefingSession"
+                    },
+                    "description": "Its live sessions, at most the briefing's limit."
+                  },
+                  "more": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many live sessions the limit left out."
+                  }
+                },
+                "required": [
+                  "node",
+                  "this_machine",
+                  "sessions",
+                  "more"
+                ],
+                "description": "The live sessions of one machine.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingMachine;\nlet m = MeshBriefingMachine { node: \"641bdb94\".into(), this_machine: true, sessions: vec![], more: 0 };\nassert!(m.this_machine);\n```"
+              },
+              "MeshBriefingSession": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "`<stream>/<session>`."
+                  },
+                  "client": {
+                    "type": "string",
+                    "description": "The client it runs in."
+                  },
+                  "worker": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The worker's name for itself."
+                  },
+                  "intent": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it said it is doing."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it works on."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it works on."
+                  },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths its live claims name, exclusive ones marked `!`."
+                  }
+                },
+                "required": [
+                  "key",
+                  "client",
+                  "claims"
+                ],
+                "description": "One live session another worker holds, with what it said and the scope it claims.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingSession;\nlet s = MeshBriefingSession { key: \"n-r-s/board-p2\".into(), client: \"codex\".into(),\n    worker: None, intent: Some(\"the release\".into()), branch: None, issue: None,\n    claims: vec![\"docs\".into()] };\nassert_eq!(serde_json::to_value(&s).unwrap()[\"client\"], \"codex\");\n```"
+              },
+              "MeshBriefingHandover": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The handover's id, which `mesh.handover.consume` takes."
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "description": "The runtime that published it."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its task."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its issue."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its branch."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "The first line of its `# Objective`."
+                  }
+                },
+                "required": [
+                  "id",
+                  "runtime",
+                  "objective"
+                ],
+                "description": "A handover another runtime published that no session of this runtime has taken.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingHandover;\nlet h = MeshBriefingHandover { id: \"ab12\".into(), runtime: \"n-r\".into(), task: None,\n    issue: Some(\"I1\".into()), branch: None, objective: \"ship it\".into() };\nassert_eq!(h.objective, \"ship it\");\n```"
+              },
+              "MeshBriefingReview": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The request's key, which `mesh.review.answer` takes."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "What to review."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its issue."
+                  },
+                  "addressed_here": {
+                    "type": "boolean",
+                    "description": "Whether it names this runtime as the reviewer."
+                  }
+                },
+                "required": [
+                  "key",
+                  "subject",
+                  "addressed_here"
+                ],
+                "description": "A review another runtime asked for and nobody has answered.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingReview;\nlet r = MeshBriefingReview { key: \"n-r-s/r-1\".into(), subject: \"PR #1\".into(),\n    issue: None, addressed_here: true };\nassert!(r.addressed_here);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_briefing"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/briefing"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "cooperation"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
         "id": "mesh.claim",
         "module": "mesh",
         "kind": "command",
@@ -74952,7 +75266,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75526,7 +75840,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 270,
+        "capabilities": 278,
         "capability_ids": []
       },
       {
@@ -75600,8 +75914,9 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 21,
+        "capabilities": 22,
         "capability_ids": [
+          "mesh.briefing",
           "mesh.claim",
           "mesh.cooperation",
           "mesh.doctor",
@@ -75639,7 +75954,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -76151,7 +76466,7 @@
     ]
   },
   "index": {
-    "fingerprint": "60029ca337fe8d8428780b23e9088dc4f4ceccf2c5f7eaea91ee69dbab018778",
+    "fingerprint": "c686f980b4db4cc495ea3758d72f1ef766fd734ef7aeed35719a6282136ba28a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76489,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76190,10 +76505,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 270,
+      "issue": 278,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 26,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -77608,6 +77923,22 @@
         "tags": [
           "session",
           "handover",
+          "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0128",
+        "kind": "adr",
+        "identity": "adr-0128",
+        "title": "Every session joins the mesh at start, and is told the mesh as work",
+        "description": "Every session joins the mesh at start, and is told the mesh as work",
+        "path": ".ai/repo/adrs/0128-every-session-joins-the-mesh.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 3067,
+        "tags": [
+          "mesh",
+          "session",
           "provider"
         ]
       },
@@ -81625,7 +81956,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 42983
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81670,7 +82001,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125653
+        "bytes": 127694
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87948,6 +88279,94 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2285",
+        "kind": "issue",
+        "identity": "I2285",
+        "title": "The mesh briefs every session as work",
+        "description": "A typed read capability mesh.briefing folds the journal from the starting session's side: live sessions per machine with intent, branch, issue and claimed paths; handovers not taken here; open reviews, addressed-here first; bounded.",
+        "path": ".ai/repo/project/issues/I2285.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1551
+      },
+      {
+        "uri": "majordomus://issue/I2286",
+        "kind": "issue",
+        "identity": "I2286",
+        "title": "The start of a session prints the mesh as work",
+        "description": "The session-start lifecycle prints mesh.briefing under Mesh:, within a time budget, never blocking the start.",
+        "path": ".ai/repo/project/issues/I2286.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1040
+      },
+      {
+        "uri": "majordomus://issue/I2287",
+        "kind": "issue",
+        "identity": "I2287",
+        "title": "Every MCP session is told the mesh at initialize",
+        "description": "The MCP initialize instructions carry the briefing and the protocol: announce with scope, claim exclusively before building, take a handover addressed to you, answer a review.",
+        "path": ".ai/repo/project/issues/I2287.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1167
+      },
+      {
+        "uri": "majordomus://issue/I2288",
+        "kind": "issue",
+        "identity": "I2288",
+        "title": "A session is on the mesh while it works",
+        "description": "The start opens the episode's mesh session with task, issue and branch; majordomus start claims the task scope; finish and the session end release and close.",
+        "path": ".ai/repo/project/issues/I2288.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1159
+      },
+      {
+        "uri": "majordomus://issue/I2289",
+        "kind": "issue",
+        "identity": "I2289",
+        "title": "A task built off the mesh is refused",
+        "description": "Rule project.every-session-joins-the-mesh, gated: finish --check refuses a completed task whose scope was never claimed on an enabled mesh; check warns.",
+        "path": ".ai/repo/project/issues/I2289.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1110
+      },
+      {
+        "uri": "majordomus://issue/I2290",
+        "kind": "issue",
+        "identity": "I2290",
+        "title": "Codex and Gemini start on the mesh too",
+        "description": "Lifecycle adapters for Codex and Gemini, only once their hook contracts are exercised against the real tools; until then the briefing reaches them through MCP initialize.",
+        "path": ".ai/repo/project/issues/I2290.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1135
+      },
+      {
+        "uri": "majordomus://issue/I2291",
+        "kind": "issue",
+        "identity": "I2291",
+        "title": "The mesh briefing is projected into every surface",
+        "description": "AGENTS.md, CLAUDE.md and README say what the start does and the protocol, rendered from the providers' templates; docs/MESH.md has At every start; the Cockpit mesh page shows the briefing.",
+        "path": ".ai/repo/project/issues/I2291.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1218
+      },
+      {
+        "uri": "majordomus://issue/I2292",
+        "kind": "issue",
+        "identity": "I2292",
+        "title": "The site tells why every session joins the mesh",
+        "description": "An article on the site, written from what landed, linking ADR 0128, docs/MESH.md and the cases.",
+        "path": ".ai/repo/project/issues/I2292.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 919
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88079,6 +88498,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5428
+      },
+      {
+        "uri": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "milestone",
+        "identity": "every-session-joins-the-mesh",
+        "title": "Every LLM session joins the Majordomus mesh at start, told the mesh as work",
+        "description": "Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates.",
+        "path": ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2649
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -96808,7 +97238,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96961,7 +97391,7 @@
       "identity": [
         "id"
       ],
-      "objects": 270
+      "objects": 278
     },
     {
       "name": "knowledge",
@@ -96991,7 +97421,7 @@
       "identity": [
         "id"
       ],
-      "objects": 26
+      "objects": 27
     },
     {
       "name": "moment",
@@ -115997,6 +116427,118 @@
             "path": [
               "majordomus",
               "mesh",
+              "briefing"
+            ],
+            "route": "/docs/cli/mesh/briefing/",
+            "executable": true,
+            "usage": "majordomus mesh briefing [OPTIONS]",
+            "about": "The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-briefing",
+                "title": "Who works where, and what waits for this machine",
+                "description": "The mesh as a starting session reads it, from this checkout's running server: every machine with a live session, each session's intent, branch, issue and claimed paths, the handovers no session here has taken and the open reviews, each with the call that acts on it. With no server, as here, the answer says so — the mesh lives in the server's memory.",
+                "argv": [
+                  "mesh",
+                  "briefing"
+                ],
+                "command": "majordomus mesh briefing",
+                "setup": [],
+                "expectation": "exits 0; prints cooperation inactive"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
               "events"
             ],
             "route": "/docs/cli/mesh/events/",
@@ -127961,6 +128503,23 @@
         "output": "McpProjection"
       },
       {
+        "name": "majordomus_mesh_briefing",
+        "id": "mesh.briefing",
+        "title": "The mesh, as work, for a session that starts",
+        "description": "Who works where on every machine of the mesh — each live session with its client, intent, branch, issue and the paths it claims (exclusive ones marked `!`) — the handovers no session of this runtime has taken, and the open reviews, those addressed to this runtime first; bounded per list. The start of every session prints it and every MCP session is told it at `initialize` (ADR 0128). Read-only.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "MeshBriefingInput",
+        "output": "MeshBriefingAnswer"
+      },
+      {
         "name": "majordomus_mesh_claim",
         "id": "mesh.claim",
         "title": "Claim a scope across the mesh",
@@ -130374,6 +130933,12 @@
         "method": "GET",
         "path": "/api/v1/mcp",
         "id": "mcp.projection",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/briefing",
+        "id": "mesh.briefing",
         "kind": "query"
       },
       {
@@ -134302,6 +134867,35 @@
         "case": "writers",
         "cached": false,
         "route": "GET /api/v1/mcp"
+      },
+      {
+        "key": "mesh.briefing|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "mesh.briefing",
+        "module": "mesh",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "mesh.briefing|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "mesh.briefing",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_mesh_briefing"
+      },
+      {
+        "key": "mesh.briefing|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "mesh.briefing",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/mesh/briefing"
       },
       {
         "key": "mesh.cooperation|direct|default",
@@ -139504,6 +140098,27 @@
           "cases": 2
         },
         {
+          "subject": "mesh.briefing",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.briefing",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.briefing",
+          "module": "mesh",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "mesh.claim",
           "module": "mesh",
           "transport": "direct",
@@ -141493,22 +142108,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 184,
-          "covered": 160,
+          "required": 185,
+          "covered": 161,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "http": {
-          "required": 181,
-          "covered": 160,
+          "required": 182,
+          "covered": 161,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 177,
-          "covered": 156,
+          "required": 178,
+          "covered": 157,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
@@ -141521,8 +142136,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 555,
-          "covered": 489,
+          "required": 558,
+          "covered": 492,
           "missing": 0,
           "waived": 66,
           "inapplicable": 0

@@ -514,6 +514,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.briefing",
+      "path": "/evidence/capabilities/mesh-briefing/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.claim",
       "path": "/evidence/capabilities/mesh-claim/"
     },
@@ -2669,6 +2674,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh briefing",
+      "path": "/evidence/commands/mesh-briefing/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh claim",
       "path": "/evidence/commands/mesh-claim/"
     },
@@ -4691,6 +4701,16 @@
       "kind": "capability",
       "id": "mcp.projection",
       "page": "/evidence/capabilities/mcp-projection/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.briefing": {
+      "kind": "capability",
+      "id": "mesh.briefing",
+      "page": "/evidence/capabilities/mesh-briefing/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -14300,6 +14320,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh briefing": {
+      "kind": "command",
+      "id": "mesh briefing",
+      "page": "/evidence/commands/mesh-briefing/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh claim": {
       "kind": "command",
       "id": "mesh claim",
@@ -18907,6 +18946,18 @@
       "programs": [],
       "members": [
         "capability:mesh.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_briefing": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_briefing",
+      "alias_of": "capability:mesh.briefing",
+      "programs": [],
+      "members": [
+        "capability:mesh.briefing"
       ],
       "routes": [],
       "mechanisms": [],
@@ -25663,6 +25714,7 @@
     "crate:mcp_conformance_projection",
     "crate:mcp_prose",
     "crate:mcp_stdio",
+    "crate:mesh_briefing",
     "crate:mesh_compaction",
     "crate:metadata_contract",
     "crate:objects",

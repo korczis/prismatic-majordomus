@@ -92,6 +92,7 @@
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
     "op-mcp-projection": "docs/api/mcp/",
+    "op-mesh-briefing": "docs/api/mesh/",
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
@@ -658,6 +659,12 @@
     "schema-McpToolEntry": "docs/api/mcp/",
     "schema-McpTransportEntry": "docs/api/mcp/",
     "schema-Measured": "docs/api/design/",
+    "schema-MeshBriefing": "docs/api/mesh/",
+    "schema-MeshBriefingAnswer": "docs/api/mesh/",
+    "schema-MeshBriefingHandover": "docs/api/mesh/",
+    "schema-MeshBriefingMachine": "docs/api/mesh/",
+    "schema-MeshBriefingReview": "docs/api/mesh/",
+    "schema-MeshBriefingSession": "docs/api/mesh/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
@@ -1130,8 +1137,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 181,
-    "schemas": 893,
+    "operations": 182,
+    "schemas": 899,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1309,6 +1316,7 @@
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
     "mcp.projection": "mcp",
+    "mesh.briefing": "mesh",
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
@@ -1879,6 +1887,12 @@
     "McpToolEntry": "mcp",
     "McpTransportEntry": "mcp",
     "Measured": "design",
+    "MeshBriefing": "mesh",
+    "MeshBriefingAnswer": "mesh",
+    "MeshBriefingHandover": "mesh",
+    "MeshBriefingMachine": "mesh",
+    "MeshBriefingReview": "mesh",
+    "MeshBriefingSession": "mesh",
     "MeshDoctorReport": "mesh",
     "MeshEvent": "mesh",
     "MeshIdentityReport": "mesh",
@@ -17523,6 +17537,7 @@
         "health.live",
         "mcp.projection",
         "mesh.status",
+        "mesh.briefing",
         "mesh.claim",
         "mesh.release",
         "mesh.cooperation",
@@ -28660,6 +28675,323 @@
       "used_by": [],
       "used_by_schemas": [
         "ContrastReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a starting session is told about the mesh.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefing;\nlet b = MeshBriefing::default();\nassert_eq!(b.handovers_more + b.reviews_more, 0);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshBriefing",
+      "properties": [
+        {
+          "description": "This runtime, `<node>-<runtime>`.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every machine with a live session, this one first.",
+          "name": "machines",
+          "refs": [
+            "MeshBriefingMachine"
+          ],
+          "required": true,
+          "type": "array of MeshBriefingMachine"
+        },
+        {
+          "description": "Handovers waiting to be taken here, newest first.",
+          "name": "handovers",
+          "refs": [
+            "MeshBriefingHandover"
+          ],
+          "required": true,
+          "type": "array of MeshBriefingHandover"
+        },
+        {
+          "description": "How many the limit left out.",
+          "name": "handovers_more",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Open reviews of other runtimes, those addressed here first.",
+          "name": "reviews",
+          "refs": [
+            "MeshBriefingReview"
+          ],
+          "required": true,
+          "type": "array of MeshBriefingReview"
+        },
+        {
+          "description": "How many the limit left out.",
+          "name": "reviews_more",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshBriefingAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.briefing`: the briefing, and the same as the lines a session reads.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshBriefingAnswer",
+      "properties": [
+        {
+          "description": "Whether cooperation runs.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The briefing, when cooperation runs.",
+          "name": "briefing",
+          "refs": [
+            "MeshBriefing"
+          ],
+          "required": false,
+          "type": "MeshBriefing | null"
+        },
+        {
+          "description": "The briefing as text: what the start of a session prints and the MCP instructions say.",
+          "name": "text",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.briefing"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A handover another runtime published that no session of this runtime has taken.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingHandover;\nlet h = MeshBriefingHandover { id: \"ab12\".into(), runtime: \"n-r\".into(), task: None,\n    issue: Some(\"I1\".into()), branch: None, objective: \"ship it\".into() };\nassert_eq!(h.objective, \"ship it\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshBriefingHandover",
+      "properties": [
+        {
+          "description": "The handover's id, which `mesh.handover.consume` takes.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The runtime that published it.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its task.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its issue.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its branch.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The first line of its `# Objective`.",
+          "name": "objective",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshBriefing"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The live sessions of one machine.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingMachine;\nlet m = MeshBriefingMachine { node: \"641bdb94\".into(), this_machine: true, sessions: vec![], more: 0 };\nassert!(m.this_machine);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshBriefingMachine",
+      "properties": [
+        {
+          "description": "The node id.",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it is the machine this runtime runs on.",
+          "name": "this_machine",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Its live sessions, at most the briefing's limit.",
+          "name": "sessions",
+          "refs": [
+            "MeshBriefingSession"
+          ],
+          "required": true,
+          "type": "array of MeshBriefingSession"
+        },
+        {
+          "description": "How many live sessions the limit left out.",
+          "name": "more",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshBriefing"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A review another runtime asked for and nobody has answered.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingReview;\nlet r = MeshBriefingReview { key: \"n-r-s/r-1\".into(), subject: \"PR #1\".into(),\n    issue: None, addressed_here: true };\nassert!(r.addressed_here);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshBriefingReview",
+      "properties": [
+        {
+          "description": "The request's key, which `mesh.review.answer` takes.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to review.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its issue.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether it names this runtime as the reviewer.",
+          "name": "addressed_here",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshBriefing"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One live session another worker holds, with what it said and the scope it claims.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingSession;\nlet s = MeshBriefingSession { key: \"n-r-s/board-p2\".into(), client: \"codex\".into(),\n    worker: None, intent: Some(\"the release\".into()), branch: None, issue: None,\n    claims: vec![\"docs\".into()] };\nassert_eq!(serde_json::to_value(&s).unwrap()[\"client\"], \"codex\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshBriefingSession",
+      "properties": [
+        {
+          "description": "`<stream>/<session>`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The client it runs in.",
+          "name": "client",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worker's name for itself.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it said it is doing.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch it works on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue it works on.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The paths its live claims name, exclusive ones marked `!`.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshBriefingMachine"
       ],
       "values": [],
       "variants": []
@@ -58525,6 +58857,73 @@
           "result_schema": "MeshStatus",
           "stability": "experimental",
           "summary": "The mesh, at a glance"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/briefing?limit=5\"",
+          "description": "Who works where on every machine of the mesh — each live session with its client, intent, branch, issue and the paths it claims (exclusive ones marked `!`) — the handovers no session of this runtime has taken, and the open reviews, those addressed to this runtime first; bounded per list. The start of every session prints it and every MCP session is told it at `initialize` (ADR 0128). Read-only.",
+          "home": "mesh",
+          "id": "mesh.briefing",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_briefing",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "At most this many entries in each list (default 5, at most 50).",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "5"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/mesh/briefing",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The mesh, as work, for a session that starts: the result.",
+              "schema": "MeshBriefingAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshBriefingAnswer",
+          "stability": "experimental",
+          "summary": "The mesh, as work, for a session that starts"
         },
         {
           "benchmark": "waived",

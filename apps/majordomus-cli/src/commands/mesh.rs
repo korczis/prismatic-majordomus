@@ -50,6 +50,14 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             })
         }
         MeshCommand::State(q) => ask(&q, "GET", "/api/v1/mesh/state", None, render_state, never),
+        MeshCommand::Briefing(q) => ask(
+            &q,
+            "GET",
+            "/api/v1/mesh/briefing",
+            None,
+            render_briefing,
+            never,
+        ),
         MeshCommand::Events(a) => {
             let mut target = "/api/v1/mesh/events".to_string();
             let mut pairs = Vec::new();
@@ -631,6 +639,14 @@ fn render_peer(v: &Value) -> String {
         render_session(sess, "", &mut out);
     }
     out.trim_end().to_string()
+}
+
+/// The briefing's own lines: the same text the start of a session prints.
+fn render_briefing(v: &Value) -> String {
+    if let Some(text) = inactive(v) {
+        return text;
+    }
+    v["text"].as_str().unwrap_or_default().to_string()
 }
 
 fn render_state(v: &Value) -> String {

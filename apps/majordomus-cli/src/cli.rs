@@ -608,6 +608,8 @@ pub enum MeshCommand {
     Peer(MeshPeerArgs),
     /// The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest
     State(MeshQueryArgs),
+    /// The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews
+    Briefing(MeshQueryArgs),
     /// The cooperation journal's events after a Lamport stamp, in Lamport order
     Events(MeshEventsArgs),
     /// Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails
@@ -6242,6 +6244,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh briefing",
+        examples: &[ExampleDoc {
+            id: "mesh-briefing",
+            title: "Who works where, and what waits for this machine",
+            description: "The mesh as a starting session reads it, from this checkout's running server: every machine with a live session, each session's intent, branch, issue and claimed paths, the handovers no session here has taken and the open reviews, each with the call that acts on it. With no server, as here, the answer says so — the mesh lives in the server's memory.",
+            argv: &["mesh", "briefing"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
         }],
     },
     CommandExamples {

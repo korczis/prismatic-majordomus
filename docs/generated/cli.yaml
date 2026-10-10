@@ -13991,6 +13991,87 @@ cli:
         - path:
             - majordomus
             - mesh
+            - briefing
+          route: /docs/cli/mesh/briefing/
+          executable: true
+          usage: "majordomus mesh briefing [OPTIONS]"
+          about: "The mesh as work for a session that starts: who works where on every machine, the handovers waiting here and the open reviews"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: "`text` for a person, `json` for a machine; both render the same answer"
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: mesh-briefing
+              title: "Who works where, and what waits for this machine"
+              description: "The mesh as a starting session reads it, from this checkout's running server: every machine with a live session, each session's intent, branch, issue and claimed paths, the handovers no session here has taken and the open reviews, each with the call that acts on it. With no server, as here, the answer says so — the mesh lives in the server's memory."
+              argv:
+                - mesh
+                - briefing
+              command: majordomus mesh briefing
+              setup: []
+              expectation: exits 0; prints cooperation inactive
+          subcommands: []
+        - path:
+            - majordomus
+            - mesh
             - events
           route: /docs/cli/mesh/events/
           executable: true

@@ -1,0 +1,62 @@
+---
+schema: adr/v1
+id: adr-0128
+kind: adr
+title: Every session joins the mesh at start, and is told the mesh as work
+status: proposed
+date: 2026-10-10
+tags:
+  - mesh
+  - session
+  - provider
+provenance:
+  origin: authored
+related:
+  - file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md
+  - file:apps/majordomus-cli/src/mesh/briefing.rs
+  - file:apps/majordomus-cli/src/mesh/cooperation.rs
+  - file:lib/capture.sh
+  - file:docs/MESH.md
+  - test:apps/majordomus-cli/tests/mesh_briefing.rs
+---
+
+# 128. Every session joins the mesh at start, and is told the mesh as work
+
+## Context
+
+The mesh replicates sessions, claims, handovers and reviews between the runtimes of one
+repository on every machine (ADR 0050, ADR 0067). Taking part was left to the worker: the start of
+a session printed one line about the mesh's health; an MCP client that announced was projected as
+a mesh session, and one that did not was a session with no claim; nothing told a starting worker
+who else was working, on this machine or another, which handover waited for it, or which review
+was open; no gate noticed a task built outside the mesh. On 2026-10-10 the owner asked that every
+LLM session, of any provider, use the mesh automatically from its first turn.
+
+## Decision
+
+1. The mesh is read as work, not only as health: `mesh.briefing` (one capability; MCP, HTTP and
+   the command line) folds the journal from the starting session's side — every machine's live
+   sessions with their intent, branch, issue and claimed paths, the handovers no session of this
+   runtime has taken, and the open reviews, those addressed to this runtime first — bounded per
+   list.
+2. Every start prints it: the session-start lifecycle of every adapted provider prints the
+   briefing under `Mesh:`, and every MCP client is told it in its `initialize` instructions,
+   with the protocol: announce with scope, claim exclusively before building, take a handover
+   addressed to you, answer a review.
+3. Every session is on the mesh while it works: the start opens its mesh session with the task,
+   issue and branch it works on, the task's scope is claimed, and the end closes the session and
+   releases its claims.
+4. The repository enforces it: rule `project.every-session-joins-the-mesh` is gated; a task
+   finished on an enabled mesh without its scope ever claimed is refused.
+
+The mesh stays observation, not authority (`project.mesh-is-observation-not-authority`): the
+briefing informs and claims coordinate; trust, admission and what a remote caller may change stay
+where ADR 0050, ADR 0067 and ADR 0126 put them. A mesh that is off, or a runtime that is not
+active, is reported as such and never blocks a start.
+
+## Consequences
+
+A worker starts knowing who else is working and what waits for it, on every machine. The cost is
+a bounded read at every start and one replicated session per worker. Providers without a lifecycle
+adapter (Codex and Gemini today) get the briefing through MCP `initialize` until their adapters
+are verified against the real tools.

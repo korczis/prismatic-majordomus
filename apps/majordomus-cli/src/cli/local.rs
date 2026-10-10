@@ -341,6 +341,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "asks this checkout's running server for mesh.state and renders the folded cooperation state and its digest.",
     },
     LocalCommand {
+        command: "mesh briefing",
+        reason: LocalReason::RendersCapability("mesh.briefing"),
+        note: "asks this checkout's running server for mesh.briefing and prints the lines a starting session reads: the mesh lives in the server's memory.",
+    },
+    LocalCommand {
         command: "mesh events",
         reason: LocalReason::RendersCapability("mesh.events"),
         note: "asks this checkout's running server for mesh.events and renders one page of the journal.",

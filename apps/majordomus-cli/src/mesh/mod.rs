@@ -43,6 +43,7 @@
 //! ```
 
 pub mod address;
+pub mod briefing;
 pub mod broadcast;
 pub mod config;
 pub mod cooperation;

@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.20.0"
   },
-  "fingerprint": "7dd374dd56dd840d547454c5bb2e378f18f73e5761063011d65f36d6690b30e1",
+  "fingerprint": "9a9cad043625778117e85d46e3b7b42d9f0df0feba75b2c8cab7bdd519973eb4",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 63,
+        "capabilities": 64,
         "moments": 17
       },
       "evidence": {
@@ -5331,6 +5331,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.briefing",
+              "title": "The mesh, as work, for a session that starts",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_briefing",
+              "route": "GET /api/v1/mesh/briefing"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -5618,10 +5626,10 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 21,
-        "mcp_tools": 19,
+        "capabilities": 22,
+        "mcp_tools": 20,
         "mcp_resources": 2,
-        "http_routes": 21,
+        "http_routes": 22,
         "cli_paths": 2,
         "commands": 0,
         "objects": 1,
@@ -7140,7 +7148,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 85
+          "objects": 86
         },
         {
           "name": "knowledge",
@@ -7421,11 +7429,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 416,
+        "mcp_resources": 417,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 413,
+        "objects": 414,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -10497,11 +10505,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 26
+          "objects": 27
         },
         {
           "name": "issue",
-          "objects": 270
+          "objects": 278
         },
         {
           "name": "intent",
@@ -10703,11 +10711,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 302,
+        "mcp_resources": 311,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 299,
+        "objects": 308,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14289,7 +14297,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (85)",
+        "title": "adr (86)",
         "features": [
           "knowledge"
         ]
@@ -14381,7 +14389,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (270)",
+        "title": "issue (278)",
         "features": [
           "planning"
         ]
@@ -14402,7 +14410,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (26)",
+        "title": "milestone (27)",
         "features": [
           "planning"
         ]
@@ -15373,19 +15381,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2109,
-    "builtin": 184,
-    "declarative": 1925,
+    "capabilities": 2120,
+    "builtin": 185,
+    "declarative": 1935,
     "modules": 53,
-    "mcp_tools": 177,
-    "mcp_resources": 1979,
-    "http_routes": 181,
-    "cli_commands": 190,
+    "mcp_tools": 178,
+    "mcp_resources": 1989,
+    "http_routes": 182,
+    "cli_commands": 191,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1925,
+    "objects": 1935,
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -15401,10 +15409,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 270,
+      "issue": 278,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 26,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,

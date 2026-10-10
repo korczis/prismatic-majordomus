@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 270
+      "count": 278
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "moment",
@@ -3151,6 +3151,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0128",
+          "kind": "adr",
+          "route": "/adrs/adr-0128/",
           "external": false
         }
       ]
@@ -6420,6 +6427,66 @@
           "kind": "test",
           "route": null,
           "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0128",
+      "identity": "adr-0128",
+      "slug": "adr-0128",
+      "cockpit": "/cockpit/objects/adr/adr-0128",
+      "title": "Every session joins the mesh at start, and is told the mesh as work",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "session",
+        "provider"
+      ],
+      "source": ".ai/repo/adrs/0128-every-session-joins-the-mesh.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/briefing.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/cooperation.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/mesh_briefing.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
         }
       ],
       "referenced_by": []

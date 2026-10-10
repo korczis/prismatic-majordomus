@@ -915,6 +915,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.briefing",
+        "kind": "capability",
+        "label": "mesh.briefing",
+        "summary": "The mesh, as work, for a session that starts",
+        "route": "/cockpit/capabilities/mesh.briefing",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:mesh.claim",
         "kind": "capability",
         "label": "mesh.claim",
@@ -2748,6 +2757,14 @@
         "label": "protocol.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mcp/protocol.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/briefing.rs",
+        "kind": "file",
+        "label": "briefing.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/briefing.rs",
         "external": true
       },
       {
@@ -6370,6 +6387,31 @@
           "tags": [
             "session",
             "handover",
+            "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0128",
+        "kind": "adr",
+        "label": "adr-0128",
+        "summary": "Every session joins the mesh at start, and is told the mesh as work",
+        "route": "/cockpit/objects/adr/adr-0128",
+        "source": ".ai/repo/adrs/0128-every-session-joins-the-mesh.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:apps/majordomus-cli/src/mesh/briefing.rs",
+            "file:apps/majordomus-cli/src/mesh/cooperation.rs",
+            "file:lib/capture.sh",
+            "file:docs/MESH.md",
+            "test:apps/majordomus-cli/tests/mesh_briefing.rs"
+          ],
+          "tags": [
+            "mesh",
+            "session",
             "provider"
           ]
         }
@@ -30346,6 +30388,313 @@
         }
       },
       {
+        "id": "majordomus://issue/I2285",
+        "kind": "issue",
+        "label": "I2285",
+        "summary": "The mesh briefs every session as work",
+        "route": "/cockpit/objects/issue/i2285",
+        "source": ".ai/repo/project/issues/I2285.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A runtime's briefing shows another machine's live session, its exclusive claim, its handover and its review",
+            "A runtime is never told to take the handover it published",
+            "Each list is bounded and says how much it left out"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "The start printed the mesh health only; nothing folded the journal from a starting session's side.",
+          "depends_on": [],
+          "evidence_required": [
+            "mesh_briefing_two_nodes_test"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/briefing.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_briefing.rs"
+          ],
+          "slug": "mesh-briefing",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2286",
+        "kind": "issue",
+        "label": "I2286",
+        "summary": "The start of a session prints the mesh as work",
+        "route": "/cockpit/objects/issue/i2286",
+        "source": ".ai/repo/project/issues/I2286.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The start briefing of a checkout whose mesh runs carries the briefing lines",
+            "A mesh that is off is one line and the start does not wait"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "The session-start lifecycle prints mesh.briefing under Mesh:, within a time budget, never blocking the start.",
+          "evidence_required": [
+            "case_1025"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "The session-start lifecycle prints mesh.briefing under Mesh:, within a time budget, never blocking the start.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "lib/derive.sh",
+            "test/cases"
+          ],
+          "slug": "start-prints-the-mesh",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2287",
+        "kind": "issue",
+        "label": "I2287",
+        "summary": "Every MCP session is told the mesh at initialize",
+        "route": "/cockpit/objects/issue/i2287",
+        "source": ".ai/repo/project/issues/I2287.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An MCP initialize answer on a server whose mesh runs names the briefing and the protocol"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "The MCP initialize instructions carry the briefing and the protocol: announce with scope, claim exclusively before building, take a handover addressed to you, answer a review.",
+          "evidence_required": [
+            "initialize_tells_the_mesh_test"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "The MCP initialize instructions carry the briefing and the protocol: announce with scope, claim exclusively before building, take a handover addressed to you, answer a review.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "initialize-tells-the-mesh",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2288",
+        "kind": "issue",
+        "label": "I2288",
+        "summary": "A session is on the mesh while it works",
+        "route": "/cockpit/objects/issue/i2288",
+        "source": ".ai/repo/project/issues/I2288.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After majordomus start the task's scope is a live claim on every linked runtime",
+            "After finish the claim is released"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "The start opens the episode's mesh session with task, issue and branch; majordomus start claims the task scope; finish and the session end release and close.",
+          "evidence_required": [
+            "case_1026"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "The start opens the episode's mesh session with task, issue and branch; majordomus start claims the task scope; finish and the session end release and close.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "lib/start.sh",
+            "lib/finish.sh",
+            "apps/majordomus-cli/src/mesh/cooperation.rs"
+          ],
+          "slug": "session-on-the-mesh",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2289",
+        "kind": "issue",
+        "label": "I2289",
+        "summary": "A task built off the mesh is refused",
+        "route": "/cockpit/objects/issue/i2289",
+        "source": ".ai/repo/project/issues/I2289.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "finish refuses a task whose scope was never claimed while the mesh was enabled",
+            "A disabled mesh refuses nothing"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "Rule project.every-session-joins-the-mesh, gated: finish --check refuses a completed task whose scope was never claimed on an enabled mesh; check warns.",
+          "evidence_required": [
+            "case_1027"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "Rule project.every-session-joins-the-mesh, gated: finish --check refuses a completed task whose scope was never claimed on an enabled mesh; check warns.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project",
+            "lib/finish.sh",
+            "lib/check.sh"
+          ],
+          "slug": "built-off-the-mesh-is-refused",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2290",
+        "kind": "issue",
+        "label": "I2290",
+        "summary": "Codex and Gemini start on the mesh too",
+        "route": "/cockpit/objects/issue/i2290",
+        "source": ".ai/repo/project/issues/I2290.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A Codex or Gemini session start runs the same lifecycle, proved against the real tool"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "Lifecycle adapters for Codex and Gemini, only once their hook contracts are exercised against the real tools; until then the briefing reaches them through MCP initialize.",
+          "evidence_required": [
+            "provider_hook_evidence"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "Lifecycle adapters for Codex and Gemini, only once their hook contracts are exercised against the real tools; until then the briefing reaches them through MCP initialize.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/providers.yaml",
+            "lib/capture.sh",
+            ".codex",
+            ".gemini"
+          ],
+          "slug": "other-providers-on-the-mesh",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2291",
+        "kind": "issue",
+        "label": "I2291",
+        "summary": "The mesh briefing is projected into every surface",
+        "route": "/cockpit/objects/issue/i2291",
+        "source": ".ai/repo/project/issues/I2291.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The provider projections and README name mesh.briefing and the protocol",
+            "The Cockpit mesh page renders the briefing"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "AGENTS.md, CLAUDE.md and README say what the start does and the protocol, rendered from the providers' templates; docs/MESH.md has At every start; the Cockpit mesh page shows the briefing.",
+          "evidence_required": [
+            "case_1028"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "AGENTS.md, CLAUDE.md and README say what the start does and the protocol, rendered from the providers' templates; docs/MESH.md has At every start; the Cockpit mesh page shows the briefing.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/providers",
+            "README.md",
+            "docs/MESH.md",
+            "apps/majordomus-cli/src/cockpit"
+          ],
+          "slug": "briefing-projected",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2292",
+        "kind": "issue",
+        "label": "I2292",
+        "summary": "The site tells why every session joins the mesh",
+        "route": "/cockpit/objects/issue/i2292",
+        "source": ".ai/repo/project/issues/I2292.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The article is published by the site build and passes site-check"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Not done.",
+          "depends_on": [
+            "I2285"
+          ],
+          "desired_state": "An article on the site, written from what landed, linking ADR 0128, docs/MESH.md and the cases.",
+          "evidence_required": [
+            "site_check"
+          ],
+          "milestone": "every-session-joins-the-mesh",
+          "objective": "An article on the site, written from what landed, linking ADR 0128, docs/MESH.md and the cases.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/content-src",
+            "site/data/nav.toml"
+          ],
+          "slug": "mesh-article",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner asked on 2026-10-10 that every LLM session use the mesh automatically from its start (ADR 0128); the survey at master a804ae2045 found participation left to the worker."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -30904,6 +31253,59 @@
             "bin/majordomus-cli capabilities validate",
             "bin/majordomus-cli generate --check",
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "milestone",
+        "label": "every-session-joins-the-mesh",
+        "summary": "Every LLM session joins the Majordomus mesh at start, told the mesh as work",
+        "route": "/cockpit/objects/milestone/every-session-joins-the-mesh",
+        "source": ".ai/repo/project/milestones/every-session-joins-the-mesh.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A runtime's briefing shows another machine's live session, its exclusive claim, its handover and its review",
+            "The start briefing of a checkout whose mesh runs carries the briefing lines",
+            "An MCP initialize answer on a server whose mesh runs names the briefing and the protocol",
+            "After majordomus start the task's scope is a live claim on every linked runtime",
+            "finish refuses a task whose scope was never claimed while the mesh was enabled",
+            "A Codex or Gemini session start runs the same lifecycle, proved against the real tool",
+            "The provider projections and README name mesh.briefing and the protocol",
+            "The article is published by the site build and passes site-check"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Partly automatic: an announcing MCP client is projected as a mesh session with advisory claims; everything else is the worker's memory.",
+          "depends_on": [],
+          "desired_state": "mesh.briefing at every start and MCP initialize, a mesh session and a claim for every task, a gated rule, projections and the Cockpit, an article.",
+          "evidence_required": [
+            "mesh_briefing_two_nodes_test"
+          ],
+          "non_scope": [
+            "Changing what the mesh may decide: it stays observation, not authority (ADR 0050)."
+          ],
+          "order": 145,
+          "priority": "p0",
+          "risks": [
+            "A start that waits on the mesh is a slower start for everyone: the briefing is read within a budget and skipped, not waited for."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "lib/capture.sh",
+            "lib/derive.sh",
+            ".ai/repo/rules/project",
+            ".ai/repo/providers",
+            "docs/MESH.md",
+            "README.md",
+            "site/content-src"
+          ],
+          "slug": "every-session-joins-the-mesh",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::briefing",
+            "cargo test --test mesh_briefing"
           ]
         }
       },
@@ -48030,6 +48432,14 @@
         "external": true
       },
       {
+        "id": "test:apps/majordomus-cli/tests/mesh_briefing.rs",
+        "kind": "test",
+        "label": "mesh_briefing.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/mesh_briefing.rs",
+        "external": true
+      },
+      {
         "id": "test:apps/majordomus-cli/tests/preflight.rs",
         "kind": "test",
         "label": "preflight.rs",
@@ -49724,6 +50134,21 @@
       },
       {
         "source": "capability:mcp.projection",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.briefing",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.briefing",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.briefing",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -54645,6 +55070,41 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "file:apps/majordomus-cli/src/mesh/briefing.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0128",
+        "target": "test:apps/majordomus-cli/tests/mesh_briefing.rs",
         "kind": "put_in_force"
       },
       {
@@ -66478,6 +66938,121 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2285",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2285",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2286",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2286",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2286",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2287",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2287",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2287",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2288",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2288",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2288",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2289",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2289",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2289",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2290",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2290",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2290",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2291",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2291",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2291",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2292",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2292",
+        "target": "majordomus://issue/I2285",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2292",
+        "target": "majordomus://milestone/every-session-joins-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66544,6 +67119,11 @@
       },
       {
         "source": "majordomus://milestone/development-runtime",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/every-session-joins-the-mesh",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -74809,6 +75389,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.briefing",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.claim",
         "kind": "composes"
       },
@@ -75259,8 +75844,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2490,
-      "edges": 5442,
+      "nodes": 2503,
+      "edges": 5477,
       "acyclic": false,
       "truncated": false
     }

@@ -184,7 +184,7 @@ modules:
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
     stability: experimental
     source: builtin
-    capabilities: 21
+    capabilities: 22
   - id: models
     title: Models
     description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
@@ -29203,6 +29203,235 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/mcp.rs
+  - id: mesh.briefing
+    module: mesh
+    kind: query
+    title: "The mesh, as work, for a session that starts"
+    description: "Who works where on every machine of the mesh — each live session with its client, intent, branch, issue and the paths it claims (exclusive ones marked `!`) — the handovers no session of this runtime has taken, and the open reviews, those addressed to this runtime first; bounded per list. The start of every session prints it and every MCP session is told it at `initialize` (ADR 0128). Read-only."
+    input:
+      name: MeshBriefingInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          limit:
+            type:
+              - integer
+              - "null"
+            format: uint
+            minimum: 0
+            description: "At most this many entries in each list (default 5, at most 50)."
+        description: "The input of `mesh.briefing`."
+        title: MeshBriefingInput
+    output:
+      name: MeshBriefingAnswer
+      schema:
+        type: object
+        properties:
+          active:
+            type: boolean
+            description: Whether cooperation runs.
+          reason:
+            type:
+              - string
+              - "null"
+            description: Why not.
+          briefing:
+            anyOf:
+              - "$ref": "#/$defs/MeshBriefing"
+              - type: "null"
+            description: "The briefing, when cooperation runs."
+          text:
+            type: string
+            description: "The briefing as text: what the start of a session prints and the MCP instructions say."
+        required:
+          - active
+          - text
+        description: "The answer of `mesh.briefing`: the briefing, and the same as the lines a session reads."
+        title: MeshBriefingAnswer
+        "$defs":
+          MeshBriefing:
+            type: object
+            properties:
+              runtime:
+                type: string
+                description: "This runtime, `<node>-<runtime>`."
+              machines:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshBriefingMachine"
+                description: "Every machine with a live session, this one first."
+              handovers:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshBriefingHandover"
+                description: "Handovers waiting to be taken here, newest first."
+              handovers_more:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many the limit left out.
+              reviews:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshBriefingReview"
+                description: "Open reviews of other runtimes, those addressed here first."
+              reviews_more:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many the limit left out.
+            required:
+              - runtime
+              - machines
+              - handovers
+              - handovers_more
+              - reviews
+              - reviews_more
+            description: "What a starting session is told about the mesh.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefing;\nlet b = MeshBriefing::default();\nassert_eq!(b.handovers_more + b.reviews_more, 0);\n```"
+          MeshBriefingMachine:
+            type: object
+            properties:
+              node:
+                type: string
+                description: The node id.
+              this_machine:
+                type: boolean
+                description: Whether it is the machine this runtime runs on.
+              sessions:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshBriefingSession"
+                description: "Its live sessions, at most the briefing's limit."
+              more:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many live sessions the limit left out.
+            required:
+              - node
+              - this_machine
+              - sessions
+              - more
+            description: "The live sessions of one machine.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingMachine;\nlet m = MeshBriefingMachine { node: \"641bdb94\".into(), this_machine: true, sessions: vec![], more: 0 };\nassert!(m.this_machine);\n```"
+          MeshBriefingSession:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "`<stream>/<session>`."
+              client:
+                type: string
+                description: The client it runs in.
+              worker:
+                type:
+                  - string
+                  - "null"
+                description: "The worker's name for itself."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: What it said it is doing.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it works on.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it works on.
+              claims:
+                type: array
+                items:
+                  type: string
+                description: "The paths its live claims name, exclusive ones marked `!`."
+            required:
+              - key
+              - client
+              - claims
+            description: "One live session another worker holds, with what it said and the scope it claims.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingSession;\nlet s = MeshBriefingSession { key: \"n-r-s/board-p2\".into(), client: \"codex\".into(),\n    worker: None, intent: Some(\"the release\".into()), branch: None, issue: None,\n    claims: vec![\"docs\".into()] };\nassert_eq!(serde_json::to_value(&s).unwrap()[\"client\"], \"codex\");\n```"
+          MeshBriefingHandover:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The handover's id, which `mesh.handover.consume` takes."
+              runtime:
+                type: string
+                description: The runtime that published it.
+              task:
+                type:
+                  - string
+                  - "null"
+                description: Its task.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: Its issue.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: Its branch.
+              objective:
+                type: string
+                description: "The first line of its `# Objective`."
+            required:
+              - id
+              - runtime
+              - objective
+            description: "A handover another runtime published that no session of this runtime has taken.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingHandover;\nlet h = MeshBriefingHandover { id: \"ab12\".into(), runtime: \"n-r\".into(), task: None,\n    issue: Some(\"I1\".into()), branch: None, objective: \"ship it\".into() };\nassert_eq!(h.objective, \"ship it\");\n```"
+          MeshBriefingReview:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "The request's key, which `mesh.review.answer` takes."
+              subject:
+                type: string
+                description: What to review.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: Its issue.
+              addressed_here:
+                type: boolean
+                description: Whether it names this runtime as the reviewer.
+            required:
+              - key
+              - subject
+              - addressed_here
+            description: "A review another runtime asked for and nobody has answered.\n\n```\nuse majordomus_cli::mesh::briefing::MeshBriefingReview;\nlet r = MeshBriefingReview { key: \"n-r-s/r-1\".into(), subject: \"PR #1\".into(),\n    issue: None, addressed_here: true };\nassert!(r.addressed_here);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_briefing
+      http:
+        method: GET
+        path: /api/v1/mesh/briefing
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - coordination
+      - cooperation
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.claim
     module: mesh
     kind: command

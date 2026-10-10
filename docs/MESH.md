@@ -231,6 +231,17 @@ meets `apps/majordomus-cli`; `app` does not.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.
 
+## The briefing
+
+`mesh.briefing` (MCP `majordomus_mesh_briefing`, `GET /api/v1/mesh/briefing`,
+`majordomus mesh briefing`) is the journal folded from a starting session's side: every machine
+with a live session, this one first, each session with its client, intent, branch, issue and the
+paths it claims (`!` marks an exclusive claim); the handovers another runtime published that no
+session of this runtime has taken, each with the call that takes it; and the open reviews of other
+runtimes, those addressed to this one first, each with the call that answers it. Every list is
+bounded (`limit`, 5 by default) and says how much it left out. A runtime is never told to take a
+handover it published itself. ADR 0128 makes it what every session is told at start (I2285).
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.
