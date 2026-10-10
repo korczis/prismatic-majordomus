@@ -146,16 +146,25 @@ awk -v n="$checked" '
 awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && $0 !~ /^[ \t]*#/ && /set \+e/{found=1} END{exit found}' "$WF" \
   || { echo "    the publication job turns off bash -e, so a refused scripts/derive-check need not fail it"; exit 1; }
 
-# --- smoke fails, and names the pull request, while the record is only a proposal -------------
-# It used to exit 0 with a notice, and the install step after it then failed with a message
-# about a download instead of the unmerged record that was the cause. The wait's one success
-# exit is inside its bounded loop; nothing before the loop may pass the step.
+# --- the release publishes its metadata itself, and smoke waits for what the installer reads ----
+# ADR 0131: the publish job puts releases/<tag>.json and latest.json on the site after the
+# derivation was judged and before the record is proposed, so smoke no longer begins by asking
+# whether the record is on the default branch (it failed every release whose record was still
+# a proposal). The wait's one success exit is inside its bounded loop; nothing before the loop
+# may pass the step, and its diagnostic still names the record's pull request.
+judged="$(job_line publish 'scripts/derive-check')"
+overlay="$(job_line publish "scripts/site-deploy --release-metadata '[$][{][{] needs[.]plan[.]outputs[.]tag [}][}]'")"
+proposed="$(job_line publish 'gh pr create')"
+[ -n "$overlay" ] || { echo "    the publication job does not put the release's metadata on the site"; exit 1; }
+before "$judged" "$overlay" "the metadata is published before scripts/derive-check judged it"
+before "$overlay" "$proposed" "the record is proposed before the site serves its metadata"
+if job_line smoke 'contents/[$]record' | grep -q .; then
+  echo "    the smoke job still waits for the record to be on the default branch"; exit 1
+fi
 grep -qF 'record_pr: ${{ steps.record.outputs.record_pr }}' "$WF" \
   || { echo "    the publication job does not expose the record pull request as an output"; exit 1; }
 job_line smoke 'needs[.]publish[.]outputs[.]record_pr' | grep -q . \
   || { echo "    the smoke job does not name the record pull request it waits on"; exit 1; }
-job_line smoke '::error::.*record is still a proposal.*re-run this job' | grep -q . \
-  || { echo "    the smoke job does not fail with an error naming the unmerged record and the re-run"; exit 1; }
 loop="$(job_line smoke 'for attempt in [$][(]seq 1 [0-9]+[)]')"
 passed="$(job_line smoke 'exit 0')"
 [ -n "$loop" ] || { echo "    the smoke job's wait is no longer bounded"; exit 1; }
