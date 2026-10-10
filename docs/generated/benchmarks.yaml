@@ -6,10 +6,10 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.20.0
 coverage:
   - scope: direct
-    required: 184
-    covered: 160
+    required: 187
+    covered: 161
     missing: 0
-    waived: 24
+    waived: 26
     inapplicable: 0
   - scope: http
     required: 181
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 555
-    covered: 489
+    required: 558
+    covered: 490
     missing: 0
-    waived: 66
+    waived: 68
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -632,6 +632,31 @@ capabilities:
     http: covered
     cases:
       - demonstrate
+  - id: fleet.plan
+    module: fleet
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
+    http: none
+    cases:
+      - default
+  - id: fleet.rollout
+    module: fleet
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
+  - id: fleet.status
+    module: fleet
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: gates.completion
     module: gates
     kind: query

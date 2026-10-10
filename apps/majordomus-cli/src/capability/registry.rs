@@ -466,19 +466,35 @@ impl Builder {
             // repository, which only a command may — a query that wrote tracked files would
             // be a query in name only, bound to GET and announced to MCP as read-only.
             // Everything else about the policy still follows the kind.
+            // A command may also change other machines (ADR 0121), and that one is
+            // projected on the command line only: a person at a terminal runs it, and no
+            // agent over MCP and no page over HTTP reaches another machine through this
+            // process.
             let mut permitted = vec![policy, policy.stoppable()];
             if c.kind == CapabilityKind::Command {
                 permitted.push(policy.writes_repository());
                 permitted.push(policy.stoppable().writes_repository());
+                permitted.push(policy.changes_other_machines());
+                permitted.push(policy.stoppable().changes_other_machines());
             }
             if !permitted.contains(&c.execution) {
                 errors.push(RegistryError::Shape {
                     id: id.clone(),
                     provenance: prov.clone(),
                     reason: format!(
-                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), and a command may add writing the repository (`.writes_repository()`); the effect of a query and the concurrency of anything follow the kind",
+                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), and a command may add writing the repository (`.writes_repository()`) or changing other machines (`.changes_other_machines()`); the effect of a query and the concurrency of anything follow the kind",
                         c.execution
                     ),
+                });
+                continue;
+            }
+            if c.execution.effect == crate::capability::Effect::RemoteMutation
+                && (c.exposure.mcp.is_some() || c.exposure.http.is_some())
+            {
+                errors.push(RegistryError::Shape {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    reason: "changes other machines and is projected beyond the command line; a capability that reaches another machine is run by a person at a terminal, never over MCP or HTTP (ADR 0121)".into(),
                 });
                 continue;
             }

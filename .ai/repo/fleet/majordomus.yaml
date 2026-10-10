@@ -1,0 +1,55 @@
+# The fleet of this repository: the owner's machines that run its mesh, how the operator
+# reaches each of them, and what each one serves (ADR 0121, docs/FLEET.md).
+#
+# The mesh declaration (`.ai/repo/mesh/majordomus.yaml`) says who may link and where the
+# hubs listen; this one says how a machine is brought to the version the repository is at,
+# so that the two together are enough to form the mesh from one terminal:
+# `majordomus fleet rollout` installs the release on every machine with the published,
+# checksum-verifying installer, fast-forwards each hub's checkout, writes the hub's service
+# (a systemd user unit on Linux, a launchd agent on macOS), restarts it, and waits for the
+# hub to answer at the version and for the mesh to see the node. `majordomus fleet plan`
+# says all of that without touching anything.
+#
+# Nothing secret belongs here. An `ssh` entry is a destination as `ssh` itself takes it —
+# `user@address`, or a host alias of the operator's own ssh configuration — and the keys
+# that open it stay in that configuration. Every address is private (RFC 1918) or on the
+# tailnet (100.64.0.0/10); the schema and case 1003 refuse a public one. The machine whose
+# mesh node is the operator's own is reached without ssh.
+schema: fleet/v1
+kind: fleet-declaration
+id: majordomus
+# Where a hub's checkout is cloned from when it has none.
+repository: https://github.com/korczis/prismatic-majordomus.git
+machines:
+  - id: tomass-macbook-pro
+    title: The owner's MacBook Pro (Darwin arm64), a LAN hub
+    node: 5d81b5c94b02767fc07b181613a7fc71
+    ssh: [korczis@100.108.237.68]
+    hub:
+      checkout: dev/prismatic-majordomus-hub
+      port: 8791
+  - id: tomass-macbook-pro-2
+    title: The owner's second MacBook Pro (Darwin arm64), a LAN hub
+    node: 641bdb94dae9f62268abf5ca73c11e15
+    ssh: [korczis@100.120.245.51, korczis@192.168.100.91]
+    hub:
+      checkout: dev/prismatic-majordomus-hub
+      port: 8791
+  - id: imac
+    title: The owner's iMac (Darwin x86_64)
+    node: aaba18eaf51efe57bcacb03222a10e2d
+    ssh: [korczis@100.122.86.48, korczis@192.168.100.50]
+  - id: lundra
+    title: lundra (Linux x86_64), a hub
+    node: 25c9758fa667ea3e2dbb438c84cf4145
+    ssh: [korczis@192.168.100.10, korczis@100.65.22.118]
+    hub:
+      checkout: dev/prismatic-majordomus-hub
+      port: 8791
+  - id: jetson
+    title: jetson (Linux aarch64), a hub
+    node: 9d652b2c7d06b12bfc5c3f8325e6618c
+    ssh: [korczis@192.168.100.30, korczis@100.92.246.32]
+    hub:
+      checkout: dev/prismatic-majordomus-hub
+      port: 8791

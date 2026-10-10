@@ -197,6 +197,14 @@ sources:
     pathspec: ':(glob).ai/repo/mesh/*.yaml'
     required: false
 
+  # The fleet (ADR 0121): the machines that run the mesh and how `majordomus fleet rollout`
+  # reaches them; without this class `.ai/repo/fleet/*.yaml` is never read.
+  - id: fleet-declaration
+    kind: fleet-declaration
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/fleet/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs

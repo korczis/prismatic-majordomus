@@ -1,0 +1,108 @@
+---
+schema: adr/v1
+id: adr-0121
+kind: adr
+title: The fleet is declared, and rolled out by a typed capability
+status: proposed
+date: 2026-10-08
+tags:
+  - architecture
+  - mesh
+  - distribution
+  - capabilities
+  - safety
+related:
+  - file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md
+  - file:.ai/repo/fleet/majordomus.yaml
+  - file:share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json
+  - file:apps/majordomus-cli/src/fleet/mod.rs
+  - file:apps/majordomus-cli/src/fleet/scripts.rs
+  - file:apps/majordomus-cli/src/capability/builtin/fleet.rs
+  - file:apps/majordomus-cli/src/capability/model.rs
+  - file:apps/majordomus-cli/src/capability/registry.rs
+  - file:docs/FLEET.md
+  - file:docs/MESH.md
+provenance:
+  origin: authored
+---
+
+# 121. The fleet is declared, and rolled out by a typed capability
+
+## Context
+
+The mesh declaration (ADR 0050, ADR 0059) says who may link and where the hubs listen. It
+does not say how a machine comes to run the version the repository is at, which checkout its
+hub serves, or what keeps that hub running. ADR 0059 left that owed: "a hub installer is owed
+as a typed capability or a Rhai workflow". The script proposed with it (`scripts/mesh-hub`,
+systemd only) never landed, because new shell automation is refused.
+
+What filled the gap was by hand, and it drifted. On 2026-10-08:
+
+- three machines ran 0.14.0 while the release was 0.17.0;
+- lundra's hub ran a checkout's release build behind a hand-written unit;
+- the second MacBook Pro's hub had been started by hand and would not survive a reboot;
+- the declared address of that hub was stale.
+
+None of it was in the repository. The machines, their addresses and the ssh keys that reach
+them were known only to an operator's notes.
+
+## Decision
+
+1. **The fleet is declared.** A new kind, `fleet-declaration` (`fleet/v1`, under
+   `.ai/repo/fleet/`), names each machine:
+   - its mesh node id;
+   - the ssh destinations that reach it, tried in order;
+   - the hub it serves, if any, as a checkout relative to its home directory and a port.
+
+   Nothing secret is in it: a destination names a machine, and its key stays in the
+   operator's ssh configuration. Every address is private, a tailnet's or loopback.
+2. **One typed module operates it**, `fleet`:
+   - `fleet.plan` reaches nothing.
+   - `fleet.status` asks each machine what it runs.
+   - `fleet.rollout`, on each machine in parallel:
+     - asks the mesh who holds the machine, and leaves untouched one another session holds
+       exclusively (`host:` claims), reporting advisory ones;
+     - installs the release with the published, verifying installer;
+     - fast-forwards each hub's checkout, never rewriting work;
+     - writes the hub's service as a systemd user unit or a launchd agent, and restarts it;
+     - verifies the hub answers at the version with its mesh active;
+     - restarts servers still running an older installed tree;
+     - last, asks the hubs whether they see each other.
+
+   The machine whose node is the operator's own is reached without ssh. The programs that run
+   on a machine are fixed in the executable and take the declaration's values as quoted
+   arguments.
+3. **Changing other machines is an effect of its own.** `Effect::RemoteMutation` is added to
+   the capability model, and `.changes_other_machines()` declares it.
+   - It is the strongest effect and the only open-world one; the command graph maps it to
+     `NetworkMutation`.
+   - The registry admits it only on a command.
+   - The registry refuses to build when a capability with it is projected over MCP or HTTP.
+     Reaching another machine is something a person does at a terminal, never something an
+     agent or a page does through this process.
+
+## Consequences
+
+- One command brings the fleet to a release and forms the mesh, and the verdict says per
+  machine and per step what happened. Adding a machine is an entry in the declaration and its
+  key in the mesh declaration's allowlist.
+- Hubs survive reboots: a systemd unit with lingering on Linux, and a launchd agent with
+  `KeepAlive` on macOS.
+- A rollout installs only published releases. A version not yet released cannot be rolled
+  out, which is the point: what runs on the fleet is what a release built and checksummed.
+- The rollout restarts servers that run an older installed tree by default. A session
+  attached to one reconnects. `--keep-servers` leaves them running.
+- An unreachable machine is reported, never waited on. The fleet is then `partial`, and the
+  command exits 10.
+
+## Alternatives
+
+- **A Rhai workflow.** Scripts get no process or network access of their own (ADR 0069 as
+  proposed), so the ssh and installer steps would still be typed Rust. A workflow would only
+  sequence them, and the sequence is the part least likely to change.
+- **Extending the mesh declaration with ssh destinations.** The mesh declaration is read by
+  every server at start and decides what sockets open. How an operator reaches a machine is
+  not the server's concern, and two open changes to that file were already in review.
+- **A deployment object per hub.** The `deployment` kind describes one hosted process on one
+  provider. A fleet is several machines reached over ssh, and the kind's schema has no place
+  for either.

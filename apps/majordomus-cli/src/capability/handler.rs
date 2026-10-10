@@ -441,6 +441,12 @@ impl Executable {
         self.capability.execution = self.capability.execution.writes_repository();
         self
     }
+
+    /// Declare that this command's handler changes other machines (ADR 0121).
+    pub fn changes_other_machines(mut self) -> Self {
+        self.capability.execution = self.capability.execution.changes_other_machines();
+        self
+    }
 }
 
 /// The one canonical declaration of an executable capability. From it every projection is
