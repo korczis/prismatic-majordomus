@@ -131,6 +131,17 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
     ))
 }
 
+/// Put the declaration's trust in force on a running cooperation runtime, ending the links of
+/// every key it no longer trusts (I2134). The server calls this with each new generation of the
+/// repository it reads, so a key withdrawn from `trust.allow` and committed loses its links
+/// without a restart. Returns the runtime keys whose links ended.
+pub(crate) fn retrust(ctx: &Context) -> Vec<String> {
+    let (Some(cooperation), Some(Ok(config))) = (ctx.mesh.cooperation(), declaration(ctx)) else {
+        return Vec::new();
+    };
+    cooperation.retrust(config.trust)
+}
+
 /// The repository's mesh declaration, as the index discovered it: `None` when no object
 /// of the kind exists, the parse verdict when one does.
 pub fn declaration(ctx: &Context) -> Option<Result<MeshConfig, crate::mesh::MeshError>> {

@@ -1147,7 +1147,9 @@ pub struct Cooperation {
     own_key: String,
     repository: MeshRepositoryIdentity,
     config: CooperationConfig,
-    trust: TrustConfig,
+    /// The trust in force: replaced, never patched, when the declaration changes under a
+    /// running server ([`Cooperation::retrust`]).
+    trust: std::sync::RwLock<TrustConfig>,
     registry: Arc<MeshRegistry>,
     transport: Arc<dyn LinkTransport>,
     journal: Arc<Journal>,
@@ -1266,7 +1268,7 @@ impl Cooperation {
             own_key,
             repository: setup.repository,
             config: setup.config,
-            trust: setup.trust,
+            trust: std::sync::RwLock::new(setup.trust),
             registry: setup.registry,
             transport: setup.transport,
             journal,
@@ -1671,13 +1673,78 @@ impl Cooperation {
         let Some(node) = node_id_of_key(public_key) else {
             return TrustState::Rejected("not a key".into());
         };
+        let trust = self
+            .trust
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         trust::evaluate(
-            &self.trust.policy,
-            &self.trust.allow,
+            &trust.policy,
+            &trust.allow,
             public_key,
             self.registry.known_key(&node).as_deref(),
             self.registry.trust_of(&node).as_ref(),
         )
+    }
+
+    /// Put `trust` in force while this runtime runs, and end every link to a runtime it no
+    /// longer trusts. Returns the runtime keys whose links ended.
+    ///
+    /// Before this, a key withdrawn from the declaration kept its links until every runtime
+    /// that had admitted it restarted. Now the server calls this whenever it reads a new
+    /// generation of the repository: the withdrawn peer's link is gone at once, its next
+    /// sync meets `unknown_link`, and the hello it says next is refused `untrusted`. Events it
+    /// wrote stay in the journal until the next restart, whose reload applies the trust in
+    /// force (I2124).
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::TrustConfig;
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::cooperation::{Cooperation, CooperationSetup, CheckoutFacts};
+    /// # use majordomus_cli::mesh::{identity::NodeIdentity, registry::MeshRegistry, repository::of_root_commits};
+    /// # use majordomus_cli::mesh::config::CooperationConfig;
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed};
+    /// # struct Nowhere;
+    /// # impl LinkTransport for Nowhere {
+    /// #     fn post(&self, e: &str, _: &str, _: &Signed) -> Result<LinkReply, String> { Err(format!("{e}: nobody")) } }
+    /// # let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![], version: "doc".into(),
+    /// #     config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()), transport: Arc::new(Nowhere), board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// let stranger = NodeIdentity::ephemeral().unwrap().public.public_key;
+    /// assert!(c.trust_of_key(&stranger).is_trusted(), "tofu");
+    /// assert!(c.retrust(TrustConfig::default()).is_empty(), "no link to end");
+    /// assert!(!c.trust_of_key(&stranger).is_trusted(), "deny_unknown is in force now");
+    /// ```
+    pub fn retrust(&self, trust: TrustConfig) -> Vec<String> {
+        *self
+            .trust
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = trust;
+        let mut table = self.table.lock().expect("cooperation table");
+        let mut ended = Vec::new();
+        let mut links = Vec::new();
+        for (key, peer) in table.peers.iter_mut() {
+            let verdict = self.trust_of_key(&peer.card.pk);
+            if verdict.is_trusted() {
+                continue;
+            }
+            if let Some(inbound) = peer.inbound.take() {
+                links.push(inbound.link);
+            }
+            peer.outbound = None;
+            peer.expired = true;
+            peer.trust = verdict;
+            ended.push(key.clone());
+            tracing::warn!(runtime_id = %self.own_key, peer = %key, "mesh link ended: the peer's key is no longer trusted");
+        }
+        for link in links {
+            table.inbound_links.remove(&link);
+        }
+        ended
     }
 
     fn origin_accept(&self, event: &MeshEvent) -> Result<(), Rejection> {
@@ -3759,6 +3826,39 @@ mod tests {
             a.state().digest,
             b.state().digest,
             "one state, two runtimes"
+        );
+    }
+
+    #[test]
+    fn a_withdrawn_key_loses_its_link_without_a_restart() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        b.dial(&["a:1".into()]).expect("linked under tofu");
+        assert_eq!(a.peers().len(), 1);
+        // A's declaration now trusts nobody it does not list, and lists nobody
+        let ended = a.retrust(TrustConfig::default());
+        assert_eq!(ended, vec![b.runtime_key().to_string()], "B's link ended");
+        // the link B already holds is gone on A's side: a sync over it is not served
+        let synced = b.sync_with(a.runtime_key());
+        assert!(
+            matches!(synced, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::UnknownLink),
+            "{synced:?}"
+        );
+        // B's next sync meets a link A no longer knows, and its hello is refused
+        let reply = b.dial(&["a:1".into()]);
+        assert!(
+            matches!(reply, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Untrusted),
+            "{reply:?}"
+        );
+        // and a trust that admits B again lets it link again
+        a.retrust(TrustConfig {
+            policy: TrustPolicy::DenyUnknown,
+            allow: vec![b.identity.public.public_key.clone()],
+        });
+        assert!(
+            b.dial(&["a:1".into()]).is_ok(),
+            "trusted again, linked again"
         );
     }
 

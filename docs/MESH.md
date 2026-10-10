@@ -113,7 +113,7 @@ Trust is decided by the declared policy, and the default is that no one is trust
 | `allowlist` | observed; listed keys are trusted | the same as `deny_unknown` plus `allow` |
 | `tofu` | trusted on first use | a development convenience for a network you control: under TOFU **every** key on the segment that knows the repository identity is trusted and can link, claim and publish; every listing says `tofu`, and TOFU-trusted records are evictable |
 
-This machine's own key is trusted as itself, which is what lets two worktrees link. A node id
+A key withdrawn from `trust.allow` loses its links as soon as the server reads the change: the server puts the declaration's trust in force with every new generation of the repository, ends the link of every peer it no longer trusts, and refuses that peer's next hello `untrusted` — no restart (I2134). This machine's own key is trusted as itself, which is what lets two worktrees link. A node id
 reappearing under a different key is rejected under every policy. Trust is a precondition of
 a link, not a link: discovery never admits one.
 
