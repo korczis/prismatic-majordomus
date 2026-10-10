@@ -388,7 +388,7 @@
 <a href=#388 id=388 data-nosnippet>388</a>            <span class="prelude-val">Err</span>(CapabilityError::Internal(e)) =&gt; <span class="prelude-val">Err</span>(SurfaceError::Internal(e)),
 <a href=#389 id=389 data-nosnippet>389</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Ok</span>(ToolOutcome::Refused {
 <a href=#390 id=390 data-nosnippet>390</a>                code: e.code(),
-<a href=#391 id=391 data-nosnippet>391</a>                reason: e.to_string(),
+<a href=#391 id=391 data-nosnippet>391</a>                reason: <span class="kw">crate</span>::redaction::redact_secrets(<span class="kw-2">&amp;</span>e.to_string()).text,
 <a href=#392 id=392 data-nosnippet>392</a>            }),
 <a href=#393 id=393 data-nosnippet>393</a>        }
 <a href=#394 id=394 data-nosnippet>394</a>    }

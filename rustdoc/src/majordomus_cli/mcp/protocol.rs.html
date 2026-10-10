@@ -457,122 +457,124 @@
 <a href=#457 id=457 data-nosnippet>457</a>}
 <a href=#458 id=458 data-nosnippet>458</a>
 <a href=#459 id=459 data-nosnippet>459</a><span class="kw">fn </span>error(id: Value, code: i64, message: <span class="kw-2">&amp;</span>str) -&gt; Value {
-<a href=#460 id=460 data-nosnippet>460</a>    <span class="macro">json!</span>({ <span class="string">"jsonrpc"</span>: <span class="string">"2.0"</span>, <span class="string">"id"</span>: id, <span class="string">"error"</span>: { <span class="string">"code"</span>: code, <span class="string">"message"</span>: message } })
-<a href=#461 id=461 data-nosnippet>461</a>}
-<a href=#462 id=462 data-nosnippet>462</a>
-<a href=#463 id=463 data-nosnippet>463</a><span class="attr">#[cfg(test)]
-<a href=#464 id=464 data-nosnippet>464</a></span><span class="kw">mod </span>tests {
-<a href=#465 id=465 data-nosnippet>465</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#466 id=466 data-nosnippet>466</a>
-<a href=#467 id=467 data-nosnippet>467</a>    <span class="doccomment">/// The `initialize` instructions are the one thing every client reads before it does
-<a href=#468 id=468 data-nosnippet>468</a>    /// anything, and for most of this server's life they ended with the constant "Nothing
-<a href=#469 id=469 data-nosnippet>469</a>    /// here writes to the repository." That sentence stopped being true when the first
-<a href=#470 id=470 data-nosnippet>470</a>    /// mutating capability was exposed as a tool, and nothing said so: a constant cannot go
-<a href=#471 id=471 data-nosnippet>471</a>    /// stale loudly. So the sentence is derived, and this is the assertion that it stays
-<a href=#472 id=472 data-nosnippet>472</a>    /// derived — if a tool that writes the repository is exposed and the instructions still
-<a href=#473 id=473 data-nosnippet>473</a>    /// promise a read-only surface, this fails.
-<a href=#474 id=474 data-nosnippet>474</a>    </span><span class="attr">#[test]
-<a href=#475 id=475 data-nosnippet>475</a>    </span><span class="kw">fn </span>the_instructions_never_claim_read_only_while_a_writer_is_exposed() {
-<a href=#476 id=476 data-nosnippet>476</a>        <span class="kw">let </span>registry = <span class="kw">crate</span>::capability::CapabilityRegistry::builder()
-<a href=#477 id=477 data-nosnippet>477</a>            .with_builtin(<span class="kw">crate</span>::capability::builtin::all())
-<a href=#478 id=478 data-nosnippet>478</a>            .build()
-<a href=#479 id=479 data-nosnippet>479</a>            .unwrap();
-<a href=#480 id=480 data-nosnippet>480</a>        <span class="kw">let </span>writers: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = registry
-<a href=#481 id=481 data-nosnippet>481</a>            .iter()
-<a href=#482 id=482 data-nosnippet>482</a>            .filter(|c| c.execution.effect == <span class="kw">crate</span>::capability::model::Effect::RepositoryMutation)
-<a href=#483 id=483 data-nosnippet>483</a>            .filter_map(|c| c.exposure.mcp.as_ref()<span class="question-mark">?</span>.tool.as_deref())
-<a href=#484 id=484 data-nosnippet>484</a>            .collect();
-<a href=#485 id=485 data-nosnippet>485</a>        <span class="kw">let </span>sentence = effects_sentence(<span class="kw-2">&amp;</span>registry);
-<a href=#486 id=486 data-nosnippet>486</a>
-<a href=#487 id=487 data-nosnippet>487</a>        <span class="kw">if </span>writers.is_empty() {
-<a href=#488 id=488 data-nosnippet>488</a>            <span class="macro">assert_eq!</span>(sentence, <span class="string">"Nothing here writes to the repository."</span>);
-<a href=#489 id=489 data-nosnippet>489</a>        } <span class="kw">else </span>{
-<a href=#490 id=490 data-nosnippet>490</a>            <span class="macro">assert!</span>(
-<a href=#491 id=491 data-nosnippet>491</a>                !sentence.contains(<span class="string">"Nothing here writes"</span>),
-<a href=#492 id=492 data-nosnippet>492</a>                <span class="string">"{} mutating tool(s) are exposed ({}) and the instructions still tell every \
-<a href=#493 id=493 data-nosnippet>493</a>                 client the surface writes nothing: {sentence}"</span>,
-<a href=#494 id=494 data-nosnippet>494</a>                writers.len(),
-<a href=#495 id=495 data-nosnippet>495</a>                writers.join(<span class="string">", "</span>)
-<a href=#496 id=496 data-nosnippet>496</a>            );
-<a href=#497 id=497 data-nosnippet>497</a>            <span class="kw">for </span>w <span class="kw">in </span><span class="kw-2">&amp;</span>writers {
-<a href=#498 id=498 data-nosnippet>498</a>                <span class="macro">assert!</span>(
-<a href=#499 id=499 data-nosnippet>499</a>                    sentence.contains(w),
-<a href=#500 id=500 data-nosnippet>500</a>                    <span class="string">"the instructions do not name the writing tool {w}: {sentence}"
-<a href=#501 id=501 data-nosnippet>501</a>                </span>);
-<a href=#502 id=502 data-nosnippet>502</a>            }
-<a href=#503 id=503 data-nosnippet>503</a>        }
-<a href=#504 id=504 data-nosnippet>504</a>    }
-<a href=#505 id=505 data-nosnippet>505</a>
-<a href=#506 id=506 data-nosnippet>506</a>    <span class="doccomment">/// A tool's annotations are what a client reads to decide whether to ask a person
-<a href=#507 id=507 data-nosnippet>507</a>    /// first, and for most of this server's life three of the four were constants:
-<a href=#508 id=508 data-nosnippet>508</a>    /// never destructive, always idempotent. The first tool that unlinked files was
-<a href=#509 id=509 data-nosnippet>509</a>    /// announced as both. They are now the capability's classified hints, and this is the
-<a href=#510 id=510 data-nosnippet>510</a>    /// assertion that they stay so: every tool of the real registry is rendered, and each
-<a href=#511 id=511 data-nosnippet>511</a>    /// annotation is compared with the policy of the capability behind it.
-<a href=#512 id=512 data-nosnippet>512</a>    </span><span class="attr">#[test]
-<a href=#513 id=513 data-nosnippet>513</a>    </span><span class="kw">fn </span>a_tools_annotations_are_its_capabilitys_hints_and_a_writer_is_never_announced_as_safe() {
-<a href=#514 id=514 data-nosnippet>514</a>        <span class="kw">let </span>registry = <span class="kw">crate</span>::capability::CapabilityRegistry::builder()
-<a href=#515 id=515 data-nosnippet>515</a>            .with_builtin(<span class="kw">crate</span>::capability::builtin::all())
-<a href=#516 id=516 data-nosnippet>516</a>            .build()
-<a href=#517 id=517 data-nosnippet>517</a>            .unwrap();
-<a href=#518 id=518 data-nosnippet>518</a>        <span class="kw">let </span><span class="kw-2">mut </span>writers = <span class="number">0</span>;
-<a href=#519 id=519 data-nosnippet>519</a>        <span class="kw">for </span>c <span class="kw">in </span>registry.iter() {
-<a href=#520 id=520 data-nosnippet>520</a>            <span class="kw">let </span><span class="prelude-val">Some</span>(tool) = <span class="kw">super</span>::<span class="kw">super</span>::surface::Tool::of(c) <span class="kw">else </span>{
-<a href=#521 id=521 data-nosnippet>521</a>                <span class="kw">continue</span>;
-<a href=#522 id=522 data-nosnippet>522</a>            };
-<a href=#523 id=523 data-nosnippet>523</a>            <span class="kw">let </span>v = tool_json(<span class="kw-2">&amp;</span>tool);
-<a href=#524 id=524 data-nosnippet>524</a>            <span class="kw">let </span>a = <span class="kw-2">&amp;</span>v[<span class="string">"annotations"</span>];
-<a href=#525 id=525 data-nosnippet>525</a>            <span class="kw">let </span>h = c.execution.hints();
-<a href=#526 id=526 data-nosnippet>526</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"readOnlyHint"</span>], h.read_only, <span class="string">"{}"</span>, tool.name);
-<a href=#527 id=527 data-nosnippet>527</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"destructiveHint"</span>], h.destructive, <span class="string">"{}"</span>, tool.name);
-<a href=#528 id=528 data-nosnippet>528</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"idempotentHint"</span>], h.idempotent, <span class="string">"{}"</span>, tool.name);
-<a href=#529 id=529 data-nosnippet>529</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"openWorldHint"</span>], h.open_world, <span class="string">"{}"</span>, tool.name);
-<a href=#530 id=530 data-nosnippet>530</a>            <span class="macro">assert_eq!</span>(
-<a href=#531 id=531 data-nosnippet>531</a>                v[<span class="string">"_meta"</span>][<span class="string">"majordomus"</span>][<span class="string">"effect"</span>],
-<a href=#532 id=532 data-nosnippet>532</a>                serde_json::to_value(c.execution.effect).unwrap(),
-<a href=#533 id=533 data-nosnippet>533</a>                <span class="string">"{}"</span>,
-<a href=#534 id=534 data-nosnippet>534</a>                tool.name
-<a href=#535 id=535 data-nosnippet>535</a>            );
-<a href=#536 id=536 data-nosnippet>536</a>            <span class="kw">if </span>c.execution.effect == <span class="kw">crate</span>::capability::model::Effect::RepositoryMutation {
-<a href=#537 id=537 data-nosnippet>537</a>                writers += <span class="number">1</span>;
-<a href=#538 id=538 data-nosnippet>538</a>                <span class="macro">assert_eq!</span>(
-<a href=#539 id=539 data-nosnippet>539</a>                    a[<span class="string">"readOnlyHint"</span>], <span class="bool-val">false</span>,
-<a href=#540 id=540 data-nosnippet>540</a>                    <span class="string">"{} writes the repository"</span>,
-<a href=#541 id=541 data-nosnippet>541</a>                    tool.name
-<a href=#542 id=542 data-nosnippet>542</a>                );
-<a href=#543 id=543 data-nosnippet>543</a>                <span class="macro">assert_eq!</span>(
-<a href=#544 id=544 data-nosnippet>544</a>                    a[<span class="string">"destructiveHint"</span>], <span class="bool-val">true</span>,
-<a href=#545 id=545 data-nosnippet>545</a>                    <span class="string">"{} writes the repository"</span>,
-<a href=#546 id=546 data-nosnippet>546</a>                    tool.name
-<a href=#547 id=547 data-nosnippet>547</a>                );
-<a href=#548 id=548 data-nosnippet>548</a>                <span class="macro">assert_eq!</span>(
-<a href=#549 id=549 data-nosnippet>549</a>                    a[<span class="string">"idempotentHint"</span>], <span class="bool-val">false</span>,
-<a href=#550 id=550 data-nosnippet>550</a>                    <span class="string">"{} writes the repository"</span>,
-<a href=#551 id=551 data-nosnippet>551</a>                    tool.name
-<a href=#552 id=552 data-nosnippet>552</a>                );
-<a href=#553 id=553 data-nosnippet>553</a>            }
-<a href=#554 id=554 data-nosnippet>554</a>            <span class="kw">if </span>a[<span class="string">"readOnlyHint"</span>] == <span class="bool-val">true </span>{
-<a href=#555 id=555 data-nosnippet>555</a>                <span class="macro">assert_eq!</span>(c.execution.effect, <span class="kw">crate</span>::capability::model::Effect::Read);
-<a href=#556 id=556 data-nosnippet>556</a>            }
-<a href=#557 id=557 data-nosnippet>557</a>        }
-<a href=#558 id=558 data-nosnippet>558</a>        <span class="macro">assert!</span>(
-<a href=#559 id=559 data-nosnippet>559</a>            writers &gt; <span class="number">0</span>,
-<a href=#560 id=560 data-nosnippet>560</a>            <span class="string">"the registry exposes no writing tool, so this proved nothing about one"
-<a href=#561 id=561 data-nosnippet>561</a>        </span>);
-<a href=#562 id=562 data-nosnippet>562</a>    }
-<a href=#563 id=563 data-nosnippet>563</a>
-<a href=#564 id=564 data-nosnippet>564</a>    <span class="doccomment">/// The sentence over a registry this repository does not happen to hold, so that the
-<a href=#565 id=565 data-nosnippet>565</a>    /// assertion above cannot pass merely because the real registry has a writer today: a
-<a href=#566 id=566 data-nosnippet>566</a>    /// registry with nothing in it writes nothing, and says so.
-<a href=#567 id=567 data-nosnippet>567</a>    </span><span class="attr">#[test]
-<a href=#568 id=568 data-nosnippet>568</a>    </span><span class="kw">fn </span>a_registry_with_no_writer_still_says_nothing_writes() {
-<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">let </span>empty = <span class="kw">crate</span>::capability::CapabilityRegistry::builder()
-<a href=#570 id=570 data-nosnippet>570</a>            .build()
-<a href=#571 id=571 data-nosnippet>571</a>            .unwrap();
-<a href=#572 id=572 data-nosnippet>572</a>        <span class="macro">assert_eq!</span>(
-<a href=#573 id=573 data-nosnippet>573</a>            effects_sentence(<span class="kw-2">&amp;</span>empty),
-<a href=#574 id=574 data-nosnippet>574</a>            <span class="string">"Nothing here writes to the repository."
-<a href=#575 id=575 data-nosnippet>575</a>        </span>);
-<a href=#576 id=576 data-nosnippet>576</a>    }
-<a href=#577 id=577 data-nosnippet>577</a>}
+<a href=#460 id=460 data-nosnippet>460</a>    <span class="comment">// the one place a JSON-RPC error is made: it may echo a tool name or an argument
+<a href=#461 id=461 data-nosnippet>461</a>    </span><span class="kw">let </span>message = <span class="kw">crate</span>::redaction::redact_secrets(message).text;
+<a href=#462 id=462 data-nosnippet>462</a>    <span class="macro">json!</span>({ <span class="string">"jsonrpc"</span>: <span class="string">"2.0"</span>, <span class="string">"id"</span>: id, <span class="string">"error"</span>: { <span class="string">"code"</span>: code, <span class="string">"message"</span>: message } })
+<a href=#463 id=463 data-nosnippet>463</a>}
+<a href=#464 id=464 data-nosnippet>464</a>
+<a href=#465 id=465 data-nosnippet>465</a><span class="attr">#[cfg(test)]
+<a href=#466 id=466 data-nosnippet>466</a></span><span class="kw">mod </span>tests {
+<a href=#467 id=467 data-nosnippet>467</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#468 id=468 data-nosnippet>468</a>
+<a href=#469 id=469 data-nosnippet>469</a>    <span class="doccomment">/// The `initialize` instructions are the one thing every client reads before it does
+<a href=#470 id=470 data-nosnippet>470</a>    /// anything, and for most of this server's life they ended with the constant "Nothing
+<a href=#471 id=471 data-nosnippet>471</a>    /// here writes to the repository." That sentence stopped being true when the first
+<a href=#472 id=472 data-nosnippet>472</a>    /// mutating capability was exposed as a tool, and nothing said so: a constant cannot go
+<a href=#473 id=473 data-nosnippet>473</a>    /// stale loudly. So the sentence is derived, and this is the assertion that it stays
+<a href=#474 id=474 data-nosnippet>474</a>    /// derived — if a tool that writes the repository is exposed and the instructions still
+<a href=#475 id=475 data-nosnippet>475</a>    /// promise a read-only surface, this fails.
+<a href=#476 id=476 data-nosnippet>476</a>    </span><span class="attr">#[test]
+<a href=#477 id=477 data-nosnippet>477</a>    </span><span class="kw">fn </span>the_instructions_never_claim_read_only_while_a_writer_is_exposed() {
+<a href=#478 id=478 data-nosnippet>478</a>        <span class="kw">let </span>registry = <span class="kw">crate</span>::capability::CapabilityRegistry::builder()
+<a href=#479 id=479 data-nosnippet>479</a>            .with_builtin(<span class="kw">crate</span>::capability::builtin::all())
+<a href=#480 id=480 data-nosnippet>480</a>            .build()
+<a href=#481 id=481 data-nosnippet>481</a>            .unwrap();
+<a href=#482 id=482 data-nosnippet>482</a>        <span class="kw">let </span>writers: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = registry
+<a href=#483 id=483 data-nosnippet>483</a>            .iter()
+<a href=#484 id=484 data-nosnippet>484</a>            .filter(|c| c.execution.effect == <span class="kw">crate</span>::capability::model::Effect::RepositoryMutation)
+<a href=#485 id=485 data-nosnippet>485</a>            .filter_map(|c| c.exposure.mcp.as_ref()<span class="question-mark">?</span>.tool.as_deref())
+<a href=#486 id=486 data-nosnippet>486</a>            .collect();
+<a href=#487 id=487 data-nosnippet>487</a>        <span class="kw">let </span>sentence = effects_sentence(<span class="kw-2">&amp;</span>registry);
+<a href=#488 id=488 data-nosnippet>488</a>
+<a href=#489 id=489 data-nosnippet>489</a>        <span class="kw">if </span>writers.is_empty() {
+<a href=#490 id=490 data-nosnippet>490</a>            <span class="macro">assert_eq!</span>(sentence, <span class="string">"Nothing here writes to the repository."</span>);
+<a href=#491 id=491 data-nosnippet>491</a>        } <span class="kw">else </span>{
+<a href=#492 id=492 data-nosnippet>492</a>            <span class="macro">assert!</span>(
+<a href=#493 id=493 data-nosnippet>493</a>                !sentence.contains(<span class="string">"Nothing here writes"</span>),
+<a href=#494 id=494 data-nosnippet>494</a>                <span class="string">"{} mutating tool(s) are exposed ({}) and the instructions still tell every \
+<a href=#495 id=495 data-nosnippet>495</a>                 client the surface writes nothing: {sentence}"</span>,
+<a href=#496 id=496 data-nosnippet>496</a>                writers.len(),
+<a href=#497 id=497 data-nosnippet>497</a>                writers.join(<span class="string">", "</span>)
+<a href=#498 id=498 data-nosnippet>498</a>            );
+<a href=#499 id=499 data-nosnippet>499</a>            <span class="kw">for </span>w <span class="kw">in </span><span class="kw-2">&amp;</span>writers {
+<a href=#500 id=500 data-nosnippet>500</a>                <span class="macro">assert!</span>(
+<a href=#501 id=501 data-nosnippet>501</a>                    sentence.contains(w),
+<a href=#502 id=502 data-nosnippet>502</a>                    <span class="string">"the instructions do not name the writing tool {w}: {sentence}"
+<a href=#503 id=503 data-nosnippet>503</a>                </span>);
+<a href=#504 id=504 data-nosnippet>504</a>            }
+<a href=#505 id=505 data-nosnippet>505</a>        }
+<a href=#506 id=506 data-nosnippet>506</a>    }
+<a href=#507 id=507 data-nosnippet>507</a>
+<a href=#508 id=508 data-nosnippet>508</a>    <span class="doccomment">/// A tool's annotations are what a client reads to decide whether to ask a person
+<a href=#509 id=509 data-nosnippet>509</a>    /// first, and for most of this server's life three of the four were constants:
+<a href=#510 id=510 data-nosnippet>510</a>    /// never destructive, always idempotent. The first tool that unlinked files was
+<a href=#511 id=511 data-nosnippet>511</a>    /// announced as both. They are now the capability's classified hints, and this is the
+<a href=#512 id=512 data-nosnippet>512</a>    /// assertion that they stay so: every tool of the real registry is rendered, and each
+<a href=#513 id=513 data-nosnippet>513</a>    /// annotation is compared with the policy of the capability behind it.
+<a href=#514 id=514 data-nosnippet>514</a>    </span><span class="attr">#[test]
+<a href=#515 id=515 data-nosnippet>515</a>    </span><span class="kw">fn </span>a_tools_annotations_are_its_capabilitys_hints_and_a_writer_is_never_announced_as_safe() {
+<a href=#516 id=516 data-nosnippet>516</a>        <span class="kw">let </span>registry = <span class="kw">crate</span>::capability::CapabilityRegistry::builder()
+<a href=#517 id=517 data-nosnippet>517</a>            .with_builtin(<span class="kw">crate</span>::capability::builtin::all())
+<a href=#518 id=518 data-nosnippet>518</a>            .build()
+<a href=#519 id=519 data-nosnippet>519</a>            .unwrap();
+<a href=#520 id=520 data-nosnippet>520</a>        <span class="kw">let </span><span class="kw-2">mut </span>writers = <span class="number">0</span>;
+<a href=#521 id=521 data-nosnippet>521</a>        <span class="kw">for </span>c <span class="kw">in </span>registry.iter() {
+<a href=#522 id=522 data-nosnippet>522</a>            <span class="kw">let </span><span class="prelude-val">Some</span>(tool) = <span class="kw">super</span>::<span class="kw">super</span>::surface::Tool::of(c) <span class="kw">else </span>{
+<a href=#523 id=523 data-nosnippet>523</a>                <span class="kw">continue</span>;
+<a href=#524 id=524 data-nosnippet>524</a>            };
+<a href=#525 id=525 data-nosnippet>525</a>            <span class="kw">let </span>v = tool_json(<span class="kw-2">&amp;</span>tool);
+<a href=#526 id=526 data-nosnippet>526</a>            <span class="kw">let </span>a = <span class="kw-2">&amp;</span>v[<span class="string">"annotations"</span>];
+<a href=#527 id=527 data-nosnippet>527</a>            <span class="kw">let </span>h = c.execution.hints();
+<a href=#528 id=528 data-nosnippet>528</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"readOnlyHint"</span>], h.read_only, <span class="string">"{}"</span>, tool.name);
+<a href=#529 id=529 data-nosnippet>529</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"destructiveHint"</span>], h.destructive, <span class="string">"{}"</span>, tool.name);
+<a href=#530 id=530 data-nosnippet>530</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"idempotentHint"</span>], h.idempotent, <span class="string">"{}"</span>, tool.name);
+<a href=#531 id=531 data-nosnippet>531</a>            <span class="macro">assert_eq!</span>(a[<span class="string">"openWorldHint"</span>], h.open_world, <span class="string">"{}"</span>, tool.name);
+<a href=#532 id=532 data-nosnippet>532</a>            <span class="macro">assert_eq!</span>(
+<a href=#533 id=533 data-nosnippet>533</a>                v[<span class="string">"_meta"</span>][<span class="string">"majordomus"</span>][<span class="string">"effect"</span>],
+<a href=#534 id=534 data-nosnippet>534</a>                serde_json::to_value(c.execution.effect).unwrap(),
+<a href=#535 id=535 data-nosnippet>535</a>                <span class="string">"{}"</span>,
+<a href=#536 id=536 data-nosnippet>536</a>                tool.name
+<a href=#537 id=537 data-nosnippet>537</a>            );
+<a href=#538 id=538 data-nosnippet>538</a>            <span class="kw">if </span>c.execution.effect == <span class="kw">crate</span>::capability::model::Effect::RepositoryMutation {
+<a href=#539 id=539 data-nosnippet>539</a>                writers += <span class="number">1</span>;
+<a href=#540 id=540 data-nosnippet>540</a>                <span class="macro">assert_eq!</span>(
+<a href=#541 id=541 data-nosnippet>541</a>                    a[<span class="string">"readOnlyHint"</span>], <span class="bool-val">false</span>,
+<a href=#542 id=542 data-nosnippet>542</a>                    <span class="string">"{} writes the repository"</span>,
+<a href=#543 id=543 data-nosnippet>543</a>                    tool.name
+<a href=#544 id=544 data-nosnippet>544</a>                );
+<a href=#545 id=545 data-nosnippet>545</a>                <span class="macro">assert_eq!</span>(
+<a href=#546 id=546 data-nosnippet>546</a>                    a[<span class="string">"destructiveHint"</span>], <span class="bool-val">true</span>,
+<a href=#547 id=547 data-nosnippet>547</a>                    <span class="string">"{} writes the repository"</span>,
+<a href=#548 id=548 data-nosnippet>548</a>                    tool.name
+<a href=#549 id=549 data-nosnippet>549</a>                );
+<a href=#550 id=550 data-nosnippet>550</a>                <span class="macro">assert_eq!</span>(
+<a href=#551 id=551 data-nosnippet>551</a>                    a[<span class="string">"idempotentHint"</span>], <span class="bool-val">false</span>,
+<a href=#552 id=552 data-nosnippet>552</a>                    <span class="string">"{} writes the repository"</span>,
+<a href=#553 id=553 data-nosnippet>553</a>                    tool.name
+<a href=#554 id=554 data-nosnippet>554</a>                );
+<a href=#555 id=555 data-nosnippet>555</a>            }
+<a href=#556 id=556 data-nosnippet>556</a>            <span class="kw">if </span>a[<span class="string">"readOnlyHint"</span>] == <span class="bool-val">true </span>{
+<a href=#557 id=557 data-nosnippet>557</a>                <span class="macro">assert_eq!</span>(c.execution.effect, <span class="kw">crate</span>::capability::model::Effect::Read);
+<a href=#558 id=558 data-nosnippet>558</a>            }
+<a href=#559 id=559 data-nosnippet>559</a>        }
+<a href=#560 id=560 data-nosnippet>560</a>        <span class="macro">assert!</span>(
+<a href=#561 id=561 data-nosnippet>561</a>            writers &gt; <span class="number">0</span>,
+<a href=#562 id=562 data-nosnippet>562</a>            <span class="string">"the registry exposes no writing tool, so this proved nothing about one"
+<a href=#563 id=563 data-nosnippet>563</a>        </span>);
+<a href=#564 id=564 data-nosnippet>564</a>    }
+<a href=#565 id=565 data-nosnippet>565</a>
+<a href=#566 id=566 data-nosnippet>566</a>    <span class="doccomment">/// The sentence over a registry this repository does not happen to hold, so that the
+<a href=#567 id=567 data-nosnippet>567</a>    /// assertion above cannot pass merely because the real registry has a writer today: a
+<a href=#568 id=568 data-nosnippet>568</a>    /// registry with nothing in it writes nothing, and says so.
+<a href=#569 id=569 data-nosnippet>569</a>    </span><span class="attr">#[test]
+<a href=#570 id=570 data-nosnippet>570</a>    </span><span class="kw">fn </span>a_registry_with_no_writer_still_says_nothing_writes() {
+<a href=#571 id=571 data-nosnippet>571</a>        <span class="kw">let </span>empty = <span class="kw">crate</span>::capability::CapabilityRegistry::builder()
+<a href=#572 id=572 data-nosnippet>572</a>            .build()
+<a href=#573 id=573 data-nosnippet>573</a>            .unwrap();
+<a href=#574 id=574 data-nosnippet>574</a>        <span class="macro">assert_eq!</span>(
+<a href=#575 id=575 data-nosnippet>575</a>            effects_sentence(<span class="kw-2">&amp;</span>empty),
+<a href=#576 id=576 data-nosnippet>576</a>            <span class="string">"Nothing here writes to the repository."
+<a href=#577 id=577 data-nosnippet>577</a>        </span>);
+<a href=#578 id=578 data-nosnippet>578</a>    }
+<a href=#579 id=579 data-nosnippet>579</a>}
 </code></pre></div></section></main></body></html>

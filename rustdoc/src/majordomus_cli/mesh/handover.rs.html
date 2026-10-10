@@ -217,480 +217,483 @@
 <a href=#217 id=217 data-nosnippet>217</a>    milestone: <span class="prelude-ty">Option</span>&lt;String&gt;,
 <a href=#218 id=218 data-nosnippet>218</a>) -&gt; <span class="prelude-ty">Result</span>&lt;HandoverBody, String&gt; {
 <a href=#219 id=219 data-nosnippet>219</a>    <span class="kw">let </span>(front, body) = read(path)<span class="question-mark">?</span>;
-<a href=#220 id=220 data-nosnippet>220</a>    <span class="kw">if </span>body.trim().is_empty() {
-<a href=#221 id=221 data-nosnippet>221</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{}: the handover has no body"</span>, path.display()));
-<a href=#222 id=222 data-nosnippet>222</a>    }
-<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">if </span>body.len() &gt; MAX_HANDOVER_BYTES {
-<a href=#224 id=224 data-nosnippet>224</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-<a href=#225 id=225 data-nosnippet>225</a>            <span class="string">"{}: a body of {} bytes exceeds the {MAX_HANDOVER_BYTES}-byte bound a mesh handover carries"</span>,
-<a href=#226 id=226 data-nosnippet>226</a>            path.display(),
-<a href=#227 id=227 data-nosnippet>227</a>            body.len()
-<a href=#228 id=228 data-nosnippet>228</a>        ));
-<a href=#229 id=229 data-nosnippet>229</a>    }
-<a href=#230 id=230 data-nosnippet>230</a>    <span class="kw">let </span>fact = |key: <span class="kw-2">&amp;</span>str| {
-<a href=#231 id=231 data-nosnippet>231</a>        front
-<a href=#232 id=232 data-nosnippet>232</a>            .get(key)
-<a href=#233 id=233 data-nosnippet>233</a>            .filter(|v| !v.is_empty() &amp;&amp; <span class="kw-2">*</span>v != <span class="string">"none" </span>&amp;&amp; <span class="kw-2">*</span>v != <span class="string">"NONE"</span>)
-<a href=#234 id=234 data-nosnippet>234</a>            .cloned()
-<a href=#235 id=235 data-nosnippet>235</a>    };
-<a href=#236 id=236 data-nosnippet>236</a>    <span class="prelude-val">Ok</span>(HandoverBody {
-<a href=#237 id=237 data-nosnippet>237</a>        id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
-<a href=#238 id=238 data-nosnippet>238</a>        task: fact(<span class="string">"task_id"</span>),
-<a href=#239 id=239 data-nosnippet>239</a>        issue,
-<a href=#240 id=240 data-nosnippet>240</a>        milestone,
-<a href=#241 id=241 data-nosnippet>241</a>        branch: fact(<span class="string">"branch"</span>).filter(|b| b != <span class="string">"DETACHED"</span>),
-<a href=#242 id=242 data-nosnippet>242</a>        head: fact(<span class="string">"head"</span>),
-<a href=#243 id=243 data-nosnippet>243</a>        created_at: fact(<span class="string">"created_at"</span>),
-<a href=#244 id=244 data-nosnippet>244</a>        name: path
-<a href=#245 id=245 data-nosnippet>245</a>            .file_name()
-<a href=#246 id=246 data-nosnippet>246</a>            .and_then(|n| n.to_str())
-<a href=#247 id=247 data-nosnippet>247</a>            .map(str::to_string),
-<a href=#248 id=248 data-nosnippet>248</a>        body,
-<a href=#249 id=249 data-nosnippet>249</a>    })
-<a href=#250 id=250 data-nosnippet>250</a>}
-<a href=#251 id=251 data-nosnippet>251</a>
-<a href=#252 id=252 data-nosnippet>252</a><span class="doccomment">/// The git common directory of `root`, spelled as the shell resolver spells the local
-<a href=#253 id=253 data-nosnippet>253</a>/// repository id: absolute as git prints it, or joined to the root when relative.
-<a href=#254 id=254 data-nosnippet>254</a></span><span class="kw">fn </span>repository_id(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
-<a href=#255 id=255 data-nosnippet>255</a>    <span class="kw">let </span>out = std::process::Command::new(<span class="string">"git"</span>)
-<a href=#256 id=256 data-nosnippet>256</a>        .arg(<span class="string">"-C"</span>)
-<a href=#257 id=257 data-nosnippet>257</a>        .arg(root)
-<a href=#258 id=258 data-nosnippet>258</a>        .args([<span class="string">"rev-parse"</span>, <span class="string">"--git-common-dir"</span>])
-<a href=#259 id=259 data-nosnippet>259</a>        .output()
-<a href=#260 id=260 data-nosnippet>260</a>        .map_err(|e| <span class="macro">format!</span>(<span class="string">"git: {e}"</span>))<span class="question-mark">?</span>;
-<a href=#261 id=261 data-nosnippet>261</a>    <span class="kw">if </span>!out.status.success() {
-<a href=#262 id=262 data-nosnippet>262</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{} is not a git work tree"</span>, root.display()));
-<a href=#263 id=263 data-nosnippet>263</a>    }
-<a href=#264 id=264 data-nosnippet>264</a>    <span class="kw">let </span>dir = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).trim().to_string();
-<a href=#265 id=265 data-nosnippet>265</a>    <span class="prelude-val">Ok</span>(<span class="kw">if </span>dir.starts_with(<span class="string">'/'</span>) {
-<a href=#266 id=266 data-nosnippet>266</a>        dir
-<a href=#267 id=267 data-nosnippet>267</a>    } <span class="kw">else </span>{
-<a href=#268 id=268 data-nosnippet>268</a>        <span class="macro">format!</span>(<span class="string">"{}/{dir}"</span>, root.display())
-<a href=#269 id=269 data-nosnippet>269</a>    })
-<a href=#270 id=270 data-nosnippet>270</a>}
-<a href=#271 id=271 data-nosnippet>271</a>
-<a href=#272 id=272 data-nosnippet>272</a><span class="doccomment">/// Write a consumed handover into `root`'s handovers directory, or return the record that
-<a href=#273 id=273 data-nosnippet>273</a>/// already holds it. The record's worktree is `mesh:&lt;origin runtime&gt;`: it resolves as
-<a href=#274 id=274 data-nosnippet>274</a>/// another checkout's handover on the same branch.
-<a href=#275 id=275 data-nosnippet>275</a>///
-<a href=#276 id=276 data-nosnippet>276</a>/// This is the half that turns a message into continuity: after it, `majordomus handover
-<a href=#277 id=277 data-nosnippet>277</a>/// --resolve` on this checkout finds the other machine's handover through the ordinary
-<a href=#278 id=278 data-nosnippet>278</a>/// resolution and nothing downstream has to know the mesh exists. It is written to be
-<a href=#279 id=279 data-nosnippet>279</a>/// repeatable — consuming the same handover twice yields the one record — and defensively,
-<a href=#280 id=280 data-nosnippet>280</a>/// because every value in it was written by another runtime: the front matter and the file
-<a href=#281 id=281 data-nosnippet>281</a>/// name admit only what their parts are, so neither a key nor a path can be smuggled in
-<a href=#282 id=282 data-nosnippet>282</a>/// through a branch name or a timestamp.
-<a href=#283 id=283 data-nosnippet>283</a>///
-<a href=#284 id=284 data-nosnippet>284</a>/// ```
-<a href=#285 id=285 data-nosnippet>285</a>/// use majordomus_cli::mesh::handover::{directory, materialize, to_body};
-<a href=#286 id=286 data-nosnippet>286</a>/// use majordomus_cli::mesh::journal::StreamId;
-<a href=#287 id=287 data-nosnippet>287</a>/// use majordomus_cli::mesh::state::HandoverView;
-<a href=#288 id=288 data-nosnippet>288</a>///
-<a href=#289 id=289 data-nosnippet>289</a>/// let tmp = tempfile::tempdir().unwrap();
-<a href=#290 id=290 data-nosnippet>290</a>/// let root = tmp.path().join("checkout");
-<a href=#291 id=291 data-nosnippet>291</a>/// std::fs::create_dir_all(&amp;root).unwrap();
-<a href=#292 id=292 data-nosnippet>292</a>/// assert!(std::process::Command::new("git")
-<a href=#293 id=293 data-nosnippet>293</a>///     .arg("-C").arg(&amp;root).args(["init", "-q"]).status().unwrap().success());
-<a href=#294 id=294 data-nosnippet>294</a>///
-<a href=#295 id=295 data-nosnippet>295</a>/// let src = tmp.path().join("20260915T100000Z--feature-x--abcdef1--0011.md");
-<a href=#296 id=296 data-nosnippet>296</a>/// std::fs::write(&amp;src, "---\nbranch: feature/x\nhead: abcdef1234\n---\n\n# Objective\nship\n")
-<a href=#297 id=297 data-nosnippet>297</a>///     .unwrap();
-<a href=#298 id=298 data-nosnippet>298</a>/// let stream = StreamId::parse(&amp;format!("{}-{}-{}", "a".repeat(32), "b".repeat(16), "c".repeat(16)))
-<a href=#299 id=299 data-nosnippet>299</a>///     .unwrap();
-<a href=#300 id=300 data-nosnippet>300</a>/// let view = HandoverView {
-<a href=#301 id=301 data-nosnippet>301</a>///     id: to_body(&amp;src, None, None).unwrap().id,
-<a href=#302 id=302 data-nosnippet>302</a>///     stream,
-<a href=#303 id=303 data-nosnippet>303</a>///     runtime: format!("{}-{}", "a".repeat(32), "b".repeat(16)),
-<a href=#304 id=304 data-nosnippet>304</a>///     published_lamport: 1,
-<a href=#305 id=305 data-nosnippet>305</a>///     handover: to_body(&amp;src, None, None).unwrap(),
-<a href=#306 id=306 data-nosnippet>306</a>///     consumed_by: vec![],
-<a href=#307 id=307 data-nosnippet>307</a>/// };
-<a href=#308 id=308 data-nosnippet>308</a>///
-<a href=#309 id=309 data-nosnippet>309</a>/// let written = materialize(&amp;root, &amp;view).unwrap();
-<a href=#310 id=310 data-nosnippet>310</a>/// assert_eq!(written.parent(), Some(directory(&amp;root).as_path()));
-<a href=#311 id=311 data-nosnippet>311</a>/// assert_eq!(materialize(&amp;root, &amp;view).unwrap(), written, "one handover, one record");
-<a href=#312 id=312 data-nosnippet>312</a>/// assert!(std::fs::read_to_string(&amp;written).unwrap().contains("worktree: mesh:"));
-<a href=#313 id=313 data-nosnippet>313</a>/// ```
-<a href=#314 id=314 data-nosnippet>314</a></span><span class="kw">pub fn </span>materialize(root: <span class="kw-2">&amp;</span>Path, view: <span class="kw-2">&amp;</span>HandoverView) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, String&gt; {
-<a href=#315 id=315 data-nosnippet>315</a>    write_record(
-<a href=#316 id=316 data-nosnippet>316</a>        root,
-<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw-2">&amp;</span>view.handover,
-<a href=#318 id=318 data-nosnippet>318</a>        <span class="kw-2">&amp;</span>Provenance {
-<a href=#319 id=319 data-nosnippet>319</a>            transport: <span class="string">"mesh"</span>,
-<a href=#320 id=320 data-nosnippet>320</a>            marker_key: <span class="string">"mesh_handover"</span>,
-<a href=#321 id=321 data-nosnippet>321</a>            marker: view.id.clone(),
-<a href=#322 id=322 data-nosnippet>322</a>            origin_key: <span class="string">"mesh_origin"</span>,
-<a href=#323 id=323 data-nosnippet>323</a>            origin: view.runtime.clone(),
-<a href=#324 id=324 data-nosnippet>324</a>            working_tree: <span class="prelude-val">None</span>,
-<a href=#325 id=325 data-nosnippet>325</a>            changed_files: Vec::new(),
-<a href=#326 id=326 data-nosnippet>326</a>        },
-<a href=#327 id=327 data-nosnippet>327</a>    )
-<a href=#328 id=328 data-nosnippet>328</a>}
-<a href=#329 id=329 data-nosnippet>329</a>
-<a href=#330 id=330 data-nosnippet>330</a><span class="doccomment">/// Where a handover written into this checkout came from, and what its front matter says
-<a href=#331 id=331 data-nosnippet>331</a>/// about the source state it was written against. The mesh and a continuity record are the
-<a href=#332 id=332 data-nosnippet>332</a>/// two transports that bring one; both write through [`write_record`], so a handover that
-<a href=#333 id=333 data-nosnippet>333</a>/// arrived from another machine has one shape whichever way it travelled.
-<a href=#334 id=334 data-nosnippet>334</a></span><span class="attr">#[derive(Debug, Clone)]
-<a href=#335 id=335 data-nosnippet>335</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Provenance {
-<a href=#336 id=336 data-nosnippet>336</a>    <span class="doccomment">/// `mesh` or `continuity`: the file-name segment and the prefix of owner and worktree.
-<a href=#337 id=337 data-nosnippet>337</a>    </span><span class="kw">pub </span>transport: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#338 id=338 data-nosnippet>338</a>    <span class="doccomment">/// The front-matter key whose value identifies the handover on its transport; a record
-<a href=#339 id=339 data-nosnippet>339</a>    /// holding `&lt;marker_key&gt;: &lt;marker&gt;` already is this handover, which is what makes
-<a href=#340 id=340 data-nosnippet>340</a>    /// writing it twice write one file.
-<a href=#341 id=341 data-nosnippet>341</a>    </span><span class="kw">pub </span>marker_key: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#342 id=342 data-nosnippet>342</a>    <span class="doccomment">/// That value (32 hex).
-<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="kw">pub </span>marker: String,
-<a href=#344 id=344 data-nosnippet>344</a>    <span class="doccomment">/// The front-matter key naming where it came from.
-<a href=#345 id=345 data-nosnippet>345</a>    </span><span class="kw">pub </span>origin_key: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#346 id=346 data-nosnippet>346</a>    <span class="doccomment">/// Where it came from: a runtime id or a device node id (hex).
-<a href=#347 id=347 data-nosnippet>347</a>    </span><span class="kw">pub </span>origin: String,
-<a href=#348 id=348 data-nosnippet>348</a>    <span class="doccomment">/// `clean` or `dirty` at the origin when the transport carries it. `None` writes
-<a href=#349 id=349 data-nosnippet>349</a>    /// `clean`, as the mesh, which does not carry it, always has.
-<a href=#350 id=350 data-nosnippet>350</a>    </span><span class="kw">pub </span>working_tree: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
-<a href=#351 id=351 data-nosnippet>351</a>    <span class="doccomment">/// The repository-relative paths that differed from HEAD at the origin.
-<a href=#352 id=352 data-nosnippet>352</a>    </span><span class="kw">pub </span>changed_files: Vec&lt;String&gt;,
-<a href=#353 id=353 data-nosnippet>353</a>}
-<a href=#354 id=354 data-nosnippet>354</a>
-<a href=#355 id=355 data-nosnippet>355</a><span class="doccomment">/// Write a handover that arrived from elsewhere into `root`'s handovers directory, or
-<a href=#356 id=356 data-nosnippet>356</a>/// return the record that already holds it. See [`materialize`] for why every value is
-<a href=#357 id=357 data-nosnippet>357</a>/// written defensively.
-<a href=#358 id=358 data-nosnippet>358</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_record(
-<a href=#359 id=359 data-nosnippet>359</a>    root: <span class="kw-2">&amp;</span>Path,
-<a href=#360 id=360 data-nosnippet>360</a>    h: <span class="kw-2">&amp;</span>HandoverBody,
-<a href=#361 id=361 data-nosnippet>361</a>    from: <span class="kw-2">&amp;</span>Provenance,
-<a href=#362 id=362 data-nosnippet>362</a>) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, String&gt; {
-<a href=#363 id=363 data-nosnippet>363</a>    <span class="kw">let </span>dir = directory(root);
-<a href=#364 id=364 data-nosnippet>364</a>    std::fs::create_dir_all(<span class="kw-2">&amp;</span>dir).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, dir.display()))<span class="question-mark">?</span>;
-<a href=#365 id=365 data-nosnippet>365</a>    <span class="kw">let </span>hexish = |v: <span class="kw-2">&amp;</span>str| {
-<a href=#366 id=366 data-nosnippet>366</a>        v.chars()
-<a href=#367 id=367 data-nosnippet>367</a>            .filter(char::is_ascii_hexdigit)
-<a href=#368 id=368 data-nosnippet>368</a>            .take(<span class="number">64</span>)
-<a href=#369 id=369 data-nosnippet>369</a>            .collect::&lt;String&gt;()
-<a href=#370 id=370 data-nosnippet>370</a>    };
-<a href=#371 id=371 data-nosnippet>371</a>    <span class="kw">let </span>marker_value = hexish(<span class="kw-2">&amp;</span>from.marker);
-<a href=#372 id=372 data-nosnippet>372</a>    <span class="kw">let </span>origin = hexish(<span class="kw-2">&amp;</span>from.origin.replace(<span class="string">'-'</span>, <span class="string">""</span>));
-<a href=#373 id=373 data-nosnippet>373</a>    <span class="kw">if </span>marker_value.len() &lt; <span class="number">16 </span>{
-<a href=#374 id=374 data-nosnippet>374</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a handover from elsewhere is identified by at least 16 hex"</span>.into());
-<a href=#375 id=375 data-nosnippet>375</a>    }
-<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">let </span>marker = <span class="macro">format!</span>(<span class="string">"{}: {marker_value}"</span>, from.marker_key);
-<a href=#377 id=377 data-nosnippet>377</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(entries) = std::fs::read_dir(<span class="kw-2">&amp;</span>dir) {
-<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">for </span>entry <span class="kw">in </span>entries.flatten() {
-<a href=#379 id=379 data-nosnippet>379</a>            <span class="kw">let </span>path = entry.path();
-<a href=#380 id=380 data-nosnippet>380</a>            <span class="kw">if </span>path.extension().is_some_and(|x| x == <span class="string">"md"</span>)
-<a href=#381 id=381 data-nosnippet>381</a>                &amp;&amp; std::fs::read_to_string(<span class="kw-2">&amp;</span>path).is_ok_and(|t| t.lines().any(|l| l == marker))
-<a href=#382 id=382 data-nosnippet>382</a>            {
-<a href=#383 id=383 data-nosnippet>383</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(path);
-<a href=#384 id=384 data-nosnippet>384</a>            }
-<a href=#385 id=385 data-nosnippet>385</a>        }
-<a href=#386 id=386 data-nosnippet>386</a>    }
-<a href=#387 id=387 data-nosnippet>387</a>    <span class="comment">// Everything below comes from another runtime. Validation refused multi-line values at
-<a href=#388 id=388 data-nosnippet>388</a>    // ingest; this writes defensively anyway, because a file name and a front matter built
-<a href=#389 id=389 data-nosnippet>389</a>    // from a peer's words are exactly where a path or a key would be smuggled.
-<a href=#390 id=390 data-nosnippet>390</a>    </span><span class="kw">let </span>origin_label = <span class="kw">if </span>from.transport == <span class="string">"mesh" </span>{
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="comment">// the mesh's runtime id keeps its dash, as it always has
-<a href=#392 id=392 data-nosnippet>392</a>        </span>one_line(<span class="kw-2">&amp;</span>from.origin)
-<a href=#393 id=393 data-nosnippet>393</a>            .chars()
-<a href=#394 id=394 data-nosnippet>394</a>            .filter(|c| c.is_ascii_hexdigit() || <span class="kw-2">*</span>c == <span class="string">'-'</span>)
-<a href=#395 id=395 data-nosnippet>395</a>            .collect()
-<a href=#396 id=396 data-nosnippet>396</a>    } <span class="kw">else </span>{
-<a href=#397 id=397 data-nosnippet>397</a>        origin
-<a href=#398 id=398 data-nosnippet>398</a>    };
-<a href=#399 id=399 data-nosnippet>399</a>    <span class="kw">let </span>branch = one_line(h.branch.as_deref().unwrap_or(<span class="string">"DETACHED"</span>));
-<a href=#400 id=400 data-nosnippet>400</a>    <span class="kw">let </span>head = one_line(h.head.as_deref().unwrap_or(<span class="string">"NONE"</span>));
-<a href=#401 id=401 data-nosnippet>401</a>    <span class="kw">let </span>created = one_line(
-<a href=#402 id=402 data-nosnippet>402</a>        <span class="kw-2">&amp;</span>h.created_at
-<a href=#403 id=403 data-nosnippet>403</a>            .clone()
-<a href=#404 id=404 data-nosnippet>404</a>            .unwrap_or_else(|| <span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now())),
-<a href=#405 id=405 data-nosnippet>405</a>    );
-<a href=#406 id=406 data-nosnippet>406</a>    <span class="kw">let </span><span class="kw-2">mut </span>text = String::new();
-<a href=#407 id=407 data-nosnippet>407</a>    text.push_str(<span class="string">"---\nschema_version: 1\n"</span>);
-<a href=#408 id=408 data-nosnippet>408</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"created_at: {created}\n"</span>));
-<a href=#409 id=409 data-nosnippet>409</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="string">"task_id: {}\n"</span>,
-<a href=#411 id=411 data-nosnippet>411</a>        one_line(h.task.as_deref().unwrap_or(<span class="string">"none"</span>))
-<a href=#412 id=412 data-nosnippet>412</a>    ));
-<a href=#413 id=413 data-nosnippet>413</a>    text.push_str(<span class="string">"profile: none\n"</span>);
-<a href=#414 id=414 data-nosnippet>414</a>    <span class="kw">let </span>transport = from.transport;
-<a href=#415 id=415 data-nosnippet>415</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"owner: \"{transport}:{origin_label}\"\n"</span>));
-<a href=#416 id=416 data-nosnippet>416</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"repository_id: {}\n"</span>, repository_id(root)<span class="question-mark">?</span>));
-<a href=#417 id=417 data-nosnippet>417</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"worktree: {transport}:{origin_label}\n"</span>));
-<a href=#418 id=418 data-nosnippet>418</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="string">"branch: {branch}\nhead: {head}\nworking_tree: {}\nchanged_files:\n"</span>,
-<a href=#420 id=420 data-nosnippet>420</a>        from.working_tree.unwrap_or(<span class="string">"clean"</span>)
-<a href=#421 id=421 data-nosnippet>421</a>    ));
-<a href=#422 id=422 data-nosnippet>422</a>    <span class="kw">for </span>path <span class="kw">in </span><span class="kw-2">&amp;</span>from.changed_files {
-<a href=#423 id=423 data-nosnippet>423</a>        <span class="kw">let </span>path = one_line(path);
-<a href=#424 id=424 data-nosnippet>424</a>        <span class="kw">if </span>!path.is_empty() &amp;&amp; !path.starts_with(<span class="string">'/'</span>) &amp;&amp; !path.split(<span class="string">'/'</span>).any(|c| c == <span class="string">".."</span>) {
-<a href=#425 id=425 data-nosnippet>425</a>            text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"  - {path}\n"</span>));
-<a href=#426 id=426 data-nosnippet>426</a>        }
-<a href=#427 id=427 data-nosnippet>427</a>    }
-<a href=#428 id=428 data-nosnippet>428</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{marker}\n{}: {origin_label}\n"</span>, from.origin_key));
-<a href=#429 id=429 data-nosnippet>429</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(issue) = <span class="kw-2">&amp;</span>h.issue {
-<a href=#430 id=430 data-nosnippet>430</a>        text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"issue: \"{}\"\n"</span>, one_line(issue)));
-<a href=#431 id=431 data-nosnippet>431</a>    }
-<a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(milestone) = <span class="kw-2">&amp;</span>h.milestone {
-<a href=#433 id=433 data-nosnippet>433</a>        text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"milestone: \"{}\"\n"</span>, one_line(milestone)));
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="comment">// signed into the journal and replicated to every linked runtime, in clear: a credential
+<a href=#221 id=221 data-nosnippet>221</a>    // the author pasted into the record is replaced by a marker before anything is signed
+<a href=#222 id=222 data-nosnippet>222</a>    </span><span class="kw">let </span>body = <span class="kw">crate</span>::redaction::redact_secrets(<span class="kw-2">&amp;</span>body).text;
+<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">if </span>body.trim().is_empty() {
+<a href=#224 id=224 data-nosnippet>224</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{}: the handover has no body"</span>, path.display()));
+<a href=#225 id=225 data-nosnippet>225</a>    }
+<a href=#226 id=226 data-nosnippet>226</a>    <span class="kw">if </span>body.len() &gt; MAX_HANDOVER_BYTES {
+<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+<a href=#228 id=228 data-nosnippet>228</a>            <span class="string">"{}: a body of {} bytes exceeds the {MAX_HANDOVER_BYTES}-byte bound a mesh handover carries"</span>,
+<a href=#229 id=229 data-nosnippet>229</a>            path.display(),
+<a href=#230 id=230 data-nosnippet>230</a>            body.len()
+<a href=#231 id=231 data-nosnippet>231</a>        ));
+<a href=#232 id=232 data-nosnippet>232</a>    }
+<a href=#233 id=233 data-nosnippet>233</a>    <span class="kw">let </span>fact = |key: <span class="kw-2">&amp;</span>str| {
+<a href=#234 id=234 data-nosnippet>234</a>        front
+<a href=#235 id=235 data-nosnippet>235</a>            .get(key)
+<a href=#236 id=236 data-nosnippet>236</a>            .filter(|v| !v.is_empty() &amp;&amp; <span class="kw-2">*</span>v != <span class="string">"none" </span>&amp;&amp; <span class="kw-2">*</span>v != <span class="string">"NONE"</span>)
+<a href=#237 id=237 data-nosnippet>237</a>            .cloned()
+<a href=#238 id=238 data-nosnippet>238</a>    };
+<a href=#239 id=239 data-nosnippet>239</a>    <span class="prelude-val">Ok</span>(HandoverBody {
+<a href=#240 id=240 data-nosnippet>240</a>        id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
+<a href=#241 id=241 data-nosnippet>241</a>        task: fact(<span class="string">"task_id"</span>),
+<a href=#242 id=242 data-nosnippet>242</a>        issue,
+<a href=#243 id=243 data-nosnippet>243</a>        milestone,
+<a href=#244 id=244 data-nosnippet>244</a>        branch: fact(<span class="string">"branch"</span>).filter(|b| b != <span class="string">"DETACHED"</span>),
+<a href=#245 id=245 data-nosnippet>245</a>        head: fact(<span class="string">"head"</span>),
+<a href=#246 id=246 data-nosnippet>246</a>        created_at: fact(<span class="string">"created_at"</span>),
+<a href=#247 id=247 data-nosnippet>247</a>        name: path
+<a href=#248 id=248 data-nosnippet>248</a>            .file_name()
+<a href=#249 id=249 data-nosnippet>249</a>            .and_then(|n| n.to_str())
+<a href=#250 id=250 data-nosnippet>250</a>            .map(str::to_string),
+<a href=#251 id=251 data-nosnippet>251</a>        body,
+<a href=#252 id=252 data-nosnippet>252</a>    })
+<a href=#253 id=253 data-nosnippet>253</a>}
+<a href=#254 id=254 data-nosnippet>254</a>
+<a href=#255 id=255 data-nosnippet>255</a><span class="doccomment">/// The git common directory of `root`, spelled as the shell resolver spells the local
+<a href=#256 id=256 data-nosnippet>256</a>/// repository id: absolute as git prints it, or joined to the root when relative.
+<a href=#257 id=257 data-nosnippet>257</a></span><span class="kw">fn </span>repository_id(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
+<a href=#258 id=258 data-nosnippet>258</a>    <span class="kw">let </span>out = std::process::Command::new(<span class="string">"git"</span>)
+<a href=#259 id=259 data-nosnippet>259</a>        .arg(<span class="string">"-C"</span>)
+<a href=#260 id=260 data-nosnippet>260</a>        .arg(root)
+<a href=#261 id=261 data-nosnippet>261</a>        .args([<span class="string">"rev-parse"</span>, <span class="string">"--git-common-dir"</span>])
+<a href=#262 id=262 data-nosnippet>262</a>        .output()
+<a href=#263 id=263 data-nosnippet>263</a>        .map_err(|e| <span class="macro">format!</span>(<span class="string">"git: {e}"</span>))<span class="question-mark">?</span>;
+<a href=#264 id=264 data-nosnippet>264</a>    <span class="kw">if </span>!out.status.success() {
+<a href=#265 id=265 data-nosnippet>265</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{} is not a git work tree"</span>, root.display()));
+<a href=#266 id=266 data-nosnippet>266</a>    }
+<a href=#267 id=267 data-nosnippet>267</a>    <span class="kw">let </span>dir = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).trim().to_string();
+<a href=#268 id=268 data-nosnippet>268</a>    <span class="prelude-val">Ok</span>(<span class="kw">if </span>dir.starts_with(<span class="string">'/'</span>) {
+<a href=#269 id=269 data-nosnippet>269</a>        dir
+<a href=#270 id=270 data-nosnippet>270</a>    } <span class="kw">else </span>{
+<a href=#271 id=271 data-nosnippet>271</a>        <span class="macro">format!</span>(<span class="string">"{}/{dir}"</span>, root.display())
+<a href=#272 id=272 data-nosnippet>272</a>    })
+<a href=#273 id=273 data-nosnippet>273</a>}
+<a href=#274 id=274 data-nosnippet>274</a>
+<a href=#275 id=275 data-nosnippet>275</a><span class="doccomment">/// Write a consumed handover into `root`'s handovers directory, or return the record that
+<a href=#276 id=276 data-nosnippet>276</a>/// already holds it. The record's worktree is `mesh:&lt;origin runtime&gt;`: it resolves as
+<a href=#277 id=277 data-nosnippet>277</a>/// another checkout's handover on the same branch.
+<a href=#278 id=278 data-nosnippet>278</a>///
+<a href=#279 id=279 data-nosnippet>279</a>/// This is the half that turns a message into continuity: after it, `majordomus handover
+<a href=#280 id=280 data-nosnippet>280</a>/// --resolve` on this checkout finds the other machine's handover through the ordinary
+<a href=#281 id=281 data-nosnippet>281</a>/// resolution and nothing downstream has to know the mesh exists. It is written to be
+<a href=#282 id=282 data-nosnippet>282</a>/// repeatable — consuming the same handover twice yields the one record — and defensively,
+<a href=#283 id=283 data-nosnippet>283</a>/// because every value in it was written by another runtime: the front matter and the file
+<a href=#284 id=284 data-nosnippet>284</a>/// name admit only what their parts are, so neither a key nor a path can be smuggled in
+<a href=#285 id=285 data-nosnippet>285</a>/// through a branch name or a timestamp.
+<a href=#286 id=286 data-nosnippet>286</a>///
+<a href=#287 id=287 data-nosnippet>287</a>/// ```
+<a href=#288 id=288 data-nosnippet>288</a>/// use majordomus_cli::mesh::handover::{directory, materialize, to_body};
+<a href=#289 id=289 data-nosnippet>289</a>/// use majordomus_cli::mesh::journal::StreamId;
+<a href=#290 id=290 data-nosnippet>290</a>/// use majordomus_cli::mesh::state::HandoverView;
+<a href=#291 id=291 data-nosnippet>291</a>///
+<a href=#292 id=292 data-nosnippet>292</a>/// let tmp = tempfile::tempdir().unwrap();
+<a href=#293 id=293 data-nosnippet>293</a>/// let root = tmp.path().join("checkout");
+<a href=#294 id=294 data-nosnippet>294</a>/// std::fs::create_dir_all(&amp;root).unwrap();
+<a href=#295 id=295 data-nosnippet>295</a>/// assert!(std::process::Command::new("git")
+<a href=#296 id=296 data-nosnippet>296</a>///     .arg("-C").arg(&amp;root).args(["init", "-q"]).status().unwrap().success());
+<a href=#297 id=297 data-nosnippet>297</a>///
+<a href=#298 id=298 data-nosnippet>298</a>/// let src = tmp.path().join("20260915T100000Z--feature-x--abcdef1--0011.md");
+<a href=#299 id=299 data-nosnippet>299</a>/// std::fs::write(&amp;src, "---\nbranch: feature/x\nhead: abcdef1234\n---\n\n# Objective\nship\n")
+<a href=#300 id=300 data-nosnippet>300</a>///     .unwrap();
+<a href=#301 id=301 data-nosnippet>301</a>/// let stream = StreamId::parse(&amp;format!("{}-{}-{}", "a".repeat(32), "b".repeat(16), "c".repeat(16)))
+<a href=#302 id=302 data-nosnippet>302</a>///     .unwrap();
+<a href=#303 id=303 data-nosnippet>303</a>/// let view = HandoverView {
+<a href=#304 id=304 data-nosnippet>304</a>///     id: to_body(&amp;src, None, None).unwrap().id,
+<a href=#305 id=305 data-nosnippet>305</a>///     stream,
+<a href=#306 id=306 data-nosnippet>306</a>///     runtime: format!("{}-{}", "a".repeat(32), "b".repeat(16)),
+<a href=#307 id=307 data-nosnippet>307</a>///     published_lamport: 1,
+<a href=#308 id=308 data-nosnippet>308</a>///     handover: to_body(&amp;src, None, None).unwrap(),
+<a href=#309 id=309 data-nosnippet>309</a>///     consumed_by: vec![],
+<a href=#310 id=310 data-nosnippet>310</a>/// };
+<a href=#311 id=311 data-nosnippet>311</a>///
+<a href=#312 id=312 data-nosnippet>312</a>/// let written = materialize(&amp;root, &amp;view).unwrap();
+<a href=#313 id=313 data-nosnippet>313</a>/// assert_eq!(written.parent(), Some(directory(&amp;root).as_path()));
+<a href=#314 id=314 data-nosnippet>314</a>/// assert_eq!(materialize(&amp;root, &amp;view).unwrap(), written, "one handover, one record");
+<a href=#315 id=315 data-nosnippet>315</a>/// assert!(std::fs::read_to_string(&amp;written).unwrap().contains("worktree: mesh:"));
+<a href=#316 id=316 data-nosnippet>316</a>/// ```
+<a href=#317 id=317 data-nosnippet>317</a></span><span class="kw">pub fn </span>materialize(root: <span class="kw-2">&amp;</span>Path, view: <span class="kw-2">&amp;</span>HandoverView) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, String&gt; {
+<a href=#318 id=318 data-nosnippet>318</a>    write_record(
+<a href=#319 id=319 data-nosnippet>319</a>        root,
+<a href=#320 id=320 data-nosnippet>320</a>        <span class="kw-2">&amp;</span>view.handover,
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw-2">&amp;</span>Provenance {
+<a href=#322 id=322 data-nosnippet>322</a>            transport: <span class="string">"mesh"</span>,
+<a href=#323 id=323 data-nosnippet>323</a>            marker_key: <span class="string">"mesh_handover"</span>,
+<a href=#324 id=324 data-nosnippet>324</a>            marker: view.id.clone(),
+<a href=#325 id=325 data-nosnippet>325</a>            origin_key: <span class="string">"mesh_origin"</span>,
+<a href=#326 id=326 data-nosnippet>326</a>            origin: view.runtime.clone(),
+<a href=#327 id=327 data-nosnippet>327</a>            working_tree: <span class="prelude-val">None</span>,
+<a href=#328 id=328 data-nosnippet>328</a>            changed_files: Vec::new(),
+<a href=#329 id=329 data-nosnippet>329</a>        },
+<a href=#330 id=330 data-nosnippet>330</a>    )
+<a href=#331 id=331 data-nosnippet>331</a>}
+<a href=#332 id=332 data-nosnippet>332</a>
+<a href=#333 id=333 data-nosnippet>333</a><span class="doccomment">/// Where a handover written into this checkout came from, and what its front matter says
+<a href=#334 id=334 data-nosnippet>334</a>/// about the source state it was written against. The mesh and a continuity record are the
+<a href=#335 id=335 data-nosnippet>335</a>/// two transports that bring one; both write through [`write_record`], so a handover that
+<a href=#336 id=336 data-nosnippet>336</a>/// arrived from another machine has one shape whichever way it travelled.
+<a href=#337 id=337 data-nosnippet>337</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#338 id=338 data-nosnippet>338</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Provenance {
+<a href=#339 id=339 data-nosnippet>339</a>    <span class="doccomment">/// `mesh` or `continuity`: the file-name segment and the prefix of owner and worktree.
+<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">pub </span>transport: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#341 id=341 data-nosnippet>341</a>    <span class="doccomment">/// The front-matter key whose value identifies the handover on its transport; a record
+<a href=#342 id=342 data-nosnippet>342</a>    /// holding `&lt;marker_key&gt;: &lt;marker&gt;` already is this handover, which is what makes
+<a href=#343 id=343 data-nosnippet>343</a>    /// writing it twice write one file.
+<a href=#344 id=344 data-nosnippet>344</a>    </span><span class="kw">pub </span>marker_key: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#345 id=345 data-nosnippet>345</a>    <span class="doccomment">/// That value (32 hex).
+<a href=#346 id=346 data-nosnippet>346</a>    </span><span class="kw">pub </span>marker: String,
+<a href=#347 id=347 data-nosnippet>347</a>    <span class="doccomment">/// The front-matter key naming where it came from.
+<a href=#348 id=348 data-nosnippet>348</a>    </span><span class="kw">pub </span>origin_key: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#349 id=349 data-nosnippet>349</a>    <span class="doccomment">/// Where it came from: a runtime id or a device node id (hex).
+<a href=#350 id=350 data-nosnippet>350</a>    </span><span class="kw">pub </span>origin: String,
+<a href=#351 id=351 data-nosnippet>351</a>    <span class="doccomment">/// `clean` or `dirty` at the origin when the transport carries it. `None` writes
+<a href=#352 id=352 data-nosnippet>352</a>    /// `clean`, as the mesh, which does not carry it, always has.
+<a href=#353 id=353 data-nosnippet>353</a>    </span><span class="kw">pub </span>working_tree: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
+<a href=#354 id=354 data-nosnippet>354</a>    <span class="doccomment">/// The repository-relative paths that differed from HEAD at the origin.
+<a href=#355 id=355 data-nosnippet>355</a>    </span><span class="kw">pub </span>changed_files: Vec&lt;String&gt;,
+<a href=#356 id=356 data-nosnippet>356</a>}
+<a href=#357 id=357 data-nosnippet>357</a>
+<a href=#358 id=358 data-nosnippet>358</a><span class="doccomment">/// Write a handover that arrived from elsewhere into `root`'s handovers directory, or
+<a href=#359 id=359 data-nosnippet>359</a>/// return the record that already holds it. See [`materialize`] for why every value is
+<a href=#360 id=360 data-nosnippet>360</a>/// written defensively.
+<a href=#361 id=361 data-nosnippet>361</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_record(
+<a href=#362 id=362 data-nosnippet>362</a>    root: <span class="kw-2">&amp;</span>Path,
+<a href=#363 id=363 data-nosnippet>363</a>    h: <span class="kw-2">&amp;</span>HandoverBody,
+<a href=#364 id=364 data-nosnippet>364</a>    from: <span class="kw-2">&amp;</span>Provenance,
+<a href=#365 id=365 data-nosnippet>365</a>) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, String&gt; {
+<a href=#366 id=366 data-nosnippet>366</a>    <span class="kw">let </span>dir = directory(root);
+<a href=#367 id=367 data-nosnippet>367</a>    std::fs::create_dir_all(<span class="kw-2">&amp;</span>dir).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, dir.display()))<span class="question-mark">?</span>;
+<a href=#368 id=368 data-nosnippet>368</a>    <span class="kw">let </span>hexish = |v: <span class="kw-2">&amp;</span>str| {
+<a href=#369 id=369 data-nosnippet>369</a>        v.chars()
+<a href=#370 id=370 data-nosnippet>370</a>            .filter(char::is_ascii_hexdigit)
+<a href=#371 id=371 data-nosnippet>371</a>            .take(<span class="number">64</span>)
+<a href=#372 id=372 data-nosnippet>372</a>            .collect::&lt;String&gt;()
+<a href=#373 id=373 data-nosnippet>373</a>    };
+<a href=#374 id=374 data-nosnippet>374</a>    <span class="kw">let </span>marker_value = hexish(<span class="kw-2">&amp;</span>from.marker);
+<a href=#375 id=375 data-nosnippet>375</a>    <span class="kw">let </span>origin = hexish(<span class="kw-2">&amp;</span>from.origin.replace(<span class="string">'-'</span>, <span class="string">""</span>));
+<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">if </span>marker_value.len() &lt; <span class="number">16 </span>{
+<a href=#377 id=377 data-nosnippet>377</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a handover from elsewhere is identified by at least 16 hex"</span>.into());
+<a href=#378 id=378 data-nosnippet>378</a>    }
+<a href=#379 id=379 data-nosnippet>379</a>    <span class="kw">let </span>marker = <span class="macro">format!</span>(<span class="string">"{}: {marker_value}"</span>, from.marker_key);
+<a href=#380 id=380 data-nosnippet>380</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(entries) = std::fs::read_dir(<span class="kw-2">&amp;</span>dir) {
+<a href=#381 id=381 data-nosnippet>381</a>        <span class="kw">for </span>entry <span class="kw">in </span>entries.flatten() {
+<a href=#382 id=382 data-nosnippet>382</a>            <span class="kw">let </span>path = entry.path();
+<a href=#383 id=383 data-nosnippet>383</a>            <span class="kw">if </span>path.extension().is_some_and(|x| x == <span class="string">"md"</span>)
+<a href=#384 id=384 data-nosnippet>384</a>                &amp;&amp; std::fs::read_to_string(<span class="kw-2">&amp;</span>path).is_ok_and(|t| t.lines().any(|l| l == marker))
+<a href=#385 id=385 data-nosnippet>385</a>            {
+<a href=#386 id=386 data-nosnippet>386</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(path);
+<a href=#387 id=387 data-nosnippet>387</a>            }
+<a href=#388 id=388 data-nosnippet>388</a>        }
+<a href=#389 id=389 data-nosnippet>389</a>    }
+<a href=#390 id=390 data-nosnippet>390</a>    <span class="comment">// Everything below comes from another runtime. Validation refused multi-line values at
+<a href=#391 id=391 data-nosnippet>391</a>    // ingest; this writes defensively anyway, because a file name and a front matter built
+<a href=#392 id=392 data-nosnippet>392</a>    // from a peer's words are exactly where a path or a key would be smuggled.
+<a href=#393 id=393 data-nosnippet>393</a>    </span><span class="kw">let </span>origin_label = <span class="kw">if </span>from.transport == <span class="string">"mesh" </span>{
+<a href=#394 id=394 data-nosnippet>394</a>        <span class="comment">// the mesh's runtime id keeps its dash, as it always has
+<a href=#395 id=395 data-nosnippet>395</a>        </span>one_line(<span class="kw-2">&amp;</span>from.origin)
+<a href=#396 id=396 data-nosnippet>396</a>            .chars()
+<a href=#397 id=397 data-nosnippet>397</a>            .filter(|c| c.is_ascii_hexdigit() || <span class="kw-2">*</span>c == <span class="string">'-'</span>)
+<a href=#398 id=398 data-nosnippet>398</a>            .collect()
+<a href=#399 id=399 data-nosnippet>399</a>    } <span class="kw">else </span>{
+<a href=#400 id=400 data-nosnippet>400</a>        origin
+<a href=#401 id=401 data-nosnippet>401</a>    };
+<a href=#402 id=402 data-nosnippet>402</a>    <span class="kw">let </span>branch = one_line(h.branch.as_deref().unwrap_or(<span class="string">"DETACHED"</span>));
+<a href=#403 id=403 data-nosnippet>403</a>    <span class="kw">let </span>head = one_line(h.head.as_deref().unwrap_or(<span class="string">"NONE"</span>));
+<a href=#404 id=404 data-nosnippet>404</a>    <span class="kw">let </span>created = one_line(
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw-2">&amp;</span>h.created_at
+<a href=#406 id=406 data-nosnippet>406</a>            .clone()
+<a href=#407 id=407 data-nosnippet>407</a>            .unwrap_or_else(|| <span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now())),
+<a href=#408 id=408 data-nosnippet>408</a>    );
+<a href=#409 id=409 data-nosnippet>409</a>    <span class="kw">let </span><span class="kw-2">mut </span>text = String::new();
+<a href=#410 id=410 data-nosnippet>410</a>    text.push_str(<span class="string">"---\nschema_version: 1\n"</span>);
+<a href=#411 id=411 data-nosnippet>411</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"created_at: {created}\n"</span>));
+<a href=#412 id=412 data-nosnippet>412</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="string">"task_id: {}\n"</span>,
+<a href=#414 id=414 data-nosnippet>414</a>        one_line(h.task.as_deref().unwrap_or(<span class="string">"none"</span>))
+<a href=#415 id=415 data-nosnippet>415</a>    ));
+<a href=#416 id=416 data-nosnippet>416</a>    text.push_str(<span class="string">"profile: none\n"</span>);
+<a href=#417 id=417 data-nosnippet>417</a>    <span class="kw">let </span>transport = from.transport;
+<a href=#418 id=418 data-nosnippet>418</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"owner: \"{transport}:{origin_label}\"\n"</span>));
+<a href=#419 id=419 data-nosnippet>419</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"repository_id: {}\n"</span>, repository_id(root)<span class="question-mark">?</span>));
+<a href=#420 id=420 data-nosnippet>420</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"worktree: {transport}:{origin_label}\n"</span>));
+<a href=#421 id=421 data-nosnippet>421</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="string">"branch: {branch}\nhead: {head}\nworking_tree: {}\nchanged_files:\n"</span>,
+<a href=#423 id=423 data-nosnippet>423</a>        from.working_tree.unwrap_or(<span class="string">"clean"</span>)
+<a href=#424 id=424 data-nosnippet>424</a>    ));
+<a href=#425 id=425 data-nosnippet>425</a>    <span class="kw">for </span>path <span class="kw">in </span><span class="kw-2">&amp;</span>from.changed_files {
+<a href=#426 id=426 data-nosnippet>426</a>        <span class="kw">let </span>path = one_line(path);
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">if </span>!path.is_empty() &amp;&amp; !path.starts_with(<span class="string">'/'</span>) &amp;&amp; !path.split(<span class="string">'/'</span>).any(|c| c == <span class="string">".."</span>) {
+<a href=#428 id=428 data-nosnippet>428</a>            text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"  - {path}\n"</span>));
+<a href=#429 id=429 data-nosnippet>429</a>        }
+<a href=#430 id=430 data-nosnippet>430</a>    }
+<a href=#431 id=431 data-nosnippet>431</a>    text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{marker}\n{}: {origin_label}\n"</span>, from.origin_key));
+<a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(issue) = <span class="kw-2">&amp;</span>h.issue {
+<a href=#433 id=433 data-nosnippet>433</a>        text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"issue: \"{}\"\n"</span>, one_line(issue)));
 <a href=#434 id=434 data-nosnippet>434</a>    }
-<a href=#435 id=435 data-nosnippet>435</a>    text.push_str(<span class="string">"---\n\n"</span>);
-<a href=#436 id=436 data-nosnippet>436</a>    text.push_str(<span class="kw-2">&amp;</span>h.body);
-<a href=#437 id=437 data-nosnippet>437</a>    <span class="comment">// The file name admits only what its parts are: digits and T/Z of a timestamp, hex of a
-<a href=#438 id=438 data-nosnippet>438</a>    // commit, a branch key of [A-Za-z0-9_-] (no dots, so never `..`), hex of the id.
-<a href=#439 id=439 data-nosnippet>439</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>compact: String = created
-<a href=#440 id=440 data-nosnippet>440</a>        .chars()
-<a href=#441 id=441 data-nosnippet>441</a>        .filter(|c| c.is_ascii_digit() || <span class="kw-2">*</span>c == <span class="string">'T' </span>|| <span class="kw-2">*</span>c == <span class="string">'Z'</span>)
-<a href=#442 id=442 data-nosnippet>442</a>        .take(<span class="number">16</span>)
-<a href=#443 id=443 data-nosnippet>443</a>        .collect();
-<a href=#444 id=444 data-nosnippet>444</a>    <span class="kw">if </span>compact.is_empty() {
-<a href=#445 id=445 data-nosnippet>445</a>        compact = <span class="string">"00000000T000000Z"</span>.into();
-<a href=#446 id=446 data-nosnippet>446</a>    }
-<a href=#447 id=447 data-nosnippet>447</a>    <span class="kw">let </span>branch_key: String = branch
-<a href=#448 id=448 data-nosnippet>448</a>        .chars()
-<a href=#449 id=449 data-nosnippet>449</a>        .map(|c| {
-<a href=#450 id=450 data-nosnippet>450</a>            <span class="kw">if </span>c.is_ascii_alphanumeric() || c == <span class="string">'_' </span>|| c == <span class="string">'-' </span>{
-<a href=#451 id=451 data-nosnippet>451</a>                c
-<a href=#452 id=452 data-nosnippet>452</a>            } <span class="kw">else </span>{
-<a href=#453 id=453 data-nosnippet>453</a>                <span class="string">'-'
-<a href=#454 id=454 data-nosnippet>454</a>            </span>}
-<a href=#455 id=455 data-nosnippet>455</a>        })
-<a href=#456 id=456 data-nosnippet>456</a>        .take(<span class="number">64</span>)
-<a href=#457 id=457 data-nosnippet>457</a>        .collect();
-<a href=#458 id=458 data-nosnippet>458</a>    <span class="kw">let </span><span class="kw-2">mut </span>head7: String = head
-<a href=#459 id=459 data-nosnippet>459</a>        .chars()
-<a href=#460 id=460 data-nosnippet>460</a>        .filter(char::is_ascii_hexdigit)
-<a href=#461 id=461 data-nosnippet>461</a>        .take(<span class="number">7</span>)
-<a href=#462 id=462 data-nosnippet>462</a>        .collect();
-<a href=#463 id=463 data-nosnippet>463</a>    <span class="kw">if </span>head7.is_empty() {
-<a href=#464 id=464 data-nosnippet>464</a>        head7 = <span class="string">"0000000"</span>.into();
-<a href=#465 id=465 data-nosnippet>465</a>    }
-<a href=#466 id=466 data-nosnippet>466</a>    <span class="kw">let </span>name = <span class="macro">format!</span>(
-<a href=#467 id=467 data-nosnippet>467</a>        <span class="string">"{compact}--{transport}--{branch_key}--{head7}--{}.md"</span>,
-<a href=#468 id=468 data-nosnippet>468</a>        <span class="kw-2">&amp;</span>marker_value[..<span class="number">16</span>]
-<a href=#469 id=469 data-nosnippet>469</a>    );
-<a href=#470 id=470 data-nosnippet>470</a>    <span class="kw">let </span>path = dir.join(<span class="kw-2">&amp;</span>name);
-<a href=#471 id=471 data-nosnippet>471</a>    <span class="kw">if </span>name.contains(<span class="string">'/'</span>) || path.parent() != <span class="prelude-val">Some</span>(dir.as_path()) {
-<a href=#472 id=472 data-nosnippet>472</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-<a href=#473 id=473 data-nosnippet>473</a>            <span class="string">"refusing to write a handover outside {}"</span>,
-<a href=#474 id=474 data-nosnippet>474</a>            dir.display()
-<a href=#475 id=475 data-nosnippet>475</a>        ));
-<a href=#476 id=476 data-nosnippet>476</a>    }
-<a href=#477 id=477 data-nosnippet>477</a>    <span class="kw">let </span>tmp = dir.join(<span class="macro">format!</span>(<span class="string">".tmp.{transport}.{}"</span>, <span class="kw-2">&amp;</span>marker_value[..<span class="number">16</span>]));
-<a href=#478 id=478 data-nosnippet>478</a>    std::fs::write(<span class="kw-2">&amp;</span>tmp, text).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, tmp.display()))<span class="question-mark">?</span>;
-<a href=#479 id=479 data-nosnippet>479</a>    <span class="attr">#[cfg(unix)]
-<a href=#480 id=480 data-nosnippet>480</a>    </span>{
-<a href=#481 id=481 data-nosnippet>481</a>        <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
-<a href=#482 id=482 data-nosnippet>482</a>        <span class="kw">let _ </span>= std::fs::set_permissions(<span class="kw-2">&amp;</span>tmp, std::fs::Permissions::from_mode(<span class="number">0o600</span>));
-<a href=#483 id=483 data-nosnippet>483</a>    }
-<a href=#484 id=484 data-nosnippet>484</a>    std::fs::rename(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span>path).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, path.display()))<span class="question-mark">?</span>;
-<a href=#485 id=485 data-nosnippet>485</a>    <span class="prelude-val">Ok</span>(path)
-<a href=#486 id=486 data-nosnippet>486</a>}
-<a href=#487 id=487 data-nosnippet>487</a>
-<a href=#488 id=488 data-nosnippet>488</a><span class="attr">#[cfg(test)]
-<a href=#489 id=489 data-nosnippet>489</a></span><span class="kw">mod </span>tests {
-<a href=#490 id=490 data-nosnippet>490</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#491 id=491 data-nosnippet>491</a>    <span class="kw">use </span><span class="kw">crate</span>::mesh::journal::StreamId;
-<a href=#492 id=492 data-nosnippet>492</a>
-<a href=#493 id=493 data-nosnippet>493</a>    <span class="kw">const </span>RECORD: <span class="kw-2">&amp;</span>str = <span class="string">"---\nschema_version: 1\ncreated_at: 2026-09-15T10:00:00Z\ntask_id: t-1\nprofile: implementation\nowner: \"k\"\nrepository_id: /somewhere/.git\nworktree: /somewhere\nbranch: feature/x\nhead: abcdef1234\nworking_tree: dirty\nchanged_files:\n  - apps/x.rs\n---\n\n# Objective\nship\n# Current State\nhalf\n# Next Action\nrest\n"</span>;
-<a href=#494 id=494 data-nosnippet>494</a>
-<a href=#495 id=495 data-nosnippet>495</a>    <span class="attr">#[test]
-<a href=#496 id=496 data-nosnippet>496</a>    </span><span class="kw">fn </span>two_records_of_one_second_resolve_to_the_later_write_not_the_larger_suffix() {
-<a href=#497 id=497 data-nosnippet>497</a>        <span class="kw">let </span>root = tempfile::tempdir().unwrap();
-<a href=#498 id=498 data-nosnippet>498</a>        <span class="kw">let </span>dir = directory(root.path());
-<a href=#499 id=499 data-nosnippet>499</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>dir).unwrap();
-<a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">let </span>earlier = dir.join(<span class="string">"20261004T010000Z--b--0000000--ffff.md"</span>);
-<a href=#501 id=501 data-nosnippet>501</a>        <span class="kw">let </span>later = dir.join(<span class="string">"20261004T010000Z--b--0000000--0000.md"</span>);
-<a href=#502 id=502 data-nosnippet>502</a>        std::fs::write(<span class="kw-2">&amp;</span>earlier, <span class="string">"---\n---\nfirst"</span>).unwrap();
-<a href=#503 id=503 data-nosnippet>503</a>        std::fs::write(<span class="kw-2">&amp;</span>later, <span class="string">"---\n---\nsecond"</span>).unwrap();
-<a href=#504 id=504 data-nosnippet>504</a>        <span class="kw">let </span>at = std::time::SystemTime::now();
-<a href=#505 id=505 data-nosnippet>505</a>        <span class="kw">let </span>set = |p: <span class="kw-2">&amp;</span>Path, t: std::time::SystemTime| {
-<a href=#506 id=506 data-nosnippet>506</a>            std::fs::File::options()
-<a href=#507 id=507 data-nosnippet>507</a>                .write(<span class="bool-val">true</span>)
-<a href=#508 id=508 data-nosnippet>508</a>                .open(p)
-<a href=#509 id=509 data-nosnippet>509</a>                .unwrap()
-<a href=#510 id=510 data-nosnippet>510</a>                .set_modified(t)
-<a href=#511 id=511 data-nosnippet>511</a>                .unwrap();
-<a href=#512 id=512 data-nosnippet>512</a>        };
-<a href=#513 id=513 data-nosnippet>513</a>        set(<span class="kw-2">&amp;</span>earlier, at - std::time::Duration::from_millis(<span class="number">500</span>));
-<a href=#514 id=514 data-nosnippet>514</a>        set(<span class="kw-2">&amp;</span>later, at);
-<a href=#515 id=515 data-nosnippet>515</a>        <span class="macro">assert_eq!</span>(
-<a href=#516 id=516 data-nosnippet>516</a>            latest(root.path()).unwrap(),
-<a href=#517 id=517 data-nosnippet>517</a>            later,
-<a href=#518 id=518 data-nosnippet>518</a>            <span class="string">"the suffix orders nothing"
-<a href=#519 id=519 data-nosnippet>519</a>        </span>);
-<a href=#520 id=520 data-nosnippet>520</a>        <span class="comment">// and a record of a later second still wins whatever its write time
-<a href=#521 id=521 data-nosnippet>521</a>        </span><span class="kw">let </span>next = dir.join(<span class="string">"20261004T010001Z--b--0000000--0000.md"</span>);
-<a href=#522 id=522 data-nosnippet>522</a>        std::fs::write(<span class="kw-2">&amp;</span>next, <span class="string">"---\n---\nthird"</span>).unwrap();
-<a href=#523 id=523 data-nosnippet>523</a>        set(<span class="kw-2">&amp;</span>next, at - std::time::Duration::from_secs(<span class="number">60</span>));
-<a href=#524 id=524 data-nosnippet>524</a>        <span class="macro">assert_eq!</span>(latest(root.path()).unwrap(), next);
-<a href=#525 id=525 data-nosnippet>525</a>    }
-<a href=#526 id=526 data-nosnippet>526</a>
-<a href=#527 id=527 data-nosnippet>527</a>    <span class="attr">#[test]
-<a href=#528 id=528 data-nosnippet>528</a>    </span><span class="kw">fn </span>a_hostile_handover_is_written_inside_the_directory_with_no_injected_keys() {
-<a href=#529 id=529 data-nosnippet>529</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#530 id=530 data-nosnippet>530</a>        <span class="kw">let </span>root = dir.path().join(<span class="string">"checkout"</span>);
-<a href=#531 id=531 data-nosnippet>531</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>root).unwrap();
-<a href=#532 id=532 data-nosnippet>532</a>        <span class="macro">assert!</span>(std::process::Command::new(<span class="string">"git"</span>)
-<a href=#533 id=533 data-nosnippet>533</a>            .arg(<span class="string">"-C"</span>)
-<a href=#534 id=534 data-nosnippet>534</a>            .arg(<span class="kw-2">&amp;</span>root)
-<a href=#535 id=535 data-nosnippet>535</a>            .args([<span class="string">"init"</span>, <span class="string">"-q"</span>])
-<a href=#536 id=536 data-nosnippet>536</a>            .status()
-<a href=#537 id=537 data-nosnippet>537</a>            .unwrap()
-<a href=#538 id=538 data-nosnippet>538</a>            .success());
-<a href=#539 id=539 data-nosnippet>539</a>        <span class="kw">let </span>body = <span class="string">"# Objective\nx\n"</span>.to_string();
-<a href=#540 id=540 data-nosnippet>540</a>        <span class="kw">let </span>view = HandoverView {
-<a href=#541 id=541 data-nosnippet>541</a>            id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
-<a href=#542 id=542 data-nosnippet>542</a>            stream: StreamId::parse(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#543 id=543 data-nosnippet>543</a>                <span class="string">"{}-{}-{}"</span>,
-<a href=#544 id=544 data-nosnippet>544</a>                <span class="string">"a"</span>.repeat(<span class="number">32</span>),
-<a href=#545 id=545 data-nosnippet>545</a>                <span class="string">"b"</span>.repeat(<span class="number">16</span>),
-<a href=#546 id=546 data-nosnippet>546</a>                <span class="string">"c"</span>.repeat(<span class="number">16</span>)
-<a href=#547 id=547 data-nosnippet>547</a>            ))
-<a href=#548 id=548 data-nosnippet>548</a>            .unwrap(),
-<a href=#549 id=549 data-nosnippet>549</a>            runtime: <span class="macro">format!</span>(<span class="string">"{}-{}"</span>, <span class="string">"a"</span>.repeat(<span class="number">32</span>), <span class="string">"b"</span>.repeat(<span class="number">16</span>)),
-<a href=#550 id=550 data-nosnippet>550</a>            published_lamport: <span class="number">1</span>,
-<a href=#551 id=551 data-nosnippet>551</a>            handover: HandoverBody {
-<a href=#552 id=552 data-nosnippet>552</a>                id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
-<a href=#553 id=553 data-nosnippet>553</a>                task: <span class="prelude-val">Some</span>(<span class="string">"t\nrepository_id: evil"</span>.into()),
-<a href=#554 id=554 data-nosnippet>554</a>                issue: <span class="prelude-val">Some</span>(<span class="string">"\"#1\"\nworktree: evil"</span>.into()),
-<a href=#555 id=555 data-nosnippet>555</a>                milestone: <span class="prelude-val">None</span>,
-<a href=#556 id=556 data-nosnippet>556</a>                branch: <span class="prelude-val">Some</span>(<span class="string">"../../../../.claude/commands"</span>.into()),
-<a href=#557 id=557 data-nosnippet>557</a>                head: <span class="prelude-val">Some</span>(<span class="string">"../x\n---"</span>.into()),
-<a href=#558 id=558 data-nosnippet>558</a>                created_at: <span class="prelude-val">Some</span>(<span class="string">"../../../../.claude/commands/pwn\nowner: evil"</span>.into()),
-<a href=#559 id=559 data-nosnippet>559</a>                name: <span class="prelude-val">None</span>,
-<a href=#560 id=560 data-nosnippet>560</a>                body,
-<a href=#561 id=561 data-nosnippet>561</a>            },
-<a href=#562 id=562 data-nosnippet>562</a>            consumed_by: <span class="macro">vec!</span>[],
-<a href=#563 id=563 data-nosnippet>563</a>        };
-<a href=#564 id=564 data-nosnippet>564</a>        <span class="kw">let </span>path = materialize(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>view).unwrap();
-<a href=#565 id=565 data-nosnippet>565</a>        <span class="macro">assert_eq!</span>(path.parent(), <span class="prelude-val">Some</span>(directory(<span class="kw-2">&amp;</span>root).as_path()));
-<a href=#566 id=566 data-nosnippet>566</a>        <span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>path).unwrap();
-<a href=#567 id=567 data-nosnippet>567</a>        <span class="kw">let </span>front = text.split(<span class="string">"\n---\n"</span>).next().unwrap();
-<a href=#568 id=568 data-nosnippet>568</a>        <span class="macro">assert!</span>(!front.contains(<span class="string">"\nrepository_id: evil"</span>));
-<a href=#569 id=569 data-nosnippet>569</a>        <span class="macro">assert!</span>(!front.contains(<span class="string">"\nworktree: evil"</span>));
-<a href=#570 id=570 data-nosnippet>570</a>        <span class="macro">assert!</span>(!front.contains(<span class="string">"\nowner: evil"</span>));
-<a href=#571 id=571 data-nosnippet>571</a>        <span class="macro">assert!</span>(!root.join(<span class="string">".claude"</span>).exists());
-<a href=#572 id=572 data-nosnippet>572</a>        <span class="comment">// And validation refuses the same handover before it is ever stored.
-<a href=#573 id=573 data-nosnippet>573</a>        </span><span class="macro">assert!</span>(<span class="kw">crate</span>::mesh::journal::EventBody::HandoverPublished {
-<a href=#574 id=574 data-nosnippet>574</a>            handover: view.handover.clone()
-<a href=#575 id=575 data-nosnippet>575</a>        }
-<a href=#576 id=576 data-nosnippet>576</a>        .validate()
-<a href=#577 id=577 data-nosnippet>577</a>        .is_err());
-<a href=#578 id=578 data-nosnippet>578</a>    }
-<a href=#579 id=579 data-nosnippet>579</a>
-<a href=#580 id=580 data-nosnippet>580</a>    <span class="attr">#[test]
-<a href=#581 id=581 data-nosnippet>581</a>    </span><span class="kw">fn </span>a_record_reads_into_a_bounded_body_without_its_paths() {
-<a href=#582 id=582 data-nosnippet>582</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#583 id=583 data-nosnippet>583</a>        <span class="kw">let </span>path = dir
-<a href=#584 id=584 data-nosnippet>584</a>            .path()
-<a href=#585 id=585 data-nosnippet>585</a>            .join(<span class="string">"20260915T100000Z--feature-x--abcdef1--0011.md"</span>);
-<a href=#586 id=586 data-nosnippet>586</a>        std::fs::write(<span class="kw-2">&amp;</span>path, RECORD).unwrap();
-<a href=#587 id=587 data-nosnippet>587</a>        <span class="kw">let </span>body = to_body(<span class="kw-2">&amp;</span>path, <span class="prelude-val">Some</span>(<span class="string">"#184"</span>.into()), <span class="prelude-val">None</span>).unwrap();
-<a href=#588 id=588 data-nosnippet>588</a>        <span class="macro">assert_eq!</span>(body.task.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"t-1"</span>));
-<a href=#589 id=589 data-nosnippet>589</a>        <span class="macro">assert_eq!</span>(body.branch.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"feature/x"</span>));
-<a href=#590 id=590 data-nosnippet>590</a>        <span class="macro">assert_eq!</span>(body.issue.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"#184"</span>));
-<a href=#591 id=591 data-nosnippet>591</a>        <span class="macro">assert!</span>(body.body.starts_with(<span class="string">"# Objective"</span>));
-<a href=#592 id=592 data-nosnippet>592</a>        <span class="macro">assert_eq!</span>(body.id, HandoverBody::digest_of(<span class="kw-2">&amp;</span>body.body));
-<a href=#593 id=593 data-nosnippet>593</a>        <span class="kw">let </span>json = serde_json::to_string(<span class="kw-2">&amp;</span>body).unwrap();
-<a href=#594 id=594 data-nosnippet>594</a>        <span class="macro">assert!</span>(
-<a href=#595 id=595 data-nosnippet>595</a>            !json.contains(<span class="string">"/somewhere"</span>),
-<a href=#596 id=596 data-nosnippet>596</a>            <span class="string">"no path of the author's disk travels"
-<a href=#597 id=597 data-nosnippet>597</a>        </span>);
-<a href=#598 id=598 data-nosnippet>598</a>    }
-<a href=#599 id=599 data-nosnippet>599</a>
-<a href=#600 id=600 data-nosnippet>600</a>    <span class="attr">#[test]
-<a href=#601 id=601 data-nosnippet>601</a>    </span><span class="kw">fn </span>materializing_twice_writes_one_record_the_resolver_can_read() {
-<a href=#602 id=602 data-nosnippet>602</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#603 id=603 data-nosnippet>603</a>        <span class="kw">let </span>root = dir.path().join(<span class="string">"checkout"</span>);
-<a href=#604 id=604 data-nosnippet>604</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>root).unwrap();
-<a href=#605 id=605 data-nosnippet>605</a>        <span class="macro">assert!</span>(std::process::Command::new(<span class="string">"git"</span>)
-<a href=#606 id=606 data-nosnippet>606</a>            .arg(<span class="string">"-C"</span>)
-<a href=#607 id=607 data-nosnippet>607</a>            .arg(<span class="kw-2">&amp;</span>root)
-<a href=#608 id=608 data-nosnippet>608</a>            .args([<span class="string">"init"</span>, <span class="string">"-q"</span>])
-<a href=#609 id=609 data-nosnippet>609</a>            .status()
-<a href=#610 id=610 data-nosnippet>610</a>            .unwrap()
-<a href=#611 id=611 data-nosnippet>611</a>            .success());
-<a href=#612 id=612 data-nosnippet>612</a>        <span class="kw">let </span>src = dir
-<a href=#613 id=613 data-nosnippet>613</a>            .path()
-<a href=#614 id=614 data-nosnippet>614</a>            .join(<span class="string">"20260915T100000Z--feature-x--abcdef1--0011.md"</span>);
-<a href=#615 id=615 data-nosnippet>615</a>        std::fs::write(<span class="kw-2">&amp;</span>src, RECORD).unwrap();
-<a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">let </span>body = to_body(<span class="kw-2">&amp;</span>src, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).unwrap();
-<a href=#617 id=617 data-nosnippet>617</a>        <span class="kw">let </span>view = HandoverView {
-<a href=#618 id=618 data-nosnippet>618</a>            id: body.id.clone(),
-<a href=#619 id=619 data-nosnippet>619</a>            stream: StreamId::parse(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#620 id=620 data-nosnippet>620</a>                <span class="string">"{}-{}-{}"</span>,
-<a href=#621 id=621 data-nosnippet>621</a>                <span class="string">"a"</span>.repeat(<span class="number">32</span>),
-<a href=#622 id=622 data-nosnippet>622</a>                <span class="string">"b"</span>.repeat(<span class="number">16</span>),
-<a href=#623 id=623 data-nosnippet>623</a>                <span class="string">"c"</span>.repeat(<span class="number">16</span>)
-<a href=#624 id=624 data-nosnippet>624</a>            ))
-<a href=#625 id=625 data-nosnippet>625</a>            .unwrap(),
-<a href=#626 id=626 data-nosnippet>626</a>            runtime: <span class="macro">format!</span>(<span class="string">"{}-{}"</span>, <span class="string">"a"</span>.repeat(<span class="number">32</span>), <span class="string">"b"</span>.repeat(<span class="number">16</span>)),
-<a href=#627 id=627 data-nosnippet>627</a>            published_lamport: <span class="number">1</span>,
-<a href=#628 id=628 data-nosnippet>628</a>            handover: body,
-<a href=#629 id=629 data-nosnippet>629</a>            consumed_by: <span class="macro">vec!</span>[],
-<a href=#630 id=630 data-nosnippet>630</a>        };
-<a href=#631 id=631 data-nosnippet>631</a>        <span class="kw">let </span>first = materialize(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>view).unwrap();
-<a href=#632 id=632 data-nosnippet>632</a>        <span class="kw">let </span>second = materialize(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>view).unwrap();
-<a href=#633 id=633 data-nosnippet>633</a>        <span class="macro">assert_eq!</span>(first, second, <span class="string">"one handover, one record"</span>);
-<a href=#634 id=634 data-nosnippet>634</a>        <span class="kw">let </span>(front, text) = read(<span class="kw-2">&amp;</span>first).unwrap();
-<a href=#635 id=635 data-nosnippet>635</a>        <span class="macro">assert_eq!</span>(front[<span class="string">"schema_version"</span>], <span class="string">"1"</span>);
-<a href=#636 id=636 data-nosnippet>636</a>        <span class="macro">assert_eq!</span>(front[<span class="string">"branch"</span>], <span class="string">"feature/x"</span>);
-<a href=#637 id=637 data-nosnippet>637</a>        <span class="macro">assert_eq!</span>(front[<span class="string">"head"</span>], <span class="string">"abcdef1234"</span>);
-<a href=#638 id=638 data-nosnippet>638</a>        <span class="macro">assert!</span>(front[<span class="string">"worktree"</span>].starts_with(<span class="string">"mesh:"</span>));
-<a href=#639 id=639 data-nosnippet>639</a>        <span class="macro">assert!</span>(front[<span class="string">"repository_id"</span>].ends_with(<span class="string">".git"</span>));
-<a href=#640 id=640 data-nosnippet>640</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"# Next Action"</span>));
-<a href=#641 id=641 data-nosnippet>641</a>        <span class="macro">assert_eq!</span>(latest(<span class="kw-2">&amp;</span>root).unwrap(), first);
-<a href=#642 id=642 data-nosnippet>642</a>    }
-<a href=#643 id=643 data-nosnippet>643</a>
-<a href=#644 id=644 data-nosnippet>644</a>    <span class="doccomment">/// A handover that arrived from elsewhere is written with what its transport says about
-<a href=#645 id=645 data-nosnippet>645</a>    /// the source it was written against — and with nothing of it that names a place outside
-<a href=#646 id=646 data-nosnippet>646</a>    /// the repository.
-<a href=#647 id=647 data-nosnippet>647</a>    </span><span class="attr">#[test]
-<a href=#648 id=648 data-nosnippet>648</a>    </span><span class="kw">fn </span>a_record_from_elsewhere_carries_its_source_state_and_only_repository_paths() {
-<a href=#649 id=649 data-nosnippet>649</a>        <span class="kw">let </span>w = <span class="kw">crate</span>::continuity::tests_support::World::new();
-<a href=#650 id=650 data-nosnippet>650</a>        <span class="kw">let </span>root = w.root(<span class="string">"a"</span>);
-<a href=#651 id=651 data-nosnippet>651</a>        <span class="kw">let </span>body = <span class="string">"# Objective\nship\n\n# Next Action\nrest\n"</span>.to_string();
-<a href=#652 id=652 data-nosnippet>652</a>        <span class="kw">let </span>h = HandoverBody {
-<a href=#653 id=653 data-nosnippet>653</a>            id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
-<a href=#654 id=654 data-nosnippet>654</a>            task: <span class="prelude-val">None</span>,
-<a href=#655 id=655 data-nosnippet>655</a>            issue: <span class="prelude-val">None</span>,
-<a href=#656 id=656 data-nosnippet>656</a>            milestone: <span class="prelude-val">None</span>,
-<a href=#657 id=657 data-nosnippet>657</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"feature/x"</span>.into()),
-<a href=#658 id=658 data-nosnippet>658</a>            head: <span class="prelude-val">Some</span>(<span class="string">"abcdef1234"</span>.into()),
-<a href=#659 id=659 data-nosnippet>659</a>            created_at: <span class="prelude-val">Some</span>(<span class="string">"2026-10-03T12:00:00Z"</span>.into()),
-<a href=#660 id=660 data-nosnippet>660</a>            name: <span class="prelude-val">None</span>,
-<a href=#661 id=661 data-nosnippet>661</a>            body,
-<a href=#662 id=662 data-nosnippet>662</a>        };
-<a href=#663 id=663 data-nosnippet>663</a>        <span class="kw">let </span>from = |marker: <span class="kw-2">&amp;</span>str| Provenance {
-<a href=#664 id=664 data-nosnippet>664</a>            transport: <span class="string">"continuity"</span>,
-<a href=#665 id=665 data-nosnippet>665</a>            marker_key: <span class="string">"continuity_record"</span>,
-<a href=#666 id=666 data-nosnippet>666</a>            marker: marker.into(),
-<a href=#667 id=667 data-nosnippet>667</a>            origin_key: <span class="string">"continuity_device"</span>,
-<a href=#668 id=668 data-nosnippet>668</a>            origin: <span class="string">"b"</span>.repeat(<span class="number">32</span>),
-<a href=#669 id=669 data-nosnippet>669</a>            working_tree: <span class="prelude-val">Some</span>(<span class="string">"dirty"</span>),
-<a href=#670 id=670 data-nosnippet>670</a>            changed_files: <span class="macro">vec!</span>[
-<a href=#671 id=671 data-nosnippet>671</a>                <span class="string">"lib/a.rs"</span>.into(),
-<a href=#672 id=672 data-nosnippet>672</a>                <span class="string">"/etc/passwd"</span>.into(),
-<a href=#673 id=673 data-nosnippet>673</a>                <span class="string">"../outside"</span>.into(),
-<a href=#674 id=674 data-nosnippet>674</a>                String::new(),
-<a href=#675 id=675 data-nosnippet>675</a>            ],
-<a href=#676 id=676 data-nosnippet>676</a>        };
-<a href=#677 id=677 data-nosnippet>677</a>        <span class="kw">let </span>err = write_record(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;</span>from(<span class="string">"abc"</span>)).unwrap_err();
-<a href=#678 id=678 data-nosnippet>678</a>        <span class="macro">assert!</span>(err.contains(<span class="string">"at least 16 hex"</span>), <span class="string">"{err}"</span>);
-<a href=#679 id=679 data-nosnippet>679</a>
-<a href=#680 id=680 data-nosnippet>680</a>        <span class="kw">let </span>written = write_record(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;</span>from(<span class="kw-2">&amp;</span><span class="string">"a"</span>.repeat(<span class="number">32</span>))).unwrap();
-<a href=#681 id=681 data-nosnippet>681</a>        <span class="kw">let </span>(front, text) = read(<span class="kw-2">&amp;</span>written).unwrap();
-<a href=#682 id=682 data-nosnippet>682</a>        <span class="macro">assert_eq!</span>(front.get(<span class="string">"working_tree"</span>).map(String::as_str), <span class="prelude-val">Some</span>(<span class="string">"dirty"</span>));
-<a href=#683 id=683 data-nosnippet>683</a>        <span class="macro">assert!</span>(text.starts_with(<span class="string">"# Objective"</span>));
-<a href=#684 id=684 data-nosnippet>684</a>        <span class="kw">let </span>whole = std::fs::read_to_string(<span class="kw-2">&amp;</span>written).unwrap();
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="macro">assert!</span>(
-<a href=#686 id=686 data-nosnippet>686</a>            whole.contains(<span class="string">"changed_files:\n  - lib/a.rs\ncontinuity_record: "</span>),
-<a href=#687 id=687 data-nosnippet>687</a>            <span class="string">"{whole}"
-<a href=#688 id=688 data-nosnippet>688</a>        </span>);
-<a href=#689 id=689 data-nosnippet>689</a>        <span class="comment">// writing it twice writes one file
-<a href=#690 id=690 data-nosnippet>690</a>        </span><span class="macro">assert_eq!</span>(
-<a href=#691 id=691 data-nosnippet>691</a>            write_record(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;</span>from(<span class="kw-2">&amp;</span><span class="string">"a"</span>.repeat(<span class="number">32</span>))).unwrap(),
-<a href=#692 id=692 data-nosnippet>692</a>            written
-<a href=#693 id=693 data-nosnippet>693</a>        );
-<a href=#694 id=694 data-nosnippet>694</a>    }
-<a href=#695 id=695 data-nosnippet>695</a>}
+<a href=#435 id=435 data-nosnippet>435</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(milestone) = <span class="kw-2">&amp;</span>h.milestone {
+<a href=#436 id=436 data-nosnippet>436</a>        text.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"milestone: \"{}\"\n"</span>, one_line(milestone)));
+<a href=#437 id=437 data-nosnippet>437</a>    }
+<a href=#438 id=438 data-nosnippet>438</a>    text.push_str(<span class="string">"---\n\n"</span>);
+<a href=#439 id=439 data-nosnippet>439</a>    text.push_str(<span class="kw-2">&amp;</span>h.body);
+<a href=#440 id=440 data-nosnippet>440</a>    <span class="comment">// The file name admits only what its parts are: digits and T/Z of a timestamp, hex of a
+<a href=#441 id=441 data-nosnippet>441</a>    // commit, a branch key of [A-Za-z0-9_-] (no dots, so never `..`), hex of the id.
+<a href=#442 id=442 data-nosnippet>442</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>compact: String = created
+<a href=#443 id=443 data-nosnippet>443</a>        .chars()
+<a href=#444 id=444 data-nosnippet>444</a>        .filter(|c| c.is_ascii_digit() || <span class="kw-2">*</span>c == <span class="string">'T' </span>|| <span class="kw-2">*</span>c == <span class="string">'Z'</span>)
+<a href=#445 id=445 data-nosnippet>445</a>        .take(<span class="number">16</span>)
+<a href=#446 id=446 data-nosnippet>446</a>        .collect();
+<a href=#447 id=447 data-nosnippet>447</a>    <span class="kw">if </span>compact.is_empty() {
+<a href=#448 id=448 data-nosnippet>448</a>        compact = <span class="string">"00000000T000000Z"</span>.into();
+<a href=#449 id=449 data-nosnippet>449</a>    }
+<a href=#450 id=450 data-nosnippet>450</a>    <span class="kw">let </span>branch_key: String = branch
+<a href=#451 id=451 data-nosnippet>451</a>        .chars()
+<a href=#452 id=452 data-nosnippet>452</a>        .map(|c| {
+<a href=#453 id=453 data-nosnippet>453</a>            <span class="kw">if </span>c.is_ascii_alphanumeric() || c == <span class="string">'_' </span>|| c == <span class="string">'-' </span>{
+<a href=#454 id=454 data-nosnippet>454</a>                c
+<a href=#455 id=455 data-nosnippet>455</a>            } <span class="kw">else </span>{
+<a href=#456 id=456 data-nosnippet>456</a>                <span class="string">'-'
+<a href=#457 id=457 data-nosnippet>457</a>            </span>}
+<a href=#458 id=458 data-nosnippet>458</a>        })
+<a href=#459 id=459 data-nosnippet>459</a>        .take(<span class="number">64</span>)
+<a href=#460 id=460 data-nosnippet>460</a>        .collect();
+<a href=#461 id=461 data-nosnippet>461</a>    <span class="kw">let </span><span class="kw-2">mut </span>head7: String = head
+<a href=#462 id=462 data-nosnippet>462</a>        .chars()
+<a href=#463 id=463 data-nosnippet>463</a>        .filter(char::is_ascii_hexdigit)
+<a href=#464 id=464 data-nosnippet>464</a>        .take(<span class="number">7</span>)
+<a href=#465 id=465 data-nosnippet>465</a>        .collect();
+<a href=#466 id=466 data-nosnippet>466</a>    <span class="kw">if </span>head7.is_empty() {
+<a href=#467 id=467 data-nosnippet>467</a>        head7 = <span class="string">"0000000"</span>.into();
+<a href=#468 id=468 data-nosnippet>468</a>    }
+<a href=#469 id=469 data-nosnippet>469</a>    <span class="kw">let </span>name = <span class="macro">format!</span>(
+<a href=#470 id=470 data-nosnippet>470</a>        <span class="string">"{compact}--{transport}--{branch_key}--{head7}--{}.md"</span>,
+<a href=#471 id=471 data-nosnippet>471</a>        <span class="kw-2">&amp;</span>marker_value[..<span class="number">16</span>]
+<a href=#472 id=472 data-nosnippet>472</a>    );
+<a href=#473 id=473 data-nosnippet>473</a>    <span class="kw">let </span>path = dir.join(<span class="kw-2">&amp;</span>name);
+<a href=#474 id=474 data-nosnippet>474</a>    <span class="kw">if </span>name.contains(<span class="string">'/'</span>) || path.parent() != <span class="prelude-val">Some</span>(dir.as_path()) {
+<a href=#475 id=475 data-nosnippet>475</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+<a href=#476 id=476 data-nosnippet>476</a>            <span class="string">"refusing to write a handover outside {}"</span>,
+<a href=#477 id=477 data-nosnippet>477</a>            dir.display()
+<a href=#478 id=478 data-nosnippet>478</a>        ));
+<a href=#479 id=479 data-nosnippet>479</a>    }
+<a href=#480 id=480 data-nosnippet>480</a>    <span class="kw">let </span>tmp = dir.join(<span class="macro">format!</span>(<span class="string">".tmp.{transport}.{}"</span>, <span class="kw-2">&amp;</span>marker_value[..<span class="number">16</span>]));
+<a href=#481 id=481 data-nosnippet>481</a>    std::fs::write(<span class="kw-2">&amp;</span>tmp, text).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, tmp.display()))<span class="question-mark">?</span>;
+<a href=#482 id=482 data-nosnippet>482</a>    <span class="attr">#[cfg(unix)]
+<a href=#483 id=483 data-nosnippet>483</a>    </span>{
+<a href=#484 id=484 data-nosnippet>484</a>        <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
+<a href=#485 id=485 data-nosnippet>485</a>        <span class="kw">let _ </span>= std::fs::set_permissions(<span class="kw-2">&amp;</span>tmp, std::fs::Permissions::from_mode(<span class="number">0o600</span>));
+<a href=#486 id=486 data-nosnippet>486</a>    }
+<a href=#487 id=487 data-nosnippet>487</a>    std::fs::rename(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span>path).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, path.display()))<span class="question-mark">?</span>;
+<a href=#488 id=488 data-nosnippet>488</a>    <span class="prelude-val">Ok</span>(path)
+<a href=#489 id=489 data-nosnippet>489</a>}
+<a href=#490 id=490 data-nosnippet>490</a>
+<a href=#491 id=491 data-nosnippet>491</a><span class="attr">#[cfg(test)]
+<a href=#492 id=492 data-nosnippet>492</a></span><span class="kw">mod </span>tests {
+<a href=#493 id=493 data-nosnippet>493</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#494 id=494 data-nosnippet>494</a>    <span class="kw">use </span><span class="kw">crate</span>::mesh::journal::StreamId;
+<a href=#495 id=495 data-nosnippet>495</a>
+<a href=#496 id=496 data-nosnippet>496</a>    <span class="kw">const </span>RECORD: <span class="kw-2">&amp;</span>str = <span class="string">"---\nschema_version: 1\ncreated_at: 2026-09-15T10:00:00Z\ntask_id: t-1\nprofile: implementation\nowner: \"k\"\nrepository_id: /somewhere/.git\nworktree: /somewhere\nbranch: feature/x\nhead: abcdef1234\nworking_tree: dirty\nchanged_files:\n  - apps/x.rs\n---\n\n# Objective\nship\n# Current State\nhalf\n# Next Action\nrest\n"</span>;
+<a href=#497 id=497 data-nosnippet>497</a>
+<a href=#498 id=498 data-nosnippet>498</a>    <span class="attr">#[test]
+<a href=#499 id=499 data-nosnippet>499</a>    </span><span class="kw">fn </span>two_records_of_one_second_resolve_to_the_later_write_not_the_larger_suffix() {
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">let </span>root = tempfile::tempdir().unwrap();
+<a href=#501 id=501 data-nosnippet>501</a>        <span class="kw">let </span>dir = directory(root.path());
+<a href=#502 id=502 data-nosnippet>502</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>dir).unwrap();
+<a href=#503 id=503 data-nosnippet>503</a>        <span class="kw">let </span>earlier = dir.join(<span class="string">"20261004T010000Z--b--0000000--ffff.md"</span>);
+<a href=#504 id=504 data-nosnippet>504</a>        <span class="kw">let </span>later = dir.join(<span class="string">"20261004T010000Z--b--0000000--0000.md"</span>);
+<a href=#505 id=505 data-nosnippet>505</a>        std::fs::write(<span class="kw-2">&amp;</span>earlier, <span class="string">"---\n---\nfirst"</span>).unwrap();
+<a href=#506 id=506 data-nosnippet>506</a>        std::fs::write(<span class="kw-2">&amp;</span>later, <span class="string">"---\n---\nsecond"</span>).unwrap();
+<a href=#507 id=507 data-nosnippet>507</a>        <span class="kw">let </span>at = std::time::SystemTime::now();
+<a href=#508 id=508 data-nosnippet>508</a>        <span class="kw">let </span>set = |p: <span class="kw-2">&amp;</span>Path, t: std::time::SystemTime| {
+<a href=#509 id=509 data-nosnippet>509</a>            std::fs::File::options()
+<a href=#510 id=510 data-nosnippet>510</a>                .write(<span class="bool-val">true</span>)
+<a href=#511 id=511 data-nosnippet>511</a>                .open(p)
+<a href=#512 id=512 data-nosnippet>512</a>                .unwrap()
+<a href=#513 id=513 data-nosnippet>513</a>                .set_modified(t)
+<a href=#514 id=514 data-nosnippet>514</a>                .unwrap();
+<a href=#515 id=515 data-nosnippet>515</a>        };
+<a href=#516 id=516 data-nosnippet>516</a>        set(<span class="kw-2">&amp;</span>earlier, at - std::time::Duration::from_millis(<span class="number">500</span>));
+<a href=#517 id=517 data-nosnippet>517</a>        set(<span class="kw-2">&amp;</span>later, at);
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="macro">assert_eq!</span>(
+<a href=#519 id=519 data-nosnippet>519</a>            latest(root.path()).unwrap(),
+<a href=#520 id=520 data-nosnippet>520</a>            later,
+<a href=#521 id=521 data-nosnippet>521</a>            <span class="string">"the suffix orders nothing"
+<a href=#522 id=522 data-nosnippet>522</a>        </span>);
+<a href=#523 id=523 data-nosnippet>523</a>        <span class="comment">// and a record of a later second still wins whatever its write time
+<a href=#524 id=524 data-nosnippet>524</a>        </span><span class="kw">let </span>next = dir.join(<span class="string">"20261004T010001Z--b--0000000--0000.md"</span>);
+<a href=#525 id=525 data-nosnippet>525</a>        std::fs::write(<span class="kw-2">&amp;</span>next, <span class="string">"---\n---\nthird"</span>).unwrap();
+<a href=#526 id=526 data-nosnippet>526</a>        set(<span class="kw-2">&amp;</span>next, at - std::time::Duration::from_secs(<span class="number">60</span>));
+<a href=#527 id=527 data-nosnippet>527</a>        <span class="macro">assert_eq!</span>(latest(root.path()).unwrap(), next);
+<a href=#528 id=528 data-nosnippet>528</a>    }
+<a href=#529 id=529 data-nosnippet>529</a>
+<a href=#530 id=530 data-nosnippet>530</a>    <span class="attr">#[test]
+<a href=#531 id=531 data-nosnippet>531</a>    </span><span class="kw">fn </span>a_hostile_handover_is_written_inside_the_directory_with_no_injected_keys() {
+<a href=#532 id=532 data-nosnippet>532</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#533 id=533 data-nosnippet>533</a>        <span class="kw">let </span>root = dir.path().join(<span class="string">"checkout"</span>);
+<a href=#534 id=534 data-nosnippet>534</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>root).unwrap();
+<a href=#535 id=535 data-nosnippet>535</a>        <span class="macro">assert!</span>(std::process::Command::new(<span class="string">"git"</span>)
+<a href=#536 id=536 data-nosnippet>536</a>            .arg(<span class="string">"-C"</span>)
+<a href=#537 id=537 data-nosnippet>537</a>            .arg(<span class="kw-2">&amp;</span>root)
+<a href=#538 id=538 data-nosnippet>538</a>            .args([<span class="string">"init"</span>, <span class="string">"-q"</span>])
+<a href=#539 id=539 data-nosnippet>539</a>            .status()
+<a href=#540 id=540 data-nosnippet>540</a>            .unwrap()
+<a href=#541 id=541 data-nosnippet>541</a>            .success());
+<a href=#542 id=542 data-nosnippet>542</a>        <span class="kw">let </span>body = <span class="string">"# Objective\nx\n"</span>.to_string();
+<a href=#543 id=543 data-nosnippet>543</a>        <span class="kw">let </span>view = HandoverView {
+<a href=#544 id=544 data-nosnippet>544</a>            id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
+<a href=#545 id=545 data-nosnippet>545</a>            stream: StreamId::parse(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#546 id=546 data-nosnippet>546</a>                <span class="string">"{}-{}-{}"</span>,
+<a href=#547 id=547 data-nosnippet>547</a>                <span class="string">"a"</span>.repeat(<span class="number">32</span>),
+<a href=#548 id=548 data-nosnippet>548</a>                <span class="string">"b"</span>.repeat(<span class="number">16</span>),
+<a href=#549 id=549 data-nosnippet>549</a>                <span class="string">"c"</span>.repeat(<span class="number">16</span>)
+<a href=#550 id=550 data-nosnippet>550</a>            ))
+<a href=#551 id=551 data-nosnippet>551</a>            .unwrap(),
+<a href=#552 id=552 data-nosnippet>552</a>            runtime: <span class="macro">format!</span>(<span class="string">"{}-{}"</span>, <span class="string">"a"</span>.repeat(<span class="number">32</span>), <span class="string">"b"</span>.repeat(<span class="number">16</span>)),
+<a href=#553 id=553 data-nosnippet>553</a>            published_lamport: <span class="number">1</span>,
+<a href=#554 id=554 data-nosnippet>554</a>            handover: HandoverBody {
+<a href=#555 id=555 data-nosnippet>555</a>                id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
+<a href=#556 id=556 data-nosnippet>556</a>                task: <span class="prelude-val">Some</span>(<span class="string">"t\nrepository_id: evil"</span>.into()),
+<a href=#557 id=557 data-nosnippet>557</a>                issue: <span class="prelude-val">Some</span>(<span class="string">"\"#1\"\nworktree: evil"</span>.into()),
+<a href=#558 id=558 data-nosnippet>558</a>                milestone: <span class="prelude-val">None</span>,
+<a href=#559 id=559 data-nosnippet>559</a>                branch: <span class="prelude-val">Some</span>(<span class="string">"../../../../.claude/commands"</span>.into()),
+<a href=#560 id=560 data-nosnippet>560</a>                head: <span class="prelude-val">Some</span>(<span class="string">"../x\n---"</span>.into()),
+<a href=#561 id=561 data-nosnippet>561</a>                created_at: <span class="prelude-val">Some</span>(<span class="string">"../../../../.claude/commands/pwn\nowner: evil"</span>.into()),
+<a href=#562 id=562 data-nosnippet>562</a>                name: <span class="prelude-val">None</span>,
+<a href=#563 id=563 data-nosnippet>563</a>                body,
+<a href=#564 id=564 data-nosnippet>564</a>            },
+<a href=#565 id=565 data-nosnippet>565</a>            consumed_by: <span class="macro">vec!</span>[],
+<a href=#566 id=566 data-nosnippet>566</a>        };
+<a href=#567 id=567 data-nosnippet>567</a>        <span class="kw">let </span>path = materialize(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>view).unwrap();
+<a href=#568 id=568 data-nosnippet>568</a>        <span class="macro">assert_eq!</span>(path.parent(), <span class="prelude-val">Some</span>(directory(<span class="kw-2">&amp;</span>root).as_path()));
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>path).unwrap();
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="kw">let </span>front = text.split(<span class="string">"\n---\n"</span>).next().unwrap();
+<a href=#571 id=571 data-nosnippet>571</a>        <span class="macro">assert!</span>(!front.contains(<span class="string">"\nrepository_id: evil"</span>));
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="macro">assert!</span>(!front.contains(<span class="string">"\nworktree: evil"</span>));
+<a href=#573 id=573 data-nosnippet>573</a>        <span class="macro">assert!</span>(!front.contains(<span class="string">"\nowner: evil"</span>));
+<a href=#574 id=574 data-nosnippet>574</a>        <span class="macro">assert!</span>(!root.join(<span class="string">".claude"</span>).exists());
+<a href=#575 id=575 data-nosnippet>575</a>        <span class="comment">// And validation refuses the same handover before it is ever stored.
+<a href=#576 id=576 data-nosnippet>576</a>        </span><span class="macro">assert!</span>(<span class="kw">crate</span>::mesh::journal::EventBody::HandoverPublished {
+<a href=#577 id=577 data-nosnippet>577</a>            handover: view.handover.clone()
+<a href=#578 id=578 data-nosnippet>578</a>        }
+<a href=#579 id=579 data-nosnippet>579</a>        .validate()
+<a href=#580 id=580 data-nosnippet>580</a>        .is_err());
+<a href=#581 id=581 data-nosnippet>581</a>    }
+<a href=#582 id=582 data-nosnippet>582</a>
+<a href=#583 id=583 data-nosnippet>583</a>    <span class="attr">#[test]
+<a href=#584 id=584 data-nosnippet>584</a>    </span><span class="kw">fn </span>a_record_reads_into_a_bounded_body_without_its_paths() {
+<a href=#585 id=585 data-nosnippet>585</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#586 id=586 data-nosnippet>586</a>        <span class="kw">let </span>path = dir
+<a href=#587 id=587 data-nosnippet>587</a>            .path()
+<a href=#588 id=588 data-nosnippet>588</a>            .join(<span class="string">"20260915T100000Z--feature-x--abcdef1--0011.md"</span>);
+<a href=#589 id=589 data-nosnippet>589</a>        std::fs::write(<span class="kw-2">&amp;</span>path, RECORD).unwrap();
+<a href=#590 id=590 data-nosnippet>590</a>        <span class="kw">let </span>body = to_body(<span class="kw-2">&amp;</span>path, <span class="prelude-val">Some</span>(<span class="string">"#184"</span>.into()), <span class="prelude-val">None</span>).unwrap();
+<a href=#591 id=591 data-nosnippet>591</a>        <span class="macro">assert_eq!</span>(body.task.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"t-1"</span>));
+<a href=#592 id=592 data-nosnippet>592</a>        <span class="macro">assert_eq!</span>(body.branch.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"feature/x"</span>));
+<a href=#593 id=593 data-nosnippet>593</a>        <span class="macro">assert_eq!</span>(body.issue.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"#184"</span>));
+<a href=#594 id=594 data-nosnippet>594</a>        <span class="macro">assert!</span>(body.body.starts_with(<span class="string">"# Objective"</span>));
+<a href=#595 id=595 data-nosnippet>595</a>        <span class="macro">assert_eq!</span>(body.id, HandoverBody::digest_of(<span class="kw-2">&amp;</span>body.body));
+<a href=#596 id=596 data-nosnippet>596</a>        <span class="kw">let </span>json = serde_json::to_string(<span class="kw-2">&amp;</span>body).unwrap();
+<a href=#597 id=597 data-nosnippet>597</a>        <span class="macro">assert!</span>(
+<a href=#598 id=598 data-nosnippet>598</a>            !json.contains(<span class="string">"/somewhere"</span>),
+<a href=#599 id=599 data-nosnippet>599</a>            <span class="string">"no path of the author's disk travels"
+<a href=#600 id=600 data-nosnippet>600</a>        </span>);
+<a href=#601 id=601 data-nosnippet>601</a>    }
+<a href=#602 id=602 data-nosnippet>602</a>
+<a href=#603 id=603 data-nosnippet>603</a>    <span class="attr">#[test]
+<a href=#604 id=604 data-nosnippet>604</a>    </span><span class="kw">fn </span>materializing_twice_writes_one_record_the_resolver_can_read() {
+<a href=#605 id=605 data-nosnippet>605</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#606 id=606 data-nosnippet>606</a>        <span class="kw">let </span>root = dir.path().join(<span class="string">"checkout"</span>);
+<a href=#607 id=607 data-nosnippet>607</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>root).unwrap();
+<a href=#608 id=608 data-nosnippet>608</a>        <span class="macro">assert!</span>(std::process::Command::new(<span class="string">"git"</span>)
+<a href=#609 id=609 data-nosnippet>609</a>            .arg(<span class="string">"-C"</span>)
+<a href=#610 id=610 data-nosnippet>610</a>            .arg(<span class="kw-2">&amp;</span>root)
+<a href=#611 id=611 data-nosnippet>611</a>            .args([<span class="string">"init"</span>, <span class="string">"-q"</span>])
+<a href=#612 id=612 data-nosnippet>612</a>            .status()
+<a href=#613 id=613 data-nosnippet>613</a>            .unwrap()
+<a href=#614 id=614 data-nosnippet>614</a>            .success());
+<a href=#615 id=615 data-nosnippet>615</a>        <span class="kw">let </span>src = dir
+<a href=#616 id=616 data-nosnippet>616</a>            .path()
+<a href=#617 id=617 data-nosnippet>617</a>            .join(<span class="string">"20260915T100000Z--feature-x--abcdef1--0011.md"</span>);
+<a href=#618 id=618 data-nosnippet>618</a>        std::fs::write(<span class="kw-2">&amp;</span>src, RECORD).unwrap();
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="kw">let </span>body = to_body(<span class="kw-2">&amp;</span>src, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).unwrap();
+<a href=#620 id=620 data-nosnippet>620</a>        <span class="kw">let </span>view = HandoverView {
+<a href=#621 id=621 data-nosnippet>621</a>            id: body.id.clone(),
+<a href=#622 id=622 data-nosnippet>622</a>            stream: StreamId::parse(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#623 id=623 data-nosnippet>623</a>                <span class="string">"{}-{}-{}"</span>,
+<a href=#624 id=624 data-nosnippet>624</a>                <span class="string">"a"</span>.repeat(<span class="number">32</span>),
+<a href=#625 id=625 data-nosnippet>625</a>                <span class="string">"b"</span>.repeat(<span class="number">16</span>),
+<a href=#626 id=626 data-nosnippet>626</a>                <span class="string">"c"</span>.repeat(<span class="number">16</span>)
+<a href=#627 id=627 data-nosnippet>627</a>            ))
+<a href=#628 id=628 data-nosnippet>628</a>            .unwrap(),
+<a href=#629 id=629 data-nosnippet>629</a>            runtime: <span class="macro">format!</span>(<span class="string">"{}-{}"</span>, <span class="string">"a"</span>.repeat(<span class="number">32</span>), <span class="string">"b"</span>.repeat(<span class="number">16</span>)),
+<a href=#630 id=630 data-nosnippet>630</a>            published_lamport: <span class="number">1</span>,
+<a href=#631 id=631 data-nosnippet>631</a>            handover: body,
+<a href=#632 id=632 data-nosnippet>632</a>            consumed_by: <span class="macro">vec!</span>[],
+<a href=#633 id=633 data-nosnippet>633</a>        };
+<a href=#634 id=634 data-nosnippet>634</a>        <span class="kw">let </span>first = materialize(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>view).unwrap();
+<a href=#635 id=635 data-nosnippet>635</a>        <span class="kw">let </span>second = materialize(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>view).unwrap();
+<a href=#636 id=636 data-nosnippet>636</a>        <span class="macro">assert_eq!</span>(first, second, <span class="string">"one handover, one record"</span>);
+<a href=#637 id=637 data-nosnippet>637</a>        <span class="kw">let </span>(front, text) = read(<span class="kw-2">&amp;</span>first).unwrap();
+<a href=#638 id=638 data-nosnippet>638</a>        <span class="macro">assert_eq!</span>(front[<span class="string">"schema_version"</span>], <span class="string">"1"</span>);
+<a href=#639 id=639 data-nosnippet>639</a>        <span class="macro">assert_eq!</span>(front[<span class="string">"branch"</span>], <span class="string">"feature/x"</span>);
+<a href=#640 id=640 data-nosnippet>640</a>        <span class="macro">assert_eq!</span>(front[<span class="string">"head"</span>], <span class="string">"abcdef1234"</span>);
+<a href=#641 id=641 data-nosnippet>641</a>        <span class="macro">assert!</span>(front[<span class="string">"worktree"</span>].starts_with(<span class="string">"mesh:"</span>));
+<a href=#642 id=642 data-nosnippet>642</a>        <span class="macro">assert!</span>(front[<span class="string">"repository_id"</span>].ends_with(<span class="string">".git"</span>));
+<a href=#643 id=643 data-nosnippet>643</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"# Next Action"</span>));
+<a href=#644 id=644 data-nosnippet>644</a>        <span class="macro">assert_eq!</span>(latest(<span class="kw-2">&amp;</span>root).unwrap(), first);
+<a href=#645 id=645 data-nosnippet>645</a>    }
+<a href=#646 id=646 data-nosnippet>646</a>
+<a href=#647 id=647 data-nosnippet>647</a>    <span class="doccomment">/// A handover that arrived from elsewhere is written with what its transport says about
+<a href=#648 id=648 data-nosnippet>648</a>    /// the source it was written against — and with nothing of it that names a place outside
+<a href=#649 id=649 data-nosnippet>649</a>    /// the repository.
+<a href=#650 id=650 data-nosnippet>650</a>    </span><span class="attr">#[test]
+<a href=#651 id=651 data-nosnippet>651</a>    </span><span class="kw">fn </span>a_record_from_elsewhere_carries_its_source_state_and_only_repository_paths() {
+<a href=#652 id=652 data-nosnippet>652</a>        <span class="kw">let </span>w = <span class="kw">crate</span>::continuity::tests_support::World::new();
+<a href=#653 id=653 data-nosnippet>653</a>        <span class="kw">let </span>root = w.root(<span class="string">"a"</span>);
+<a href=#654 id=654 data-nosnippet>654</a>        <span class="kw">let </span>body = <span class="string">"# Objective\nship\n\n# Next Action\nrest\n"</span>.to_string();
+<a href=#655 id=655 data-nosnippet>655</a>        <span class="kw">let </span>h = HandoverBody {
+<a href=#656 id=656 data-nosnippet>656</a>            id: HandoverBody::digest_of(<span class="kw-2">&amp;</span>body),
+<a href=#657 id=657 data-nosnippet>657</a>            task: <span class="prelude-val">None</span>,
+<a href=#658 id=658 data-nosnippet>658</a>            issue: <span class="prelude-val">None</span>,
+<a href=#659 id=659 data-nosnippet>659</a>            milestone: <span class="prelude-val">None</span>,
+<a href=#660 id=660 data-nosnippet>660</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"feature/x"</span>.into()),
+<a href=#661 id=661 data-nosnippet>661</a>            head: <span class="prelude-val">Some</span>(<span class="string">"abcdef1234"</span>.into()),
+<a href=#662 id=662 data-nosnippet>662</a>            created_at: <span class="prelude-val">Some</span>(<span class="string">"2026-10-03T12:00:00Z"</span>.into()),
+<a href=#663 id=663 data-nosnippet>663</a>            name: <span class="prelude-val">None</span>,
+<a href=#664 id=664 data-nosnippet>664</a>            body,
+<a href=#665 id=665 data-nosnippet>665</a>        };
+<a href=#666 id=666 data-nosnippet>666</a>        <span class="kw">let </span>from = |marker: <span class="kw-2">&amp;</span>str| Provenance {
+<a href=#667 id=667 data-nosnippet>667</a>            transport: <span class="string">"continuity"</span>,
+<a href=#668 id=668 data-nosnippet>668</a>            marker_key: <span class="string">"continuity_record"</span>,
+<a href=#669 id=669 data-nosnippet>669</a>            marker: marker.into(),
+<a href=#670 id=670 data-nosnippet>670</a>            origin_key: <span class="string">"continuity_device"</span>,
+<a href=#671 id=671 data-nosnippet>671</a>            origin: <span class="string">"b"</span>.repeat(<span class="number">32</span>),
+<a href=#672 id=672 data-nosnippet>672</a>            working_tree: <span class="prelude-val">Some</span>(<span class="string">"dirty"</span>),
+<a href=#673 id=673 data-nosnippet>673</a>            changed_files: <span class="macro">vec!</span>[
+<a href=#674 id=674 data-nosnippet>674</a>                <span class="string">"lib/a.rs"</span>.into(),
+<a href=#675 id=675 data-nosnippet>675</a>                <span class="string">"/etc/passwd"</span>.into(),
+<a href=#676 id=676 data-nosnippet>676</a>                <span class="string">"../outside"</span>.into(),
+<a href=#677 id=677 data-nosnippet>677</a>                String::new(),
+<a href=#678 id=678 data-nosnippet>678</a>            ],
+<a href=#679 id=679 data-nosnippet>679</a>        };
+<a href=#680 id=680 data-nosnippet>680</a>        <span class="kw">let </span>err = write_record(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;</span>from(<span class="string">"abc"</span>)).unwrap_err();
+<a href=#681 id=681 data-nosnippet>681</a>        <span class="macro">assert!</span>(err.contains(<span class="string">"at least 16 hex"</span>), <span class="string">"{err}"</span>);
+<a href=#682 id=682 data-nosnippet>682</a>
+<a href=#683 id=683 data-nosnippet>683</a>        <span class="kw">let </span>written = write_record(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;</span>from(<span class="kw-2">&amp;</span><span class="string">"a"</span>.repeat(<span class="number">32</span>))).unwrap();
+<a href=#684 id=684 data-nosnippet>684</a>        <span class="kw">let </span>(front, text) = read(<span class="kw-2">&amp;</span>written).unwrap();
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="macro">assert_eq!</span>(front.get(<span class="string">"working_tree"</span>).map(String::as_str), <span class="prelude-val">Some</span>(<span class="string">"dirty"</span>));
+<a href=#686 id=686 data-nosnippet>686</a>        <span class="macro">assert!</span>(text.starts_with(<span class="string">"# Objective"</span>));
+<a href=#687 id=687 data-nosnippet>687</a>        <span class="kw">let </span>whole = std::fs::read_to_string(<span class="kw-2">&amp;</span>written).unwrap();
+<a href=#688 id=688 data-nosnippet>688</a>        <span class="macro">assert!</span>(
+<a href=#689 id=689 data-nosnippet>689</a>            whole.contains(<span class="string">"changed_files:\n  - lib/a.rs\ncontinuity_record: "</span>),
+<a href=#690 id=690 data-nosnippet>690</a>            <span class="string">"{whole}"
+<a href=#691 id=691 data-nosnippet>691</a>        </span>);
+<a href=#692 id=692 data-nosnippet>692</a>        <span class="comment">// writing it twice writes one file
+<a href=#693 id=693 data-nosnippet>693</a>        </span><span class="macro">assert_eq!</span>(
+<a href=#694 id=694 data-nosnippet>694</a>            write_record(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;</span>from(<span class="kw-2">&amp;</span><span class="string">"a"</span>.repeat(<span class="number">32</span>))).unwrap(),
+<a href=#695 id=695 data-nosnippet>695</a>            written
+<a href=#696 id=696 data-nosnippet>696</a>        );
+<a href=#697 id=697 data-nosnippet>697</a>    }
+<a href=#698 id=698 data-nosnippet>698</a>}
 </code></pre></div></section></main></body></html>
