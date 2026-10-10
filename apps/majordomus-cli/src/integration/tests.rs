@@ -1989,6 +1989,57 @@ fn a_link_above_a_landed_one_merges_without_a_refresh() {
     );
 }
 
+/// A link that carries master and whose check runs on a head the executor pushed holds the
+/// refresh pipeline exactly as an up-to-date one does: refreshing another now would waste the
+/// run that is about to decide this one.
+#[test]
+fn a_link_that_carries_master_and_awaits_its_checks_holds_the_pipeline() {
+    use crate::integration::drain::{IntegrationAction, IntegrationEvent};
+    let root = scratch();
+    let mut above = sim(2);
+    above.carries = vec![1];
+    let mut w = World {
+        open: vec![sim(1), above, sim(3)],
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![1], "{report:?}");
+    // the executor pushed #2's head (a refresh onto #1, as a train is prepared) and its
+    // required check now runs there
+    let head = w.open[0].head.clone();
+    drain::record(
+        &root,
+        IntegrationEvent {
+            pr: Some(2),
+            head_after: Some(head),
+            ..IntegrationEvent::of(IntegrationAction::Refreshed)
+        },
+    )
+    .unwrap();
+    w.open[0].ci_pending = true;
+    let q = w.queue();
+    assert!(
+        matches!(
+            q.get(2).unwrap().relation,
+            RelationToMaster::CarriesMaster { .. }
+        ),
+        "{:?}",
+        q.get(2).unwrap().relation
+    );
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::WaitingForChecks);
+    assert_eq!(disposition(&q, 3), PullRequestDisposition::NeedsRefresh);
+    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert_eq!(
+        report.steps,
+        vec![DrainStepOutcome::AwaitingChecks { pr: 2 }],
+        "{report:?}"
+    );
+    assert_eq!(
+        w.refresh_calls, 0,
+        "#3 was refreshed while #2's run decides"
+    );
+}
+
 /// The link carries only what it was built on. A merge of somebody else's between, and master
 /// holds a change its head never saw: behind, to be refreshed like any other.
 #[test]
