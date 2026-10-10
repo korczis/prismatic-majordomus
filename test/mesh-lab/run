@@ -121,6 +121,27 @@ cp -R "$ROOT/share" "$CTX/share"
 cp "$HERE/node-entrypoint" "$CTX/node-entrypoint"
 cp "$HERE/Dockerfile" "$CTX/Dockerfile"
 git -C "$ROOT" archive --format=tar HEAD -o "$CTX/repo.tar"
+# The node's base image is fetched here rather than by `docker build`, because a registry
+# hiccup is not a verdict on the mesh: Docker Hub answered 429 on a master push (run
+# 37991782867) and 504 on #823 (run 37992647496), and each cost a whole validate cycle with
+# every scenario unrun. Docker Hub is asked three times with a growing pause, then the same
+# official image from Google's Docker Hub mirror, tagged under its own name; the build then
+# finds it in the local image store. The name is read from the Dockerfile, never repeated.
+BASE="$(sed -n 's/^FROM \([^ ]*\).*/\1/p' "$HERE/Dockerfile" | head -n 1)"
+[ -n "$BASE" ] || die "the Dockerfile names no base image"
+base_image() {
+  local i
+  docker image inspect "$BASE" >/dev/null 2>&1 && return 0
+  for i in 1 2 3; do
+    docker pull -q "$BASE" >/dev/null 2>&1 && return 0
+    printf 'mesh-lab: pulling %s failed (attempt %s of 3)\n' "$BASE" "$i" >&2
+    sleep $(( i * 10 ))
+  done
+  printf 'mesh-lab: pulling %s from mirror.gcr.io\n' "$BASE" >&2
+  docker pull -q "mirror.gcr.io/library/$BASE" >/dev/null 2>&1 \
+    && docker tag "mirror.gcr.io/library/$BASE" "$BASE"
+}
+base_image || die "the base image $BASE could not be pulled from Docker Hub or its mirror"
 docker build -q -t "$IMAGE" "$CTX" >/dev/null || die "the image did not build"
 
 # ------------------------------------------------------------------ topology

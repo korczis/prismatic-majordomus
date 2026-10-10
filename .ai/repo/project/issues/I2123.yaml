@@ -1,0 +1,34 @@
+id: I2123
+milestone: runtime-trust
+title: "A caller beyond loopback reads, and changes nothing it cannot authenticate"
+slug: a-remote-caller-cannot-write
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Refuse every capability that changes something to a request from an address that is not loopback, unless the capability's input is a signed message its handler verifies, on the HTTP routes and on MCP over HTTP alike."
+why: "On 2026-10-09 the hub on 8791 and two servers of the primary checkout listened on every interface of the owner's machine, and the only guard on a state-changing request was the Origin check, which a program passes by sending none. Any host on the LAN or tailnet could transition a plan record, run any capability through executions.start, or post a mesh claim the node then signed with its own trusted key and replicated to every runtime."
+current_state: "A remote request is admitted by any route whose browser Origin check it passes; the bind warning says a remote host can only read."
+desired_state: "ExecutionPolicy::admits_remote decides it once from the declared effect and the declared signed input; the router and the MCP endpoint refuse with forbidden/403 per request; mesh.link.hello, mesh.link.sync and mesh.register stay reachable because they authenticate their input."
+scope:
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "test/cases/1022_a_remote_caller_cannot_write.sh"
+  - "docs/MCP.md"
+  - "docs/MESH.md"
+acceptance_criteria:
+  - "Every HTTP route of a capability that does not admit a remote caller answers 403 forbidden to a request from a non-loopback address, before its handler runs"
+  - "A remote MCP message calling a tool that changes something is refused with error code forbidden, and the same session's next message from loopback is not"
+  - "A real server bound to 0.0.0.0 refuses plan/transition, executions/start, mesh/claims, mesh/handovers/consume and peers/announce from this machine's LAN address and still answers a read"
+  - "The three signed mesh capabilities reach their handlers from a remote address"
+  - "executions.start declares repository_mutation, so a local client is told it can write before it runs a writer through it"
+validation:
+  - "cargo test --test remote_callers"
+  - "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1022_a_remote_caller_cannot_write"
+evidence_required:
+  - "remote_callers_tests"
+  - "case_1022_red_on_0_18_0_green_on_branch"
+created_at: 2026-10-09
+updated_at: 2026-10-09
