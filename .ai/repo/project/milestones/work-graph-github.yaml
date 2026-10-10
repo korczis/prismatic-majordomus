@@ -50,4 +50,29 @@ risks:
   - "The backfill is an outward-facing mutation: applying the projection creates roughly 180 public issues in one run. It must be a deliberate, confirmed act, not a side effect of wiring a gate."
   - "Wiring the gate before the backfill makes CI red on master until the backfill lands. The order matters and is part of the work."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-10-10T21:40:21Z
+evidence:
+  - covers: drift_gated
+    type: test
+    command: "bash test/run.sh 97_github_gate"
+    result: "ok at master 890e112 + this branch, 2026-10-10; scripts/github-sync --check exits 0 with the baseline at zero"
+    commit: 890e112d04865f767f644856c7cef01aaeba7199
+    recorded_at: 2026-10-10T21:40:09Z
+  - covers: identity_stable
+    type: test
+    command: "bash test/run.sh 45_github_projection"
+    result: "ok at master 890e112 + this branch, 2026-10-10"
+    commit: 890e112d04865f767f644856c7cef01aaeba7199
+    recorded_at: 2026-10-10T21:40:12Z
+  - covers: offline_provable
+    type: test
+    command: "scripts/github-sync --plan"
+    result: "computed offline with no token, exit 0, 2026-10-10"
+    commit: 890e112d04865f767f644856c7cef01aaeba7199
+    recorded_at: 2026-10-10T21:40:16Z
+  - covers: traceability_both_ways
+    type: test
+    command: "env -u MAJORDOMUS_SHARE bash test/run.sh 98_traceability"
+    result: "ok at master 890e112 + this branch, 2026-10-10; 99_work_graph_chain ok too"
+    commit: 890e112d04865f767f644856c7cef01aaeba7199
+    recorded_at: 2026-10-10T21:40:21Z
