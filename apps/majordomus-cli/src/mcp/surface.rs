@@ -388,7 +388,7 @@ impl Surface {
             Err(CapabilityError::Internal(e)) => Err(SurfaceError::Internal(e)),
             Err(e) => Ok(ToolOutcome::Refused {
                 code: e.code(),
-                reason: e.to_string(),
+                reason: crate::redaction::redact_secrets(&e.to_string()).text,
             }),
         }
     }
