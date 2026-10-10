@@ -16329,20 +16329,6 @@
             "false"
           ],
           "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
           "help": "Include drafts and deprecated features, not only the stable ones",
           "long": "all",
           "name": "all",
@@ -16594,20 +16580,6 @@
             "false"
           ],
           "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
           "help": "Include drafts and deprecated features, not only the stable ones",
           "long": "all",
           "name": "all",
@@ -16701,7 +16673,7 @@
             "list"
           ],
           "command": "majordomus product list",
-          "description": "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
+          "description": "Drafts are excluded unless `--all` is given. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
           "expectation": "exits 0; prints SLUG, fixture-feature",
           "id": "product-list",
           "setup": [],
@@ -16843,20 +16815,6 @@
           "required": false,
           "takes_value": true,
           "value_name": "FORMAT"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
         },
         {
           "defaults": [
@@ -17080,20 +17038,6 @@
             "false"
           ],
           "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
           "help": "Include drafts and deprecated features, not only the stable ones",
           "long": "all",
           "name": "all",
@@ -17304,20 +17248,6 @@
           "required": false,
           "takes_value": true,
           "value_name": "FORMAT"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
         },
         {
           "defaults": [
@@ -17540,20 +17470,6 @@
             "false"
           ],
           "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
           "help": "Include drafts and deprecated features, not only the stable ones",
           "long": "all",
           "name": "all",
@@ -17770,20 +17686,6 @@
             "false"
           ],
           "global": true,
-          "help": "Only the features the homepage shows",
-          "long": "featured",
-          "name": "featured",
-          "positional": false,
-          "possible_values": [],
-          "required": false,
-          "takes_value": false,
-          "value_name": "FEATURED"
-        },
-        {
-          "defaults": [
-            "false"
-          ],
-          "global": true,
           "help": "Include drafts and deprecated features, not only the stable ones",
           "long": "all",
           "name": "all",
@@ -17877,7 +17779,7 @@
             "validate"
           ],
           "command": "majordomus product validate",
-          "description": "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
+          "description": "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
           "expectation": "exits 0; prints feature(s), valid",
           "id": "product-validate",
           "setup": [],
@@ -34067,7 +33969,7 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
+    "arguments": 1463,
     "commands": 216,
     "examples": 216,
     "runnable": 190

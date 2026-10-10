@@ -9,7 +9,6 @@ summary: The claims matrix binds a claim to a test by path, and a path resolving
 status: stable
 weight: 175
 domain: evidence
-featured: true
 areas: [verification, governance]
 modules: [evidence]
 commands: [evidence]

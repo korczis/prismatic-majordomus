@@ -9,7 +9,6 @@ summary: The gate model names every validation gate and which classes of paths s
 status: stable
 weight: 190
 domain: completion
-featured: false
 areas: [verification]
 commands: [doctor, watch]
 rules: [project.blocking-checks-cheap, project.tests-run-in-disposable-repos, project.rust-cli-evidence, project.rust-command-tested-in-file]

@@ -9,7 +9,6 @@ summary: One typed declaration per capability, one file per object of the layer;
 status: stable
 weight: 10
 domain: surfaces
-featured: true
 areas: [documentation, governance]
 modules: [capabilities, artifacts, product, quality]
 commands: [update, doctor]

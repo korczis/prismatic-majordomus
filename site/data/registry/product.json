@@ -11,7 +11,6 @@
   "counts": {
     "features": 26,
     "features_all": 27,
-    "featured": 14,
     "providers": 6,
     "modules": 53,
     "modules_covered": 42,
@@ -74,7 +73,6 @@
           "title": "Sessions, prompts and handovers that outlive the conversation",
           "headline": "A session ends and the work does not: what the next worker needs is a typed record checked against git, not a transcript somebody hopes to find.",
           "route": "/features/continuity/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -92,7 +90,6 @@
           "title": "Decisions and knowledge that compound instead of evaporating",
           "headline": "What was decided, why, and what was rejected is recorded where the next session reads it, and a durable decision becomes an architecture record with typed links to what it put in force.",
           "route": "/features/knowledge/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -110,7 +107,6 @@
           "title": "Every directory of the layer carries its contract, and a worker reads what applies",
           "headline": "Context is a tree, not one file: the documents that apply to a path are resolved from the root down, the nearest one adds and never silently replaces, and a worker loads what its task needs and nothing more.",
           "route": "/features/context/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -128,7 +124,6 @@
           "title": "Skills are procedures as data, discovered and checked, never registered",
           "headline": "A skill is one directory under the layer; adding it is the whole act, and the command line, the website and MCP all read it from the same file.",
           "route": "/features/skills/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": false,
@@ -662,7 +657,6 @@
           "title": "Several agents on one repository, without stepping on each other",
           "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
           "route": "/features/coordination/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -680,7 +674,6 @@
           "title": "One branch, one worktree, at a path derived from git",
           "headline": "A branch's worktree is where git says it is, never where somebody chose to put it, and a misplaced one is a diagnostic with a remedy rather than a mystery.",
           "route": "/features/worktrees/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -698,7 +691,6 @@
           "title": "Sessions on several machines work one repository without colliding",
           "headline": "Majordomus runtimes of one repository — on one machine or several — discover each other, link through a signed handshake, and share sessions, claims, handovers and reviews through one replicated journal that survives disconnects, crashes and partitions.",
           "route": "/features/mesh/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -716,7 +708,6 @@
           "title": "The models the world offers, declared once and routed with reasons",
           "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
           "route": "/features/models/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -734,7 +725,6 @@
           "title": "Reasoning that works with or without advisors, and review that is recorded rather than claimed",
           "headline": "Material uncertainty becomes an evidence-backed decision — reviewed by whichever optional advisors are available, decided locally when none are, and carried to the next session as a record.",
           "route": "/features/reasoning/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -752,7 +742,6 @@
           "title": "Milestones and issues as data; status derived, never stored",
           "headline": "An issue records what happened to it and the engine derives whether it is blocked, ready, active, verifying or done from the dependency graph, so the roadmap cannot disagree with the plan.",
           "route": "/features/planning/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -1194,7 +1183,6 @@
           "title": "Rules a machine decides, wired, tested and CI-blocking",
           "headline": "A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.",
           "route": "/features/doctrine/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -1212,7 +1200,6 @@
           "title": "One policy, projected into every tool's instruction file",
           "headline": "Every provider the tool declares — an agent, an orchestrator that runs agents, any tool that reads AGENTS.md — gets the same rules from the same place, because their instruction files are generated from one policy and never written by hand; the providers are the table in docs/generated/providers.md.",
           "route": "/features/policy/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": false,
@@ -1230,7 +1217,6 @@
           "title": "A commit message is a value this repository judges, not a convention it hopes for",
           "headline": "The commit message has one grammar, one policy and one verdict; the scope it is written under is learned from the repository's own history rather than kept in a table, and a message that does not satisfy the policy is refused while it is still being written.",
           "route": "/features/commit/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -1707,7 +1693,6 @@
           "title": "Token economics, measured from matched runs and never typed",
           "headline": "What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests, with every number labelled by how it was obtained and published only past a declared rule.",
           "route": "/features/economics/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -1725,7 +1710,6 @@
           "title": "Every record names the commit, the branch and the episode that made it",
           "headline": "Who did what, under which task, at which commit, in which session is a ledger the tool writes and a person can read back, not a memory of a conversation.",
           "route": "/features/provenance/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": false,
@@ -1743,7 +1727,6 @@
           "title": "Every use case is executed against the tool, not described",
           "headline": "What a person does with the tool is one file with a scenario the tool runs against itself; the page shows that execution, and a public command no use case runs is a gap the tool reports.",
           "route": "/features/use-cases/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": false,
@@ -1761,7 +1744,6 @@
           "title": "A claim is proven by a run that happened, not by a file that exists",
           "headline": "Every claim is joined to the execution recorded for its test — the outcome, the commit, the tree, the digest and the command that produces it again — and a run against this commit is never reported as the same thing as a run whose inputs merely have not changed.",
           "route": "/features/evidence/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -1779,7 +1761,6 @@
           "title": "Every claim about speed is a recorded measurement",
           "headline": "Every externally callable operation is timed directly, over MCP and over HTTP, the denominator is generated from the registry, and a regression against the accepted baseline fails the check.",
           "route": "/features/benchmarks/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -2178,7 +2159,6 @@
           "title": "New code is covered, measured once and asked two questions",
           "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.",
           "route": "/features/coverage/",
-          "featured": false,
           "surfaces": {
             "cli": false,
             "api": false,
@@ -2196,7 +2176,6 @@
           "title": "Done is a contract, evaluated line by line and refused when unmet",
           "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, the task is not accepted until all of them pass, and every time it was claimed done and was not is on the record.",
           "route": "/features/finish-contract/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -2214,7 +2193,6 @@
           "title": "CI planned from one model, the site deployed from its verified run",
           "headline": "A change runs the gates its paths can affect, every gate is the same script a person runs, and the public site is published only from a commit whose derived data proved current.",
           "route": "/features/ci/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": false,
@@ -2600,7 +2578,6 @@
           "title": "Declare once, derive every interface",
           "headline": "A capability is written in one place, and the command line, the HTTP API, the OpenAPI document, MCP, the Cockpit, the reference and this website are projections of it.",
           "route": "/features/declare-once/",
-          "featured": true,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -2618,7 +2595,6 @@
           "title": "One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP",
           "headline": "Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.",
           "route": "/features/interfaces/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -2636,7 +2612,6 @@
           "title": "The Cockpit: the registry rendered for a person",
           "headline": "The same server that answers agents renders every capability, object, graph, worktree and health check as pages, with a runner generated from each capability's own schema; nothing on it is a second list.",
           "route": "/features/cockpit/",
-          "featured": true,
           "surfaces": {
             "cli": false,
             "api": true,
@@ -2654,7 +2629,6 @@
           "title": "One command to install, one to initialise, nothing else to trust",
           "headline": "The installer downloads one archive for your machine, verifies its digest against the release metadata before unpacking anything, and installs atomically; no git, no Rust, no Node, no root.",
           "route": "/features/install/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -2672,7 +2646,6 @@
           "title": "The failure modes it answers are objects, not marketing pages",
           "headline": "Every operational moment the tool exists for is one file with the signals that identify it and the mechanisms that answer it, and a reader's own symptoms resolve to a diagnosis by counting, not by inference.",
           "route": "/features/why/",
-          "featured": false,
           "surfaces": {
             "cli": true,
             "api": true,
@@ -3190,7 +3163,6 @@
       "summary": "One typed declaration per capability, one file per object of the layer; every interface, generated document and page is derived from the registry those declarations build, and a stale projection fails the build.",
       "status": "stable",
       "weight": 10,
-      "featured": true,
       "domain": "surfaces",
       "areas": [
         "documentation",
@@ -3758,7 +3730,6 @@
       "summary": "The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.",
       "status": "stable",
       "weight": 20,
-      "featured": false,
       "domain": "surfaces",
       "areas": [
         "documentation",
@@ -4510,7 +4481,6 @@
       "summary": "A task claims its scope before the first edit; check and finish refuse a file outside it and report another worktree's overlapping claim; every client of the shared server is a peer that can announce its intent and paths; and each branch has exactly one worktree, derived from git.",
       "status": "stable",
       "weight": 30,
-      "featured": true,
       "domain": "coordination",
       "areas": [
         "coordination"
@@ -5026,7 +4996,6 @@
       "summary": "The container is the primary checkout's sibling named with -wt, a branch's worktree is the branch name under it with its hierarchy kept, both derived from git identity and registered nowhere; a pre-commit guard refuses a feature branch committed from anywhere else, and migration moves a misplaced worktree with its uncommitted work, fingerprinted before and after.",
       "status": "stable",
       "weight": 40,
-      "featured": true,
       "domain": "coordination",
       "areas": [
         "coordination",
@@ -5262,7 +5231,6 @@
       "summary": "Each runtime is a key-authenticated participant; discovery (multicast, broadcast, rendezvous, seeds) only finds candidates, and a signed handshake admits a link only for the same repository, a compatible protocol and a trusted key. Linked runtimes replicate one signed event journal every heartbeat and fold it into the same state everywhere, so an exclusive claim on one machine refuses an overlapping claim on another, a handover published on one is consumed on another, and a runtime that crashes expires everywhere on its own. The CLI, HTTP, OpenAPI, MCP and the Cockpit render the same state, and every guarantee is held by tests over real processes and a container lab on a real network.",
       "status": "stable",
       "weight": 45,
-      "featured": true,
       "domain": "coordination",
       "areas": [
         "coordination"
@@ -5655,7 +5623,6 @@
       "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
       "status": "stable",
       "weight": 46,
-      "featured": true,
       "domain": "coordination",
       "areas": [
         "coordination"
@@ -5819,7 +5786,6 @@
       "summary": "A task corpus runs in a real harness twice — without Majordomus and with it — and the provider's usage, the gate verdicts and the context compiler's counted selection are recorded as raw facts; one calculator derives pairs, distributions, seeded bootstrap intervals and the one statement the methodology's publication rule allows, projected to the CLI, HTTP, OpenAPI, MCP, the Cockpit, a generated report and the site; economics check refuses any savings number typed by hand.",
       "status": "stable",
       "weight": 47,
-      "featured": false,
       "domain": "evidence",
       "areas": [
         "observability",
@@ -6001,7 +5967,6 @@
       "summary": "share/advisors.yaml declares advisory roles by reference to the provider table and the model catalogue; availability is derived from presence and recorded outcomes, with no network; a pure policy plans review by capability and treats no advisor as a structured local review; one writer records assessments, consultations, disagreements settled by experiment, conclusions with computed review counts, and validations; and the state reaches the command line, HTTP, MCP, the Cockpit, the environment banner, doctor, the context briefing and the derived handover.",
       "status": "stable",
       "weight": 47,
-      "featured": true,
       "domain": "coordination",
       "areas": [
         "coordination"
@@ -6248,7 +6213,6 @@
       "summary": "Task state, checkpoints, handovers, decisions and open questions live in files outside every conversation; a session opens and closes into an immutable record; the person's prompts are captured by the provider's own hooks; and the next episode is briefed from those records, labelled by how far git has moved since.",
       "status": "stable",
       "weight": 50,
-      "featured": true,
       "domain": "context",
       "areas": [
         "context",
@@ -6953,7 +6917,6 @@
       "summary": "Decisions are recorded with their reason and their task, open questions block acceptance until resolved, architecture decision records carry typed references to the rules, claims, files and tests they put in force, and the graph of all of it is derived from those references rather than drawn.",
       "status": "stable",
       "weight": 60,
-      "featured": true,
       "domain": "context",
       "areas": [
         "decisions",
@@ -7458,7 +7421,6 @@
       "summary": "Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.",
       "status": "stable",
       "weight": 70,
-      "featured": true,
       "domain": "governance",
       "areas": [
         "governance",
@@ -8052,7 +8014,6 @@
       "summary": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, a floor over the session/continuity domain, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
       "status": "stable",
       "weight": 72,
-      "featured": false,
       "domain": "completion",
       "areas": [
         "verification"
@@ -8160,7 +8121,6 @@
       "summary": "A task starts with a declared scope and a profile; check reports whether the task is consistent with policy, scope and state; finish evaluates the policy's contract — scope respected, verification ran, state updated, no open blockers, a note present — and refuses with the reproducing command when any line fails.",
       "status": "stable",
       "weight": 80,
-      "featured": true,
       "domain": "completion",
       "areas": [
         "verification"
@@ -8641,7 +8601,6 @@
       "summary": "A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.",
       "status": "stable",
       "weight": 90,
-      "featured": false,
       "domain": "governance",
       "areas": [
         "governance",
@@ -9091,7 +9050,6 @@
       "summary": "At /cockpit the shared server lays out what a capability answered — the registry explorer, every object of the layer, the derived graphs, the directory contracts, the continuity of this checkout, the worktree topology, one health report naming the engine behind every check — and every page is complete HTML before any script runs.",
       "status": "stable",
       "weight": 100,
-      "featured": true,
       "domain": "surfaces",
       "areas": [
         "observability"
@@ -9441,7 +9399,6 @@
       "summary": "The ledger records every durable event with its task and its head; identity fields on any record are computed from git and refused when authored; a closed session is an immutable record of what one episode produced; the person's prompts are captured by the provider's hooks; and retention is capped by policy rather than by forgetting.",
       "status": "stable",
       "weight": 110,
-      "featured": true,
       "domain": "evidence",
       "areas": [
         "observability",
@@ -9809,7 +9766,6 @@
       "summary": "One distribution model owns every platform, artifact name and URL; the installer, the release build matrix, the installation guide, the website's install block and the public release metadata are generated from it, and a release publishes an artifact for every supported target or it is not published.",
       "status": "stable",
       "weight": 120,
-      "featured": false,
       "domain": "surfaces",
       "areas": [
         "verification",
@@ -10175,7 +10131,6 @@
       "summary": "Milestones are outcome specifications and issues are execution contracts, one YAML file each; the dependency graph decides execution waves and the next ready issue; a milestone whose dependencies are not accepted is blocked whatever its own issues say; and the GitHub projection is rendered offline from the same model.",
       "status": "stable",
       "weight": 130,
-      "featured": false,
       "domain": "coordination",
       "areas": [
         "work-tracking"
@@ -10739,7 +10694,6 @@
       "summary": "Every README under .ai/ is a context document with an identity, a scope, the providers and audience it addresses and how it composes with its ancestors; the repository scope declares what a worker reads and what it never reads; and the briefing a worker gets is assembled from durable state within a line budget with every exclusion named.",
       "status": "stable",
       "weight": 140,
-      "featured": false,
       "domain": "context",
       "areas": [
         "context"
@@ -11239,7 +11193,6 @@
       "summary": "A use case names the commands, rules, claims and applications it relies on and carries a scenario as data; usecase run executes it in a disposable repository and records normalised evidence; maturity is observed from the evidence; coverage of commands, guaranteed claims and MCP tools is tallied and the policy says which gaps fail.",
       "status": "stable",
       "weight": 150,
-      "featured": false,
       "domain": "evidence",
       "areas": [
         "verification",
@@ -11456,7 +11409,6 @@
       "summary": "A skill is a provider-neutral procedure for one bounded kind of work, front matter under a schema over a body with a purpose, a procedure and an output contract; the source class discovers it, skills check holds every one to its contract, and nothing loads a skill unless the task is about it.",
       "status": "stable",
       "weight": 160,
-      "featured": false,
       "domain": "context",
       "areas": [
         "documentation"
@@ -11610,7 +11562,6 @@
       "summary": "Moments, audiences and areas are kinds of the layer; a moment names the commands, capabilities, claims, rules and use cases that answer it, each reference validated; the catalogue, the questionnaire, the diagnosis and every page and filter are derived from those files.",
       "status": "stable",
       "weight": 170,
-      "featured": false,
       "domain": "surfaces",
       "areas": [
         "documentation"
@@ -11839,7 +11790,6 @@
       "summary": "The claims matrix binds a claim to a test by path, and a path resolving says a file exists rather than that anything ran. The ledger records the latest execution of every test with its provenance; the join is derived on every read and answers, per claim, whether the repository can honestly call it proven, only-not-invalidated, stale, failing or never run.",
       "status": "stable",
       "weight": 175,
-      "featured": true,
       "domain": "evidence",
       "areas": [
         "verification",
@@ -12094,7 +12044,6 @@
       "summary": "The benchmark targets are derived from the registry, so a capability nothing times cannot be merged; runs are compared with a tracked baseline per platform under a regression policy; the shell tool reports where every command's time went; and derived state is computed once per state version rather than per call.",
       "status": "stable",
       "weight": 180,
-      "featured": false,
       "domain": "evidence",
       "areas": [
         "verification",
@@ -12371,7 +12320,6 @@
       "summary": "The gate model names every validation gate and which classes of paths select it; the workflow is a thin adapter over that plan; the publication path proves the committed derived data current by its input hash and renders it; and the tool supervises its own repository with its own hooks.",
       "status": "stable",
       "weight": 190,
-      "featured": false,
       "domain": "completion",
       "areas": [
         "verification"
@@ -12692,7 +12640,6 @@
       "summary": "One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.",
       "status": "draft",
       "weight": 200,
-      "featured": false,
       "domain": "surfaces",
       "areas": [
         "governance"
@@ -12880,7 +12827,6 @@
       "summary": "The same parse the changelog reads the history with decides whether a new message passes. The policy is data in the repository's own policy file, its subject width measured from the history rather than taken from the convention. The scope vocabulary is observed from at most 1500 commits of the log, so a subsystem committed today is in it today and a scope nobody uses sinks on its own. A plan over the working tree carries a fingerprint of repository, worktree, HEAD and change set, so a plan acted on after the tree moved is refused rather than applied - and a change set holding generated files is one commit, because only the last of several could carry current derived data.",
       "status": "stable",
       "weight": 205,
-      "featured": true,
       "domain": "governance",
       "areas": [
         "governance",

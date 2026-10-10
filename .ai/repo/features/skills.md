@@ -9,7 +9,6 @@ summary: A skill is a provider-neutral procedure for one bounded kind of work, f
 status: stable
 weight: 160
 domain: context
-featured: false
 areas: [documentation]
 commands: [skills]
 kinds: [skill]

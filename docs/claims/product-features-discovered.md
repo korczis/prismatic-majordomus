@@ -6,8 +6,8 @@ One Markdown file under `.ai/repo/features/` with schema-valid front matter is t
 of adding a feature to this product. From that moment `majordomus product list` shows it,
 `GET /api/v1/product/features` returns it, the OpenAPI document describes its type,
 `majordomus://feature/<id>` serves it over MCP, the `product` graph carries its nodes and
-edges, the capability matrix gains its row, the website gives it `/features/<id>/`, and — if
-the file declares itself featured — the homepage carries its chapter.
+edges, the capability matrix gains its row, the website gives it `/features/<id>/`, and — when
+it names a domain the homepage draws — the homepage map carries it.
 
 Nothing else changes. There is no registry to edit, no navigation file, no template list, no
 site data file, no Rust and no schema.

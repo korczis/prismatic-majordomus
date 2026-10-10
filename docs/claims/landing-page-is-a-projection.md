@@ -37,8 +37,8 @@ bash test/run.sh 12_site_build
 
 ## What it does not cover
 
-Which features are chapters of the homepage and in what order is editorial, and is declared in
-the feature files themselves (`featured`, `weight`) rather than in the page. The positioning
+Which domain a feature belongs to and in what order it is listed is editorial, and is declared
+in the feature files themselves (`domain`, `weight`) rather than in the page. The positioning
 sentences are written by a person; what is checked is that they carry no number and no
 capability claim, not that they are true.
 

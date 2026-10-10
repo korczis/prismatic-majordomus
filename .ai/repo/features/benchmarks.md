@@ -9,7 +9,6 @@ summary: The benchmark targets are derived from the registry, so a capability no
 status: stable
 weight: 180
 domain: evidence
-featured: false
 areas: [verification, cost]
 modules: [perf]
 commands: [bench]

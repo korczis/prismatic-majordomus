@@ -892,7 +892,6 @@ PRODUCT_DATA="$ROOT/site/data/registry/product.json"
 [ "$(jq -r '.schema' "$PRODUCT_DATA")" = "majordomus-site-product/v1" ] || { echo "generate-site-data: site/data/registry/product.json is not a majordomus-site-product/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
 [ "$(jq -r '.valid' "$PRODUCT_DATA")" = "true" ] || { echo "generate-site-data: the product model does not validate; the site may not render it (reproduce: majordomus product validate)" >&2; exit 10; }
 [ "$(jq '[.features[] | select(.status != "draft")] | length' "$PRODUCT_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/features/ produced almost no features" >&2; exit 10; }
-[ "$(jq '[.features[] | select(.featured and .status != "draft")] | length' "$PRODUCT_DATA")" -ge 3 ] || { echo "generate-site-data: no feature declares itself featured; the homepage would have no chapters" >&2; exit 10; }
 # A public dataset that carried a feature's body, an absolute path or a key nobody allowed
 # would be a projection boundary that leaked; the executable copies field by field and its
 # test asserts it, and this refuses the artifact rather than publishing it.
@@ -2077,8 +2076,8 @@ for tx in audiences areas; do
 done
 # The product's routes: the section, one page per feature, and the matrix. Nothing here
 # names a feature: adding .ai/repo/features/<id>.md and regenerating is what puts
-# /features/<id>/ on the site, in the homepage's chapters when it declares itself featured,
-# in the matrix, in the graph and in the search. The body is the feature's own file, read
+# /features/<id>/ on the site, on the homepage map under its domain, in the matrix,
+# in the graph and in the search. The body is the feature's own file, read
 # from the `source` the dataset names; everything else on the page is derived (ADR 22).
 mk_section features "Features" "Every capability of the product as one object of the layer: what it is made of, the interfaces it is exposed through, the rules that hold it and the guarantees behind it. Each card is a file; every mark beside it is derived." features-section.html feature.html 4
 jq -r '.features[] | select(.status != "draft") | [.id, .title, .summary, .source, .status, (.weight|tostring)] | @tsv' "$PRODUCT_DATA" \

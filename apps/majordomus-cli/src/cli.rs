@@ -1204,7 +1204,7 @@ pub struct MeshQueryArgs {
 
 #[derive(Debug, Args)]
 /// `majordomus product`. The filters and the output shape are global, so they read the way
-/// a person writes them — `product list --featured` — and are declared once.
+/// a person writes them — `product list --domain <id>` — and are declared once.
 pub struct ProductArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -1218,9 +1218,6 @@ pub struct ProductArgs {
     /// Output shape
     pub format: OutputFormat,
 
-    /// Only the features the homepage shows
-    #[arg(long, global = true)]
-    pub featured: bool,
     /// Include drafts and deprecated features, not only the stable ones
     #[arg(long, global = true)]
     pub all: bool,
@@ -4175,7 +4172,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
             ExampleDoc {
                 id: "product-list",
                 title: "Every stable feature, in presentation order",
-                description: "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
+                description: "Drafts are excluded unless `--all` is given. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
                 argv: &["product", "list"],
                 setup: &[],
                 expect: Expect::StdoutContains(&["SLUG", "fixture-feature"]),
@@ -4239,7 +4236,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "product-validate",
             title: "Check the model before anything projects it",
-            description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
+            description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
             argv: &["product", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["feature(s)", "valid"]),

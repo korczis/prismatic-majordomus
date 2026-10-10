@@ -9,7 +9,6 @@ summary: Each runtime is a key-authenticated participant; discovery (multicast, 
 status: stable
 weight: 45
 domain: coordination
-featured: true
 areas: [coordination]
 modules: [mesh]
 kinds: [mesh-declaration]

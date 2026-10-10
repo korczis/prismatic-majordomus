@@ -44,8 +44,7 @@ only advisory, and its route. The schema refuses a derived key such as `surfaces
 
 **Editorial decisions** are the fields nothing can infer, and they are the only ones a
 person writes for presentation: `headline` (the promise), `summary`, `status`, `weight`
-(the order), `featured` (whether the homepage shows it as a chapter), `domain` (its one
-place in the product's top-level model), `areas` and
+(the order), `domain` (its one place in the product's top-level model), `areas` and
 `audiences` (the why catalogue's own taxonomies, reused rather than declared again).
 
 ## Domains
@@ -76,14 +75,13 @@ Adding the file and tracking it in git is the whole act.
 
 What follows with no further step: `majordomus product list` shows it; `/api/v1/product/features`
 returns it; the MCP tools answer it and `majordomus://feature/<id>` serves it; `/features/<id>/`
-exists and, when it is featured, the homepage carries its chapter; the capability matrix
+exists, and its domain's place on the homepage map lists it; the capability matrix
 gains its row; and every module, command and kind it names gains a link back.
 
 ## The floors a stable feature is held to
 
 A `stable` feature names at least one mechanism (a module, a command or a kind) and at least
-one document; its body carries `## What it does` and `## What it does not do`; only a stable
-feature may be featured. A draft is exempt and listed as a draft. `majordomus product
+one document; its body carries `## What it does` and `## What it does not do`. A draft is exempt and listed as a draft. `majordomus product
 validate` reports every floor a record misses; a module of the executable, a public command
 or a kind of the layer that no feature names is reported too, because a thing the product
 does that the product page does not mention is the gap this section exists to close.

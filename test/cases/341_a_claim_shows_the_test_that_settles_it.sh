@@ -60,7 +60,6 @@ headline: One claim it guarantees and one it has only planned, so the difference
 summary: The feature exists to be read by the projection, and its two claims differ in exactly the way the reader has to be able to see.
 status: stable
 weight: 900
-featured: false
 claims: [proven-claim, planned-claim]
 tags: [probe]
 ---
