@@ -66,6 +66,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "completed_means_complete": {
+          "type": "boolean",
+          "description": "When true, the outcome completed is refused unless the completion report (gates.completion, share/completion.yaml) says complete: every question of the policy passes or is exempt, every gate the change selects has reported over this tree, and nothing refuses. When false or absent, a gate that never reported and a question nobody answered are reported and the outcome is not refused over them."
         }
       }
     },

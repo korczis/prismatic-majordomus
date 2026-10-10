@@ -6,7 +6,9 @@
     "verification",
     "state",
     "blockers",
-    "note"
+    "note",
+    "obligation",
+    "gate"
   ],
   "problem_md": "\nMost AI-assisted work fails for boring reasons. Too much context. The wrong rules for\nthe tool that happens to be open. Reasoning at maximum by default. Sessions that never\nend. Two agents editing the same file. No definition of done, so \"done\" means the\nworker said so.\n\nThese are operational-control problems, and the environments this tool was distilled\nfrom had them at scale:\n\n- instruction files for two AI tools in the same repository sharing **0–9 %** of their\n  content: not duplicates, disjoint rule sets\n- an always-loaded operating contract oscillating between **0 and about 1,100 lines**\n  across roughly 200 hand edits, until a hard budget with a failing check pinned it\n- **seventeen** independent cases of a check documented as blocking, present on disk,\n  executable, and invoked by nothing\n- full worktree isolation still producing about **3,200** concurrently modified files\n  and **67** duplicated patches across forty worktrees, with nine ever merged\n- **10 GB** of session notes standing in for a database, recovered by a hand-written\n  runbook\n\nBetter prompts do not fix any of this.",
   "problem_bullets_md": "- instruction files for two AI tools in the same repository sharing **0–9 %** of their\n  content: not duplicates, disjoint rule sets\n- an always-loaded operating contract oscillating between **0 and about 1,100 lines**\n  across roughly 200 hand edits, until a hard budget with a failing check pinned it\n- **seventeen** independent cases of a check documented as blocking, present on disk,\n  executable, and invoked by nothing\n- full worktree isolation still producing about **3,200** concurrently modified files\n  and **67** duplicated patches across forty worktrees, with nine ever merged\n- **10 GB** of session notes standing in for a database, recovered by a hand-written\n  runbook",

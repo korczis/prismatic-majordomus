@@ -1342,6 +1342,23 @@ if [ -f "$CH_TOML" ]; then
     [ -z "$CH_RMISS" ] || {
       echo "generate-site-data: README.md's first transcript is not the challenge's recorded run:" >&2
       printf '%s\n' "$CH_RMISS" | sed 's/^/  /' >&2; exit 10; }
+    # Every key of the finish contract has a check name, and the name comes from that run.
+    # The README shows the step's decisions; a line of the contract with nothing to judge in
+    # that run — a task that declares no obligations, a repository with no CI model — is
+    # printed by the same step as INFO and is not a decision, so the transcript does not carry
+    # it and must not. The contract page pairs every policy key with a name all the same, so
+    # a key the transcript did not name takes the check the step printed for it, read from
+    # the step's whole recorded output. A key the step printed nothing for stays unnamed, and
+    # scripts/site-check refuses the page rather than this guessing a word.
+    jq_inplace "$OUT/readme.json" --arg cmd "$CH_RCMD" --slurpfile pol "$OUT/policy.json" --slurpfile ch "$OUT/challenge.json" '
+      . as $r
+      | ([ $ch[0].steps[] | select(.command == $cmd) | .output // "" | split("\n")[]
+           | select(test("^(OK|FAIL|INFO)[[:space:]]")) | [splits("[[:space:]]+")] | .[1] ] | unique) as $printed
+      | ([ $pol[0].verification.finish_requires[] as $k
+           | (([ $r.finish_checks[] | select(. as $n | $k | contains($n)) ] | first)
+              // ([ $printed[] | select(. as $n | $k | contains($n)) ] | first)
+              // empty) ]) as $named
+      | .finish_checks = ($named + ($r.finish_checks - $named))'
     grep -qF "$SITE_BASE/challenge/" "$ROOT/README.md" || {
       echo "generate-site-data: README.md does not link the challenge at $SITE_BASE/challenge/" >&2; exit 10; }
     grep -qF "$(jq -r '.install_command' "$OUT/challenge.json")" "$ROOT/README.md" || {

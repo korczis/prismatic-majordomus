@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.20.0"
   },
-  "fingerprint": "7dd374dd56dd840d547454c5bb2e378f18f73e5761063011d65f36d6690b30e1",
+  "fingerprint": "00ea5bbaeabb025fe789c7cee1e4d0a410f7cecc467df3fa2973669d539fee3a",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 5,
         "moments": 31
       },
       "evidence": {
@@ -8255,6 +8255,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
             }
           ]
         },
@@ -8604,10 +8613,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -15373,17 +15382,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2109,
-    "builtin": 184,
-    "declarative": 1925,
+    "capabilities": 2111,
+    "builtin": 185,
+    "declarative": 1926,
     "modules": 53,
-    "mcp_tools": 177,
-    "mcp_resources": 1979,
-    "http_routes": 181,
+    "mcp_tools": 178,
+    "mcp_resources": 1981,
+    "http_routes": 182,
     "cli_commands": 190,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1925,
+    "objects": 1926,
     "by_kind": {
       "adr": 85,
       "application": 5,
@@ -15415,7 +15424,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
