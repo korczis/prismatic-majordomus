@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "ab865b2de52e7b26a80ca705944af92064c73d490bbf0fc4e9bd8ce86a72324a",
     "summary": {
-      "total": 2112,
+      "total": 2119,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1935,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1935
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1943
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1989,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 277,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "bc9d7bfe5a9650f1fb0f2dc06c35c61a345749cc97649cb7af85989b28d2b797",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 277,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 28,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 150599
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87959,6 +87959,72 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2410",
+        "kind": "issue",
+        "identity": "I2410",
+        "title": "A trusted machine on the tailnet is found through Tailscale, with no address written by hand",
+        "description": "Add a Tailscale discovery provider beside multicast, broadcast and rendezvous: it reads the local tailnet's peers and offers each one's tailnet address on the declared port as a candidate, which the link then admits or refuses under the trust list.",
+        "path": ".ai/repo/project/issues/I2410.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2136
+      },
+      {
+        "uri": "majordomus://issue/I2411",
+        "kind": "issue",
+        "identity": "I2411",
+        "title": "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer",
+        "description": "When the mesh is enabled, the shared server listens and advertises on the machine's tailnet and LAN addresses as well as loopback, so a trusted peer can dial it, while a request from a non-loopback address stays limited to what runtime-trust allows.",
+        "path": ".ai/repo/project/issues/I2411.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1885
+      },
+      {
+        "uri": "majordomus://issue/I2412",
+        "kind": "issue",
+        "identity": "I2412",
+        "title": "`majordomus init` declares the mesh and enrols this machine's key, so a fresh repository cooperates",
+        "description": "A fresh `majordomus init` writes a mesh declaration (multicast and Tailscale discovery on, deny_unknown trust) and an enrolment command adds this machine's node key to it, so a repository becomes a mesh by init and one enrolment per machine.",
+        "path": ".ai/repo/project/issues/I2412.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1702
+      },
+      {
+        "uri": "majordomus://issue/I2413",
+        "kind": "issue",
+        "identity": "I2413",
+        "title": "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why",
+        "description": "Mesh commands in a linked worktree with no server of its own use a running server of the same repository (the primary's, or the first ready one), and the session-start hook reports, never silently skips, when it cannot ensure a server.",
+        "path": ".ai/repo/project/issues/I2413.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1891
+      },
+      {
+        "uri": "majordomus://issue/I2414",
+        "kind": "issue",
+        "identity": "I2414",
+        "title": "mesh.state and mesh.peers answer a filtered summary that fits one tool answer",
+        "description": "Give mesh.state and mesh.peers inputs that narrow and summarise: a kind (sessions, claims, handovers, reviews), open-only, mine-only, a scope or PR substring and a limit, with a counts-only summary by default.",
+        "path": ".ai/repo/project/issues/I2414.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1478
+      },
+      {
+        "uri": "majordomus://issue/I2415",
+        "kind": "issue",
+        "identity": "I2415",
+        "title": "A mesh review request carries a body, can be withdrawn, and expires",
+        "description": "Give review requests a body beside the 256-byte subject, a withdraw event its requester may write, an optional expiry, and a result note the requester may attach to its own request, so a request ends instead of staying open forever.",
+        "path": ".ai/repo/project/issues/I2415.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1833
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88244,6 +88310,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 9891
+      },
+      {
+        "uri": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "milestone",
+        "identity": "the-mesh-works-out-of-the-box",
+        "title": "The mesh works out of the box: trusted machines find each other by every means and their sessions cooperate from the first turn",
+        "description": "A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer.",
+        "path": ".ai/repo/project/milestones/the-mesh-works-out-of-the-box.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3667
       },
       {
         "uri": "majordomus://milestone/two-folder-integration",
@@ -96993,7 +97070,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 277
     },
     {
       "name": "knowledge",
@@ -97023,7 +97100,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 28
     },
     {
       "name": "moment",

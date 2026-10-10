@@ -1,0 +1,28 @@
+id: I2413
+milestone: the-mesh-works-out-of-the-box
+title: "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why"
+slug: a-worktree-cooperates-through-the-primary
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Mesh commands in a linked worktree with no server of its own use a running server of the same repository (the primary's, or the first ready one), and the session-start hook reports, never silently skips, when it cannot ensure a server."
+why: "`majordomus mesh handover publish` in a linked worktree answered 'cooperation inactive ... no running server for this checkout' (apps/majordomus-cli/src/commands/mesh.rs:272-279) because the lease is per checkout (lease.rs:465-467). The workaround `serve ensure` in that worktree started a second server on *:8741 beside the primary's 127.0.0.1:8741 (2026-10-10). The start hook skips with 'not ensured' when the binary is unbuilt or stale (lib/capture.sh:1613-1620)."
+current_state: "A worktree without its own server is off the mesh; the start hook skips silently."
+desired_state: "A worktree's mesh commands reach the repository's running runtime; a start that ensures nothing prints the reason and the remedy."
+scope:
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "lib/capture.sh"
+  - "docs/MESH.md"
+  - "test/cases"
+acceptance_criteria:
+  - "In a linked worktree with no server, `mesh handover publish` and `mesh claim` reach the primary's running runtime"
+  - "No command run in a worktree starts a server bound beyond loopback"
+  - "A start whose binary is stale prints why no server was ensured and what to run"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_shared"
+evidence_required:
+  - "worktree_publishes_through_primary_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10
