@@ -1,0 +1,29 @@
+id: I2282
+milestone: test-evidence
+title: "The record pull request's dispatched verdict does not satisfy branch protection"
+slug: the-record-dispatch-is-not-a-verdict
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is."
+why: "docs/DISTRIBUTION.md ('Why the release asks for the verdict of its record') says the publish job dispatches validate on release/record-<tag>, that the check-runs attach to the head commit the pull request reads, and so the record no longer sits with an empty rollup until somebody closes and reopens it. On 2026-10-10 the v0.19.1 record, #866 at head 03e1d8a597, had exactly that dispatched run (38015081212) conclude success with a `ci` check-run from app 15368, the app and context master's branch protection requires (strict false, no rulesets). The merge was refused with 'base branch policy prohibits'. The pull_request run the record's opening caused (38015082449, actor github-actions[bot]) concluded failure with zero jobs; both check suites are associated with pull request 866, and its statusCheckRollup stayed empty until a close and reopen at 05:22Z started pull_request run 38027303212. The dispatch has not yet made a record mergeable on its own: v0.18.0's (#832) dispatch failed and it merged after a close/reopen run, v0.19.0's (#861) was admin-merged. Case 996 holds that the two workflows are wired to each other; it never observes a record pull request become mergeable. Each release since has lost one CI cycle, about 90 minutes, between publication and the record reaching the site."
+current_state: "The publish job opens the record pull request with GITHUB_TOKEN and dispatches validate on its branch. The dispatched run's `ci` passes, the branch protection still refuses the merge, and the record waits for a person to close and reopen it or for an admin merge. docs/DISTRIBUTION.md and case 996 describe the record as needing neither."
+desired_state: "A release's record pull request becomes mergeable on its own green `ci`, with no close, reopen or admin merge, and the documentation says what the pipeline proves. Two remedies are named. The first is the owner's decision because it needs a credential only the owner can provide: the publish job opens, or closes and reopens, the record pull request with a GitHub App or fine-grained token whose events start workflows, so the pull_request run carries `ci` itself. The second needs nothing new: the pipeline and documentation stop claiming the dispatch is a verdict, the release names the close/reopen as its remaining step and does it with a token that can, or the lander's runbook carries it, and case 996 is narrowed to what it shows."
+scope:
+  - ".github/workflows/release.yml"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/996_the_record_pull_request_gets_its_verdict.sh"
+  - ".ai/repo/ci/release.yaml"
+acceptance_criteria:
+  - "On a release, `gh pr view <record> --json mergeStateStatus` reads CLEAN once its `ci` concludes success, without the record pull request having been closed, reopened or admin-merged; or docs/DISTRIBUTION.md no longer says that it does"
+  - "docs/DISTRIBUTION.md names, for the record pull request, only steps the pipeline performs or the lander's runbook performs, and the failure table names the close/reopen if it remains"
+  - "Case 996 asserts only what it observes; if it keeps the dispatch, it does not call it the record's verdict"
+  - "If the token remedy is chosen, the credential is named in docs/DISTRIBUTION.md as the owner's, with how it is rotated, and no secret value appears in the repository"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 996"
+evidence_required:
+  - "record_pull_request_mergeable_without_reopen"
+  - "distribution_claims_match_pipeline"
+created_at: 2026-10-10
+updated_at: 2026-10-10

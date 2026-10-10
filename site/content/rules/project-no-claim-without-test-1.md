@@ -1,7 +1,7 @@
 +++
 title = "No claim without a test"
 description = "No claim without a test"
-weight = 117
+weight = 118
 [extra]
 kind = "rule"
 slug = "project-no-claim-without-test-1"

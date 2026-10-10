@@ -1173,7 +1173,10 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_register"), http: post(REGISTER_PATH), cli: None },
                 tags: ["mesh", "coordination", "discovery"],
                 handler: mesh_register,
-            },
+            }
+            // the caller is another machine by design, admitted by the signature on its envelope
+            // and the trust policy, never by its address (ADR 0126)
+            .authenticates_its_input(),
             capability! {
                 id: "mesh.cooperation",
                 title: "Cooperation, at a glance",
@@ -1357,7 +1360,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: None, http: post(HELLO_PATH), cli: None },
                 tags: ["mesh", "cooperation", "link"],
                 handler: mesh_link_hello,
-            },
+            }
+            // a hello is signed by the dialling node and verified before a link is admitted
+            .authenticates_its_input(),
             capability! {
                 id: "mesh.link.sync",
                 kind: CapabilityKind::Command,
@@ -1369,7 +1374,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: None, http: post(SYNC_PATH), cli: None },
                 tags: ["mesh", "cooperation", "link"],
                 handler: mesh_link_sync,
-            },
+            }
+            // a sync round is signed under the link's key and verified before anything is ingested
+            .authenticates_its_input(),
         ],
     }
 }

@@ -22,12 +22,17 @@
 #   4. the installed tool reports the version the metadata resolved;
 #   5. the installed MCP launcher runs with no toolchain present, because an archive
 #      missing a launcher passes every check that only reads the archive's file list;
-#   6. the installed tool initialises a repository that has none.
+#   6. the installed tool initialises a repository that has none;
+#   7. and serves it: the installed MCP launcher, started in that repository without
+#      --standalone, answers initialize and tools/list over stdio, starts the shared server,
+#      and the server reports itself ready and names that repository — not this one.
 #
 #   scripts/ci/install-check              against the published site
 #   scripts/ci/install-check --base URL   against another origin (a preview deployment)
 #   scripts/ci/install-check --wait N     let the metadata appear within N seconds first
 #   scripts/ci/install-check --keep       leave the temporary tree for inspection
+#   scripts/ci/install-check --expect TAG the metadata must name this release (the release
+#                                         smoke, which installs exactly the tag it published)
 #
 # Exit: 0 the advertised command works, 10 it does not, 12 this machine cannot judge.
 set -eu
@@ -37,6 +42,7 @@ cd "$ROOT"
 
 BASE=""
 KEEP=0
+EXPECT=""
 # How long the metadata may still be on its way. Zero for a person, who wants an answer now;
 # CI passes a window, because publishing a release and deploying the site are two workflows
 # and the second is not instant — a push that lands between them would otherwise be told the
@@ -48,6 +54,7 @@ while [ $# -gt 0 ]; do
     --base) BASE="${2:-}"; shift 2 ;;
     --wait) WAIT="${2:-0}"; shift 2 ;;
     --keep) KEEP=1; shift ;;
+    --expect) EXPECT="${2:-}"; shift 2 ;;
     -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "install-check: unknown option $1" >&2; exit 2 ;;
   esac
@@ -134,6 +141,11 @@ tag="$(sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' "$latest" | head -n 1)"
 [ -n "$tag" ] || { fail "the metadata at $latest_url names no release"; printf 'install-check: %s finding(s)\n' "$findings" >&2; exit 10; }
 version="${tag#v}"
 ok "the metadata names $tag"
+if [ -n "$EXPECT" ] && [ "$tag" != "v${EXPECT#v}" ]; then
+  fail "the metadata names $tag, not the release this run was asked to check (v${EXPECT#v})"
+  printf 'install-check: %s finding(s)\n' "$findings" >&2
+  exit 10
+fi
 
 # ---------------------------------------------------------------- 2. the installer
 script="$WORK/install.sh"
@@ -183,7 +195,7 @@ fi
 
 # ---------------------------------------------------------------- 6. it supervises a repository
 if [ -x "$BIN/majordomus" ] && command -v git >/dev/null 2>&1; then
-  repo="$WORK/repo"; mkdir -p "$repo"
+  repo="$WORK/foreign"; mkdir -p "$repo"
   ( cd "$repo" && git init -q . && git config user.email ci@example.invalid && git config user.name ci ) >/dev/null 2>&1
   if ( cd "$repo" && env HOME="$HOMEDIR" "$BIN/majordomus" init ) >"$WORK/init.log" 2>&1 && [ -f "$repo/.ai/repo/policy.yaml" ]; then
     ok "the installed tool initialises a repository that has none"
@@ -191,6 +203,69 @@ if [ -x "$BIN/majordomus" ] && command -v git >/dev/null 2>&1; then
     fail "the installed tool could not initialise a repository"
     tail -n 5 "$WORK/init.log" | sed 's/^/                    /' >&2
   fi
+fi
+
+# ---------------------------------------------------------------- 7. it serves that repository
+# What a client configuration does with the installed tool: start the MCP launcher in a
+# repository and talk to it over stdio. Not --standalone — the launcher elects itself the
+# repository's shared server, so this is the one check that an installed release can serve a
+# repository that is not the one it was built from. The server's own answers are read back:
+# ready, and the repository it names is the one it was started in (the identity is the digest
+# of the checkout's root, crate::repository::identity), never this checkout.
+digest32() {
+  if command -v sha256sum >/dev/null 2>&1; then printf '%s' "$1" | sha256sum | cut -c1-32
+  else printf '%s' "$1" | openssl dgst -sha256 | sed 's/^.*= *//' | cut -c1-32; fi
+}
+frame() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }
+if [ -x "$BIN/majordomus-mcp" ] && [ -f "${repo:-}/.ai/repo/policy.yaml" ]; then
+  served_ok=1
+  mkfifo "$WORK/mcp.in"
+  ( cd "$repo" && exec env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --http-port 0 \
+      < "$WORK/mcp.in" > "$WORK/mcp.out" 2> "$WORK/mcp.log" ) &
+  mcp_pid=$!
+  exec 3> "$WORK/mcp.in"
+  frame 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"install-check","version":"0"}}' >&3
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n' >&3
+  frame 2 tools/list >&3
+  # bounded: 60 s for the server to listen and both answers to arrive
+  i=0
+  while [ "$i" -lt 600 ]; do
+    if [ "$(wc -l < "$WORK/mcp.out" | tr -d ' ')" -ge 2 ] && grep -q 'listening on http://' "$WORK/mcp.log"; then break; fi
+    kill -0 "$mcp_pid" 2>/dev/null || break
+    i=$((i + 1)); sleep 0.1
+  done
+  url="$(sed -n 's/.*listening on \(http:\/\/127\.0\.0\.1:[0-9]*\).*/\1/p' "$WORK/mcp.log" | head -n 1)"
+  if [ -z "$url" ]; then
+    served_ok=0; fail "the installed MCP launcher did not start a shared server in a repository of its own"
+    tail -n 8 "$WORK/mcp.log" | sed 's/^/                    /' >&2
+  fi
+  sed -n 1p "$WORK/mcp.out" | grep -q '"id":1,"result"' \
+    || { served_ok=0; fail "the installed MCP launcher did not answer initialize: $(sed -n 1p "$WORK/mcp.out" | cut -c1-200)"; }
+  sed -n 2p "$WORK/mcp.out" | grep -q '"id":2,"result":{"tools":\[{' \
+    || { served_ok=0; fail "the installed MCP launcher listed no tools: $(sed -n 2p "$WORK/mcp.out" | cut -c1-200)"; }
+  if [ -n "$url" ]; then
+    ready="$(curl -fsS --max-time 10 "$url/api/v1/ready" 2>&1 || true)"
+    printf '%s' "$ready" | grep -q '"ready": *true' \
+      || { served_ok=0; fail "the installed server is not ready: $(printf '%s' "$ready" | tr '\n' ' ' | cut -c1-300)"; }
+    index="$(curl -fsS --max-time 10 -H 'Accept: application/json' "$url/" 2>&1 || true)"
+    served_id="$(printf '%s' "$index" | sed -n 's/.*"repository_id": *"\([0-9a-f]*\)".*/\1/p' | head -n 1)"
+    foreign_id="$(digest32 "$(git -C "$repo" rev-parse --show-toplevel)")"
+    own_id="$(digest32 "$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || pwd -P)")"
+    if [ -z "$served_id" ]; then
+      served_ok=0; fail "the installed server names no repository_id: $(printf '%s' "$index" | tr '\n' ' ' | cut -c1-300)"
+    elif [ "$served_id" != "$foreign_id" ] || [ "$served_id" = "$own_id" ]; then
+      served_ok=0; fail "the installed server names repository $served_id, not the repository it was started in ($foreign_id)"
+    fi
+  fi
+  # the last client leaves; the server ends with it and takes its lease along
+  exec 3>&-
+  i=0; while kill -0 "$mcp_pid" 2>/dev/null && [ "$i" -lt 200 ]; do i=$((i + 1)); sleep 0.1; done
+  if kill -0 "$mcp_pid" 2>/dev/null; then
+    kill "$mcp_pid" 2>/dev/null || true
+    served_ok=0; fail "the installed shared server did not end with its last client"
+  fi
+  wait "$mcp_pid" 2>/dev/null || true
+  [ "$served_ok" = 1 ] && ok "the installed release serves a foreign repository over the shared server ($served_id)"
 fi
 
 if [ "$findings" != 0 ]; then
