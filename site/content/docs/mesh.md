@@ -563,8 +563,10 @@ verdict, `mesh.firewall` (`apps/majordomus-cli/src/mesh/firewall.rs`):
 The fleet's networks are the enclosing private ranges of every address the declaration names
 (hubs and seeds): `192.168.x.0/24`, `10.0.0.0/8`, `172.16.0.0/12`, `100.64.0.0/10` for a tailnet
 — and this machine's own ranges when it names none. A public address derives no network, and
-case 491 refuses one in the declaration first. A machine that is no hub, with multicast on,
-needs exactly one rule: the group's port.
+case 491 refuses one in the declaration first. With no network to admit from, no rule is
+planned for a TCP or broadcast port: only the multicast group is ever admitted from any
+source, and opening a port to every address stays the operator's act. A machine that is no
+hub, with multicast on, needs exactly one rule: the group's port.
 
 `majordomus mesh firewall` prints the plan, the backend (`ufw`, `nftables`, the macOS
 application firewall, or `none`), the commands that admit the plan there, the firewall's own

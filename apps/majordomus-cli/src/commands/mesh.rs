@@ -1624,4 +1624,208 @@ mod tests {
             "a value that is not a string reads as empty"
         );
     }
+
+    /// The firewall report of a declared hub whose ufw admits nothing of the mesh, as
+    /// `mesh.firewall` answers it: the shape `FirewallReport` serialises to.
+    fn firewall_report() -> Value {
+        json!({
+            "ok": false,
+            "platform": "linux",
+            "backend": "ufw",
+            "plan": {
+                "local_addresses": ["192.168.7.10"],
+                "networks": ["100.64.0.0/10", "192.168.7.0/24"],
+                "hub_ports": [8791],
+                "rules": [
+                    { "role": "multicast", "protocol": "udp", "port": 7741,
+                      "destination": "239.255.77.77", "sources": [],
+                      "reason": "every runtime of the segment advertises to the group" },
+                    { "role": "hub", "protocol": "tcp", "port": 8791,
+                      "sources": ["100.64.0.0/10", "192.168.7.0/24"],
+                      "reason": "this machine is a declared rendezvous hub" },
+                ],
+            },
+            "commands": [
+                { "rule": "udp/7741 to 239.255.77.77 from any",
+                  "argv": ["ufw", "allow", "in", "proto", "udp", "to", "239.255.77.77",
+                           "port", "7741", "comment", "majordomus mesh: multicast discovery"],
+                  "line": "ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'" },
+                { "rule": "tcp/8791 from 100.64.0.0/10, 192.168.7.0/24",
+                  "argv": ["ufw", "allow", "in", "proto", "tcp", "from", "100.64.0.0/10",
+                           "to", "any", "port", "8791", "comment", "majordomus mesh: rendezvous hub"],
+                  "line": "ufw allow in proto tcp from 100.64.0.0/10 to any port 8791 comment 'majordomus mesh: rendezvous hub'" },
+            ],
+            "observation": {
+                "state": "missing",
+                "detail": "2 of 2 rule(s) not admitted",
+                "missing": ["udp/7741 to 239.255.77.77 from any",
+                            "tcp/8791 from 100.64.0.0/10, 192.168.7.0/24"],
+            },
+            "window_seconds": 300,
+            "blocked_recently": { "7741": 3, "8791": 0 },
+            "verdict": "the host firewall does not admit the mesh: 2 of 2 rule(s) not admitted; run `sudo majordomus mesh firewall apply`",
+        })
+    }
+
+    #[test]
+    fn the_firewall_report_lists_the_plan_the_firewalls_word_the_drops_and_the_commands() {
+        let text = render_firewall(&firewall_report());
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "backend     ufw (linux)",
+                "plan        2 rule(s) from 100.64.0.0/10, 192.168.7.0/24",
+                "  multicast  udp/7741 to 239.255.77.77 from any — every runtime of the segment advertises to the group",
+                "  hub        tcp/8791 from 100.64.0.0/10, 192.168.7.0/24 — this machine is a declared rendezvous hub",
+                "observation missing: 2 of 2 rule(s) not admitted",
+                "blocked     7741: 3, 8791: 0 (kernel log, last 300 s)",
+                "commands    what `sudo majordomus mesh firewall apply` runs:",
+                "  ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'",
+                "  ufw allow in proto tcp from 100.64.0.0/10 to any port 8791 comment 'majordomus mesh: rendezvous hub'",
+                "verdict     the host firewall does not admit the mesh: 2 of 2 rule(s) not admitted; run `sudo majordomus mesh firewall apply`",
+            ]
+        );
+        assert!(
+            not_ok(&firewall_report()),
+            "a report whose `ok` is false is the exit code 10"
+        );
+    }
+
+    #[test]
+    fn a_firewall_report_that_needs_nothing_prints_no_rule_no_drop_and_no_command() {
+        let nothing = json!({
+            "ok": true,
+            "platform": "macos",
+            "backend": "application_firewall",
+            "executable": "/opt/majordomus",
+            "plan": { "local_addresses": [], "networks": [], "hub_ports": [], "rules": [] },
+            "commands": [],
+            "observation": { "state": "present", "detail": "the mesh needs no inbound admission on this host" },
+            "window_seconds": 300,
+            "verdict": "the mesh needs no inbound admission on this host",
+        });
+        assert_eq!(
+            render_firewall(&nothing),
+            "backend     application_firewall (macos)\n\
+             plan        0 rule(s)\n\
+             observation present: the mesh needs no inbound admission on this host\n\
+             verdict     the mesh needs no inbound admission on this host"
+        );
+        assert!(!not_ok(&nothing));
+    }
+
+    #[test]
+    fn a_kernel_log_that_was_read_and_counted_nothing_says_none_rather_than_nothing() {
+        // The log line is printed whenever the log was read: its absence means the log
+        // could not be read, which is a different answer from "nothing was dropped".
+        let mut report = firewall_report();
+        report["blocked_recently"] = json!({});
+        let text = render_firewall(&report);
+        assert!(
+            text.contains("\nblocked     none (kernel log, last 300 s)\n"),
+            "{text}"
+        );
+        report
+            .as_object_mut()
+            .expect("the report is an object")
+            .remove("blocked_recently");
+        let text = render_firewall(&report);
+        assert!(!text.contains("blocked"), "{text}");
+    }
+
+    #[test]
+    fn a_refused_firewall_apply_says_why_before_the_firewalls_word_and_the_verdict() {
+        let refused = json!({
+            "ok": false,
+            "refused": "applying firewall rules needs root: run `sudo majordomus mesh firewall apply`",
+            "applied": [],
+            "observation": { "state": "missing", "detail": "2 of 2 rule(s) not admitted" },
+            "before": firewall_report(),
+        });
+        assert_eq!(
+            render_firewall_apply(&refused),
+            "refused     applying firewall rules needs root: run `sudo majordomus mesh firewall apply`\n\
+             observation missing: 2 of 2 rule(s) not admitted\n\
+             verdict     the host firewall does not admit the mesh (see above)"
+        );
+        assert!(not_ok(&refused));
+    }
+
+    #[test]
+    fn an_applied_firewall_lists_every_command_with_its_outcome_and_everything_it_printed() {
+        let applied = json!({
+            "ok": true,
+            "applied": [
+                { "line": "ufw allow in proto udp to 239.255.77.77 port 7741",
+                  "ok": true, "output": "Rule added\nRule added (v6)" },
+                { "line": "ufw allow in proto tcp from 100.64.0.0/10 to any port 8791",
+                  "ok": true, "output": "" },
+            ],
+            "observation": { "state": "present", "detail": "every rule of the plan is admitted (2 rule(s))" },
+            "before": firewall_report(),
+        });
+        assert_eq!(
+            render_firewall_apply(&applied),
+            "ok    ufw allow in proto udp to 239.255.77.77 port 7741\n      \
+             Rule added\n      \
+             Rule added (v6)\n\
+             ok    ufw allow in proto tcp from 100.64.0.0/10 to any port 8791\n\
+             observation present: every rule of the plan is admitted (2 rule(s))\n\
+             verdict     the host firewall admits the mesh"
+        );
+        assert!(!not_ok(&applied));
+
+        // a command the tool refused is marked, with what the tool said under it
+        let failed = json!({
+            "ok": false,
+            "applied": [
+                { "line": "ufw allow in proto udp to 239.255.77.77 port 7741",
+                  "ok": false, "output": "ERROR: Invalid syntax" },
+            ],
+            "observation": { "state": "missing", "detail": "1 of 1 rule(s) not admitted" },
+        });
+        assert_eq!(
+            render_firewall_apply(&failed),
+            "FAIL  ufw allow in proto udp to 239.255.77.77 port 7741\n      \
+             ERROR: Invalid syntax\n\
+             observation missing: 1 of 1 rule(s) not admitted\n\
+             verdict     the host firewall does not admit the mesh (see above)"
+        );
+    }
+
+    #[test]
+    fn only_the_strings_of_an_array_are_read_and_anything_else_is_no_strings() {
+        assert_eq!(strings(&json!(["a", 1, "b", null])), ["a", "b"]);
+        assert!(strings(&json!("a")).is_empty());
+        assert!(strings(&Value::Null).is_empty());
+        assert!(
+            not_ok(&json!({})),
+            "an answer that carries no `ok` has not said that it holds"
+        );
+    }
+
+    #[test]
+    fn an_input_the_capability_refuses_is_an_error_and_never_an_answer() {
+        // The repository this crate is built in: `in_process` needs a layer to load, and the
+        // refusal under test is the capability's, of an input the command line cannot type.
+        let here = MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")),
+                ..Default::default()
+            },
+            format: OutputFormat::Text,
+        };
+        let refused = in_process(
+            here,
+            &["mesh", "firewall"],
+            json!({ "port": "eighty" }),
+            render_firewall,
+            not_ok,
+        );
+        assert!(
+            refused.is_err(),
+            "a port that is not a number was answered: {refused:?}"
+        );
+    }
 }

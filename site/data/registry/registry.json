@@ -6,7 +6,7 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "36ae7a78b829eb6ffb6798b5839e1e4e9bac6c9a6655009392f2f994670344b7",
+    "fingerprint": "6e4dcd0aa793f32398a389eba7860058fb402b9fb547784326295de1dfc7e3c8",
     "summary": {
       "total": 2105,
       "builtin": 186,
@@ -42290,7 +42290,7 @@
         "module": "mesh",
         "kind": "query",
         "title": "The host firewall, as the mesh needs it",
-        "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last hour. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+        "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
         "input": {
           "name": "FirewallInput",
           "schema": {
@@ -76969,7 +76969,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fbd6316cae644b5048428ac9da6bb779ac93a213962abfd438903f8345e39efb",
+    "fingerprint": "fe80aa0f42eed589477c0b5fbafa5087584795930ba02a94a64117a69dae05ef",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -82453,7 +82453,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 49277
+        "bytes": 49477
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -95364,7 +95364,7 @@
         "identity": "test/cases/495_the_firewall_admits_the_mesh.sh",
         "path": "test/cases/495_the_firewall_admits_the_mesh.sh",
         "source_class": "case",
-        "bytes": 11223
+        "bytes": 11258
       },
       {
         "uri": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
@@ -129030,7 +129030,7 @@
         "name": "majordomus_mesh_firewall",
         "id": "mesh.firewall",
         "title": "The host firewall, as the mesh needs it",
-        "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last hour. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+        "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

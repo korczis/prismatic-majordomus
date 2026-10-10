@@ -1,4 +1,5 @@
 # majordomus-timeout: 300
+# claims: mesh-firewall-is-derived
 # The host firewall is a derived requirement of the mesh with a verdict, not a thing an
 # operator remembers.
 #

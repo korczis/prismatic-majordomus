@@ -19,7 +19,8 @@
 //!
 //! What this is not: a firewall manager. It admits the ports the mesh declared, from the
 //! private networks the declaration names, and touches no other rule; and it never opens
-//! anything on a public address, because the declaration case refuses one first.
+//! anything on a public address: no rule is planned without a private network to admit from
+//! (the multicast group excepted), and the declaration case refuses a public address first.
 //!
 //! ```
 //! use std::net::Ipv4Addr;
@@ -290,9 +291,14 @@ pub fn plan(
     } else {
         &declared
     };
-    let mut networks: Vec<String> = basis.iter().filter_map(|ip| enclosing(*ip)).collect();
-    networks.sort();
-    networks.dedup();
+    // A set rather than a Vec and a sort: ordered and free of repeats by construction, and
+    // `order-check` counts every sort site in the crate against a baseline it may not exceed.
+    let networks: Vec<String> = basis
+        .iter()
+        .filter_map(|ip| enclosing(*ip))
+        .collect::<std::collections::BTreeSet<String>>()
+        .into_iter()
+        .collect();
 
     let mut rules = Vec::new();
     if config.multicast.enabled {
@@ -313,20 +319,25 @@ pub fn plan(
         if sources.is_empty() {
             sources.clone_from(&networks);
         }
-        rules.push(FirewallRule {
-            role: Role::Broadcast,
-            protocol: Protocol::Udp,
-            port: config.broadcast.port,
-            destination: None,
-            sources,
-            reason: format!(
-                "broadcast is a permitted fallback on UDP port {}",
-                config.broadcast.port
-            ),
-        });
+        // Only the multicast group is admitted from any source. A rule with no source
+        // renders as "from anywhere", and with no private network to name, that is a port
+        // opened to the internet: a decision for the operator, never one derived here.
+        if !sources.is_empty() {
+            rules.push(FirewallRule {
+                role: Role::Broadcast,
+                protocol: Protocol::Udp,
+                port: config.broadcast.port,
+                destination: None,
+                sources,
+                reason: format!(
+                    "broadcast is a permitted fallback on UDP port {}",
+                    config.broadcast.port
+                ),
+            });
+        }
     }
 
-    let mut hub_ports: Vec<u16> = config
+    let hub_ports: std::collections::BTreeSet<u16> = config
         .rendezvous
         .endpoints
         .iter()
@@ -334,9 +345,12 @@ pub fn plan(
         .filter(|(ip, _)| local.contains(ip))
         .map(|(_, port)| port)
         .collect();
-    hub_ports.sort_unstable();
-    hub_ports.dedup();
-    for port in &hub_ports {
+    // The TCP ports are admitted from the fleet's private networks and from nowhere else.
+    // When none can be derived — a hub declared on a public address, a host with no private
+    // address — no TCP rule is planned: the ports stay in `hub_ports` for a reader, and
+    // opening one to every source stays the operator's act.
+    let private = !networks.is_empty();
+    for port in hub_ports.iter().filter(|_| private) {
         rules.push(FirewallRule {
             role: Role::Hub,
             protocol: Protocol::Tcp,
@@ -348,7 +362,7 @@ pub fn plan(
             ),
         });
     }
-    if let Some(port) = server_port {
+    if let Some(port) = server_port.filter(|_| private) {
         if !hub_ports.contains(&port) {
             rules.push(FirewallRule {
                 role: Role::Link,
@@ -366,7 +380,7 @@ pub fn plan(
     FirewallPlan {
         local_addresses,
         networks,
-        hub_ports,
+        hub_ports: hub_ports.into_iter().collect(),
         rules,
     }
 }
@@ -959,6 +973,13 @@ fn judge_with(
     }
 }
 
+/// How this module asks a host tool: the program and its arguments in; everything it
+/// printed, or the reason it could not run, out. [`run`] is the one that reaches the host.
+/// The judgement around the asking takes the asker as an argument, so that every branch of
+/// it is exercised by a test that answers from a table — without a firewall, without root
+/// and on any platform — while the public functions pass [`run`] and nothing else.
+type Runner<'a> = &'a dyn Fn(&str, &[&str]) -> std::result::Result<String, String>;
+
 fn run(program: &str, args: &[&str]) -> std::result::Result<String, String> {
     let program = find_tool(program).unwrap_or_else(|| PathBuf::from(program));
     match Command::new(&program).args(args).output() {
@@ -987,6 +1008,16 @@ pub fn observe(
     backend: Backend,
     plan: &FirewallPlan,
     executable: Option<&Path>,
+) -> FirewallObservation {
+    observe_with(backend, plan, executable, &run)
+}
+
+/// [`observe`], asking through `run`.
+fn observe_with(
+    backend: Backend,
+    plan: &FirewallPlan,
+    executable: Option<&Path>,
+    run: Runner<'_>,
 ) -> FirewallObservation {
     match backend {
         Backend::None => FirewallObservation::of(
@@ -1065,7 +1096,16 @@ pub const BLOCK_WINDOW_SECONDS: u64 = 300;
 /// assert!(kernel_blocks(&plan(None, &[], None)).is_none());
 /// ```
 pub fn kernel_blocks(plan: &FirewallPlan) -> Option<BTreeMap<String, u64>> {
-    if plan.rules.is_empty() || std::env::consts::OS != "linux" {
+    kernel_blocks_with(plan, std::env::consts::OS, &run)
+}
+
+/// [`kernel_blocks`] for the platform `os`, reading the log through `run`.
+fn kernel_blocks_with(
+    plan: &FirewallPlan,
+    os: &str,
+    run: Runner<'_>,
+) -> Option<BTreeMap<String, u64>> {
+    if plan.rules.is_empty() || os != "linux" {
         return None;
     }
     let ports: Vec<u16> = plan.rules.iter().map(|r| r.port).collect();
@@ -1138,9 +1178,40 @@ pub fn report(
     local: &[Ipv4Addr],
     server_port: Option<u16>,
 ) -> FirewallReport {
+    let host = Host {
+        os: std::env::consts::OS,
+        backend: detect_here(),
+        executable: std::env::current_exe().ok(),
+        run: &run,
+    };
+    report_with(config, local, server_port, host)
+}
+
+/// The host a report is built on: its platform, the firewall front found there, the
+/// executable the server runs as, and how its tools are asked. [`report`] fills it from
+/// this process; a test fills it with a platform and answers of its own, which is how the
+/// verdict of every backend and every observation is held on a machine that has neither.
+struct Host<'a> {
+    os: &'a str,
+    backend: Backend,
+    executable: Option<PathBuf>,
+    run: Runner<'a>,
+}
+
+/// [`report`] on the host given.
+fn report_with(
+    config: Option<&MeshConfig>,
+    local: &[Ipv4Addr],
+    server_port: Option<u16>,
+    host: Host<'_>,
+) -> FirewallReport {
+    let Host {
+        os,
+        backend,
+        executable,
+        run,
+    } = host;
     let plan = plan(config, local, server_port);
-    let backend = detect_here();
-    let executable = std::env::current_exe().ok();
     let commands = render(backend, &plan, executable.as_deref());
     let observation = if plan.rules.is_empty() {
         FirewallObservation::of(
@@ -1148,9 +1219,9 @@ pub fn report(
             "the mesh needs no inbound admission on this host: no enabled declaration, or nothing declared that reaches this machine",
         )
     } else {
-        observe(backend, &plan, executable.as_deref())
+        observe_with(backend, &plan, executable.as_deref(), run)
     };
-    let blocked_recently = kernel_blocks(&plan);
+    let blocked_recently = kernel_blocks_with(&plan, os, run);
     let dropped: u64 = blocked_recently
         .as_ref()
         .map(|m| m.values().sum())
@@ -1188,7 +1259,7 @@ pub fn report(
     };
     FirewallReport {
         ok,
-        platform: std::env::consts::OS.to_string(),
+        platform: os.to_string(),
         backend,
         executable: executable.map(|p| p.display().to_string()),
         plan,
@@ -1273,6 +1344,12 @@ fn is_root() -> bool {
 /// assert_eq!(a.observation, a.before.observation);
 /// ```
 pub fn apply(before: FirewallReport) -> FirewallApplyReport {
+    apply_with(before, is_root(), &run)
+}
+
+/// [`apply`] with the privilege and the asker given: `root` is whether this process may
+/// change the firewall, and `run` is what runs each command and asks the firewall after.
+fn apply_with(before: FirewallReport, root: bool, run: Runner<'_>) -> FirewallApplyReport {
     let refuse = |before: FirewallReport, reason: String| FirewallApplyReport {
         ok: false,
         refused: Some(reason),
@@ -1292,7 +1369,7 @@ pub fn apply(before: FirewallReport) -> FirewallApplyReport {
             "the plan needs no admission on this host; nothing to apply".into(),
         );
     }
-    if !is_root() {
+    if !root {
         return refuse(
             before,
             "applying firewall rules needs root: run `sudo majordomus mesh firewall apply` (sudo -E keeps the repository and state paths of the invoking user)".into(),
@@ -1315,7 +1392,7 @@ pub fn apply(before: FirewallReport) -> FirewallApplyReport {
         });
     }
     let exe = before.executable.as_deref().map(Path::new);
-    let observation = observe(before.backend, &before.plan, exe);
+    let observation = observe_with(before.backend, &before.plan, exe, run);
     let ok = all_ok
         && matches!(
             observation.state,
@@ -1400,12 +1477,61 @@ mod tests {
             "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
             "rendezvous": { "endpoints": ["http://203.0.113.5:8791"] },
         }));
-        let p = plan(Some(&c), &[Ipv4Addr::new(203, 0, 113, 5)], None);
+        let p = plan(Some(&c), &[Ipv4Addr::new(203, 0, 113, 5)], Some(8741));
         assert!(p.networks.is_empty());
-        let hub = p.rules.iter().find(|r| r.role == Role::Hub).unwrap();
+        assert_eq!(p.hub_ports, [8791], "the port is still named for a reader");
+        // No private network to admit from, so no TCP rule at all: one with no source would
+        // render as a port opened to every address, and this plan never derives that.
         assert!(
-            hub.sources.is_empty(),
-            "no private network to admit from: {hub:?}"
+            p.rules
+                .iter()
+                .all(|r| r.role == Role::Multicast && r.protocol == Protocol::Udp),
+            "only the group's own port is admitted from any source: {:?}",
+            p.rules
+        );
+    }
+
+    #[test]
+    fn broadcast_with_no_network_to_admit_from_is_not_planned() {
+        // Broadcast is on, it names no network, and the one declared address is public: there
+        // is nothing to admit from, and a rule without a source would admit everybody.
+        let c = config(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
+            "multicast": { "enabled": false },
+            "broadcast": { "mode": "explicit", "port": 7742 },
+            "rendezvous": { "endpoints": ["http://203.0.113.5:8791"] },
+        }));
+        let p = plan(Some(&c), &[Ipv4Addr::new(203, 0, 113, 5)], Some(8741));
+        assert!(p.networks.is_empty());
+        assert!(p.rules.is_empty(), "nothing is derived: {:?}", p.rules);
+    }
+
+    #[test]
+    fn a_rule_is_rendered_as_it_is_given_so_the_plan_is_what_keeps_a_port_closed() {
+        // `render` is faithful to the rule it is handed: one with no source and no group is
+        // written "to any". That is why `plan` never derives such a rule for a TCP or a
+        // broadcast port, and this is the only place one exists.
+        let open = FirewallPlan {
+            local_addresses: Vec::new(),
+            networks: Vec::new(),
+            hub_ports: vec![8791],
+            rules: vec![FirewallRule {
+                role: Role::Hub,
+                protocol: Protocol::Tcp,
+                port: 8791,
+                destination: None,
+                sources: Vec::new(),
+                reason: "hand-built".into(),
+            }],
+        };
+        let ufw = render(Backend::Ufw, &open, None);
+        assert_eq!(ufw.len(), 1, "{ufw:#?}");
+        assert!(
+            ufw[0]
+                .line
+                .starts_with("ufw allow in proto tcp to any port 8791 comment"),
+            "{}",
+            ufw[0].line
         );
     }
 
@@ -1498,5 +1624,1200 @@ mod tests {
         let log = "[UFW BLOCK] IN=e SRC=1.1.1.1 DST=2.2.2.2 PROTO=TCP DPT=8791\n[UFW BLOCK] IN=e DPT=87911 LEN=1\n";
         let counts = count_blocks(log, &[8791]);
         assert_eq!(counts["8791"], 1);
+    }
+
+    // ------------------------------------------------------------ the fixtures below
+    //
+    // Everything from here on is held without a firewall: the fleet is the one of the
+    // incident this module answers, the firewall's words are texts, and the host is a
+    // table. No test below runs a firewall tool, and none depends on which one — if any —
+    // the machine running the suite has.
+
+    /// The LAN hub of [`fleet`].
+    const HUB: Ipv4Addr = Ipv4Addr::new(192, 168, 7, 10);
+
+    /// Two hubs, one on the LAN and one on the tailnet, and the multicast group on.
+    fn fleet() -> MeshConfig {
+        config(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
+            "rendezvous": { "endpoints": ["http://192.168.7.10:8791", "http://100.64.1.2:8791"] },
+        }))
+    }
+
+    /// What the LAN hub of [`fleet`] must admit: the group, and its port from both networks.
+    fn hub_plan() -> FirewallPlan {
+        plan(Some(&fleet()), &[HUB], None)
+    }
+
+    const GROUP_LABEL: &str = "udp/7741 to 239.255.77.77 from any";
+    const HUB_LABEL: &str = "tcp/8791 from 100.64.0.0/10, 192.168.7.0/24";
+
+    /// ufw on, with nothing of the mesh admitted: the host of the incident.
+    const UFW_BARE: &str = concat!(
+        "Status: active\n",
+        "\n",
+        "To                         Action      From\n",
+        "--                         ------      ----\n",
+        "22/tcp                     ALLOW IN    Anywhere\n",
+    );
+
+    /// ufw on, after `apply`: every rule of [`hub_plan`] admitted, each with its comment.
+    const UFW_ADMITTED: &str = concat!(
+        "Status: active\n",
+        "\n",
+        "To                         Action      From\n",
+        "--                         ------      ----\n",
+        "22/tcp                     ALLOW IN    Anywhere\n",
+        "239.255.77.77 7741/udp     ALLOW IN    Anywhere                   ",
+        "# majordomus mesh: multicast discovery\n",
+        "8791/tcp                   ALLOW IN    192.168.7.0/24             ",
+        "# majordomus mesh: rendezvous hub\n",
+        "8791/tcp                   ALLOW IN    100.64.0.0/10              ",
+        "# majordomus mesh: rendezvous hub\n",
+    );
+
+    /// What ufw answers a process that is not root.
+    const UFW_ROOT: &str = "ERROR: You need to be root to run this script\n";
+
+    /// An nftables ruleset that admits every rule of [`hub_plan`].
+    const NFT_ADMITTED: &str = concat!(
+        "table inet filter {\n",
+        " chain input {\n",
+        "  ip daddr 239.255.77.77 udp dport 7741 accept\n",
+        "  ip saddr 192.168.7.0/24 tcp dport 8791 accept\n",
+        "  ip saddr 100.64.0.0/10 tcp dport 8791 accept\n",
+        " }\n",
+        "}\n",
+    );
+
+    /// A kernel log of the window with nothing of the firewall's in it.
+    const JOURNAL_QUIET: &str = "perf: interrupt took too long\n";
+
+    /// A kernel log of the window with one drop toward each port of [`hub_plan`].
+    const JOURNAL_DROPS: &str = concat!(
+        "[UFW BLOCK] IN=eth0 OUT= SRC=192.168.7.11 DST=239.255.77.77 ",
+        "PROTO=UDP SPT=7741 DPT=7741 LEN=430\n",
+        "[UFW BLOCK] IN=eth0 OUT= SRC=192.168.7.11 DST=192.168.7.10 ",
+        "PROTO=TCP SPT=57168 DPT=8791 WINDOW=65535\n",
+        "[UFW BLOCK] IN=eth0 OUT= SRC=203.0.113.9 DST=192.168.7.10 ",
+        "PROTO=TCP SPT=40000 DPT=22 WINDOW=1024\n",
+    );
+
+    const FIREWALL_ON: &str = "Firewall is enabled. (State = 1)";
+    const EXECUTABLE: &str = "/opt/majordomus";
+    const APPS_ALLOWED: &str = concat!(
+        "ALF: total number of apps = 1 \n",
+        "\n",
+        "1 :  /opt/majordomus \n",
+        " \t ( Allow incoming connections ) \n",
+    );
+    const APPS_OTHER: &str = "1 :  /opt/other \n \t ( Allow incoming connections ) \n";
+
+    /// A host that answers from a table. Each entry is a fragment of a command line and
+    /// what the tool prints for the command carrying it; a command no entry names is a
+    /// tool this host does not have, answered the way [`run`] answers for one. Every
+    /// command is recorded, so a test holds what was asked — and that nothing was.
+    struct Script {
+        answers: Vec<(&'static str, &'static str)>,
+        asked: std::cell::RefCell<Vec<String>>,
+    }
+
+    impl Script {
+        fn new(answers: &[(&'static str, &'static str)]) -> Self {
+            Script {
+                answers: answers.to_vec(),
+                asked: std::cell::RefCell::new(Vec::new()),
+            }
+        }
+
+        fn run(&self, program: &str, args: &[&str]) -> std::result::Result<String, String> {
+            let mut words = vec![program];
+            words.extend_from_slice(args);
+            let line = words.join(" ");
+            self.asked.borrow_mut().push(line.clone());
+            self.answers
+                .iter()
+                .find(|(fragment, _)| line.contains(fragment))
+                .map(|(_, printed)| printed.to_string())
+                .ok_or_else(|| format!("{program} could not run: no such tool on this host"))
+        }
+
+        fn asked(&self) -> Vec<String> {
+            self.asked.borrow().clone()
+        }
+    }
+
+    /// The report of [`fleet`]'s LAN hub on the host a test describes.
+    fn hub_report(
+        os: &str,
+        backend: Backend,
+        executable: Option<&str>,
+        host: &Script,
+    ) -> FirewallReport {
+        let host = Host {
+            os,
+            backend,
+            executable: executable.map(PathBuf::from),
+            run: &|program, args| host.run(program, args),
+        };
+        report_with(Some(&fleet()), &[HUB], None, host)
+    }
+
+    // ------------------------------------------------------------ the plan and its words
+
+    #[test]
+    fn a_rule_is_labelled_by_its_protocol_its_port_its_group_and_its_sources() {
+        let p = hub_plan();
+        assert_eq!(p.rules[0].label(), GROUP_LABEL);
+        assert_eq!(p.rules[1].label(), HUB_LABEL);
+        let lone = FirewallRule {
+            role: Role::Link,
+            protocol: Protocol::Tcp,
+            port: 8741,
+            destination: None,
+            sources: Vec::new(),
+            reason: String::new(),
+        };
+        assert_eq!(lone.label(), "tcp/8741 from any");
+        // a rule without a group does not carry the member at all: an absent destination
+        // is this host's own address, and `null` would read as a group nobody named
+        let wire = serde_json::to_value(&lone).unwrap();
+        assert!(wire.get("destination").is_none(), "{wire}");
+        assert_eq!(wire["role"], "link");
+        assert_eq!(serde_json::from_value::<FirewallRule>(wire).unwrap(), lone);
+    }
+
+    #[test]
+    fn every_private_range_encloses_its_addresses_and_a_public_address_has_none() {
+        let range = |a, b, c, d| enclosing(Ipv4Addr::new(a, b, c, d));
+        assert_eq!(
+            range(192, 168, 100, 10).as_deref(),
+            Some("192.168.100.0/24")
+        );
+        assert_eq!(range(100, 92, 246, 32).as_deref(), Some("100.64.0.0/10"));
+        assert_eq!(range(10, 3, 2, 1).as_deref(), Some("10.0.0.0/8"));
+        assert_eq!(range(172, 20, 0, 1).as_deref(), Some("172.16.0.0/12"));
+        // the edges of each range, and the public addresses right beside them
+        assert_eq!(range(172, 16, 0, 1).as_deref(), Some("172.16.0.0/12"));
+        assert_eq!(range(172, 31, 255, 254).as_deref(), Some("172.16.0.0/12"));
+        assert_eq!(range(100, 64, 0, 1).as_deref(), Some("100.64.0.0/10"));
+        assert_eq!(range(100, 127, 255, 254).as_deref(), Some("100.64.0.0/10"));
+        for public in [
+            Ipv4Addr::new(8, 8, 8, 8),
+            Ipv4Addr::new(172, 15, 0, 1),
+            Ipv4Addr::new(172, 32, 0, 1),
+            Ipv4Addr::new(100, 63, 0, 1),
+            Ipv4Addr::new(100, 128, 0, 1),
+            Ipv4Addr::new(192, 169, 0, 1),
+        ] {
+            assert_eq!(enclosing(public), None, "{public} is not a private address");
+        }
+    }
+
+    #[test]
+    fn an_endpoint_is_an_address_and_a_port_whatever_scheme_or_path_surrounds_them() {
+        let hub = Some((HUB, 8791));
+        assert_eq!(parse_endpoint("http://192.168.7.10:8791"), hub);
+        assert_eq!(parse_endpoint("https://192.168.7.10:8791"), hub);
+        assert_eq!(parse_endpoint("192.168.7.10:8791"), hub);
+        assert_eq!(parse_endpoint("http://192.168.7.10:8791/"), hub);
+        assert_eq!(
+            parse_endpoint("http://192.168.7.10:8791/api/v1?x=1#top"),
+            hub
+        );
+        assert_eq!(parse_endpoint("http://192.168.7.10:8791?x=1"), hub);
+        assert_eq!(parse_endpoint("http://192.168.7.10:8791#top"), hub);
+        // a name is not an address this machine can be compared with, and a firewall
+        // rule is not derived from a resolver's answer
+        assert_eq!(parse_endpoint("http://hub.example:8791"), None);
+        assert_eq!(parse_endpoint("http://192.168.7.10"), None);
+        assert_eq!(parse_endpoint("http://192.168.7.10:http"), None);
+        assert_eq!(parse_endpoint("http://192.168.7.10:99999"), None);
+        assert_eq!(parse_endpoint(""), None);
+    }
+
+    #[test]
+    fn a_declared_hub_admits_the_group_and_its_port_and_every_other_machine_only_the_group() {
+        let p = hub_plan();
+        assert_eq!(p.local_addresses, ["192.168.7.10"]);
+        assert_eq!(p.networks, ["100.64.0.0/10", "192.168.7.0/24"]);
+        assert_eq!(p.hub_ports, [8791]);
+        let group = &p.rules[0];
+        assert_eq!(
+            (group.role, group.protocol, group.port),
+            (Role::Multicast, Protocol::Udp, 7741)
+        );
+        assert_eq!(group.destination.as_deref(), Some("239.255.77.77"));
+        assert!(group.sources.is_empty() && group.reason.contains("239.255.77.77"));
+        let hub = &p.rules[1];
+        assert_eq!(
+            (hub.role, hub.protocol, hub.port),
+            (Role::Hub, Protocol::Tcp, 8791)
+        );
+        assert_eq!(hub.sources, p.networks);
+        assert!(hub.reason.contains("TCP port 8791"), "{}", hub.reason);
+        // another machine of the same fleet is no hub: the networks are the fleet's all
+        // the same, because they are what its peers come from
+        let other = plan(Some(&fleet()), &[Ipv4Addr::new(192, 168, 7, 11)], None);
+        assert!(other.hub_ports.is_empty());
+        assert!(other.rules.iter().all(|r| r.role == Role::Multicast));
+        assert_eq!(other.networks, p.networks);
+    }
+
+    #[test]
+    fn a_server_beyond_loopback_is_admitted_on_its_port_from_the_networks_of_the_seeds() {
+        let seeded = config(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
+            "cooperation": { "seeds": ["http://10.9.8.7:8741"] },
+        }));
+        let p = plan(Some(&seeded), &[Ipv4Addr::new(10, 9, 8, 1)], Some(8741));
+        let roles: Vec<Role> = p.rules.iter().map(|r| r.role).collect();
+        assert_eq!(roles, [Role::Multicast, Role::Link]);
+        assert_eq!(p.rules[1].sources, ["10.0.0.0/8"]);
+        assert!(p.rules[1].reason.contains("TCP port 8741"));
+        // on loopback nobody dials it, and no port is given: no rule
+        let quiet = plan(Some(&seeded), &[Ipv4Addr::new(10, 9, 8, 1)], None);
+        assert!(quiet.rules.iter().all(|r| r.role != Role::Link));
+    }
+
+    #[test]
+    fn broadcast_that_names_no_network_of_its_own_is_admitted_from_the_fleets() {
+        let auto = config(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
+            "multicast": { "enabled": false },
+            "broadcast": { "mode": "auto" },
+            "rendezvous": { "endpoints": ["http://192.168.7.10:8791"] },
+        }));
+        let p = plan(Some(&auto), &[Ipv4Addr::new(192, 168, 7, 11)], None);
+        assert_eq!(p.rules.len(), 1, "{p:?}");
+        let b = &p.rules[0];
+        assert_eq!(
+            (b.role, b.protocol, b.port),
+            (Role::Broadcast, Protocol::Udp, 7741)
+        );
+        assert_eq!(b.destination, None);
+        assert_eq!(b.sources, ["192.168.7.0/24"]);
+        assert!(b.reason.contains("UDP port 7741"), "{}", b.reason);
+    }
+
+    #[test]
+    fn every_word_a_report_carries_is_the_one_a_reader_of_the_json_matches_on() {
+        let word = |v: serde_json::Value| v.as_str().map(str::to_string);
+        assert_eq!(
+            word(serde_json::json!(Protocol::Udp)).as_deref(),
+            Some("udp")
+        );
+        assert_eq!(
+            word(serde_json::json!(Protocol::Tcp)).as_deref(),
+            Some("tcp")
+        );
+        assert_eq!(word(serde_json::json!(Role::Hub)).as_deref(), Some("hub"));
+        assert_eq!(
+            word(serde_json::json!(Role::Broadcast)).as_deref(),
+            Some("broadcast")
+        );
+        let back: Role = serde_json::from_value(serde_json::json!("multicast")).unwrap();
+        assert_eq!(back, Role::Multicast);
+        assert_eq!(
+            word(serde_json::json!(Backend::ApplicationFirewall)).as_deref(),
+            Some("application_firewall")
+        );
+        assert_eq!(
+            word(serde_json::json!(FirewallObservationState::NoBackend)).as_deref(),
+            Some("no_backend")
+        );
+        assert_eq!(
+            word(serde_json::json!(FirewallObservationState::Unobservable)).as_deref(),
+            Some("unobservable")
+        );
+        let ran: Applied = serde_json::from_value(serde_json::json!({
+            "line": "ufw allow in proto udp to 239.255.77.77 port 7741",
+            "ok": true,
+            "output": "Rule added",
+        }))
+        .unwrap();
+        assert!(ran.ok && ran.output == "Rule added" && ran.line.starts_with("ufw allow"));
+    }
+
+    // ------------------------------------------------------------ the backend
+
+    #[test]
+    fn a_backend_is_named_by_its_tool_or_described_where_it_is_a_system_service() {
+        assert_eq!(Backend::Ufw.as_str(), "ufw");
+        assert_eq!(Backend::Nftables.as_str(), "nftables");
+        assert_eq!(
+            Backend::ApplicationFirewall.as_str(),
+            "macOS application firewall"
+        );
+        assert_eq!(Backend::None.as_str(), "none");
+    }
+
+    #[test]
+    fn the_backend_is_decided_by_the_platform_and_by_what_is_on_the_path() {
+        assert_eq!(
+            detect("linux", &|name| name == "ufw" || name == "nft"),
+            Backend::Ufw,
+            "ufw is a front of nftables: where both are, ufw is the one to ask"
+        );
+        assert_eq!(detect("linux", &|name| name == "ufw"), Backend::Ufw);
+        assert_eq!(detect("linux", &|name| name == "nft"), Backend::Nftables);
+        assert_eq!(detect("linux", &|_| false), Backend::None);
+        assert_eq!(
+            detect("macos", &|_| false),
+            Backend::ApplicationFirewall,
+            "the application firewall is part of the system, not a tool on the path"
+        );
+        assert_eq!(detect("macos", &|_| true), Backend::ApplicationFirewall);
+        assert_eq!(detect("windows", &|_| true), Backend::None);
+        assert_eq!(detect("freebsd", &|_| true), Backend::None);
+    }
+
+    #[test]
+    fn this_process_detects_what_its_platform_and_its_path_decide() {
+        let looked_up = detect(std::env::consts::OS, &|name| find_tool(name).is_some());
+        assert_eq!(detect_here(), looked_up);
+        assert_eq!(find_tool("majordomus-no-such-firewall-tool"), None);
+    }
+
+    // ------------------------------------------------------------ the commands
+
+    #[test]
+    fn a_word_is_quoted_for_a_shell_only_when_the_shell_would_read_it_otherwise() {
+        assert_eq!(shell_quote("ufw"), "ufw");
+        assert_eq!(shell_quote("192.168.7.0/24"), "192.168.7.0/24");
+        assert_eq!(shell_quote(SOCKETFILTERFW), SOCKETFILTERFW);
+        assert_eq!(
+            shell_quote("majordomus mesh: rendezvous hub"),
+            "'majordomus mesh: rendezvous hub'"
+        );
+        assert_eq!(shell_quote(""), "''");
+        assert_eq!(shell_quote("it's"), "'it'\\''s'");
+        assert_eq!(shell_quote("$(reboot)"), "'$(reboot)'");
+    }
+
+    #[test]
+    fn every_role_is_admitted_with_the_comment_that_names_it_on_ufw_and_on_nftables() {
+        let all = config(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
+            "broadcast": { "mode": "auto" },
+            "rendezvous": { "endpoints": ["http://192.168.7.10:8791"] },
+        }));
+        let p = plan(Some(&all), &[HUB], Some(8741));
+        let roles: Vec<Role> = p.rules.iter().map(|r| r.role).collect();
+        assert_eq!(
+            roles,
+            [Role::Multicast, Role::Broadcast, Role::Hub, Role::Link]
+        );
+        let comments = [
+            "majordomus mesh: multicast discovery",
+            "majordomus mesh: broadcast discovery",
+            "majordomus mesh: rendezvous hub",
+            "majordomus mesh: link protocol",
+        ];
+
+        let ufw = render(Backend::Ufw, &p, None);
+        let lines: Vec<&str> = ufw.iter().map(|c| c.line.as_str()).collect();
+        assert_eq!(
+            lines,
+            [
+                "ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'",
+                "ufw allow in proto udp from 192.168.7.0/24 to any port 7741 comment 'majordomus mesh: broadcast discovery'",
+                "ufw allow in proto tcp from 192.168.7.0/24 to any port 8791 comment 'majordomus mesh: rendezvous hub'",
+                "ufw allow in proto tcp from 192.168.7.0/24 to any port 8741 comment 'majordomus mesh: link protocol'",
+            ]
+        );
+        for (command, (rule, comment)) in ufw.iter().zip(p.rules.iter().zip(comments)) {
+            assert_eq!(command.rule, rule.label());
+            assert_eq!(command.argv.last().map(String::as_str), Some(comment));
+            // the line is the vector quoted, word for word: what is shown is what runs
+            let quoted: Vec<String> = command.argv.iter().map(|w| shell_quote(w)).collect();
+            assert_eq!(command.line, quoted.join(" "));
+        }
+
+        let nft = render(Backend::Nftables, &p, None);
+        assert_eq!(nft.len(), 4, "{nft:#?}");
+        let heads = [
+            "nft add rule inet filter input ip daddr 239.255.77.77 udp dport 7741 accept comment ",
+            "nft add rule inet filter input ip saddr 192.168.7.0/24 udp dport 7741 accept comment ",
+            "nft add rule inet filter input ip saddr 192.168.7.0/24 tcp dport 8791 accept comment ",
+            "nft add rule inet filter input ip saddr 192.168.7.0/24 tcp dport 8741 accept comment ",
+        ];
+        for ((command, head), (rule, comment)) in
+            nft.iter().zip(heads).zip(p.rules.iter().zip(comments))
+        {
+            assert!(command.line.starts_with(head), "{}", command.line);
+            assert_eq!(command.rule, rule.label());
+            assert_eq!(command.argv.last().map(String::as_str), Some(comment));
+        }
+    }
+
+    #[test]
+    fn a_rule_from_two_networks_is_one_command_per_network_and_no_backend_is_no_command() {
+        let p = hub_plan();
+        let lines: Vec<String> = render(Backend::Ufw, &p, None)
+            .into_iter()
+            .map(|c| c.line)
+            .collect();
+        assert_eq!(
+            lines,
+            [
+                "ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'",
+                "ufw allow in proto tcp from 100.64.0.0/10 to any port 8791 comment 'majordomus mesh: rendezvous hub'",
+                "ufw allow in proto tcp from 192.168.7.0/24 to any port 8791 comment 'majordomus mesh: rendezvous hub'",
+            ]
+        );
+        let nft = render(Backend::Nftables, &p, None);
+        assert_eq!(nft.len(), 3);
+        assert!(nft[1].argv.contains(&"100.64.0.0/10".to_string()));
+        assert!(nft[2].argv.contains(&"192.168.7.0/24".to_string()));
+        assert!(render(Backend::None, &p, None).is_empty());
+        assert!(render(Backend::None, &p, Some(Path::new(EXECUTABLE))).is_empty());
+    }
+
+    #[test]
+    fn the_application_firewall_admits_the_executable_once_whatever_the_ports() {
+        let p = hub_plan();
+        let exe = Path::new(EXECUTABLE);
+        let mac = render(Backend::ApplicationFirewall, &p, Some(exe));
+        let argv: Vec<Vec<&str>> = mac
+            .iter()
+            .map(|c| c.argv.iter().map(String::as_str).collect())
+            .collect();
+        assert_eq!(
+            argv,
+            [
+                [SOCKETFILTERFW, "--add", EXECUTABLE],
+                [SOCKETFILTERFW, "--unblockapp", EXECUTABLE],
+            ]
+        );
+        assert!(mac[0].line.ends_with("--add /opt/majordomus"));
+        assert!(mac[1].line.ends_with("--unblockapp /opt/majordomus"));
+        assert!(mac.iter().all(|c| c.rule == GROUP_LABEL));
+        // nothing to admit, nothing to run — with an executable or without
+        let nothing = plan(None, &[HUB], None);
+        assert!(render(Backend::ApplicationFirewall, &nothing, Some(exe)).is_empty());
+        assert!(render(Backend::ApplicationFirewall, &p, None).is_empty());
+    }
+
+    // ------------------------------------------------------------ the firewall's own word
+
+    #[test]
+    fn ufw_is_judged_present_missing_inactive_or_unobservable_from_its_status_alone() {
+        let p = hub_plan();
+        let before = judge_ufw(UFW_BARE, &p);
+        assert_eq!(before.state, FirewallObservationState::Missing);
+        assert_eq!(before.missing, [GROUP_LABEL, HUB_LABEL]);
+        assert_eq!(
+            before.detail,
+            format!("2 of 2 rule(s) not admitted: {GROUP_LABEL}; {HUB_LABEL}")
+        );
+
+        let after = judge_ufw(UFW_ADMITTED, &p);
+        assert_eq!(after.state, FirewallObservationState::Present);
+        assert!(after.missing.is_empty());
+        assert_eq!(
+            after.detail,
+            "every rule of the plan is admitted (2 rule(s))"
+        );
+
+        let off = judge_ufw("Status: inactive\n", &p);
+        assert_eq!(off.state, FirewallObservationState::Inactive);
+        assert!(off.missing.is_empty() && off.detail.contains("inactive"));
+
+        let unasked = judge_ufw(UFW_ROOT, &p);
+        assert_eq!(unasked.state, FirewallObservationState::Unobservable);
+        assert!(unasked.detail.contains("sudo majordomus mesh firewall"));
+    }
+
+    #[test]
+    fn a_ufw_status_nobody_understands_is_unobservable_and_quotes_what_it_said() {
+        let p = hub_plan();
+        let odd = judge_ufw("ufw: command not found\nsecond line\n", &p);
+        assert_eq!(odd.state, FirewallObservationState::Unobservable);
+        assert_eq!(
+            odd.detail,
+            "ufw status was not understood: ufw: command not found"
+        );
+        let silent = judge_ufw("", &p);
+        assert_eq!(silent.state, FirewallObservationState::Unobservable);
+        assert_eq!(silent.detail, "ufw status was not understood: (empty)");
+    }
+
+    #[test]
+    fn ufw_admits_by_the_terse_action_and_by_anywhere_and_never_by_an_outbound_rule() {
+        let p = hub_plan();
+        // `ufw status` without `verbose` prints the action as `ALLOW`; it is the same rule
+        let terse = concat!(
+            "Status: active\n",
+            "239.255.77.77 7741/udp     ALLOW       Anywhere\n",
+            "8791/tcp                   ALLOW       192.168.7.0/24\n",
+            "8791/tcp                   ALLOW       100.64.0.0/10\n",
+        );
+        assert_eq!(
+            judge_ufw(terse, &p).state,
+            FirewallObservationState::Present
+        );
+        // a wider admission counts: anywhere covers every network
+        let wide = concat!(
+            "Status: active\n",
+            "239.255.77.77 7741/udp     ALLOW IN    Anywhere\n",
+            "8791/tcp                   ALLOW IN    Anywhere\n",
+        );
+        assert_eq!(judge_ufw(wide, &p).state, FirewallObservationState::Present);
+        // outbound and forwarded traffic is not what reaches this host's socket, a denial
+        // is not an admission, and the group's port to another address is not the group's
+        let elsewhere = concat!(
+            "Status: active\n",
+            "7741/udp                   ALLOW IN    Anywhere\n",
+            "239.255.77.77 7741/udp     ALLOW OUT   Anywhere\n",
+            "239.255.77.77 7741/udp     DENY IN     Anywhere\n",
+            "8791/tcp                   ALLOW OUT   Anywhere\n",
+            "8791/tcp                   ALLOW FWD   Anywhere\n",
+            "8791/tcp                   DENY        192.168.7.0/24\n",
+        );
+        let o = judge_ufw(elsewhere, &p);
+        assert_eq!(o.state, FirewallObservationState::Missing);
+        assert_eq!(o.missing, [GROUP_LABEL, HUB_LABEL]);
+        // one network of two is the rule still missing, named whole
+        let half = concat!(
+            "Status: active\n",
+            "239.255.77.77 7741/udp     ALLOW IN    Anywhere\n",
+            "8791/tcp                   ALLOW IN    192.168.7.0/24\n",
+        );
+        let o = judge_ufw(half, &p);
+        assert_eq!(o.missing, [HUB_LABEL]);
+        assert_eq!(
+            o.detail,
+            format!("1 of 2 rule(s) not admitted: {HUB_LABEL}")
+        );
+        // an empty plan is admitted by any active firewall: there is nothing to drop
+        let nothing = judge_ufw(UFW_BARE, &plan(None, &[], None));
+        assert_eq!(nothing.state, FirewallObservationState::Present);
+    }
+
+    #[test]
+    fn nftables_is_judged_present_missing_inactive_or_unobservable_from_its_ruleset_alone() {
+        let p = hub_plan();
+        assert_eq!(
+            judge_nft(NFT_ADMITTED, &p).state,
+            FirewallObservationState::Present
+        );
+        let empty_table = judge_nft("table inet filter {\n}\n", &p);
+        assert_eq!(empty_table.state, FirewallObservationState::Missing);
+        assert_eq!(empty_table.missing, [GROUP_LABEL, HUB_LABEL]);
+        for nothing in ["", "  \n\n"] {
+            let o = judge_nft(nothing, &p);
+            assert_eq!(o.state, FirewallObservationState::Inactive);
+            assert!(o.detail.contains("ruleset is empty"), "{}", o.detail);
+        }
+        for refusal in [
+            "Operation not permitted (you must be root)",
+            "netlink: Error: cache initialization failed: Permission denied",
+        ] {
+            let o = judge_nft(refusal, &p);
+            assert_eq!(o.state, FirewallObservationState::Unobservable);
+            assert!(o.detail.contains("sudo majordomus mesh firewall"));
+        }
+    }
+
+    #[test]
+    fn an_nftables_accept_covers_a_source_it_names_or_every_source_when_it_names_none() {
+        let p = hub_plan();
+        // an accept that names no source admits every one of them
+        let any_source = concat!(
+            "  ip daddr 239.255.77.77 udp dport 7741 accept\n",
+            "  tcp dport 8791 accept\n",
+        );
+        assert_eq!(
+            judge_nft(any_source, &p).state,
+            FirewallObservationState::Present
+        );
+        // one network of two admitted is the rule still missing
+        let half = concat!(
+            "  ip daddr 239.255.77.77 udp dport 7741 accept\n",
+            "  ip saddr 192.168.7.0/24 tcp dport 8791 accept\n",
+        );
+        let o = judge_nft(half, &p);
+        assert_eq!(o.state, FirewallObservationState::Missing);
+        assert_eq!(o.missing, [HUB_LABEL]);
+        // the port to another address is not the group, and a drop is not an accept
+        let elsewhere = concat!(
+            "  udp dport 7741 accept\n",
+            "  ip saddr 192.168.7.0/24 tcp dport 8791 drop\n",
+            "  ip saddr 100.64.0.0/10 tcp dport 8791 drop\n",
+            "  tcp dport 22 accept\n",
+        );
+        let o = judge_nft(elsewhere, &p);
+        assert_eq!(o.missing, [GROUP_LABEL, HUB_LABEL]);
+    }
+
+    #[test]
+    fn the_application_firewall_is_judged_by_whether_the_executable_is_allowed() {
+        let exe = Path::new(EXECUTABLE);
+        for off in ["Firewall is disabled. (State = 0)", "(State = 0)"] {
+            let o = judge_application_firewall(off, "", exe);
+            assert_eq!(o.state, FirewallObservationState::Inactive, "{off}");
+            assert!(o.missing.is_empty());
+        }
+        let allowed = judge_application_firewall(FIREWALL_ON, APPS_ALLOWED, exe);
+        assert_eq!(allowed.state, FirewallObservationState::Present);
+        assert!(allowed.detail.ends_with(EXECUTABLE), "{}", allowed.detail);
+
+        let blocked = "1 :  /opt/majordomus \n \t ( Block incoming connections ) \n";
+        // listed last with no verdict line after it is not listed as allowed either
+        let cut_short = "1 :  /opt/majordomus";
+        for apps in [APPS_OTHER, blocked, cut_short, ""] {
+            let o = judge_application_firewall(FIREWALL_ON, apps, exe);
+            assert_eq!(o.state, FirewallObservationState::Missing, "{apps:?}");
+            assert_eq!(o.missing, ["incoming connections to /opt/majordomus"]);
+            assert!(o.detail.contains("does not allow"), "{}", o.detail);
+        }
+    }
+
+    // ------------------------------------------------------------ the asking
+
+    #[test]
+    fn each_backend_is_asked_its_own_question_and_judged_by_its_own_answer() {
+        let p = hub_plan();
+        let host = Script::new(&[
+            ("ufw status", UFW_ADMITTED),
+            ("nft list ruleset", "table inet filter {\n}\n"),
+        ]);
+        let ufw = observe_with(Backend::Ufw, &p, None, &|program, args| {
+            host.run(program, args)
+        });
+        assert_eq!(ufw.state, FirewallObservationState::Present);
+        let nft = observe_with(Backend::Nftables, &p, None, &|program, args| {
+            host.run(program, args)
+        });
+        assert_eq!(nft.state, FirewallObservationState::Missing);
+        assert_eq!(host.asked(), ["ufw status", "nft list ruleset"]);
+    }
+
+    #[test]
+    fn a_firewall_tool_that_cannot_run_is_unobservable_and_the_reason_is_the_evidence() {
+        let p = hub_plan();
+        let host = Script::new(&[]);
+        for (backend, tool) in [(Backend::Ufw, "ufw"), (Backend::Nftables, "nft")] {
+            let o = observe_with(backend, &p, None, &|program, args| host.run(program, args));
+            assert_eq!(o.state, FirewallObservationState::Unobservable);
+            assert_eq!(
+                o.detail,
+                format!("{tool} could not run: no such tool on this host")
+            );
+        }
+        // the application firewall is two questions, and either failing is the same absence
+        let exe = Path::new(EXECUTABLE);
+        for answered in [
+            ("--getglobalstate", FIREWALL_ON),
+            ("--listapps", APPS_ALLOWED),
+        ] {
+            let host = Script::new(&[answered]);
+            let o = observe_with(
+                Backend::ApplicationFirewall,
+                &p,
+                Some(exe),
+                &|program, args| host.run(program, args),
+            );
+            assert_eq!(o.state, FirewallObservationState::Unobservable, "{o:?}");
+            assert!(o.detail.contains("could not run"), "{}", o.detail);
+        }
+    }
+
+    #[test]
+    fn the_application_firewall_is_asked_its_state_and_its_list_for_the_executable_given() {
+        let p = hub_plan();
+        let host = Script::new(&[
+            ("--getglobalstate", FIREWALL_ON),
+            ("--listapps", APPS_ALLOWED),
+        ]);
+        let o = observe_with(
+            Backend::ApplicationFirewall,
+            &p,
+            Some(Path::new(EXECUTABLE)),
+            &|program, args| host.run(program, args),
+        );
+        assert_eq!(o.state, FirewallObservationState::Present, "{o:?}");
+        assert_eq!(
+            host.asked(),
+            [
+                format!("{SOCKETFILTERFW} --getglobalstate"),
+                format!("{SOCKETFILTERFW} --listapps"),
+            ]
+        );
+        // it admits an executable, and without one there is nothing to ask about
+        let unasked = Script::new(&[]);
+        let o = observe_with(Backend::ApplicationFirewall, &p, None, &|program, args| {
+            unasked.run(program, args)
+        });
+        assert_eq!(o.state, FirewallObservationState::Unobservable);
+        assert!(o.detail.contains("none was given"), "{}", o.detail);
+        let o = observe_with(Backend::None, &p, None, &|program, args| {
+            unasked.run(program, args)
+        });
+        assert_eq!(o.state, FirewallObservationState::NoBackend);
+        assert!(unasked.asked().is_empty(), "{:?}", unasked.asked());
+    }
+
+    #[test]
+    fn observing_without_a_backend_or_without_an_executable_asks_nothing_of_this_host() {
+        // The two answers of the real `observe` that run no tool, on any platform.
+        let nothing = plan(None, &[], None);
+        let o = observe(Backend::None, &nothing, None);
+        assert_eq!(o.state, FirewallObservationState::NoBackend);
+        let o = observe(Backend::ApplicationFirewall, &hub_plan(), None);
+        assert_eq!(o.state, FirewallObservationState::Unobservable);
+    }
+
+    #[test]
+    fn a_host_tool_answers_with_everything_it_printed_and_a_missing_one_with_the_reason() {
+        // git is the one tool every machine that builds this crate has, and asking it for
+        // its version changes nothing anywhere.
+        let version = run("git", &["--version"]).unwrap();
+        assert!(version.starts_with("git version"), "{version}");
+        // What a tool says on standard error is part of its answer: a refusal is read
+        // there, and `apply` records it instead of leaving it in a log.
+        let refused = run("git", &["--majordomus-no-such-option"]).unwrap();
+        assert!(refused.contains("--majordomus-no-such-option"), "{refused}");
+        let absent = run("majordomus-no-such-firewall-tool", &[]).unwrap_err();
+        assert!(
+            absent.starts_with("majordomus-no-such-firewall-tool could not run: "),
+            "{absent}"
+        );
+    }
+
+    // ------------------------------------------------------------ the kernel's word
+
+    #[test]
+    fn a_drop_is_counted_for_the_port_it_names_wherever_the_port_stands_in_the_line() {
+        let counts = count_blocks(JOURNAL_DROPS, &[7741, 8791]);
+        assert_eq!(counts.get("7741"), Some(&1));
+        assert_eq!(counts.get("8791"), Some(&1));
+        assert_eq!(counts.get("22"), None, "port 22 is not the mesh's");
+        // the port as the last word of the line, with and without trailing space, twice
+        let tail = "[UFW BLOCK] IN=e DPT=8791\n[UFW BLOCK] IN=e DPT=8791  \nDPT=8791 unrelated\n";
+        let counts = count_blocks(tail, &[7741, 8791]);
+        assert_eq!(counts["8791"], 2);
+        assert_eq!(
+            counts["7741"], 0,
+            "a port nothing was dropped toward counts zero"
+        );
+        assert!(count_blocks(JOURNAL_DROPS, &[]).is_empty());
+    }
+
+    #[test]
+    fn the_kernel_log_is_read_on_linux_for_a_plan_with_rules_and_nowhere_else() {
+        let host = Script::new(&[("journalctl", JOURNAL_DROPS)]);
+        let nothing = plan(None, &[], None);
+        let read = |plan: &FirewallPlan, os: &str| {
+            kernel_blocks_with(plan, os, &|program, args| host.run(program, args))
+        };
+        assert_eq!(read(&nothing, "linux"), None, "an empty plan asks nothing");
+        assert_eq!(read(&hub_plan(), "macos"), None);
+        assert!(host.asked().is_empty(), "{:?}", host.asked());
+
+        let counts = read(&hub_plan(), "linux").unwrap();
+        assert_eq!(counts.len(), 2);
+        assert_eq!((counts["7741"], counts["8791"]), (1, 1));
+        assert_eq!(
+            host.asked(),
+            [format!(
+                "journalctl -k --since -{BLOCK_WINDOW_SECONDS}s -o cat -q --no-pager"
+            )]
+        );
+        // the real one, on this platform: an empty plan is never a question
+        assert!(kernel_blocks(&nothing).is_none());
+    }
+
+    #[test]
+    fn a_kernel_log_that_cannot_be_read_is_an_absence_and_never_a_count_of_zero() {
+        let p = hub_plan();
+        let absent = Script::new(&[]);
+        let none = kernel_blocks_with(&p, "linux", &|program, args| absent.run(program, args));
+        assert_eq!(none, None, "no journalctl on this host");
+        for refusal in [
+            "No journal files were found.\n",
+            "Failed to open journal: Permission denied\n",
+        ] {
+            let host = Script::new(&[("journalctl", refusal)]);
+            let none = kernel_blocks_with(&p, "linux", &|program, args| host.run(program, args));
+            assert_eq!(none, None, "{refusal}");
+        }
+        let quiet = Script::new(&[("journalctl", JOURNAL_QUIET)]);
+        let zero = kernel_blocks_with(&p, "linux", &|program, args| quiet.run(program, args));
+        assert_eq!(
+            zero.map(|m| m.values().sum::<u64>()),
+            Some(0),
+            "a log that was read and holds no drop is a count, and the count is zero"
+        );
+    }
+
+    // ------------------------------------------------------------ the report
+
+    #[test]
+    fn a_rule_observed_missing_fails_the_report_and_the_verdict_says_how_to_admit_it() {
+        let host = Script::new(&[("ufw status", UFW_BARE), ("journalctl", JOURNAL_QUIET)]);
+        let r = hub_report("linux", Backend::Ufw, None, &host);
+        assert!(!r.ok);
+        assert_eq!((r.platform.as_str(), r.backend), ("linux", Backend::Ufw));
+        assert_eq!(r.executable, None);
+        assert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);
+        assert_eq!(r.observation.state, FirewallObservationState::Missing);
+        assert_eq!(r.observation.missing, [GROUP_LABEL, HUB_LABEL]);
+        assert_eq!(
+            r.verdict,
+            format!(
+                "the host firewall does not admit the mesh: {}; run `sudo majordomus mesh firewall apply`",
+                r.observation.detail
+            )
+        );
+        // the commands are the plan's, rendered for the backend found
+        assert_eq!(r.commands, render(Backend::Ufw, &r.plan, None));
+        assert_eq!(r.commands.len(), 3);
+        let dropped = r.blocked_recently.as_ref().unwrap();
+        assert_eq!((dropped["7741"], dropped["8791"]), (0, 0));
+    }
+
+    #[test]
+    fn a_logged_drop_fails_the_report_whatever_the_firewall_says_or_cannot_say() {
+        let unasked = Script::new(&[("ufw status", UFW_ROOT), ("journalctl", JOURNAL_DROPS)]);
+        let r = hub_report("linux", Backend::Ufw, None, &unasked);
+        assert!(!r.ok);
+        assert_eq!(r.observation.state, FirewallObservationState::Unobservable);
+        assert!(
+            r.verdict.starts_with("the kernel logged 2 inbound")
+                && r.verdict.contains("in the last 5 minutes")
+                && r.verdict.contains("could not be asked without root")
+                && r.verdict
+                    .ends_with("run `sudo majordomus mesh firewall apply`"),
+            "{}",
+            r.verdict
+        );
+
+        // admitted on paper and dropped all the same: another rule, or another filter
+        let on_paper = Script::new(&[("ufw status", UFW_ADMITTED), ("journalctl", JOURNAL_DROPS)]);
+        let r = hub_report("linux", Backend::Ufw, None, &on_paper);
+        assert!(!r.ok);
+        assert_eq!(r.observation.state, FirewallObservationState::Present);
+        assert!(
+            r.verdict.starts_with("the kernel logged 2 inbound")
+                && r.verdict
+                    .contains("although the firewall admits the mesh on paper"),
+            "{}",
+            r.verdict
+        );
+    }
+
+    #[test]
+    fn a_firewall_that_admits_the_plan_or_filters_nothing_holds_with_its_own_words() {
+        let admitted = Script::new(&[("ufw status", UFW_ADMITTED), ("journalctl", JOURNAL_QUIET)]);
+        let r = hub_report("linux", Backend::Ufw, None, &admitted);
+        assert!(r.ok);
+        assert_eq!(
+            r.verdict,
+            "the host firewall admits the mesh: every rule of the plan is admitted (2 rule(s))"
+        );
+        assert_eq!(
+            admitted.asked().len(),
+            2,
+            "the firewall once, the log once: {:?}",
+            admitted.asked()
+        );
+
+        let off = Script::new(&[("ufw status", "Status: inactive\n")]);
+        let r = hub_report("linux", Backend::Ufw, None, &off);
+        assert!(r.ok);
+        assert_eq!(r.observation.state, FirewallObservationState::Inactive);
+        assert_eq!(r.verdict, r.observation.detail);
+        assert!(r.verdict.contains("inactive"), "{}", r.verdict);
+
+        // nftables without ufw in front, asked and judged the same way
+        let nft = Script::new(&[("nft list ruleset", NFT_ADMITTED)]);
+        let r = hub_report("linux", Backend::Nftables, None, &nft);
+        assert!(r.ok);
+        assert_eq!(r.commands, render(Backend::Nftables, &r.plan, None));
+    }
+
+    #[test]
+    fn a_host_without_a_known_firewall_holds_and_says_that_nothing_was_observed() {
+        let host = Script::new(&[]);
+        let r = hub_report("freebsd", Backend::None, None, &host);
+        assert!(r.ok);
+        assert_eq!(r.platform, "freebsd");
+        assert_eq!(r.observation.state, FirewallObservationState::NoBackend);
+        assert_eq!(r.verdict, r.observation.detail);
+        assert!(r.verdict.contains("nothing is observed"), "{}", r.verdict);
+        assert!(r.commands.is_empty() && r.blocked_recently.is_none());
+        assert_eq!(r.plan, hub_plan(), "the plan is derived all the same");
+        assert!(host.asked().is_empty(), "{:?}", host.asked());
+    }
+
+    #[test]
+    fn a_firewall_that_cannot_be_asked_holds_and_says_what_the_kernel_log_showed() {
+        let quiet = Script::new(&[("ufw status", UFW_ROOT), ("journalctl", JOURNAL_QUIET)]);
+        let r = hub_report("linux", Backend::Ufw, None, &quiet);
+        assert!(r.ok, "an absence is not a verdict: {}", r.verdict);
+        assert!(
+            r.verdict.starts_with("not observed: ufw status needs root")
+                && r.verdict.ends_with(
+                    "the kernel log shows nothing dropped toward the mesh's ports in the last 5 minutes"
+                ),
+            "{}",
+            r.verdict
+        );
+
+        let blind = Script::new(&[("ufw status", UFW_ROOT)]);
+        let r = hub_report("linux", Backend::Ufw, None, &blind);
+        assert!(r.ok);
+        assert!(r.blocked_recently.is_none());
+        assert!(
+            r.verdict
+                .ends_with("the kernel log could not be read either"),
+            "{}",
+            r.verdict
+        );
+    }
+
+    #[test]
+    fn an_empty_plan_is_reported_as_needing_nothing_on_any_host_and_asks_none_of_them() {
+        let host = Script::new(&[]);
+        for (os, backend) in [
+            ("linux", Backend::Ufw),
+            ("linux", Backend::Nftables),
+            ("macos", Backend::ApplicationFirewall),
+            ("freebsd", Backend::None),
+        ] {
+            let on = Host {
+                os,
+                backend,
+                executable: Some(PathBuf::from(EXECUTABLE)),
+                run: &|program, args| host.run(program, args),
+            };
+            let r = report_with(None, &[HUB], Some(8741), on);
+            assert!(r.ok, "{os}: {}", r.verdict);
+            assert_eq!(r.plan.local_addresses, ["192.168.7.10"]);
+            assert!(r.plan.rules.is_empty() && r.commands.is_empty());
+            assert_eq!(r.observation.state, FirewallObservationState::Present);
+            assert_eq!(r.verdict, r.observation.detail);
+            assert!(r.verdict.contains("needs no inbound admission"));
+            assert!(r.blocked_recently.is_none());
+            assert_eq!(r.executable.as_deref(), Some(EXECUTABLE));
+        }
+        assert!(host.asked().is_empty(), "{:?}", host.asked());
+    }
+
+    #[test]
+    fn the_report_of_a_mac_names_the_executable_it_asked_the_application_firewall_about() {
+        let host = Script::new(&[
+            ("--getglobalstate", FIREWALL_ON),
+            ("--listapps", APPS_ALLOWED),
+        ]);
+        let r = hub_report(
+            "macos",
+            Backend::ApplicationFirewall,
+            Some(EXECUTABLE),
+            &host,
+        );
+        assert!(r.ok, "{}", r.verdict);
+        assert_eq!(r.executable.as_deref(), Some(EXECUTABLE));
+        assert_eq!(r.observation.state, FirewallObservationState::Present);
+        assert_eq!(r.commands.len(), 2);
+        assert!(r.blocked_recently.is_none(), "there is no ufw log on a Mac");
+        assert_eq!(
+            host.asked().len(),
+            2,
+            "its state and its list, and no kernel log: {:?}",
+            host.asked()
+        );
+
+        // without an executable it cannot be judged, and with no log either that is said
+        let unasked = Script::new(&[]);
+        let r = hub_report("macos", Backend::ApplicationFirewall, None, &unasked);
+        assert!(r.ok);
+        assert!(r.commands.is_empty());
+        assert_eq!(
+            r.verdict,
+            "not observed: the application firewall admits an executable, and none was given; the kernel log could not be read either"
+        );
+        assert!(unasked.asked().is_empty(), "{:?}", unasked.asked());
+    }
+
+    // ------------------------------------------------------------ apply
+
+    /// The report of the incident: ufw on, nothing of the mesh admitted.
+    fn dropping() -> FirewallReport {
+        let host = Script::new(&[("ufw status", UFW_BARE), ("journalctl", JOURNAL_QUIET)]);
+        hub_report("linux", Backend::Ufw, None, &host)
+    }
+
+    #[test]
+    fn apply_refuses_without_a_backend_without_commands_and_without_root_and_runs_nothing() {
+        let host = Script::new(&[("ufw", "Rule added\n")]);
+        let apply_as = |before: FirewallReport, root: bool| {
+            apply_with(before, root, &|program, args| host.run(program, args))
+        };
+
+        let nowhere = hub_report("freebsd", Backend::None, None, &Script::new(&[]));
+        let a = apply_as(nowhere, true);
+        assert!(!a.ok && a.applied.is_empty());
+        assert_eq!(
+            a.refused.as_deref(),
+            Some("no firewall front this executable knows is on this host; nothing to apply")
+        );
+
+        let on = Host {
+            os: "linux",
+            backend: Backend::Ufw,
+            executable: None,
+            run: &|program, args| host.run(program, args),
+        };
+        let a = apply_as(report_with(None, &[HUB], None, on), true);
+        assert!(!a.ok && a.applied.is_empty());
+        assert_eq!(
+            a.refused.as_deref(),
+            Some("the plan needs no admission on this host; nothing to apply")
+        );
+
+        let a = apply_as(dropping(), false);
+        assert!(!a.ok && a.applied.is_empty());
+        let refusal = a.refused.as_deref().unwrap();
+        assert!(
+            refusal.starts_with("applying firewall rules needs root"),
+            "{refusal}"
+        );
+        // a refusal changed nothing, so the firewall's word is the one it had
+        assert_eq!(a.observation, a.before.observation);
+        assert_eq!(a.observation.state, FirewallObservationState::Missing);
+
+        assert!(host.asked().is_empty(), "{:?}", host.asked());
+    }
+
+    #[test]
+    fn as_root_every_command_runs_as_rendered_and_the_verdict_is_the_firewalls_afterwards() {
+        let before = dropping();
+        let rendered: Vec<String> = before.commands.iter().map(|c| c.argv.join(" ")).collect();
+        let lines: Vec<String> = before.commands.iter().map(|c| c.line.clone()).collect();
+        let host = Script::new(&[("ufw allow", "Rule added\n"), ("ufw status", UFW_ADMITTED)]);
+        let a = apply_with(before, true, &|program, args| host.run(program, args));
+        assert!(a.ok);
+        assert_eq!(a.refused, None);
+        assert_eq!(a.applied.len(), 3);
+        assert!(a.applied.iter().all(|c| c.ok && c.output == "Rule added"));
+        let ran: Vec<&str> = a.applied.iter().map(|c| c.line.as_str()).collect();
+        assert_eq!(ran, lines);
+        assert_eq!(a.observation.state, FirewallObservationState::Present);
+        assert_eq!(
+            a.before.observation.state,
+            FirewallObservationState::Missing,
+            "the report the commands came from is kept as it was"
+        );
+        // exactly the rendered vectors, in order, and then the question again
+        let mut expected = rendered;
+        expected.push("ufw status".to_string());
+        assert_eq!(host.asked(), expected);
+    }
+
+    #[test]
+    fn a_command_the_tool_refuses_fails_the_run_even_when_the_firewall_then_admits_the_plan() {
+        // The group's command is refused by the tool; the hub's cannot run at all.
+        let host = Script::new(&[
+            ("proto udp", "ERROR: Invalid syntax\n"),
+            ("ufw status", UFW_ADMITTED),
+        ]);
+        let a = apply_with(dropping(), true, &|program, args| host.run(program, args));
+        assert!(!a.ok, "a refused command is never a run that held");
+        assert_eq!(a.refused, None, "it ran: that is not a refusal to run");
+        assert_eq!(a.observation.state, FirewallObservationState::Present);
+        assert!(!a.applied[0].ok);
+        assert_eq!(a.applied[0].output, "ERROR: Invalid syntax");
+        for failed in &a.applied[1..] {
+            assert!(!failed.ok);
+            assert_eq!(
+                failed.output,
+                "ufw could not run: no such tool on this host"
+            );
+        }
+    }
+
+    #[test]
+    fn commands_that_all_ran_do_not_hold_while_the_firewall_still_drops_the_mesh() {
+        let still = Script::new(&[("ufw allow", "Rule added\n"), ("ufw status", UFW_BARE)]);
+        let a = apply_with(dropping(), true, &|program, args| still.run(program, args));
+        assert!(a.applied.iter().all(|c| c.ok));
+        assert_eq!(a.observation.state, FirewallObservationState::Missing);
+        assert!(!a.ok, "the verdict is the firewall's, not the exit codes'");
+
+        // a firewall switched off meanwhile filters nothing, and that holds
+        let off = Script::new(&[
+            ("ufw allow", "Rules updated\n"),
+            ("ufw status", "Status: inactive\n"),
+        ]);
+        let a = apply_with(dropping(), true, &|program, args| off.run(program, args));
+        assert_eq!(a.observation.state, FirewallObservationState::Inactive);
+        assert!(a.ok);
+
+        // and one that cannot be asked afterwards has not been seen to admit anything
+        let blind = Script::new(&[("ufw allow", "Rule added\n"), ("ufw status", UFW_ROOT)]);
+        let a = apply_with(dropping(), true, &|program, args| blind.run(program, args));
+        assert_eq!(a.observation.state, FirewallObservationState::Unobservable);
+        assert!(!a.ok);
+    }
+
+    #[test]
+    fn the_application_firewall_is_applied_for_the_executable_the_report_names() {
+        let listed_other = Script::new(&[
+            ("--getglobalstate", FIREWALL_ON),
+            ("--listapps", APPS_OTHER),
+        ]);
+        let before = hub_report(
+            "macos",
+            Backend::ApplicationFirewall,
+            Some(EXECUTABLE),
+            &listed_other,
+        );
+        assert!(!before.ok);
+        assert_eq!(
+            before.observation.missing,
+            ["incoming connections to /opt/majordomus"]
+        );
+
+        let host = Script::new(&[
+            (
+                "--add",
+                "Application at path ( /opt/majordomus ) added to firewall\n",
+            ),
+            (
+                "--unblockapp",
+                "Incoming connection to the application is permitted\n",
+            ),
+            ("--getglobalstate", FIREWALL_ON),
+            ("--listapps", APPS_ALLOWED),
+        ]);
+        let a = apply_with(before, true, &|program, args| host.run(program, args));
+        assert!(a.ok, "{a:?}");
+        assert_eq!(a.applied.len(), 2);
+        assert_eq!(a.observation.state, FirewallObservationState::Present);
+        assert_eq!(
+            host.asked(),
+            [
+                format!("{SOCKETFILTERFW} --add {EXECUTABLE}"),
+                format!("{SOCKETFILTERFW} --unblockapp {EXECUTABLE}"),
+                format!("{SOCKETFILTERFW} --getglobalstate"),
+                format!("{SOCKETFILTERFW} --listapps"),
+            ]
+        );
+    }
+
+    #[test]
+    fn applying_an_empty_plan_on_this_host_is_refused_before_anything_could_run() {
+        // The real `apply` over the real, empty report: whatever firewall this machine
+        // runs and whoever runs the suite — root included — there is no command to run.
+        let a = apply(report(None, &[], None));
+        assert!(!a.ok && a.applied.is_empty());
+        let refusal = a.refused.as_deref().unwrap();
+        assert!(refusal.ends_with("nothing to apply"), "{refusal}");
+        assert_eq!(a.observation, a.before.observation);
+        assert_eq!(a.before.platform, std::env::consts::OS);
+        assert_eq!(a.before.backend, detect_here());
     }
 }
