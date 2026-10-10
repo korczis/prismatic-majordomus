@@ -27,6 +27,7 @@ use super::protocol::{self, Refusal};
 use super::provider::{Beacon, MeshProvider, Observation, ProviderContext, ProviderStatus};
 use super::registry::{MeshRegistry, MeshSource, NodeRecord, Tallies};
 use super::rendezvous::{RegisterAnswer, RendezvousProvider};
+use super::tailscale::TailscaleProvider;
 use super::trust;
 use super::MeshError;
 
@@ -448,6 +449,11 @@ impl MeshRuntime {
                 config.rendezvous.interval_seconds,
             )));
         }
+        // the tailnet's online peers are asked as rendezvous: a machine joining the tailnet
+        // is found with no address written by hand (I2410)
+        if config.tailscale.enabled {
+            providers.push(Box::new(TailscaleProvider::new(config.tailscale.clone())));
+        }
         for provider in providers.iter_mut() {
             if let Err(e) = provider.start(&ctx) {
                 tracing::warn!(provider = provider.id(), error = %e, "mesh provider did not start; the others run on");
@@ -719,6 +725,10 @@ mod tests {
             },
             broadcast: Default::default(),
             rendezvous: Default::default(),
+            tailscale: crate::mesh::config::TailscaleConfig {
+                enabled: false,
+                ..Default::default()
+            },
             trust: Default::default(),
             cooperation: Default::default(),
         }

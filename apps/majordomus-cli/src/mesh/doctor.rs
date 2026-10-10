@@ -686,6 +686,7 @@ mod tests {
         let identity = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
         let mut quiet = config(true);
         quiet.multicast.enabled = false;
+        quiet.tailscale.enabled = false;
         server
             .activate(&quiet, identity, vec![], vec![], "test")
             .unwrap();

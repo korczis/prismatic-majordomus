@@ -36,14 +36,14 @@ mod common;
 use common::{Fixture, Served};
 use serde_json::{json, Value};
 
-use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig};
+use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig, TailscaleConfig};
 use majordomus_cli::mesh::identity::NodeIdentity;
 use majordomus_cli::mesh::protocol::advertise;
 use majordomus_cli::mesh::MeshRuntime;
 
 /// An enabled declaration with every socket-opening transport off: activation, identity
 /// and registration under test, and not one datagram anywhere.
-const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n";
+const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n";
 
 const DISABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: false\n";
 
@@ -292,6 +292,11 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
+        // this test is about the rendezvous: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
         trust: Default::default(),
         cooperation: Default::default(),
     };
