@@ -3766,7 +3766,7 @@ paths:
           description: "The claim id, as `docs/CLAIMS.yaml` spells it."
           examples:
             first-claim:
-              value: a-finding-names-how-to-see-it-again
+              value: a-candidate-is-routed-by-what-it-is-about
       responses:
         "200":
           description: "What proves this claim: the result."
@@ -3828,7 +3828,7 @@ paths:
           description: "`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity."
           examples:
             first-test:
-              value: suite:138_governance_gates
+              value: suite:982_a_candidate_is_routed_by_what_it_is_about
       responses:
         "200":
           description: "What this test proves: the result."
@@ -4917,7 +4917,7 @@ paths:
           description: "The intent's id."
           examples:
             first-intent:
-              value: intent-bound-work
+              value: a-session-leaves-what-it-observed
       responses:
         "200":
           description: "Why an intent stands where it stands: the result."
@@ -5051,7 +5051,7 @@ paths:
           description: "An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out."
           examples:
             first-intent:
-              value: intent-bound-work
+              value: a-session-leaves-what-it-observed
       responses:
         "200":
           description: "Which work realises which intent, and what each still lacks: the result."
@@ -5113,7 +5113,7 @@ paths:
           description: "The intent's id, which is also its file name under `.ai/repo/project/intents/`."
           examples:
             first-intent:
-              value: intent-bound-work
+              value: a-session-leaves-what-it-observed
       responses:
         "200":
           description: "One intent, with everything derived about it: the result."
@@ -25067,6 +25067,12 @@ components:
         age_source:
           "$ref": "#/components/schemas/AgeSource"
           description: Where the wait was read from.
+        about:
+          type: string
+          description: "What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else."
+        route:
+          type: string
+          description: "Which owner should look first, derived from `about`'s structure; empty without one."
       required:
         - id
         - uri
@@ -25106,6 +25112,11 @@ components:
           items:
             "$ref": "#/components/schemas/KnowledgeCandidate"
           description: "Every candidate, in canonical order of id."
+        groups:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGroup"
+          description: "The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject."
         cap:
           type:
             - integer
@@ -25128,6 +25139,34 @@ components:
         - branch
         - over_cap
       description: "The candidates awaiting review, against the policy's cap.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidates;\nlet empty: KnowledgeCandidates = serde_json::from_str(\n    r#\"{\"total\":0,\"on_this_branch\":0,\"unattributed\":0,\"branch\":\"master\",\"candidates\":[],\"over_cap\":false}\"#,\n).unwrap();\nassert_eq!(empty.total, 0, \"an empty queue is an answer\");\nassert_eq!(empty.cap, None, \"and a policy without the key declares no cap\");\n```"
+    KnowledgeGroup:
+      type: object
+      properties:
+        about:
+          type: string
+          description: "The subject, as written."
+        route:
+          type: string
+          description: The route of its records.
+        candidates:
+          type: array
+          items:
+            type: string
+          description: "The candidates awaiting review, by id."
+        rejected:
+          type: array
+          items:
+            type: string
+          description: "The records rejected and kept, by id."
+        episodes:
+          type: array
+          items:
+            type: string
+          description: "The episodes behind all of them, each once, in order."
+      required:
+        - about
+        - route
+      description: "The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode's own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\"{\"about\":\"lib/a.sh\",\"route\":\"project\",\"candidates\":[\"e1-a\",\"e2-b\"],\"episodes\":[\"e1\",\"e2\"]}\"#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \"two episodes observed it\");\nassert!(g.rejected.is_empty(), \"and nobody rejected it\");\n```"
     KnowledgeRecord:
       type: object
       properties:

@@ -27750,6 +27750,11 @@ capabilities:
             items:
               "$ref": "#/$defs/KnowledgeCandidate"
             description: "Every candidate, in canonical order of id."
+          groups:
+            type: array
+            items:
+              "$ref": "#/$defs/KnowledgeGroup"
+            description: "The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject."
           cap:
             type:
               - integer
@@ -27830,6 +27835,12 @@ capabilities:
               age_source:
                 "$ref": "#/$defs/AgeSource"
                 description: Where the wait was read from.
+              about:
+                type: string
+                description: "What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else."
+              route:
+                type: string
+                description: "Which owner should look first, derived from `about`'s structure; empty without one."
             required:
               - id
               - uri
@@ -27873,6 +27884,34 @@ capabilities:
                 const: date
                 description: "The record's own `date`, at midnight UTC: the evidence day, not the queue day."
             description: "Where the age of a candidate in the review queue was read from. A candidate's `date` is\nthe day of the evidence it came from, deliberately, so that the same evidence yields the\nsame bytes; the day it entered the queue is a different fact and is read from the ledger\nfirst, then from git, and only then from the record.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::AgeSource;\nlet from_ledger: AgeSource = serde_json::from_str(r#\"\"derivation\"\"#).unwrap();\nassert_eq!(from_ledger, AgeSource::Derivation);\nassert!(AgeSource::Derivation < AgeSource::Date, \"the ledger is asked before the record\");\n```"
+          KnowledgeGroup:
+            type: object
+            properties:
+              about:
+                type: string
+                description: "The subject, as written."
+              route:
+                type: string
+                description: The route of its records.
+              candidates:
+                type: array
+                items:
+                  type: string
+                description: "The candidates awaiting review, by id."
+              rejected:
+                type: array
+                items:
+                  type: string
+                description: "The records rejected and kept, by id."
+              episodes:
+                type: array
+                items:
+                  type: string
+                description: "The episodes behind all of them, each once, in order."
+            required:
+              - about
+              - route
+            description: "The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode's own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\"{\"about\":\"lib/a.sh\",\"route\":\"project\",\"candidates\":[\"e1-a\",\"e2-b\"],\"episodes\":[\"e1\",\"e2\"]}\"#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \"two episodes observed it\");\nassert!(g.rejected.is_empty(), \"and nobody rejected it\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::knowledge_base

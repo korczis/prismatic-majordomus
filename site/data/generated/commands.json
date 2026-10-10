@@ -1928,7 +1928,9 @@
           "563_knowledge_is_derived_at_the_boundary",
           "564_knowledge_derivation_is_idempotent",
           "565_knowledge_switch_and_failure_leave_evidence",
-          "710_briefing_names_the_candidates"
+          "710_briefing_names_the_candidates",
+          "981_an_observation_becomes_a_grouped_candidate",
+          "982_a_candidate_is_routed_by_what_it_is_about"
         ],
         "negative": [
           "1016_the_worker_is_asked_before_compaction",
@@ -2695,9 +2697,9 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus knowledge <sources|nodes|edges|derive|candidates|promote|reject|check> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--json]",
+      "syntax": "majordomus knowledge <sources|nodes|edges|derive|candidates|promote|reject|check|observe> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--subject <ref>] [--evidence <ref>] [--json]",
       "demo": "knowledge-index",
-      "note": "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091).",
+      "note": "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091). observe records what a session met as one observation.recorded ledger line, refusing a kind, subject or evidence reference of the wrong shape and a statement that spans lines or opens like a conversation (ADR 0118).",
       "reads": [
         ".ai/repo/knowledge/sources.yaml",
         "share/knowledge-sources.yaml",
@@ -2732,14 +2734,20 @@
           "709_knowledge_promotion_is_an_act",
           "710_briefing_names_the_candidates",
           "711_candidates_are_reviewed_not_accumulated",
-          "777_a_recorded_scenario_does_not_depend_on_the_recorder"
+          "777_a_recorded_scenario_does_not_depend_on_the_recorder",
+          "980_a_session_records_what_it_observed",
+          "981_an_observation_becomes_a_grouped_candidate",
+          "982_a_candidate_is_routed_by_what_it_is_about"
         ],
         "negative": [
           "405_the_knowledge_reader_honours_the_schema",
           "563_knowledge_is_derived_at_the_boundary",
           "64_knowledge_discovery",
           "707_knowledge_check_refuses_malformed_records",
-          "709_knowledge_promotion_is_an_act"
+          "709_knowledge_promotion_is_an_act",
+          "980_a_session_records_what_it_observed",
+          "981_an_observation_becomes_a_grouped_candidate",
+          "982_a_candidate_is_routed_by_what_it_is_about"
         ]
       },
       "demo_data": {

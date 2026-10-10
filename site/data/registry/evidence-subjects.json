@@ -964,8 +964,18 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:a-candidate-is-routed-by-what-it-is-about",
+      "path": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:a-finding-names-how-to-see-it-again",
       "path": "/evidence/claims/a-finding-names-how-to-see-it-again/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:a-session-records-what-it-observed",
+      "path": "/evidence/claims/a-session-records-what-it-observed/"
     },
     {
       "kind": "claim",
@@ -1016,6 +1026,11 @@
       "kind": "claim",
       "subject": "claim:ai-layer-manifest",
       "path": "/evidence/claims/ai-layer-manifest/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:an-observation-becomes-a-grouped-candidate",
+      "path": "/evidence/claims/an-observation-becomes-a-grouped-candidate/"
     },
     {
       "kind": "claim",
@@ -5713,6 +5728,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:a-candidate-is-routed-by-what-it-is-about": {
+      "kind": "claim",
+      "id": "a-candidate-is-routed-by-what-it-is-about",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-candidate-is-routed-by-what-it-is-about/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/KNOWLEDGE.md",
+            "lib/knowledge.sh",
+            "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:a-finding-names-how-to-see-it-again": {
       "kind": "claim",
       "id": "a-finding-names-how-to-see-it-again",
@@ -5730,6 +5768,29 @@
             "docs/DOCTRINE.md",
             "scripts/ci/finding-reproduce-check",
             "test/cases/138_governance_gates.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:a-session-records-what-it-observed": {
+      "kind": "claim",
+      "id": "a-session-records-what-it-observed",
+      "status": "guaranteed",
+      "page": "/evidence/claims/a-session-records-what-it-observed/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:980_a_session_records_what_it_observed",
+          "path": "test/cases/980_a_session_records_what_it_observed.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/KNOWLEDGE.md",
+            "lib/knowledge.sh",
+            "test/cases/980_a_session_records_what_it_observed.sh"
           ]
         }
       ],
@@ -5960,6 +6021,29 @@
             "docs/SCHEMAS.md",
             "lib/init.sh",
             "test/cases/01_init.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:an-observation-becomes-a-grouped-candidate": {
+      "kind": "claim",
+      "id": "an-observation-becomes-a-grouped-candidate",
+      "status": "guaranteed",
+      "page": "/evidence/claims/an-observation-becomes-a-grouped-candidate/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/KNOWLEDGE.md",
+            "lib/knowledge.sh",
+            "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
           ]
         }
       ],
@@ -11498,6 +11582,18 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:1016_the_worker_is_asked_before_compaction",
           "path": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
@@ -14191,6 +14287,24 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:980_a_session_records_what_it_observed",
+          "path": "test/cases/980_a_session_records_what_it_observed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:405_the_knowledge_reader_honours_the_schema",
           "path": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
@@ -14218,6 +14332,24 @@
           "via": "negative",
           "test": "suite:709_knowledge_promotion_is_an_act",
           "path": "test/cases/709_knowledge_promotion_is_an_act.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:980_a_session_records_what_it_observed",
+          "path": "test/cases/980_a_session_records_what_it_observed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:981_an_observation_becomes_a_grouped_candidate",
+          "path": "test/cases/981_an_observation_becomes_a_grouped_candidate.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:982_a_candidate_is_routed_by_what_it_is_about",
+          "path": "test/cases/982_a_candidate_is_routed_by_what_it_is_about.sh",
           "category": "e2e"
         }
       ],

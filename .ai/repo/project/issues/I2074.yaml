@@ -1,0 +1,42 @@
+id: I2074
+milestone: a-session-leaves-what-it-observed
+title: An observation becomes a candidate that says what it is about, and reading groups recurrence
+slug: an-observation-becomes-a-candidate
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-session-leaves-what-it-observed#an-observation-becomes-a-candidate
+  - a-session-leaves-what-it-observed#recurrence-is-grouped
+objective: "Add the observation.recorded row to mj_knowledge_evidence with ADR 0091's per-episode id over kind, subject and statement; add optional about and route to knowledge/v1 (proto, generate); have knowledge candidates and the Rust knowledge_base.candidates group by about, listing each record and its episodes."
+why: "The same defect seen by several sessions must read as one thing without any episode writing another's file."
+current_state: "Four events map to candidates; no record says what it is about; candidates is a flat list."
+desired_state: "Observation candidates carry about; both readers group by it; a second derivation is byte-identical; an empty episode still records knowledge.derived with written 0."
+scope:
+  - lib/knowledge.sh
+  - share/schemas/majordomus/knowledge
+  - share/allow
+  - share/sections
+  - .ai/repo/knowledge/candidates/README.md
+  - share/skeleton/ai/repo/knowledge
+  - apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - apps/majordomus-cli/tests/knowledge_base.rs
+  - docs/KNOWLEDGE.md
+  - test/cases/981_an_observation_becomes_a_grouped_candidate.sh
+depends_on:
+  - I2073
+acceptance_criteria:
+  - An episode with two observations derives two candidates, each with about set to its subject
+  - Two episodes observing one subject write two files and candidates lists one group naming both episodes, the shell and the Rust reader alike
+  - A rejected candidate stays superseded after the second episode, which adds a new candidate to the same group
+  - An episode with no observation writes no candidate and still appends knowledge.derived with written 0
+  - Cases 563, 564, 565, 707, 709, 710 and 711 still pass
+validation:
+  - bash test/run.sh 981_an_observation_becomes_a_grouped_candidate
+  - bash test/run.sh 563_knowledge_is_derived_at_the_boundary
+  - bash test/run.sh 564_knowledge_derivation_is_idempotent
+  - cargo test --test knowledge_base
+evidence_required:
+  - observation_becomes_grouped_candidate
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -228,6 +228,14 @@ events:
     public: true
     note: A record is never deleted. What this event counts is bodies taken, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed.
 
+  - id: observation.recorded
+    title: Observation recorded
+    summary: A worker recorded friction it met — its kind, what it is about, one line saying what, and the references that show it.
+    emitted_by: knowledge
+    requires: [task_id, kind, subject, statement, evidence]
+    public: true
+    note: "Written by `majordomus knowledge observe` (ADR 0118). kind is friction, workaround, defect, drift or repetition; subject is a repository path or capability:, rule:, command:, gate: with an identifier; evidence is a list of typed references, possibly empty. task_id is the active task's or `none`. The episode boundary derives a candidate from it; nothing judges it here."
+
   - id: knowledge.derived
     title: Knowledge derived from an episode
     summary: The deriver ran over one episode's evidence and wrote, kept or skipped the candidate records it yields; which episode, how many of each, and the paths written.
