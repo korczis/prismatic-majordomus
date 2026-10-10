@@ -31046,11 +31046,16 @@ capabilities:
                   - "$ref": "#/$defs/PeerView"
                   - type: "null"
                 description: "This runtime's link to it, when there is one."
+              newest_claim:
+                anyOf:
+                  - "$ref": "#/$defs/MeshClaimBrief"
+                  - type: "null"
+                description: "Its newest live claim, told briefly."
               sessions:
                 type: array
                 items:
                   "$ref": "#/$defs/SessionNode"
-                description: Its sessions.
+                description: Its sessions; in the summary view only the active ones.
             required:
               - runtime
               - this_runtime
@@ -31235,6 +31240,54 @@ capabilities:
                 const: expired
                 description: "No exchange within the expiry: the link is dropped and will be re-dialed."
             description: "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
+          MeshClaimBrief:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "`<stream>/<claim>`."
+              session:
+                type: string
+                description: "The holding session's key."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it is for.
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What it is for, cut to `SUMMARY_TEXT` characters."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many paths it claims.
+              mode:
+                "$ref": "#/$defs/ClaimMode"
+                description: Exclusive or advisory.
+              acquired_lamport:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The Lamport stamp of the acquisition.
+            required:
+              - key
+              - session
+              - paths
+              - mode
+              - acquired_lamport
+            description: "One live claim, told briefly."
+          ClaimMode:
+            oneOf:
+              - type: string
+                const: exclusive
+                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+              - type: string
+                const: advisory
+                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           SessionNode:
             type: object
             properties:
@@ -31251,7 +31304,12 @@ capabilities:
                 type: array
                 items:
                   "$ref": "#/$defs/ClaimView"
-                description: The claims it holds or held.
+                description: "The claims it holds or held; empty in the summary view, which counts them instead."
+              claims_held:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of its claims are live.
               reviews:
                 type: array
                 items:
@@ -31262,6 +31320,7 @@ capabilities:
               - info
               - state
               - claims
+              - claims_held
               - reviews
             description: One session in the peer tree.
           SessionInfo:
@@ -31399,15 +31458,6 @@ capabilities:
           StreamId:
             type: string
             description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
-          ClaimMode:
-            oneOf:
-              - type: string
-                const: exclusive
-                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
-              - type: string
-                const: advisory
-                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           ClaimState:
             oneOf:
               - type: object
@@ -31571,14 +31621,101 @@ capabilities:
     module: mesh
     kind: query
     title: "Who cooperates, machine by machine"
-    description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state."
+    description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state."
     input:
-      name: Empty
+      name: MeshQuery
       schema:
         type: object
         additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          view:
+            anyOf:
+              - "$ref": "#/$defs/MeshView"
+              - type: "null"
+            description: "`summary` (the default) or `full`."
+          claims:
+            anyOf:
+              - "$ref": "#/$defs/MeshClaimFilter"
+              - type: "null"
+            description: "`all` (the default) or `live`: whether ended claims are kept."
+          after:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions."
+          session:
+            type:
+              - string
+              - "null"
+            description: "Only what belongs to this session: its key (`<stream>/<session>`) or its bare id."
+          runtime:
+            type:
+              - string
+              - "null"
+            description: "Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime\nof that machine."
+          kind:
+            anyOf:
+              - "$ref": "#/$defs/MeshKind"
+              - type: "null"
+            description: Only this collection; the others are answered empty.
+          limit:
+            type:
+              - integer
+              - "null"
+            format: uint
+            minimum: 0
+            description: "At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold's own order."
+          open:
+            type:
+              - boolean
+              - "null"
+            description: "Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken."
+          matching:
+            type:
+              - string
+              - "null"
+            description: "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+        description: What a reader asks of the folded state. Every filter narrows; none changes a shape.
+        title: MeshQuery
+        "$defs":
+          MeshView:
+            oneOf:
+              - type: string
+                const: summary
+                description: "Counts, each runtime's newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history."
+              - type: string
+                const: full
+                description: "Everything, narrowed only by the filters."
+            description: How much an answer about the mesh carries.
+          MeshClaimFilter:
+            oneOf:
+              - type: string
+                const: all
+                description: "Every claim, ended ones included."
+              - type: string
+                const: live
+                description: "Only claims that are still live: held, or conflicted and still held."
+            description: Which claims a full answer keeps.
+          MeshKind:
+            oneOf:
+              - type: string
+                const: sessions
+                description: The sessions.
+              - type: string
+                const: claims
+                description: The claims.
+              - type: string
+                const: overlaps
+                description: The advisory overlaps.
+              - type: string
+                const: handovers
+                description: The handovers.
+              - type: string
+                const: reviews
+                description: The review requests.
+            description: One collection of the folded state.
     output:
       name: PeerTree
       schema:
@@ -31587,6 +31724,9 @@ capabilities:
           active:
             type: boolean
             description: Whether cooperation runs.
+          view:
+            "$ref": "#/$defs/MeshView"
+            description: "What the answer carries: `summary` or `full`."
           reason:
             type:
               - string
@@ -31619,11 +31759,21 @@ capabilities:
             description: "The digest of the cooperation state: equal digests, equal state."
         required:
           - active
+          - view
           - machines
           - refused
         description: "The answer of `mesh.peers`: machine → runtime → session → claim, every level from the\none journal and the one link table."
         title: PeerTree
         "$defs":
+          MeshView:
+            oneOf:
+              - type: string
+                const: summary
+                description: "Counts, each runtime's newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history."
+              - type: string
+                const: full
+                description: "Everything, narrowed only by the filters."
+            description: How much an answer about the mesh carries.
           MachineNode:
             type: object
             properties:
@@ -31671,11 +31821,16 @@ capabilities:
                   - "$ref": "#/$defs/PeerView"
                   - type: "null"
                 description: "This runtime's link to it, when there is one."
+              newest_claim:
+                anyOf:
+                  - "$ref": "#/$defs/MeshClaimBrief"
+                  - type: "null"
+                description: "Its newest live claim, told briefly."
               sessions:
                 type: array
                 items:
                   "$ref": "#/$defs/SessionNode"
-                description: Its sessions.
+                description: Its sessions; in the summary view only the active ones.
             required:
               - runtime
               - this_runtime
@@ -31860,6 +32015,54 @@ capabilities:
                 const: expired
                 description: "No exchange within the expiry: the link is dropped and will be re-dialed."
             description: "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
+          MeshClaimBrief:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "`<stream>/<claim>`."
+              session:
+                type: string
+                description: "The holding session's key."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it is for.
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What it is for, cut to `SUMMARY_TEXT` characters."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many paths it claims.
+              mode:
+                "$ref": "#/$defs/ClaimMode"
+                description: Exclusive or advisory.
+              acquired_lamport:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The Lamport stamp of the acquisition.
+            required:
+              - key
+              - session
+              - paths
+              - mode
+              - acquired_lamport
+            description: "One live claim, told briefly."
+          ClaimMode:
+            oneOf:
+              - type: string
+                const: exclusive
+                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+              - type: string
+                const: advisory
+                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           SessionNode:
             type: object
             properties:
@@ -31876,7 +32079,12 @@ capabilities:
                 type: array
                 items:
                   "$ref": "#/$defs/ClaimView"
-                description: The claims it holds or held.
+                description: "The claims it holds or held; empty in the summary view, which counts them instead."
+              claims_held:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of its claims are live.
               reviews:
                 type: array
                 items:
@@ -31887,6 +32095,7 @@ capabilities:
               - info
               - state
               - claims
+              - claims_held
               - reviews
             description: One session in the peer tree.
           SessionInfo:
@@ -32024,15 +32233,6 @@ capabilities:
           StreamId:
             type: string
             description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
-          ClaimMode:
-            oneOf:
-              - type: string
-                const: exclusive
-                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
-              - type: string
-                const: advisory
-                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           ClaimState:
             oneOf:
               - type: object
@@ -32744,14 +32944,101 @@ capabilities:
     module: mesh
     kind: query
     title: The state every linked runtime converges on
-    description: "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock."
+    description: "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's."
     input:
-      name: Empty
+      name: MeshQuery
       schema:
         type: object
         additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          view:
+            anyOf:
+              - "$ref": "#/$defs/MeshView"
+              - type: "null"
+            description: "`summary` (the default) or `full`."
+          claims:
+            anyOf:
+              - "$ref": "#/$defs/MeshClaimFilter"
+              - type: "null"
+            description: "`all` (the default) or `live`: whether ended claims are kept."
+          after:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions."
+          session:
+            type:
+              - string
+              - "null"
+            description: "Only what belongs to this session: its key (`<stream>/<session>`) or its bare id."
+          runtime:
+            type:
+              - string
+              - "null"
+            description: "Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime\nof that machine."
+          kind:
+            anyOf:
+              - "$ref": "#/$defs/MeshKind"
+              - type: "null"
+            description: Only this collection; the others are answered empty.
+          limit:
+            type:
+              - integer
+              - "null"
+            format: uint
+            minimum: 0
+            description: "At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold's own order."
+          open:
+            type:
+              - boolean
+              - "null"
+            description: "Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken."
+          matching:
+            type:
+              - string
+              - "null"
+            description: "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+        description: What a reader asks of the folded state. Every filter narrows; none changes a shape.
+        title: MeshQuery
+        "$defs":
+          MeshView:
+            oneOf:
+              - type: string
+                const: summary
+                description: "Counts, each runtime's newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history."
+              - type: string
+                const: full
+                description: "Everything, narrowed only by the filters."
+            description: How much an answer about the mesh carries.
+          MeshClaimFilter:
+            oneOf:
+              - type: string
+                const: all
+                description: "Every claim, ended ones included."
+              - type: string
+                const: live
+                description: "Only claims that are still live: held, or conflicted and still held."
+            description: Which claims a full answer keeps.
+          MeshKind:
+            oneOf:
+              - type: string
+                const: sessions
+                description: The sessions.
+              - type: string
+                const: claims
+                description: The claims.
+              - type: string
+                const: overlaps
+                description: The advisory overlaps.
+              - type: string
+                const: handovers
+                description: The handovers.
+              - type: string
+                const: reviews
+                description: The review requests.
+            description: One collection of the folded state.
     output:
       name: MeshStateAnswer
       schema:
@@ -32760,16 +33047,24 @@ capabilities:
           active:
             type: boolean
             description: Whether cooperation runs.
+          view:
+            "$ref": "#/$defs/MeshView"
+            description: "What the answer carries: `summary` or `full`."
           reason:
             type:
               - string
               - "null"
             description: Why not.
+          summary:
+            anyOf:
+              - "$ref": "#/$defs/MeshSummary"
+              - type: "null"
+            description: "The summary, in the summary view: counts, each runtime's newest live claim, the\nopen reviews and the untaken handovers."
           state:
             anyOf:
               - "$ref": "#/$defs/CooperationState"
               - type: "null"
-            description: "The folded state, when cooperation runs."
+            description: "The folded state narrowed by the filters, in the full view; its digest is the whole\nfold's."
           streams:
             type: array
             items:
@@ -32777,10 +33072,276 @@ capabilities:
             description: "Every stream's liveness."
         required:
           - active
+          - view
           - streams
         description: "The answer of `mesh.state`."
         title: MeshStateAnswer
         "$defs":
+          MeshView:
+            oneOf:
+              - type: string
+                const: summary
+                description: "Counts, each runtime's newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history."
+              - type: string
+                const: full
+                description: "Everything, narrowed only by the filters."
+            description: How much an answer about the mesh carries.
+          MeshSummary:
+            type: object
+            properties:
+              digest:
+                type: string
+                description: "The whole fold's digest: equal digests, equal state."
+              sessions:
+                "$ref": "#/$defs/MeshSessionCounts"
+                description: Every session by standing.
+              claims:
+                "$ref": "#/$defs/MeshClaimCounts"
+                description: Every claim by standing.
+              overlaps:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Advisory overlaps between live claims.
+              runtimes:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshRuntimeSummary"
+                description: "Each runtime counted, the living first; at most `SUMMARY_LIST`."
+              runtimes_not_listed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Runtimes past the list, counted."
+              open_reviews:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshReviewBrief"
+                description: "Review requests nobody has answered; at most `SUMMARY_LIST`."
+              open_reviews_not_listed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Open reviews past the list, counted."
+              untaken_handovers:
+                type: array
+                items:
+                  "$ref": "#/$defs/MeshHandoverBrief"
+                description: "Handovers nobody has consumed; at most `SUMMARY_LIST`."
+              untaken_handovers_not_listed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Untaken handovers past the list, counted."
+            required:
+              - digest
+              - sessions
+              - claims
+              - overlaps
+              - runtimes
+              - runtimes_not_listed
+              - open_reviews
+              - open_reviews_not_listed
+              - untaken_handovers
+              - untaken_handovers_not_listed
+            description: The mesh in an answer a worker reads whole.
+          MeshSessionCounts:
+            type: object
+            properties:
+              active:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Open, on a runtime that beats."
+              closed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Closed by their own runtime.
+              expired:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Never closed, on a runtime that stopped beating."
+            required:
+              - active
+              - closed
+              - expired
+            description: Sessions by standing.
+          MeshClaimCounts:
+            type: object
+            properties:
+              held:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Live and, for an exclusive claim, the winner of its scope."
+              conflicted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Live, exclusive, and beaten to its scope."
+              released:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Released by the holder.
+              expired:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Ended without a release.
+            required:
+              - held
+              - conflicted
+              - released
+              - expired
+            description: Claims by standing.
+          MeshRuntimeSummary:
+            type: object
+            properties:
+              runtime:
+                type: string
+                description: "`<node>-<runtime>`."
+              liveness:
+                "$ref": "#/$defs/StreamLiveness"
+                description: "Own, live or expired."
+              last_beat_ms:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Milliseconds since its beat last rose, on this runtime's clock."
+              sessions:
+                "$ref": "#/$defs/MeshSessionCounts"
+                description: Its sessions by standing.
+              claims:
+                "$ref": "#/$defs/MeshClaimCounts"
+                description: Its claims by standing.
+              newest_claim:
+                anyOf:
+                  - "$ref": "#/$defs/MeshClaimBrief"
+                  - type: "null"
+                description: Its newest live claim.
+            required:
+              - runtime
+              - liveness
+              - sessions
+              - claims
+            description: "One runtime, counted."
+          StreamLiveness:
+            oneOf:
+              - type: string
+                const: own
+                description: "This runtime's own current stream."
+              - type: string
+                const: live
+                description: Its beat rose within the expiry.
+              - type: string
+                const: expired
+                description: "Its beat has not risen within the expiry, or was never heard."
+            description: "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```"
+          MeshClaimBrief:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "`<stream>/<claim>`."
+              session:
+                type: string
+                description: "The holding session's key."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it is for.
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What it is for, cut to `SUMMARY_TEXT` characters."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many paths it claims.
+              mode:
+                "$ref": "#/$defs/ClaimMode"
+                description: Exclusive or advisory.
+              acquired_lamport:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The Lamport stamp of the acquisition.
+            required:
+              - key
+              - session
+              - paths
+              - mode
+              - acquired_lamport
+            description: "One live claim, told briefly."
+          ClaimMode:
+            oneOf:
+              - type: string
+                const: exclusive
+                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+              - type: string
+                const: advisory
+                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
+          MeshReviewBrief:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "`<stream>/<review>`."
+              subject:
+                type: string
+                description: "What is to be reviewed, cut to `SUMMARY_TEXT` characters."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue.
+              reviewer:
+                type:
+                  - string
+                  - "null"
+                description: "The runtime asked, when one was."
+            required:
+              - key
+              - subject
+            description: "An open review request, told briefly."
+          MeshHandoverBrief:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The content digest: what `mesh.handover.consume` takes."
+              runtime:
+                type: string
+                description: "`<node>-<runtime>` of the publisher."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it continues.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it continues.
+              published_lamport:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The Lamport stamp of the first publication.
+            required:
+              - id
+              - runtime
+              - published_lamport
+            description: "A handover nobody has taken, told briefly."
           CooperationState:
             type: object
             properties:
@@ -32996,15 +33557,6 @@ capabilities:
               - acquired_seq
               - state
             description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
-          ClaimMode:
-            oneOf:
-              - type: string
-                const: exclusive
-                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
-              - type: string
-                const: advisory
-                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           ClaimState:
             oneOf:
               - type: object
@@ -33241,18 +33793,6 @@ capabilities:
               - stream
               - liveness
             description: "One stream's liveness."
-          StreamLiveness:
-            oneOf:
-              - type: string
-                const: own
-                description: "This runtime's own current stream."
-              - type: string
-                const: live
-                description: Its beat rose within the expiry.
-              - type: string
-                const: expired
-                description: "Its beat has not risen within the expiry, or was never heard."
-            description: "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh

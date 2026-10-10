@@ -42,14 +42,20 @@ pub fn run(args: MeshArgs) -> Result<u8> {
         MeshCommand::Nodes(q) => ask(&q, "GET", "/api/v1/mesh/nodes", None, render_nodes, never),
         MeshCommand::Identity(q) => in_process(q, &["mesh", "identity"], render_identity, never),
         MeshCommand::Doctor(q) => doctor(q),
-        MeshCommand::Peers(q) => ask(&q, "GET", "/api/v1/mesh/peers", None, render_peers, never),
+        MeshCommand::Peers(v) => {
+            let target = viewed("/api/v1/mesh/peers", &v);
+            ask(&v.query, "GET", &target, None, render_peers, never)
+        }
         MeshCommand::Peer(a) => {
             let target = format!("/api/v1/mesh/peer?runtime={}", encode(&a.runtime));
             ask(&a.query, "GET", &target, None, render_peer, |v| {
                 v["found"] != json!(true)
             })
         }
-        MeshCommand::State(q) => ask(&q, "GET", "/api/v1/mesh/state", None, render_state, never),
+        MeshCommand::State(v) => {
+            let target = viewed("/api/v1/mesh/state", &v);
+            ask(&v.query, "GET", &target, None, render_state, never)
+        }
         MeshCommand::Events(a) => {
             let mut target = "/api/v1/mesh/events".to_string();
             let mut pairs = Vec::new();
@@ -633,9 +639,100 @@ fn render_peer(v: &Value) -> String {
     out.trim_end().to_string()
 }
 
+/// `path` with the view's flags as its query string, each value encoded.
+fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
+    let pairs: Vec<String> = v
+        .pairs()
+        .iter()
+        .map(|pair| match pair.split_once('=') {
+            Some((key, value)) => format!("{key}={}", encode(value)),
+            None => pair.clone(),
+        })
+        .collect();
+    if pairs.is_empty() {
+        path.to_string()
+    } else {
+        format!("{path}?{}", pairs.join("&"))
+    }
+}
+
+/// The summary view of `mesh.state`: the totals, then each runtime, the open reviews and
+/// the untaken handovers, each list followed by how many it did not show.
+fn render_summary(sm: &Value) -> String {
+    let n = |v: &Value, k: &str| v[k].as_u64().unwrap_or(0);
+    let mut out = format!(
+        "sessions   {} active, {} closed, {} expired\nclaims     {} held, {} conflicted, {} released, {} expired\noverlaps   {}\n",
+        n(&sm["sessions"], "active"),
+        n(&sm["sessions"], "closed"),
+        n(&sm["sessions"], "expired"),
+        n(&sm["claims"], "held"),
+        n(&sm["claims"], "conflicted"),
+        n(&sm["claims"], "released"),
+        n(&sm["claims"], "expired"),
+        n(sm, "overlaps"),
+    );
+    let more = |out: &mut String, k: &str, what: &str| {
+        let past = n(sm, k);
+        if past > 0 {
+            out.push_str(&format!("           and {past} more {what}\n"));
+        }
+    };
+    for r in sm["runtimes"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "runtime    {} {}{} sessions {} active claims {} held{}\n",
+            short(s(r, "runtime")),
+            s(r, "liveness"),
+            r["last_beat_ms"]
+                .as_u64()
+                .map(|ms| format!(" beat {:.1}s ago", ms as f64 / 1000.0))
+                .unwrap_or_default(),
+            n(&r["sessions"], "active"),
+            n(&r["claims"], "held"),
+            r["newest_claim"]
+                .as_object()
+                .map(|c| format!(
+                    " newest {}{}",
+                    c.get("issue").and_then(Value::as_str).unwrap_or("-"),
+                    c.get("intent")
+                        .and_then(Value::as_str)
+                        .map(|i| format!(" — {i}"))
+                        .unwrap_or_default()
+                ))
+                .unwrap_or_default(),
+        ));
+    }
+    more(&mut out, "runtimes_not_listed", "runtime(s)");
+    for r in sm["open_reviews"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "review     {} {} open\n",
+            s(r, "key"),
+            s(r, "subject")
+        ));
+    }
+    more(&mut out, "open_reviews_not_listed", "open review(s)");
+    for h in sm["untaken_handovers"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "handover   {} from {} branch {} untaken\n",
+            s(h, "id"),
+            short(s(h, "runtime")),
+            h["branch"].as_str().unwrap_or("-"),
+        ));
+    }
+    more(
+        &mut out,
+        "untaken_handovers_not_listed",
+        "untaken handover(s)",
+    );
+    out.push_str(&format!("digest     {}", s(sm, "digest")));
+    out
+}
+
 fn render_state(v: &Value) -> String {
     if let Some(text) = inactive(v) {
         return text;
+    }
+    if v["summary"].is_object() {
+        return render_summary(&v["summary"]);
     }
     let st = &v["state"];
     let count = |k: &str| st[k].as_array().map(Vec::len).unwrap_or(0);

@@ -10193,11 +10193,123 @@
       "get": {
         "operationId": "mesh.peers",
         "summary": "Who cooperates, machine by machine",
-        "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
+        "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state.",
         "tags": [
           "mesh"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshView"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`summary` (the default) or `full`.",
+            "examples": {
+              "full": {
+                "value": "full"
+              }
+            }
+          },
+          {
+            "name": "claims",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshClaimFilter"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`all` (the default) or `live`: whether ended claims are kept."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions."
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this session: its key (`<stream>/<session>`) or its bare id."
+          },
+          {
+            "name": "runtime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime\nof that machine."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshKind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this collection; the others are answered empty."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold's own order."
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken."
+          },
+          {
+            "name": "matching",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Who cooperates, machine by machine: the result.",
@@ -10819,11 +10931,123 @@
       "get": {
         "operationId": "mesh.state",
         "summary": "The state every linked runtime converges on",
-        "description": "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
+        "description": "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
         "tags": [
           "mesh"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshView"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`summary` (the default) or `full`.",
+            "examples": {
+              "full": {
+                "value": "full"
+              }
+            }
+          },
+          {
+            "name": "claims",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshClaimFilter"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`all` (the default) or `live`: whether ended claims are kept."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions."
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this session: its key (`<stream>/<session>`) or its bare id."
+          },
+          {
+            "name": "runtime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime\nof that machine."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshKind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this collection; the others are answered empty."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold's own order."
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken."
+          },
+          {
+            "name": "matching",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+          }
+        ],
         "responses": {
           "200": {
             "description": "The state every linked runtime converges on: the result.",
@@ -38375,6 +38599,108 @@
         ],
         "description": "One measured pair: a foreground on a ground, in one theme."
       },
+      "MeshClaimBrief": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "`<stream>/<claim>`."
+          },
+          "session": {
+            "type": "string",
+            "description": "The holding session's key."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue it is for."
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it is for, cut to `SUMMARY_TEXT` characters."
+          },
+          "paths": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many paths it claims."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ClaimMode",
+            "description": "Exclusive or advisory."
+          },
+          "acquired_lamport": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The Lamport stamp of the acquisition."
+          }
+        },
+        "required": [
+          "key",
+          "session",
+          "paths",
+          "mode",
+          "acquired_lamport"
+        ],
+        "description": "One live claim, told briefly."
+      },
+      "MeshClaimCounts": {
+        "type": "object",
+        "properties": {
+          "held": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Live and, for an exclusive claim, the winner of its scope."
+          },
+          "conflicted": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Live, exclusive, and beaten to its scope."
+          },
+          "released": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Released by the holder."
+          },
+          "expired": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Ended without a release."
+          }
+        },
+        "required": [
+          "held",
+          "conflicted",
+          "released",
+          "expired"
+        ],
+        "description": "Claims by standing."
+      },
+      "MeshClaimFilter": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "all",
+            "description": "Every claim, ended ones included."
+          },
+          {
+            "type": "string",
+            "const": "live",
+            "description": "Only claims that are still live: held, or conflicted and still held."
+          }
+        ],
+        "description": "Which claims a full answer keeps."
+      },
       "MeshDoctorReport": {
         "type": "object",
         "properties": {
@@ -38456,6 +38782,45 @@
         ],
         "description": "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines' idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\n\nlet event: &MeshEvent = &j.events()[0];\nassert_eq!(event.seq, 1, \"dense from 1 within its stream\");\nassert_eq!(event.kind(), \"session_closed\");\nassert_eq!(event.id(), format!(\"{}/1\", event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \"another-repository\".into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```"
       },
+      "MeshHandoverBrief": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The content digest: what `mesh.handover.consume` takes."
+          },
+          "runtime": {
+            "type": "string",
+            "description": "`<node>-<runtime>` of the publisher."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch it continues."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue it continues."
+          },
+          "published_lamport": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The Lamport stamp of the first publication."
+          }
+        },
+        "required": [
+          "id",
+          "runtime",
+          "published_lamport"
+        ],
+        "description": "A handover nobody has taken, told briefly."
+      },
       "MeshIdentityReport": {
         "type": "object",
         "properties": {
@@ -38493,6 +38858,36 @@
           "present"
         ],
         "description": "The answer of `mesh.identity`: this machine's node identity, public half only."
+      },
+      "MeshKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "sessions",
+            "description": "The sessions."
+          },
+          {
+            "type": "string",
+            "const": "claims",
+            "description": "The claims."
+          },
+          {
+            "type": "string",
+            "const": "overlaps",
+            "description": "The advisory overlaps."
+          },
+          {
+            "type": "string",
+            "const": "handovers",
+            "description": "The handovers."
+          },
+          {
+            "type": "string",
+            "const": "reviews",
+            "description": "The review requests."
+          }
+        ],
+        "description": "One collection of the folded state."
       },
       "MeshProviderState": {
         "oneOf": [
@@ -38552,6 +38947,115 @@
         ],
         "description": "A repository's mesh identity, carried by every advertisement, link and event, together\nwith the account of where it came from. The `detail` exists so that a person told two\ncheckouts are not the same repository can see what each one was derived from instead of\ncomparing two opaque digests.\n\n```\nuse majordomus_cli::mesh::repository::MeshRepositoryIdentity;\nuse majordomus_cli::mesh::repository::of_root_commits;\n\nlet identity: MeshRepositoryIdentity = of_root_commits(&[\"a\".repeat(40)]);\nassert_eq!(identity.id.len(), 32, \"32 hex characters, on every machine\");\nassert_eq!(identity.detail, \"aaaaaaaaaaaa\", \"the evidence, short enough to read\");\n```"
       },
+      "MeshReviewBrief": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "`<stream>/<review>`."
+          },
+          "subject": {
+            "type": "string",
+            "description": "What is to be reviewed, cut to `SUMMARY_TEXT` characters."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue."
+          },
+          "reviewer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The runtime asked, when one was."
+          }
+        },
+        "required": [
+          "key",
+          "subject"
+        ],
+        "description": "An open review request, told briefly."
+      },
+      "MeshRuntimeSummary": {
+        "type": "object",
+        "properties": {
+          "runtime": {
+            "type": "string",
+            "description": "`<node>-<runtime>`."
+          },
+          "liveness": {
+            "$ref": "#/components/schemas/StreamLiveness",
+            "description": "Own, live or expired."
+          },
+          "last_beat_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Milliseconds since its beat last rose, on this runtime's clock."
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/MeshSessionCounts",
+            "description": "Its sessions by standing."
+          },
+          "claims": {
+            "$ref": "#/components/schemas/MeshClaimCounts",
+            "description": "Its claims by standing."
+          },
+          "newest_claim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshClaimBrief"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its newest live claim."
+          }
+        },
+        "required": [
+          "runtime",
+          "liveness",
+          "sessions",
+          "claims"
+        ],
+        "description": "One runtime, counted."
+      },
+      "MeshSessionCounts": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open, on a runtime that beats."
+          },
+          "closed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Closed by their own runtime."
+          },
+          "expired": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Never closed, on a runtime that stopped beating."
+          }
+        },
+        "required": [
+          "active",
+          "closed",
+          "expired"
+        ],
+        "description": "Sessions by standing."
+      },
       "MeshSource": {
         "oneOf": [
           {
@@ -38584,12 +39088,27 @@
             "type": "boolean",
             "description": "Whether cooperation runs."
           },
+          "view": {
+            "$ref": "#/components/schemas/MeshView",
+            "description": "What the answer carries: `summary` or `full`."
+          },
           "reason": {
             "type": [
               "string",
               "null"
             ],
             "description": "Why not."
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The summary, in the summary view: counts, each runtime's newest live claim, the\nopen reviews and the untaken handovers."
           },
           "state": {
             "anyOf": [
@@ -38600,7 +39119,7 @@
                 "type": "null"
               }
             ],
-            "description": "The folded state, when cooperation runs."
+            "description": "The folded state narrowed by the filters, in the full view; its digest is the whole\nfold's."
           },
           "streams": {
             "type": "array",
@@ -38612,6 +39131,7 @@
         },
         "required": [
           "active",
+          "view",
           "streams"
         ],
         "description": "The answer of `mesh.state`."
@@ -38678,6 +39198,81 @@
           "refusals"
         ],
         "description": "The whole mesh, as every surface reports it."
+      },
+      "MeshSummary": {
+        "type": "object",
+        "properties": {
+          "digest": {
+            "type": "string",
+            "description": "The whole fold's digest: equal digests, equal state."
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/MeshSessionCounts",
+            "description": "Every session by standing."
+          },
+          "claims": {
+            "$ref": "#/components/schemas/MeshClaimCounts",
+            "description": "Every claim by standing."
+          },
+          "overlaps": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Advisory overlaps between live claims."
+          },
+          "runtimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeshRuntimeSummary"
+            },
+            "description": "Each runtime counted, the living first; at most `SUMMARY_LIST`."
+          },
+          "runtimes_not_listed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Runtimes past the list, counted."
+          },
+          "open_reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeshReviewBrief"
+            },
+            "description": "Review requests nobody has answered; at most `SUMMARY_LIST`."
+          },
+          "open_reviews_not_listed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open reviews past the list, counted."
+          },
+          "untaken_handovers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeshHandoverBrief"
+            },
+            "description": "Handovers nobody has consumed; at most `SUMMARY_LIST`."
+          },
+          "untaken_handovers_not_listed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Untaken handovers past the list, counted."
+          }
+        },
+        "required": [
+          "digest",
+          "sessions",
+          "claims",
+          "overlaps",
+          "runtimes",
+          "runtimes_not_listed",
+          "open_reviews",
+          "open_reviews_not_listed",
+          "untaken_handovers",
+          "untaken_handovers_not_listed"
+        ],
+        "description": "The mesh in an answer a worker reads whole."
       },
       "MeshVerifyCheck": {
         "type": "object",
@@ -38758,6 +39353,21 @@
           "peers"
         ],
         "description": "What `mesh verify` found: the local checks, every peer's round, and the state digest\nafterwards. The digest is what makes the report worth running on two machines — two\nruntimes that print the same digest have the same sessions, claims, handovers and\nreviews, and two that do not have something to reconcile, whatever their links say.\n\n`ok` is the conjunction of everything below it, so a caller may act on the one field\nand a person may read the rest to find out which part of it was false.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyReport;\n\nlet report: MeshVerifyReport = cooperation.verify();\nassert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert_eq!(report.digest, Some(cooperation.state().digest), \"what a peer is compared to\");\nassert_eq!(report.ok, report.checks.iter().all(|c| c.ok), \"one field for every check\");\n```"
+      },
+      "MeshView": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "summary",
+            "description": "Counts, each runtime's newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history."
+          },
+          {
+            "type": "string",
+            "const": "full",
+            "description": "Everything, narrowed only by the filters."
+          }
+        ],
+        "description": "How much an answer about the mesh carries."
       },
       "MigrationAction": {
         "oneOf": [
@@ -41474,6 +42084,10 @@
             "type": "boolean",
             "description": "Whether cooperation runs."
           },
+          "view": {
+            "$ref": "#/components/schemas/MeshView",
+            "description": "What the answer carries: `summary` or `full`."
+          },
           "reason": {
             "type": [
               "string",
@@ -41519,6 +42133,7 @@
         },
         "required": [
           "active",
+          "view",
           "machines",
           "refused"
         ],
@@ -50547,12 +51162,23 @@
             ],
             "description": "This runtime's link to it, when there is one."
           },
+          "newest_claim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshClaimBrief"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its newest live claim, told briefly."
+          },
           "sessions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SessionNode"
             },
-            "description": "Its sessions."
+            "description": "Its sessions; in the summary view only the active ones."
           }
         },
         "required": [
@@ -51818,7 +52444,13 @@
             "items": {
               "$ref": "#/components/schemas/ClaimView"
             },
-            "description": "The claims it holds or held."
+            "description": "The claims it holds or held; empty in the summary view, which counts them instead."
+          },
+          "claims_held": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of its claims are live."
           },
           "reviews": {
             "type": "array",
@@ -51833,6 +52465,7 @@
           "info",
           "state",
           "claims",
+          "claims_held",
           "reviews"
         ],
         "description": "One session in the peer tree."

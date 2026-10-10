@@ -53,6 +53,7 @@ pub mod journal;
 pub mod link;
 pub mod manager;
 pub mod multicast;
+pub mod page;
 pub mod protocol;
 pub mod provider;
 pub mod registry;

@@ -124,14 +124,14 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.link.sync` | mesh | command | — | covered | — | covered | `malformed` |
 | `mesh.nodes` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.peer` | mesh | query | — | covered | covered | covered | `unknown` |
-| `mesh.peers` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.peers` | mesh | query | — | covered | covered | covered | `summary`, `full` |
 | `mesh.register` | mesh | command | — | covered | covered | covered | `refused` |
 | `mesh.release` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.answer` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.request` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.close` | mesh | command | — | waived | waived | waived | — |
 | `mesh.session.open` | mesh | command | — | waived | waived | waived | — |
-| `mesh.state` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.state` | mesh | query | — | covered | covered | covered | `summary`, `full` |
 | `mesh.status` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.verify` | mesh | command | — | waived | waived | waived | — |
 | `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |

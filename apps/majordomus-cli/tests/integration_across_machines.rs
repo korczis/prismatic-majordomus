@@ -246,7 +246,7 @@ fn connected(s: &Served) -> usize {
 
 /// The held claims on [`SCOPE`] a runtime knows of.
 fn held(s: &Served) -> Vec<Value> {
-    s.get("/api/v1/mesh/state").1["state"]["claims"]
+    s.get("/api/v1/mesh/state?view=full").1["state"]["claims"]
         .as_array()
         .cloned()
         .unwrap_or_default()

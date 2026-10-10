@@ -22,7 +22,7 @@ the set of events and the liveness verdicts alone
 ## How to see it
 
 ```
-curl http://127.0.0.1:8741/api/v1/mesh/state | jq '.state.digest'   # on each runtime
+curl http://127.0.0.1:8741/api/v1/mesh/state | jq '.summary.digest'   # on each runtime
 curl 'http://127.0.0.1:8741/api/v1/mesh/events?limit=1000' | jq '.count'
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation three_runtimes
 ```

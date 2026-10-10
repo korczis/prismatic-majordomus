@@ -20919,7 +20919,7 @@
           "route": "/docs/cli/mesh/doctor/"
         },
         {
-          "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
+          "about": "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim",
           "command": "majordomus mesh peers",
           "name": "peers",
           "route": "/docs/cli/mesh/peers/"
@@ -20931,7 +20931,7 @@
           "route": "/docs/cli/mesh/peer/"
         },
         {
-          "about": "The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest",
+          "about": "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review",
           "command": "majordomus mesh state",
           "name": "state",
           "route": "/docs/cli/mesh/state/"
@@ -21510,7 +21510,7 @@
       "usage": "majordomus mesh doctor [OPTIONS]"
     },
     {
-      "about": "Every machine, runtime and session this checkout's server cooperates with, with each link's state",
+      "about": "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim",
       "ancestors": [
         {
           "command": "majordomus",
@@ -21524,6 +21524,120 @@
         }
       ],
       "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every session, claim, handover and review, not the summary",
+          "long": "full",
+          "name": "full",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FULL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only claims that are still held",
+          "long": "live-claims",
+          "name": "live_claims",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LIVE_CLAIMS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what moved after this Lamport stamp",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this session: its key or its bare id",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this runtime (`<node>-<runtime>`), or every runtime of a node id",
+          "long": "runtime",
+          "name": "runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUNTIME"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this collection: sessions, claims, overlaps, handovers or reviews",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many of each collection, the newest first kept",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers",
+          "long": "open",
+          "name": "open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what mentions this text: a path, a branch, an issue, a pull request, a word",
+          "long": "matching",
+          "name": "matching",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATCHING"
+        },
         {
           "defaults": [],
           "global": true,
@@ -21780,7 +21894,7 @@
       "usage": "majordomus mesh peer [OPTIONS] <RUNTIME>"
     },
     {
-      "about": "The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest",
+      "about": "The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review",
       "ancestors": [
         {
           "command": "majordomus",
@@ -21794,6 +21908,120 @@
         }
       ],
       "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every session, claim, handover and review, not the summary",
+          "long": "full",
+          "name": "full",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FULL"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only claims that are still held",
+          "long": "live-claims",
+          "name": "live_claims",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LIVE_CLAIMS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what moved after this Lamport stamp",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this session: its key or its bare id",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this runtime (`<node>-<runtime>`), or every runtime of a node id",
+          "long": "runtime",
+          "name": "runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUNTIME"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this collection: sessions, claims, overlaps, handovers or reviews",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many of each collection, the newest first kept",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers",
+          "long": "open",
+          "name": "open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only what mentions this text: a path, a branch, an issue, a pull request, a word",
+          "long": "matching",
+          "name": "matching",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATCHING"
+        },
         {
           "defaults": [],
           "global": true,
@@ -34067,7 +34295,7 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
+    "arguments": 1488,
     "commands": 216,
     "examples": 216,
     "runnable": 190

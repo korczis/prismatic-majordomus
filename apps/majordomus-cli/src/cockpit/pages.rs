@@ -3383,12 +3383,13 @@ pub fn mesh(ctx: &Context) -> Page {
             Ok(c) => c,
             Err(e) => return failed(Area::Mesh, "Mesh", e),
         };
-    let tree: crate::capability::builtin::mesh::PeerTree = match ask(ctx, "mesh.peers", json!({})) {
-        Ok(t) => t,
-        Err(e) => return failed(Area::Mesh, "Mesh", e),
-    };
+    let tree: crate::capability::builtin::mesh::PeerTree =
+        match ask(ctx, "mesh.peers", json!({ "view": "full" })) {
+            Ok(t) => t,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
     let folded: crate::capability::builtin::mesh::MeshStateAnswer =
-        match ask(ctx, "mesh.state", json!({})) {
+        match ask(ctx, "mesh.state", json!({ "view": "full" })) {
             Ok(s) => s,
             Err(e) => return failed(Area::Mesh, "Mesh", e),
         };

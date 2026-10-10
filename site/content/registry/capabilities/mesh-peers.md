@@ -1,6 +1,6 @@
 +++
 title = "mesh.peers"
-description = "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state."
+description = "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state."
 weight = 106
 slug = "mesh-peers"
 [extra]

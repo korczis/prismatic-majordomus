@@ -27,6 +27,7 @@ use crate::mesh::cooperation::{
 };
 use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
+use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
 use crate::mesh::rendezvous::REGISTER_PATH;
 use crate::mesh::state::{ClaimView, CooperationState, HandoverView, SessionState};
 use crate::mesh::{
@@ -229,8 +230,10 @@ pub struct SessionNode {
     pub info: SessionInfo,
     /// Its standing.
     pub state: SessionState,
-    /// The claims it holds or held.
+    /// The claims it holds or held; empty in the summary view, which counts them instead.
     pub claims: Vec<ClaimView>,
+    /// How many of its claims are live.
+    pub claims_held: usize,
     /// The review requests it opened, by key.
     pub reviews: Vec<String>,
 }
@@ -250,7 +253,10 @@ pub struct RuntimeNode {
     /// This runtime's link to it, when there is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub link: Option<PeerView>,
-    /// Its sessions.
+    /// Its newest live claim, told briefly.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub newest_claim: Option<ClaimBrief>,
+    /// Its sessions; in the summary view only the active ones.
     pub sessions: Vec<SessionNode>,
 }
 
@@ -281,6 +287,8 @@ impl crate::order::Ordered for MachineNode {
 pub struct PeerTree {
     /// Whether cooperation runs.
     pub active: bool,
+    /// What the answer carries: `summary` or `full`.
+    pub view: View,
     /// Why not.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
@@ -307,10 +315,15 @@ fn rank(l: StreamLiveness) -> u8 {
     }
 }
 
-/// Build the peer tree from a running cooperation.
-pub fn peer_tree(c: &Cooperation) -> PeerTree {
+/// Build the peer tree from a running cooperation, narrowed and viewed as `query` asks. The
+/// summary view keeps every runtime and only the active sessions, each with its claims
+/// counted rather than listed and its intent cut; the full view is every session with every
+/// claim. Either way the digest is the whole fold's.
+pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
     let status = c.status();
-    let state = c.state();
+    let whole = c.state();
+    let state = page::narrow(&whole, query);
+    let summary = query.view() == View::Summary;
     let links: BTreeMap<String, PeerView> = status
         .peers
         .iter()
@@ -330,6 +343,7 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
                 liveness,
                 last_beat_ms: age,
                 link: None,
+                newest_claim: None,
                 sessions: Vec::new(),
             });
         if rank(liveness) < rank(node.liveness) {
@@ -348,13 +362,40 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
     for (key, node) in runtimes.iter_mut() {
         node.link = links.get(key).cloned();
     }
+    for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
+        if let Some(runtime) = runtimes.get_mut(&claim.runtime) {
+            let newer = runtime
+                .newest_claim
+                .as_ref()
+                .is_none_or(|b| claim.acquired_lamport > b.acquired_lamport);
+            if newer {
+                runtime.newest_claim = Some(ClaimBrief {
+                    key: claim.key.clone(),
+                    session: claim.session.clone(),
+                    issue: claim.issue.clone(),
+                    intent: claim.intent.as_deref().map(page::cut),
+                    paths: claim.scope.len(),
+                    mode: claim.mode,
+                    acquired_lamport: claim.acquired_lamport,
+                });
+            }
+        }
+    }
     for session in &state.sessions {
-        let claims = state
+        if summary && session.state != SessionState::Active {
+            continue;
+        }
+        let claims: Vec<ClaimView> = state
             .claims
             .iter()
             .filter(|cl| cl.session == session.key)
             .cloned()
             .collect();
+        let claims_held = claims.iter().filter(|cl| cl.state.is_live()).count();
+        let mut info = session.info.clone();
+        if summary {
+            info.intent = info.intent.as_deref().map(page::cut);
+        }
         let reviews = state
             .reviews
             .iter()
@@ -364,9 +405,10 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
         if let Some(runtime) = runtimes.get_mut(&session.runtime) {
             runtime.sessions.push(SessionNode {
                 key: session.key.clone(),
-                info: session.info.clone(),
+                info,
                 state: session.state,
-                claims,
+                claims: if summary { Vec::new() } else { claims },
+                claims_held,
                 reviews,
             });
         }
@@ -401,20 +443,22 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
     crate::order::canonical(&mut machines);
     PeerTree {
         active: status.active,
+        view: query.view(),
         reason: status.reason,
         runtime: status.runtime,
         repository: status.repository.map(|r| r.id),
         machines,
         refused: status.refused,
-        digest: Some(state.digest),
+        digest: Some(whole.digest),
     }
 }
 
-fn mesh_peers(ctx: &Context, _: Empty) -> Result<PeerTree, CapabilityError> {
+fn mesh_peers(ctx: &Context, query: Query) -> Result<PeerTree, CapabilityError> {
     Ok(match ctx.mesh.cooperation() {
-        Some(c) => peer_tree(&c),
+        Some(c) => peer_tree(&c, &query),
         None => PeerTree {
             active: false,
+            view: query.view(),
             reason: ctx.mesh.cooperation_status().reason,
             runtime: None,
             repository: None,
@@ -474,7 +518,11 @@ fn mesh_peer(ctx: &Context, input: PeerInput) -> Result<PeerDetail, CapabilityEr
             refused: Vec::new(),
         });
     };
-    let tree = peer_tree(&c);
+    let full = Query {
+        view: Some(View::Full),
+        ..Query::default()
+    };
+    let tree = peer_tree(&c, &full);
     let wanted = input.runtime.trim();
     let hit = tree.machines.iter().find_map(|m| {
         m.runtimes
@@ -524,37 +572,69 @@ pub struct StreamView {
 pub struct MeshStateAnswer {
     /// Whether cooperation runs.
     pub active: bool,
+    /// What the answer carries: `summary` or `full`.
+    pub view: View,
     /// Why not.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
-    /// The folded state, when cooperation runs.
+    /// The summary, in the summary view: counts, each runtime's newest live claim, the
+    /// open reviews and the untaken handovers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub summary: Option<Summary>,
+    /// The folded state narrowed by the filters, in the full view; its digest is the whole
+    /// fold's.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub state: Option<CooperationState>,
     /// Every stream's liveness.
     pub streams: Vec<StreamView>,
 }
 
-fn mesh_state(ctx: &Context, _: Empty) -> Result<MeshStateAnswer, CapabilityError> {
-    Ok(match ctx.mesh.cooperation() {
-        Some(c) => MeshStateAnswer {
-            active: true,
-            reason: None,
-            state: Some(c.state()),
-            streams: c
-                .streams()
-                .into_iter()
-                .map(|(stream, liveness, last_beat_ms)| StreamView {
-                    stream,
-                    liveness,
-                    last_beat_ms,
-                })
-                .collect(),
-        },
-        None => MeshStateAnswer {
+fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, CapabilityError> {
+    let view = query.view();
+    let Some(c) = ctx.mesh.cooperation() else {
+        return Ok(MeshStateAnswer {
             active: false,
+            view,
             reason: ctx.mesh.cooperation_status().reason,
+            summary: None,
             state: None,
             streams: Vec::new(),
+        });
+    };
+    let state = page::narrow(&c.state(), &query);
+    let streams: Vec<StreamView> = c
+        .streams()
+        .into_iter()
+        .filter(|(stream, _, _)| query.admits_runtime(&stream.runtime_key()))
+        .map(|(stream, liveness, last_beat_ms)| StreamView {
+            stream,
+            liveness,
+            last_beat_ms,
+        })
+        .collect();
+    Ok(match view {
+        View::Summary => {
+            let beats: Vec<_> = streams
+                .iter()
+                .map(|s| (s.stream.runtime_key(), s.liveness, s.last_beat_ms))
+                .collect();
+            MeshStateAnswer {
+                active: true,
+                view,
+                reason: None,
+                summary: Some(page::summarize(&state, &beats)),
+                state: None,
+                // the streams are the summary's runtimes, told once
+                streams: Vec::new(),
+            }
+        }
+        View::Full => MeshStateAnswer {
+            active: true,
+            view,
+            reason: None,
+            summary: None,
+            state: Some(state),
+            streams,
         },
     })
 }
@@ -1184,8 +1264,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.peers",
                 title: "Who cooperates, machine by machine",
-                description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
-                input: Empty,
+                description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state.",
+                input: Query,
                 output: PeerTree,
                 stability: Stability::Experimental,
                 exposure: Exposure { mcp: mcp("majordomus_mesh_peers"), http: get("/api/v1/mesh/peers"), cli: None },
@@ -1206,8 +1286,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.state",
                 title: "The state every linked runtime converges on",
-                description: "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
-                input: Empty,
+                description: "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
+                input: Query,
                 output: MeshStateAnswer,
                 stability: Stability::Experimental,
                 exposure: Exposure { mcp: mcp("majordomus_mesh_state"), http: get("/api/v1/mesh/state"), cli: None },

@@ -211,6 +211,33 @@ carry no events: replication stops rather than loops.
 `mesh.state` folds the journal: every runtime with the same events and the same liveness
 verdicts computes the same state and the same `digest`.
 
+### Reading the state in one answer
+
+The fold keeps its history — every session that ever opened, every claim ever taken — and on
+2026-10-10, with twelve runtimes, the whole of it was 449 kB from `mesh.state` and 313 kB from
+`mesh.peers`; a page of 80 journal events was 83 000 characters, 30 of them one session
+reopening itself. An answer a worker's client cannot show is not an answer. So both
+capabilities take one input (`apps/majordomus-cli/src/mesh/page.rs`, I2414):
+
+| Input | Values | What it does |
+|---|---|---|
+| `view` | `summary` (default), `full` | The summary counts sessions and claims by standing, gives each runtime its liveness, counts and newest live claim, and lists the open review requests and the handovers nobody has taken — at most 24 of each, the rest counted, every intent cut to 160 characters. `full` is the fold. |
+| `claims` | `all` (default), `live` | Only the claims still held; their overlaps follow them. |
+| `after` | a Lamport stamp | Only sessions, claims and handovers that moved after it. |
+| `session` | a key or a bare id | Only what that session holds, opened or took. |
+| `runtime` | `<node>-<runtime>` or a node id | Only that runtime, or every runtime of that machine. |
+| `kind` | `sessions`, `claims`, `overlaps`, `handovers`, `reviews` | Only that collection; the others answer empty. |
+| `limit` | a count | At most that many of each collection, the newest by Lamport stamp, in the fold's order. |
+| `open` | `true` | Only what is still open: active sessions, live claims, review requests nobody has answered, handovers nobody has taken. |
+| `matching` | text | Only what mentions it, ignoring case: a claimed path, a branch, an issue, a pull request, a word of an intent or a subject. |
+
+The `digest` in every answer is the whole fold's, never a page's: it is what two runtimes
+compare. `majordomus mesh state` and `mesh peers` take the same input as `--full`,
+`--live-claims`, `--after`, `--session`, `--runtime`, `--kind`, `--limit`, `--open` and
+`--matching`. A server older than this input
+refuses it as invalid; the readers in this repository that need the fold (the integration
+lease's claims, the mesh-review advisor) ask again without it, and the answer is the same.
+
 ## Claims and leases
 
 A claim is a scope — repository-relative paths — held by a session, `exclusive` (the default)
@@ -491,9 +518,10 @@ majordomus mesh doctor            # prerequisites and the server's runtime verdi
 majordomus mesh identity          # this machine's key, for trust.allow
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
-majordomus mesh peers             # machines → runtimes → sessions → claims, each link's state
+majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
-majordomus mesh state             # sessions, claims (held/conflicted/expired), handovers, reviews, digest
+majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
+majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
 majordomus mesh events --after 0  # the journal
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'

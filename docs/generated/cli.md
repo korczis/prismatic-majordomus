@@ -144,9 +144,9 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
 | [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
 | [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end |
-| [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine, runtime and session this checkout's server cooperates with, with each link's state |
+| [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim |
 | [`majordomus mesh peer`](#majordomus-mesh-peer) | `/docs/cli/mesh/peer/` | One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here |
-| [`majordomus mesh state`](#majordomus-mesh-state) | `/docs/cli/mesh/state/` | The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest |
+| [`majordomus mesh state`](#majordomus-mesh-state) | `/docs/cli/mesh/state/` | The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review |
 | [`majordomus mesh events`](#majordomus-mesh-events) | `/docs/cli/mesh/events/` | The cooperation journal's events after a Lamport stamp, in Lamport order |
 | [`majordomus mesh verify`](#majordomus-mesh-verify) | `/docs/cli/mesh/verify/` | Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails |
 | [`majordomus mesh claim`](#majordomus-mesh-claim) | `/docs/cli/mesh/claim/` | Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them |
@@ -4146,7 +4146,7 @@ Examples:
 <a id="majordomus-mesh-peers"></a>
 ## `majordomus mesh peers`
 
-Every machine, runtime and session this checkout's server cooperates with, with each link's state
+Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim
 
 ```text
 majordomus mesh peers [OPTIONS]
@@ -4154,6 +4154,15 @@ majordomus mesh peers [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
+| `--full` | flag | — | Every session, claim, handover and review, not the summary |
+| `--live-claims` | flag | — | Only claims that are still held |
+| `--after` | `<AFTER>` | — | Only what moved after this Lamport stamp |
+| `--session` | `<SESSION>` | — | Only this session: its key or its bare id |
+| `--runtime` | `<RUNTIME>` | — | Only this runtime (`<node>-<runtime>`), or every runtime of a node id |
+| `--kind` | `<KIND>` | — | Only this collection: sessions, claims, overlaps, handovers or reviews |
+| `--limit` | `<LIMIT>` | — | At most this many of each collection, the newest first kept |
+| `--open` | flag | — | Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers |
+| `--matching` | `<MATCHING>` | — | Only what mentions this text: a path, a branch, an issue, a pull request, a word |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4201,7 +4210,7 @@ Examples:
 <a id="majordomus-mesh-state"></a>
 ## `majordomus mesh state`
 
-The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest
+The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review
 
 ```text
 majordomus mesh state [OPTIONS]
@@ -4209,6 +4218,15 @@ majordomus mesh state [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
+| `--full` | flag | — | Every session, claim, handover and review, not the summary |
+| `--live-claims` | flag | — | Only claims that are still held |
+| `--after` | `<AFTER>` | — | Only what moved after this Lamport stamp |
+| `--session` | `<SESSION>` | — | Only this session: its key or its bare id |
+| `--runtime` | `<RUNTIME>` | — | Only this runtime (`<node>-<runtime>`), or every runtime of a node id |
+| `--kind` | `<KIND>` | — | Only this collection: sessions, claims, overlaps, handovers or reviews |
+| `--limit` | `<LIMIT>` | — | At most this many of each collection, the newest first kept |
+| `--open` | flag | — | Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers |
+| `--matching` | `<MATCHING>` | — | Only what mentions this text: a path, a branch, an issue, a pull request, a word |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

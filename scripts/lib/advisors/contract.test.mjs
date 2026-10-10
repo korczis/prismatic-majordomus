@@ -273,5 +273,23 @@ test('peer adapter: a review request answered through the mesh', async () => {
   assert.equal(r.status, 'completed');
   assert.equal(r.stance, 'opposes');
   assert.equal(JSON.parse(fetch.calls[0].init.body).reviewer, 'n1-r1');
+  assert.ok(fetch.calls[1].url.endsWith('/api/v1/mesh/state?view=full'), 'the reviews are in the full view');
   assert.equal((await consultOne(peer, { id: 'peer:x' }, 'q', { env: {} })).status, 'unavailable');
+});
+
+test('peer adapter: a server older than the summary view is asked bare', async () => {
+  const peer = await loadAdapter('mesh-review');
+  const fetch = fakeFetch([
+    ['/api/v1/mesh/reviews', () => response(200, { key: 'n1/r-1', event: 'e', lamport: 1 })],
+    ['/api/v1/mesh/state?view=full', () => response(400, { error: { code: 'invalid_input' } })],
+    ['/api/v1/mesh/state', () => response(200, {
+      state: { reviews: [{ key: 'n1/r-1', answers: [{ verdict: 'approved' }] }] },
+    })],
+  ]);
+  const r = await consultOne(peer, { id: 'peer:n1-r1' }, 'Subject: x', {
+    fetch, env: { MAJORDOMUS_SERVER_URL: 'http://127.0.0.1:1', MAJORDOMUS_MESH_POLL_MS: '1' },
+  });
+  assert.equal(r.status, 'completed');
+  assert.equal(r.stance, 'supports');
+  assert.ok(fetch.calls.some((c) => c.url.endsWith('/api/v1/mesh/state')), 'asked again, bare');
 });

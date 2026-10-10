@@ -1,6 +1,6 @@
 +++
 title = "majordomus mesh peers"
-description = "Every machine, runtime and session this checkout's server cooperates with, with each link's state"
+description = "Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim"
 weight = 131
 [extra]
 route = "/docs/cli/mesh/peers/"
