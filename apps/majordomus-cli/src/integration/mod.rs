@@ -197,10 +197,20 @@ pub fn store_observation(root: &Path, obs: &ForgeObservation) -> Result<(), Stri
 /// whose master is not the current.
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct RelationCache {
+    /// Which [`RELATION_VOCABULARY`] decided the entries; absent in a file written before
+    /// the vocabulary was counted.
+    #[serde(default)]
+    vocabulary: u32,
     entries: BTreeMap<String, RelationToMaster>,
     #[serde(default)]
     shapes: BTreeMap<String, ChangeShape>,
 }
+
+/// How many times the relations this executable tells apart have changed. An entry is a fact
+/// about two commits only in the vocabulary that decided it: `behind`, written before
+/// `carries_master` existed, may be either. A cache of another vocabulary loses its relations
+/// whole and keeps its shapes, which no relation decides.
+const RELATION_VOCABULARY: u32 = 1;
 
 fn relation_cached(
     root: &Path,
@@ -568,7 +578,9 @@ pub fn build_queue_shaped(
             (Some(s), _) => s.authored.clone(),
             (
                 None,
-                RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+                RelationToMaster::UpToDate { authored }
+                | RelationToMaster::CarriesMaster { authored, .. }
+                | RelationToMaster::Behind { authored, .. },
             ) => authored.clone(),
             (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
             _ => Vec::new(),
@@ -1134,6 +1146,10 @@ fn computed(
         k.split_once("..")
             .is_some_and(|(m, h)| m == master && is_object_id(m) && is_object_id(h))
     };
+    if cache.vocabulary != RELATION_VOCABULARY {
+        cache.entries.clear();
+        cache.vocabulary = RELATION_VOCABULARY;
+    }
     cache.entries.retain(|k, _| current(k));
     cache.shapes.retain(|k, _| current(k));
     // the relation and the shape share the cache, and each is asked from its own closure

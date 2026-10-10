@@ -55,6 +55,8 @@ struct Sim {
     association: &'static str,
     /// Whether the pull requests that mention it were read whole.
     references: crate::integration::CrossReferenceRead,
+    /// The pull requests whose heads this head already holds: the links below it in a train.
+    carries: Vec<u64>,
 }
 
 /// How a pull request stopped being open.
@@ -98,6 +100,7 @@ fn sim(number: u64) -> Sim {
         // the repository's owner, read whole: what a single-owner repository's queue is
         association: "OWNER",
         references: crate::integration::CrossReferenceRead::Whole,
+        carries: Vec::new(),
     }
 }
 
@@ -174,6 +177,9 @@ struct World {
     /// On this observation (1-based) the queue's policy names no merge method, whatever
     /// its pull requests say: an observation that contradicts itself.
     no_method_on: Option<usize>,
+    /// Which pull request's merge made each master generation. A generation absent here was
+    /// somebody else's merge.
+    landed: BTreeMap<u32, u64>,
 }
 
 impl Default for World {
@@ -206,6 +212,7 @@ impl Default for World {
             outages: Vec::new(),
             close_comments: Vec::new(),
             no_method_on: None,
+            landed: BTreeMap::new(),
         }
     }
 }
@@ -260,6 +267,14 @@ impl World {
         })
     }
 
+    /// Whether merging `s` yields its own tree although its head lacks master: every master
+    /// generation it does not contain was the merge of a pull request whose head it holds.
+    fn carried(&self, s: &Sim) -> bool {
+        s.contains < self.master
+            && (s.contains + 1..=self.master)
+                .all(|g| self.landed.get(&g).is_some_and(|pr| s.carries.contains(pr)))
+    }
+
     fn relation(&self, n: u64) -> RelationToMaster {
         if let Some((_, how)) = self.gone.iter().find(|(s, _)| s.number == n) {
             // a pull request no longer open: its head is on master when it was merged with a
@@ -285,6 +300,11 @@ impl World {
         let authored = s.paths.clone();
         if s.contains == self.master {
             RelationToMaster::UpToDate { authored }
+        } else if self.carried(s) {
+            RelationToMaster::CarriesMaster {
+                behind: u64::from(self.master - s.contains),
+                authored,
+            }
         } else {
             RelationToMaster::Behind {
                 behind: u64::from(self.master - s.contains),
@@ -436,9 +456,9 @@ impl Integrator for World {
             self.open[i].head, head_sha,
             "merged a head that was not decided on"
         );
-        assert_eq!(
-            self.open[i].contains, self.master,
-            "merged a head that does not contain the current master"
+        assert!(
+            self.open[i].contains == self.master || self.carried(&self.open[i]),
+            "merged a head whose merge does not yield its own tree"
         );
         assert!(!self.open[i].failing, "merged a failing pull request");
         assert!(
@@ -461,6 +481,7 @@ impl Integrator for World {
         self.gone_as(pr, Gone::Merged);
         self.merged.push(pr);
         self.master += 1;
+        self.landed.insert(self.master, pr);
         self.merged_after_observation.push(self.observations);
         if self.answer_lost_after_landing.contains(&pr) {
             return Err("Post https://api.github.com/graphql: timed out".into());
@@ -1756,6 +1777,243 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
         relation_to_master(&dir, &master, "0000000000000000000000000000000000000000"),
         RelationToMaster::Unknown { .. }
     ));
+}
+
+/// A repository in which `above` was built on `below`'s head and `below` then landed the way
+/// the forge lands it, as a merge commit on master that writes `below`'s tree.
+struct StackedFixture {
+    dir: std::path::PathBuf,
+    landed: String,
+    above: String,
+}
+
+fn stacked_fixture() -> StackedFixture {
+    let dir = scratch();
+    git(&dir, &["init", "-q", "-b", "master"]);
+    std::fs::write(dir.join(".gitattributes"), "gen.json merge=derived\n").unwrap();
+    std::fs::write(dir.join("a.txt"), "one\n").unwrap();
+    std::fs::write(dir.join("gen.json"), "{}\n").unwrap();
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    let base = git(&dir, &["rev-parse", "HEAD"]);
+    let below = commit_on(
+        &dir,
+        "below",
+        &base,
+        &[("b.txt", "b\n"), ("gen.json", "{\"b\":1}\n")],
+    );
+    let above = commit_on(
+        &dir,
+        "above",
+        &below,
+        &[("c.txt", "c\n"), ("gen.json", "{\"b\":1,\"c\":1}\n")],
+    );
+    let landed = git(
+        &dir,
+        &[
+            "commit-tree",
+            &format!("{below}^{{tree}}"),
+            "-p",
+            &base,
+            "-p",
+            &below,
+            "-m",
+            "merge below",
+        ],
+    );
+    StackedFixture { dir, landed, above }
+}
+
+/// ADR 0129, decided by git. Master's merge commit is not in `above`, merging `above` writes
+/// `above`'s own tree, and a merge commit is all `above` lacks: it carries master. One change
+/// on master that `above` never saw, authored or derived, and the same head is behind. So it
+/// is after a commit of master's own that changes no file: the tree is the same, and the
+/// changelog lists a commit the head's never did.
+#[test]
+fn a_head_stacked_on_a_landed_head_carries_master() {
+    use crate::integration::relation_to_master;
+    let StackedFixture { dir, landed, above } = stacked_fixture();
+    assert_eq!(
+        relation_to_master(&dir, &landed, &above),
+        RelationToMaster::CarriesMaster {
+            behind: 1,
+            authored: vec!["c.txt".into()],
+        }
+    );
+    // the property itself, asked of git without this module in between
+    assert_eq!(
+        git(&dir, &["merge-tree", "--write-tree", &landed, &above]),
+        git(&dir, &["rev-parse", &format!("{above}^{{tree}}")]),
+    );
+    let moved = commit_on(&dir, "moved", &landed, &[("d.txt", "d\n")]);
+    assert!(
+        matches!(
+            relation_to_master(&dir, &moved, &above),
+            RelationToMaster::Behind { behind: 2, ref authored } if authored == &vec!["c.txt".to_string()]
+        ),
+        "{:?}",
+        relation_to_master(&dir, &moved, &above)
+    );
+    // master's own commit that changes nothing: the merge still writes the head's tree, and
+    // history holds a commit no generator on the head ever listed
+    git(&dir, &["checkout", "-q", "-B", "empty", &landed]);
+    git(&dir, &["commit", "-q", "--allow-empty", "-m", "nothing"]);
+    let empty = git(&dir, &["rev-parse", "HEAD"]);
+    assert_eq!(
+        git(&dir, &["merge-tree", "--write-tree", &empty, &above]),
+        git(&dir, &["rev-parse", &format!("{above}^{{tree}}")]),
+    );
+    assert!(
+        matches!(
+            relation_to_master(&dir, &empty, &above),
+            RelationToMaster::Behind { behind: 2, .. }
+        ),
+        "{:?}",
+        relation_to_master(&dir, &empty, &above)
+    );
+    // a derived file both sides rewrote is the regeneration's to settle: behind, never carried
+    let rederived = commit_on(
+        &dir,
+        "rederived",
+        &landed,
+        &[("gen.json", "{\"b\":1,\"m\":2}\n")],
+    );
+    assert!(
+        matches!(
+            relation_to_master(&dir, &rederived, &above),
+            RelationToMaster::Behind { behind: 2, .. }
+        ),
+        "{:?}",
+        relation_to_master(&dir, &rederived, &above)
+    );
+}
+
+/// A relation kept by an executable that could not tell `carries_master` from `behind` is not
+/// a fact in this one's vocabulary: the cache drops it, git is asked again, and the file says
+/// which vocabulary decided what it holds now.
+#[test]
+fn a_relation_of_an_older_vocabulary_is_asked_again() {
+    let StackedFixture { dir, landed, above } = stacked_fixture();
+    observed(&dir, &landed, vec![observed_pr(2, &above)]);
+    let path = crate::integration::state_path(&dir, crate::integration::RELATIONS_FILE);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(
+        &path,
+        format!(
+            "{{\"entries\":{{\"{landed}..{above}\":{{\"kind\":\"behind\",\"behind\":1,\"authored\":[\"c.txt\"]}}}}}}"
+        ),
+    )
+    .unwrap();
+    let q = crate::integration::queue_and_record(&dir).unwrap();
+    assert!(
+        matches!(
+            q.get(2).unwrap().relation,
+            RelationToMaster::CarriesMaster { behind: 1, .. }
+        ),
+        "{:?}",
+        q.get(2).unwrap().relation
+    );
+    let kept: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(kept["vocabulary"], 1);
+    assert_eq!(
+        kept["entries"][format!("{landed}..{above}")]["kind"],
+        "carries_master"
+    );
+}
+
+/// `prs repair` brings master into a head that is behind. A head that carries master has
+/// nothing to bring in: its merge writes its own tree, and repair says so and would push
+/// nothing.
+#[test]
+fn a_head_that_carries_master_has_nothing_to_repair() {
+    let StackedFixture { dir, landed, above } = stacked_fixture();
+    observed(&dir, &landed, vec![observed_pr(2, &above)]);
+    let r = repair::plan(&dir, &RepairTarget::Number(2)).unwrap();
+    assert_eq!(outcome(&r), "nothing", "{r:?}");
+    assert!(
+        matches!(
+            &r.outcome,
+            repair::RepairOutcome::NothingToRepair { why } if why.contains("yields its own tree")
+        ),
+        "{r:?}"
+    );
+    assert!(
+        matches!(r.relation, Some(RelationToMaster::CarriesMaster { .. })),
+        "{r:?}"
+    );
+}
+
+/// ADR 0129 through the executor: #2 was built on #1's head. Once #1 has landed, #2 lacks
+/// master's merge commit and its merge yields its own tree, so the verdict its head already
+/// has is the verdict on what master becomes: it is ready, says `carries_master`, and merges
+/// with no refresh in between.
+#[test]
+fn a_link_above_a_landed_one_merges_without_a_refresh() {
+    let root = scratch();
+    let mut above = sim(2);
+    above.carries = vec![1];
+    above.depends_on = Some(1);
+    let mut w = World {
+        open: vec![sim(1), above],
+        ..Default::default()
+    };
+    assert_eq!(
+        disposition(&w.queue(), 2),
+        PullRequestDisposition::WaitingForDependency
+    );
+    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert_eq!(report.merged, vec![1], "{report:?}");
+
+    let q = w.queue();
+    let a = q.get(2).unwrap();
+    assert!(
+        matches!(
+            a.relation,
+            RelationToMaster::CarriesMaster { behind: 1, .. }
+        ),
+        "{:?}",
+        a.relation
+    );
+    assert_eq!(a.disposition, PullRequestDisposition::Ready);
+    assert!(a.gates.iter().all(|g| g.passed), "{:?}", a.gates);
+    assert_eq!(a.reasons, ["carries_master", "required_checks_passed"]);
+    assert!(q.next_refresh.is_empty(), "{:?}", q.next_refresh);
+
+    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert_eq!(report.merged, vec![2], "{report:?}");
+    assert_eq!(w.merge_calls, 2);
+    assert_eq!(
+        w.refresh_calls, 0,
+        "a head that carries master is not refreshed"
+    );
+}
+
+/// The link carries only what it was built on. A merge of somebody else's between, and master
+/// holds a change its head never saw: behind, to be refreshed like any other.
+#[test]
+fn a_link_is_behind_once_master_holds_what_it_never_saw() {
+    let root = scratch();
+    let mut above = sim(2);
+    above.carries = vec![1];
+    let mut w = World {
+        open: vec![sim(1), above],
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![1], "{report:?}");
+    w.master += 1;
+    let q = w.queue();
+    assert!(
+        matches!(
+            q.get(2).unwrap().relation,
+            RelationToMaster::Behind { behind: 2, .. }
+        ),
+        "{:?}",
+        q.get(2).unwrap().relation
+    );
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::NeedsRefresh);
+    assert_eq!(q.next_refresh, vec![2]);
 }
 
 /// `project.cache-is-invisible`: the relation cache answers exactly what git answers, on a
@@ -4046,6 +4304,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::NoRequiredChecks
         | R::RequiredChecksUnread
         | R::ContainsMaster
+        | R::CarriesMaster
         | R::RequiredChecksPassed
         | R::RequiredChecksSkipped
         | R::ExecutorMergeRefused { .. }
@@ -4092,6 +4351,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::NoRequiredChecks,
         R::RequiredChecksUnread,
         R::ContainsMaster,
+        R::CarriesMaster,
         R::RequiredChecksPassed,
         R::RequiredChecksSkipped,
         R::ExecutorMergeRefused {
