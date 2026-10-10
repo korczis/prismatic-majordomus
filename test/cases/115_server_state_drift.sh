@@ -87,6 +87,15 @@ agree "with a foreign lease planted in the primary"
 # exactly what an executable rebuilt under a running server leaves behind
 cp "$la" "$T/lease.real"
 jq '.version = "0.0.0-planted"' "$T/lease.real" > "$la"
+# `outdated` is read only from a server that answers, and the probe waits two seconds
+# (lease::PROBE_TIMEOUT). On a loaded runner one probe did not get its answer and the same
+# server read `stale` (PR #825, job 113788989371; green on the rerun). The question is asked
+# again, a bounded number of times, while the answer is `stale`; a server that is gone stays
+# stale through all of them and fails below as before.
+for _ in 1 2 3 4 5; do
+  mj "$A" serve status 2>&1 | grep -q '^standing   stale' || break
+  sleep 2
+done
 expect_exit 0 mj "$A" serve status
 expect_grep '^standing   outdated'
 expect_grep '0\.0\.0-planted'
