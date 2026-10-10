@@ -176,7 +176,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `08d8ee82dc49e3d4` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9320 | `c5151e77a1a9afc7` |
 | `deploy/Dockerfile` | `deployment` | text | 1866 | `05e4fe64011ca785` |
-| `docs/INSTALL.md` | `install-guide` | markdown | 10982 | `ddafcd66bb5a7a56` |
+| `docs/INSTALL.md` | `install-guide` | markdown | 11426 | `1a866be903c0d12e` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
@@ -197,7 +197,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 28388 | `1e297c699537d77f` |
 | `docs/generated/economics.md` | `economics` | markdown | 15023 | `be9e00395cc46ab5` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 23676 | `41acf995a854a01e` |
-| `docs/generated/graph.json` | `graph` | json | 2822724 | `5cca89a287ebe565` |
+| `docs/generated/graph.json` | `graph` | json | 2827499 | `85d5419da08b93f6` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `7b60575fbd9a0f96` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `e5999765bd74e6da` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `94c8132e65df100f` |
@@ -316,15 +316,15 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `3bb6e5899b95e262` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `37f0800f6021243b` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 725231 | `3af257f19ac4a447` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `26e0a7a93e2cafa6` |
-| `site/data/registry/product.json` | `site-product` | json | 632822 | `5e485ba10d01f832` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6195335 | `ed94fc42fc73dadf` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `81684eef7ba97252` |
+| `site/data/registry/product.json` | `site-product` | json | 632822 | `da7cc81558d194f0` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6196575 | `8f8f3100f36e4259` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `1ae26ae94d8a87e9` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `8ddb9eacdb8e93d0` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `38e234901136312c` |
 | `site/static/images/logo-mark.svg` | `design-mark` | text | 904 | `38e234901136312c` |
 | `site/static/images/logo.svg` | `design-logo` | text | 1059 | `db526bb4fa7d0c29` |
-| `site/static/install.sh` | `installer` | text | 31451 | `fb5c54c696fd3130` |
+| `site/static/install.sh` | `installer` | text | 34129 | `914942c649d7171e` |
 | `site/static/releases/latest.json` | `release/latest` | json | 2397 | `b210dce0e7f418cc` |
 | `site/static/releases/v0.10.0.json` | `release/v0.10.0` | json | 2397 | `d5d062b81a621263` |
 | `site/static/releases/v0.11.0.json` | `release/v0.11.0` | json | 2397 | `d314f8a7caa0916f` |
