@@ -770,9 +770,9 @@ impl Router {
             return None;
         }
         tracing::warn!(
-            origin = origin,
+            origin = %crate::redaction::redact_secrets(origin).text,
             method = %req.method,
-            path = %req.path,
+            path = %crate::redaction::redact_secrets(&req.path).text,
             "a state-changing request from another origin was refused"
         );
         Some(error_response(
@@ -1038,10 +1038,12 @@ fn json_response(status: u16, v: &Value) -> Response {
 }
 
 fn error_response(status: u16, code: &str, message: &str) -> Response {
+    // an error often echoes what it was asked — a path, a parameter, an input — and what it
+    // was asked may hold a credential; no answer of this server carries one back
     let body = ErrorBody {
         error: ErrorDetail {
             code: code.into(),
-            message: message.into(),
+            message: crate::redaction::redact_secrets(message).text,
         },
     };
     Response::new(
