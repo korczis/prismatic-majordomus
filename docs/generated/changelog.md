@@ -1,13 +1,17 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.0 -->
+     Generator: majordomus-cli 0.19.1 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.19.0**
+Current version: **0.19.1**
 
 ## v0.19.0 — 2026-10-09
+
+### Decisions
+
+- **ADR-0123** The worker is asked for a handover before the context window fills, by a provider mod the policy switches _(proposed)_
 
 ### Added
 
