@@ -30430,6 +30430,8 @@
         "route": "/cockpit/objects/issue/i2301",
         "source": ".ai/repo/project/issues/I2301.yaml",
         "facts": {
+          "completed_at": "2026-10-10T21:56:14Z",
+          "completed_event": "sha256:9ada14f9b4cd901f913fa115725796be0e940db622d367a34c0b4d3bc23f8c64",
           "created_at": "2026-10-10",
           "depends_on": [],
           "evidence_required": [
@@ -30455,13 +30457,17 @@
             "test/cases/131_completion_gates.sh"
           ],
           "slug": "the-closing-question-is-measured",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-10T21:36:49Z",
+          "started_event": "sha256:458b8138a56ee668c18de49041365fcc0f928b71ef79cf03002a0a6a9578a5a1",
+          "updated_at": "2026-10-10T21:56:14Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 1037_the_closing_question_is_measured",
             "MJ_TEST_JOBS=4 bash test/run.sh 131_completion_gates",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
-          ]
+          ],
+          "verified_at": "2026-10-10T21:36:58Z",
+          "verified_event": "sha256:a11b865d8abc5c70cb62a2d56ed522173558ec3dbabf736fbe7929e13256d71d"
         }
       },
       {
