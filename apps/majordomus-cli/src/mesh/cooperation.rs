@@ -3689,6 +3689,26 @@ mod tests {
 
     type Answered = Box<dyn Fn() + Send>;
 
+    /// The one trust definition the live path and the reload share: this machine's own key
+    /// is trusted, and a value that is not a key is rejected before any policy is asked —
+    /// whatever the policy, even one that trusts on first use.
+    #[test]
+    fn a_value_that_is_not_a_key_is_rejected_by_every_policy() {
+        let registry = MeshRegistry::new();
+        let own = NodeIdentity::ephemeral().unwrap().public.public_key.clone();
+        for policy in [TrustPolicy::Tofu, TrustPolicy::DenyUnknown] {
+            let config = TrustConfig {
+                policy,
+                allow: vec!["not-a-key".into()],
+            };
+            assert!(key_trust(&own, &config, &registry, &own).is_trusted());
+            assert_eq!(
+                key_trust(&own, &config, &registry, "not-a-key"),
+                TrustState::Rejected("not a key".into())
+            );
+        }
+    }
+
     impl LinkTransport for InProcess {
         fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String> {
             if self.cut.lock().unwrap().iter().any(|c| c == endpoint) {
