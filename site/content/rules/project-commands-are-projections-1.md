@@ -1,7 +1,7 @@
 +++
 title = "A command is declared once, and every surface that shows it is a projection"
 description = "A command is declared once, and every surface that shows it is a projection"
-weight = 76
+weight = 77
 [extra]
 kind = "rule"
 slug = "project-commands-are-projections-1"

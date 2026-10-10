@@ -1,0 +1,46 @@
+id: failure-is-visible
+title: "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports"
+slug: failure-is-visible
+order: 142
+priority: p1
+problem: "Readiness stays true for a degraded index and knows nothing of a lost lease or the mesh (apps/majordomus-cli/src/capability/builtin/health.rs:214; was_lost reaches only GET / at apps/majordomus-cli/src/http/router.rs:710); health.report has no mesh dimension (apps/majordomus-cli/src/capability/builtin/health.rs:299); 'degraded' has three unrelated meanings. The HTTP server reads request bodies with no deadline on four workers (apps/majordomus-cli/src/http/server.rs:23,208-222), so four slow clients hold the server. Of the failure classes the pack names, the audit found tests for SIGKILL, port collision, an unwritable lease directory and a frozen owner, and none for disk full, a read-only journal directory, a slow client, a frozen worker or a kill between lease creation and its first write; lease keep-alive write errors are swallowed (apps/majordomus-cli/src/lease.rs:1058-1060). The pack's premise of structured logging is refuted: logging is human tracing fmt on stderr with no JSON, correlation id or redaction (apps/majordomus-cli/src/logging.rs:29-37). The top-level doctor is a governance doctor (lib/doctor.sh:53-77). Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "A client can tell running from ready from mesh-healthy from degraded on one endpoint; no client can hold a worker past a declared deadline; each failure class in a published table names its test or its stated limitation."
+current_state: "Implemented: /api/v1/live, the lease's client-side bounded waits, link timeouts, clock-skew bounds, the mesh doctor's typed checks (apps/majordomus-cli/src/mesh/doctor.rs:93-372). Partial: readiness, health, failure-class coverage. Absent: server-side request deadlines."
+desired_state: "The failure table in docs/DEVELOPMENT_RUNTIME.md has no row without a test or a limitation, a case refuses a row with neither, and readiness and health reflect every state the runtime already knows about itself."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/logging.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "lib/doctor.sh"
+  - "lib/common.sh"
+  - "apps/majordomus-cli/tests/"
+  - "test/cases"
+  - "docs/DEVELOPMENT_RUNTIME.md"
+  - "docs/MCP.md"
+non_scope:
+  - "Circuit breakers; the audit found no evidence one is justified."
+  - "A metrics stack or log shipping; the runtime reports through its own capabilities."
+  - "Journal durability, which is I2137 (mesh-journal-converges)."
+acceptance_criteria:
+  - "/api/v1/ready reports false with a named reason after a lease loss"
+  - "health.report carries a mesh check when the mesh is enabled"
+  - "Slow clients hold no worker past the declared deadline"
+  - "Every failure class in the published table names a CI test or a stated limitation"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - "readiness_reflects_state"
+  - "request_deadline_test"
+  - "failure_class_table"
+depends_on: []
+risks:
+  - "Making readiness stricter can make deploy health checks fail where they passed; the fly-deployment health block reads /api/v1/live and must keep doing so."
+  - "A deadline on request reads that is too short breaks slow links; it must be declared and measured."
+created_at: 2026-10-09
+updated_at: 2026-10-09

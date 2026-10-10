@@ -481,6 +481,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "How long a live owner that does not answer its probe is waited on, and asked again, before its lease is taken over. A probe that times out is not a dead server; a live process that stays silent this long is treated as wedged and replaced."
+        },
+        "read_deadline_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
         }
       }
     }

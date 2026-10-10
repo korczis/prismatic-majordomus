@@ -289,15 +289,30 @@ A server already running keeps the address it bound. After setting the variable,
 `majordomus serve stop` and the next `serve ensure` — or the next session — brings it up
 on the named interface.
 
-There is no authentication on this surface. Binding beyond loopback hands every reachable
-host the read surface and the commands the registry declares as writing; do it on a
-network you would hand that to, or reach the loopback server through an SSH tunnel
-instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
+There are no accounts and no tokens on this surface, so a request is judged by where it
+came from (ADR 0126). Binding beyond loopback hands every reachable host the read surface
+and nothing else: a request from an address that is not loopback runs a capability only
+when the capability reads (`effect: read`) or when its input is a signed message the
+handler verifies against the trust policy — the mesh's `link.hello`, `link.sync` and
+`register`. Every other route, and every MCP tool that changes something, answers that
+caller `forbidden` (HTTP 403) before its handler runs, including `executions.start`, which
+would otherwise run any capability. The decision is per request, not per session: an MCP
+session id is a name, not a proof. Reads are still served to the whole network, unencrypted;
+to write from another machine, reach the loopback server through an SSH tunnel
+(`ssh -L 8741:127.0.0.1:8741 <machine>`), whose requests arrive from loopback.
+
+A request from loopback must name this server by an address or `localhost`: one that names any
+other host is refused `forbidden` before any surface answers, reads included, because that is
+what a page whose domain was made to resolve to this machine (DNS rebinding) sends. A request
+from another host may name the machine as it knows it. `/swagger` is served with a
+Content-Security-Policy that admits only its pinned CDN files, whose integrity hashes the page
+names, and its one inline script.
 
 ### What a contest is judged by
 
-Four numbers decide which process owns the lease. They are **declared**, in
-`.ai/repo/policy.yaml`'s `server:` block, and read once when the repository is opened:
+Four numbers decide which process owns the lease, and a fifth keeps the owner able to
+answer. They are **declared**, in `.ai/repo/policy.yaml`'s `server:` block, and read once
+when the repository is opened:
 
 | key | what it decides |
 |---|---|
@@ -305,6 +320,7 @@ Four numbers decide which process owns the lease. They are **declared**, in
 | `bind_grace_seconds` | how long a lease naming no URL yet is left alone — a server writes its lease before it can serve, so a fresh lease without a URL is a *starting* owner, not a dead one |
 | `join_timeout_seconds` | how long a process waits to join or create the lease file before refusing rather than waiting forever |
 | `busy_grace_seconds` | how long a live owner that does not answer is waited on, and asked again, before its lease is taken over. The election gives a busy owner this long, and so does `serve ensure` before it starts anything: a probe that times out against a live process is not a dead server, but one that stays silent this long is wedged and replaced. A server that `ensure` started after waiting out this grace is told which lease it judged, so its election does not wait on it a second time |
+| `read_deadline_seconds` | how long the server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection. A client sending one byte a second would otherwise hold a request thread forever, and enough of them would leave the probe above unanswered. A connection whose request is being answered, or that was upgraded to the live channel, is never closed by it. Each close is counted in `server.status` (`connections.closed_by_deadline`), beside the requests refused `503` because all 64 request handlers were busy (`connections.refused_busy`); the probe, `GET /`, is answered even then. The HTTP library keeps a thread on each connection while it lives and can queue a connection that arrives in a burst until one is free; the deadline is also what bounds that wait (I2156) |
 
 Until 2026-09-15 all of them were compiled constants in `apps/majordomus-cli/src/lease.rs`:
 unchangeable without a rebuild, stated nowhere a reader would look, and invisible to every
@@ -660,7 +676,7 @@ the `initialize` instructions name them, derived from the registry, and so does
 `majordomus mcp --inspect`. Each tool carries the canonical id in `_meta.majordomus.id` and
 its `inputSchema` and `outputSchema` from the canonical schemas. A refused call is a result with
 `isError: true`, the reason as text, and the category as one word in
-`_meta.majordomus.error.code` — `invalid_input`, `not_found` or `refused`, the same word the
+`_meta.majordomus.error.code` — `invalid_input`, `not_found`, `refused` or `forbidden`, the same word the
 HTTP route answers as `error.code`, because both read it from the error itself. A
 refused result carries no `structuredContent`: the output schema describes a success. An
 unknown tool, method or resource is a protocol error.

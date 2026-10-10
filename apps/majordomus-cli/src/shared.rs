@@ -32,7 +32,15 @@ pub struct SharedServer {
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
 fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
-    let Some(parsed) = crate::capability::builtin::mesh::declaration(ctx) else {
+    let resolved = crate::capability::builtin::mesh::resolved_declaration(ctx);
+    if !resolved.narrowed.is_empty() {
+        // obeyed as narrowed; `mesh doctor` fails its `trust-root` check with the same lines
+        tracing::warn!(
+            ignored = %resolved.narrowed.join("; "),
+            "the working tree's mesh declaration widens what the trunk's copy says; those lines are ignored"
+        );
+    }
+    let Some(parsed) = resolved.declaration else {
         return;
     };
     let config = match parsed {

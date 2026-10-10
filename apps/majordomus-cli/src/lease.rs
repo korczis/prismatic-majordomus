@@ -61,6 +61,14 @@ pub const BUSY_GRACE: Duration = Duration::from_secs(10);
 /// client alone.
 pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 
+/// How long the shared server lets a connection go without a request read in full on it
+/// before it closes the connection: waiting for a request head, kept alive between requests,
+/// or reading a body. A client that sends one byte a second would otherwise hold a request
+/// thread forever, and enough of them would leave the probe above nobody to answer it (I2156).
+/// Generous, because a person's client on a slow link is a client too; far below anything
+/// that would let a handful of slow sockets outlast a [`BUSY_GRACE`] contest many times over.
+pub const READ_DEADLINE: Duration = Duration::from_secs(30);
+
 /// The timings above are the defaults. What a process actually judges a lease contest by is
 /// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
 ///
@@ -75,13 +83,16 @@ pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 /// the constants, so a policy that cannot be read does not silently change behaviour.
 ///
 /// ```
-/// use majordomus_cli::lease::{Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT};
+/// use majordomus_cli::lease::{
+///     Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
+/// };
 /// // the defaults are the compiled constants, one for one
 /// let t = Timings::default();
 /// assert_eq!(t.bind_grace, BIND_GRACE);
 /// assert_eq!(t.probe_timeout, PROBE_TIMEOUT);
 /// assert_eq!(t.join_timeout, JOIN_TIMEOUT);
 /// assert_eq!(t.busy_grace, BUSY_GRACE);
+/// assert_eq!(t.read_deadline, READ_DEADLINE);
 /// // a busy owner is given up on before the election that waits on it gives up itself
 /// assert!(t.busy_grace < t.join_timeout);
 /// ```
@@ -95,6 +106,8 @@ pub struct Timings {
     pub join_timeout: Duration,
     /// `server.busy_grace_seconds:`
     pub busy_grace: Duration,
+    /// `server.read_deadline_seconds:`
+    pub read_deadline: Duration,
 }
 
 impl Default for Timings {
@@ -104,6 +117,7 @@ impl Default for Timings {
             probe_timeout: PROBE_TIMEOUT,
             join_timeout: JOIN_TIMEOUT,
             busy_grace: BUSY_GRACE,
+            read_deadline: READ_DEADLINE,
         }
     }
 }
@@ -169,6 +183,10 @@ impl Timings {
                 .busy_grace_seconds
                 .map(Duration::from_secs)
                 .unwrap_or(d.busy_grace),
+            read_deadline: policy
+                .read_deadline_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.read_deadline),
         }
     }
 }
