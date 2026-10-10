@@ -1,7 +1,7 @@
 +++
 title = "An episode record carries its episode"
 description = "An episode record carries its episode"
-weight = 94
+weight = 95
 [extra]
 kind = "rule"
 slug = "project-episode-record-carries-its-episode-1"

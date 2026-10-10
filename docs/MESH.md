@@ -343,6 +343,7 @@ What the mesh defends against, and how:
 | flooding | bounded datagrams, messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
+| a host on the network posting claims, sessions, handovers or reviews for this node to sign | a request from an address that is not loopback runs only a capability that reads or whose input is a signed message (`mesh.link.hello`, `mesh.link.sync`, `mesh.register`); every other route answers 403 `forbidden` before its handler runs (ADR 0126) |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |
 | a stale peer holding a scope forever | claims live only while the holder's beat rises |
@@ -404,7 +405,7 @@ starts from ships no declaration, and nothing opens there until its own operator
 |---|---|
 | multicast | `239.255.77.77:7741`, TTL 1 — the local segment only; the sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every server on a machine hears the group |
 | broadcast | disabled |
-| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`), lundra (`192.168.100.10`, tailnet `100.65.22.118`) and the owner's MacBook Pro (`192.168.100.93`), port 8791, every 30 s |
+| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`), lundra (`192.168.100.10`, tailnet `100.65.22.118`) and the owner's two MacBook Pros (tailnet `100.120.245.51` and `100.108.237.68`), port 8791, every 30 s |
 | seeds | none |
 | cooperation | the defaults: heartbeat 5 s, expiry 30 s |
 | trust | `deny_unknown` with five keys: `641bdb94` (the owner's MacBook Pro), `5d81b5c9` (the owner's second MacBook Pro), `aaba18ea` (the owner's iMac), `9d652b2c` (jetson), `25c9758f` (lundra) |
@@ -414,15 +415,16 @@ share that machine's key and link as itself; two machines link only when both ke
 which is why the MacBook's own key is on the list. Any other key on the segment is observed,
 trusted for nothing, and refused `untrusted` if it dials.
 
-**Where the hubs are.** A hub is a server of this repository on jetson, lundra or the owner's
-MacBook Pro (its LAN address only: the hub the Macs of one segment reach when the other two
-are off, and an address its router must keep handing it), listening
-beyond loopback on port 8791, listed by its LAN and its tailnet address. Multicast cannot cross
+**Where the hubs are.** A hub is a server of this repository on jetson, lundra or one of the
+owner's two MacBook Pros, listening beyond loopback on port 8791. jetson and lundra are listed
+by their LAN and their tailnet address; a MacBook by its tailnet address alone, because its LAN
+address is a DHCP lease that moves — the first MacBook was declared at `192.168.100.93` and the
+router has since handed it `.91`, so for a while no Mac reached it. Multicast cannot cross
 the tailnet, and the macOS firewall drops it inbound, so the hubs are how machines on different
 segments find each other. Every server registers with every hub it can reach, one thread per
 hub with a 5-second bound per request. A hub that does not answer is asked less and less often
 — the 30-second interval doubles per failure, up to eight times — and delays nothing else: a
-server whose five hub addresses are all unreachable starts, discovers and links over multicast, and
+server whose six hub addresses are all unreachable starts, discovers and links over multicast, and
 answers requests, exactly as one with none (`mesh status` shows the `rendezvous` provider
 `running` with `sent 0`).
 
