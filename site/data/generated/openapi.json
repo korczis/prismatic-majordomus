@@ -317,6 +317,7 @@
     "schema-ConditionState": "docs/api/intents/",
     "schema-Confidence": "docs/api/environment/",
     "schema-Conflict": "docs/api/devcontext/",
+    "schema-ConnectionCounts": "docs/api/server/",
     "schema-ConnectionEpisode": "docs/api/episodes/",
     "schema-ConnectionEpisodeState": "docs/api/episodes/",
     "schema-ConsultationStatus": "docs/api/reasoning/",
@@ -1131,7 +1132,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 181,
-    "schemas": 893,
+    "schemas": 894,
     "tags": 53
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1538,6 +1539,7 @@
     "ConditionState": "intents",
     "Confidence": "environment",
     "Conflict": "devcontext",
+    "ConnectionCounts": "server",
     "ConnectionEpisode": "episodes",
     "ConnectionEpisodeState": "episodes",
     "ConsultationStatus": "reasoning",
@@ -9397,6 +9399,42 @@
       "used_by": [],
       "used_by_schemas": [
         "CompiledContext"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "ConnectionCounts",
+      "properties": [
+        {
+          "description": "`server.read_deadline_seconds:` as this process applies it.",
+          "name": "read_deadline_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Connections closed because no request was read in full on them within the deadline.",
+          "name": "closed_by_deadline",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Requests answered 503 because every request handler was busy.",
+          "name": "refused_busy",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus"
       ],
       "values": [],
       "variants": []
@@ -45504,7 +45542,7 @@
       "variants": []
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
       "home": "server",
       "is_enum": false,
       "name": "ServerStatus",
@@ -45560,6 +45598,15 @@
           ],
           "required": true,
           "type": "array of ServerView"
+        },
+        {
+          "description": "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP.",
+          "name": "connections",
+          "refs": [
+            "ConnectionCounts"
+          ],
+          "required": false,
+          "type": "ConnectionCounts | null"
         }
       ],
       "type": "object",

@@ -4,7 +4,9 @@
 //! threads, and each request is answered on a thread of its own up to a bound, so a slow
 //! request queues nothing behind it — not even the probe a client sends before it would
 //! take the lease over — and the owner's stdio session never waits on HTTP. Stopping is cooperative: every
-//! worker is unblocked and joined, and an in-flight response is finished first.
+//! worker is unblocked and joined, and an in-flight response is finished first. A connection
+//! that reads no request within the declared deadline is closed ([`super::deadline`]), and a
+//! request that finds every handler busy is refused rather than answered on a worker.
 
 use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -15,6 +17,7 @@ use tiny_http::{Header, Response as HttpResponse, Server};
 
 use crate::error::{Error, Result};
 
+use super::deadline::Watch;
 use super::Router;
 
 /// The largest request body accepted.
@@ -25,9 +28,11 @@ pub const MAX_BODY_BYTES: usize = 1024 * 1024;
 /// lease probe is answered while tool calls run (I2126).
 pub const WORKERS: usize = 4;
 
-/// How many requests are answered at once before a worker answers the next one itself. A
-/// bound, so that a flood costs a fixed number of threads; far above what clients of one
-/// checkout send, so that a few slow tool calls never hold the probe up.
+/// How many requests are answered at once. A bound, so that a flood costs a fixed number of
+/// threads; far above what clients of one checkout send, so that a few slow tool calls never
+/// hold the probe up. Past it a request is answered 503, except the probe (`GET /`), which a
+/// worker answers itself: it is cheap, and it is what decides whether this server keeps its
+/// lease (I2156).
 pub const MAX_HANDLERS: usize = 64;
 
 /// Requests being answered right now, on threads of their own.
@@ -107,20 +112,35 @@ impl Bound {
         format!("http://{}", self.address)
     }
 
-    /// Start [`WORKERS`] threads answering requests through `router`.
+    /// Start [`WORKERS`] threads answering requests through `router`, and the sweeper that
+    /// holds their connections to the declared read deadline.
     pub fn start(self, router: Router) -> Running {
         let stopping = Arc::new(AtomicBool::new(false));
-        let threads = (0..WORKERS)
+        let local = self
+            .address
+            .parse()
+            .unwrap_or_else(|_| std::net::SocketAddr::from(([0, 0, 0, 0], 0)));
+        let watch = Arc::new(Watch::new(local, crate::lease::timings().read_deadline));
+        let mut threads: Vec<JoinHandle<()>> = (0..WORKERS)
             .map(|n| {
                 let server = Arc::clone(&self.server);
                 let router = router.clone();
                 let stopping = Arc::clone(&stopping);
+                let watch = Arc::clone(&watch);
                 std::thread::Builder::new()
                     .name(format!("http-{n}"))
-                    .spawn(move || worker(&server, &router, &stopping))
+                    .spawn(move || worker(&server, &router, &watch, &stopping))
                     .expect("spawn an http worker")
             })
             .collect();
+        let sweeper = {
+            let stopping = Arc::clone(&stopping);
+            std::thread::Builder::new()
+                .name("http-deadline".into())
+                .spawn(move || watch.run(&stopping))
+                .expect("spawn the http deadline sweeper")
+        };
+        threads.push(sweeper);
         Running {
             server: self.server,
             address: self.address,
@@ -152,6 +172,7 @@ impl Running {
     /// Unblock every worker and wait for it; an in-flight response is finished first.
     pub fn stop(self) {
         self.stopping.store(true, Ordering::SeqCst);
+        // one more than there are workers is harmless; the sweeper reads `stopping` itself
         for _ in &self.threads {
             self.server.unblock();
         }
@@ -168,10 +189,10 @@ impl Running {
     }
 }
 
-fn worker(server: &Server, router: &Router, stopping: &AtomicBool) {
+fn worker(server: &Server, router: &Router, watch: &Arc<Watch>, stopping: &AtomicBool) {
     loop {
         match server.recv() {
-            Ok(request) => hand_off(router, request),
+            Ok(request) => hand_off(router, watch, request),
             Err(_) if stopping.load(Ordering::SeqCst) => break,
             Err(e) => tracing::warn!("accepting a connection failed: {e}"),
         }
@@ -179,18 +200,36 @@ fn worker(server: &Server, router: &Router, stopping: &AtomicBool) {
 }
 
 /// Answer `request` on a thread of its own while fewer than [`MAX_HANDLERS`] are, so that the
-/// worker accepts the next request at once; past the bound, answer it here.
-fn hand_off(router: &Router, request: tiny_http::Request) {
+/// worker accepts the next request at once. Past the bound the probe is answered here and
+/// anything else is refused 503: a worker that read a slow body itself would be held by it.
+fn hand_off(router: &Router, watch: &Arc<Watch>, request: tiny_http::Request) {
     if HANDLERS.fetch_add(1, Ordering::SeqCst) >= MAX_HANDLERS {
         HANDLERS.fetch_sub(1, Ordering::SeqCst);
-        answer(router, request);
+        let probe = matches!(
+            request.method(),
+            tiny_http::Method::Get | tiny_http::Method::Head
+        ) && request.url() == "/";
+        if probe {
+            answer(router, watch, request);
+        } else {
+            super::deadline::refused();
+            watch.stop_reading(request.remote_addr());
+            let busy = super::router::Response::error(
+                503,
+                "busy",
+                &format!("{MAX_HANDLERS} requests are being answered; ask again"),
+            )
+            .with_header("Retry-After", "1");
+            respond(request, busy, false);
+        }
         return;
     }
     let router = router.clone();
+    let watch = Arc::clone(watch);
     let spawned = std::thread::Builder::new()
         .name("http-request".into())
         .spawn(move || {
-            answer(&router, request);
+            answer(&router, &watch, request);
             HANDLERS.fetch_sub(1, Ordering::SeqCst);
         });
     if let Err(e) = spawned {
@@ -200,10 +239,13 @@ fn hand_off(router: &Router, request: tiny_http::Request) {
     }
 }
 
-fn answer(router: &Router, request: tiny_http::Request) {
-    if let Some(request) = upgrade(router, request) {
-        answer_http(router, request);
+fn answer(router: &Router, watch: &Watch, request: tiny_http::Request) {
+    let peer = request.remote_addr().copied();
+    watch.reading(peer.as_ref());
+    if let Some(request) = upgrade(router, watch, request) {
+        answer_http(router, watch, request);
     }
+    watch.answered(peer.as_ref());
 }
 
 /// Hand the socket to the live channel when the request asks for it, on a thread of its
@@ -212,7 +254,11 @@ fn answer(router: &Router, request: tiny_http::Request) {
 /// Returns the request when it was not an upgrade, and nothing when the socket has been
 /// given away. This is the one thing the router cannot do for itself: `tiny_http` yields
 /// the stream only by consuming the request.
-fn upgrade(router: &Router, request: tiny_http::Request) -> Option<tiny_http::Request> {
+fn upgrade(
+    router: &Router,
+    watch: &Watch,
+    request: tiny_http::Request,
+) -> Option<tiny_http::Request> {
     let headers: Vec<(String, String)> = request
         .headers()
         .iter()
@@ -225,10 +271,13 @@ fn upgrade(router: &Router, request: tiny_http::Request) -> Option<tiny_http::Re
         None => return Some(request),
         Some(Ok(accepted)) => accepted,
         Some(Err(response)) => {
+            watch.busy(request.remote_addr());
             respond(request, response, false);
             return None;
         }
     };
+    // a live channel is never closed by the read deadline: it waits by design
+    watch.live(request.remote_addr());
     let key = accepted.accept.clone();
     let response = HttpResponse::empty(101).with_header(
         Header::from_bytes("Sec-WebSocket-Accept", key.as_bytes())
@@ -244,7 +293,7 @@ fn upgrade(router: &Router, request: tiny_http::Request) -> Option<tiny_http::Re
     None
 }
 
-fn answer_http(router: &Router, mut request: tiny_http::Request) {
+fn answer_http(router: &Router, watch: &Watch, mut request: tiny_http::Request) {
     let method = request.method().to_string();
     let head = method == "HEAD";
     let method = if head { "GET".to_string() } else { method };
@@ -263,7 +312,13 @@ fn answer_http(router: &Router, mut request: tiny_http::Request) {
         tracing::warn!("cannot read a request body: {e}");
         return;
     }
+    if !watch.busy(request.remote_addr()) {
+        // the deadline closed the connection under the body: what was read is short
+        return;
+    }
     let response = if body.len() > MAX_BODY_BYTES {
+        // the rest of the body is never read, and dropping the request would read it
+        watch.stop_reading(request.remote_addr());
         super::router::Response::error(
             413,
             "too_large",

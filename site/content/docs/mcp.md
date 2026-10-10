@@ -315,8 +315,9 @@ instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
 
 ### What a contest is judged by
 
-Four numbers decide which process owns the lease. They are **declared**, in
-`.ai/repo/policy.yaml`'s `server:` block, and read once when the repository is opened:
+Four numbers decide which process owns the lease, and a fifth keeps the owner able to
+answer. They are **declared**, in `.ai/repo/policy.yaml`'s `server:` block, and read once
+when the repository is opened:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -326,6 +327,7 @@ Four numbers decide which process owns the lease. They are **declared**, in
 | `bind_grace_seconds` | how long a lease naming no URL yet is left alone — a server writes its lease before it can serve, so a fresh lease without a URL is a *starting* owner, not a dead one |
 | `join_timeout_seconds` | how long a process waits to join or create the lease file before refusing rather than waiting forever |
 | `busy_grace_seconds` | how long a live owner that does not answer is waited on, and asked again, before its lease is taken over. The election gives a busy owner this long, and so does `serve ensure` before it starts anything: a probe that times out against a live process is not a dead server, but one that stays silent this long is wedged and replaced. A server that `ensure` started after waiting out this grace is told which lease it judged, so its election does not wait on it a second time |
+| `read_deadline_seconds` | how long the server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection. A client sending one byte a second would otherwise hold a request thread forever, and enough of them would leave the probe above unanswered. A connection whose request is being answered, or that was upgraded to the live channel, is never closed by it. Each close is counted in `server.status` (`connections.closed_by_deadline`), beside the requests refused `503` because all 64 request handlers were busy (`connections.refused_busy`); the probe, `GET /`, is answered even then. The HTTP library keeps a thread on each connection while it lives and can queue a connection that arrives in a burst until one is free; the deadline is also what bounds that wait (I2156) |
 
 </div>
 

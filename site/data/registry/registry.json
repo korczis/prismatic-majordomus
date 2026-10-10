@@ -6,23 +6,23 @@
     "version": "0.19.1"
   },
   "registry": {
-    "fingerprint": "3af88ed2ac03c298d459c9102c7a20abfd13536bf1d371d4cfa5ec509bfc338d",
+    "fingerprint": "afdd193c6fa36b046e28e252770a89a39597bf6b7749b8d6ddb3d934acfb566a",
     "summary": {
-      "total": 2102,
+      "total": 2104,
       "builtin": 184,
-      "declarative": 1918,
+      "declarative": 1920,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1918
+        "resource": 1920
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1926
+        "implemented": 1928
       },
       "mcp_tools": 177,
-      "mcp_resources": 1972,
+      "mcp_resources": 1974,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -67222,6 +67222,17 @@
                   "$ref": "#/$defs/ServerView"
                 },
                 "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+              },
+              "connections": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ConnectionCounts"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
               }
             },
             "required": [
@@ -67230,7 +67241,7 @@
               "standing",
               "servers"
             ],
-            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
             "title": "ServerStatus",
             "$defs": {
               "GitIdentity": {
@@ -67461,6 +67472,35 @@
                   "standing"
                 ],
                 "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+              },
+              "ConnectionCounts": {
+                "type": "object",
+                "properties": {
+                  "read_deadline_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "`server.read_deadline_seconds:` as this process applies it."
+                  },
+                  "closed_by_deadline": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Connections closed because no request was read in full on them within the deadline."
+                  },
+                  "refused_busy": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Requests answered 503 because every request handler was busy."
+                  }
+                },
+                "required": [
+                  "read_deadline_seconds",
+                  "closed_by_deadline",
+                  "refused_busy"
+                ],
+                "description": "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
               }
             }
           }
@@ -75526,7 +75566,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 269,
+        "capabilities": 270,
         "capability_ids": []
       },
       {
@@ -75639,7 +75679,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -76151,7 +76191,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d6d10845eafd19e5497de6b124c95334f08d84e836706e13f3c167149926b937",
+    "fingerprint": "7752d93296516674c5957edb140a7ee9785fc255d7ff8f27d9088ef8d53db49c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76230,10 @@
       "gap": 2,
       "implementation": 51,
       "intent": 3,
-      "issue": 269,
+      "issue": 270,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 26,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81616,7 +81656,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58914
+        "bytes": 59839
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -81670,7 +81710,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 123154
+        "bytes": 124717
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87929,6 +87969,17 @@
         "bytes": 3029
       },
       {
+        "uri": "majordomus://issue/I2156",
+        "kind": "issue",
+        "identity": "I2156",
+        "title": "A slow or silent HTTP client cannot hold a server worker",
+        "description": "Put a declared deadline on reading each request's head and body, close and count a connection that misses it, and keep handler time off the workers the probe needs.",
+        "path": ".ai/repo/project/issues/I2156.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2178
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88082,6 +88133,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 6152
+      },
+      {
+        "uri": "majordomus://milestone/failure-is-visible",
+        "kind": "milestone",
+        "identity": "failure-is-visible",
+        "title": "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports",
+        "description": "A client can tell running from ready from mesh-healthy from degraded on one endpoint; no client can hold a worker past a declared deadline; each failure class in a published table names its test or its stated limitation.",
+        "path": ".ai/repo/project/milestones/failure-is-visible.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3805
       },
       {
         "uri": "majordomus://milestone/fly-deployment",
@@ -88889,7 +88951,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 20714
+        "bytes": 20742
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -96885,7 +96947,7 @@
       "identity": [
         "id"
       ],
-      "objects": 269
+      "objects": 270
     },
     {
       "name": "knowledge",
@@ -96915,7 +96977,7 @@
       "identity": [
         "id"
       ],
-      "objects": 26
+      "objects": 27
     },
     {
       "name": "moment",

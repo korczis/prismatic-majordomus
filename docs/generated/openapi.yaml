@@ -15584,6 +15584,29 @@ components:
         - kind
         - detail
       description: "Two things in the answer that do not agree, named rather than silently ordered.\n\nThe compiler could have resolved every disagreement by keeping one side, and for\ndeduplication it does. A conflict is what is left when both sides are legitimately in\nthe answer and they still do not agree — so the resolution belongs to the session\nreading it, and the compiler's job is to make sure the disagreement is visible rather\nthan implied by the order of two rows.\n\n`current` is the side the compiler treats as current, which is a statement about\nrecency, not correctness: `supersedes` means the layer declared one to replace the other,\n`version` means two versions of one thing are both here.\n\n```\nuse majordomus_cli::devcontext::Conflict;\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |current: &str, against: &str, kind: &str| -> Conflict {\n    serde_json::from_value(json!({\n        \"current\": current, \"against\": against, \"kind\": kind,\n        \"detail\": \"both are in the answer and they disagree\",\n    })).unwrap()\n};\n\nlet mut conflicts = vec![\n    row(\"majordomus://rule/project.x@2\", \"majordomus://rule/project.x@1\", \"version\"),\n    row(\"majordomus://adr/0052\", \"majordomus://adr/0031\", \"supersedes\"),\n];\ncanonical(&mut conflicts);\n\n// filed under the kind of disagreement, so like reads with like\nlet kinds: Vec<&str> = conflicts.iter().map(|c| c.kind.as_str()).collect();\nassert_eq!(kinds, [\"supersedes\", \"version\"]);\n\n// and both sides are always named: the pair is the fact, not the winner alone\nfor c in &conflicts {\n    assert_ne!(c.current, c.against);\n    assert!(!c.detail.is_empty());\n}\n```"
+    ConnectionCounts:
+      type: object
+      properties:
+        read_deadline_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "`server.read_deadline_seconds:` as this process applies it."
+        closed_by_deadline:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Connections closed because no request was read in full on them within the deadline.
+        refused_busy:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Requests answered 503 because every request handler was busy.
+      required:
+        - read_deadline_seconds
+        - closed_by_deadline
+        - refused_busy
+      description: "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
     ConnectionEpisode:
       type: object
       properties:
@@ -35624,12 +35647,17 @@ components:
           items:
             "$ref": "#/components/schemas/ServerView"
           description: "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+        connections:
+          anyOf:
+            - "$ref": "#/components/schemas/ConnectionCounts"
+            - type: "null"
+          description: "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
       required:
         - checkout_id
         - desired
         - standing
         - servers
-      description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+      description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
     ServerView:
       type: object
       properties:
