@@ -32,4 +32,17 @@ evidence_required:
   - backfill_applied
 risk: "High and outward-facing. It publishes 172 issues to a public repository in one run and cannot be undone cheaply. It requires the operator's explicit confirmation and must run after I1401, or the pagination ceiling will corrupt it."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-10-10T21:37:05Z
+started_at: 2026-10-10T21:34:57Z
+started_event: sha256:8e216927cdc705777da0916907dc0bb2760b51b07d842df5c6a40838a842ddc3
+verified_at: 2026-10-10T21:36:59Z
+verified_event: sha256:7d469fdffdf9117db9b4d067b27065afa277b0a14e7a2efb3a5e217ab2df7c9a
+completed_at: 2026-10-10T21:37:05Z
+completed_event: sha256:ef38ce35379732968eb7537b0ccc3b82e44d89f49fa5fdfb7804628d9c7b181f
+evidence:
+  - covers: backfill_applied
+    type: manual
+    command: "scripts/github-sync --apply; scripts/github-sync --check"
+    result: "2026-10-10T21:3xZ from master 890e112d04 by session p8: the projection was already backfilled by earlier runs (293 records in sync); this run created milestone safe-self-update and issues I2114 (#910), I2161 (#911), I2165 (#912), rewrote six milestone descriptions, and --check then reported 0 drift findings (exit 0); the drift baseline is lowered to zero in this commit"
+    commit: 890e112d04865f767f644856c7cef01aaeba7199
+    recorded_at: 2026-10-10T21:36:54Z
