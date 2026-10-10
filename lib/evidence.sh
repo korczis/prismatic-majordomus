@@ -260,7 +260,7 @@ mj_obligation_implied() {
   local tok="$1" bin out
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] && command -v jq >/dev/null 2>&1 || return 1
   local share; share="$(mj_rust_share "$MJ_ROOT")"
   out="$( ( export MAJORDOMUS_SHARE="$share"; "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -r --arg t "$tok" '.output.obligations[]? | select(.id == $t) | .applicable' 2>/dev/null)"
@@ -438,7 +438,7 @@ mj_obl_est_live() { # <token> <targets json array or empty>
   local tok="$1" only="$2" head def remote expected out rc=0 ok refusing detail bin
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || { mj_obl_say "the executable is not built, so nothing can ask the deployed surfaces" "bin/majordomus-cli --help"; return 2; }
   command -v jq >/dev/null 2>&1 || { mj_obl_say "jq is not installed, so the verification cannot be read here" "brew install jq"; return 2; }
   head="$(mj_git_head)"

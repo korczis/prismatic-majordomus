@@ -154,7 +154,14 @@ echo "    uncommitted files are reported, with the work tree that holds them"
 # --- 5. the completion invariant reads this verdict, not a sentence about a command
 # The question exists either way; what is asserted is where its answer comes from. Before
 # this, `no-stale-topology` answered "nothing in this report reaches that fact".
-grep -q 'Answers::Convergence' "$ROOT/apps/majordomus-cli/src/gates/done.rs" || {
+# Since the completion policy became data (share/completion.yaml), the question names its
+# source there and the invariant reads the verdict for every question that names it: both
+# halves are asserted, because either alone leaves the answer where it was.
+awk '/^  - id: no-stale-topology$/ { q = 1; next } /^  - id: / { q = 0 } q && /^    source: convergence$/ { found = 1 } END { exit !found }' \
+  "$ROOT/share/completion.yaml" || {
+  echo "    the completion policy does not source no-stale-topology from the convergence verdict"
+  exit 1; }
+grep -q 'QuestionSource::Convergence => match inputs.convergence' "$ROOT/apps/majordomus-cli/src/gates/done.rs" || {
   echo "    the done invariant does not answer no-stale-topology from the convergence verdict"
   exit 1; }
 expect_no_grep 'majordomus worktree && majordomus doctor' \

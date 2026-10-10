@@ -312,7 +312,7 @@ mj_derive_sec_completion() {
   local bin out
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ] || ! command -v jq >/dev/null 2>&1; then
     printf 'Not derived: the completion report needs the built executable and jq (`bin/majordomus-cli run gates.completion`).\n'; return 0
   fi
