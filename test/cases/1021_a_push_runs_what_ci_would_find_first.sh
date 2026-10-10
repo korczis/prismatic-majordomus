@@ -9,7 +9,8 @@
 # its failure refuses the push; a gate that reaches the network, one with no recorded
 # duration, one over the per-gate limit and one past the budget are each left out with a line
 # that says why; a missing durations file or an uncomputable plan refuses the push; and a case
-# that reads stdin no longer hangs the runner.
+# that reads stdin no longer hangs the runner. A fifth, since 2026-10-10: nothing it runs
+# inherits the repository git hands a hook, so a fixture cannot write into the one being pushed.
 . "$ROOT/test/lib.sh"
 
 R="$ROOT/scripts/ci/run-plan"
@@ -45,6 +46,37 @@ expect_grep 'nothing CI would find here first'
 MJ_PUSH_BOUND=-1 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
 expect_grep 'over it by [0-9]+s; slowest: cheap-ok [0-9]+s; .*the push is not refused for that'
 expect_grep 'nothing CI would find here first'
+
+# ---------------------------------------------------------------- a hook's repository stays its own
+# Git exports GIT_DIR to a pre-push hook run from a linked worktree. `outer` stands for the
+# repository being pushed: a gate dispatched under that environment must not see it, and a
+# case that builds a repository of its own must not move a ref, a branch or a tag of it.
+git init -q -b trunk outer
+git -C outer -c user.email=o@example.com -c user.name=o commit -q --allow-empty -m outer
+outer_before="$(git -C outer for-each-ref --format='%(refname) %(objectname)'; git -C outer symbolic-ref HEAD)"
+printf 'no-hook-env\t1\n' >> "$T/durations.tsv"
+plan_with "$(gate no-hook-env '! env | grep -q ^GIT_DIR= && ! env | grep -q ^GIT_WORK_TREE= && ! env | grep -q ^GIT_INDEX_FILE=' false)"
+GIT_DIR="$PWD/outer/.git" GIT_WORK_TREE="$PWD/outer" GIT_INDEX_FILE="$PWD/outer/.git/index" \
+  expect_exit 0 "$R" --before-push --plan "$T/plan.json"
+expect_grep '  ok     no-hook-env'
+mkdir -p hooked/test/cases hooked/.ai/repo/ci
+cp "$ROOT/test/run.sh" hooked/test/
+cat > hooked/test/cases/zz_builds_a_repository.sh <<'CASE'
+git init -q fixture && cd fixture
+git -c user.email=t@example.com -c user.name=t commit -q --allow-empty -m fixture
+git branch -M renamed
+git tag probe
+git config user.name fixture
+CASE
+: > hooked/.ai/repo/ci/suite-durations.tsv
+GIT_DIR="$PWD/outer/.git" bash hooked/test/run.sh zz_builds_a_repository > "$T/hooked.out" 2>&1 \
+  || fail "the runner failed under a hook's environment: $(tail -3 "$T/hooked.out")"
+grep -q '^ok   zz_builds_a_repository' "$T/hooked.out" || fail "the fixture case did not run: $(tail -3 "$T/hooked.out")"
+outer_after="$(git -C outer for-each-ref --format='%(refname) %(objectname)'; git -C outer symbolic-ref HEAD)"
+[ "$outer_before" = "$outer_after" ] \
+  || fail "a fixture run under a hook's GIT_DIR moved the outer repository: before [$outer_before] after [$outer_after]"
+[ -z "$(git -C outer config --local --get user.name || true)" ] \
+  || fail 'a fixture run under a hook'"'"'s GIT_DIR wrote an identity into the outer repository'
 
 # ---------------------------------------------------------------- fail closed
 MJ_PUSH_DURATIONS="$T/no-such-file" expect_exit 12 "$R" --before-push --plan "$T/plan.json"

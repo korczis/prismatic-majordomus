@@ -50,6 +50,16 @@
 # `git status` of the checkout changed, the run fails naming the paths.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# A case builds repositories of its own, and git tells a hook which repository it is in
+# through the environment: a pre-push hook run from a linked worktree gets GIT_DIR. A fixture
+# that inherited it would init, rename, commit and tag in the repository the suite was
+# started from. On 2026-10-10 that renamed a feature branch to master and left fixture
+# commits, branches, a tag and an identity in a real repository. Every variable git reads its
+# repository from is therefore dropped before a case can run.
+# shellcheck disable=SC2046
+unset $(git rev-parse --local-env-vars 2>/dev/null) GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE \
+  GIT_COMMON_DIR GIT_PREFIX 2>/dev/null || true
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
