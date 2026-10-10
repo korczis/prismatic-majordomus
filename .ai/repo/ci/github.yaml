@@ -1,0 +1,29 @@
+# The model of the GitHub projection's gate: how long the trunk may carry a landed change to
+# the plan before GitHub must show it. `scripts/ci/github-check` reads this file for that one
+# value and nothing else; test/cases/1038_a_head_is_judged_against_what_it_changes.sh holds
+# the gate to it, with a fixture that declares its own.
+#
+# GitHub is a projection of the trunk and of nothing else: `scripts/github-sync --apply`
+# refuses any tree that is not the tip of the remote's default branch. So a change to a plan
+# record cannot reach GitHub before it lands, and after it lands it reaches GitHub when the
+# executor applies it, which is a deliberate act and not a consequence of the merge
+# (docs/INTEGRATION.md, "One merge at a time"). Between the two the remote is behind by exactly
+# what landed. The gate reports that as PENDING rather than refusing it, for as long as this
+# file says, and refuses it afterwards with the remedy named.
+version: 1
+
+apply:
+  # Seconds between a landing that changes what GitHub should show and the moment the gate
+  # refuses the trunk for not showing it. A bound on lateness, not a target: the executor
+  # applies as the next step after the merge.
+  #
+  # What is measured: one read of the remote by `scripts/github-sync --check` took 111 s on
+  # 2026-10-10 against 271 issues and 27 milestones. An apply is that read plus its writes,
+  # which the adapter paces one second apart, and it rewrites every milestone's description on
+  # every run; no apply was timed for this file, so its cost is that arithmetic and not a
+  # measurement. The rest of the window is the executor's own latency between the merge and
+  # the apply, and thirty minutes is the lateness this repository already allows its other
+  # projection of the trunk, the public site (`scripts/ci/pages-check`, OWED_AFTER). A much
+  # shorter window would refuse an executor that was merely busy with its next step; a much
+  # longer one would let GitHub go on telling a reader what the trunk stopped saying.
+  window: 1800

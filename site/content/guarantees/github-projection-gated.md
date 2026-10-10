@@ -21,7 +21,7 @@ is the other half: that the two agree now, and that a build fails when they stop
 `scripts/ci/github-check` reads the remote and classifies every record. It applies two
 tolerances rather than one.
 
-Refused outright, from the first run, with no allowance:
+Refused outright, from the first run:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -36,6 +36,14 @@ Refused outright, from the first run, with no allowance:
 
 </div>
 
+
+Four of those states are what an apply writes: `behind`, `state`, `milestone`, and the
+`closed` the adapter reports beside `state` when GitHub is the closed side. They are
+reported as `PENDING` and not refused in two cases only: for the records a head changed
+since its merge base, and on the trunk for the records that changed in a landing younger
+than a declared window. That is a claim of its own,
+[projected-record-edit-is-landable](@/guarantees/projected-record-edit-is-landable.md). On every other
+record they are refused, and past the window the trunk is refused for all of them.
 
 Ratcheted against `.ai/repo/ci/github-drift-baseline.txt`:
 
@@ -82,7 +90,9 @@ is what a claim citing a script that exists, rather than a gate that runs, buys 
 
 Applying stays a human act. CI proves agreement; it does not create issues.
 `scripts/github-sync --apply` is run by a person, deliberately, and the gate's baseline is
-lowered in the same commit.
+lowered in the same commit. The baseline is a ceiling, and nothing lowers it by itself: on
+2026-10-10 it read 192 `missing` while GitHub lacked 3 records, so a new record counts as
+`missing` and passes until somebody writes the baseline down.
 
 Nor does the gate judge the model. It says which of the two sides moved, not whether the
 canonical records describe the right work — that is the plan's business. And it decides
@@ -96,6 +106,8 @@ remote, offline: a record whose canonical text moved fails outright, a record ad
 model and never projected breaks the ratchet, a backlog at its baseline passes, an edited
 region and an unmanaged remote issue are refused, and a gate with no baseline refuses to
 guess one. `test/cases/45_github_projection.sh` proves the six states it reads.
+`test/cases/1038_a_head_is_judged_against_what_it_changes.sh` proves which drift is pending
+and that everything else is still refused.
 
 The rule is [`project.github-projection-gated@1`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/github-projection-gated.v1.md).
 {% endraw %}

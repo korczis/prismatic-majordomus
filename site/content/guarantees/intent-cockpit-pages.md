@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>"
 description = "The intent model has a view in the Cockpit. /cockpit/intents lists every intent with its stage, the criteria with current evidence, the providers realising it and its findings. /cockpit/intents/<id> shows one intent: each criterion with its evidence state, linked to the test object it names and to the issues serving it, the command that reproduces it, and every unit of work realising it with the provenance of its link."
-weight = 116
+weight = 117
 [extra]
 claim_id = "intent-cockpit-pages"
 status = "guaranteed"

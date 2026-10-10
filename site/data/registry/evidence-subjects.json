@@ -1789,6 +1789,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:projected-record-edit-is-landable",
+      "path": "/evidence/claims/projected-record-edit-is-landable/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:projection-fingerprint",
       "path": "/evidence/claims/projection-fingerprint/"
     },
@@ -9482,6 +9487,29 @@
             "docs/PLANNING.md",
             "lib/project.awk",
             "test/cases/41_project_status.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:projected-record-edit-is-landable": {
+      "kind": "claim",
+      "id": "projected-record-edit-is-landable",
+      "status": "guaranteed",
+      "page": "/evidence/claims/projected-record-edit-is-landable/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "scripts/ci/github-check",
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
           ]
         }
       ],
@@ -22341,6 +22369,16 @@
       "programs": [],
       "members": [],
       "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/rules/project/github-projection-gated.v1.md"
+          ]
+        },
         {
           "via": "rule",
           "test": "suite:45_github_projection",

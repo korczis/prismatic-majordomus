@@ -470,6 +470,19 @@ executor first sees the pull request as actionable, not when the forge was first
 A merge moves every other pull request behind master, so the next step always starts from a
 new observation.
 
+A merge that changes a projected plan record leaves GitHub behind by exactly that change.
+The records are the files under `.ai/repo/project/issues/` and `.ai/repo/project/milestones/`
+and every record whose derived status moves with one of them. `scripts/github-sync --apply`
+projects master and nothing else, and `prs drain` never runs it. So after landing such a pull
+request, whoever operates the executor runs `scripts/github-sync --apply` from master as the
+next step. `scripts/ci/github-check` gives that step a declared window, `apply.window` in
+`.ai/repo/ci/github.yaml`. On the pull request's own head the records it changed are reported
+`PENDING` and not refused. On master they stay `PENDING` while the landing is younger than the
+window. Past it the gate refuses master and names the command. A job on every push to master
+that applies with a token allowed to write issues would remove the manual step. That is the
+owner's open choice and nothing runs one: the workflow token reads issues, and applying stays
+a deliberate act (`project.github-projection-gated`).
+
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
 --no-commit` with the derived driver (rerere off, so no remembered resolution decides a path

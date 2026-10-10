@@ -9566,6 +9566,22 @@
         }
       },
       {
+        "id": "majordomus://claim/projected-record-edit-is-landable",
+        "kind": "claim",
+        "label": "projected-record-edit-is-landable",
+        "summary": "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed",
+        "route": "/cockpit/objects/claim/projected-record-edit-is-landable",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed",
+          "implementation": "scripts/ci/github-check",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/projection-fingerprint",
         "kind": "claim",
         "label": "projection-fingerprint",
@@ -14798,6 +14814,14 @@
         "summary": "Issue and milestone status is derived from recorded facts and is stored nowhere",
         "route": "/cockpit/objects/document/docs-claims-project-status-derived-md",
         "source": "docs/claims/project-status-derived.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/projected-record-edit-is-landable.md",
+        "kind": "document",
+        "label": "docs/claims/projected-record-edit-is-landable.md",
+        "summary": "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed",
+        "route": "/cockpit/objects/document/docs-claims-projected-record-edit-is-landable-md",
+        "source": "docs/claims/projected-record-edit-is-landable.md"
       },
       {
         "id": "majordomus://document/docs/claims/projection-fingerprint.md",
@@ -30346,6 +30370,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I2300",
+        "kind": "issue",
+        "label": "I2300",
+        "summary": "A head is judged against what it changes, not against GitHub's live state",
+        "route": "/cockpit/objects/issue/i2300",
+        "source": ".ai/repo/project/issues/I2300.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A pull request head that changes a projected record passes the gate with that record reported PENDING",
+            "Drift on a record the head did not change is refused on the same run",
+            "The trunk reports a landed change PENDING inside the declared window and refuses it past the window, naming scripts/github-sync --apply",
+            "The window is read from .ai/repo/ci/github.yaml and the gate carries no copy of it",
+            "A base or a window that cannot be read refuses what the gate refused before"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "scripts/ci/github-check refuses behind, state, milestone and closed on every run, whatever the run is of. scripts/github-sync --apply is run by hand from master.",
+          "depends_on": [],
+          "evidence_required": [
+            "pending_class_case",
+            "mutations_fail_the_case"
+          ],
+          "milestone": "work-graph-github",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/github-check",
+            ".ai/repo/ci/github.yaml",
+            ".ai/repo/ci/README.md",
+            ".ai/repo/rules/project/github-projection-gated.v1.md",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            "docs/INTEGRATION.md",
+            "docs/PLANNING.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/projected-record-edit-is-landable.md",
+            "docs/claims/github-projection-gated.md"
+          ],
+          "slug": "a-head-is-judged-against-what-it-changes",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 1038_a_head_is_judged_against_what_it_changes 97_github_gate 45_github_projection"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42906,6 +42977,13 @@
         "label": "test/cases/102_completion_shell.sh",
         "route": "/cockpit/objects/test/test-cases-102-completion-shell-sh",
         "source": "test/cases/102_completion_shell.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+        "kind": "test",
+        "label": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+        "route": "/cockpit/objects/test/test-cases-1038-a-head-is-judged-against-what-it-changes-sh",
+        "source": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
       },
       {
         "id": "majordomus://test/test/cases/103_obligations.sh",
@@ -58093,6 +58171,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/projected-record-edit-is-landable",
+        "target": "file:scripts/ci/github-check",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/projected-record-edit-is-landable",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/projected-record-edit-is-landable",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/projected-record-edit-is-landable",
+        "target": "majordomus://test/test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/projection-fingerprint",
         "target": "kind:claim",
         "kind": "is_a"
@@ -61349,6 +61447,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/project-status-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/projected-record-edit-is-landable.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66478,6 +66581,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2300",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2300",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69554,6 +69667,11 @@
       },
       {
         "source": "majordomus://test/test/cases/102_completion_shell.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75259,8 +75377,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2490,
-      "edges": 5442,
+      "nodes": 2494,
+      "edges": 5450,
       "acyclic": false,
       "truncated": false
     }

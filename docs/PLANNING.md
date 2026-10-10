@@ -473,6 +473,16 @@ may fall and may never rise. It exists because the detector was written, never c
 the projection decayed to a tenth of the model over five days with every build green
 (`project.github-projection-gated@1`).
 
+A head is judged against what it changes. GitHub shows the trunk's plan and nothing else,
+so a record a pull request edits is `behind` there until the pull request has merged and
+somebody has applied. The gate reports the four states an apply writes (`behind`, `state`,
+`milestone`, `closed`) as `PENDING` instead of refusing them, for the records the head
+changed since its merge base, and on the trunk for the records that changed in a landing
+younger than `apply.window` in `.ai/repo/ci/github.yaml`. Past that window the trunk is
+refused and the refusal names `scripts/github-sync --apply`. A record counts as changed
+when its file or its rendering differs, because closing one issue moves the status of every
+issue that waited for it. Drift on a record the head did not change is refused as before.
+
 The network calls live in `scripts/github-sync`, outside the tool. `bin/`, `lib/`, `share/`
 and `test/` contain no network client, and `test/cases/08_no_forbidden_constructs.sh` proves
 it.

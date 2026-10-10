@@ -28,12 +28,49 @@
 # The baseline shrinks to zero when the backfill runs; it may never grow. Writing it is a
 # deliberate act with a reason, exactly as scripts/ci/pipefail-check treats its own.
 #
+# A head is judged against what it changes, not against GitHub's live state. The adapter
+# projects the trunk and nothing else, and nothing applies it automatically, so a record a
+# head changed is `behind` on GitHub for exactly as long as that head is unmerged, and for a
+# little longer on the trunk, until the executor applies. Refusing that made a pull request
+# that edits a projected record red from birth with no way to go green on its own head (#855
+# changed one line of I1900; #820 closed eight records), and would have left the trunk red
+# after it landed. So the four states an apply writes — `behind`, `state`, `milestone` and
+# `closed`, which the adapter reports beside `state` whenever the remote is the closed side —
+# are PENDING, reported and not refused, for exactly two sets of records:
+#
+#   on a head       the records the head changed since its merge base with the base it
+#                   merges into: "projected after merge". The base is origin/$GITHUB_BASE_REF
+#                   in a pull request's run, MJ_GH_BASE=<ref> when a person names one, and
+#                   otherwise the remote's default branch for a tree that is not on it.
+#   on the trunk    the records that changed in a landing younger than the window declared
+#                   in .ai/repo/ci/github.yaml as apply.window: "the executor applies after
+#                   landing". Older than the window they are refused, and the refusal names
+#                   the remedy. The trunk is a run whose GITHUB_REF is the default branch,
+#                   or, with no CI event, a HEAD the remote's default branch contains.
+#
+# A record has changed when its file differs from the reference commit, or when its
+# rendering does: a status is derived, so closing one issue moves the body of every issue
+# that waited for it and the state of its milestone without touching their files. The
+# reference's plan is rendered by the reference's own adapter when it carries one, so a
+# change to the renderer is the head's change too. The same states on any other record, and
+# every other state on every record, are refused as before.
+#
+# A measurement that cannot be made is never read as "nothing changed" or as "all of it
+# changed": with no base that resolves, no merge base, a shallow clone or no declared
+# window, the gate says which in a NOTE line and refuses what it would have refused before.
+#
 #   scripts/ci/github-check                  report and exit 10 on any refused finding
+#   MJ_GH_BASE=<ref> scripts/ci/github-check judge this tree as a head that merges into <ref>
 #   MJ_ROOT=<dir> MJ_GH_BASELINE=<file>      measure another tree against another baseline
 #   scripts/ci/github-check --write-baseline record today's backlog as the ceiling
 #
 # Exit: 0 clean, 10 findings, 12 the gate cannot run (no gh, no token, no model).
 set -eu
+set -o pipefail
+# The tree under test is named by path, always. A git that inherited a hook's environment
+# would answer about the repository the hook ran in, and the scratch repository made below
+# to render a reference would be created over it.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
 # The gate is part of the tool; the model is the tree under test. They are not always the
 # same tree — the case that proves this gate can fail drives it over a fixture repository —
 # so the adapter is located from this script and the model from MJ_ROOT.
@@ -42,6 +79,10 @@ SYNC="$SELF/../github-sync"
 ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
 cd "$ROOT"
 BASELINE="${MJ_GH_BASELINE:-.ai/repo/ci/github-drift-baseline.txt}"
+# The model of this gate: how long the trunk may carry a landed change the executor has not
+# applied. Declared there, read here, and written nowhere else.
+MODEL=".ai/repo/ci/github.yaml"
+REMOTE="${MJ_GH_REMOTE:-origin}"
 WRITE=0
 while [ $# -gt 0 ]; do case "$1" in
   --write-baseline) WRITE=1; shift ;;
@@ -61,16 +102,20 @@ if [ -z "${MJ_GH_FIXTURE_ISSUES:-}${MJ_GH_FIXTURE_MILESTONES:-}" ]; then
 fi
 
 out="$(mktemp "${TMPDIR:-/tmp}/mj.ghc.XXXXXX")"
-trap 'rm -f "$out"' EXIT
+work="$(mktemp -d "${TMPDIR:-/tmp}/mj.ghcw.XXXXXX")"
+trap 'rm -rf "$out" "$work"' EXIT
 set +e
 "$SYNC" --check > "$out" 2>&1
 rc=$?
 set -e
 [ "$rc" = 11 ] || [ "$rc" = 0 ] || { echo "github-check: the adapter could not read the remote (exit $rc)" >&2; sed -n '$p' "$out" >&2; exit 12; }
 
+lines_of() { grep -E "^DRIFT  $1 " "$out" || true; }
 count_of() { grep -cE "^DRIFT  $1 " "$out" || true; }
 REFUSED="behind edited conflict unmanaged state milestone closed"
 RATCHET="missing adopt"
+# What an apply from the trunk writes, and therefore what can be waiting for one.
+PENDABLE="behind state milestone closed"
 
 if [ "$WRITE" = 1 ]; then
   {
@@ -88,17 +133,176 @@ fi
 
 [ -f "$BASELINE" ] || { echo "github-check: no baseline at $BASELINE; write one with --write-baseline" >&2; exit 12; }
 
-findings=0
+findings=0; pending=0
 fail() { printf 'FAIL github-check  %s\n' "$*"; findings=$((findings + 1)); }
 ok()   { printf 'OK   github-check  %s\n' "$*"; }
+pend() { printf 'PENDING github-check  %s\n' "$*"; pending=$((pending + 1)); }
+note() { printf 'NOTE github-check  %s\n' "$*"; }
+# The first ten of the drift lines behind a verdict. `head` may close the pipe on a longer
+# list, and under pipefail that is the status of the pipeline: it is a sample, not a check.
+sample() { printf '%s\n' "$1" | sed 's/^/     /' | head -10 || true; }
+
+# ---------------------------------------------------------------- the reference commit
+# One question in both places: which records changed since a commit GitHub can be expected
+# to agree with? On a head that commit is the merge base with the base it merges into. On
+# the trunk it is the youngest landing older than the declared window — a first-parent
+# commit, because the age that matters is when a change reached the trunk and not when it
+# was written: a commit authored last week and merged a minute ago landed a minute ago.
+#
+#   KIND   head | trunk | none        none: no reference; WHY says what could not be measured
+#   REF    the reference commit, or empty on the trunk when every landing is inside the window
+#   ABOUT  the reference in the words of a PENDING line
+KIND=none; REF=""; WHY=""; ABOUT=""; WINDOW=""
+TRUNK="$(sed -n 's/^default_branch: *//p' .ai/repo/project/project.yaml 2>/dev/null | head -1 | tr -d "\"'" || true)"
+resolves() { git rev-parse -q --verify "$1^{commit}" >/dev/null 2>&1; }
+decide_reference() {
+  local base="" on_trunk=0 cutoff
+  resolves HEAD || { WHY="this tree has no commit, so nothing says what it changed"; return 0; }
+  if [ -n "${MJ_GH_BASE:-}" ]; then
+    base="$MJ_GH_BASE"
+  else
+    case "${GITHUB_EVENT_NAME:-}" in
+      pull_request|pull_request_target)
+        [ -n "${GITHUB_BASE_REF:-}" ] || { WHY="a ${GITHUB_EVENT_NAME} run names no GITHUB_BASE_REF"; return 0; }
+        base="$REMOTE/$GITHUB_BASE_REF" ;;
+      *)
+        [ -n "$TRUNK" ] || { WHY=".ai/repo/project/project.yaml names no default_branch"; return 0; }
+        if [ -n "${GITHUB_REF:-}" ]; then
+          if [ "$GITHUB_REF" = "refs/heads/$TRUNK" ]; then on_trunk=1; else base="$REMOTE/$TRUNK"; fi
+        else
+          resolves "$REMOTE/$TRUNK" || { WHY="$REMOTE/$TRUNK does not resolve here, so this tree is neither shown to be the trunk nor comparable to it"; return 0; }
+          if git merge-base --is-ancestor HEAD "$REMOTE/$TRUNK" 2>/dev/null; then on_trunk=1; else base="$REMOTE/$TRUNK"; fi
+        fi ;;
+    esac
+  fi
+  if [ "$on_trunk" = 1 ]; then
+    WINDOW="$(sed -n 's/^ *window: *\([0-9][0-9]*\) *\(#.*\)\{0,1\}$/\1/p' "$MODEL" 2>/dev/null | head -1 || true)"
+    [ -n "$WINDOW" ] || { WHY="$MODEL declares no apply.window, so no landing can be called young"; return 0; }
+    [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = false ] \
+      || { WHY="this clone is shallow, so the age of a landing cannot be read from it"; return 0; }
+    cutoff=$(( $(date +%s) - WINDOW ))
+    REF="$(git rev-list --first-parent -1 --min-age="$cutoff" HEAD 2>/dev/null)" \
+      || { WHY="git could not walk the history of $TRUNK"; return 0; }
+    KIND="trunk"
+    ABOUT="landed on $TRUNK less than ${WINDOW}s ago"
+    [ -z "$REF" ] || ABOUT="$ABOUT (since ${REF:0:12})"
+  else
+    resolves "$base" || { WHY="the base $base does not resolve here (git -C $ROOT rev-parse $base)"; return 0; }
+    REF="$(git merge-base "$base" HEAD 2>/dev/null)" || REF=""
+    [ -n "$REF" ] || { WHY="this tree and $base share no commit this clone can see (git -C $ROOT merge-base $base HEAD)"; return 0; }
+    KIND="head"
+    ABOUT="changed by this head since its merge base with $base (${REF:0:12})"
+  fi
+}
+
+# ---------------------------------------------------------------- what changed since it
+# The ids, one per line, in $CHANGED. A record's id is its filename; the model refuses a
+# record whose two disagree. The working tree counts: a head is what is about to be pushed.
+CHANGED="$work/changed"; : > "$CHANGED"
+RECORDS=".ai/repo/project/issues .ai/repo/project/milestones"
+ids_of_paths() { awk -F/ '/\.yaml$/ { f = $NF; sub(/\.yaml$/, "", f); print f }'; }
+changed_files() {
+  # shellcheck disable=SC2086 # two pathspecs, deliberately split
+  if [ -z "$REF" ]; then
+    git ls-files --cached --others --exclude-standard -- $RECORDS
+  else
+    git --no-pager diff --name-only "$REF" -- $RECORDS
+    git ls-files --others --exclude-standard -- $RECORDS
+  fi | ids_of_paths | LC_ALL=C sort -u > "$CHANGED"
+}
+# One line per record of a rendered plan: id, body hash, and the adapter's own line for it,
+# which carries the derived status and, of an issue, whether it is open.
+signature() {
+  awk '/^milestones$/ { s = "m"; next } /^issues$/ { s = "i"; next } /^body hashes/ { s = "h"; next }
+       /^$/ { next } /^[^ ]/ { s = ""; next }
+       s == "m" && NF >= 2 { line[$1] = $0 }
+       s == "i" && $1 != "labels:" && NF >= 3 { line[$1] = $0 }
+       s == "h" && NF == 2 { hash[$1] = $2 }
+       END { for (i in hash) printf "%s\t%s\t%s\n", i, hash[i], line[i] }' | LC_ALL=C sort
+}
+# Adds to $CHANGED the records whose rendering differs between the reference and this tree.
+# Returns non-zero, with the reason in WHY, when either plan could not be rendered; the
+# caller then judges by the files alone, which only ever refuses more.
+changed_renderings() {
+  local scratch="$work/ref" adapter p
+  git cat-file -e "$REF:.ai/repo/project" 2>/dev/null || return 0   # no model there: every record is a new file
+  mkdir "$scratch"
+  set -- .ai
+  for p in bin lib share scripts/github-sync; do
+    if git cat-file -e "$REF:$p" 2>/dev/null; then set -- "$@" "$p"; fi
+  done
+  git archive "$REF" -- "$@" | tar -x -C "$scratch" \
+    || { WHY="the plan at ${REF:0:12} could not be extracted (git -C $ROOT archive $REF -- $*)"; return 1; }
+  # the reference's own adapter when it carries the whole tool; this one for a tree that
+  # does not, which is a fixture or a repository the tool is installed beside
+  adapter="$SYNC"
+  [ "$#" = 5 ] && [ -x "$scratch/scripts/github-sync" ] && adapter="$scratch/scripts/github-sync"
+  ( cd "$scratch" && git init -q . >/dev/null 2>&1 && MJ_ROOT="$scratch" "$adapter" --plan ) > "$work/ref.plan" 2>/dev/null \
+    || { WHY="the plan at ${REF:0:12} could not be rendered ($adapter --plan over a copy of it)"; return 1; }
+  "$SYNC" --plan > "$work/head.plan" 2>/dev/null \
+    || { WHY="this tree's plan could not be rendered ($SYNC --plan)"; return 1; }
+  signature < "$work/ref.plan" > "$work/ref.sig"
+  signature < "$work/head.plan" > "$work/head.sig"
+  [ -s "$work/ref.sig" ] && [ -s "$work/head.sig" ] \
+    || { WHY="a rendered plan named no record ($SYNC --plan)"; return 1; }
+  LC_ALL=C comm -13 "$work/ref.sig" "$work/head.sig" | cut -f1 >> "$CHANGED"
+  LC_ALL=C sort -u "$CHANGED" > "$CHANGED.sorted" && mv "$CHANGED.sorted" "$CHANGED"
+}
+# The drift lines of one state that name a changed record (pending) or do not (held). The
+# fourth field of a DRIFT line is the record's id. The ids are read in BEGIN: with
+# `NR == FNR` an empty list would make every drift line read as an id and refuse nothing.
+split_lines() { # <state> <pending|held>
+  lines_of "$1" | awk -v want="$2" -v list="$CHANGED" '
+    BEGIN { while ((getline id < list) > 0) c[id] = 1 }
+    { if ((($4 in c) ? "pending" : "held") == want) print }'
+}
+
+# Nothing is measured until something could be pending: a tree with no such drift costs
+# what it always cost, and prints what it always printed.
+waiting=0
+for s in $PENDABLE; do waiting=$((waiting + $(count_of "$s"))); done
+if [ "$waiting" -gt 0 ]; then
+  decide_reference
+  if [ "$KIND" = none ]; then
+    note "what this tree changed could not be measured: $WHY; every drift is judged as if this tree changed nothing"
+  else
+    changed_files
+    unexplained=0
+    for s in $PENDABLE; do unexplained=$((unexplained + $(split_lines "$s" held | grep -c . || true))); done
+    # The rendering is asked only for drift the files do not explain, and never on a trunk
+    # whose every landing is inside the window, where every record is already in the list.
+    if [ "$unexplained" -gt 0 ] && [ -n "$REF" ]; then
+      changed_renderings || note "the records whose rendering changed could not be measured: $WHY; only the records whose files changed are pending"
+    fi
+  fi
+fi
 
 for s in $REFUSED; do
-  n="$(count_of "$s")"
+  case " $PENDABLE " in
+    *" $s "*) held="$(split_lines "$s" held)"; waits="$(split_lines "$s" pending)" ;;
+    *)        held="$(lines_of "$s")"; waits="" ;;
+  esac
+  n="$(printf '%s' "$held" | grep -c . || true)"
+  p="$(printf '%s' "$waits" | grep -c . || true)"
   if [ "$n" -gt 0 ]; then
-    fail "$n record(s) $s — the projection is behind the canonical model or a person's text is at stake (run: scripts/github-sync --check)"
-    grep -E "^DRIFT  $s " "$out" | sed 's/^/     /' | head -10
-  else
+    why="the projection is behind the canonical model or a person's text is at stake (run: scripts/github-sync --check)"
+    case " $PENDABLE " in *" $s "*)
+      case "$KIND" in
+        trunk) why="$why; nothing changed them inside the ${WINDOW}s the executor is given after a landing ($MODEL), so they are owed now — run: scripts/github-sync --apply from $TRUNK" ;;
+        head)  why="$why; this head did not change them: they drifted before it, or the trunk has moved past this tree's base" ;;
+      esac ;;
+    esac
+    fail "$n record(s) $s — $why"
+    sample "$held"
+  elif [ "$p" = 0 ]; then
     ok "no record is $s"
+  fi
+  if [ "$p" -gt 0 ]; then
+    case "$KIND" in
+      trunk) pend "$p record(s) $s, $ABOUT — the executor applies after landing (scripts/github-sync --apply from $TRUNK); refused once the window declared in $MODEL has passed" ;;
+      *)     pend "$p record(s) $s, $ABOUT — projected after merge: GitHub shows the trunk's plan, and the executor runs scripts/github-sync --apply once this has landed" ;;
+    esac
+    sample "$waits"
   fi
 done
 
@@ -115,6 +319,10 @@ for s in $RATCHET; do
   fi
 done
 
-printf '\ngithub-check: %s finding(s)\n' "$findings"
+if [ "$pending" -gt 0 ]; then
+  printf '\ngithub-check: %s finding(s), %s pending\n' "$findings" "$pending"
+else
+  printf '\ngithub-check: %s finding(s)\n' "$findings"
+fi
 [ "$findings" = 0 ] || exit 10
 exit 0

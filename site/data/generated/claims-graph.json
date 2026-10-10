@@ -867,7 +867,16 @@
       "status": "guaranteed",
       "route": "/guarantees/github-projection-gated/",
       "external": false,
-      "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise."
+      "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise. The one drift it reports without refusing is the drift a head or a young landing made itself, which projected-record-edit-is-landable covers."
+    },
+    {
+      "id": "claim:projected-record-edit-is-landable",
+      "kind": "claim",
+      "label": "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed",
+      "status": "guaranteed",
+      "route": "/guarantees/projected-record-edit-is-landable/",
+      "external": false,
+      "note": "GitHub shows the trunk's plan and nothing applies it automatically, so a record a pull request edits is behind there until the pull request has merged and somebody has applied. The gate reports behind, state, milestone and closed as PENDING for the records a head changed since its merge base, and on the trunk for the records that changed in a landing younger than apply.window in .ai/repo/ci/github.yaml. A record has changed when its file or its rendering differs. Drift on any other record is refused as before, and so is every record when the change cannot be measured."
     },
     {
       "id": "claim:intent-stage-derived",
@@ -3562,6 +3571,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
     },
     {
+      "id": "test:test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+      "kind": "test",
+      "label": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
+    },
+    {
       "id": "test:test/cases/103_obligations.sh",
       "kind": "test",
       "label": "test/cases/103_obligations.sh",
@@ -4823,6 +4839,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:projected-record-edit-is-landable",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:intent-stage-derived",
       "target": "source:docs/PLANNING.md",
       "kind": "specified_by"
@@ -5963,6 +5984,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:projected-record-edit-is-landable",
+      "target": "impl:scripts/ci/github-check",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:intent-stage-derived",
       "target": "impl:apps/majordomus-cli/src/intent.rs",
       "kind": "implemented_by"
@@ -7085,6 +7111,11 @@
     {
       "source": "claim:github-projection-gated",
       "target": "test:test/cases/97_github_gate.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:projected-record-edit-is-landable",
+      "target": "test:test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
       "kind": "proved_by"
     },
     {
