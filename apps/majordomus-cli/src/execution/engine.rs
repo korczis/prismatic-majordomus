@@ -516,3 +516,30 @@ pub fn runnable(kind: CapabilityKind, stability: crate::capability::Stability) -
     }
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_forbidden_capability_fails_its_execution_with_the_refusal_it_gave() {
+        let id = ExecutionId::fresh();
+        let e = failure(&id, &CapabilityError::remote("plan.transition"));
+        assert_eq!(e.code, "forbidden");
+        assert!(e.message.contains("plan.transition"), "{}", e.message);
+        assert_eq!(e.suggestion, None);
+        assert_eq!(e.correlation_id, id.to_string());
+        for (error, code) in [
+            (
+                CapabilityError::InvalidInput("m".into()),
+                "validation_error",
+            ),
+            (CapabilityError::NotFound("m".into()), "not_found"),
+            (CapabilityError::Refused("m".into()), "refused"),
+            (CapabilityError::Internal("m".into()), "internal"),
+        ] {
+            let e = failure(&id, &error);
+            assert_eq!((e.code.as_str(), e.message.as_str()), (code, "m"));
+        }
+    }
+}
