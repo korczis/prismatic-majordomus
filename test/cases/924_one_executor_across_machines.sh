@@ -55,6 +55,8 @@ declare_mesh() { # repo [seed-url]
     [ -z "${2:-}" ] || printf '  seeds:\n    - %s\n' "$2"
   } > "$1/.ai/repo/mesh/majordomus.yaml"
   git -C "$1" add .ai/repo/mesh/majordomus.yaml
+  # and committed: trust on first use is honoured only from the trunk's copy (I2135)
+  gitq -C "$1" commit -qm "the mesh declaration"
 }
 
 serve() { # repo state

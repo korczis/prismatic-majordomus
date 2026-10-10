@@ -1759,31 +1759,60 @@ fn prune_mirrors(root: &Path, obs: &ForgeObservation) {
 }
 
 /// Fetch the base and every observed head into this clone, the heads under
-/// [`PR_REF_PREFIX`]. One `git fetch`; a head that cannot be fetched stays unknown to the
-/// relation, which then says so.
-pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
-    let mut args: Vec<String> = vec![
-        "-C".into(),
-        root.display().to_string(),
-        "fetch".into(),
-        "--quiet".into(),
-        "--no-tags".into(),
-        "origin".into(),
-        format!("+refs/heads/{0}:refs/remotes/origin/{0}", obs.base),
-    ];
-    for p in &obs.pull_requests {
-        args.push(format!("+refs/pull/{0}/head:{PR_REF_PREFIX}{0}", p.number));
-    }
+/// [`PR_REF_PREFIX`], and return the pull requests whose head the forge does not serve.
+///
+/// One `git fetch` when the forge serves everything. A single `refs/pull/<n>/head` it does
+/// not serve fails that fetch for every ref in it, so on a failure `git ls-remote` asks which
+/// of the heads origin serves and only those are fetched again. A head that cannot be fetched
+/// stays unknown to the relation, which then says so, and its mirror is removed: the head it
+/// held is an answer nobody can renew. The base is never optional — a base that cannot be
+/// fetched fails the fetch, and so does a failure with every head served.
+pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<Vec<u64>, ForgeError> {
+    let base = format!("+refs/heads/{0}:refs/remotes/origin/{0}", obs.base);
     // a successor no longer open is fetched too, so git can say whether its head landed; the
     // forge keeps refs/pull/<n>/head for a closed pull request, and only one it read is here
-    for n in obs.resolved.keys() {
-        args.push(format!("+refs/pull/{n}/head:{PR_REF_PREFIX}{n}"));
-    }
+    let numbers: BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.number)
+        .chain(obs.resolved.keys().copied())
+        .collect();
     prune_mirrors(root, obs);
-    // a fetch is a read: a dropped connection is asked again, a refusal is not
+    let refspecs = |heads: &mut dyn Iterator<Item = &u64>| -> Vec<String> {
+        std::iter::once(base.clone())
+            .chain(heads.map(|n| format!("+refs/pull/{n}/head:{PR_REF_PREFIX}{n}")))
+            .collect()
+    };
+    let failed = match fetch_refspecs(root, &refspecs(&mut numbers.iter())) {
+        Ok(()) => return Ok(Vec::new()),
+        Err(e) => e,
+    };
+    let served = served_pull_heads(root, &numbers).map_err(|_| ForgeError(failed.clone()))?;
+    let (kept, unserved): (Vec<u64>, Vec<u64>) = numbers.iter().partition(|n| served.contains(n));
+    if unserved.is_empty() {
+        // every head is there, so a missing one is not why the fetch failed
+        return Err(ForgeError(failed));
+    }
+    for n in &unserved {
+        let _ = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["update-ref", "-d", &format!("{PR_REF_PREFIX}{n}")])
+            .status();
+    }
+    fetch_refspecs(root, &refspecs(&mut kept.iter())).map_err(ForgeError)?;
+    Ok(unserved)
+}
+
+/// One `git fetch` of `refspecs` from origin. A fetch is a read: a dropped connection is
+/// asked again, a refusal is not.
+fn fetch_refspecs(root: &Path, refspecs: &[String]) -> Result<(), String> {
     super::retry::forge(|| {
         let out = Command::new("git")
-            .args(&args)
+            .arg("-C")
+            .arg(root)
+            .args(["fetch", "--quiet", "--no-tags", "origin"])
+            .args(refspecs)
             .output()
             .map_err(|e| format!("git fetch could not run: {e}"))?;
         if out.status.success() {
@@ -1795,7 +1824,82 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
             ))
         }
     })
-    .map_err(ForgeError)
+}
+
+/// Which of `numbers` origin serves a `refs/pull/<n>/head` for, by `git ls-remote`.
+fn served_pull_heads(root: &Path, numbers: &BTreeSet<u64>) -> Result<BTreeSet<u64>, String> {
+    let wanted: Vec<String> = numbers
+        .iter()
+        .map(|n| format!("refs/pull/{n}/head"))
+        .collect();
+    super::retry::forge(|| {
+        let mut ls = Command::new("git");
+        ls.arg("-C")
+            .arg(root)
+            .args(["ls-remote", "origin"])
+            .args(&wanted);
+        output_of(ls, "git ls-remote").and_then(|out| stdout_of(out, "git ls-remote"))
+    })
+    .map(|listed| served_pull_heads_of(&listed))
+}
+
+/// What `cmd` answered, or why it could not run, naming `what` was run.
+fn output_of(mut cmd: Command, what: &str) -> Result<std::process::Output, String> {
+    cmd.output()
+        .map_err(|e| format!("{what} could not run: {e}"))
+}
+
+/// The standard output of a command that succeeded; for one that failed, what it said.
+fn stdout_of(out: std::process::Output, what: &str) -> Result<String, String> {
+    if out.status.success() {
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    } else {
+        Err(format!(
+            "{what} failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ))
+    }
+}
+
+/// The pull requests of `obs`, open and resolved, that have no mirror in this clone. After
+/// [`fetch`] these are exactly the heads the forge does not serve: a served head is fetched
+/// into its mirror, and an unserved one's mirror is removed.
+pub fn unmirrored(root: &Path, obs: &ForgeObservation) -> Vec<u64> {
+    let numbers: BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.number)
+        .chain(obs.resolved.keys().copied())
+        .collect();
+    // git that cannot run lists nothing, and then every pull request is named
+    let listed = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["for-each-ref", "--format=%(refname)", PR_REF_PREFIX])
+        .output()
+        .map(|o| o.stdout)
+        .unwrap_or_default();
+    let mirrored: BTreeSet<u64> = String::from_utf8_lossy(&listed)
+        .lines()
+        .filter_map(|r| r.strip_prefix(PR_REF_PREFIX).and_then(|n| n.parse().ok()))
+        .collect();
+    numbers.difference(&mirrored).copied().collect()
+}
+
+/// The pull request numbers of `git ls-remote` output whose ref is exactly
+/// `refs/pull/<n>/head`: ls-remote matches a pattern by its tail, so a ref that only ends
+/// in one is not the head.
+fn served_pull_heads_of(listed: &str) -> BTreeSet<u64> {
+    listed
+        .lines()
+        .filter_map(|l| l.split_once('\t').map(|(_, r)| r.trim()))
+        .filter_map(|r| {
+            r.strip_prefix("refs/pull/")?
+                .strip_suffix("/head")?
+                .parse()
+                .ok()
+        })
+        .collect()
 }
 
 /// Tests only: an observed pull request as a whole declarations read leaves it, its author
@@ -2594,6 +2698,228 @@ mod tests {
         assert!(
             asked.as_ref().is_none_or(|v| v.is_empty()),
             "no merged pull request of this origin can name fix/a: {asked:?}"
+        );
+    }
+
+    /// One pull request the forge serves no `refs/pull/<n>/head` for is that pull request's
+    /// unknown head, never the whole fetch: the served heads and the base are fetched, the
+    /// unserved head's stale mirror goes, and its relation names the forge as the reason.
+    #[test]
+    fn a_missing_pull_ref_is_one_unknown_head() {
+        let git = |dir: &Path, args: &[&str]| -> String {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let base = tmp.path();
+        git(
+            base,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(base, &["init", "-q", "-b", "master", "work"]);
+        let work = base.join("work");
+        let origin = base.join("origin.git");
+        git(
+            &work,
+            &["remote", "add", "origin", origin.to_str().unwrap()],
+        );
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/master"]);
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "one"]);
+        let one = git(&work, &["rev-parse", "HEAD"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/pull/1/head"]);
+        // #2's head is a commit origin holds under no pull ref, and a mirror of it from an
+        // earlier refresh is still here
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "two"]);
+        let two = git(&work, &["rev-parse", "HEAD"]);
+        git(&work, &["update-ref", &format!("{PR_REF_PREFIX}2"), &two]);
+        let pr = |n: u64, head: &str| {
+            pull_request_of(&json!({
+                "number": n, "title": "t", "author": {"login": "a"},
+                "headRefName": format!("fix/{n}"), "headRefOid": head, "baseRefName": "master",
+                "isDraft": false, "labels": [], "createdAt": "2026-10-01T00:00:00Z",
+                "updatedAt": "2026-10-01T00:00:00Z", "body": "", "statusCheckRollup": [],
+                "reviewDecision": "", "autoMergeRequest": null, "isCrossRepository": false
+            }))
+            .unwrap()
+        };
+        let mut obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: String::new(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: vec![pr(1, &one), pr(2, &two)],
+            resolved: BTreeMap::new(),
+            delete_branch_on_merge: None,
+        };
+        let mirror = |n: u64| {
+            Command::new("git")
+                .arg("-C")
+                .arg(&work)
+                .args([
+                    "rev-parse",
+                    "--verify",
+                    "--quiet",
+                    &format!("{PR_REF_PREFIX}{n}"),
+                ])
+                .output()
+                .ok()
+                .filter(|o| o.status.success())
+                .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        };
+        assert_eq!(fetch(&work, &obs).map_err(|e| e.0), Ok(vec![2]));
+        assert_eq!(mirror(1), Some(one.clone()), "the served head is fetched");
+        assert_eq!(mirror(2), None, "the unserved head's mirror is gone");
+        assert_eq!(
+            unmirrored(&work, &obs),
+            [2],
+            "what the trail names is what was not fetched"
+        );
+        assert_eq!(
+            git(&work, &["rev-parse", "refs/remotes/origin/master"]).len(),
+            40,
+            "the base is fetched"
+        );
+        let reason = super::super::unfetched_head_reason(&work, 2, &two);
+        assert!(reason.contains("serves no refs/pull/2/head"), "{reason}");
+        let reason = super::super::unfetched_head_reason(&work, 1, &two);
+        assert!(reason.contains("moved during the refresh"), "{reason}");
+        // every head served: one fetch, nothing unknown
+        obs.pull_requests.truncate(1);
+        assert_eq!(fetch(&work, &obs).map_err(|e| e.0), Ok(Vec::new()));
+        // the base is never optional, whatever the heads are
+        obs.base = "gone".into();
+        let refused = fetch(&work, &obs).map_err(|e| e.0);
+        assert!(
+            refused
+                .as_ref()
+                .is_err_and(|e| e.contains("refs/heads/gone")),
+            "{refused:?}"
+        );
+        assert_eq!(
+            served_pull_heads_of(
+                "a\trefs/pull/1/head\nb\trefs/x/refs/pull/2/head\nc\trefs/pull/3/merge\n"
+            ),
+            BTreeSet::from([1])
+        );
+    }
+
+    /// The fallback's own failures: an origin that answers neither fetch nor ls-remote is the
+    /// first fetch's error, a base that is gone as well as a head fails the second fetch, and
+    /// a command that cannot start says which.
+    #[test]
+    fn a_fallback_that_cannot_ask_or_fetch_fails_with_the_cause() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let base = tmp.path();
+        git(
+            base,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(base, &["init", "-q", "-b", "master", "work"]);
+        let work = base.join("work");
+        git(
+            &work,
+            &[
+                "remote",
+                "add",
+                "origin",
+                base.join("origin.git").to_str().unwrap(),
+            ],
+        );
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/master"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/pull/1/head"]);
+        let pr = |n: u64| {
+            pull_request_of(&json!({
+                "number": n, "title": "t", "author": {"login": "a"},
+                "headRefName": format!("fix/{n}"), "headRefOid": "h", "baseRefName": "master",
+                "isDraft": false, "labels": [], "createdAt": "2026-10-01T00:00:00Z",
+                "updatedAt": "2026-10-01T00:00:00Z", "body": "", "statusCheckRollup": [],
+                "reviewDecision": "", "autoMergeRequest": null, "isCrossRepository": false
+            }))
+            .unwrap()
+        };
+        let mut obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "gone".into(),
+            base_sha: String::new(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: vec![pr(1), pr(2)],
+            resolved: BTreeMap::new(),
+            delete_branch_on_merge: None,
+        };
+        // #2 is unserved, so the heads are fetched again with the base, which is gone too
+        let second = fetch(&work, &obs).map_err(|e| e.0);
+        assert!(
+            second
+                .as_ref()
+                .is_err_and(|e| e.contains("refs/heads/gone")),
+            "{second:?}"
+        );
+        // an origin that cannot be reached at all: ls-remote fails, and the first fetch's
+        // error is the answer
+        obs.base = "master".into();
+        git(
+            &work,
+            &[
+                "remote",
+                "set-url",
+                "origin",
+                base.join("absent.git").to_str().unwrap(),
+            ],
+        );
+        let unreachable = fetch(&work, &obs).map_err(|e| e.0);
+        assert!(
+            unreachable
+                .as_ref()
+                .is_err_and(|e| e.starts_with("git fetch failed")),
+            "{unreachable:?}"
+        );
+        assert!(
+            served_pull_heads(&work, &BTreeSet::from([1]))
+                .is_err_and(|e| e.starts_with("git ls-remote failed")),
+            "an ls-remote git refuses is a failure that says so"
+        );
+        let missing = output_of(
+            Command::new("/nonexistent/majordomus-no-git"),
+            "git ls-remote",
+        );
+        assert!(
+            missing.is_err_and(|e| e.starts_with("git ls-remote could not run")),
+            "a command that cannot start names itself"
         );
     }
 

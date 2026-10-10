@@ -58,6 +58,7 @@ pub mod provider;
 pub mod registry;
 pub mod rendezvous;
 pub mod repository;
+pub mod root;
 pub mod state;
 pub mod trust;
 
