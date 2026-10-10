@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "9c817fd67a62c7b4e9f63965da16cbaa96f1787685345236440a9f98ecb4a969",
     "summary": {
-      "total": 2112,
+      "total": 2114,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1930,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1930
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1938
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1984,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -30606,6 +30606,21 @@
                   },
                   {
                     "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
+                  },
+                  {
+                    "type": "string",
                     "const": "repair_selected",
                     "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
                   },
@@ -32054,6 +32069,21 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
                   },
                   {
                     "type": "string",
@@ -33863,6 +33893,21 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
                   },
                   {
                     "type": "string",
@@ -75526,7 +75571,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 272,
         "capability_ids": []
       },
       {
@@ -76061,7 +76106,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 412,
+        "capabilities": 413,
         "capability_ids": []
       },
       {
@@ -76151,7 +76196,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "9009efc0497e66762b49f3e540cac39a8529f66cadc209cdee692c9d19fc4e00",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,7 +76235,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 272,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 27,
@@ -76204,7 +76249,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
@@ -81436,7 +81481,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 28248
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -81580,7 +81625,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 53676
+        "bytes": 55527
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -81670,7 +81715,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 133591
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87959,6 +88004,17 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2296",
+        "kind": "issue",
+        "identity": "I2296",
+        "title": "The executor reopens a record pull request no run was started for",
+        "description": "Let `majordomus prs drain` close and reopen a release's record pull request itself when the workflow's token opened it and it therefore has no check of its own, so the record lands one validate cycle after publication without a person noticing.",
+        "path": ".ai/repo/project/issues/I2296.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4394
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -93132,6 +93188,14 @@
         "bytes": 4930
       },
       {
+        "uri": "majordomus://test/test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "kind": "test",
+        "identity": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "path": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "source_class": "case",
+        "bytes": 8295
+      },
+      {
         "uri": "majordomus://test/test/cases/103_obligations.sh",
         "kind": "test",
         "identity": "test/cases/103_obligations.sh",
@@ -96993,7 +97057,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 272
     },
     {
       "name": "knowledge",
@@ -97145,7 +97209,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 412
+      "objects": 413
     },
     {
       "name": "use-case",

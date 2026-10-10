@@ -13,9 +13,19 @@
 //! It never passes `--admin`, never merges a pull request whose required checks are not
 //! all passed on its current head, never merges one that does not contain the current
 //! master, never rewrites a branch — the one push it makes is a fast-forward of the head it
-//! observed, leased on that head — and never closes a pull request — closure is
+//! observed, leased on that head — and never closes a pull request for good — closure is
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
+//!
+//! # The one pull request it reopens
+//!
+//! A release proposes its record as `release/record-<tag>`, opened with the workflow's own
+//! token, and a forge starts no workflow from an event that token caused: the pull request
+//! has no check of its own and never will, so it can never merge. Closing and reopening it
+//! as a person is the event that starts its run. The executor does exactly that, once per
+//! head, when [`Integrator::record_standing`] says the pull request is in that state
+//! ([`RecordStanding::Reopenable`]) — `reopen_attempted` on the trail first, like every
+//! other act. It pushes nothing, so it needs no `--refresh`, and a dry run only names it.
 //!
 //! # The trail comes first
 //!
@@ -56,6 +66,114 @@ pub const MERGE_VISIBLE_WITHIN: Duration = Duration::from_secs(60);
 /// with queue time and margin; past it the check is taken never to report, and the pipeline
 /// moves on rather than freezing. A run that still reports later costs one wasted CI run.
 pub const REFRESHED_HEAD_REPORTS_WITHIN: Duration = Duration::from_secs(4 * 3600);
+
+/// The head branch of a release's record pull request: `.github/workflows/release.yml`
+/// proposes the record of `<tag>` as `release/record-<tag>`.
+pub const RECORD_BRANCH_PREFIX: &str = "release/record-";
+
+/// The author a forge reports for a pull request opened with a workflow's own token. Such a
+/// pull request starts no workflow, which is the whole reason the executor reopens it.
+pub const WORKFLOW_TOKEN_AUTHOR: &str = "app/github-actions";
+
+/// How old a record pull request must be before its empty rollup is taken to mean "no run
+/// was started" rather than "the run has not registered yet". Two minutes is far above the
+/// seconds a forge needs to list a run it did start, and far below the ninety minutes a
+/// wasted cycle costs.
+pub const RECORD_REOPEN_GRACE: Duration = Duration::from_secs(120);
+
+/// The comment a record pull request is closed with, a moment before it is reopened.
+pub const RECORD_REOPEN_COMMENT: &str = "Closed and reopened by the integration executor: \
+this pull request was opened with the workflow's own token, so no workflow ran for it and its \
+required check could never report. Reopening it as a person starts that run.";
+
+/// Whether a record pull request is in the one state the executor reopens it from.
+///
+/// ```text
+/// use majordomus_cli::integration::drain::{record_standing_of, RecordStanding};
+/// use serde_json::json;
+///
+/// let view = json!({
+///     "state": "OPEN", "headRefOid": "abc", "createdAt": "2026-10-10T01:56:10Z",
+///     "author": {"is_bot": true, "login": "app/github-actions"}, "statusCheckRollup": []
+/// });
+/// let later = majordomus_cli::peers::epoch_seconds("2026-10-10T02:00:00Z").unwrap();
+/// assert_eq!(record_standing_of(&view, "abc", later), RecordStanding::Reopenable);
+/// // one second after it was opened, an empty rollup proves nothing yet
+/// let at_once = majordomus_cli::peers::epoch_seconds("2026-10-10T01:56:11Z").unwrap();
+/// assert!(matches!(record_standing_of(&view, "abc", at_once), RecordStanding::NotYet(_)));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RecordStanding {
+    /// Open at the head decided on, opened with the workflow's token, older than
+    /// [`RECORD_REOPEN_GRACE`], and without a single check of its own.
+    Reopenable,
+    /// Anything else, with the reason: nothing is done and nothing is recorded.
+    NotYet(String),
+}
+
+/// [`RecordStanding`] from the forge's own view of the pull request — `gh pr view --json
+/// state,headRefOid,author,createdAt,statusCheckRollup` — as of `now` (seconds since the
+/// epoch). Pure, so the decision is tested without a forge.
+///
+/// ```text
+/// use majordomus_cli::integration::drain::{record_standing_of, RecordStanding};
+/// use serde_json::json;
+///
+/// // a person opened this one: its own run exists or will, so it is left alone
+/// let view = json!({
+///     "state": "OPEN", "headRefOid": "abc", "createdAt": "2026-10-10T01:56:10Z",
+///     "author": {"is_bot": false, "login": "someone"}, "statusCheckRollup": []
+/// });
+/// let now = majordomus_cli::peers::epoch_seconds("2026-10-10T03:00:00Z").unwrap();
+/// let RecordStanding::NotYet(why) = record_standing_of(&view, "abc", now) else { panic!() };
+/// assert!(why.contains("someone"), "{why}");
+/// ```
+pub fn record_standing_of(view: &serde_json::Value, head_sha: &str, now: i64) -> RecordStanding {
+    let text = |key: &str| {
+        view.get(key)
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("")
+    };
+    let state = text("state");
+    if state != "OPEN" {
+        return RecordStanding::NotYet(format!("it is {state} on the forge, not open"));
+    }
+    let head = text("headRefOid");
+    if head != head_sha {
+        return RecordStanding::NotYet(format!(
+            "its head moved to {head}; the reopen was decided on {head_sha}"
+        ));
+    }
+    let author = view
+        .pointer("/author/login")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
+    if author != WORKFLOW_TOKEN_AUTHOR {
+        return RecordStanding::NotYet(format!(
+            "{author} opened it, not the workflow's token: a run of its own exists or will"
+        ));
+    }
+    let checks = view
+        .get("statusCheckRollup")
+        .and_then(serde_json::Value::as_array)
+        .map_or(0, Vec::len);
+    if checks > 0 {
+        return RecordStanding::NotYet(format!(
+            "it has {checks} check(s) of its own: a run was started for this head"
+        ));
+    }
+    let Some(created) = crate::peers::epoch_seconds(text("createdAt")) else {
+        return RecordStanding::NotYet("the forge gave no readable creation time".to_string());
+    };
+    let grace = RECORD_REOPEN_GRACE.as_secs() as i64;
+    if now - created < grace {
+        return RecordStanding::NotYet(format!(
+            "it was opened {}s ago; an empty rollup means nothing before {grace}s",
+            now - created
+        ));
+    }
+    RecordStanding::Reopenable
+}
 
 /// The one executor of a base branch: an exclusive file under the *common* git directory,
 /// so every worktree of the repository contends on the same file and no other repository
@@ -440,6 +558,13 @@ pub enum IntegrationAction {
     ClosedSuperseded,
     /// Closing it failed.
     CloseFailed,
+    /// A record pull request the workflow's token opened is about to be closed and reopened,
+    /// so that a run of its own starts ([`RecordStanding::Reopenable`]).
+    ReopenAttempted,
+    /// It was closed and reopened; its required check can report now.
+    Reopened,
+    /// Reopening it failed; the detail says whether the pull request was left closed.
+    ReopenFailed,
     /// A person named a pull request to repair (`prs repair --apply`) and its classification
     /// makes it eligible: master is what it lacks, and nothing authored conflicts.
     RepairSelected,
@@ -484,6 +609,9 @@ impl IntegrationAction {
             IntegrationAction::ClosedRedundant => "closed_redundant",
             IntegrationAction::ClosedSuperseded => "closed_superseded",
             IntegrationAction::CloseFailed => "close_failed",
+            IntegrationAction::ReopenAttempted => "reopen_attempted",
+            IntegrationAction::Reopened => "reopened",
+            IntegrationAction::ReopenFailed => "reopen_failed",
             IntegrationAction::RepairSelected => "repair_selected",
             IntegrationAction::RepairAttempted => "repair_attempted",
             IntegrationAction::Repaired => "repaired",
@@ -677,7 +805,10 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
         // every failed act names its class, decided once, here, from what it says
         event.class = match event.action {
             IntegrationAction::StaleDecision => Some(FailureClass::Stale),
-            IntegrationAction::MergeFailed => Some(FailureClass::of_merge_refusal(&event.detail)),
+            // a reopen is refused in the forge's words, as a merge is
+            IntegrationAction::MergeFailed | IntegrationAction::ReopenFailed => {
+                Some(FailureClass::of_merge_refusal(&event.detail))
+            }
             IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {
                 Some(FailureClass::of_refresh_failure(&event.detail))
             }
@@ -814,6 +945,28 @@ pub enum DrainStepOutcome {
         /// Why, as a class.
         class: FailureClass,
     },
+    /// Dry run: this record pull request would have been closed and reopened.
+    WouldReopen {
+        /// The pull request.
+        pr: u64,
+    },
+    /// A record pull request was closed and reopened; its required check now runs on the
+    /// same head, in a run of its own.
+    Reopened {
+        /// The pull request.
+        pr: u64,
+        /// Its head, unchanged by the reopen.
+        head: String,
+    },
+    /// Reopening a record pull request failed.
+    ReopenFailed {
+        /// The pull request.
+        pr: u64,
+        /// Why, saying whether it was left closed.
+        reason: String,
+        /// Why, as a class.
+        class: FailureClass,
+    },
     /// The decision went stale between planning and acting; nothing was merged.
     StaleDecision {
         /// The pull request.
@@ -917,6 +1070,12 @@ pub trait Integrator {
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
     /// Close a pull request with a comment saying why.
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
+    /// Whether a record pull request is, on the forge now, in the state the executor
+    /// reopens it from. A read; a forge that cannot be read is [`RecordStanding::NotYet`].
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> RecordStanding;
+    /// Close a record pull request with `comment` and reopen it at once, while it is open
+    /// at `head_sha`. An error says whether the pull request was left closed.
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
 }
 
 /// One integration step: observe, decide, observe again, act only on an unchanged
@@ -934,6 +1093,11 @@ pub fn step(
         super::wait::record_transitions(root, &first)?;
     }
     let Some(candidate) = first.next_merge.and_then(|n| first.get(n).cloned()) else {
+        // a record nothing can merge until its own run exists comes before any refresh: it
+        // pushes nothing, and every open head is red until the record has landed
+        if let Some(outcome) = reopen_step(root, integrator, &first, dry_run)? {
+            return Ok(outcome);
+        }
         if allow_refresh {
             if let Some(outcome) = refresh_step(root, integrator, &first, dry_run)? {
                 return Ok(outcome);
@@ -1279,6 +1443,105 @@ pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, St
 /// created until the jobs it needs finish, and a check that never reports must not hold every
 /// refresh forever. A check running on a head the author pushed is not the executor's run to
 /// wait for.
+/// Close and reopen the record pull request no run was ever started for, if there is one.
+///
+/// A candidate is a pull request from a [`RECORD_BRANCH_PREFIX`] branch that waits for a
+/// required check nothing has reported, at a head the trail names in no reopen yet: the act
+/// is taken once per head, and a head it was attempted on is never tried again, because a
+/// reopened pull request also reads `missing` until its run's last job exists. The forge is
+/// then asked what the queue cannot say — who opened it, when, and whether it has a single
+/// check of its own ([`Integrator::record_standing`]). `None` when there is nothing to do.
+fn reopen_step(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    first: &IntegrationQueue,
+    dry_run: bool,
+) -> Result<Option<DrainStepOutcome>, String> {
+    let tried: std::collections::BTreeSet<(u64, String)> = events(root)
+        .into_iter()
+        .filter(|e| {
+            matches!(
+                e.action,
+                IntegrationAction::ReopenAttempted | IntegrationAction::Reopened
+            )
+        })
+        .filter_map(|e| e.pr.zip(e.head_sha))
+        .collect();
+    // every record that could be it is asked after, in rank order: one a person opened does
+    // not hide the stranded one behind it
+    let Some(candidate) = first
+        .assessments
+        .iter()
+        .filter(|a| {
+            a.head_ref.starts_with(RECORD_BRANCH_PREFIX)
+                && a.disposition == PullRequestDisposition::WaitingForChecks
+                && a.required_checks == super::RequiredCheckState::Missing
+                && !tried.contains(&(a.number, a.evaluated_against.head_sha.clone()))
+        })
+        .find(|a| {
+            integrator.record_standing(a.number, &a.evaluated_against.head_sha)
+                == RecordStanding::Reopenable
+        })
+        .cloned()
+    else {
+        return Ok(None);
+    };
+    let head = candidate.evaluated_against.head_sha.clone();
+    if dry_run {
+        return Ok(Some(DrainStepOutcome::WouldReopen {
+            pr: candidate.number,
+        }));
+    }
+    // on the trail before the forge is asked: a closure the trail cannot name is not made
+    let attempted = event(
+        IntegrationAction::ReopenAttempted,
+        Some(&candidate),
+        format!(
+            "{} was opened with the workflow's token and has no check of its own",
+            candidate.head_ref
+        ),
+    );
+    if let Err(reason) = record(root, attempted) {
+        return Ok(Some(DrainStepOutcome::TrailUnwritable {
+            pr: candidate.number,
+            unrecorded: IntegrationAction::ReopenAttempted,
+            reason,
+        }));
+    }
+    match integrator.reopen(candidate.number, &head, RECORD_REOPEN_COMMENT) {
+        Ok(()) => {
+            record(
+                root,
+                event(
+                    IntegrationAction::Reopened,
+                    Some(&candidate),
+                    "closed and reopened; a run of its own starts on the same head",
+                ),
+            )?;
+            Ok(Some(DrainStepOutcome::Reopened {
+                pr: candidate.number,
+                head,
+            }))
+        }
+        Err(reason) => {
+            record(
+                root,
+                event(
+                    IntegrationAction::ReopenFailed,
+                    Some(&candidate),
+                    reason.clone(),
+                ),
+            )?;
+            let class = FailureClass::of_merge_refusal(&reason);
+            Ok(Some(DrainStepOutcome::ReopenFailed {
+                pr: candidate.number,
+                reason,
+                class,
+            }))
+        }
+    }
+}
+
 fn refresh_step(
     root: &Path,
     integrator: &mut dyn Integrator,
@@ -1551,6 +1814,16 @@ pub(crate) fn ends_drain(outcome: &DrainStepOutcome) -> Option<String> {
         )),
         DrainStepOutcome::RefreshFailed { pr, reason, class } => (!class.recoverable())
             .then(|| format!("bringing master into #{pr} failed: {reason}")),
+        DrainStepOutcome::WouldReopen { pr } => Some(format!(
+            "dry run: #{pr}, a record pull request the workflow's token opened, would be closed and reopened; its required check must then pass before it can merge"
+        )),
+        DrainStepOutcome::Reopened { pr, .. } => Some(format!(
+            "#{pr} was closed and reopened; its required check runs on the same head now, and the next drain merges it when it passes"
+        )),
+        // a reopen that failed may have left the record closed: said once, and the drain ends
+        DrainStepOutcome::ReopenFailed { pr, reason, .. } => {
+            Some(format!("reopening #{pr} failed: {reason}"))
+        }
         DrainStepOutcome::VerificationFailed { pr, reason } => {
             Some(format!("#{pr} could not be verified after merging: {reason}"))
         }
@@ -2075,6 +2348,47 @@ impl Integrator for ForgeIntegrator<'_> {
             &["pr", "close", &pr.to_string(), "--comment", comment],
         )
         .map(|_| ())
+    }
+
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> RecordStanding {
+        // the forge's own view, read now: the queue does not carry who opened a pull request,
+        // when, or how many checks it has
+        let view = super::retry::forge(|| {
+            gh(
+                self.root,
+                &[
+                    "pr",
+                    "view",
+                    &pr.to_string(),
+                    "--json",
+                    "state,headRefOid,author,createdAt,statusCheckRollup",
+                ],
+            )
+        })
+        .and_then(|out| {
+            serde_json::from_str::<serde_json::Value>(&out)
+                .map_err(|e| format!("the forge's view of #{pr} is not JSON: {e}"))
+        });
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs() as i64);
+        match view {
+            Ok(view) => record_standing_of(&view, head_sha, now),
+            // a view that cannot be read is not a state to act on
+            Err(why) => RecordStanding::NotYet(format!("#{pr} could not be read: {why}")),
+        }
+    }
+
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        // closed only while it is open at the head that was decided on, exactly as a closure is
+        self.close(pr, head_sha, comment)?;
+        // from here the pull request is closed: the reopen is asked again through an outage,
+        // and a failure says what a person finds
+        super::retry::forge(|| gh(self.root, &["pr", "reopen", &pr.to_string()]))
+            .map(|_| ())
+            .map_err(|why| {
+                format!("#{pr} was closed and could not be reopened ({why}); reopen it by hand: gh pr reopen {pr}")
+            })
     }
 
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
@@ -2846,6 +3160,12 @@ mod obsolete_and_plan_tests {
         }
         fn close(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
             panic!("cleanup closed #{pr}")
+        }
+        fn record_standing(&mut self, pr: u64, _: &str) -> RecordStanding {
+            panic!("cleanup asked after #{pr}'s record")
+        }
+        fn reopen(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("cleanup reopened #{pr}")
         }
     }
 
