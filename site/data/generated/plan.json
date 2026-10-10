@@ -14322,7 +14322,7 @@
       ],
       "scope": [
         "apps/majordomus-cli/src/intent.rs",
-        "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "apps/majordomus-cli/src/capability/builtin/intent.rs",
         "share/schemas/majordomus/intent",
         ".ai/repo/project/intents",
         ".ai/repo/ci/gates.yaml"
@@ -17062,7 +17062,8 @@
         "lib/start.sh",
         "lib/check.sh",
         "scripts/gitattributes",
-        "apps/majordomus-cli/src/capability/builtin",
+        "apps/majordomus-cli/src/capability/builtin/scope.rs",
+        "apps/majordomus-cli/src/capability/builtin/devtask.rs",
         "docs/CLI.md",
         "test/cases"
       ],
@@ -19520,7 +19521,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1501",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/executions.rs with I2114; they may not run concurrently"
+      "message": "shares test/cases with I2114; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -19706,7 +19707,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1502",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/server.rs with I2114; they may not run concurrently"
+      "message": "shares test/cases with I2114; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -20048,7 +20049,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1504",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/plan.rs with I2114; they may not run concurrently"
+      "message": "shares test/cases with I2114; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -20869,12 +20870,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I1900",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/intents.rs with I2114; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I1946",
       "message": "shares test/cases/501_verdict_words_are_status_words.sh with I1967; they may not run concurrently"
     },
@@ -21158,7 +21153,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1948",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I2114; they may not run concurrently"
+      "message": "shares test/cases/502_evidence_is_judged_at_the_presented_revision.sh with I2114; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -22106,7 +22101,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1995",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/worktree.rs with I2114; they may not run concurrently"
+      "message": "shares test/cases with I2114; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -22172,7 +22167,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1997",
-      "message": "shares apps/majordomus-cli/src/capability/builtin/peers.rs with I2114; they may not run concurrently"
+      "message": "shares test/cases with I2114; they may not run concurrently"
     },
     {
       "level": "WARN",
