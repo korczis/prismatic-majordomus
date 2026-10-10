@@ -379,6 +379,20 @@ gate on a deployment that has already happened is a gate that gets waived. What 
 publication that never happened is the `pages-live` gate of `.ai/repo/ci/gates.yaml`, on the
 next validation of master.
 
+### How the homepage renders
+
+Bytes are not the whole of what a visitor waits for. `site/data/homepage.toml` budgets the
+homepage's rendering beside its weight — `largest_contentful_paint_ms` and
+`cumulative_layout_shift` in its `[budget]` table — and `scripts/site-probe` measures both on
+every run, after its sweep, in the browser it already drives: the median of three cold loads
+at the narrowest and the widest width the design declares, each in a browser of its own over
+the debugging pipe, read from the page's own buffered performance entries. A figure over its
+budget fails the `site-probe` gate naming the figure, the measurement and the budget; a figure
+without a budget fails as unbounded; a page that reports no paint is within no budget; and
+without a browser the probe reports SKIP, which is never a pass. `site-probe --self-check`
+holds each of those answers against fixtures, so the measurement cannot go blind unnoticed.
+There is no Lighthouse and no third-party service: the browser is the one the sweep starts.
+
 ## Locally
 
 The same commands CI runs. There is no GitHub-only build semantics.
