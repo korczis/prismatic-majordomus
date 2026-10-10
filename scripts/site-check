@@ -1259,6 +1259,12 @@ else
         [ -f "$PUB/releases/v${shown#v}.json" ] \
           || { bad install "the site presents v${shown#v} as its version and /releases/v${shown#v}.json is not served: a reader beside the install command is told to expect a version that does not exist"; distbad=1; }
       fi
+      # Served is not enough: a yanked or prerelease record is served too, and the installer
+      # resolves /releases/latest.json, not the badge. The version the site presents is the
+      # one latest.json names, or the navbar and the hero answer two different questions.
+      latest="$(jq -r '.version // empty' "$PUB/releases/latest.json")"
+      [ "${shown#v}" = "${latest#v}" ] \
+        || { bad install "the site presents v${shown#v} as its version and /releases/latest.json names v${latest#v}: the badge and the installer disagree on the release"; distbad=1; }
       [ -f "$PUB/releases/$tag.json" ] \
         || { bad install "/releases/latest.json names $tag and /releases/$tag.json is not served"; distbad=1; }
       cmp -s "$PUB/releases/latest.json" "$PUB/releases/$tag.json" \

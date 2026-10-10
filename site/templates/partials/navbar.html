@@ -35,7 +35,7 @@
          released shows no badge, because the alternative is to state a version that does not
          exist, which is the defect this replaces. #}
       {% if project.release %}
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v{{ project.release }}</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="{{ project.release }}">v{{ project.release }}</span>
       {% endif %}
     </a>
     <div class="flex items-center gap-2 md:order-2">

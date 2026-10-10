@@ -28,16 +28,96 @@ NAV="$ROOT/site/templates/partials/navbar.html"
 [ -x "$GEN" ] || { echo "    no scripts/generate-site-data"; exit 1; }
 [ -f "$NAV" ] || { echo "    no navbar template"; exit 1; }
 
-# --- 1. the two versions are two fields
+# --- 1. the two versions are two fields, and the released one is derived once
 # The tree's version and the released one answer different questions, so they cannot be one
 # value: a single field forces every reader to guess which question it answered.
 grep -q 'release: \$release' "$GEN" \
   || { echo "    generate-site-data writes no separate 'release' into project.json;"
        echo "    the site has only the tree's version to show"; exit 1; }
-grep -qE 'RELEASE=.*\.ai/repo/releases' "$GEN" \
-  || { echo "    the released version is not read from the release records, which are what the"
-       echo "    changelog, the baselines and /releases/latest.json all read"; exit 1; }
-echo "    the site data carries the tree's version and the released one as two fields"
+# Until 2026-10-10 the navbar's release was the highest `v*.yaml` filename by `ls|sort`, with
+# no channel and no yanked filter, while the hero, the trust card and /releases/latest.json
+# read `Releases::latest_stable`. They agreed only because every record was stable. One
+# derivation now: the generator reads the `latest` that `majordomus generate` wrote.
+if grep -qE 'ls[^|]*\.ai/repo/releases' "$GEN"; then
+  echo "    generate-site-data still lists the release records to choose a version; that is a"
+  echo "    second derivation of the latest release beside Releases::latest_stable"; exit 1
+fi
+grep -qE "RELEASE=.*\.latest\.version" "$GEN" && grep -q 'DIST_DATA=.*site/data/registry/distribution.json' "$GEN" \
+  || { echo "    the released version is not read from site/data/registry/distribution.json 'latest',"
+       echo "    the derivation the hero badge and /releases/latest.json read"; exit 1; }
+"$GEN" --inputs | grep -qx 'site/data/registry/distribution.json' \
+  || { echo "    distribution.json is read but not a declared input: a new release record would"
+       echo "    not change the generator's fingerprint"; exit 1; }
+echo "    the site data carries the tree's version and the released one, read from the one derivation"
+
+# --- 1b. the derivation skips what an installation never resolves to
+# Against the real executable: a layer whose highest record is a prerelease and whose next is
+# yanked yields, in distribution.json and in /releases/latest.json, the highest stable record
+# that is not yanked. The generator copies that value; section 1 proves it reads nothing else.
+RB="$(rust_bin)" || rust_bin_exit $?
+MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
+"$MJ" init >/dev/null
+awk '/^  deployments: repo\/deployments$/{print; print "  releases: repo/releases"; next} {print}' \
+  .ai/manifest.yaml > "$T/.manifest" && mv "$T/.manifest" .ai/manifest.yaml
+grep -q '^  releases: repo/releases$' .ai/manifest.yaml \
+  || { echo "    the manifest did not gain a releases section; the skeleton's shape changed"; exit 1; }
+cat >> .ai/repo/knowledge/sources.yaml <<'Y'
+
+  - id: release
+    kind: release-record
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/releases/*.yaml'
+    required: false
+Y
+mkdir -p .ai/repo/releases
+cat > .ai/repo/releases/README.md <<'Y'
+---
+schema: context/v1
+id: ai.repo.releases
+kind: context
+title: Published releases
+description: One record per published release.
+status: active
+scope: subtree
+providers: ["*"]
+audience: [human, agent]
+composition: extend
+order: 75
+---
+
+# Published releases
+Y
+# A real record as the template, the newest stable one, so its targets are the model's.
+OLD="$(jq -r '.latest.version' "$ROOT/site/data/registry/distribution.json")"
+REC="$ROOT/.ai/repo/releases/v$OLD.yaml"
+[ -f "$REC" ] || { echo "    no record $REC for the checkout's latest release"; exit 1; }
+record() {   # VERSION CHANNEL [yanked]
+  sed "s/$(printf '%s' "$OLD" | sed 's/\./\\./g')/$1/g; s/^channel: .*/channel: $2/" "$REC" \
+    > ".ai/repo/releases/v$1.yaml"
+  [ "${3:-}" = yanked ] && printf 'yanked: true\n' >> ".ai/repo/releases/v$1.yaml"
+  return 0
+}
+record 7.1.0 stable; record 7.2.0 stable yanked; record 7.3.0 prerelease
+git add -A >/dev/null
+"$RB" generate distribution --repo "$T" >/dev/null 2>"$T/.gen.err" \
+  || { sed 's/^/      /' "$T/.gen.err"; echo "    majordomus generate distribution failed on the fixture"; exit 1; }
+got="$(jq -r '.latest.version // empty' site/data/registry/distribution.json)"
+served="$(jq -r '.version // empty' site/static/releases/latest.json)"
+[ "$got" = 7.1.0 ] && [ "$served" = 7.1.0 ] \
+  || { echo "    with 7.3.0 prerelease, 7.2.0 yanked and 7.1.0 stable, distribution.json says"
+       echo "    '$got' and latest.json '$served'; both must be 7.1.0"; exit 1; }
+echo "    a prerelease and a yanked record above the newest stable one are not the release"
+
+# --- 1c. this checkout's derived data agree
+# project.json is derived from distribution.json, and latest.json from the same records:
+# scripts/derive-check keeps them current, so here they must already be one value.
+PJ="$(jq -r '.release // empty' "$ROOT/site/data/generated/project.json")"
+DL="$(jq -r '.latest.version // empty' "$ROOT/site/data/registry/distribution.json")"
+LJ="$(jq -r '.version // empty' "$ROOT/site/static/releases/latest.json" 2>/dev/null)"
+[ "$PJ" = "$DL" ] && [ "$DL" = "$LJ" ] \
+  || { echo "    project.json release '$PJ', distribution.json latest '$DL' and latest.json '$LJ'"
+       echo "    disagree in this checkout"; exit 1; }
+echo "    project.json, distribution.json and latest.json name one release ($PJ)"
 
 # --- 2. the badge names the release, and falls back to nothing
 grep -q 'project.release' "$NAV" \
@@ -80,6 +160,9 @@ echo "    a repository with nothing released is not refused; it simply shows no 
 grep -q 'a reader beside the install command is told to expect a version that does not exist' "$ROOT/scripts/site-check" \
   || { echo "    scripts/site-check does not carry the refusal, so nothing stops a publication"
        echo "    that advertises a version nobody can obtain"; exit 1; }
+grep -q 'the badge and the installer disagree on the release' "$ROOT/scripts/site-check" \
+  || { echo "    scripts/site-check accepts a shown version that is served but is not the one"
+       echo "    /releases/latest.json names, so a yanked or prerelease badge would publish"; exit 1; }
 echo "    the refusal lives in site-check, so a publication is stopped rather than reported later"
 
 echo "    the version the site shows is one you can get"

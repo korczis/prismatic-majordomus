@@ -51,6 +51,49 @@ verify
 [ "$rc" = 12 ] || { echo "    a site that answers nothing exited $rc, not 12"; cat "$T/v.err"; exit 1; }
 echo "    a site that cannot be reached is not reported as a failed publication"
 
+# --- 1b. the served badge names the release the served latest.json names
+# The smoke entry of .ai/repo/ci/pages.yaml with `release:` compares every `data-release` on
+# the route with the `version` of that served document. Measured on 2026-10-10: v0.20.0 was
+# published at 16:46Z and deploy 8b161f19ab still showed v0.19.1, and only a person with curl
+# could tell. Against a local fixture site, so no network: the identity matches, every other
+# smoke marker is present, and only the release varies.
+SITE="$T/site"; mkdir -p "$SITE/challenge" "$SITE/releases"
+printf '{"commit":"%s"}\n' "$WANT" > "$SITE/build.json"
+printf '<p data-challenge-replay></p><a data-challenge-replay href="/guarantees/">g</a>\n' > "$SITE/challenge/index.html"
+page() {   # the homepage with the given badge values, or none
+  { printf '<p data-challenge-replay data-cta></p>\n'
+    for v in "$@"; do printf '<span data-release="%s">v%s</span>\n' "$v" "$v"; done; } > "$SITE/index.html"
+}
+start_http "$SITE" || skip "no python3 or node to serve the fixture site"
+trap 'stop_http' EXIT
+smoke() {
+  rc=0
+  PATH="$BIN:$PATH" "$ROOT/scripts/pages" verify --url "$HTTP_BASE" --commit "$WANT" --timeout 0 --smoke \
+    > "$T/v.out" 2> "$T/v.err" || rc=$?
+}
+printf '{"version":"1.2.3"}\n' > "$SITE/releases/latest.json"
+page 1.2.3 1.2.3; smoke
+[ "$rc" = 0 ] || { echo "    badges naming the version latest.json names exited $rc, not 0"; cat "$T/v.err"; exit 1; }
+echo "    badges that name the version latest.json names pass, with no network"
+
+page 1.2.3 1.2.2; smoke
+[ "$rc" = 10 ] || { echo "    a badge naming another version exited $rc, not 10"; cat "$T/v.err"; exit 1; }
+grep -q 'shows release 1.2.2 and /releases/latest.json names 1.2.3 (commit 1234567890ab)' "$T/v.err" \
+  || { echo "    the mismatch does not name the route, both versions and the commit:"; cat "$T/v.err"; exit 1; }
+echo "    a badge naming another version fails, naming both versions and the commit"
+
+page; smoke
+[ "$rc" = 10 ] || { echo "    a page with no release attribute exited $rc, not 10"; cat "$T/v.err"; exit 1; }
+grep -q 'does not carry data-release' "$T/v.err" \
+  || { echo "    a page with no release attribute is not reported as a missing marker:"; cat "$T/v.err"; exit 1; }
+printf '{"tag":"v1.2.3"}\n' > "$SITE/releases/latest.json"
+page 1.2.3; smoke
+[ "$rc" = 10 ] || { echo "    a latest.json with no version exited $rc, not 10"; cat "$T/v.err"; exit 1; }
+grep -q 'names no version' "$T/v.err" \
+  || { echo "    a latest.json with no version is not reported as missing:"; cat "$T/v.err"; exit 1; }
+echo "    a missing badge or a latest.json with no version is missing, never a pass"
+stop_http
+
 # The remaining sections need the probe to reach something, so they run against the published
 # site if it answers and are skipped if it does not — the subject here is the verdict, not the
 # network, and a case that fails on connectivity teaches nobody anything.

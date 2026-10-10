@@ -91,6 +91,13 @@ deploy:
       marker: data-challenge-replay
     - route: /challenge/
       marker: /guarantees/
+    # The release the page presents. `release` names the served document whose `version`
+    # every `data-release` value on the route must equal: the navbar badge and the hero
+    # badge against what the installer resolves, so a deploy that shows one version while
+    # latest.json names another fails here, after every deploy, instead of by hand.
+    - route: /
+      marker: data-release
+      release: /releases/latest.json
 
 # ---------------------------------------------------------------- what the fast path may spend
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from

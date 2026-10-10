@@ -124,6 +124,7 @@ site/data/registry/why.json
 site/data/registry/why-graph.json
 site/data/registry/product.json
 site/data/registry/product-graph.json
+site/data/registry/distribution.json
 docs/generated/cli.json
 docs/generated/web.json
 docs/generated/changelog.json
@@ -274,12 +275,18 @@ VERSION="${VERSION#majordomus }"
 # yet. Presenting the first as the product's version tells a visitor standing next to the
 # install command that they are getting something that does not exist.
 #
-# `release` is therefore read from the newest record under `.ai/repo/releases/`, which is what
-# the changelog, the baselines and `/releases/latest.json` all read. Empty when the layer
-# holds no record, and the site must then show nothing rather than fall back to the tree's
-# version — the fallback is the defect.
-RELEASE="$(ls "$ROOT/.ai/repo/releases/"v*.yaml 2>/dev/null \
-  | sed 's|.*/v||; s|\.yaml$||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)"
+# `release` is therefore the release an unpinned installation resolves to: `latest` in
+# site/data/registry/distribution.json, which `majordomus generate` writes (stage A of
+# scripts/derive, before this script) from `Releases::latest_stable` — the highest stable,
+# unyanked record. The hero badge, the trust card and `/releases/latest.json` read the same
+# derivation. It used to be a second one here, the highest `v*.yaml` filename by `ls|sort`,
+# with no channel and no yanked filter: a prerelease or a yanked record above the newest
+# stable one would have put a version in the navbar that the installer never resolves to.
+# Empty when there is no stable release, and the site must then show nothing rather than
+# fall back to the tree's version — the fallback is the defect.
+DIST_DATA="$ROOT/site/data/registry/distribution.json"
+[ "$(jq -r '.schema' "$DIST_DATA")" = "majordomus/distribution/v1" ] || { echo "generate-site-data: site/data/registry/distribution.json is not a majordomus/distribution/v1 dataset (regenerate: majordomus generate)" >&2; exit 10; }
+RELEASE="$(jq -r '.latest.version // empty' "$DIST_DATA")"
 TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
 LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
 COMMANDS="$(sed -n '/^usage: majordomus <command>/,/^global options:/p' "$ROOT/bin/majordomus" \

@@ -210,9 +210,9 @@ git tag v0.3.0 && git push origin v0.3.0
 # 5. the pipeline publishes, then proposes the record as release/record-v0.3.0:
 #    merge that pull request — until it lands, releases/latest.json still names the
 #    previous release and the installer installs it
-# 6. Pages deploys the record; confirm with scripts/pages verify --commit <merge sha> and
-#    curl -fsSL https://majordomus.dev/releases/latest.json, and re-run the smoke job if it
-#    ran before the record was published
+# 6. Pages deploys the record; scripts/pages verify --smoke --commit <merge sha> confirms
+#    the commit and that the served badges name the version the served latest.json names,
+#    and re-run the smoke job if it ran before the record was published
 ```
 
 The pipeline is [`.github/workflows/release.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/release.yml), an
@@ -423,7 +423,10 @@ yanked: true
 then `just derive` and commit. `latest.json` is derived on every generation as the highest
 version among the stable, unwithdrawn records, so the stable pointer moves back on its own
 and `--version v0.3.0` still resolves for anyone who wants exactly that. Nothing is deleted
-and no URL stops working.
+and no URL stops working. The site follows the same derivation: the navbar badge, the hero
+badge and the trust card all read `latest` in `site/data/registry/distribution.json`, so a
+withdrawn or prerelease record is never the version the site presents, and `scripts/site-check`
+refuses a build whose presented version differs from the one `latest.json` names.
 
 ## Reproducibility
 

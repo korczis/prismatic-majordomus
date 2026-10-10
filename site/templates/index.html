@@ -46,7 +46,7 @@
     <div class="flex min-w-0 flex-col">
       <p class="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-default bg-neutral-primary-soft px-3 py-1 text-xs font-medium text-body">
         <span aria-hidden="true" class="h-2 w-2 rounded-full bg-success"></span>
-        {%- if dist.latest %}<a href="{{ dist.latest.notes_url }}" class="font-mono font-semibold text-heading hover:underline">{{ dist.latest.version }}</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>{% endif %}
+        {%- if dist.latest %}<a href="{{ dist.latest.notes_url }}" class="font-mono font-semibold text-heading hover:underline" data-release="{{ dist.latest.version }}">{{ dist.latest.version }}</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>{% endif %}
         <span class="truncate">{{ m.hero.eyebrow }}</span>
       </p>
       <h1 class="mt-7 text-5xl font-extrabold leading-[1.02] tracking-tighter text-balance text-heading sm:text-6xl xl:text-[4.25rem]">{{ m.hero.title }}<span class="mt-3 block text-fg-brand"> {{ m.hero.subtitle }}</span></h1>
@@ -304,7 +304,7 @@
     {#- where this page came from, and what a reader can check for themselves -#}
     <dl class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"><dt class="text-xs text-body">latest release the installer resolves</dt>
-        {%- if dist.latest %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ dist.latest.notes_url }}" class="hover:underline">{{ dist.latest.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ dist.latest.published_at | truncate(length=10, end="") }}</dd>
+        {%- if dist.latest %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ dist.latest.notes_url }}" class="hover:underline" data-release="{{ dist.latest.version }}">{{ dist.latest.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ dist.latest.published_at | truncate(length=10, end="") }}</dd>
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt>

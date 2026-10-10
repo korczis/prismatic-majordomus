@@ -524,7 +524,7 @@ cmd_verify() {
       # The identity says which commit is served; it does not say that the pages a visitor is
       # sent to answer and carry what they are for. The same public bytes are asked that too,
       # route by route, and every miss is named rather than only the first.
-      local i=0 route marker page missing=0 asked=0
+      local i=0 route marker page missing=0 asked=0 release
       while route="$(m "deploy.smoke.$i.route")"; [ -n "$route" ]; do
         marker="$(m "deploy.smoke.$i.marker")"; asked=$((asked + 1))
         page="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}$route?t=$(now)" 2>/dev/null || true)"
@@ -532,6 +532,28 @@ cmd_verify() {
           printf 'pages verify: smoke %s did not answer\n' "${url%/}$route" >&2; missing=$((missing + 1))
         elif ! printf '%s' "$page" | grep -qF -- "$marker"; then
           printf 'pages verify: smoke %s does not carry %s\n' "${url%/}$route" "$marker" >&2; missing=$((missing + 1))
+        else
+          # A marker that carries a value: every `<marker>="<v>"` on the page must equal the
+          # `version` of the served document `release` names. Either side absent is a missing
+          # marker, never a pass — an empty comparison is equal to nothing.
+          release="$(m "deploy.smoke.$i.release")"
+          if [ -n "$release" ]; then
+            local want shown v
+            want="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}$release?t=$(now)" 2>/dev/null \
+              | jq -r '.version // empty' 2>/dev/null || true)"
+            shown="$(printf '%s' "$page" | grep -oE -- "$marker=\"[^\"]*\"" | sed 's/^[^"]*"//; s/"$//' | LC_ALL=C sort -u || true)"
+            if [ -z "$want" ]; then
+              printf 'pages verify: smoke %s names no version, so %s on %s cannot be compared (commit %s)\n' "${url%/}$release" "$marker" "${url%/}$route" "${commit:0:12}" >&2; missing=$((missing + 1))
+            elif [ -z "$shown" ]; then
+              printf 'pages verify: smoke %s carries %s with no value; %s names %s (commit %s)\n' "${url%/}$route" "$marker" "$release" "$want" "${commit:0:12}" >&2; missing=$((missing + 1))
+            else
+              for v in $shown; do
+                [ "$v" = "$want" ] || {
+                  printf 'pages verify: smoke %s shows release %s and %s names %s (commit %s)\n' "${url%/}$route" "$v" "$release" "$want" "${commit:0:12}" >&2
+                  missing=$((missing + 1)); }
+              done
+            fi
+          fi
         fi
         i=$((i + 1))
       done
