@@ -4,10 +4,78 @@
 # finish contract asks whether the task's work may be published, which is not this
 # question, and asking it would refuse a handover for exactly the task it hands over.
 # Any other ref in the same push and the contract applies to the whole push, as before.
-only_layer=1 any=0
-while read -r _local_ref _local_sha remote_ref _remote_sha; do
+#
+# A release tag is the second push the contract does not describe. A tag publishes a commit,
+# not a working tree. On 2026-10-10 the tag of v0.19.1 was refused from a checkout whose tree
+# held another session's uncommitted file, which no tag can carry, while the question a tag
+# does raise was asked by nobody: the day before, v0.19.0 had been pushed before its commit
+# had a `ci` check-run at all, and the release failed in its first job. So a ref under
+# refs/tags/v[0-9]* is judged by the verdict of the commit it names, with the command the
+# release pipeline runs first (scripts/ci/release-verdict), and a push that moves only
+# release tags and refs/majordomus/* is not asked the finish contract. A verdict that
+# failed, is still running, does not exist yet or could not be read refuses the push, all
+# of it: a release that cannot prove its commit passed has not earned one.
+#
+# A tag the remote already holds is not this hook's to move. docs/DISTRIBUTION.md gives a
+# tag on the wrong commit one answer, a new version, and lets a tag move only while no
+# release stands behind it. So a push that deletes or moves one asks the forge whether a
+# release does, and an answer that could not be read is not the answer that none does.
+#
+# Everything the loop runs reads /dev/null: the refs arrive on standard input, and a command
+# that read it would take the rest of the push away from the loop.
+
+# 0 a release stands behind the tag, 1 none does, 2 the forge did not say. The repository
+# is the one the verdict is asked about, read the way scripts/ci/release-verdict reads it.
+released() {
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || slug="$(git remote get-url origin 2>/dev/null </dev/null \
+    | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  [ -n "$slug" ] || return 2
+  answer="$(gh api "repos/$slug/releases/tags/$1" 2>&1 </dev/null)" && return 0
+  case "$answer" in *'HTTP 404'*) return 1 ;; esac
+  return 2
+}
+
+# One release tag of the push: $1 its name, $2 what it would name, $3 what the remote holds.
+# Returns 0 when the tag may leave, and the status of the refusal otherwise.
+release_tag() {
+  tag="$1"
+  case "$3" in *[!0]*)
+    released "$tag"
+    case $? in
+      0) echo "pre-push: refused: $tag has a release behind it, and a published tag is never moved or deleted by a push; the answer to a bad tag is a new version (docs/DISTRIBUTION.md)" >&2
+         return 10 ;;
+      1) echo "pre-push: $tag has no release behind it; a tag is moved only before anyone can have pinned it (docs/DISTRIBUTION.md)" >&2 ;;
+      *) echo "pre-push: refused: whether a release stands behind $tag could not be read, so the tag stays where it is; reproduce: gh api repos/${slug:-<owner>/<repository>}/releases/tags/$tag" >&2
+         return 12 ;;
+    esac ;;
+  esac
+  # A deletion that got this far names no commit, and so publishes nothing to judge.
+  case "$2" in *[!0]*) ;; *) return 0 ;; esac
+  commit="$(git rev-parse --verify -q "$2^{commit}" 2>/dev/null </dev/null)" || commit=""
+  [ -n "$commit" ] || {
+    echo "pre-push: refused: release tag $tag names no commit ($2), and a release is built from one" >&2
+    return 12; }
+  verdict=0
+  said="$(scripts/ci/release-verdict --commit "$commit" 2>&1 </dev/null)" || verdict=$?
+  [ "$verdict" = 0 ] && return 0
+  echo "pre-push: refused: release tag $tag names commit $commit, and its verdict does not pass (exit $verdict):" >&2
+  printf '%s\n' "$said" | sed 's/^/  /' >&2
+  [ "$verdict" != 12 ] || {
+    echo "  wait for master's validate on that commit, then push again:" >&2
+    echo "  scripts/ci/release-verdict --commit $commit --wait 3600" >&2; }
+  return "$verdict"
+}
+
+only_exempt=1 any=0 refused=0
+while read -r _local_ref local_sha remote_ref remote_sha; do
   any=1
-  case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0 ;; esac
+  case "$remote_ref" in
+    refs/majordomus/*) ;;
+    refs/tags/v[0-9]*) release_tag "${remote_ref#refs/tags/}" "$local_sha" "$remote_sha" || refused=$? ;;
+    *) only_exempt=0 ;;
+  esac
 done
-[ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
+[ "$refused" = 0 ] || exit "$refused"
+[ "$any" = 1 ] && [ "$only_exempt" = 1 ] && exit 0
 bin/majordomus finish --check || exit $?

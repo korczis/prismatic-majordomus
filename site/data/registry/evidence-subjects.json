@@ -1874,6 +1874,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:release-tag-leaves-a-judged-commit",
+      "path": "/evidence/claims/release-tag-leaves-a-judged-commit/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:reproduce-command",
       "path": "/evidence/claims/reproduce-command/"
     },
@@ -9873,6 +9878,29 @@
             "docs/DISTRIBUTION.md",
             "scripts/release-record",
             "test/cases/87_release_pipeline.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:release-tag-leaves-a-judged-commit": {
+      "kind": "claim",
+      "id": "release-tag-leaves-a-judged-commit",
+      "status": "guaranteed",
+      "page": "/evidence/claims/release-tag-leaves-a-judged-commit/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1032_a_release_tag_is_pushed_only_from_a_judged_commit",
+          "path": "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/DISTRIBUTION.md",
+            ".githooks/pre-push",
+            "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh"
           ]
         }
       ],
@@ -25684,6 +25712,7 @@
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:102_completion_shell",
+    "suite:1033_release_verdict_waits_for_a_check_that_does_not_exist_yet",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

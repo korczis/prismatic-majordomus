@@ -1,7 +1,7 @@
 +++
 title = "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule"
 description = "**Planned.** Majordomus will state how much it changes total token consumption only when matched live runs, with and without it, judged by the same hidden acceptance tests, meet the methodology's publication rule. Until then, the statement every surface shows is that no verified total-token-savings claim is available, beside whatever preliminary observation the runs support."
-weight = 97
+weight = 98
 [extra]
 claim_id = "token-savings-measured"
 status = "planned"

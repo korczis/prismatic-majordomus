@@ -2015,6 +2015,14 @@
         "external": true
       },
       {
+        "id": "file:.githooks/pre-push",
+        "kind": "file",
+        "label": "pre-push",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".githooks/pre-push",
+        "external": true
+      },
+      {
         "id": "file:.github/workflows/pages.yml",
         "kind": "file",
         "label": "pages.yml",
@@ -9845,6 +9853,22 @@
         }
       },
       {
+        "id": "majordomus://claim/release-tag-leaves-a-judged-commit",
+        "kind": "claim",
+        "label": "release-tag-leaves-a-judged-commit",
+        "summary": "A release tag is pushed only from a commit whose ci check concluded success, and a push of release tags is judged by that verdict and never by the working tree it was made in",
+        "route": "/cockpit/objects/claim/release-tag-leaves-a-judged-commit",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A release tag is pushed only from a commit whose ci check concluded success, and a push of release tags is judged by that verdict and never by the working tree it was made in",
+          "implementation": ".githooks/pre-push",
+          "responsibility": "none",
+          "source": "docs/DISTRIBUTION.md",
+          "test": "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/reproduce-command",
         "kind": "claim",
         "label": "reproduce-command",
@@ -14934,6 +14958,14 @@
         "summary": "A release publishes an artifact for every supported target or it is not published",
         "route": "/cockpit/objects/document/docs-claims-release-is-complete-or-absent-md",
         "source": "docs/claims/release-is-complete-or-absent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/release-tag-leaves-a-judged-commit.md",
+        "kind": "document",
+        "label": "docs/claims/release-tag-leaves-a-judged-commit.md",
+        "summary": "A release tag is pushed only from a commit whose ci check concluded success, and a push of release tags is judged by that verdict and never by the working tree it was made in",
+        "route": "/cockpit/objects/document/docs-claims-release-tag-leaves-a-judged-commit-md",
+        "source": "docs/claims/release-tag-leaves-a-judged-commit.md"
       },
       {
         "id": "majordomus://document/docs/claims/reproduce-command.md",
@@ -30346,6 +30378,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I2294",
+        "kind": "issue",
+        "label": "I2294",
+        "summary": "A release tag leaves only from a judged commit",
+        "route": "/cockpit/objects/issue/i2294",
+        "source": ".ai/repo/project/issues/I2294.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A v* tag whose commit's ci concluded success is pushed; one whose commit has no check-run, a running one, a failed one or an unreadable one is refused and the remote has no such tag afterwards",
+            "A push of release tags alone succeeds from a working tree the finish contract refuses, and a push that carries a branch is still judged by the finish contract",
+            "A push that deletes or moves a release tag with a release behind it is refused",
+            "release-verdict --wait N answers 0 for a ci check-run that appears and succeeds within N seconds, 12 at the bound when none appears, and 12 at once without --wait"
+          ],
+          "created_at": "2026-10-10",
+          "depends_on": [],
+          "evidence_required": [
+            "release_tag_push_case",
+            "verdict_wait_case"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            ".github/workflows/release.yml: the pipeline already asks the verdict with --wait 300, and that call is unchanged.",
+            "Which refs of a branch push the finish contract judges; that decision is I1990's."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".githooks/pre-push",
+            "scripts/ci/release-verdict",
+            "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+            "test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh",
+            "docs/DISTRIBUTION.md",
+            ".ai/repo/automation/inventory.jsonl"
+          ],
+          "slug": "a-release-tag-leaves-only-from-a-judged-commit",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 1032_a_release_tag_is_pushed_only_from_a_judged_commit 1033_release_verdict_waits_for_a_check_that_does_not_exist_yet 362_a_release_follows_the_ci_verdict"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -42906,6 +42982,20 @@
         "label": "test/cases/102_completion_shell.sh",
         "route": "/cockpit/objects/test/test-cases-102-completion-shell-sh",
         "source": "test/cases/102_completion_shell.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+        "kind": "test",
+        "label": "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+        "route": "/cockpit/objects/test/test-cases-1032-a-release-tag-is-pushed-only-from-a-judged-commit-sh",
+        "source": "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh",
+        "kind": "test",
+        "label": "test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh",
+        "route": "/cockpit/objects/test/test-cases-1033-release-verdict-waits-for-a-check-that-does-not-exist-yet-sh",
+        "source": "test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh"
       },
       {
         "id": "majordomus://test/test/cases/103_obligations.sh",
@@ -58433,6 +58523,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/release-tag-leaves-a-judged-commit",
+        "target": "file:.githooks/pre-push",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/release-tag-leaves-a-judged-commit",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/release-tag-leaves-a-judged-commit",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/release-tag-leaves-a-judged-commit",
+        "target": "majordomus://test/test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/reproduce-command",
         "target": "kind:claim",
         "kind": "is_a"
@@ -61434,6 +61544,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/release-is-complete-or-absent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/release-tag-leaves-a-judged-commit.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66478,6 +66593,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2294",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2294",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69554,6 +69679,16 @@
       },
       {
         "source": "majordomus://test/test/cases/102_completion_shell.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75259,8 +75394,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2490,
-      "edges": 5442,
+      "nodes": 2496,
+      "edges": 5451,
       "acyclic": false,
       "truncated": false
     }

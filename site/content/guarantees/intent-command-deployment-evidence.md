@@ -1,7 +1,7 @@
 +++
 title = "A criterion settled by a command or by a deployment will be met by recorded evidence"
 description = "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
-weight = 120
+weight = 121
 [extra]
 claim_id = "intent-command-deployment-evidence"
 status = "planned"

@@ -16,10 +16,19 @@
 # answer, no `ci` check-run on the commit, or one that is still running: each is exit 12 and
 # says which, because a release that cannot prove its commit passed has not earned one.
 #
+# A check-run that does not exist yet is waited for like one that is running. The `ci`
+# check-run is created when the aggregate job of the validate workflow starts, which is at
+# the end of the run: for most of the time a commit is being judged it carries no `ci`
+# check-run at all. `--wait` used to poll only a run it could already see, so on 2026-10-09
+# `--wait 3600` answered 12 in the first second for a commit whose validate was running, and
+# the release of v0.19.0 failed in `plan` for a tag pushed before the check existed. Without
+# `--wait` the answer is the state of this moment, as before.
+#
 #   scripts/ci/release-verdict --tag v0.7.0          the commit that tag names
 #   scripts/ci/release-verdict --commit <rev>        a commit directly (HEAD, a sha)
 #   scripts/ci/release-verdict --tag v0.7.0 --wait 300
-#                                                    poll a run still in progress, up to N seconds
+#                                                    poll, up to N seconds, a run in progress
+#                                                    or one that does not exist yet
 #   RELEASE_VERDICT_CHECK=<name>                     the check to require (default: ci)
 #   GITHUB_REPOSITORY=<owner/repo>                   the repository (default: from origin)
 #
@@ -34,7 +43,7 @@ while [ $# -gt 0 ]; do
     --tag) TAG="${2:?--tag needs a value}"; shift 2 ;;
     --commit) COMMIT="${2:?--commit needs a value}"; shift 2 ;;
     --wait) WAIT="${2:?--wait needs seconds}"; shift 2 ;;
-    -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "release-verdict: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -77,14 +86,25 @@ while :; do
   status="$(printf '%s' "$run" | cut -f1)"
   conclusion="$(printf '%s' "$run" | cut -f2)"
   url="$(printf '%s' "$run" | cut -f3)"
-  [ -n "$run" ] && [ "$status" != completed ] || break
-  [ $(( $(date +%s) - t0 )) -lt "$WAIT" ] || break
-  sleep 15
+  # A run that concluded is the answer. One still running and one not there yet are both
+  # worth the wait that was asked for, and the last sleep is cut to what is left of it, so
+  # the bound is the bound and not the bound plus an interval.
+  [ -z "$run" ] || [ "$status" != completed ] || break
+  left=$(( WAIT - ( $(date +%s) - t0 ) ))
+  [ "$left" -gt 0 ] || break
+  sleep "$(( left < 15 ? left : 15 ))"
 done
 
 if [ -z "$run" ]; then
-  echo "release-verdict: $WHAT has no '$CHECK' check-run; nothing says it passed" >&2
-  echo "  the verdict comes from the validate workflow; a commit it never ran on cannot be released" >&2
+  if [ "$WAIT" -gt 0 ]; then
+    echo "release-verdict: $WHAT has no '$CHECK' check-run after $(( $(date +%s) - t0 ))s; nothing says it passed" >&2
+    echo "  the check-run appears when the validate workflow reaches its verdict job: either the run" >&2
+    echo "  has not got there yet, and a longer --wait would see it, or validate never ran on this commit" >&2
+  else
+    echo "release-verdict: $WHAT has no '$CHECK' check-run; nothing says it passed" >&2
+    echo "  the verdict comes from the validate workflow; a commit it never ran on cannot be released" >&2
+    echo "  a validate run still on its way has not created the check-run yet: --wait <seconds> waits for it" >&2
+  fi
   exit 12
 fi
 if [ "$status" != completed ]; then

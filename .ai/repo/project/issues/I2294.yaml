@@ -1,0 +1,35 @@
+id: I2294
+milestone: safe-self-update
+title: "A release tag leaves only from a judged commit"
+slug: a-release-tag-leaves-only-from-a-judged-commit
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the pre-push hook judge a release tag by the ci verdict of the commit it names instead of by the working tree's finish contract, and make scripts/ci/release-verdict --wait wait for a ci check-run that does not exist yet."
+why: "Three incidents of one release. On 2026-10-09 the tag v0.19.0 was pushed by hand before master's required ci check existed on its commit: the release workflow's plan job ran scripts/ci/release-verdict --tag v0.19.0 --wait 300, found no ci check-run and failed, and nothing was published until the workflow was rerun an hour later. scripts/ci/release-verdict --commit <sha> --wait 3600 had answered 12 at once for the same reason: the ci check-run is created when the aggregate job of validate starts, at the end of the run, and --wait polled only a check-run that already existed. On 2026-10-10 the push of v0.19.1, on a commit that had passed, was refused by .githooks/pre-push, which ran bin/majordomus finish --check for every push: the primary checkout held another session's uncommitted file outside the active task's scope. A tag publishes a commit, not a working tree, so the hook asked a question the tag cannot answer and nobody asked the one it raises."
+current_state: ".githooks/pre-push exempts a push that moves only refs/majordomus/* and asks every other push the finish contract; it never reads which commit a tag names. scripts/ci/release-verdict leaves its polling loop as soon as the commit has no ci check-run, with or without --wait."
+desired_state: "A push of a refs/tags/v[0-9]* ref is refused unless scripts/ci/release-verdict --commit passes for the commit the tag names, with the tag, the commit, the verdict's message and the remedy printed; a push of release tags alone is not asked finish --check, and a branch in the push still is; a tag the remote holds is neither deleted nor moved while a release stands behind it; --wait N polls an absent check-run like a running one, up to N seconds; docs/DISTRIBUTION.md says so."
+scope:
+  - ".githooks/pre-push"
+  - "scripts/ci/release-verdict"
+  - "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh"
+  - "test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh"
+  - "docs/DISTRIBUTION.md"
+  - ".ai/repo/automation/inventory.jsonl"
+non_scope:
+  - ".github/workflows/release.yml: the pipeline already asks the verdict with --wait 300, and that call is unchanged."
+  - "Which refs of a branch push the finish contract judges; that decision is I1990's."
+depends_on: []
+acceptance_criteria:
+  - "A v* tag whose commit's ci concluded success is pushed; one whose commit has no check-run, a running one, a failed one or an unreadable one is refused and the remote has no such tag afterwards"
+  - "A push of release tags alone succeeds from a working tree the finish contract refuses, and a push that carries a branch is still judged by the finish contract"
+  - "A push that deletes or moves a release tag with a release behind it is refused"
+  - "release-verdict --wait N answers 0 for a ci check-run that appears and succeeds within N seconds, 12 at the bound when none appears, and 12 at once without --wait"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1032_a_release_tag_is_pushed_only_from_a_judged_commit 1033_release_verdict_waits_for_a_check_that_does_not_exist_yet 362_a_release_follows_the_ci_verdict"
+evidence_required:
+  - "release_tag_push_case"
+  - "verdict_wait_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

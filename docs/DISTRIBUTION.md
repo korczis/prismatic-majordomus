@@ -184,14 +184,16 @@ scripts/release-version --check --tag v0.3.0
 # 2. commit, open the pull request, and merge it once `ci` is green
 ```
 
-<!-- majordomus:unrun it asks GitHub for the commit's newest `ci` check-run, which needs the network and a token; case 362 runs it against a stubbed answer -->
+<!-- majordomus:unrun it asks GitHub for the commit's newest `ci` check-run, which needs the network and a token; cases 362 and 1033 run it against a stubbed answer -->
 ```bash
-# 3. the commit to be tagged passed ci — the same question the pipeline asks first
-scripts/ci/release-verdict --commit HEAD
+# 3. the commit to be tagged passed ci — the same question the pipeline asks first, and
+#    --wait holds it open while validate is still on its way to the check
+scripts/ci/release-verdict --commit HEAD --wait 3600
 ```
 
 ```bash
-# 4. tag the merge on the default branch, and push the tag
+# 4. tag the merge on the default branch, and push the tag: the pre-push hook asks step 3
+#    for the commit the tag names and refuses the push unless the answer is a pass
 git tag v0.3.0 && git push origin v0.3.0
 
 # 5. the pipeline publishes, then proposes the record as release/record-v0.3.0:
@@ -209,9 +211,9 @@ matrix:
 ```text
 plan     the tag equals the version the crate manifest declares and the shell tool prints
          it; the tagged commit's `ci` check concluded success (scripts/ci/release-verdict:
-         failure refuses with 10, a run still in progress after the wait or a verdict that
-         cannot be read with 12); the model and every recorded release hold their
-         invariants; the matrix is emitted
+         failure refuses with 10; a run still in progress or not there yet after the wait,
+         or a verdict that cannot be read, with 12); the model and every recorded release
+         hold their invariants; the matrix is emitted
 build    one archive per supported target, on the runner the model names, verified where
          it was built (fail-fast: a release missing a platform is not a release)
 publish  digests, the GitHub release, the record written from what was uploaded and staged,
@@ -232,6 +234,33 @@ reads after the version, and nothing is built from a commit it did not see pass.
 `test/cases/362_a_release_follows_the_ci_verdict.sh` holds the script to success, failure,
 a run in progress, a missing check and an unreadable answer, and the workflow to asking it.
 
+The tag is held to the same verdict before it leaves the machine it was made on. v0.19.0 was
+tagged and pushed by hand while validate was still running on its commit: the `ci` check-run
+is created when the workflow's verdict job starts, which is last, so the commit carried none,
+`plan` found none within its wait, and nothing was published until somebody reran the
+workflow an hour later. The tag of v0.19.1, on a commit that had passed, was then refused
+locally for the opposite reason: `.githooks/pre-push` asked every push the finish contract,
+and the checkout held another session's uncommitted file outside the task's scope. A tag
+carries a commit, not a working tree, so that was the wrong question, and the right one had
+no one to ask it. Two changes close both ends:
+
+* **the pre-push hook asks the verdict for you.** For every `refs/tags/v[0-9]*` ref in a
+  push it runs `scripts/ci/release-verdict --commit` on the commit the tag names, peeling an
+  annotated tag, and refuses the whole push unless the answer is a pass: it names the tag
+  and the commit, repeats the verdict's own words, and for a verdict that could not be read
+  yet says to wait for master's validate on that commit and push again. A push that moves
+  only release tags (and `refs/majordomus/*`) is not asked `finish --check`; a branch in the
+  same push and the finish contract judges all of it, as before.
+* **`--wait` waits for a check that does not exist yet.** An absent `ci` check-run used to
+  be 12 at once, wait or no wait. With `--wait N` an absent check-run and a running one are
+  both polled until one concludes or N seconds have passed, and the answer at the bound says
+  which it was. Without `--wait` the answer is this moment's, as it always was.
+
+`test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh` drives the hook
+against a scratch remote and a scripted forge through every one of those answers, and
+`test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh` holds the
+wait to a clock it controls.
+
 A runner label the model names must be a standard, currently offered GitHub-hosted label.
 This is not a style rule. A retired label does not fail: the job is accepted and queues for
 a runner that will never arrive, so the run neither publishes nor goes red — it simply never
@@ -245,6 +274,9 @@ one that is easy to walk away from: the tag still exists, pointing at the commit
 failed on, and no release is behind it. Fixing the cause on the default branch does not fix
 the tag. Finish the release — a new version, bumped and tagged, is the ordinary way; moving
 a tag that has no release behind it is the other, and only before anyone can have pinned it.
+The pre-push hook holds that line: a push that deletes or moves a `v*` tag the remote already
+has asks the forge whether a release stands behind it, refuses when one does or when the
+forge could not be asked, and judges the commit a moved tag would name like any other.
 Until one of those happens the advertised install command is broken for everyone, and
 `installer-live` below is what says so.
 

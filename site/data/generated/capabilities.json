@@ -92,6 +92,19 @@
       "test_case": "87b_release_archive_shape"
     },
     {
+      "id": "release-tag-leaves-a-judged-commit",
+      "claim": "A release tag is pushed only from a commit whose ci check concluded success, and a push of release tags is judged by that verdict and never by the working tree it was made in",
+      "source": "docs/DISTRIBUTION.md",
+      "implementation": ".githooks/pre-push",
+      "test": "test/cases/1032_a_release_tag_is_pushed_only_from_a_judged_commit.sh",
+      "status": "guaranteed",
+      "note": "The pre-push hook runs scripts/ci/release-verdict on the commit every v-tag in a push names and refuses the whole push on a failure, a run still on its way, a check that does not exist yet or an answer it could not read, printing the verdict's words and the remedy. A tag the remote already holds is neither deleted nor moved while a release stands behind it. The verdict's wait covers a check-run that has not been created yet as well as one that is running, which test/cases/1033_release_verdict_waits_for_a_check_that_does_not_exist_yet.sh holds against a clock it controls.",
+      "responsibility": "none",
+      "source_route": "/docs/distribution/",
+      "command": null,
+      "test_case": "1032_a_release_tag_is_pushed_only_from_a_judged_commit"
+    },
+    {
       "id": "policy-parse",
       "claim": "The canonical policy is parsed and rejected if it contains an unknown key",
       "source": "docs/SCHEMAS.md",

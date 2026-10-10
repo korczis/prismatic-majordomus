@@ -1,7 +1,7 @@
 +++
 title = "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion"
 description = "Which work realises an intent is never written into a task, a session or a handover. It is joined on every read from the records the lifecycle already keeps: each task with every episode that worked on it and the provider of each, the handovers between them, closed session records and the peer board's claims. When the plan says every milestone of an intent is DONE and a criterion's recorded run fails, or is stale against a case that has changed, the intent is closed_work_contradicted and the realization exits 10 naming the criterion."
-weight = 114
+weight = 115
 [extra]
 claim_id = "intent-realization-held-to-evidence"
 status = "guaranteed"
