@@ -52,6 +52,7 @@ pub(crate) mod knowledge;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
+pub(crate) mod monitor;
 pub(crate) mod pack;
 pub(crate) mod product;
 pub(crate) mod prs;
@@ -98,6 +99,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Executions(args) => executions::executions(args),
         Command::Devcontext(args) => devcontext::run(args),
         Command::Mesh(args) => mesh::run(args),
+        Command::Monitor(args) => monitor::run(args),
         Command::Models(args) => models::run(args),
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
@@ -130,6 +132,9 @@ mod tests {
         type Case = (&'static [&'static str], fn(&Command) -> bool);
         let cases: &[Case] = &[
             (&["majordomus", "mcp"], |c| matches!(c, Command::Mcp(_))),
+            (&["majordomus", "monitor", "--follow"], |c| {
+                matches!(c, Command::Monitor(_))
+            }),
             (&["majordomus", "serve"], |c| matches!(c, Command::Serve(_))),
             (&["majordomus", "serve", "status"], |c| {
                 matches!(c, Command::Serve(_))

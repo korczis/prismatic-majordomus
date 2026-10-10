@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -626,6 +626,11 @@
       "kind": "capability",
       "subject": "capability:models.route",
       "path": "/evidence/capabilities/models-route/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:monitor.stream",
+      "path": "/evidence/capabilities/monitor-stream/"
     },
     {
       "kind": "capability",
@@ -2766,6 +2771,11 @@
       "kind": "command",
       "subject": "command:models route",
       "path": "/evidence/commands/models-route/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:monitor",
+      "path": "/evidence/commands/monitor/"
     },
     {
       "kind": "command",
@@ -4931,6 +4941,16 @@
       "members": [
         "command:models route"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:monitor.stream": {
+      "kind": "capability",
+      "id": "monitor.stream",
+      "page": "/evidence/capabilities/monitor-stream/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -14686,6 +14706,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:monitor": {
+      "kind": "command",
+      "id": "monitor",
+      "page": "/evidence/commands/monitor/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:pack build": {
       "kind": "command",
       "id": "pack build",
@@ -19147,6 +19186,18 @@
       "programs": [],
       "members": [
         "capability:models.route"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_monitor": {
+      "kind": "mcp",
+      "id": "majordomus_monitor",
+      "alias_of": "capability:monitor.stream",
+      "programs": [],
+      "members": [
+        "capability:monitor.stream"
       ],
       "routes": [],
       "mechanisms": [],
@@ -25685,6 +25736,11 @@
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:102_completion_shell",
+    "suite:1050_the_monitor_folds_the_noise",
+    "suite:1051_a_followed_stream_can_be_waited_on",
+    "suite:1052_an_absent_source_is_reported",
+    "suite:1053_the_cockpit_follows_the_stream",
+    "suite:1054_every_session_is_told_the_stream",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

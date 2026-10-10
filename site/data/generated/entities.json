@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 328
     },
     {
       "kind": "domain",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 271
+      "count": 279
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 27
+      "count": 28
     },
     {
       "kind": "moment",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 412
+      "count": 417
     },
     {
       "kind": "use-case",
@@ -420,6 +420,13 @@
           "label": "adr-0110",
           "kind": "adr",
           "route": "/adrs/adr-0110/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0133",
+          "kind": "adr",
+          "route": "/adrs/adr-0133/",
           "external": false
         }
       ]
@@ -3908,6 +3915,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0105/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0133",
+          "kind": "adr",
+          "route": "/adrs/adr-0133/",
+          "external": false
         }
       ]
     },
@@ -6419,6 +6433,60 @@
           "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0133",
+      "identity": "adr-0133",
+      "slug": "adr-0133",
+      "cockpit": "/cockpit/objects/adr/adr-0133",
+      "title": "Everything that happens in the repository is followed in one stream, folded and addressed",
+      "status": "proposed",
+      "tags": [
+        "monitor",
+        "mesh",
+        "cooperation",
+        "observability"
+      ],
+      "source": ".ai/repo/adrs/0133-everything-is-followed-in-one-stream.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/monitor/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MONITOR.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "everything-is-followed-in-one-stream",
+          "kind": "milestone",
+          "route": "/plan/",
           "external": false
         }
       ],

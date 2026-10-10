@@ -85,6 +85,8 @@ pub enum Command {
     Devcontext(DevcontextArgs),
     /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
     Mesh(MeshArgs),
+    /// Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
+    Monitor(MonitorArgs),
     /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
     Models(ModelsArgs),
     /// Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor
@@ -1188,6 +1190,100 @@ pub struct MeshReviewAnswerArgs {
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `monitor`: one page of the stream, or `--follow` to keep printing what is new. `--count`
+/// and `--until` end a follow, so a script or an agent can wait for one event and go on;
+/// `--match` keeps only the signals whose summary contains a text.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MonitorArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "monitor", "--follow", "--for", "1b", "--match", "#885", "--until", "merged",
+///     "--since", "30m", "--sources", "mesh,executor",
+/// ])
+/// .unwrap();
+/// let Command::Monitor(m) = cli.command else { panic!("expected `monitor`") };
+/// let m: MonitorArgs = m;
+/// assert!(m.follow);
+/// assert_eq!(m.reader.as_deref(), Some("1b"));
+/// assert_eq!(m.until.as_deref(), Some("merged"));
+/// assert_eq!(m.since, Some(1800));
+/// assert_eq!(m.interval, 2);
+///
+/// // a duration is seconds, or a number with s, m, h or d
+/// assert!(Cli::try_parse_from(["majordomus", "monitor", "--since", "soon"]).is_err());
+/// ```
+pub struct MonitorArgs {
+    /// Keep following: ask again every `--interval` seconds and print only what is new
+    #[arg(long)]
+    pub follow: bool,
+    /// Start after this cursor (a page's `cursor`), instead of the newest signals
+    #[arg(long)]
+    pub after: Option<String>,
+    /// At most this many signals per page (default 50, at most 500)
+    #[arg(long)]
+    pub limit: Option<u64>,
+    /// A comma-separated subset of mesh, executor and github (default: all three)
+    #[arg(long)]
+    pub sources: Option<String>,
+    /// Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR
+    #[arg(long = "for")]
+    pub reader: Option<String>,
+    /// How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h)
+    #[arg(long, value_parser = parse_duration)]
+    pub since: Option<u64>,
+    /// Keep only signals whose summary contains this text (case-insensitive)
+    #[arg(long = "match")]
+    pub pattern: Option<String>,
+    /// Stop following after this many signals
+    #[arg(long)]
+    pub count: Option<u64>,
+    /// Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)
+    #[arg(long)]
+    pub until: Option<String>,
+    /// Give up following after this long, exiting 10: seconds, or a number with s, m, h or d
+    #[arg(long, value_parser = parse_duration)]
+    pub timeout: Option<u64>,
+    /// Seconds between two asks while following
+    #[arg(long, default_value_t = 2)]
+    pub interval: u64,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+/// A duration as a person writes it: `90`, `90s`, `30m`, `2h`, `1d`, in seconds.
+///
+/// ```
+/// use majordomus_cli::cli::parse_duration;
+/// assert_eq!(parse_duration("90"), Ok(90));
+/// assert_eq!(parse_duration("30m"), Ok(1800));
+/// assert_eq!(parse_duration("2h"), Ok(7200));
+/// assert_eq!(parse_duration("1d"), Ok(86400));
+/// assert!(parse_duration("soon").is_err());
+/// assert!(parse_duration("").is_err());
+/// ```
+pub fn parse_duration(text: &str) -> std::result::Result<u64, String> {
+    let text = text.trim();
+    let (number, unit) = match text.char_indices().last() {
+        Some((i, c)) if c.is_ascii_alphabetic() => (&text[..i], c),
+        _ => (text, 's'),
+    };
+    let n: u64 = number
+        .parse()
+        .map_err(|_| format!("{text:?} is not a duration: write 90, 90s, 30m, 2h or 1d"))?;
+    let scale = match unit {
+        's' => 1,
+        'm' => 60,
+        'h' => 3600,
+        'd' => 86400,
+        _ => return Err(format!("{text:?} has an unknown unit: use s, m, h or d")),
+    };
+    Ok(n.saturating_mul(scale))
 }
 
 #[derive(Debug, Args)]
@@ -6276,6 +6372,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["cooperation inactive"]),
         }],
+    },
+    CommandExamples {
+        command: "monitor",
+        examples: &[
+            ExampleDoc {
+                id: "monitor-page",
+                title: "What happened in the last half hour",
+                description: "One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason.",
+                argv: &["monitor", "--since", "30m", "--for", "1b"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["no running server"]),
+            },
+            ExampleDoc {
+                id: "monitor-wait",
+                title: "Wait for a pull request to merge",
+                description: "Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers.",
+                argv: &["monitor", "--follow", "--match", "#885", "--until", "merged", "--timeout", "1s", "--interval", "1"],
+                setup: &[],
+                expect: Expect::ExitCode(10),
+            },
+        ],
     },
     CommandExamples {
         command: "mesh events",

@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.20.0",
+    "version": "0.21.0",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -149,6 +149,10 @@
     {
       "name": "models",
       "description": "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
+    },
+    {
+      "name": "monitor",
+      "description": "Everything that happens around this repository, followed in one stream: the mesh journal (sessions on every linked machine, this checkout's board among them, their claims, handovers and reviews), the executor's trail (merges, refreshes, repairs, closures, failures) and GitHub (pull requests opened, merged and closed, finished workflow runs), folded so that a session re-announcing itself unchanged and a step that decided nothing are counted rather than shown, with what is addressed to the reader marked (ADR 0133)."
     },
     {
       "name": "objects",
@@ -11263,6 +11267,173 @@
           "tool": "majordomus_models_route"
         },
         "x-majordomus-cli": "models route"
+      }
+    },
+    "/api/v1/monitor": {
+      "get": {
+        "operationId": "monitor.stream",
+        "summary": "Follow everything in one stream",
+        "description": "A page of signals after a cursor, oldest first, or without one the newest of the last `since` seconds: each with its time, source, kind, severity, machine, session, actor, pull request, branch, issue, paths, a one-line summary and whether it is for the reader. Re-projections and undecided steps are counted as `suppressed`; a source that cannot be read is listed with its reason, never answered as empty. The page's `cursor` is the next page's `after`, and nothing on this page comes back. Reads only.",
+        "tags": [
+          "monitor"
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The `cursor` of the previous page; without it, the page is the newest signals of the\nlast `since` seconds.",
+            "examples": {
+              "local-resumed": {
+                "value": "x0"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "At most this many signals (default 50, at most 500).",
+            "examples": {
+              "local-first-page": {
+                "value": 50
+              },
+              "local-resumed": {
+                "value": 20
+              }
+            }
+          },
+          {
+            "name": "sources",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A comma-separated subset of `mesh`, `executor` and `github` (default: all three).",
+            "examples": {
+              "local-first-page": {
+                "value": "mesh,executor"
+              },
+              "local-resumed": {
+                "value": "mesh,executor"
+              }
+            }
+          },
+          {
+            "name": "for",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what\nis addressed to it is marked `for_you`. An MCP caller is also its own board session.",
+            "examples": {
+              "local-first-page": {
+                "value": "1b"
+              },
+              "local-resumed": {
+                "value": "1b,cd"
+              }
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "How far back a first page reaches, in seconds (default 3600).",
+            "examples": {
+              "local-first-page": {
+                "value": 3600
+              },
+              "local-resumed": {
+                "value": 600
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Follow everything in one stream: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "monitor.stream",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::monitor"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_monitor"
+        }
       }
     },
     "/api/v1/object": {
@@ -39853,6 +40024,256 @@
         ],
         "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
       },
+      "MonitorPage": {
+        "type": "object",
+        "properties": {
+          "signals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitorSignal"
+            },
+            "description": "The signals, oldest first."
+          },
+          "for_you": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of them are for the reader."
+          },
+          "suppressed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many records were read and folded away as noise."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitorSourceState"
+            },
+            "description": "Every source, read or not, with its reason."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The cursor of the next page: ask with `after` set to it and nothing on this page\ncomes back."
+          },
+          "more": {
+            "type": "boolean",
+            "description": "Whether more signals wait after this page than its limit let through."
+          }
+        },
+        "required": [
+          "signals",
+          "for_you",
+          "suppressed",
+          "sources",
+          "cursor",
+          "more"
+        ],
+        "description": "A page of the stream."
+      },
+      "MonitorSeverity": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "info",
+            "description": "Something happened; nothing is asked."
+          },
+          {
+            "type": "string",
+            "const": "attention",
+            "description": "Something failed or waits for someone: worth a look."
+          },
+          {
+            "type": "string",
+            "const": "action",
+            "description": "Something waits for the reader: a review asked of them, a handover for them."
+          }
+        ],
+        "description": "How much a signal asks of its reader."
+      },
+      "MonitorSignal": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "When it happened, in Unix seconds, on the clock of whoever recorded it."
+          },
+          "source": {
+            "$ref": "#/components/schemas/MonitorSource",
+            "description": "Which record it comes from."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`."
+          },
+          "severity": {
+            "$ref": "#/components/schemas/MonitorSeverity",
+            "description": "How much it asks of the reader."
+          },
+          "machine": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The machine it happened on, by its display name when the mesh knows it."
+          },
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The session that did it."
+          },
+          "actor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who did it: a session's worker or client, the executor's actor, a GitHub login."
+          },
+          "pr": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request it is about."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch it is about."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue it is about."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The repository paths it is about."
+          },
+          "summary": {
+            "type": "string",
+            "description": "What happened, in one line of at most 200 characters."
+          },
+          "for_you": {
+            "type": "boolean",
+            "description": "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.",
+            "default": false
+          },
+          "link": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where to read more, when there is a page for it."
+          }
+        },
+        "required": [
+          "at",
+          "source",
+          "kind",
+          "severity",
+          "summary"
+        ],
+        "description": "One thing that happened, as one line a person or an agent can act on."
+      },
+      "MonitorSource": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews."
+          },
+          {
+            "type": "string",
+            "const": "executor",
+            "description": "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures."
+          },
+          {
+            "type": "string",
+            "const": "github",
+            "description": "GitHub: pull requests opened, merged and closed, and finished workflow runs."
+          }
+        ],
+        "description": "Where a signal comes from."
+      },
+      "MonitorSourceHealth": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "ok",
+            "description": "Read."
+          },
+          {
+            "type": "string",
+            "const": "absent",
+            "description": "Not there to read: the mesh is not running, there is no trail, `gh` is missing."
+          },
+          {
+            "type": "string",
+            "const": "error",
+            "description": "There, but reading it failed."
+          },
+          {
+            "type": "string",
+            "const": "skipped",
+            "description": "Not asked for in `sources`."
+          }
+        ],
+        "description": "Whether a source could be read, and what it contributed to the page."
+      },
+      "MonitorSourceState": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/MonitorSource",
+            "description": "The source."
+          },
+          "state": {
+            "$ref": "#/components/schemas/MonitorSourceHealth",
+            "description": "Whether it was read."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it was not, when it was not."
+          },
+          "signals": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of its signals are on this page."
+          },
+          "suppressed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many of its records were read and folded away as noise."
+          }
+        },
+        "required": [
+          "source",
+          "state",
+          "signals",
+          "suppressed"
+        ],
+        "description": "One source's standing on a page."
+      },
       "Mount": {
         "type": "string",
         "description": "An absolute mount path, without a trailing slash."
@@ -56490,7 +56911,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.20.0",
+    "generator": "majordomus-cli 0.21.0",
     "infrastructure": [
       {
         "id": "home",
@@ -56560,5 +56981,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.20.0"
+  "x-majordomus-generator": "majordomus-cli 0.21.0"
 }

@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "3fab599ab6930c060e0365c7503b78fd5ab441677529351f93f6e6fbab090d72",
     "summary": {
-      "total": 2112,
-      "builtin": 184,
-      "declarative": 1928,
+      "total": 2129,
+      "builtin": 185,
+      "declarative": 1944,
       "by_kind": {
         "command": 26,
-        "query": 158,
-        "resource": 1928
+        "query": 159,
+        "resource": 1944
       },
       "by_stability": {
         "behaviorally_verified": 132,
-        "experimental": 44,
-        "implemented": 1936
+        "experimental": 45,
+        "implemented": 1952
       },
-      "mcp_tools": 177,
-      "mcp_resources": 1982,
-      "http_routes": 181,
+      "mcp_tools": 178,
+      "mcp_resources": 1998,
+      "http_routes": 182,
       "cli_commands": 101,
-      "modules": 86,
-      "benchmark_required": 160,
+      "modules": 87,
+      "benchmark_required": 161,
       "benchmark_waived": 24,
       "cached": 41
     },
@@ -47687,6 +47687,353 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs"
       },
       {
+        "id": "monitor.stream",
+        "module": "monitor",
+        "kind": "query",
+        "title": "Follow everything in one stream",
+        "description": "A page of signals after a cursor, oldest first, or without one the newest of the last `since` seconds: each with its time, source, kind, severity, machine, session, actor, pull request, branch, issue, paths, a one-line summary and whether it is for the reader. Re-projections and undecided steps are counted as `suppressed`; a source that cannot be read is listed with its reason, never answered as empty. The page's `cursor` is the next page's `after`, and nothing on this page comes back. Reads only.",
+        "input": {
+          "name": "MonitorInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The `cursor` of the previous page; without it, the page is the newest signals of the\nlast `since` seconds."
+              },
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "At most this many signals (default 50, at most 500)."
+              },
+              "sources": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A comma-separated subset of `mesh`, `executor` and `github` (default: all three)."
+              },
+              "for": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what\nis addressed to it is marked `for_you`. An MCP caller is also its own board session."
+              },
+              "since": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How far back a first page reaches, in seconds (default 3600)."
+              }
+            },
+            "description": "The input of `monitor`: where the reader stands, how much it wants, from which sources,\nand who it is.",
+            "title": "MonitorInput"
+          }
+        },
+        "output": {
+          "name": "MonitorPage",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "signals": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MonitorSignal"
+                },
+                "description": "The signals, oldest first."
+              },
+              "for_you": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of them are for the reader."
+              },
+              "suppressed": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How many records were read and folded away as noise."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MonitorSourceState"
+                },
+                "description": "Every source, read or not, with its reason."
+              },
+              "cursor": {
+                "type": "string",
+                "description": "The cursor of the next page: ask with `after` set to it and nothing on this page\ncomes back."
+              },
+              "more": {
+                "type": "boolean",
+                "description": "Whether more signals wait after this page than its limit let through."
+              }
+            },
+            "required": [
+              "signals",
+              "for_you",
+              "suppressed",
+              "sources",
+              "cursor",
+              "more"
+            ],
+            "description": "A page of the stream.",
+            "title": "MonitorPage",
+            "$defs": {
+              "MonitorSignal": {
+                "type": "object",
+                "properties": {
+                  "at": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When it happened, in Unix seconds, on the clock of whoever recorded it."
+                  },
+                  "source": {
+                    "$ref": "#/$defs/MonitorSource",
+                    "description": "Which record it comes from."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`."
+                  },
+                  "severity": {
+                    "$ref": "#/$defs/MonitorSeverity",
+                    "description": "How much it asks of the reader."
+                  },
+                  "machine": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The machine it happened on, by its display name when the mesh knows it."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session that did it."
+                  },
+                  "actor": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Who did it: a session's worker or client, the executor's actor, a GitHub login."
+                  },
+                  "pr": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request it is about."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it is about."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue it is about."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths it is about."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "What happened, in one line of at most 200 characters."
+                  },
+                  "for_you": {
+                    "type": "boolean",
+                    "description": "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.",
+                    "default": false
+                  },
+                  "link": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where to read more, when there is a page for it."
+                  }
+                },
+                "required": [
+                  "at",
+                  "source",
+                  "kind",
+                  "severity",
+                  "summary"
+                ],
+                "description": "One thing that happened, as one line a person or an agent can act on."
+              },
+              "MonitorSource": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "mesh",
+                    "description": "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews."
+                  },
+                  {
+                    "type": "string",
+                    "const": "executor",
+                    "description": "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures."
+                  },
+                  {
+                    "type": "string",
+                    "const": "github",
+                    "description": "GitHub: pull requests opened, merged and closed, and finished workflow runs."
+                  }
+                ],
+                "description": "Where a signal comes from."
+              },
+              "MonitorSeverity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Something happened; nothing is asked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "attention",
+                    "description": "Something failed or waits for someone: worth a look."
+                  },
+                  {
+                    "type": "string",
+                    "const": "action",
+                    "description": "Something waits for the reader: a review asked of them, a handover for them."
+                  }
+                ],
+                "description": "How much a signal asks of its reader."
+              },
+              "MonitorSourceState": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "$ref": "#/$defs/MonitorSource",
+                    "description": "The source."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/MonitorSourceHealth",
+                    "description": "Whether it was read."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it was not, when it was not."
+                  },
+                  "signals": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of its signals are on this page."
+                  },
+                  "suppressed": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many of its records were read and folded away as noise."
+                  }
+                },
+                "required": [
+                  "source",
+                  "state",
+                  "signals",
+                  "suppressed"
+                ],
+                "description": "One source's standing on a page."
+              },
+              "MonitorSourceHealth": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "Read."
+                  },
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "Not there to read: the mesh is not running, there is no trail, `gh` is missing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "There, but reading it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skipped",
+                    "description": "Not asked for in `sources`."
+                  }
+                ],
+                "description": "Whether a source could be read, and what it contributed to the page."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::monitor"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_monitor"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/monitor"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "monitor",
+          "mesh",
+          "coordination",
+          "observability"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs"
+      },
+      {
         "id": "objects.get",
         "module": "objects",
         "kind": "query",
@@ -74952,7 +75299,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75257,7 +75604,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 327,
+        "capabilities": 328,
         "capability_ids": []
       },
       {
@@ -75526,7 +75873,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 279,
         "capability_ids": []
       },
       {
@@ -75639,7 +75986,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -75662,6 +76009,18 @@
         "source": "declarative",
         "capabilities": 38,
         "capability_ids": []
+      },
+      {
+        "id": "monitor",
+        "title": "The monitor",
+        "description": "Everything that happens around this repository, followed in one stream: the mesh journal (sessions on every linked machine, this checkout's board among them, their claims, handovers and reviews), the executor's trail (merges, refreshes, repairs, closures, failures) and GitHub (pull requests opened, merged and closed, finished workflow runs), folded so that a session re-announcing itself unchanged and a step that decided nothing are counted rather than shown, with what is addressed to the reader marked (ADR 0133).",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "monitor.stream"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs"
       },
       {
         "id": "objects",
@@ -76061,7 +76420,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 412,
+        "capabilities": 417,
         "capability_ids": []
       },
       {
@@ -76151,7 +76510,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "2983cb902f35ef91b73db6ca43c3ff333b1efb57c76258353ba9b63351ecc206",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76533,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76184,16 +76543,16 @@
       "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 328,
       "domain": 6,
       "feature": 27,
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 279,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 28,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -76204,7 +76563,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 417,
       "use-case": 48,
       "workspace": 1
     },
@@ -77609,6 +77968,23 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0133",
+        "kind": "adr",
+        "identity": "adr-0133",
+        "title": "Everything that happens in the repository is followed in one stream, folded and addressed",
+        "description": "Everything that happens in the repository is followed in one stream, folded and addressed",
+        "path": ".ai/repo/adrs/0133-everything-is-followed-in-one-stream.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4317,
+        "tags": [
+          "monitor",
+          "mesh",
+          "cooperation",
+          "observability"
         ]
       },
       {
@@ -81211,7 +81587,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 7543
+        "bytes": 7992
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -81220,7 +81596,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 6832
+        "bytes": 7281
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -81238,7 +81614,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 37676
+        "bytes": 38386
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -81328,7 +81704,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 46627
+        "bytes": 46967
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -81625,7 +82001,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 42501
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -81635,6 +82011,15 @@
         "path": "docs/MODELS.md",
         "source_class": "document",
         "bytes": 4411
+      },
+      {
+        "uri": "majordomus://document/docs/MONITOR.md",
+        "kind": "document",
+        "identity": "docs/MONITOR.md",
+        "title": "The monitor",
+        "path": "docs/MONITOR.md",
+        "source_class": "document",
+        "bytes": 9010
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -81670,7 +82055,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 132581
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -81706,7 +82091,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22777
+        "bytes": 23152
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -84590,7 +84975,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 157804
+        "bytes": 158199
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -84638,7 +85023,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 47836
+        "bytes": 48716
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -84670,7 +85055,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 33228
+        "bytes": 33403
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -84870,7 +85255,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 21598
+        "bytes": 23009
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -87959,6 +88344,94 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2400",
+        "kind": "issue",
+        "identity": "I2400",
+        "title": "A signal model and a fold join every source the server already records",
+        "description": "Add src/monitor: a Signal (cursor, at, source, kind, severity, actor, subject, summary, for_you), one reader per source (mesh journal, board, executor trail, executions) and the fold that drops unchanged session re-projections.",
+        "path": ".ai/repo/project/issues/I2400.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1376
+      },
+      {
+        "uri": "majordomus://issue/I2401",
+        "kind": "issue",
+        "identity": "I2401",
+        "title": "monitor is one read capability with three projections",
+        "description": "Declare capability monitor (MCP majordomus_monitor, GET /api/v1/monitor, CLI majordomus monitor) with OpenAPI-unique names and a benchmark case, and generate its projections.",
+        "path": ".ai/repo/project/issues/I2401.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1223
+      },
+      {
+        "uri": "majordomus://issue/I2402",
+        "kind": "issue",
+        "identity": "I2402",
+        "title": "majordomus monitor follows the stream from a terminal and a script",
+        "description": "Add majordomus monitor with --follow, --for, --sources, --since, --count, --until and --format text|json|ndjson, rendering one line per signal with its source tag.",
+        "path": ".ai/repo/project/issues/I2402.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1246
+      },
+      {
+        "uri": "majordomus://issue/I2403",
+        "kind": "issue",
+        "identity": "I2403",
+        "title": "Pull requests, checks and deploys reach the stream when GitHub is reachable",
+        "description": "Add a GitHub source (pull requests opened, merged and closed, required check verdicts, deploy and release workflow outcomes) through the existing pull-request reader, cached and time-bounded.",
+        "path": ".ai/repo/project/issues/I2403.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1198
+      },
+      {
+        "uri": "majordomus://issue/I2404",
+        "kind": "issue",
+        "identity": "I2404",
+        "title": "The Cockpit shows the stream live",
+        "description": "Add /cockpit/monitor: the live feed polling the HTTP projection with its cursor, source filters, for-you pinned, the suppressed count, linked from the home and mesh pages.",
+        "path": ".ai/repo/project/issues/I2404.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1066
+      },
+      {
+        "uri": "majordomus://issue/I2405",
+        "kind": "issue",
+        "identity": "I2405",
+        "title": "Every session is told what happened since its last look",
+        "description": "Print a bounded monitor summary in the session-start briefing and majordomus context, and name majordomus monitor --follow in the provider bootstrap templates.",
+        "path": ".ai/repo/project/issues/I2405.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1306
+      },
+      {
+        "uri": "majordomus://issue/I2406",
+        "kind": "issue",
+        "identity": "I2406",
+        "title": "The stream is documented where a reader looks",
+        "description": "Write docs/MONITOR.md, a README section, cross-links from docs/MESH.md and docs/MCP.md, the site docs page through the generated copy, and a blog article written from what landed.",
+        "path": ".ai/repo/project/issues/I2406.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 978
+      },
+      {
+        "uri": "majordomus://issue/I2407",
+        "kind": "issue",
+        "identity": "I2407",
+        "title": "The monitor is released and deployed",
+        "description": "Bump the minor version on the branch, record the CHANGELOG entry, land through the lane, let the release pipeline cut it and verify majordomus.dev serves it.",
+        "path": ".ai/repo/project/issues/I2407.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 986
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88101,6 +88574,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5428
+      },
+      {
+        "uri": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "milestone",
+        "identity": "everything-is-followed-in-one-stream",
+        "title": "Everything that happens in the repository is followed in one stream",
+        "description": "majordomus monitor is the one stream: a typed, cursor-paged feed of signals from every source, with the heartbeat noise folded away and what is addressed to the reader marked and listed first, served by the running server over HTTP, MCP and the command line (with --follow), shown live in the Cockpit, printed at every session start, named by the provider bootstrap, documented and released.",
+        "path": ".ai/repo/project/milestones/everything-is-followed-in-one-stream.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4127
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -93164,6 +93648,46 @@
         "bytes": 5465
       },
       {
+        "uri": "majordomus://test/test/cases/1050_the_monitor_folds_the_noise.sh",
+        "kind": "test",
+        "identity": "test/cases/1050_the_monitor_folds_the_noise.sh",
+        "path": "test/cases/1050_the_monitor_folds_the_noise.sh",
+        "source_class": "case",
+        "bytes": 5642
+      },
+      {
+        "uri": "majordomus://test/test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+        "kind": "test",
+        "identity": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+        "path": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+        "source_class": "case",
+        "bytes": 4073
+      },
+      {
+        "uri": "majordomus://test/test/cases/1052_an_absent_source_is_reported.sh",
+        "kind": "test",
+        "identity": "test/cases/1052_an_absent_source_is_reported.sh",
+        "path": "test/cases/1052_an_absent_source_is_reported.sh",
+        "source_class": "case",
+        "bytes": 4257
+      },
+      {
+        "uri": "majordomus://test/test/cases/1053_the_cockpit_follows_the_stream.sh",
+        "kind": "test",
+        "identity": "test/cases/1053_the_cockpit_follows_the_stream.sh",
+        "path": "test/cases/1053_the_cockpit_follows_the_stream.sh",
+        "source_class": "case",
+        "bytes": 3582
+      },
+      {
+        "uri": "majordomus://test/test/cases/1054_every_session_is_told_the_stream.sh",
+        "kind": "test",
+        "identity": "test/cases/1054_every_session_is_told_the_stream.sh",
+        "path": "test/cases/1054_every_session_is_told_the_stream.sh",
+        "source_class": "case",
+        "bytes": 3828
+      },
+      {
         "uri": "majordomus://test/test/cases/106_context_peers.sh",
         "kind": "test",
         "identity": "test/cases/106_context_peers.sh",
@@ -96840,7 +97364,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96936,7 +97460,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 327
+      "objects": 328
     },
     {
       "name": "domain",
@@ -96993,7 +97517,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 279
     },
     {
       "name": "knowledge",
@@ -97023,7 +97547,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 28
     },
     {
       "name": "moment",
@@ -97145,7 +97669,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 412
+      "objects": 417
     },
     {
       "name": "use-case",
@@ -117658,6 +118182,276 @@
       {
         "path": [
           "majordomus",
+          "monitor"
+        ],
+        "route": "/docs/cli/monitor/",
+        "executable": true,
+        "usage": "majordomus monitor [OPTIONS]",
+        "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
+        "args": [
+          {
+            "name": "follow",
+            "long": "follow",
+            "positional": false,
+            "help": "Keep following: ask again every `--interval` seconds and print only what is new",
+            "value_name": "FOLLOW",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "after",
+            "long": "after",
+            "positional": false,
+            "help": "Start after this cursor (a page's `cursor`), instead of the newest signals",
+            "value_name": "AFTER",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "limit",
+            "long": "limit",
+            "positional": false,
+            "help": "At most this many signals per page (default 50, at most 500)",
+            "value_name": "LIMIT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "sources",
+            "long": "sources",
+            "positional": false,
+            "help": "A comma-separated subset of mesh, executor and github (default: all three)",
+            "value_name": "SOURCES",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "reader",
+            "long": "for",
+            "positional": false,
+            "help": "Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR",
+            "value_name": "READER",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "since",
+            "long": "since",
+            "positional": false,
+            "help": "How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h)",
+            "value_name": "SINCE",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "pattern",
+            "long": "match",
+            "positional": false,
+            "help": "Keep only signals whose summary contains this text (case-insensitive)",
+            "value_name": "PATTERN",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "count",
+            "long": "count",
+            "positional": false,
+            "help": "Stop following after this many signals",
+            "value_name": "COUNT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "until",
+            "long": "until",
+            "positional": false,
+            "help": "Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)",
+            "value_name": "UNTIL",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "timeout",
+            "long": "timeout",
+            "positional": false,
+            "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d",
+            "value_name": "TIMEOUT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "interval",
+            "long": "interval",
+            "positional": false,
+            "help": "Seconds between two asks while following",
+            "value_name": "INTERVAL",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "2"
+            ]
+          },
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "`text` for a person, `json` for a machine; both render the same answer",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "monitor-page",
+            "title": "What happened in the last half hour",
+            "description": "One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason.",
+            "argv": [
+              "monitor",
+              "--since",
+              "30m",
+              "--for",
+              "1b"
+            ],
+            "command": "majordomus monitor --since 30m --for 1b",
+            "setup": [],
+            "expectation": "exits 0; prints no running server"
+          },
+          {
+            "id": "monitor-wait",
+            "title": "Wait for a pull request to merge",
+            "description": "Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers.",
+            "argv": [
+              "monitor",
+              "--follow",
+              "--match",
+              "#885",
+              "--until",
+              "merged",
+              "--timeout",
+              "1s",
+              "--interval",
+              "1"
+            ],
+            "command": "majordomus monitor --follow --match '#885' --until merged --timeout 1s --interval 1",
+            "setup": [],
+            "expectation": "exits 10"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "models"
         ],
         "route": "/docs/cli/models/",
@@ -128350,6 +129144,23 @@
         "output": "RoutingDecision"
       },
       {
+        "name": "majordomus_monitor",
+        "id": "monitor.stream",
+        "title": "Follow everything in one stream",
+        "description": "A page of signals after a cursor, oldest first, or without one the newest of the last `since` seconds: each with its time, source, kind, severity, machine, session, actor, pull request, branch, issue, paths, a one-line summary and whether it is for the reader. Re-projections and undecided steps are counted as `suppressed`; a source that cannot be read is listed with its reason, never answered as empty. The page's `cursor` is the next page's `after`, and nothing on this page comes back. Reads only.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "MonitorInput",
+        "output": "MonitorPage"
+      },
+      {
         "name": "majordomus_get",
         "id": "objects.get",
         "title": "Get one object",
@@ -130544,6 +131355,12 @@
         "method": "GET",
         "path": "/api/v1/models/route",
         "id": "models.route",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/monitor",
+        "id": "monitor.stream",
         "kind": "query"
       },
       {
@@ -134749,6 +135566,64 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/models/route"
+      },
+      {
+        "key": "monitor.stream|direct|local-first-page",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "monitor.stream",
+        "module": "monitor",
+        "case": "local-first-page",
+        "cached": false
+      },
+      {
+        "key": "monitor.stream|direct|local-resumed",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "monitor.stream",
+        "module": "monitor",
+        "case": "local-resumed",
+        "cached": false
+      },
+      {
+        "key": "monitor.stream|mcp|local-first-page",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "monitor.stream",
+        "module": "monitor",
+        "case": "local-first-page",
+        "cached": false,
+        "tool": "majordomus_monitor"
+      },
+      {
+        "key": "monitor.stream|mcp|local-resumed",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "monitor.stream",
+        "module": "monitor",
+        "case": "local-resumed",
+        "cached": false,
+        "tool": "majordomus_monitor"
+      },
+      {
+        "key": "monitor.stream|http|local-first-page",
+        "kind": "capability",
+        "transport": "http",
+        "id": "monitor.stream",
+        "module": "monitor",
+        "case": "local-first-page",
+        "cached": false,
+        "route": "GET /api/v1/monitor"
+      },
+      {
+        "key": "monitor.stream|http|local-resumed",
+        "kind": "capability",
+        "transport": "http",
+        "id": "monitor.stream",
+        "module": "monitor",
+        "case": "local-resumed",
+        "cached": false,
+        "route": "GET /api/v1/monitor"
       },
       {
         "key": "objects.get|direct|first-object",
@@ -140032,6 +140907,27 @@
           "cases": 1
         },
         {
+          "subject": "monitor.stream",
+          "module": "monitor",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "monitor.stream",
+          "module": "monitor",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "monitor.stream",
+          "module": "monitor",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "objects.get",
           "module": "objects",
           "transport": "direct",
@@ -141525,22 +142421,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 184,
-          "covered": 160,
+          "required": 185,
+          "covered": 161,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "http": {
-          "required": 181,
-          "covered": 160,
+          "required": 182,
+          "covered": 161,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 177,
-          "covered": 156,
+          "required": 178,
+          "covered": 157,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
@@ -141553,8 +142449,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 555,
-          "covered": 489,
+          "required": 558,
+          "covered": 492,
           "missing": 0,
           "waived": 66,
           "inapplicable": 0

@@ -115,6 +115,7 @@
     "op-mesh-verify": "docs/api/mesh/",
     "op-models-list": "docs/api/models/",
     "op-models-route": "docs/api/models/",
+    "op-monitor-stream": "docs/api/monitor/",
     "op-objects-get": "docs/api/objects/",
     "op-objects-list": "docs/api/objects/",
     "op-objects-search": "docs/api/objects/",
@@ -686,6 +687,12 @@
     "schema-MomentDetail": "docs/api/why/",
     "schema-MomentRef": "docs/api/product/",
     "schema-MomentSummary": "docs/api/why/",
+    "schema-MonitorPage": "docs/api/monitor/",
+    "schema-MonitorSeverity": "docs/api/monitor/",
+    "schema-MonitorSignal": "docs/api/monitor/",
+    "schema-MonitorSource": "docs/api/monitor/",
+    "schema-MonitorSourceHealth": "docs/api/monitor/",
+    "schema-MonitorSourceState": "docs/api/monitor/",
     "schema-Mount": "docs/api/web/",
     "schema-Moved": "docs/api/integration/",
     "schema-Node": "docs/api/graph/",
@@ -1105,6 +1112,7 @@
     "tag-mcp": "docs/api/mcp/",
     "tag-mesh": "docs/api/mesh/",
     "tag-models": "docs/api/models/",
+    "tag-monitor": "docs/api/monitor/",
     "tag-objects": "docs/api/objects/",
     "tag-obligations": "docs/api/obligations/",
     "tag-pack": "docs/api/pack/",
@@ -1130,9 +1138,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 181,
-    "schemas": 893,
-    "tags": 53
+    "operations": 182,
+    "schemas": 899,
+    "tags": 54
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1161,7 +1169,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.20.0",
+  "generated_by": "majordomus-cli 0.21.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1170,7 +1178,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "infrastructure": [
     {
@@ -1332,6 +1340,7 @@
     "mesh.verify": "mesh",
     "models.list": "models",
     "models.route": "models",
+    "monitor.stream": "monitor",
     "objects.get": "objects",
     "objects.list": "objects",
     "objects.search": "objects",
@@ -1907,6 +1916,12 @@
     "MomentDetail": "why",
     "MomentRef": "product",
     "MomentSummary": "why",
+    "MonitorPage": "monitor",
+    "MonitorSeverity": "monitor",
+    "MonitorSignal": "monitor",
+    "MonitorSource": "monitor",
+    "MonitorSourceHealth": "monitor",
+    "MonitorSourceState": "monitor",
     "Mount": "web",
     "Moved": "integration",
     "Node": "graph",
@@ -17545,6 +17560,7 @@
         "mesh.verify",
         "models.list",
         "models.route",
+        "monitor.stream",
         "objects.get",
         "objects.list",
         "objects.verify",
@@ -30497,6 +30513,324 @@
       "used_by_schemas": [
         "CatalogueView",
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A page of the stream.",
+      "home": "monitor",
+      "is_enum": false,
+      "name": "MonitorPage",
+      "properties": [
+        {
+          "description": "The signals, oldest first.",
+          "name": "signals",
+          "refs": [
+            "MonitorSignal"
+          ],
+          "required": true,
+          "type": "array of MonitorSignal"
+        },
+        {
+          "description": "How many of them are for the reader.",
+          "name": "for_you",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many records were read and folded away as noise.",
+          "name": "suppressed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Every source, read or not, with its reason.",
+          "name": "sources",
+          "refs": [
+            "MonitorSourceState"
+          ],
+          "required": true,
+          "type": "array of MonitorSourceState"
+        },
+        {
+          "description": "The cursor of the next page: ask with `after` set to it and nothing on this page\ncomes back.",
+          "name": "cursor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether more signals wait after this page than its limit let through.",
+          "name": "more",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "monitor.stream"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How much a signal asks of its reader.",
+      "home": "monitor",
+      "is_enum": true,
+      "name": "MonitorSeverity",
+      "properties": [],
+      "type": "\"info\" | \"attention\" | \"action\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MonitorSignal"
+      ],
+      "values": [
+        {
+          "description": "Something happened; nothing is asked.",
+          "value": "info"
+        },
+        {
+          "description": "Something failed or waits for someone: worth a look.",
+          "value": "attention"
+        },
+        {
+          "description": "Something waits for the reader: a review asked of them, a handover for them.",
+          "value": "action"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One thing that happened, as one line a person or an agent can act on.",
+      "home": "monitor",
+      "is_enum": false,
+      "name": "MonitorSignal",
+      "properties": [
+        {
+          "description": "When it happened, in Unix seconds, on the clock of whoever recorded it.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Which record it comes from.",
+          "name": "source",
+          "refs": [
+            "MonitorSource"
+          ],
+          "required": true,
+          "type": "MonitorSource"
+        },
+        {
+          "description": "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How much it asks of the reader.",
+          "name": "severity",
+          "refs": [
+            "MonitorSeverity"
+          ],
+          "required": true,
+          "type": "MonitorSeverity"
+        },
+        {
+          "description": "The machine it happened on, by its display name when the mesh knows it.",
+          "name": "machine",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The session that did it.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Who did it: a session's worker or client, the executor's actor, a GitHub login.",
+          "name": "actor",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The pull request it is about.",
+          "name": "pr",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The branch it is about.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue it is about.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository paths it is about.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "What happened, in one line of at most 200 characters.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.",
+          "name": "for_you",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "Where to read more, when there is a page for it.",
+          "name": "link",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MonitorPage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a signal comes from.",
+      "home": "monitor",
+      "is_enum": true,
+      "name": "MonitorSource",
+      "properties": [],
+      "type": "\"mesh\" | \"executor\" | \"github\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MonitorSignal",
+        "MonitorSourceState"
+      ],
+      "values": [
+        {
+          "description": "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews.",
+          "value": "mesh"
+        },
+        {
+          "description": "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures.",
+          "value": "executor"
+        },
+        {
+          "description": "GitHub: pull requests opened, merged and closed, and finished workflow runs.",
+          "value": "github"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Whether a source could be read, and what it contributed to the page.",
+      "home": "monitor",
+      "is_enum": true,
+      "name": "MonitorSourceHealth",
+      "properties": [],
+      "type": "\"ok\" | \"absent\" | \"error\" | \"skipped\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MonitorSourceState"
+      ],
+      "values": [
+        {
+          "description": "Read.",
+          "value": "ok"
+        },
+        {
+          "description": "Not there to read: the mesh is not running, there is no trail, `gh` is missing.",
+          "value": "absent"
+        },
+        {
+          "description": "There, but reading it failed.",
+          "value": "error"
+        },
+        {
+          "description": "Not asked for in `sources`.",
+          "value": "skipped"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One source's standing on a page.",
+      "home": "monitor",
+      "is_enum": false,
+      "name": "MonitorSourceState",
+      "properties": [
+        {
+          "description": "The source.",
+          "name": "source",
+          "refs": [
+            "MonitorSource"
+          ],
+          "required": true,
+          "type": "MonitorSource"
+        },
+        {
+          "description": "Whether it was read.",
+          "name": "state",
+          "refs": [
+            "MonitorSourceHealth"
+          ],
+          "required": true,
+          "type": "MonitorSourceHealth"
+        },
+        {
+          "description": "Why it was not, when it was not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many of its signals are on this page.",
+          "name": "signals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of its records were read and folded away as noise.",
+          "name": "suppressed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MonitorPage"
       ],
       "values": [],
       "variants": []
@@ -59957,6 +60291,144 @@
         }
       ],
       "slug": "models"
+    },
+    {
+      "description": "Everything that happens around this repository, followed in one stream: the mesh journal (sessions on every linked machine, this checkout's board among them, their claims, handovers and reviews), the executor's trail (merges, refreshes, repairs, closures, failures) and GitHub (pull requests opened, merged and closed, finished workflow runs), folded so that a session re-announcing itself unchanged and a step that decided nothing are counted rather than shown, with what is addressed to the reader marked (ADR 0133).",
+      "name": "monitor",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/monitor?after=x0&limit=50&sources=mesh%2Cexecutor&for=1b&since=3600\"",
+          "description": "A page of signals after a cursor, oldest first, or without one the newest of the last `since` seconds: each with its time, source, kind, severity, machine, session, actor, pull request, branch, issue, paths, a one-line summary and whether it is for the reader. Re-projections and undecided steps are counted as `suppressed`; a source that cannot be read is listed with its reason, never answered as empty. The page's `cursor` is the next page's `after`, and nothing on this page comes back. Reads only.",
+          "home": "monitor",
+          "id": "monitor.stream",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_monitor",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The `cursor` of the previous page; without it, the page is the newest signals of the\nlast `since` seconds.",
+              "examples": [
+                {
+                  "case": "local-resumed",
+                  "value": "\"x0\""
+                }
+              ],
+              "name": "after",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "At most this many signals (default 50, at most 500).",
+              "examples": [
+                {
+                  "case": "local-first-page",
+                  "value": "50"
+                },
+                {
+                  "case": "local-resumed",
+                  "value": "20"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "A comma-separated subset of `mesh`, `executor` and `github` (default: all three).",
+              "examples": [
+                {
+                  "case": "local-first-page",
+                  "value": "\"mesh,executor\""
+                },
+                {
+                  "case": "local-resumed",
+                  "value": "\"mesh,executor\""
+                }
+              ],
+              "name": "sources",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what\nis addressed to it is marked `for_you`. An MCP caller is also its own board session.",
+              "examples": [
+                {
+                  "case": "local-first-page",
+                  "value": "\"1b\""
+                },
+                {
+                  "case": "local-resumed",
+                  "value": "\"1b,cd\""
+                }
+              ],
+              "name": "for",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "How far back a first page reaches, in seconds (default 3600).",
+              "examples": [
+                {
+                  "case": "local-first-page",
+                  "value": "3600"
+                },
+                {
+                  "case": "local-resumed",
+                  "value": "600"
+                }
+              ],
+              "name": "since",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/monitor",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::monitor",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Follow everything in one stream: the result.",
+              "schema": "MonitorPage",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MonitorPage",
+          "stability": "experimental",
+          "summary": "Follow everything in one stream"
+        }
+      ],
+      "slug": "monitor"
     },
     {
       "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.",

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -40,6 +40,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
 | `mesh` | Mesh | experimental | 21 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
+| `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
@@ -184,6 +185,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.verify` | `mesh` | command | experimental | `majordomus_mesh_verify` | — | `POST /api/v1/mesh/verify` | — | — | waived (external_dependency) |
 | `models.list` | `models` | query | experimental | `majordomus_models` | `majordomus://models` | `GET /api/v1/models` | `majordomus models list` | process, 4 entries, 5s | required |
 | `models.route` | `models` | query | experimental | `majordomus_models_route` | — | `GET /api/v1/models/route` | `majordomus models route` | — | required |
+| `monitor.stream` | `monitor` | query | experimental | `majordomus_monitor` | — | `GET /api/v1/monitor` | — | — | required |
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |
 | `objects.search` | `objects` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | process, 64 entries | required |

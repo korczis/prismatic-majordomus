@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.21.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
+generator: majordomus-cli 0.21.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -191,6 +191,12 @@ modules:
     stability: experimental
     source: builtin
     capabilities: 2
+  - id: monitor
+    title: The monitor
+    description: "Everything that happens around this repository, followed in one stream: the mesh journal (sessions on every linked machine, this checkout's board among them, their claims, handovers and reviews), the executor's trail (merges, refreshes, repairs, closures, failures) and GitHub (pull requests opened, merged and closed, finished workflow runs), folded so that a session re-announcing itself unchanged and a step that decided nothing are counted rather than shown, with what is addressed to the reader marked (ADR 0133)."
+    stability: experimental
+    source: builtin
+    capabilities: 1
   - id: objects
     title: Objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
@@ -33983,6 +33989,257 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/models.rs
+  - id: monitor.stream
+    module: monitor
+    kind: query
+    title: Follow everything in one stream
+    description: "A page of signals after a cursor, oldest first, or without one the newest of the last `since` seconds: each with its time, source, kind, severity, machine, session, actor, pull request, branch, issue, paths, a one-line summary and whether it is for the reader. Re-projections and undecided steps are counted as `suppressed`; a source that cannot be read is listed with its reason, never answered as empty. The page's `cursor` is the next page's `after`, and nothing on this page comes back. Reads only."
+    input:
+      name: MonitorInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          after:
+            type:
+              - string
+              - "null"
+            description: "The `cursor` of the previous page; without it, the page is the newest signals of the\nlast `since` seconds."
+          limit:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "At most this many signals (default 50, at most 500)."
+          sources:
+            type:
+              - string
+              - "null"
+            description: "A comma-separated subset of `mesh`, `executor` and `github` (default: all three)."
+          for:
+            type:
+              - string
+              - "null"
+            description: "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what\nis addressed to it is marked `for_you`. An MCP caller is also its own board session."
+          since:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "How far back a first page reaches, in seconds (default 3600)."
+        description: "The input of `monitor`: where the reader stands, how much it wants, from which sources,\nand who it is."
+        title: MonitorInput
+    output:
+      name: MonitorPage
+      schema:
+        type: object
+        properties:
+          signals:
+            type: array
+            items:
+              "$ref": "#/$defs/MonitorSignal"
+            description: "The signals, oldest first."
+          for_you:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them are for the reader.
+          suppressed:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: How many records were read and folded away as noise.
+          sources:
+            type: array
+            items:
+              "$ref": "#/$defs/MonitorSourceState"
+            description: "Every source, read or not, with its reason."
+          cursor:
+            type: string
+            description: "The cursor of the next page: ask with `after` set to it and nothing on this page\ncomes back."
+          more:
+            type: boolean
+            description: Whether more signals wait after this page than its limit let through.
+        required:
+          - signals
+          - for_you
+          - suppressed
+          - sources
+          - cursor
+          - more
+        description: A page of the stream.
+        title: MonitorPage
+        "$defs":
+          MonitorSignal:
+            type: object
+            properties:
+              at:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "When it happened, in Unix seconds, on the clock of whoever recorded it."
+              source:
+                "$ref": "#/$defs/MonitorSource"
+                description: Which record it comes from.
+              kind:
+                type: string
+                description: "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`."
+              severity:
+                "$ref": "#/$defs/MonitorSeverity"
+                description: How much it asks of the reader.
+              machine:
+                type:
+                  - string
+                  - "null"
+                description: "The machine it happened on, by its display name when the mesh knows it."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: The session that did it.
+              actor:
+                type:
+                  - string
+                  - "null"
+                description: "Who did it: a session's worker or client, the executor's actor, a GitHub login."
+              pr:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The pull request it is about.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it is about.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it is about.
+              paths:
+                type: array
+                items:
+                  type: string
+                description: The repository paths it is about.
+              summary:
+                type: string
+                description: "What happened, in one line of at most 200 characters."
+              for_you:
+                type: boolean
+                description: "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them."
+                default: false
+              link:
+                type:
+                  - string
+                  - "null"
+                description: "Where to read more, when there is a page for it."
+            required:
+              - at
+              - source
+              - kind
+              - severity
+              - summary
+            description: "One thing that happened, as one line a person or an agent can act on."
+          MonitorSource:
+            oneOf:
+              - type: string
+                const: mesh
+                description: "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews."
+              - type: string
+                const: executor
+                description: "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures."
+              - type: string
+                const: github
+                description: "GitHub: pull requests opened, merged and closed, and finished workflow runs."
+            description: Where a signal comes from.
+          MonitorSeverity:
+            oneOf:
+              - type: string
+                const: info
+                description: Something happened; nothing is asked.
+              - type: string
+                const: attention
+                description: "Something failed or waits for someone: worth a look."
+              - type: string
+                const: action
+                description: "Something waits for the reader: a review asked of them, a handover for them."
+            description: How much a signal asks of its reader.
+          MonitorSourceState:
+            type: object
+            properties:
+              source:
+                "$ref": "#/$defs/MonitorSource"
+                description: The source.
+              state:
+                "$ref": "#/$defs/MonitorSourceHealth"
+                description: Whether it was read.
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why it was not, when it was not."
+              signals:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of its signals are on this page.
+              suppressed:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: How many of its records were read and folded away as noise.
+            required:
+              - source
+              - state
+              - signals
+              - suppressed
+            description: "One source's standing on a page."
+          MonitorSourceHealth:
+            oneOf:
+              - type: string
+                const: ok
+                description: Read.
+              - type: string
+                const: absent
+                description: "Not there to read: the mesh is not running, there is no trail, `gh` is missing."
+              - type: string
+                const: error
+                description: "There, but reading it failed."
+              - type: string
+                const: skipped
+                description: "Not asked for in `sources`."
+            description: "Whether a source could be read, and what it contributed to the page."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::monitor
+    exposure:
+      mcp:
+        tool: majordomus_monitor
+      http:
+        method: GET
+        path: /api/v1/monitor
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - monitor
+      - mesh
+      - coordination
+      - observability
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/monitor.rs
   - id: objects.get
     module: objects
     kind: query

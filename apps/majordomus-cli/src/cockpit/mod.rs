@@ -25,6 +25,7 @@ pub mod assets;
 pub mod html;
 pub(crate) mod intents;
 pub(crate) mod mcp;
+pub(crate) mod monitor;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod plan;
@@ -96,6 +97,7 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/peers", "peers"),
     ("/cockpit/integration", "integration"),
     ("/cockpit/mesh", "mesh"),
+    ("/cockpit/monitor", ""),
     ("/cockpit/models", "models"),
     ("/cockpit/reasoning", "reasoning"),
     ("/cockpit/economics", "economics"),
@@ -231,6 +233,7 @@ impl Cockpit {
             "/cockpit/peers" => pages::peers(ctx),
             "/cockpit/integration" => pages::integration(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
+            "/cockpit/monitor" => monitor::page(ctx, query),
             "/cockpit/models" => pages::models(ctx),
             "/cockpit/reasoning" => reasoning::page(ctx),
             "/cockpit/economics" => pages::economics(ctx),

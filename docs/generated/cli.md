@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -160,6 +160,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review`](#majordomus-mesh-review) | `/docs/cli/mesh/review/` | Ask the mesh for a review, or answer a request |
 | [`majordomus mesh review request`](#majordomus-mesh-review-request) | `/docs/cli/mesh/review/request/` | Ask for a review of a branch, commit or pull request |
 | [`majordomus mesh review answer`](#majordomus-mesh-review-answer) | `/docs/cli/mesh/review/answer/` | Answer a review request |
+| [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
@@ -236,7 +237,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -4564,6 +4565,52 @@ Examples:
 
   ```console
   $ majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-monitor"></a>
+## `majordomus monitor`
+
+Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
+
+```text
+majordomus monitor [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--follow` | flag | — | Keep following: ask again every `--interval` seconds and print only what is new |
+| `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
+| `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
+| `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
+| `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |
+| `--since` | `<SINCE>` | — | How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h) |
+| `--match` | `<PATTERN>` | — | Keep only signals whose summary contains this text (case-insensitive) |
+| `--count` | `<COUNT>` | — | Stop following after this many signals |
+| `--until` | `<UNTIL>` | — | Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed) |
+| `--timeout` | `<TIMEOUT>` | — | Give up following after this long, exiting 10: seconds, or a number with s, m, h or d |
+| `--interval` | `<INTERVAL>` | `2` | Seconds between two asks while following |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What happened in the last half hour** — One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason.
+
+  ```console
+  $ majordomus monitor --since 30m --for 1b
+  ```
+
+  Verified: exits 0; prints no running server.
+
+- **Wait for a pull request to merge** — Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers.
+
+  ```console
+  $ majordomus monitor --follow --match '#885' --until merged --timeout 1s --interval 1
   ```
 
   Verified: exits 10.

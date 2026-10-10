@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.21.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
-version: "0.20.0"
+generator: majordomus-cli 0.21.0
+version: "0.21.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -15217,6 +15217,218 @@ cli:
                   setup: []
                   expectation: exits 10
               subcommands: []
+    - path:
+        - majordomus
+        - monitor
+      route: /docs/cli/monitor/
+      executable: true
+      usage: "majordomus monitor [OPTIONS]"
+      about: "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked"
+      args:
+        - name: follow
+          long: follow
+          positional: false
+          help: "Keep following: ask again every `--interval` seconds and print only what is new"
+          value_name: FOLLOW
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+        - name: after
+          long: after
+          positional: false
+          help: "Start after this cursor (a page's `cursor`), instead of the newest signals"
+          value_name: AFTER
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: limit
+          long: limit
+          positional: false
+          help: "At most this many signals per page (default 50, at most 500)"
+          value_name: LIMIT
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: sources
+          long: sources
+          positional: false
+          help: "A comma-separated subset of mesh, executor and github (default: all three)"
+          value_name: SOURCES
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: reader
+          long: for
+          positional: false
+          help: "Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR"
+          value_name: READER
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: since
+          long: since
+          positional: false
+          help: "How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h)"
+          value_name: SINCE
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: pattern
+          long: match
+          positional: false
+          help: Keep only signals whose summary contains this text (case-insensitive)
+          value_name: PATTERN
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: count
+          long: count
+          positional: false
+          help: Stop following after this many signals
+          value_name: COUNT
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: until
+          long: until
+          positional: false
+          help: "Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)"
+          value_name: UNTIL
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: timeout
+          long: timeout
+          positional: false
+          help: "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d"
+          value_name: TIMEOUT
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: interval
+          long: interval
+          positional: false
+          help: Seconds between two asks while following
+          value_name: INTERVAL
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "2"
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: "`text` for a person, `json` for a machine; both render the same answer"
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: false
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: monitor-page
+          title: What happened in the last half hour
+          description: "One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason."
+          argv:
+            - monitor
+            - "--since"
+            - 30m
+            - "--for"
+            - 1b
+          command: majordomus monitor --since 30m --for 1b
+          setup: []
+          expectation: exits 0; prints no running server
+        - id: monitor-wait
+          title: Wait for a pull request to merge
+          description: "Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers."
+          argv:
+            - monitor
+            - "--follow"
+            - "--match"
+            - "#885"
+            - "--until"
+            - merged
+            - "--timeout"
+            - 1s
+            - "--interval"
+            - "1"
+          command: "majordomus monitor --follow --match '#885' --until merged --timeout 1s --interval 1"
+          setup: []
+          expectation: exits 10
+      subcommands: []
     - path:
         - majordomus
         - models

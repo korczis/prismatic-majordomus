@@ -62,6 +62,7 @@ pub mod lifecycle;
 pub mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
+pub(crate) mod monitor;
 pub mod objects;
 pub mod obligations;
 pub mod pack;
@@ -194,6 +195,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         rules,
         executions,
         mesh,
+        monitor,
         models,
         reasoning,
         episodes,

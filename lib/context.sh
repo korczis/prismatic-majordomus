@@ -163,6 +163,7 @@ mj_context_sections() {
 
   # 1b. peers — who else is in this repository right now, and what of it they claim.
   mj_context_peers "$have_task"
+  mj_context_monitor
 
   # 1c. integration — the pull-request queue as this checkout last built it, the lease, the
   # last merge: what a session continuing drain work needs before its first command.
@@ -396,8 +397,8 @@ mj_ctx_verification() {
 # right now outranks your own records the way git does, and it is dropped late for the same
 # reason — a collision in flight is worth more than history. `75.integration` is one line a
 # command away (`majordomus prs brief`), so it goes before any record body does.
-MJ_CTX_DROP_ORDER="90.history 75.integration 80.files 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
-MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 32.intent 35.documents 40.questions 45.knowledge 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
+MJ_CTX_DROP_ORDER="90.history 16.monitor 75.integration 80.files 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_ORDER="10.git 15.peers 16.monitor 20.task 30.profile 32.intent 35.documents 40.questions 45.knowledge 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -560,6 +561,25 @@ EOF
       printf '  (your own claim appears here too — the board answers sessions, not commands)\n'
     fi
   } > "$MJ_CTX_TMP/15.peers"
+  return 0
+}
+
+# What happened around the repository in the last hour (ADR 0133): the mesh and the
+# executor's trail folded into signals by `majordomus monitor`, with what names the reader
+# ($MAJORDOMUS_MONITOR_FOR) first. A worker that asked for its context is told of a review
+# asked of it, a handover for it or a failed merge without having to know where to look.
+# Like the board it degrades to nothing: no executable, no server, no signal.
+mj_context_monitor() {
+  local lines
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  lines="$(mj_rust_monitor_brief "$MJ_ROOT" "$MJ_HOME")"
+  [ -n "$lines" ] || return 0
+  {
+    printf '## WHAT HAPPENED\n'
+    printf '%s\n' "$lines"
+    printf '# majordomus monitor for the page, --follow to stream it, --for <your names> to be addressed\n'
+  } > "$MJ_CTX_TMP/16.monitor"
   return 0
 }
 

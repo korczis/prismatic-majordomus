@@ -193,7 +193,10 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`. An event carries its stream, a dense sequence, a
+`review_requested`, `review_answered`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+(`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
+heartbeat, marks what names the reader, and pages with the full causal key rather than the
+Lamport stamp alone. An event carries its stream, a dense sequence, a
 Lamport stamp, its origin's wall clock (informational), the repository identity, the origin
 key, a body and an Ed25519 signature over the canonical JSON of all of it.
 

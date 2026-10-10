@@ -1593,7 +1593,16 @@ mj_capture_session_start() {
   # for on 2026-09-12 (ADR 0059), and the briefing is where a worker hears of it before its
   # first tool call. It travels as an argument, like the server line.
   local mesh; mesh="$(mj_capture_mesh_line "$server")"
-  mj_derive_briefing "$server" "$mesh" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  # What happened around the repository since the last hour, under the mesh (ADR 0133): a
+  # review asked of this worker or a handover for it is told before its first tool call.
+  local monitor=""
+  case "$server" in
+    ready\ http://*)
+      # shellcheck source=rust_bin.sh
+      . "$MJ_LIB_DIR/rust_bin.sh"
+      monitor="$(mj_rust_monitor_brief "$MJ_ROOT" "$MJ_HOME")" ;;
+  esac
+  mj_derive_briefing "$server" "$mesh" "$monitor" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
   return 0
 }
 

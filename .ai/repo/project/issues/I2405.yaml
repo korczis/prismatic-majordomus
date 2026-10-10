@@ -1,0 +1,29 @@
+id: I2405
+milestone: everything-is-followed-in-one-stream
+title: "Every session is told what happened since its last look"
+slug: monitor-at-start
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Print a bounded monitor summary in the session-start briefing and majordomus context, and name majordomus monitor --follow in the provider bootstrap templates."
+why: "A tool nobody is pointed at is not used: sessions missed reviews and handovers addressed to them because nothing at start showed them."
+current_state: "The start briefing prints the board and the mesh health line only."
+desired_state: "The briefing and context print signal counts and the for-you lines; AGENTS.md and CLAUDE.md name the command."
+scope:
+  - "lib"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "test/cases/1054_every_session_is_told_the_stream.sh"
+  - ".ai/repo/providers"
+  - "AGENTS.md"
+  - "CLAUDE.md"
+depends_on: 
+  - "I2401"
+acceptance_criteria:
+  - "The session-start output carries a monitor line within its time budget and never blocks the start"
+  - "AGENTS.md and CLAUDE.md name majordomus monitor --follow, rendered from the templates"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1054"
+evidence_required:
+  - "session_start_monitor_line"
+created_at: 2026-10-10
+updated_at: 2026-10-10

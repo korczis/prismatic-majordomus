@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1119,6 +1119,15 @@
         "summary": "Route a need to a model",
         "route": "/cockpit/capabilities/models.route",
         "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:monitor.stream",
+        "kind": "capability",
+        "label": "monitor.stream",
+        "summary": "Follow everything in one stream",
+        "route": "/cockpit/capabilities/monitor.stream",
+        "source": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
         "status": "query"
       },
       {
@@ -2820,6 +2829,14 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/models/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/monitor/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/monitor/mod.rs",
         "external": true
       },
       {
@@ -6371,6 +6388,31 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0133",
+        "kind": "adr",
+        "label": "adr-0133",
+        "summary": "Everything that happens in the repository is followed in one stream, folded and addressed",
+        "route": "/cockpit/objects/adr/adr-0133",
+        "source": ".ai/repo/adrs/0133-everything-is-followed-in-one-stream.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/project/milestones/everything-is-followed-in-one-stream.yaml",
+            "file:apps/majordomus-cli/src/monitor/mod.rs",
+            "file:docs/MONITOR.md"
+          ],
+          "tags": [
+            "monitor",
+            "mesh",
+            "cooperation",
+            "observability"
           ]
         }
       },
@@ -13286,6 +13328,14 @@
         "summary": "The model catalogue",
         "route": "/cockpit/objects/document/docs-models-md",
         "source": "docs/MODELS.md"
+      },
+      {
+        "id": "majordomus://document/docs/MONITOR.md",
+        "kind": "document",
+        "label": "docs/MONITOR.md",
+        "summary": "The monitor",
+        "route": "/cockpit/objects/document/docs-monitor-md",
+        "source": "docs/MONITOR.md"
       },
       {
         "id": "majordomus://document/docs/PAGES_STATUS.md",
@@ -30391,6 +30441,325 @@
         }
       },
       {
+        "id": "majordomus://issue/I2400",
+        "kind": "issue",
+        "label": "I2400",
+        "summary": "A signal model and a fold join every source the server already records",
+        "route": "/cockpit/objects/issue/i2400",
+        "source": ".ai/repo/project/issues/I2400.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page after a cursor repeats no signal of the previous page",
+            "An unchanged session re-projection is suppressed and counted; a new session or a changed intent is a signal",
+            "A signal is for_you when its reviewer, handover target, claim conflict or text names the reader"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "No monitor module.",
+          "depends_on": [],
+          "desired_state": "src/monitor folds the four sources into ordered signals behind one opaque cursor, unit-tested per reader and for the fold.",
+          "evidence_required": [
+            "monitor_fold_unit_tests"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor",
+            "apps/majordomus-cli/src/lib.rs"
+          ],
+          "slug": "monitor-core",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "cargo test --lib monitor"
+          ],
+          "why": "Each source answers its own page with its own cursor; 95% of mesh events are identical session_opened re-projections (954 of 1000 sampled 2026-10-10 21:05Z), so a reader of the journal reads noise."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2401",
+        "kind": "issue",
+        "label": "I2401",
+        "summary": "monitor is one read capability with three projections",
+        "route": "/cockpit/objects/issue/i2401",
+        "source": ".ai/repo/project/issues/I2401.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /api/v1/monitor answers a page with sources, signals, suppressed and next cursor",
+            "majordomus_monitor is listed and answers the same page",
+            "majordomus generate --check is clean"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "No capability.",
+          "depends_on": [
+            "I2400"
+          ],
+          "desired_state": "One capability! declaration; generated OpenAPI, MCP tool list and benchmark inventory carry it.",
+          "evidence_required": [
+            "monitor_capability_projections"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Declare capability monitor (MCP majordomus_monitor, GET /api/v1/monitor, CLI majordomus monitor) with OpenAPI-unique names and a benchmark case, and generate its projections.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "docs/CAPABILITIES.md",
+            "share"
+          ],
+          "slug": "monitor-capability",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "cargo test --test monitor_stream",
+            "majordomus generate --check"
+          ],
+          "why": "A feed that only the CLI can read is one more private loop; MCP clients and the Cockpit need the same answer (ADR 0004: one declaration, every projection)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2402",
+        "kind": "issue",
+        "label": "I2402",
+        "summary": "majordomus monitor follows the stream from a terminal and a script",
+        "route": "/cockpit/objects/issue/i2402",
+        "source": ".ai/repo/project/issues/I2402.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One page prints one line per signal and the suppressed count",
+            "--follow --count N exits after N signals",
+            "--format ndjson prints one JSON document per line"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "No command.",
+          "depends_on": [
+            "I2401"
+          ],
+          "desired_state": "majordomus monitor prints a page; --follow streams it; --count and --until terminate.",
+          "evidence_required": [
+            "monitor_cli_cases"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Add majordomus monitor with --follow, --for, --sources, --since, --count, --until and --format text|json|ndjson, rendering one line per signal with its source tag.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/cli",
+            "test/cases/1050_the_monitor_folds_the_noise.sh",
+            "test/cases/1051_a_followed_stream_can_be_waited_on.sh"
+          ],
+          "slug": "monitor-cli",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 1050 1051"
+          ],
+          "why": "The person and every agent need one command to follow the repository live and a way for a script to wait for one event and exit, instead of hand-rolled jq loops."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2403",
+        "kind": "issue",
+        "label": "I2403",
+        "summary": "Pull requests, checks and deploys reach the stream when GitHub is reachable",
+        "route": "/cockpit/objects/issue/i2403",
+        "source": ".ai/repo/project/issues/I2403.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A merged pull request appears once as a signal",
+            "An absent gh is a source state with a reason, never an empty answer",
+            "No network in tests: a fixture drives the reader"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "GitHub is read only by prs.",
+          "depends_on": [
+            "I2400"
+          ],
+          "desired_state": "The monitor carries GitHub signals within a budget and reports the source absent with its reason when gh is missing or unreachable.",
+          "evidence_required": [
+            "monitor_github_source"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Add a GitHub source (pull requests opened, merged and closed, required check verdicts, deploy and release workflow outcomes) through the existing pull-request reader, cached and time-bounded.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor",
+            "test/cases/1052_an_absent_source_is_reported.sh"
+          ],
+          "slug": "monitor-github",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 1052"
+          ],
+          "why": "Merges, red checks and deploys are what a worker waits for most, and today it polls gh itself."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2404",
+        "kind": "issue",
+        "label": "I2404",
+        "summary": "The Cockpit shows the stream live",
+        "route": "/cockpit/objects/issue/i2404",
+        "source": ".ai/repo/project/issues/I2404.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The page renders with the first page of signals and a cursor",
+            "The home page and the mesh page link it",
+            "It works at phone width"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "No page.",
+          "depends_on": [
+            "I2401"
+          ],
+          "desired_state": "/cockpit/monitor renders the first page server-side and appends new signals live.",
+          "evidence_required": [
+            "cockpit_monitor_page"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Add /cockpit/monitor: the live feed polling the HTTP projection with its cursor, source filters, for-you pinned, the suppressed count, linked from the home and mesh pages.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "test/cases/1053_the_cockpit_follows_the_stream.sh"
+          ],
+          "slug": "monitor-cockpit",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 1053"
+          ],
+          "why": "The owner follows the repository in a browser as often as in a terminal; the Cockpit has no page that shows what is happening now."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2405",
+        "kind": "issue",
+        "label": "I2405",
+        "summary": "Every session is told what happened since its last look",
+        "route": "/cockpit/objects/issue/i2405",
+        "source": ".ai/repo/project/issues/I2405.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The session-start output carries a monitor line within its time budget and never blocks the start",
+            "AGENTS.md and CLAUDE.md name majordomus monitor --follow, rendered from the templates"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "The start briefing prints the board and the mesh health line only.",
+          "depends_on": [
+            "I2401"
+          ],
+          "desired_state": "The briefing and context print signal counts and the for-you lines; AGENTS.md and CLAUDE.md name the command.",
+          "evidence_required": [
+            "session_start_monitor_line"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Print a bounded monitor summary in the session-start briefing and majordomus context, and name majordomus monitor --follow in the provider bootstrap templates.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src/capability/builtin",
+            "test/cases/1054_every_session_is_told_the_stream.sh",
+            ".ai/repo/providers",
+            "AGENTS.md",
+            "CLAUDE.md"
+          ],
+          "slug": "monitor-at-start",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh 1054"
+          ],
+          "why": "A tool nobody is pointed at is not used: sessions missed reviews and handovers addressed to them because nothing at start showed them."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2406",
+        "kind": "issue",
+        "label": "I2406",
+        "summary": "The stream is documented where a reader looks",
+        "route": "/cockpit/objects/issue/i2406",
+        "source": ".ai/repo/project/issues/I2406.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "docs/MONITOR.md documents every option and every signal kind",
+            "The site carries the docs page and the article and site-check passes"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "Nothing documents it.",
+          "depends_on": [
+            "I2402",
+            "I2404"
+          ],
+          "desired_state": "The manual, README, site page and blog article describe it and link the ADR and the cases.",
+          "evidence_required": [
+            "monitor_documented"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Write docs/MONITOR.md, a README section, cross-links from docs/MESH.md and docs/MCP.md, the site docs page through the generated copy, and a blog article written from what landed.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs",
+            "README.md",
+            "site"
+          ],
+          "slug": "monitor-docs",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "An undocumented command is found by nobody but its author."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2407",
+        "kind": "issue",
+        "label": "I2407",
+        "summary": "The monitor is released and deployed",
+        "route": "/cockpit/objects/issue/i2407",
+        "source": ".ai/repo/project/issues/I2407.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The released version's majordomus monitor answers",
+            "majordomus.dev serves latest.json at that version, the docs page and the article"
+          ],
+          "created_at": "2026-10-10",
+          "current_state": "0.20.0 is released without it.",
+          "depends_on": [
+            "I2402",
+            "I2404",
+            "I2405",
+            "I2406"
+          ],
+          "desired_state": "The next minor release carries majordomus monitor and the site serves its docs and article.",
+          "evidence_required": [
+            "released_and_deployed"
+          ],
+          "milestone": "everything-is-followed-in-one-stream",
+          "objective": "Bump the minor version on the branch, record the CHANGELOG entry, land through the lane, let the release pipeline cut it and verify majordomus.dev serves it.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/Cargo.toml",
+            "CHANGELOG.md"
+          ],
+          "slug": "monitor-release",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate"
+          ],
+          "why": "Owner: version bumped, deployed, used."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31008,6 +31377,73 @@
             "bin/majordomus-cli capabilities validate",
             "bin/majordomus-cli generate --check",
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "milestone",
+        "label": "everything-is-followed-in-one-stream",
+        "summary": "Everything that happens in the repository is followed in one stream",
+        "route": "/cockpit/objects/milestone/everything-is-followed-in-one-stream",
+        "source": ".ai/repo/project/milestones/everything-is-followed-in-one-stream.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One capability answers a page of signals from mesh, board, executor trail and executions after an opaque cursor, and the next page after the answer's cursor repeats nothing",
+            "A session_opened that only re-projects an unchanged session is counted as suppressed and never shown; a new session or a changed intent is shown",
+            "Signals addressed to the reader are marked for_you and listed first in a briefing",
+            "majordomus monitor --follow streams new signals and --count/--until let a script wait for one and exit",
+            "An unreachable source is reported with its reason, never answered as empty",
+            "The Cockpit shows the stream live, and the start briefing and majordomus context print what happened since the last look",
+            "The provider bootstrap names the command; docs/MONITOR.md, the README and a blog article describe it; the release carries it"
+          ],
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "monitor_capability",
+            "fold_suppresses_reprojection",
+            "follow_terminates",
+            "absent_source_reported",
+            "cockpit_monitor_page",
+            "session_start_monitor_line",
+            "released_and_deployed"
+          ],
+          "non_scope": [
+            "Writing anything: the monitor reads; acting on a signal stays with the capability that owns the act",
+            "A second journal or event store: every signal is derived from a source that already records it",
+            "Push notifications to systems outside the repository (Slack, mail); a notifier subscribes to the stream later"
+          ],
+          "order": 340,
+          "priority": "p1",
+          "risks": [
+            "A stream that shows everything is as unread as six that show their own: the fold and for_you are the feature, not the joining.",
+            "GitHub is network: it must never make a local page slow or an absent network look like a quiet repository."
+          ],
+          "scope": [
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            ".ai/repo/providers",
+            "apps/majordomus-cli/src/monitor",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/cli",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/tests",
+            "lib",
+            "docs",
+            "site",
+            "test/cases",
+            "README.md",
+            "AGENTS.md",
+            "CLAUDE.md"
+          ],
+          "slug": "everything-is-followed-in-one-stream",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib monitor",
+            "cargo test --test monitor_stream",
+            "MJ_TEST_JOBS=4 bash test/run.sh 1050 1051 1052 1053 1054",
+            "majordomus generate --check"
           ]
         }
       },
@@ -43063,6 +43499,41 @@
         "source": "test/cases/104_strict_derivation.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1050_the_monitor_folds_the_noise.sh",
+        "kind": "test",
+        "label": "test/cases/1050_the_monitor_folds_the_noise.sh",
+        "route": "/cockpit/objects/test/test-cases-1050-the-monitor-folds-the-noise-sh",
+        "source": "test/cases/1050_the_monitor_folds_the_noise.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+        "kind": "test",
+        "label": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+        "route": "/cockpit/objects/test/test-cases-1051-a-followed-stream-can-be-waited-on-sh",
+        "source": "test/cases/1051_a_followed_stream_can_be_waited_on.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1052_an_absent_source_is_reported.sh",
+        "kind": "test",
+        "label": "test/cases/1052_an_absent_source_is_reported.sh",
+        "route": "/cockpit/objects/test/test-cases-1052-an-absent-source-is-reported-sh",
+        "source": "test/cases/1052_an_absent_source_is_reported.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1053_the_cockpit_follows_the_stream.sh",
+        "kind": "test",
+        "label": "test/cases/1053_the_cockpit_follows_the_stream.sh",
+        "route": "/cockpit/objects/test/test-cases-1053-the-cockpit-follows-the-stream-sh",
+        "source": "test/cases/1053_the_cockpit_follows_the_stream.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1054_every_session_is_told_the_stream.sh",
+        "kind": "test",
+        "label": "test/cases/1054_every_session_is_told_the_stream.sh",
+        "route": "/cockpit/objects/test/test-cases-1054-every-session-is-told-the-stream-sh",
+        "source": "test/cases/1054_every_session_is_told_the_stream.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/106_context_peers.sh",
         "kind": "test",
         "label": "test/cases/106_context_peers.sh",
@@ -47991,6 +48462,11 @@
         "label": "models"
       },
       {
+        "id": "module:monitor",
+        "kind": "module",
+        "label": "monitor"
+      },
+      {
         "id": "module:objects",
         "kind": "module",
         "label": "objects"
@@ -50206,6 +50682,21 @@
       },
       {
         "source": "capability:models.route",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:monitor.stream",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:monitor.stream",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:monitor.stream",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -54772,6 +55263,36 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0133",
+        "target": "file:apps/majordomus-cli/src/monitor/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0133",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0133",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0133",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0133",
+        "target": "majordomus://document/docs/MONITOR.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0133",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
         "kind": "put_in_force"
       },
       {
@@ -60531,6 +61052,11 @@
       },
       {
         "source": "majordomus://document/docs/MODELS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/MONITOR.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66615,6 +67141,141 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2400",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2400",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2401",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2401",
+        "target": "majordomus://issue/I2400",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2401",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2402",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2402",
+        "target": "majordomus://issue/I2401",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2402",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2403",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2403",
+        "target": "majordomus://issue/I2400",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2403",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2404",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2404",
+        "target": "majordomus://issue/I2401",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2404",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2405",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2405",
+        "target": "majordomus://issue/I2401",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2405",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2406",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2406",
+        "target": "majordomus://issue/I2402",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2406",
+        "target": "majordomus://issue/I2404",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2406",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2407",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2407",
+        "target": "majordomus://issue/I2402",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2407",
+        "target": "majordomus://issue/I2404",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2407",
+        "target": "majordomus://issue/I2405",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2407",
+        "target": "majordomus://issue/I2406",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2407",
+        "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66686,6 +67347,11 @@
       },
       {
         "source": "majordomus://milestone/development-runtime",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/everything-is-followed-in-one-stream",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -69721,6 +70387,31 @@
       },
       {
         "source": "majordomus://test/test/cases/104_strict_derivation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1050_the_monitor_folds_the_noise.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1052_an_absent_source_is_reported.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1053_the_cockpit_follows_the_stream.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1054_every_session_is_told_the_stream.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75070,6 +75761,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:monitor",
+        "target": "capability:monitor.stream",
+        "kind": "composes"
+      },
+      {
         "source": "module:objects",
         "target": "capability:objects.get",
         "kind": "composes"
@@ -75406,8 +76102,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2512,
+      "edges": 5490,
       "acyclic": false,
       "truncated": false
     }

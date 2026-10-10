@@ -354,6 +354,13 @@ pub fn overview(ctx: &Context) -> Page {
         el("div")
             .class("mj-grid")
             .child(four_questions(ctx))
+            .child(card_with(
+                "What is happening",
+                link("/cockpit/monitor", "Monitor"),
+                el("p").class("mj-prose").text(
+                    "Sessions, claims, handovers and reviews on every linked machine, the executor's merges and GitHub's runs: one live list, with what names you first. In a terminal: majordomus monitor --follow.",
+                ),
+            ))
             .child(statistics)
             .child(identity)
             .child(health_card)
@@ -3730,6 +3737,13 @@ pub fn mesh(ctx: &Context) -> Page {
         "Mesh",
         el("div")
             .class("mj-grid")
+            .child(card(
+                "Follow it",
+                el("p")
+                    .class("mj-prose")
+                    .text("Everything this page shows, and the executor's merges and GitHub's runs beside it, as one live list with what names you first: ")
+                    .child(link("/cockpit/monitor", "the monitor")),
+            ))
             .child(card("This node", overview))
             .child(card("Cooperation", coop))
             .child(card(

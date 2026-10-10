@@ -61,6 +61,7 @@ pub mod mesh;
 pub mod metadata;
 pub mod model;
 pub mod models;
+pub(crate) mod monitor;
 pub mod order;
 pub mod pack;
 pub mod peers;

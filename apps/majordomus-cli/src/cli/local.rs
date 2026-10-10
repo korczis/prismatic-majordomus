@@ -341,6 +341,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "asks this checkout's running server for mesh.state and renders the folded cooperation state and its digest.",
     },
     LocalCommand {
+        command: "monitor",
+        reason: LocalReason::RendersCapability("monitor.stream"),
+        note: "asks this checkout's running server for monitor.stream and renders a page, or follows it.",
+    },
+    LocalCommand {
         command: "mesh events",
         reason: LocalReason::RendersCapability("mesh.events"),
         note: "asks this checkout's running server for mesh.events and renders one page of the journal.",

@@ -150,6 +150,12 @@
           "route": "/docs/cli/mesh/"
         },
         {
+          "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
+          "command": "majordomus monitor",
+          "name": "monitor",
+          "route": "/docs/cli/monitor/"
+        },
+        {
           "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
           "command": "majordomus models",
           "name": "models",
@@ -23824,6 +23830,288 @@
       "usage": "majordomus mesh review answer [OPTIONS] <REQUEST>"
     },
     {
+      "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Keep following: ask again every `--interval` seconds and print only what is new",
+          "long": "follow",
+          "name": "follow",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FOLLOW"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Start after this cursor (a page's `cursor`), instead of the newest signals",
+          "long": "after",
+          "name": "after",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AFTER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "At most this many signals per page (default 50, at most 500)",
+          "long": "limit",
+          "name": "limit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIMIT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A comma-separated subset of mesh, executor and github (default: all three)",
+          "long": "sources",
+          "name": "sources",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SOURCES"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR",
+          "long": "for",
+          "name": "reader",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "READER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h)",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SINCE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Keep only signals whose summary contains this text (case-insensitive)",
+          "long": "match",
+          "name": "pattern",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATTERN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Stop following after this many signals",
+          "long": "count",
+          "name": "count",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COUNT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)",
+          "long": "until",
+          "name": "until",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "UNTIL"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d",
+          "long": "timeout",
+          "name": "timeout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TIMEOUT"
+        },
+        {
+          "defaults": [
+            "2"
+          ],
+          "global": false,
+          "help": "Seconds between two asks while following",
+          "long": "interval",
+          "name": "interval",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTERVAL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus monitor",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "monitor",
+            "--since",
+            "30m",
+            "--for",
+            "1b"
+          ],
+          "command": "majordomus monitor --since 30m --for 1b",
+          "description": "One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason.",
+          "expectation": "exits 0; prints no running server",
+          "id": "monitor-page",
+          "setup": [],
+          "title": "What happened in the last half hour"
+        },
+        {
+          "argv": [
+            "monitor",
+            "--follow",
+            "--match",
+            "#885",
+            "--until",
+            "merged",
+            "--timeout",
+            "1s",
+            "--interval",
+            "1"
+          ],
+          "command": "majordomus monitor --follow --match '#885' --until merged --timeout 1s --interval 1",
+          "description": "Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers.",
+          "expectation": "exits 10",
+          "id": "monitor-wait",
+          "setup": [],
+          "title": "Wait for a pull request to merge"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "monitor",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "monitor"
+      ],
+      "route": "/docs/cli/monitor/",
+      "usage": "majordomus monitor [OPTIONS]"
+    },
+    {
       "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
       "ancestors": [
         {
@@ -34067,13 +34355,13 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1486,
+    "commands": 217,
+    "examples": 218,
+    "runnable": 191
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.20.0",
+  "generator_version": "0.21.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

@@ -2120,6 +2120,23 @@
       "tool": "majordomus_models_route"
     },
     {
+      "api_anchor": "/docs/api/monitor/#op-monitor-stream",
+      "claims": [],
+      "cli": null,
+      "id": "monitor.stream",
+      "kind": "query",
+      "module": "monitor",
+      "module_route": "/registry/modules/monitor/",
+      "resource": null,
+      "route": "/registry/capabilities/monitor-stream/",
+      "slug": "monitor-stream",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "tests": [],
+      "title": "Follow everything in one stream",
+      "tool": "majordomus_monitor"
+    },
+    {
       "api_anchor": "/docs/api/objects/#op-objects-get",
       "claims": [
         {
@@ -3907,11 +3924,11 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
+    "capabilities": 185,
     "claims": 89,
-    "modules": 53
+    "modules": 54
   },
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "modules": [
     {
       "capabilities": [
@@ -4862,6 +4879,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
       "title": "Models"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "monitor.stream",
+          "route": "/registry/capabilities/monitor-stream/",
+          "slug": "monitor-stream"
+        }
+      ],
+      "claims": [],
+      "id": "monitor",
+      "route": "/registry/modules/monitor/",
+      "slug": "monitor",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "title": "The monitor"
     },
     {
       "capabilities": [
