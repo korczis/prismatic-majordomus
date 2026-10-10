@@ -3,9 +3,9 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.19.1",
+    "version": "0.20.0",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
-    "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
       "name": "MIT",
       "identifier": "MIT"
@@ -6766,7 +6766,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
-        "x-majordomus-effect": "process_state",
+        "x-majordomus-effect": "repository_mutation",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution_start"
         },
@@ -23593,6 +23593,35 @@
         ],
         "description": "Two things in the answer that do not agree, named rather than silently ordered.\n\nThe compiler could have resolved every disagreement by keeping one side, and for\ndeduplication it does. A conflict is what is left when both sides are legitimately in\nthe answer and they still do not agree — so the resolution belongs to the session\nreading it, and the compiler's job is to make sure the disagreement is visible rather\nthan implied by the order of two rows.\n\n`current` is the side the compiler treats as current, which is a statement about\nrecency, not correctness: `supersedes` means the layer declared one to replace the other,\n`version` means two versions of one thing are both here.\n\n```\nuse majordomus_cli::devcontext::Conflict;\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |current: &str, against: &str, kind: &str| -> Conflict {\n    serde_json::from_value(json!({\n        \"current\": current, \"against\": against, \"kind\": kind,\n        \"detail\": \"both are in the answer and they disagree\",\n    })).unwrap()\n};\n\nlet mut conflicts = vec![\n    row(\"majordomus://rule/project.x@2\", \"majordomus://rule/project.x@1\", \"version\"),\n    row(\"majordomus://adr/0052\", \"majordomus://adr/0031\", \"supersedes\"),\n];\ncanonical(&mut conflicts);\n\n// filed under the kind of disagreement, so like reads with like\nlet kinds: Vec<&str> = conflicts.iter().map(|c| c.kind.as_str()).collect();\nassert_eq!(kinds, [\"supersedes\", \"version\"]);\n\n// and both sides are always named: the pair is the fact, not the winner alone\nfor c in &conflicts {\n    assert_ne!(c.current, c.against);\n    assert!(!c.detail.is_empty());\n}\n```"
       },
+      "ConnectionCounts": {
+        "type": "object",
+        "properties": {
+          "read_deadline_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "`server.read_deadline_seconds:` as this process applies it."
+          },
+          "closed_by_deadline": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Connections closed because no request was read in full on them within the deadline."
+          },
+          "refused_busy": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Requests answered 503 because every request handler was busy."
+          }
+        },
+        "required": [
+          "read_deadline_seconds",
+          "closed_by_deadline",
+          "refused_busy"
+        ],
+        "description": "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
+      },
       "ConnectionEpisode": {
         "type": "object",
         "properties": {
@@ -30820,7 +30849,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+            "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
           },
           "message": {
             "type": "string",
@@ -31312,6 +31341,10 @@
           "concurrency": {
             "$ref": "#/components/schemas/ExecutionConcurrency",
             "description": "Whether two of them may overlap."
+          },
+          "signed_input": {
+            "type": "boolean",
+            "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
           }
         },
         "required": [
@@ -36539,6 +36572,20 @@
             "format": "uint64",
             "minimum": 0,
             "description": "The highest Lamport stamp seen."
+          },
+          "write_failures": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+            "default": 0
+          },
+          "unreadable": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+            "default": 0
           }
         },
         "required": [
@@ -51480,6 +51527,17 @@
               "$ref": "#/components/schemas/ServerView"
             },
             "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+          },
+          "connections": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionCounts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
           }
         },
         "required": [
@@ -51488,7 +51546,7 @@
           "standing",
           "servers"
         ],
-        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
       },
       "ServerView": {
         "type": "object",
@@ -56490,7 +56548,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.19.1",
+    "generator": "majordomus-cli 0.20.0",
     "infrastructure": [
       {
         "id": "home",
@@ -56560,5 +56618,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.19.1"
+  "x-majordomus-generator": "majordomus-cli 0.20.0"
 }

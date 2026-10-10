@@ -125,6 +125,25 @@ before "$derived" "$staged_all" "the projections are staged before the derivatio
 before "$staged_all" "$checked" "scripts/derive-check judges the tree before what will be committed is staged"
 before "$checked" "$pushed" "the record branch is pushed before scripts/derive-check judged it"
 before "$checked" "$proposed" "the record pull request is opened before scripts/derive-check judged it"
+
+# The staging command itself has to succeed, not only stand in the right place. git refuses a
+# pathspec that names an ignored path, exit 1, so when #855 ignored /dist/ the publish job's
+# `git add -A -- . ':(exclude)dist'` died under bash -e before derive-check ran, and v0.20.0
+# was published with no record. The line is run as the workflow states it, in a repository
+# carrying this one's .gitignore beside a downloaded dist/ and an unstaged record: it must exit
+# 0, stage the record, and stage nothing under dist/.
+stage_cmd="$(sed -n "${staged_all}p" "$WF" | sed 's/^[ \t]*//; s/^run:[ \t]*//')"
+sandbox="$(mktemp -d "${TMPDIR:-/tmp}/mj-release-stage.XXXXXX")"
+trap 'rm -rf "$sandbox"' EXIT
+(
+  cd "$sandbox" && git init -q . && cp "$ROOT/.gitignore" .gitignore
+  mkdir -p dist .ai/repo/releases && : > dist/majordomus.tar.gz && : > .ai/repo/releases/v0.0.1.yaml
+  sh -c "$stage_cmd" > out.txt 2>&1
+) || { echo "    the publication job's staging command fails beside dist/: $stage_cmd"; sed 's/^/      /' "$sandbox/out.txt"; exit 1; }
+git -C "$sandbox" diff --cached --name-only | grep -qx '.ai/repo/releases/v0.0.1.yaml' \
+  || { echo "    the publication job's staging command does not stage the record"; exit 1; }
+git -C "$sandbox" diff --cached --name-only | grep -q '^dist/' \
+  && { echo "    the publication job's staging command stages the downloaded artifacts"; exit 1; }
 awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && /continue-on-error/{found=1} END{exit found}' "$WF" \
   || { echo "    a publication step may fail without failing the job; a refused derive-check must stop the proposal"; exit 1; }
 # ...and its verdict is the job's. Running before the push is not judging: `|| true`, a branch

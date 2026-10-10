@@ -534,4 +534,8 @@ pub struct ServerPolicy {
     /// on, and asked again, before its lease is taken over.
     #[serde(default)]
     pub busy_grace_seconds: Option<u64>,
+    /// `server.read_deadline_seconds:` — how long the shared server lets a connection go
+    /// without a request read in full on it before it closes the connection.
+    #[serde(default)]
+    pub read_deadline_seconds: Option<u64>,
 }

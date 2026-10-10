@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "modules": [
     {
       "id": "artifacts",
@@ -1409,6 +1409,10 @@
                 "concurrency": {
                   "$ref": "#/$defs/ExecutionConcurrency",
                   "description": "Whether two of them may overlap."
+                },
+                "signed_input": {
+                  "type": "boolean",
+                  "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
                 }
               },
               "required": [
@@ -25831,7 +25835,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -26834,7 +26838,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -27116,7 +27120,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -27759,7 +27763,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -28508,7 +28512,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -28821,7 +28825,7 @@
         "policy": "disabled"
       },
       "execution": {
-        "effect": "process_state",
+        "effect": "repository_mutation",
         "cancellable": false,
         "concurrency": "serial"
       },
@@ -42338,6 +42342,20 @@
                   "format": "uint64",
                   "minimum": 0,
                   "description": "The highest Lamport stamp seen."
+                },
+                "write_failures": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+                  "default": 0
+                },
+                "unreadable": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+                  "default": 0
                 }
               },
               "required": [
@@ -43369,7 +43387,8 @@
       "execution": {
         "effect": "process_state",
         "cancellable": false,
-        "concurrency": "serial"
+        "concurrency": "serial",
+        "signed_input": true
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
@@ -43580,7 +43599,8 @@
       "execution": {
         "effect": "process_state",
         "cancellable": false,
-        "concurrency": "serial"
+        "concurrency": "serial",
+        "signed_input": true
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
@@ -45797,7 +45817,8 @@
       "execution": {
         "effect": "process_state",
         "cancellable": false,
-        "concurrency": "serial"
+        "concurrency": "serial",
+        "signed_input": true
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
@@ -67620,6 +67641,17 @@
                 "$ref": "#/$defs/ServerView"
               },
               "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+            },
+            "connections": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ConnectionCounts"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
             }
           },
           "required": [
@@ -67628,7 +67660,7 @@
             "standing",
             "servers"
           ],
-          "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+          "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
           "title": "ServerStatus",
           "$defs": {
             "GitIdentity": {
@@ -67859,6 +67891,35 @@
                 "standing"
               ],
               "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+            },
+            "ConnectionCounts": {
+              "type": "object",
+              "properties": {
+                "read_deadline_seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "`server.read_deadline_seconds:` as this process applies it."
+                },
+                "closed_by_deadline": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Connections closed because no request was read in full on them within the deadline."
+                },
+                "refused_busy": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Requests answered 503 because every request handler was busy."
+                }
+              },
+              "required": [
+                "read_deadline_seconds",
+                "closed_by_deadline",
+                "refused_busy"
+              ],
+              "description": "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
             }
           }
         }
