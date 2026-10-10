@@ -1,7 +1,7 @@
 +++
 title = "A plan carries the intent it serves, and is reviewed before it is executed"
 description = "A plan carries the intent it serves, and is reviewed before it is executed"
-weight = 64
+weight = 65
 [extra]
 kind = "rule"
 slug = "project-a-plan-carries-the-intent-it-serves-1"

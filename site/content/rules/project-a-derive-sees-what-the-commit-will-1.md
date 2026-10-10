@@ -1,7 +1,7 @@
 +++
 title = "A derive sees what the commit will"
 description = "A derive sees what the commit will"
-weight = 61
+weight = 62
 [extra]
 kind = "rule"
 slug = "project-a-derive-sees-what-the-commit-will-1"

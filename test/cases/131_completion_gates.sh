@@ -142,9 +142,9 @@ git checkout -q -- lib/a.sh
 [ "$(status_of unit)" = pass ] || { echo "    reverting the edit did not restore the run"; exit 1; }
 
 # ---------------------------------------------------------------- the done invariant
-# Nineteen questions, each with the source that answered it and the evidence it read.
-[ "$(completion | jq -r '.questions | length')" = 19 ] \
-  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, not 19"; exit 1; }
+# Twenty-two questions, each with the source that answered it and the evidence it read.
+[ "$(completion | jq -r '.questions | length')" = 22 ] \
+  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, not 22"; exit 1; }
 completion | jq -e '[.questions[] | select((.source | length) == 0 or (.evidence | length) == 0)] | length == 0' >/dev/null \
   || { echo "    a question carries no source or no evidence"; exit 1; }
 # every gate has reported and passed, so the CI question passes and says what it read

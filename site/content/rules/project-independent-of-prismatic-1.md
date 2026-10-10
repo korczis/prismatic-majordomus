@@ -1,7 +1,7 @@
 +++
 title = "Independent of Prismatic"
 description = "Independent of Prismatic"
-weight = 106
+weight = 107
 [extra]
 kind = "rule"
 slug = "project-independent-of-prismatic-1"

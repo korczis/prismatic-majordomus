@@ -801,13 +801,33 @@ branch-breaking defects overnight because they looked identical
 (`majordomus.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the nineteen questions of the done invariant with the source that answered each
-— is one document, `gates.completion`, read the same way by the command line, the HTTP API,
-MCP and the Cockpit:
+implies, and the twenty-two questions of the done invariant with the source that answered
+each — is one document, `gates.completion`, read the same way by the command line, the HTTP
+API, MCP and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+### The closing questions
+
+Three of those questions are the ones a person asks when a session ends, and a worker is
+not their source (`project.a-closing-question-is-answered-by-measurement`). Each is read
+from the record that holds the fact, measured from where the task started:
+
+| question | asks | read from | when it is not `pass` |
+|---|---|---|---|
+| `no-new-debt` | is the recorded debt no larger than when the task started? | the entries of every `.ai/repo/*-baseline.txt` at the commit the task started at and in the working tree | `fail`, naming each baseline that grew and by how much |
+| `nothing-accumulated` | has every branch and worktree created since gone again? | git's reflogs: when each local branch and each linked worktree began | `queued`, naming what remains, with the totals now |
+| `backlog-not-grown` | has every pull request opened since been closed? | the recorded forge observation (`majordomus prs refresh`) | `queued`, numbering them; `unknown` when the forge was not observed since the task started |
+
+They are the repository's readings, not one worker's: git does not say who created a
+branch, so a branch another session created since the task started is counted. A reading
+that could not be taken is `unknown` and says why; it is never a `pass`. `majordomus check`
+names each question still owed as `id=status` on its `done` line, so the answer to "is
+everything done, and did this leave the repository bigger than it found it?" is one command
+and not a recollection; the evidence behind each word is in the `questions` of the document
+above.
 
 ## `majordomus checkpoint`
 

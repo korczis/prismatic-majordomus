@@ -3093,6 +3093,19 @@
       "source_route": "/docs/reasoning/",
       "command": null,
       "test_case": "736_reasoning_check_refuses_drift"
+    },
+    {
+      "id": "the-closing-question-is-measured",
+      "claim": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
+      "source": "docs/CLI.md",
+      "implementation": "apps/majordomus-cli/src/gates/closing.rs",
+      "test": "test/cases/1037_the_closing_question_is_measured.sh",
+      "status": "guaranteed",
+      "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass.",
+      "responsibility": "none",
+      "source_route": "/docs/cli/",
+      "command": null,
+      "test_case": "1037_the_closing_question_is_measured"
     }
   ]
 }

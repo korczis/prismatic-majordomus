@@ -2559,6 +2559,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/gates/closing.rs",
+        "kind": "file",
+        "label": "closing.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/gates/closing.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/generate.rs",
         "kind": "file",
         "label": "generate.rs",
@@ -10458,6 +10466,22 @@
         }
       },
       {
+        "id": "majordomus://claim/the-closing-question-is-measured",
+        "kind": "claim",
+        "label": "the-closing-question-is-measured",
+        "summary": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
+        "route": "/cockpit/objects/claim/the-closing-question-is-measured",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/gates/closing.rs",
+          "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass.",
+          "responsibility": "none",
+          "source": "docs/CLI.md",
+          "test": "test/cases/1037_the_closing_question_is_measured.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/token-savings-measured",
         "kind": "claim",
         "label": "token-savings-measured",
@@ -15246,6 +15270,14 @@
         "summary": "Execution telemetry will be recorded once a provider exposes it honestly",
         "route": "/cockpit/objects/document/docs-claims-telemetry-md",
         "source": "docs/claims/telemetry.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/the-closing-question-is-measured.md",
+        "kind": "document",
+        "label": "docs/claims/the-closing-question-is-measured.md",
+        "summary": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
+        "route": "/cockpit/objects/document/docs-claims-the-closing-question-is-measured-md",
+        "source": "docs/claims/the-closing-question-is-measured.md"
       },
       {
         "id": "majordomus://document/docs/claims/token-savings-measured.md",
@@ -30391,6 +30423,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I2301",
+        "kind": "issue",
+        "label": "I2301",
+        "summary": "Whether the work is done is answered by measurement: the done invariant asks about debt, what was left behind and the backlog",
+        "route": "/cockpit/objects/issue/i2301",
+        "source": ".ai/repo/project/issues/I2301.yaml",
+        "facts": {
+          "completed_at": "2026-10-10T21:56:14Z",
+          "completed_event": "sha256:9ada14f9b4cd901f913fa115725796be0e940db622d367a34c0b4d3bc23f8c64",
+          "created_at": "2026-10-10",
+          "depends_on": [],
+          "evidence_required": [
+            "closing_readings_unit_tests",
+            "the_closing_question_is_measured_case"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/gates/closing.rs",
+            "apps/majordomus-cli/src/gates/done.rs",
+            "apps/majordomus-cli/src/gates/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            ".ai/repo/rules/project",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "lib/gates.sh",
+            "docs/CLI.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/the-closing-question-is-measured.md",
+            "test/cases/1037_the_closing_question_is_measured.sh",
+            "test/cases/131_completion_gates.sh"
+          ],
+          "slug": "the-closing-question-is-measured",
+          "started_at": "2026-10-10T21:36:49Z",
+          "started_event": "sha256:458b8138a56ee668c18de49041365fcc0f928b71ef79cf03002a0a6a9578a5a1",
+          "updated_at": "2026-10-10T21:56:14Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 1037_the_closing_question_is_measured",
+            "MJ_TEST_JOBS=4 bash test/run.sh 131_completion_gates",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
+          ],
+          "verified_at": "2026-10-10T21:36:58Z",
+          "verified_event": "sha256:a11b865d8abc5c70cb62a2d56ed522173558ec3dbabf736fbe7929e13256d71d"
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -36410,6 +36490,30 @@
             "campaigns",
             "evidence",
             "records"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+        "kind": "rule",
+        "label": "project.a-closing-question-is-answered-by-measurement@1",
+        "summary": "Whether the work is done is answered by measurement, never by the worker's recollection",
+        "route": "/cockpit/objects/rule/project-a-closing-question-is-answered-by-measurement-1",
+        "source": ".ai/repo/rules/project/a-closing-question-is-answered-by-measurement.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.a-worker-that-stops-leaves-its-work-behind@2",
+            "project.never-reported-is-not-green@1",
+            "project.accumulation-is-measured@2",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "process",
+            "integration",
+            "evidence",
+            "agents"
           ]
         }
       },
@@ -43033,6 +43137,13 @@
         "label": "test/cases/102_completion_shell.sh",
         "route": "/cockpit/objects/test/test-cases-102-completion-shell-sh",
         "source": "test/cases/102_completion_shell.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1037_the_closing_question_is_measured.sh",
+        "kind": "test",
+        "label": "test/cases/1037_the_closing_question_is_measured.sh",
+        "route": "/cockpit/objects/test/test-cases-1037-the-closing-question-is-measured-sh",
+        "source": "test/cases/1037_the_closing_question_is_measured.sh"
       },
       {
         "id": "majordomus://test/test/cases/103_obligations.sh",
@@ -59270,6 +59381,26 @@
         "kind": "defined_in"
       },
       {
+        "source": "majordomus://claim/the-closing-question-is-measured",
+        "target": "file:apps/majordomus-cli/src/gates/closing.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/the-closing-question-is-measured",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/the-closing-question-is-measured",
+        "target": "majordomus://document/docs/CLI.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/the-closing-question-is-measured",
+        "target": "majordomus://test/test/cases/1037_the_closing_question_is_measured.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/token-savings-measured",
         "target": "kind:claim",
         "kind": "is_a"
@@ -61756,6 +61887,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/telemetry.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/the-closing-question-is-measured.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66615,6 +66751,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2301",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2301",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -67732,6 +67878,31 @@
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-closing-question-is-answered-by-measurement@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
         "kind": "depends_on"
       },
       {
@@ -69701,6 +69872,11 @@
       },
       {
         "source": "majordomus://test/test/cases/102_completion_shell.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1037_the_closing_question_is_measured.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75406,8 +75582,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2499,
+      "edges": 5459,
       "acyclic": false,
       "truncated": false
     }

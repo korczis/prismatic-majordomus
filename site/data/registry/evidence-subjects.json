@@ -2069,6 +2069,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:the-closing-question-is-measured",
+      "path": "/evidence/claims/the-closing-question-is-measured/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:token-savings-measured",
       "path": "/evidence/claims/token-savings-measured/"
     },
@@ -10741,6 +10746,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:the-closing-question-is-measured": {
+      "kind": "claim",
+      "id": "the-closing-question-is-measured",
+      "status": "guaranteed",
+      "page": "/evidence/claims/the-closing-question-is-measured/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1037_the_closing_question_is_measured",
+          "path": "test/cases/1037_the_closing_question_is_measured.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/CLI.md",
+            "apps/majordomus-cli/src/gates/closing.rs",
+            "test/cases/1037_the_closing_question_is_measured.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:token-savings-measured": {
       "kind": "claim",
       "id": "token-savings-measured",
@@ -11568,6 +11596,12 @@
           "via": "behaviour",
           "test": "suite:04_start_check",
           "path": "test/cases/04_start_check.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:1037_the_closing_question_is_measured",
+          "path": "test/cases/1037_the_closing_question_is_measured.sh",
           "category": "e2e"
         },
         {
@@ -21210,6 +21244,37 @@
       "mechanisms": [
         "scripts/ci/campaigns-check"
       ],
+      "findings": []
+    },
+    "rule:project.a-closing-question-is-answered-by-measurement": {
+      "kind": "rule",
+      "id": "project.a-closing-question-is-answered-by-measurement",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1037_the_closing_question_is_measured",
+          "path": "test/cases/1037_the_closing_question_is_measured.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1037_the_closing_question_is_measured.sh",
+            ".ai/repo/rules/project/a-closing-question-is-answered-by-measurement.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:131_completion_gates",
+          "path": "test/cases/131_completion_gates.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/131_completion_gates.sh",
+            ".ai/repo/rules/project/a-closing-question-is-answered-by-measurement.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.a-derive-sees-what-the-commit-will": {
