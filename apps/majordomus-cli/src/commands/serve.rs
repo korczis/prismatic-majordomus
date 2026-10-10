@@ -135,6 +135,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let mut idle_since = Instant::now();
         loop {
             std::thread::sleep(Duration::from_secs(1));
+            if superseded_and_alone(&shared) {
+                break;
+            }
             if shared.peers_attached() > 0 {
                 idle_since = Instant::now();
             } else if idle_since.elapsed() >= idle {
@@ -150,11 +153,24 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         loop {
             std::thread::sleep(Duration::from_secs(1));
             shared.endpoint().reap();
+            if superseded_and_alone(&shared) {
+                break;
+            }
         }
     }
     shared.wait_until_peers_leave();
     shared.stop();
     Ok(0)
+}
+
+/// A server whose lease another process took, once its last session has been handed on, has
+/// nothing left to serve and ends (I2127).
+fn superseded_and_alone(shared: &crate::shared::SharedServer) -> bool {
+    let alone = lease::was_lost() && shared.peers_attached() == 0;
+    if alone {
+        tracing::info!("this server lost the lease and its last session was handed on; stopping");
+    }
+    alone
 }
 
 /// `serve status`: the projection of `server.status`, asked of the running server when

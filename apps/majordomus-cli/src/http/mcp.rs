@@ -135,6 +135,23 @@ impl McpEndpoint {
                 )
             }
         };
+        // A server that lost the checkout's lease answers its sessions for the busy grace and
+        // then hands each one on: the session is closed and answered 404, the client's bridge
+        // opens a new one, is refused 409 lease_lost, elects, and attaches to the current
+        // server. Without this, the bridges' pings kept the superseded server alive forever,
+        // and its clients on the code it was started from (I2127).
+        if crate::lease::lost_for().is_some_and(|age| age >= crate::lease::timings().busy_grace) {
+            if let Some(gone) = self.sessions().remove(&id) {
+                self.surface.context().episodes.detach(&gone.peer);
+                self.surface.context().peers.detach(&gone.peer);
+                tracing::info!(session = %id, peer = %gone.peer, "session handed on: this server lost the lease");
+            }
+            return Response::error(
+                404,
+                "session_not_found",
+                "this server lost the checkout's lease and has handed the session on; open a new session through the launcher, whose election finds the current server",
+            );
+        }
         *lock(&session.last_seen) = Instant::now();
         let response = lock(&session.server).handle(message);
         let mut out = match response {

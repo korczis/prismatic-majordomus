@@ -116,7 +116,7 @@ lease no longer carries its token:
 | its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
 | the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
 | it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
-| its open sessions continue | they are its own until they end, and the process ends with them |
+| its open sessions are handed on | they are answered for the declared busy grace (`server.busy_grace_seconds`), so a request in flight and the ones behind it finish where they started; after it, each session is closed and answered 404, the client's bridge opens a new one, is refused 409 `lease_lost` and elects the current server; with no session left the superseded process ends (I2127) |
 
 A server too old to answer the third question is accepted by the probe. It cannot be told
 from a current one on that endpoint, and refusing it would be the worse failure: a live
@@ -216,7 +216,7 @@ an abandoned one; a take-over removes only the file it judged, never one that ar
 meantime; an owner whose lease was taken over while it was binding refuses to publish and
 degrades, rather than writing over the winner's address; and a server whose lease is taken
 over later stops claiming it — its signal handler no longer unlinks the file, which is
-somebody else's — serves the peers it has, and ends with them. The server's own reader also
+somebody else's — serves the peers it has for the busy grace, hands each of them on to the current server, and ends. The server's own reader also
 forgets the HTTP sessions that stopped pinging on every path, not only while the owner
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 

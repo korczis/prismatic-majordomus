@@ -818,6 +818,7 @@ pub const LEASEHOLDER_KEY: &str = "leaseholder";
 /// assert!(majordomus_cli::lease::was_lost(), "it was told the lease is gone");
 /// ```
 pub fn lost() {
+    let _ = LOST_AT.set(Instant::now());
     LOST.store(true, Ordering::SeqCst);
     if let Ok(mut published) = published().lock() {
         *published = None;
@@ -840,6 +841,22 @@ pub fn lost() {
 /// ```
 pub fn was_lost() -> bool {
     LOST.load(Ordering::SeqCst)
+}
+
+static LOST_AT: OnceLock<Instant> = OnceLock::new();
+
+/// How long ago this process lost the checkout's lease, when it did.
+///
+/// A superseded server keeps answering its sessions for the declared busy grace, so that a
+/// request in flight and the few that follow it finish where they started; after that every
+/// session is handed on (I2127).
+///
+/// ```
+/// // a process that never lost a lease has no such age
+/// assert!(majordomus_cli::lease::lost_for().is_none() || majordomus_cli::lease::was_lost());
+/// ```
+pub fn lost_for() -> Option<Duration> {
+    LOST_AT.get().map(Instant::elapsed)
 }
 
 /// Does a Majordomus server answer at `url` for the repository at `root`, *as* that

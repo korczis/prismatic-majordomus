@@ -1,0 +1,33 @@
+id: I2127
+milestone: runtime-lifecycle
+title: "A server that lost its lease hands its sessions on and ends"
+slug: a-lost-server-hands-on-and-ends
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make a server that lost or was superseded in its lease answer its existing MCP sessions with session-not-found after a bounded in-flight grace, so their bridges re-attach to the current leaseholder and the old process reaches its own end."
+why: "A lost or superseded server keeps serving its existing sessions 'and ends with them' (apps/majordomus-cli/src/http/mcp.rs:113-118). Bridges ping every 20 s (apps/majordomus-cli/src/mcp/bridge.rs:19) and the serve loop counts bridged sessions as attached (apps/majordomus-cli/src/commands/serve.rs:136-146), so a server running replaced code never idles out while any bridge lives, and its clients stay on old code until they exit. docs/MCP.md:48 (the ping) and :50 (the server ends when the last peer goes) together make a superseded server immortal; :118 says only that 'the process ends with them'. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 4 and drift 7."
+current_state: "After a supersession, a new initialize gets 409 lease_lost (apps/majordomus-cli/src/http/mcp.rs:119-128, apps/majordomus-cli/tests/lease_lost.rs::a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new), but sessions opened before it are served indefinitely."
+desired_state: "lease::lost records when; for the declared busy grace a superseded server answers its sessions, then closes each one on its next request with 404 session_not_found, which the bridge answers by opening a session, being refused 409 lease_lost and electing the current server; serve ends once it holds no session (superseded_and_alone). A request in flight is answered where it started. Not measured here: the full client path through a real bridge to the new leaseholder (the 404 path it relies on is the bridge's existing one, tested in mcp_shared)."
+scope:
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/tests/lease_lost.rs"
+  - "apps/majordomus-cli/tests/mcp_shared.rs"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A bridged client attached to a server whose lease is then taken over is answered by the new leaseholder within the declared grace, with no request lost"
+  - "The superseded process exits by itself after its sessions moved, while the bridges are still alive"
+  - "A request in flight at the moment of supersession receives its own answer, not a 404"
+  - "docs/MCP.md states the grace and that a lost server ends"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test lease_lost --test mcp_shared"
+evidence_required:
+  - "lost_server_hands_sessions_on_test"
+  - "superseded_server_exits_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09
