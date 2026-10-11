@@ -57,7 +57,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
-| CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model` |
+| CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list`; `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report` |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
@@ -223,7 +223,8 @@ part of the screen answers the same question as the rest of it.
   the executor and following its run live is the execution control plane of the V4 pack.
   An action on a mesh node is the same, behind the executor (V5); the inspector says so.
 - There is no Settings screen: no capability holds a reader's settings.
-- No capability records per-run CI timings, so the CI/CD screen draws no build-time chart and
-  says why.
+- CI timings are what the open pull requests' latest runs took, measured from the recorded
+  forge observation (`integration.timings`); there is no history of runs yet, so no trend is
+  drawn.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
 {% endraw %}

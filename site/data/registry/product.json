@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "0c267c28157aa9c52eccd238d2304fd8ca3532c5c31657ec99a665eb90a00f32",
+  "fingerprint": "eb745b5ac00961a663997ac61faf52c4f10f97a56865bbbe3ee45364db2b6b9f",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 63,
+        "capabilities": 64,
         "moments": 17
       },
       "evidence": {
@@ -4727,6 +4727,14 @@
               "tool": "majordomus_pull_requests",
               "route": "GET /api/v1/pull-requests",
               "cli": "majordomus prs status"
+            },
+            {
+              "id": "integration.timings",
+              "title": "How long CI takes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_ci_timings",
+              "route": "GET /api/v1/pull-requests/timings"
             }
           ]
         }
@@ -4989,10 +4997,10 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 12,
-        "mcp_tools": 12,
+        "capabilities": 13,
+        "mcp_tools": 13,
         "mcp_resources": 2,
-        "http_routes": 12,
+        "http_routes": 13,
         "cli_paths": 9,
         "commands": 3,
         "objects": 0,
@@ -9685,6 +9693,14 @@
               "tool": "majordomus_pull_requests",
               "route": "GET /api/v1/pull-requests",
               "cli": "majordomus prs status"
+            },
+            {
+              "id": "integration.timings",
+              "title": "How long CI takes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_ci_timings",
+              "route": "GET /api/v1/pull-requests/timings"
             }
           ]
         },
@@ -10334,10 +10350,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 88,
-        "mcp_tools": 82,
+        "capabilities": 89,
+        "mcp_tools": 83,
         "mcp_resources": 16,
-        "http_routes": 86,
+        "http_routes": 87,
         "cli_paths": 37,
         "commands": 0,
         "objects": 0,
@@ -11782,7 +11798,7 @@
         },
         {
           "name": "issue",
-          "objects": 283
+          "objects": 284
         },
         {
           "name": "intent",
@@ -11984,11 +12000,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 319,
+        "mcp_resources": 320,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 316,
+        "objects": 317,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15684,7 +15700,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (283)",
+        "title": "issue (284)",
         "features": [
           "planning"
         ]
@@ -16676,17 +16692,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2136,
-    "builtin": 184,
-    "declarative": 1952,
+    "capabilities": 2139,
+    "builtin": 185,
+    "declarative": 1954,
     "modules": 53,
-    "mcp_tools": 177,
-    "mcp_resources": 2006,
-    "http_routes": 181,
+    "mcp_tools": 178,
+    "mcp_resources": 2008,
+    "http_routes": 182,
     "cli_commands": 190,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1952,
+    "objects": 1954,
     "by_kind": {
       "adr": 87,
       "application": 5,
@@ -16704,7 +16720,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 283,
+      "issue": 284,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 30,
@@ -16718,7 +16734,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 417,
+      "test": 418,
       "use-case": 48,
       "workspace": 1
     },

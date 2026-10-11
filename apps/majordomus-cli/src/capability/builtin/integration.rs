@@ -52,6 +52,17 @@ pub struct IntegrationStatus {
     pub throughput: IntegrationThroughput,
 }
 
+/// How long CI takes on the open pull requests, or why it is not known.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntegrationTimings {
+    /// Whether a forge observation is recorded in this checkout.
+    pub observed: bool,
+    /// Why there are no timings, when there are none.
+    pub reason: Option<String>,
+    /// The timings measured from the observation, when there is one.
+    pub timings: Option<crate::integration::timings::CiTimings>,
+}
+
 /// What cleanup would do, decided offline: the pull requests it would close or leave for a
 /// person, from the recorded observation, and the last branch report `prs cleanup` recorded.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -235,6 +246,28 @@ fn integration_cleanup(ctx: &Context, _: Empty) -> Result<IntegrationCleanup, Ca
     Ok(cleanup_status(root(ctx), now))
 }
 
+fn integration_timings(ctx: &Context, _: Empty) -> Result<IntegrationTimings, CapabilityError> {
+    Ok(match crate::integration::load_observation(root(ctx)) {
+        Ok(Some(obs)) => IntegrationTimings {
+            observed: true,
+            reason: None,
+            timings: Some(crate::integration::timings::timings(&obs)),
+        },
+        Ok(None) => IntegrationTimings {
+            observed: false,
+            reason: Some(
+                "no forge observation is recorded in this checkout; majordomus prs refresh".into(),
+            ),
+            timings: None,
+        },
+        Err(e) => IntegrationTimings {
+            observed: false,
+            reason: Some(e),
+            timings: None,
+        },
+    })
+}
+
 fn integration_prove_dry_run(
     ctx: &Context,
     _: Empty,
@@ -313,6 +346,22 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["integration", "pull-requests", "cleanup"],
                 cache: CachePolicy::Disabled,
                 handler: integration_cleanup,
+            },
+            capability! {
+                id: "integration.timings",
+                title: "How long CI takes",
+                description: "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+                input: Empty,
+                output: IntegrationTimings,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_ci_timings"),
+                    http: get("/api/v1/pull-requests/timings"),
+                    cli: None,
+                },
+                tags: ["integration", "pull-requests", "ci", "timings"],
+                cache: CachePolicy::Disabled,
+                handler: integration_timings,
             },
             capability! {
                 id: "integration.prove_dry_run",

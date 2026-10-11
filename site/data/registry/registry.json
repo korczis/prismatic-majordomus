@@ -6,27 +6,27 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "ab481328c0fd2f004d26ce5e268b516baa86a5cce410551ba4f6685718987428",
+    "fingerprint": "c6161ab2a3a41d0736b862da78bce986295976ef6c5f62342b3dc6bbb0abeba9",
     "summary": {
-      "total": 2136,
-      "builtin": 184,
-      "declarative": 1952,
+      "total": 2139,
+      "builtin": 185,
+      "declarative": 1954,
       "by_kind": {
         "command": 26,
-        "query": 158,
-        "resource": 1952
+        "query": 159,
+        "resource": 1954
       },
       "by_stability": {
         "behaviorally_verified": 132,
-        "experimental": 44,
-        "implemented": 1960
+        "experimental": 45,
+        "implemented": 1962
       },
-      "mcp_tools": 177,
-      "mcp_resources": 2006,
-      "http_routes": 181,
+      "mcp_tools": 178,
+      "mcp_resources": 2008,
+      "http_routes": 182,
       "cli_commands": 101,
       "modules": 86,
-      "benchmark_required": 160,
+      "benchmark_required": 161,
       "benchmark_waived": 24,
       "cached": 41
     },
@@ -34359,6 +34359,245 @@
           "pull-requests",
           "git",
           "queue"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs"
+      },
+      {
+        "id": "integration.timings",
+        "module": "integration",
+        "kind": "query",
+        "title": "How long CI takes",
+        "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "IntegrationTimings",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "observed": {
+                "type": "boolean",
+                "description": "Whether a forge observation is recorded in this checkout."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why there are no timings, when there are none."
+              },
+              "timings": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CiTimings"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The timings measured from the observation, when there is one."
+              }
+            },
+            "required": [
+              "observed"
+            ],
+            "description": "How long CI takes on the open pull requests, or why it is not known.",
+            "title": "IntegrationTimings",
+            "$defs": {
+              "CiTimings": {
+                "type": "object",
+                "properties": {
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the forge was observed, RFC 3339: the moment these timings describe."
+                  },
+                  "measured_runs": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Check runs measured, across every check and head."
+                  },
+                  "unmeasured_runs": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Check runs the observation holds without both a start and a completion: running,\nqueued, or recorded before starts were read. Counted, never measured as zero."
+                  },
+                  "checks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/CheckTiming"
+                    },
+                    "description": "Every check, the slowest median first."
+                  },
+                  "heads": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/HeadTiming"
+                    },
+                    "description": "Every head with a measured check, the longest wall time first."
+                  }
+                },
+                "required": [
+                  "observed_at",
+                  "measured_runs",
+                  "unmeasured_runs",
+                  "checks",
+                  "heads"
+                ],
+                "description": "CI timings over every open head the observation holds."
+              },
+              "CheckTiming": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The check's name, as the forge reports it."
+                  },
+                  "runs": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Runs that started and completed, so were measured."
+                  },
+                  "passed": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Of those, how many passed."
+                  },
+                  "failed": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Of those, how many failed."
+                  },
+                  "median_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The median duration, in seconds."
+                  },
+                  "p90_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The 90th percentile duration (nearest rank), in seconds."
+                  },
+                  "slowest_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The longest run, in seconds."
+                  }
+                },
+                "required": [
+                  "name",
+                  "runs",
+                  "passed",
+                  "failed",
+                  "median_seconds",
+                  "p90_seconds",
+                  "slowest_seconds"
+                ],
+                "description": "How one check takes, across the open heads that ran it."
+              },
+              "HeadTiming": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request."
+                  },
+                  "head_sha": {
+                    "type": "string",
+                    "description": "The head the checks ran on."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When its first measured check started, RFC 3339."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When its last measured check completed, RFC 3339."
+                  },
+                  "wall_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The wall time between them, in seconds: what a reader waited for CI on this head."
+                  },
+                  "slowest_check": {
+                    "type": "string",
+                    "description": "The measured check that took longest."
+                  },
+                  "slowest_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long it took, in seconds."
+                  },
+                  "failed": {
+                    "type": "boolean",
+                    "description": "Whether any measured check on the head failed."
+                  }
+                },
+                "required": [
+                  "number",
+                  "head_sha",
+                  "started_at",
+                  "completed_at",
+                  "wall_seconds",
+                  "slowest_check",
+                  "slowest_seconds",
+                  "failed"
+                ],
+                "description": "How long CI took on one open pull request's head: from its first check's start to its last\ncheck's completion, and the check that took longest."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::integration"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_ci_timings"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/pull-requests/timings"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "integration",
+          "pull-requests",
+          "ci",
+          "timings"
         ],
         "benchmark": {
           "policy": "required"
@@ -75489,13 +75728,14 @@
         "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": [
           "integration.cleanup",
           "integration.events",
           "integration.explain",
           "integration.prove_dry_run",
-          "integration.queue"
+          "integration.queue",
+          "integration.timings"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs"
       },
@@ -75552,7 +75792,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 283,
+        "capabilities": 284,
         "capability_ids": []
       },
       {
@@ -76087,7 +76327,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 417,
+        "capabilities": 418,
         "capability_ids": []
       },
       {
@@ -76177,7 +76417,7 @@
     ]
   },
   "index": {
-    "fingerprint": "67ad84b2cef0bdd93fb3b36952898c94fdd2f769a3b848570aac4ac2666cdf99",
+    "fingerprint": "263bcaac1769518f44d486f4c055e107945a31f022d1e8d73d6cbb024d53325d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76216,7 +76456,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 283,
+      "issue": 284,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 30,
@@ -76230,7 +76470,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 417,
+      "test": 418,
       "use-case": 48,
       "workspace": 1
     },
@@ -81676,7 +81916,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 12022
+        "bytes": 12261
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -81739,7 +81979,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 163381
+        "bytes": 163592
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -88175,6 +88415,17 @@
         "bytes": 3194
       },
       {
+        "uri": "majordomus://issue/I2472",
+        "kind": "issue",
+        "identity": "I2472",
+        "title": "How long CI takes is measured, from when each run started to when it completed, and the CI/CD screen draws it",
+        "description": "Record when each check run on an open pull request's head started, beside when it completed, and answer how long CI takes from that record with a typed capability (integration.timings): per check its measured runs, failures, median, 90th percentile and longest duration; per open head its wall time and slowest check; and how many runs could not be measured. The CI/CD screen of majordomus ui draws it in place of the panel that said no capability records CI timings.",
+        "path": ".ai/repo/project/issues/I2472.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3675
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -93461,6 +93712,14 @@
         "bytes": 3132
       },
       {
+        "uri": "majordomus://test/test/cases/1077_ci_timings_are_measured.sh",
+        "kind": "test",
+        "identity": "test/cases/1077_ci_timings_are_measured.sh",
+        "path": "test/cases/1077_ci_timings_are_measured.sh",
+        "source_class": "case",
+        "bytes": 4474
+      },
+      {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
         "kind": "test",
         "identity": "test/cases/107_design_tokens.sh",
@@ -97282,7 +97541,7 @@
       "identity": [
         "id"
       ],
-      "objects": 283
+      "objects": 284
     },
     {
       "name": "knowledge",
@@ -97434,7 +97693,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 417
+      "objects": 418
     },
     {
       "name": "use-case",
@@ -127993,6 +128252,23 @@
         "output": "IntegrationStatus"
       },
       {
+        "name": "majordomus_ci_timings",
+        "id": "integration.timings",
+        "title": "How long CI takes",
+        "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "IntegrationTimings"
+      },
+      {
         "name": "majordomus_intent_explain",
         "id": "intent_realization.explain",
         "title": "Why an intent stands where it stands",
@@ -130593,6 +130869,12 @@
         "method": "GET",
         "path": "/api/v1/pull-requests",
         "id": "integration.queue",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/pull-requests/timings",
+        "id": "integration.timings",
         "kind": "query"
       },
       {
@@ -134078,6 +134360,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/pull-requests"
+      },
+      {
+        "key": "integration.timings|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "integration.timings",
+        "module": "integration",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "integration.timings|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "integration.timings",
+        "module": "integration",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_ci_timings"
+      },
+      {
+        "key": "integration.timings|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "integration.timings",
+        "module": "integration",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/pull-requests/timings"
       },
       {
         "key": "intent_realization.explain|direct|first-intent",
@@ -139474,6 +139785,27 @@
           "cases": 1
         },
         {
+          "subject": "integration.timings",
+          "module": "integration",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "integration.timings",
+          "module": "integration",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "integration.timings",
+          "module": "integration",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "intent_realization.explain",
           "module": "intent_realization",
           "transport": "direct",
@@ -141820,22 +142152,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 184,
-          "covered": 160,
+          "required": 185,
+          "covered": 161,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "http": {
-          "required": 181,
-          "covered": 160,
+          "required": 182,
+          "covered": 161,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 177,
-          "covered": 156,
+          "required": 178,
+          "covered": 157,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
@@ -141848,8 +142180,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 555,
-          "covered": 489,
+          "required": 558,
+          "covered": 492,
           "missing": 0,
           "waived": 66,
           "inapplicable": 0

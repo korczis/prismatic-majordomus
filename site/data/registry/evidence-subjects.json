@@ -429,6 +429,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:integration.timings",
+      "path": "/evidence/capabilities/integration-timings/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intent_realization.explain",
       "path": "/evidence/capabilities/intent-realization-explain/"
     },
@@ -4493,6 +4498,16 @@
       "members": [
         "command:prs status"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.timings": {
+      "kind": "capability",
+      "id": "integration.timings",
+      "page": "/evidence/capabilities/integration-timings/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -17960,6 +17975,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_ci_timings": {
+      "kind": "mcp",
+      "id": "majordomus_ci_timings",
+      "alias_of": "capability:integration.timings",
+      "programs": [],
+      "members": [
+        "capability:integration.timings"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_command": {
       "kind": "mcp",
       "id": "majordomus_command",
@@ -25714,6 +25741,7 @@
     "suite:102_completion_shell",
     "suite:1075_the_pull_requests_drain_in_the_ui",
     "suite:1076_the_roadmap_opens_a_milestone",
+    "suite:1077_ci_timings_are_measured",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

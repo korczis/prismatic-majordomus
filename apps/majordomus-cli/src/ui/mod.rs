@@ -51,6 +51,7 @@ pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod shell;
 pub(crate) mod source;
+pub(crate) mod timings;
 pub(crate) mod view;
 pub(crate) mod work;
 

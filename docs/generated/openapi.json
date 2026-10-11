@@ -14126,6 +14126,86 @@
         "x-majordomus-cli": "prs prove-dry-run"
       }
     },
+    "/api/v1/pull-requests/timings": {
+      "get": {
+        "operationId": "integration.timings",
+        "summary": "How long CI takes",
+        "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+        "tags": [
+          "integration"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "How long CI takes: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationTimings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "integration.timings",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::integration"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_ci_timings"
+        }
+      }
+    },
     "/api/v1/quality": {
       "get": {
         "operationId": "quality.report",
@@ -21077,6 +21157,61 @@
         ],
         "description": "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see."
       },
+      "CheckTiming": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The check's name, as the forge reports it."
+          },
+          "runs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Runs that started and completed, so were measured."
+          },
+          "passed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Of those, how many passed."
+          },
+          "failed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Of those, how many failed."
+          },
+          "median_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The median duration, in seconds."
+          },
+          "p90_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The 90th percentile duration (nearest rank), in seconds."
+          },
+          "slowest_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The longest run, in seconds."
+          }
+        },
+        "required": [
+          "name",
+          "runs",
+          "passed",
+          "failed",
+          "median_seconds",
+          "p90_seconds",
+          "slowest_seconds"
+        ],
+        "description": "How one check takes, across the open heads that ran it."
+      },
       "Checkouts": {
         "oneOf": [
           {
@@ -21091,6 +21226,49 @@
           }
         ],
         "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+      },
+      "CiTimings": {
+        "type": "object",
+        "properties": {
+          "observed_at": {
+            "type": "string",
+            "description": "When the forge was observed, RFC 3339: the moment these timings describe."
+          },
+          "measured_runs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Check runs measured, across every check and head."
+          },
+          "unmeasured_runs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Check runs the observation holds without both a start and a completion: running,\nqueued, or recorded before starts were read. Counted, never measured as zero."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckTiming"
+            },
+            "description": "Every check, the slowest median first."
+          },
+          "heads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeadTiming"
+            },
+            "description": "Every head with a measured check, the longest wall time first."
+          }
+        },
+        "required": [
+          "observed_at",
+          "measured_runs",
+          "unmeasured_runs",
+          "checks",
+          "heads"
+        ],
+        "description": "CI timings over every open head the observation holds."
       },
       "ClaimEvidence": {
         "type": "object",
@@ -33402,6 +33580,60 @@
         ],
         "description": "A handover anywhere in the mesh, with everyone who has taken it. The id is the digest\nof the body, so the same handover published twice — by a retry, or by two runtimes that\nboth saw it — is one handover here; and `consumed_by` is what keeps two workers from\nsilently picking up the same continuity, since the list is folded from events every\nruntime holds.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, HandoverView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet body = \"# Objective\\nship\\n\".to_string();\nlet handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,\n    milestone: None, branch: Some(\"feature/x\".into()), head: None, created_at: None,\n    name: None, body };\nlet id = handover.id.clone();\nj.append_own(EventBody::HandoverPublished { handover }).unwrap();\nj.append_own(EventBody::HandoverConsumed { handover: id.clone(), session: \"s1\".into() })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &HandoverView = &state.handovers[0];\nassert_eq!(view.id, id, \"identified by what it says, not by who said it\");\nassert_eq!(view.consumed_by.len(), 1, \"somebody has picked this one up\");\n```"
       },
+      "HeadTiming": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request."
+          },
+          "head_sha": {
+            "type": "string",
+            "description": "The head the checks ran on."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When its first measured check started, RFC 3339."
+          },
+          "completed_at": {
+            "type": "string",
+            "description": "When its last measured check completed, RFC 3339."
+          },
+          "wall_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The wall time between them, in seconds: what a reader waited for CI on this head."
+          },
+          "slowest_check": {
+            "type": "string",
+            "description": "The measured check that took longest."
+          },
+          "slowest_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How long it took, in seconds."
+          },
+          "failed": {
+            "type": "boolean",
+            "description": "Whether any measured check on the head failed."
+          }
+        },
+        "required": [
+          "number",
+          "head_sha",
+          "started_at",
+          "completed_at",
+          "wall_seconds",
+          "slowest_check",
+          "slowest_seconds",
+          "failed"
+        ],
+        "description": "How long CI took on one open pull request's head: from its first check's start to its last\ncheck's completion, and the check that took longest."
+      },
       "Health": {
         "type": "object",
         "properties": {
@@ -34978,6 +35210,37 @@
           "unreadable_events"
         ],
         "description": "The integrator's throughput over a window of the trail."
+      },
+      "IntegrationTimings": {
+        "type": "object",
+        "properties": {
+          "observed": {
+            "type": "boolean",
+            "description": "Whether a forge observation is recorded in this checkout."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there are no timings, when there are none."
+          },
+          "timings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CiTimings"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The timings measured from the observation, when there is one."
+          }
+        },
+        "required": [
+          "observed"
+        ],
+        "description": "How long CI takes on the open pull requests, or why it is not known."
       },
       "IntentBinding": {
         "type": "object",

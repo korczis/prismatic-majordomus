@@ -1,8 +1,9 @@
 //! CI/CD & Releases: what was released, where it is deployed, and what the CI model runs.
 //! Read from `distribution.releases`, `release.version`, `deploy.list` and `gates.model`.
 //!
-//! Per-run CI timings are not recorded by any capability yet, so no build-time chart is
-//! drawn: the CI model says which gates run and when, and that is what is shown.
+//! How long CI takes is `integration.timings`, measured from the recorded forge observation
+//! (`super::timings`): the CI model says which gates run and when, the timings how long the
+//! runs on the open pull requests took.
 
 use crate::capability::Context;
 use crate::cockpit::html::el;
@@ -11,7 +12,7 @@ use serde_json::Value;
 use super::dashboard::releases_panel;
 use super::shell::View;
 use super::source::{ask_all, Source};
-use super::view::{hero, kpi, list, nothing, panel, state, table, text, unanswered, wide};
+use super::view::{hero, kpi, list, panel, state, table, text, unanswered, wide};
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/delivery";
@@ -23,7 +24,16 @@ const GATES: Source = Source::of("gates.model");
 
 /// The CI/CD & Releases screen.
 pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[RELEASES, VERSION, DEPLOYMENTS, GATES]);
+    let answers = ask_all(
+        ctx,
+        &[
+            RELEASES,
+            VERSION,
+            DEPLOYMENTS,
+            GATES,
+            super::timings::TIMINGS,
+        ],
+    );
     let (releases, version, deployments, gates) = (
         &answers[&RELEASES],
         &answers[&VERSION],
@@ -106,12 +116,9 @@ pub fn screen(ctx: &Context) -> View {
             model,
             &[gates],
         )))
-        .child(panel(
-            "Build timings",
-            "How long each run took.",
-            nothing("No capability records per-run CI timings yet, so none are drawn. The CI model above is what runs."),
-            &[gates],
-        ));
+        .child(wide(super::timings::panel_of(
+            &answers[&super::timings::TIMINGS],
+        )));
 
     View::new(
         "CI/CD & Releases",

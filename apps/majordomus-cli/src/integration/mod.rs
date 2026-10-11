@@ -53,6 +53,7 @@ pub mod repair;
 pub mod retry;
 #[cfg(test)]
 mod tests;
+pub mod timings;
 pub mod wait;
 
 use std::collections::{BTreeMap, BTreeSet};
