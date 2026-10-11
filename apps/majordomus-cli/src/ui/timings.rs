@@ -34,15 +34,28 @@ pub fn duration(s: u64) -> String {
     }
 }
 
-fn num(v: &Value, k: &str) -> u64 {
-    v.get(k).and_then(Value::as_u64).unwrap_or_default()
+fn num(v: &Value, k: &str) -> Option<u64> {
+    v.get(k).and_then(Value::as_u64)
+}
+
+/// A duration the answer gave, or `unknown` when it gave none: never a zero it did not say.
+fn seconds(s: Option<u64>) -> String {
+    s.map_or_else(|| "unknown".into(), duration)
+}
+
+/// A count the answer gave, or `unknown`.
+fn count(n: Option<u64>) -> String {
+    n.map_or_else(|| "unknown".into(), |n| n.to_string())
 }
 
 /// A bar of `value` against `max`, drawn on the server in the given tone, with its value as
 /// text beside it so the bar is never the only way to read it.
-fn bar(value: u64, max: u64, tone: &str) -> El {
-    // nothing to compare against draws an empty bar; anything measured is at least visible
-    let width = (value * 100).checked_div(max).map_or(0, |w| w.max(1));
+fn bar(value: Option<u64>, max: u64, tone: &str) -> El {
+    // ui-integrity: a width, not a count shown: an unknown value draws an empty bar, and the
+    // text beside every bar says unknown; anything measured is at least visible
+    let width = value
+        .and_then(|v| (v * 100).checked_div(max))
+        .map_or(0, |w| w.max(1));
     el("span")
         .class(format!("mj-tone--{tone}"))
         .attr("aria-hidden", "true")
@@ -69,43 +82,51 @@ pub fn panel_of(timings: &Answer) -> El {
                 "No check run on an open pull request has both a start and an end in the observation; run majordomus prs refresh to record them.",
             );
         }
-        let slowest = checks.iter().map(|c| num(c, "median_seconds")).max().unwrap_or(0);
+        // the slowest median the answer gave; a check without one draws no bar
+        let slowest = checks
+            .iter()
+            .filter_map(|c| num(c, "median_seconds"))
+            .max()
+            .unwrap_or(1);
         let check_rows = checks
             .iter()
             .map(|c| {
                 let median = num(c, "median_seconds");
                 let failed = num(c, "failed");
+                let failing = failed.is_some_and(|f| f > 0);
                 el("tr")
                     .child(el("td").class("mj-ui-mono").text(text(c, "name")))
                     .child(
                         el("td")
-                            .child(bar(median, slowest, if failed > 0 { "rose" } else { "blue" }))
-                            .child(el("span").class("mj-ui-mono").text(format!(" {}", duration(median)))),
+                            .child(bar(median, slowest, if failing { "rose" } else { "blue" }))
+                            .child(el("span").class("mj-ui-mono").text(format!(" {}", seconds(median)))),
                     )
-                    .child(el("td").class("mj-ui-mono").text(duration(num(c, "p90_seconds"))))
-                    .child(el("td").class("mj-ui-mono").text(duration(num(c, "slowest_seconds"))))
+                    .child(el("td").class("mj-ui-mono").text(seconds(num(c, "p90_seconds"))))
+                    .child(el("td").class("mj-ui-mono").text(seconds(num(c, "slowest_seconds"))))
                     .child(el("td").class("mj-ui-mono").text(format!(
                         "{} · {} failed",
-                        num(c, "runs"),
-                        failed
+                        count(num(c, "runs")),
+                        count(failed)
                     )))
             })
             .collect::<Vec<_>>();
         let heads = list(timings, "/timings/heads");
-        let longest = heads.first().map(|h| num(h, "wall_seconds")).unwrap_or(0);
+        let longest = heads
+            .iter()
+            .filter_map(|h| num(h, "wall_seconds"))
+            .max()
+            .unwrap_or(1);
         let head_rows = heads
             .iter()
             .take(HEADS)
             .map(|h| {
-                let n = num(h, "number");
                 el("tr")
-                    .child(
-                        el("td").child(
-                            el("a")
-                                .attr("href", format!("{}?pr={n}#pr", super::prs::ROUTE))
-                                .text(format!("#{n}")),
-                        ),
-                    )
+                    .child(el("td").child(match num(h, "number") {
+                        Some(n) => el("a")
+                            .attr("href", format!("{}?pr={n}#pr", super::prs::ROUTE))
+                            .text(format!("#{n}")),
+                        None => el("span").class("mj-ui-dim").text("unnumbered"),
+                    }))
                     .child(
                         el("td")
                             .child(bar(
@@ -113,12 +134,12 @@ pub fn panel_of(timings: &Answer) -> El {
                                 longest,
                                 if h.get("failed") == Some(&Value::Bool(true)) { "rose" } else { "violet" },
                             ))
-                            .child(el("span").class("mj-ui-mono").text(format!(" {}", duration(num(h, "wall_seconds"))))),
+                            .child(el("span").class("mj-ui-mono").text(format!(" {}", seconds(num(h, "wall_seconds"))))),
                     )
                     .child(el("td").class("mj-ui-mono mj-ui-dim").text(format!(
                         "{} · {}",
                         text(h, "slowest_check"),
-                        duration(num(h, "slowest_seconds"))
+                        seconds(num(h, "slowest_seconds"))
                     )))
             })
             .collect::<Vec<_>>();

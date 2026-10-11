@@ -128,12 +128,11 @@ impl Filter {
         };
         let found = self.q.as_deref().is_none_or(|q| {
             let q = q.to_lowercase();
-            let number = a.get("number").and_then(Value::as_u64).unwrap_or_default();
+            let number = number(a);
             ["title", "head_ref", "author"]
                 .iter()
                 .any(|k| text(a, k).to_lowercase().contains(&q))
-                || format!("#{number}") == q
-                || number.to_string() == q
+                || number.is_some_and(|n| format!("#{n}") == q || n.to_string() == q)
         });
         word("disposition", &self.disposition) && word("lane", &self.lane) && found
     }
@@ -455,12 +454,6 @@ fn tallies(queue: &Answer) -> El {
 /// starving, and the last merge it recorded. Each pull request is a link to its inspector.
 fn next_up(queue: &Answer, filter: &Filter) -> El {
     let v = queue.ok();
-    let numbers = |p: &str| -> Vec<u64> {
-        v.and_then(|v| v.pointer(p))
-            .and_then(Value::as_array)
-            .map(|xs| xs.iter().filter_map(Value::as_u64).collect())
-            .unwrap_or_default()
-    };
     let links = |ns: &[u64]| -> El {
         if ns.is_empty() {
             return el("span").class("mj-ui-dim").text("none");
@@ -471,6 +464,17 @@ fn next_up(queue: &Answer, filter: &Filter) -> El {
                 .attr("href", filter.href(ROUTE, "pr", Some(&n.to_string())))
                 .child(el("code").class("mj-ui-chip-value").text(format!("#{n}")))
         }))
+    };
+    // a list the queue did not answer is unknown; an empty one it answered is none
+    let listed = |p: &str| -> El {
+        match v
+            .and_then(|v| v.pointer(p))
+            .and_then(Value::as_array)
+            .map(|xs| xs.iter().filter_map(Value::as_u64).collect::<Vec<_>>())
+        {
+            Some(ns) => links(&ns),
+            None => el("span").class("mj-ui-dim").text("unknown"),
+        }
     };
     let next_merge: Vec<u64> = v
         .and_then(|v| v.pointer("/queue/next_merge"))
@@ -491,8 +495,8 @@ fn next_up(queue: &Answer, filter: &Filter) -> El {
         .class("mj-ui-facts")
         .attr("aria-label", "What the lane does next")
         .child(fact("Next merge", links(&next_merge)))
-        .child(fact("Next refresh", links(&numbers("/queue/next_refresh"))))
-        .child(fact("Starving", links(&numbers("/queue/starving"))))
+        .child(fact("Next refresh", listed("/queue/next_refresh")))
+        .child(fact("Starving", listed("/queue/starving")))
         .child(fact(
             "Last merge",
             match last {
@@ -516,7 +520,7 @@ fn next_up(queue: &Answer, filter: &Filter) -> El {
 /// The dispositions the queue counted, as tabs: the queue's own words and counts, so a
 /// disposition nobody holds has no tab, and a new one appears without a change here.
 fn tabs(queue: &Answer, filter: &Filter) -> El {
-    let counts: Vec<(String, u64)> = queue
+    let counts: Option<Vec<(String, u64)>> = queue
         .ok()
         .and_then(|v| v.pointer("/queue/tallies/by_disposition"))
         .and_then(Value::as_object)
@@ -524,8 +528,13 @@ fn tabs(queue: &Answer, filter: &Filter) -> El {
             m.iter()
                 .filter_map(|(k, v)| v.as_u64().map(|n| (k.clone(), n)))
                 .collect()
-        })
-        .unwrap_or_default();
+        });
+    // a queue that did not count its dispositions has no tabs, rather than an `All 0`
+    let Some(counts) = counts else {
+        return el("p")
+            .class("mj-ui-empty")
+            .text("The queue did not count its dispositions.");
+    };
     let total: u64 = counts.iter().map(|(_, n)| n).sum();
     let tab = |label: String, href: String, current: bool| {
         el("a")
