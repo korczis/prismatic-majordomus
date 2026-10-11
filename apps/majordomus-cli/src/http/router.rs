@@ -39,6 +39,9 @@ pub struct Request {
     pub headers: Vec<(String, String)>,
     /// The body, raw.
     pub body: Vec<u8>,
+    /// The address the request came from, when it came over a socket. A request built in
+    /// this process (a test, the Cockpit composing a call) has none, and is this machine's.
+    pub remote: Option<std::net::IpAddr>,
 }
 
 impl Request {
@@ -69,6 +72,7 @@ impl Request {
             query,
             headers: Vec::new(),
             body,
+            remote: None,
         }
     }
 
@@ -110,6 +114,7 @@ impl Request {
                     .unwrap_or_default(),
                 headers: Vec::new(),
                 body: Vec::new(),
+                remote: None,
             },
             HttpMethod::Post => Request {
                 method: "POST".into(),
@@ -117,6 +122,7 @@ impl Request {
                 query: Vec::new(),
                 headers: Vec::new(),
                 body: input.to_string().into_bytes(),
+                remote: None,
             },
         }
     }
@@ -146,6 +152,39 @@ impl Request {
     pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {
         self.headers = headers;
         self
+    }
+
+    /// The same request, as having come from `address`.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Request;
+    /// let r = Request::parse_target("GET", "/", vec![]).with_remote(Some("10.0.0.2".parse().unwrap()));
+    /// assert_eq!(r.remote, Some("10.0.0.2".parse().unwrap()));
+    /// ```
+    pub fn with_remote(mut self, address: Option<std::net::IpAddr>) -> Self {
+        self.remote = address;
+        self
+    }
+
+    /// Did this request come from another host?
+    ///
+    /// Loopback is this machine, in either family and in the IPv4-mapped IPv6 form a
+    /// dual-stack socket reports. A request with no address was built in this process.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Request;
+    /// let r = |a: &str| Request::parse_target("POST", "/", vec![]).with_remote(Some(a.parse().unwrap()));
+    /// assert!(!r("127.0.0.1").is_remote());
+    /// assert!(!r("::1").is_remote());
+    /// assert!(!r("::ffff:127.0.0.1").is_remote());
+    /// assert!(r("192.168.100.30").is_remote());
+    /// assert!(r("100.92.246.32").is_remote());
+    /// assert!(r("::ffff:10.0.0.2").is_remote());
+    /// assert!(!Request::parse_target("POST", "/", vec![]).is_remote());
+    /// ```
+    pub fn is_remote(&self) -> bool {
+        self.remote
+            .is_some_and(|ip| !ip.to_canonical().is_loopback())
     }
 
     /// A header value, by case-insensitive name.
@@ -501,6 +540,9 @@ impl Router {
     /// from another origin is refused before it reaches a handler. A client that is not a
     /// browser sends no `Origin` and is unaffected.
     pub fn handle(&self, req: &Request) -> Response {
+        if let Some(refusal) = Self::rebound(req) {
+            return refusal;
+        }
         if req.method != "GET" && req.method != "HEAD" {
             if let Some(refusal) = self.foreign_origin(req) {
                 return refusal;
@@ -746,6 +788,30 @@ impl Router {
     /// Whether a `Host` header names this machine by an address rather than by a domain a
     /// third party could point at it: an IPv4 or bracketed IPv6 literal, `localhost` or a
     /// `*.localhost` name, each with an optional port.
+    /// The refusal for a request a DNS-rebinding page sent, when this is one.
+    ///
+    /// A page on another domain cannot read this server's answers, until its domain is made
+    /// to resolve to this machine: then the browser on this machine sends the page's requests
+    /// here, from loopback, naming the page's domain as the host. Nothing else sends a
+    /// loopback request under a name that is neither an address nor `localhost`, so that
+    /// request is refused before any surface answers it, reads included. A request from
+    /// another host is judged by ADR 0126, and one that names no host is a program's.
+    fn rebound(req: &Request) -> Option<Response> {
+        let from_loopback = req.remote.is_some_and(|ip| ip.to_canonical().is_loopback());
+        let host = req.header("host")?;
+        if !from_loopback || Self::host_is_literal(host) {
+            return None;
+        }
+        tracing::warn!(host = host, path = %req.path, "a loopback request under a foreign host name was refused");
+        Some(error_response(
+            403,
+            "forbidden",
+            &format!(
+                "a request from this machine addressed to '{host}' is refused: this server answers loopback requests only under an address or `localhost`, so a page whose domain was made to resolve here reads nothing"
+            ),
+        ))
+    }
+
     fn host_is_literal(host: &str) -> bool {
         let name = if let Some(rest) = host.strip_prefix('[') {
             match rest.split_once(']') {
@@ -844,6 +910,10 @@ impl Router {
                 )
             };
         };
+        if req.is_remote() && !c.execution.admits_remote() {
+            let e = CapabilityError::remote(c.id.as_str());
+            return error_response(403, e.code(), &e.to_string());
+        }
         let input = match method {
             HttpMethod::Get => {
                 let (props, _) = c.input.properties();
@@ -900,21 +970,27 @@ impl Router {
             Ok(v) => json_response(200, &v),
             // the word is the error's own, the same one an MCP tool result carries; only
             // the status is this transport's
-            Err(e) => {
-                let status = match &e {
-                    CapabilityError::InvalidInput(_) => 400,
-                    CapabilityError::NotFound(_) => 404,
-                    CapabilityError::Refused(_) => 422,
-                    CapabilityError::Internal(_) => 500,
-                };
-                let (CapabilityError::InvalidInput(m)
-                | CapabilityError::NotFound(m)
-                | CapabilityError::Refused(m)
-                | CapabilityError::Internal(m)) = &e;
-                error_response(status, e.code(), m)
-            }
+            Err(e) => failed(&e),
         }
     }
+}
+
+/// A capability's error as an HTTP response: the status is this transport's, the code and
+/// the message are the error's own.
+fn failed(e: &CapabilityError) -> Response {
+    let status = match e {
+        CapabilityError::InvalidInput(_) => 400,
+        CapabilityError::NotFound(_) => 404,
+        CapabilityError::Refused(_) => 422,
+        CapabilityError::Internal(_) => 500,
+        CapabilityError::Forbidden(_) => 403,
+    };
+    let (CapabilityError::InvalidInput(m)
+    | CapabilityError::NotFound(m)
+    | CapabilityError::Refused(m)
+    | CapabilityError::Internal(m)
+    | CapabilityError::Forbidden(m)) = e;
+    error_response(status, e.code(), m)
 }
 
 /// Does this request come from something that would rather have a page than a document?
@@ -952,6 +1028,9 @@ fn repository_name(root: &str) -> &str {
 /// distribution and the document by absolute path, so neither form can resolve wrongly.
 fn swagger_response() -> Response {
     Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
+        .with_header("Content-Security-Policy", swagger::csp())
+        .with_header("X-Content-Type-Options", "nosniff")
+        .with_header("Referrer-Policy", "no-referrer")
 }
 
 fn json_response(status: u16, v: &Value) -> Response {
@@ -1022,6 +1101,33 @@ pub fn percent_decode(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_capability_error_has_its_status_and_keeps_its_word() {
+        for (e, status, code) in [
+            (
+                CapabilityError::InvalidInput("m".into()),
+                400,
+                "invalid_input",
+            ),
+            (CapabilityError::NotFound("m".into()), 404, "not_found"),
+            (CapabilityError::Refused("m".into()), 422, "refused"),
+            (CapabilityError::Internal("m".into()), 500, "internal"),
+            (CapabilityError::remote("plan.transition"), 403, "forbidden"),
+        ] {
+            let r = failed(&e);
+            assert_eq!(r.status, status, "{e:?}");
+            let body: serde_json::Value = serde_json::from_str(&r.body.text()).unwrap();
+            assert_eq!(body["error"]["code"], code, "{body}");
+        }
+        let body: serde_json::Value = serde_json::from_str(
+            &failed(&CapabilityError::remote("plan.transition"))
+                .body
+                .text(),
+        )
+        .unwrap();
+        assert!(body.to_string().contains("plan.transition"), "{body}");
+    }
 
     #[test]
     fn only_an_address_or_localhost_is_a_host_no_rebinding_domain_can_name() {

@@ -43,6 +43,12 @@ declare_mesh() { # repo [seed-url]
   # Declarations are discovered through the version-control index, as in any repository
   # `majordomus init` created: a declaration is what a person commits.
   git -C "$1" add .ai/repo/mesh/majordomus.yaml
+  # and committed on the trunk: trust on first use is honoured only from the trunk's copy,
+  # and this fixture works on feature/mesh, so the trunk is moved to the declaration (I2135)
+  git -C "$1" commit -qm "the mesh declaration"
+  local trunk
+  trunk="$(git -C "$1" for-each-ref --format='%(refname:short)' refs/heads/main refs/heads/master | head -1)"
+  git -C "$1" branch -f "$trunk" HEAD
 }
 
 serve() { # repo state
