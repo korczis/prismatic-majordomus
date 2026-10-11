@@ -215,11 +215,19 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
         Err(reason) => return RelationToMaster::Unknown { reason },
     };
     // a conflict on a derived path is the regeneration's to resolve, not a person's
-    let authored_conflicts: Vec<String> = conflicted
+    let mut authored_conflicts: Vec<String> = conflicted
         .iter()
         .filter(|p| !derived.contains(*p))
         .cloned()
         .collect();
+    // where the version is allocated at landing (ADR 0134), the head's number is not an
+    // author's statement: a manifest that conflicts on that line alone is the refresh's
+    if authored_conflicts == [crate::release::version::MANIFEST]
+        && super::allocate::allocates_at(root, master)
+        && super::allocate::version_only_conflict(root, master, head)
+    {
+        authored_conflicts.clear();
+    }
     if !authored_conflicts.is_empty() {
         // a change that landed by a cherry-pick and that master then moved past conflicts
         // with master; its patches say it landed
@@ -248,7 +256,11 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
         };
     }
     match git(root, &["merge-base", "--is-ancestor", master, head]) {
-        Ok((true, _)) => RelationToMaster::UpToDate { authored },
+        Ok((true, _)) => RelationToMaster::UpToDate {
+            // contains master, but under allocation at landing it may still owe its number
+            owes_version: super::allocate::owed_version(root, master, head),
+            authored,
+        },
         Ok(_) => {
             let behind = git(root, &["rev-list", "--count", &format!("{head}..{master}")])
                 .ok()

@@ -40284,6 +40284,13 @@
               "type": "array of string"
             },
             {
+              "description": "The version a landing of this head allocates, when master allocates at landing\n(ADR 0134) and the head does not carry it: the head owes a refresh even though it\ncontains master. Absent when the policy does not allocate, or the head carries it.",
+              "name": "owes_version",
+              "refs": [],
+              "required": false,
+              "type": "string | null"
+            },
+            {
               "description": "",
               "name": "kind",
               "refs": [],

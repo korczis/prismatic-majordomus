@@ -21,6 +21,8 @@ related:
   - file:.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md
   - file:.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md
   - test:test/cases/1060_the_version_is_allocated_at_landing.sh
+  - test:test/cases/1061_the_executor_allocates_the_version_at_landing.sh
+  - file:apps/majordomus-cli/src/integration/allocate.rs
 ---
 
 # 134. The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor
@@ -103,8 +105,21 @@ serialised the choice except people.
 ## Delivery
 
 - Slice A (this record): the typed policy block, the decision engine, `release.next`.
-- Slice B: allocation inside the executor's refresh, version-line conflict resolution, the
-  allocation trailer, and the tests of retries, crashes and three concurrent candidates.
+- Slice B: allocation inside the executor's refresh (`integration/allocate.rs`), version-line
+  conflict resolution in the classification and in the refresh, and the
+  `Version-Allocated: <next> (<selected> from <trunk>)` trailer on the commit the refresh
+  pushes. The policy a landing obeys is the one master commits, read from the commit and
+  never from the executor's working tree: the relation of a head to master is cached by the
+  pair of commit ids as a fact forever, so everything it depends on must be a fact of those
+  commits. A retry or a refresh after master moved recomputes from the new master (case
+  1061).
+- Slice B2: a head that already contains master but does not carry the number its landing
+  allocates owes a refresh all the same. Its relation stays `up_to_date` and says which
+  version it owes (`owes_version`, read from the two commits like everything the relation
+  cache holds), and the freshness gate refuses it as `needs_refresh` with
+  `version_unallocated:VERSION`, never as `behind_master`, which says master is missing.
+  Delivered with slice B. `allocation` stays `off` in this repository until slice C, so that
+  a pull request is not asked to bump by hand and refreshed again for it.
 - Slice C: `version-surface` on a pull request under `allocation: landing` refuses a hand
   bump instead of demanding one; `version.yml` stops opening bump pull requests.
 - Slice D: the release lifecycle as one typed state machine over the existing workflow.

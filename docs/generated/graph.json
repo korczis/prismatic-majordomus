@@ -2650,6 +2650,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/integration/allocate.rs",
+        "kind": "file",
+        "label": "allocate.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/allocate.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/integration/classify.rs",
         "kind": "file",
         "label": "classify.rs",
@@ -6466,7 +6474,9 @@
             "file:.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md",
             "file:.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
             "file:.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
-            "test:test/cases/1060_the_version_is_allocated_at_landing.sh"
+            "test:test/cases/1060_the_version_is_allocated_at_landing.sh",
+            "test:test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
+            "file:apps/majordomus-cli/src/integration/allocate.rs"
           ],
           "tags": [
             "release",
@@ -43529,6 +43539,13 @@
         "source": "test/cases/1060_the_version_is_allocated_at_landing.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
+        "kind": "test",
+        "label": "test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
+        "route": "/cockpit/objects/test/test-cases-1061-the-executor-allocates-the-version-at-landing-sh",
+        "source": "test/cases/1061_the_executor_allocates_the_version_at_landing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/106_context_peers.sh",
         "kind": "test",
         "label": "test/cases/106_context_peers.sh",
@@ -55375,6 +55392,11 @@
       },
       {
         "source": "majordomus://adr/adr-0134",
+        "target": "file:apps/majordomus-cli/src/integration/allocate.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0134",
         "target": "file:apps/majordomus-cli/src/integration/drain.rs",
         "kind": "put_in_force"
       },
@@ -55421,6 +55443,11 @@
       {
         "source": "majordomus://adr/adr-0134",
         "target": "majordomus://test/test/cases/1060_the_version_is_allocated_at_landing.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0134",
+        "target": "majordomus://test/test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
         "kind": "put_in_force"
       },
       {
@@ -70539,6 +70566,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/106_context_peers.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -76255,8 +76287,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2520,
-      "edges": 5517,
+      "nodes": 2522,
+      "edges": 5520,
       "acyclic": false,
       "truncated": false
     }
