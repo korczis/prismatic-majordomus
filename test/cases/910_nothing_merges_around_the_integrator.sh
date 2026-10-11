@@ -42,6 +42,9 @@ cp "$ROOT/test/cases/131_backlog_hygiene.sh" "$ROOT/test/cases/276_disk_is_bound
 cp "$ROOT/lib/rust_bin.sh" "$W/lib/rust_bin.sh"
 cp "$ROOT/bin/majordomus-cli" "$W/bin/majordomus-cli"
 cp "$ROOT/.just/build.just" "$ROOT/.just/site.just" "$W/.just/"
+cp "$ROOT/test/run.sh" "$W/test/run.sh"
+mkdir -p "$W/.cargo" && cp "$ROOT/.cargo/config.toml" "$W/.cargo/config.toml"
+cp "$ROOT/scripts/build-slot" "$W/scripts/build-slot" && chmod +x "$W/scripts/build-slot"
 touch "$W/justfile"
 chmod +x "$W/scripts/merge-derived" "$W/scripts/reap-orphans" "$W/scripts/ci/backlog-check"
 gate() { MJ_ROOT="$W" "$W/scripts/ci/backlog-check"; }
