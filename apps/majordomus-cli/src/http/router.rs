@@ -444,7 +444,17 @@ impl Router {
     }
 
     /// The same router, serving the UI's pages (ADR 0135) with its assets read from
-    /// `share_dir`.
+    /// `share_dir`. Without a distribution the screens are still complete HTML, unstyled;
+    /// either way the UI becomes one of the surfaces the topology says this process serves.
+    ///
+    /// ```
+    /// # use majordomus_cli::http::Router;
+    /// # fn example(router: Router) {
+    /// let router = router.with_ui(None);
+    /// let served = router.served().expect("a topology that resolves");
+    /// assert!(served.topology().surfaces.iter().any(|s| s.id == majordomus_cli::ui::SURFACE));
+    /// # }
+    /// ```
     pub fn with_ui(mut self, share_dir: Option<&std::path::Path>) -> Self {
         self.ui = Some(Arc::new(Ui::new(
             Arc::clone(&self.live),

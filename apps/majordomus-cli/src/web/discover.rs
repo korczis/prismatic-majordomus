@@ -266,7 +266,7 @@ pub fn native_all() -> Vec<Surface> {
             provenance: provenance([("mount", Provenance::Registry)]),
         },
         Surface {
-            id: "ui".into(),
+            id: crate::ui::SURFACE.into(),
             title: "The delivery, for a person: majordomus ui".into(),
             category: Category::Interface,
             visibility: Visibility::Public,
