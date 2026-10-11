@@ -25,20 +25,25 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-autopilot-pack-20261010` | 2026-10-10 | 8 | Majordomus Autonomous Delivery Convergence · 2026-10-10 | `~/Downloads/majordomus-autopilot-pack-20261010.zip` |
 | `majordomus-chatgpt-project-pack` | 2026-09-04 | 8 | Majordomus ChatGPT Project Pack | `~/Downloads/majordomus-chatgpt-project-pack` |
 | `majordomus-chatgpt-project-provider-prompts` | 2026-09-09 | 14 | Majordomus ChatGPT Project Provider — Claude Code Prompt Pack | `tmp/packs/majordomus-chatgpt-project-provider-prompts` |
+| `majordomus-ci-delivery-adoption-v4-20261010` | 2026-10-10 | 14 | Majordomus CI Delivery Adoption V4 | `~/Downloads/majordomus-ci-delivery-adoption-v4-20261010.zip` (and two copies, the same bytes) |
 | `majordomus-cockpit-ide-prompt-pack-v1` | 2026-09-10 | 19 | Majordomus Cockpit IDE / Control Plane Prompt Pack | `tmp/prompt-packs/majordomus-cockpit-ide-prompt-pack-v1` |
 | `majordomus-cockpit-landing-claude-code-prompt-pack` | 2026-09-11 | 14 | Majordomus Cockpit Landing Page — Claude Code Prompt Pack | `tmp/prompt-packs/majordomus-cockpit-landing-claude-code-prompt-pack` |
 | `majordomus-cockpit-orchestration-prompt-pack` | 2026-09-10 | 14 | Common Contract — Majordomus Cockpit Runtime Orchestration | `tmp/packs/majordomus-cockpit-orchestration-prompt-pack` |
 | `majordomus-convergence-pack-20261010` | 2026-10-10 | 8 | Majordomus: Verified Delivery Convergence | `~/Downloads/majordomus-convergence-pack-20261010.zip` |
 | `majordomus-convergence-prompt-pack-20260911` | 2026-09-11 | 26 | Majordomus Convergence Prompt Pack | `tmp/prompt-packs/majordomus-convergence-prompt-pack-20260911` |
 | `majordomus-convergence-prompt-pack-20261010` | 2026-10-10 | 11 | Majordomus Convergence / Delivery Acceleration Pack | `~/Downloads/majordomus-convergence-prompt-pack-20261010.zip` |
+| `majordomus-dashboard-concepts` | 2026-10-11 | 4 | (images: dashboard concepts the owner handed over beside the UI packs, two of 2026-10-02 and two of 2026-10-11, each with its C2PA content credentials intact) | `~/Downloads/*Dashboard*.png`, kept byte for byte with each space of the downloaded name written as a hyphen (the scope check reads a changed path as words) |
 | `majordomus-delivery-acceleration-prompt-pack-20261011` | 2026-10-10 | 15 | MAJORDOMUS: DELIVERY CONVERGENCE CAMPAIGN | `~/Downloads/majordomus-delivery-acceleration-prompt-pack-20261011.zip` |
 | `majordomus-derive-infer-enforce-prompt-pack` | 2026-10-11 | 8 | Prompt pack: Majordomus derive/infer/verify/enforce | `~/Downloads/majordomus-derive-infer-enforce-prompt-pack.zip` |
+| `majordomus-flux-v1-20261011` | 2026-10-11 | 15 | Majordomus Flux V1 — Derived Delivery Engine | `~/Downloads/majordomus-flux-v1-20261011.zip` (request-scoped snapshots, fragment cache, incremental derive, pagination and live streaming under every UI surface) |
 | `majordomus-github-workgraph-prompt-pack` | 2026-09-09 | 17 | Majordomus GitHub / Work Graph Prompt Pack | `~/Downloads/majordomus-github-workgraph-prompt-pack` |
 | `majordomus-idd-completion-prompt-pack` | 2026-09-16 | 15 | Majordomus IDD Completion Prompt Pack | `~/Downloads/majordomus-idd-completion-prompt-pack.zip` |
 | `majordomus-intent-closure-pack` | 2026-10-07 | 12 | Majordomus Intent Closure Pack | `~/Downloads/majordomus-intent-closure-pack.zip` |
 | `majordomus-intent-outcome-prompt-pack` | 2026-10-08 | 13 | Majordomus: Intent → Verified Outcome | `~/Downloads/majordomus-intent-outcome-prompt-pack.zip` |
 | `majordomus-intent-tight-integration-pack` | 2026-10-07 | 15 | Majordomus Intent Tight Integration Pack | `~/Downloads/majordomus-intent-tight-integration-pack.zip` |
 | `majordomus-landing-atomic-pack` | 2026-10-10 | 21 | Majordomus Public Surface: Atomic Autonomous Execution Pack | `~/Downloads/majordomus-landing-atomic-pack.zip` (its `MAJORDOMUS_ATOMIC_PROMPT_PACK.md` also arrived alone, byte for byte) |
+| `majordomus-living-site-v2-20261011` | 2026-10-10 | 13 | Living Site V2: freshness by construction | `~/Downloads/majordomus-living-site-v2-20261011.zip` |
+| `majordomus-mesh-interactive-v5-20261011` | 2026-10-11 | 13 | Majordomus Mesh UI Interactive V5 | `~/Downloads/majordomus-mesh-interactive-v5-20261011.zip` (makes `/ui/mesh` an interactive node-operations surface) |
 | `majordomus-mesh-pack` | 2026-10-10 | 23 | Majordomus Mesh + Prompt-Pack Lifecycle — Opus/Fable Prompt Pack | `~/Downloads/majordomus-opus-fable-full-prompt-pack-20261010.zip` |
 | `majordomus-openai-provider-control-plane-prompts` | 2026-09-07 | 14 | Majordomus OpenAI / Provider Control Plane Prompt Pack | `~/Downloads/majordomus-openai-provider-control-plane-prompts` |
 | `majordomus-opus55-recovery-pack` | 2026-10-08 | 19 | Prismatic Majordomus: Opus 5.5 Recovery & Evidence-First Prompt Pack | `~/Downloads/majordomus-opus55-recovery-pack.zip` |
@@ -50,8 +55,12 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-rks-fable-1m-prompts` | 2026-09-07 | 13 | Majordomus Repository Knowledge System (RKS) — Claude Code Fable 1M Integration Pack | `tmp/prompt-packs/majordomus-rks-fable-1m-prompts` |
 | `majordomus-runtime-mcp-mesh-opus-fable-pack` | 2026-10-09 | 14 | Majordomus Runtime / MCP / Mesh Convergence | `~/Downloads/majordomus-runtime-mcp-mesh-opus-fable-pack.zip` (also unpacked there as `majordomus-runtime-prompt-pack`, the same bytes) |
 | `majordomus-two-folder-consolidation-prompts` | 2026-09-06 | 16 | Shared execution contract | `tmp/packs/majordomus-two-folder-consolidation-prompts` |
+| `majordomus-ui-complete-opus-fable-v3-20261011` | 2026-10-11 | 48 | Majordomus UI Complete Opus/Fable V3 | `~/Downloads/majordomus-ui-complete-opus-fable-v3-20261011.zip` (and a copy, the same bytes); it supersedes and reconciles the unified-real-data V2 and fidelity V1 packs, eleven of its reference images being V2's own bytes |
+| `majordomus-ui-execution-control-v4-20261011` | 2026-10-11 | 19 | Majordomus UI Execution Control Plane V4 | `~/Downloads/majordomus-ui-execution-control-v4-20261011.zip` (extends the complete UI V3: launching and supervising real work from `majordomus ui`) |
+| `majordomus-ui-fidelity-v1-20261011` | 2026-10-11 | 18 | Majordomus UI Fidelity Pack V1 | `~/Downloads/majordomus-ui-fidelity-v1-20261011.zip` (its `reference/dashboard-concept.png` also arrived alone as "Autonomous Development Dashboard in Neon Dark Mode.png", byte for byte) |
 | `majordomus-ui-implementation-prompt-pack` | 2026-10-09 | 14 | Majordomus UI — executable implementation prompt pack | `~/Downloads/majordomus-ui-implementation-prompt-pack.zip` |
 | `majordomus-ui-implementation-prompt-pack-v1.1` | 2026-10-09 | 15 | Majordomus UI — executable implementation prompt pack | `~/Downloads/majordomus-ui-implementation-prompt-pack-v1.1.zip` |
+| `majordomus-ui-unified-real-data-v2-20261011` | 2026-10-11 | 33 | Majordomus UI: unified derived screens V2 | `~/Downloads/majordomus-ui-unified-real-data-v2-20261011.zip` (supersedes `majordomus-ui-fidelity-v1-20261011`, whose reference is its `01-dashboard-overview`) |
 | `majordomus-ui-ux-dx-prompt-pack` | 2026-10-05 | 15 | Majordomus UI/UX/DX Prompt Pack | `~/Downloads/majordomus-ui-ux-dx-prompt-pack.zip` |
 | `majordomus-worktree-cleanup-pack` | 2026-09-09 | 16 | Majordomus Worktree Cleanup & Merge Campaign | `~/Downloads/majordomus-worktree-cleanup-pack` |
 | `prismatic-majordomus-evening-project-v0.1` | 2026-09-03 | 43 | Prismatic Majordomus | `~/Downloads/prismatic-majordomus` |
@@ -81,8 +90,13 @@ Where a plan is not yet on master, the branch carries it.
 | `majordomus-opus55-recovery-pack`, `bro-net-majordomus-prompt-pack`, `majordomus-0.15.0-release-prompt-pack` | the remaining owner-pack issues up to I2281 (recovery, a-browser-is-a-read-only-peer, a-release-is-followed-to-its-users); 0.15.0 is mostly obsolete | p11, `chore/the-owner-packs-are-planned` |
 | `majordomus-runtime-mcp-mesh-opus-fable-pack` | I2126-I2165 and I2285-I2300 (runtime-lifecycle, runtime-trust, mcp-transports-are-reliable, mesh-journal-converges) | 1b, `chore/the-runtime-pack-is-planned` |
 | `majordomus-autopilot-pack-20261010`, `majordomus-convergence-pack-20261010`, `majordomus-convergence-prompt-pack-20261010` | I2310-I2389 (delivery-baseline-is-measured through the-delivery-loop-is-proved) | b2, `chore/the-autopilot-and-convergence-packs-are-planned` |
-| `majordomus-delivery-acceleration-prompt-pack-20261011` | CI Delivery V4: I2396, I2397, I2416 (test-evidence) | ce, with I2416 by this session |
+| `majordomus-delivery-acceleration-prompt-pack-20261011`, `majordomus-ci-delivery-adoption-v4-20261010` | CI Delivery V4: I2396, I2397, I2416 (test-evidence); the mission's six items V4-02-03 to V4-05-04 were offered on the mesh | ce, with I2416 by this session |
 | `majordomus-landing-atomic-pack`, `majordomus-derive-infer-enforce-prompt-pack` | I2420-I2423 (a-visitor-finds-any-public-object, a-claim-page-shows-its-whole-proof); every other atom maps to an existing record, listed in those milestones | ce, `chore/the-atomic-and-derive-packs-are-planned` |
+| `majordomus-flux-v1-20261011` | relates to I2460 (#934), I2461 (#940) and I2462; its M00 performance audit is offered on the mesh, and its incremental derive meets b2's derive-does-only-what-a-change-requires (I2344-I2349) | d3, and whoever takes the audit |
+| `majordomus-mesh-interactive-v5-20261011` | builds on I2461 (PR #940) and `feature/the-ui-has-every-screen`; planned and built by d3 (p4) | d3 |
+| `majordomus-ui-execution-control-v4-20261011` | its first slices build on I2461; planned and built by d3 (p4), the owner's word governing as for V3 | d3 |
+| `majordomus-ui-complete-opus-fable-v3-20261011` (reconciling and superseding `majordomus-ui-unified-real-data-v2-20261011` and `majordomus-ui-fidelity-v1-20261011`), `majordomus-dashboard-concepts` | planned and built by d3 (p4) from I2460 (the overview asks its sources at once) and I2461 (the /ui surface and dashboard, ADR 0135) on; the owner's word governs over any pack text: `majordomus ui` is primary, the Cockpit is the low level | d3 |
+| `majordomus-living-site-v2-20261011` | not yet planned; its subject, a site whose freshness holds by construction, meets the-site-says-what-ships (b2) and the release verification of I2360 and I2373 | — |
 | `majordomus-pr-throughput-pack-20261010`, `majordomus-release-15min-pack`, `majordomus-rapid-delivery-living-site-v3-20261010` | executed by the integration executors (`majordomus prs`, the landing train) and the release chain; no separate plan records | cd, 3d |
 
 ## Adding one

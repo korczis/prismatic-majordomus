@@ -1,0 +1,626 @@
+{
+  "name": "Majordomus UI High-Fidelity Derived Cockpit",
+  "version": "1.0.0",
+  "source_repository": "korczis/prismatic-majordomus",
+  "visual_reference": "reference/dashboard-concept.png",
+  "milestones": [
+    {
+      "id": "M00",
+      "title": "Reality audit and visual contract",
+      "prompt": "prompts/00-reality-audit-and-visual-contract.md",
+      "issues": [
+        "UI-M00-A",
+        "UI-M00-B",
+        "UI-M00-C",
+        "UI-M00-D",
+        "UI-M00-E"
+      ]
+    },
+    {
+      "id": "M01",
+      "title": "Canonical dashboard projection",
+      "prompt": "prompts/01-canonical-dashboard-projection.md",
+      "issues": [
+        "UI-M01-A",
+        "UI-M01-B",
+        "UI-M01-C",
+        "UI-M01-D",
+        "UI-M01-E"
+      ]
+    },
+    {
+      "id": "M02",
+      "title": "Pixel-oriented shell and responsive layout",
+      "prompt": "prompts/02-pixel-oriented-shell-and-responsive-layout.md",
+      "issues": [
+        "UI-M02-A",
+        "UI-M02-B",
+        "UI-M02-C",
+        "UI-M02-D",
+        "UI-M02-E"
+      ]
+    },
+    {
+      "id": "M03",
+      "title": "Cytoscape workflow graph",
+      "prompt": "prompts/03-cytoscape-workflow-graph.md",
+      "issues": [
+        "UI-M03-A",
+        "UI-M03-B",
+        "UI-M03-C",
+        "UI-M03-D",
+        "UI-M03-E"
+      ]
+    },
+    {
+      "id": "M04",
+      "title": "Apache ECharts evidence-based metrics",
+      "prompt": "prompts/04-apache-echarts-evidence-based-metrics.md",
+      "issues": [
+        "UI-M04-A",
+        "UI-M04-B",
+        "UI-M04-C",
+        "UI-M04-D",
+        "UI-M04-E"
+      ]
+    },
+    {
+      "id": "M05",
+      "title": "PR Drain, mesh peers, activity timeline",
+      "prompt": "prompts/05-pr-drain,-mesh-peers,-activity-timeline.md",
+      "issues": [
+        "UI-M05-A",
+        "UI-M05-B",
+        "UI-M05-C",
+        "UI-M05-D",
+        "UI-M05-E"
+      ]
+    },
+    {
+      "id": "M06",
+      "title": "Roadmap, discovery and interactive navigation",
+      "prompt": "prompts/06-roadmap,-discovery-and-interactive-navigation.md",
+      "issues": [
+        "UI-M06-A",
+        "UI-M06-B",
+        "UI-M06-C",
+        "UI-M06-D",
+        "UI-M06-E"
+      ]
+    },
+    {
+      "id": "M07",
+      "title": "p5.js ambient visualization and visual polish",
+      "prompt": "prompts/07-p5.js-ambient-visualization-and-visual-polish.md",
+      "issues": [
+        "UI-M07-A",
+        "UI-M07-B",
+        "UI-M07-C",
+        "UI-M07-D",
+        "UI-M07-E"
+      ]
+    },
+    {
+      "id": "M08",
+      "title": "Enforcement, docs and generated Pages",
+      "prompt": "prompts/08-enforcement,-docs-and-generated-pages.md",
+      "issues": [
+        "UI-M08-A",
+        "UI-M08-B",
+        "UI-M08-C",
+        "UI-M08-D",
+        "UI-M08-E"
+      ]
+    },
+    {
+      "id": "M09",
+      "title": "Release, rollout and adoption proof",
+      "prompt": "prompts/09-release,-rollout-and-adoption-proof.md",
+      "issues": [
+        "UI-M09-A",
+        "UI-M09-B",
+        "UI-M09-C",
+        "UI-M09-D",
+        "UI-M09-E"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "UI-M00-A",
+      "milestone": "M00",
+      "title": "Trace actual command `majordomus ui`, server startup, routes and developer experience; decide minimal alias or entry path that reuses shared server.",
+      "depends_on": [],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M00-B",
+      "milestone": "M00",
+      "title": "Map Cockpit rendered pages, reusable view helpers, asset bundling, Tailwind/Flowbite/Alpine integration, CSS and JS entry points.",
+      "depends_on": [
+        "UI-M00-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M00-C",
+      "milestone": "M00",
+      "title": "Trace canonical data producers for intent, milestone, issue, PR, CI timings, release/deploy, mesh peers, execution events and available user/repo identity.",
+      "depends_on": [
+        "UI-M00-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M00-D",
+      "milestone": "M00",
+      "title": "Audit current `.ai` invariants and live PR branches; identify conflicting prior UI work and merge candidates.",
+      "depends_on": [
+        "UI-M00-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M00-E",
+      "milestone": "M00",
+      "title": "Capture reproducible baseline screenshots at target widths plus performance/accessibility and current page route coverage.",
+      "depends_on": [
+        "UI-M00-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M01-A",
+      "milestone": "M01",
+      "title": "Define typed overview projection composed from existing capability results, not a new ledger; include origin/provenance and measured timestamps.",
+      "depends_on": [
+        "UI-M0-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M01-B",
+      "milestone": "M01",
+      "title": "Derive overview state and navigation groups from existing registries; detect absent capability and permissions.",
+      "depends_on": [
+        "UI-M0-E",
+        "UI-M01-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M01-C",
+      "milestone": "M01",
+      "title": "Define safe KPI aggregation and trends using measured timestamps/consistent denominator; distinguish current vs historical windows.",
+      "depends_on": [
+        "UI-M0-E",
+        "UI-M01-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M01-D",
+      "milestone": "M01",
+      "title": "Add stable link and action descriptors resolved through existing route/capability metadata, not concatenated client URLs.",
+      "depends_on": [
+        "UI-M0-E",
+        "UI-M01-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M01-E",
+      "milestone": "M01",
+      "title": "Add schema, contract tests and drift checks across CLI/API/MCP/Cockpit for same canonical facts.",
+      "depends_on": [
+        "UI-M0-E",
+        "UI-M01-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M02-A",
+      "milestone": "M02",
+      "title": "Create coherent dark-first desktop shell: fixed-width sidebar, compact top toolbar, main 12-column dashboard and optional right activity rail.",
+      "depends_on": [
+        "UI-M1-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M02-B",
+      "milestone": "M02",
+      "title": "Implement product mark, repository selector, canonical search/command palette, branch/version indicators and meaningful profile state.",
+      "depends_on": [
+        "UI-M1-E",
+        "UI-M02-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M02-C",
+      "milestone": "M02",
+      "title": "Build hero banner and six KPI cards from projection states with skeletons, honest empty states and time semantics.",
+      "depends_on": [
+        "UI-M1-E",
+        "UI-M02-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M02-D",
+      "milestone": "M02",
+      "title": "Implement tablet collapse, mobile drawer and activity rail fold/unfold with keyboard-focus trap/return and scroll ownership.",
+      "depends_on": [
+        "UI-M1-E",
+        "UI-M02-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M02-E",
+      "milestone": "M02",
+      "title": "Extend canonical tokens for spacing/type/surface/shadows/accent only if existing roles insufficient; regenerate all consumers and add visual regression cases.",
+      "depends_on": [
+        "UI-M1-E",
+        "UI-M02-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M03-A",
+      "milestone": "M03",
+      "title": "Derive intent → milestones → issues/PRs → releases → deploys from canonical graph nodes/edges and typed relations, preserving ambiguity and missing edges.",
+      "depends_on": [
+        "UI-M2-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M03-B",
+      "milestone": "M03",
+      "title": "Render server-side accessible node/edge list and status table as source of truth; enhancement only when module loads.",
+      "depends_on": [
+        "UI-M2-E",
+        "UI-M03-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M03-C",
+      "milestone": "M03",
+      "title": "Add lazy Cytoscape rendering, deterministic stable layout, zoom/pan/fit, click navigation, selection synchronization and legend.",
+      "depends_on": [
+        "UI-M2-E",
+        "UI-M03-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M03-D",
+      "milestone": "M03",
+      "title": "Handle hundreds/thousands nodes via clustering, virtualization/scope and user filters without inventing graph edges.",
+      "depends_on": [
+        "UI-M2-E",
+        "UI-M03-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M03-E",
+      "milestone": "M03",
+      "title": "Test graph/list parity, keyboard interaction, CSP/security, narrow screens and JS-disabled fallback.",
+      "depends_on": [
+        "UI-M2-E",
+        "UI-M03-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M04-A",
+      "milestone": "M04",
+      "title": "Map authoritative CI latency telemetry: queue vs execution vs total, p50/p95, sample size, window and source.",
+      "depends_on": [
+        "UI-M3-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M04-B",
+      "milestone": "M04",
+      "title": "Map PR throughput and release cadence from recorded integrations and published releases without synthetic observations.",
+      "depends_on": [
+        "UI-M3-E",
+        "UI-M04-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M04-C",
+      "milestone": "M04",
+      "title": "Create compact chart panels with lazy ECharts imports, shared theme tokens, usable axis labels, legends and accessible data table.",
+      "depends_on": [
+        "UI-M3-E",
+        "UI-M04-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M04-D",
+      "milestone": "M04",
+      "title": "Add range/filter selectors over server-supported query contracts, cancel outdated requests, honest gap/insufficient-data states.",
+      "depends_on": [
+        "UI-M3-E",
+        "UI-M04-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M04-E",
+      "milestone": "M04",
+      "title": "Validate chart-table data parity, timezone/units, performance budgets, reduced motion and responsive layout.",
+      "depends_on": [
+        "UI-M3-E",
+        "UI-M04-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M05-A",
+      "milestone": "M05",
+      "title": "Render PR queue rows with canonical IDs, title, phase, blockers, freshness, assigned agent and safe detail links; statuses only from real enum.",
+      "depends_on": [
+        "UI-M4-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M05-B",
+      "milestone": "M05",
+      "title": "Add authorized PR actions by existing capability input schema and executor; require server-confirmed outcomes and show execution ID.",
+      "depends_on": [
+        "UI-M4-E",
+        "UI-M05-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M05-C",
+      "milestone": "M05",
+      "title": "Render mesh peers from authenticated registry and liveness state; distinguish present, stale, unreachable and unauthorized.",
+      "depends_on": [
+        "UI-M4-E",
+        "UI-M05-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M05-D",
+      "milestone": "M05",
+      "title": "Render activity timeline from execution/evidence stream with durable cursors, idempotent ordering, backpressure and disconnect recovery.",
+      "depends_on": [
+        "UI-M4-E",
+        "UI-M05-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M05-E",
+      "milestone": "M05",
+      "title": "Test action denial/approval, concurrency races, impersonation resistance, stale rows, event gaps and browser reconnect.",
+      "depends_on": [
+        "UI-M4-E",
+        "UI-M05-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M06-A",
+      "milestone": "M06",
+      "title": "Render intent/milestone progress from canonical acceptance/dependency semantics; avoid false completion percentages for blocked milestones.",
+      "depends_on": [
+        "UI-M5-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M06-B",
+      "milestone": "M06",
+      "title": "Implement click-through to intent, issue, PR, worker, run, release and source evidence, with no dead-end dashboard badges.",
+      "depends_on": [
+        "UI-M5-E",
+        "UI-M06-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M06-C",
+      "milestone": "M06",
+      "title": "Unify roadmap/plan labels and version status with current living-site freshness model and avoid duplicate metadata.",
+      "depends_on": [
+        "UI-M5-E",
+        "UI-M06-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M06-D",
+      "milestone": "M06",
+      "title": "Add search and keyboard shortcuts using existing palette/registry; nav must be discovered and deterministically ordered.",
+      "depends_on": [
+        "UI-M5-E",
+        "UI-M06-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M06-E",
+      "milestone": "M06",
+      "title": "Cross-surface integration and snapshot tests for route ownership, broken links, stable state and accessible empty states.",
+      "depends_on": [
+        "UI-M5-E",
+        "UI-M06-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M07-A",
+      "milestone": "M07",
+      "title": "Assess whether a procedural network motif adds information; isolate as low-cost purely decorative enhancement, never live status evidence.",
+      "depends_on": [
+        "UI-M6-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M07-B",
+      "milestone": "M07",
+      "title": "Implement optional p5.js or lightweight Canvas motif only when performance and licensing/asset checks pass; lazy load.",
+      "depends_on": [
+        "UI-M6-E",
+        "UI-M07-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M07-C",
+      "milestone": "M07",
+      "title": "Tune screenshot fidelity: exact hierarchy, panel density, surfaces, rounded cards, cyan/purple/green accent roles and elevation without neon excess.",
+      "depends_on": [
+        "UI-M6-E",
+        "UI-M07-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M07-D",
+      "milestone": "M07",
+      "title": "Harden dark/light responsive contrast, reduced-motion behavior, print, no-WebGL and battery-conscious rendering.",
+      "depends_on": [
+        "UI-M6-E",
+        "UI-M07-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M07-E",
+      "milestone": "M07",
+      "title": "Add asset budgets, motion regression, static-image fallback and high-resolution visual compare checks.",
+      "depends_on": [
+        "UI-M6-E",
+        "UI-M07-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M08-A",
+      "milestone": "M08",
+      "title": "Migrate `.ai` rules/doctrines for derived UI, zero mocks, provenance, measured KPIs, a11y, cross-surface parity and speed budgets.",
+      "depends_on": [
+        "UI-M7-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M08-B",
+      "milestone": "M08",
+      "title": "Wire minimal, fast targeted gates into canonical `.ai/repo/ci/gates.yaml` plus nightly/full depth tests; prove required checks cannot silently be skipped.",
+      "depends_on": [
+        "UI-M7-E",
+        "UI-M08-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M08-C",
+      "milestone": "M08",
+      "title": "Update docs/COCKPIT.md, installation/UI/quickstart/reference, ADR when warranted, capability examples and help/completion generation.",
+      "depends_on": [
+        "UI-M7-E",
+        "UI-M08-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M08-D",
+      "milestone": "M08",
+      "title": "Update GitHub Pages as a public *explanation* and interactive derived demonstration linked to live Cockpit when available; no claim of runtime streaming on static hosting.",
+      "depends_on": [
+        "UI-M7-E",
+        "UI-M08-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M08-E",
+      "milestone": "M08",
+      "title": "Add content provenance and deploy freshness smoke checks, derive/check, page audits, link audits, snapshots and no-stale-claim enforcement.",
+      "depends_on": [
+        "UI-M7-E",
+        "UI-M08-D"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M09-A",
+      "milestone": "M09",
+      "title": "Integrate validated increments frequently using existing PR drain/mesh governance and evidence; avoid one giant PR.",
+      "depends_on": [
+        "UI-M8-E"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M09-B",
+      "milestone": "M09",
+      "title": "Analyze canonical versioning/Elm-like surface changes; bump version only when policy requires, not manually by assumption.",
+      "depends_on": [
+        "UI-M8-E",
+        "UI-M09-A"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M09-C",
+      "milestone": "M09",
+      "title": "Run focused, regression, integration, transport contract, a11y, mobile, security and performance gates, with exact commands/evidence.",
+      "depends_on": [
+        "UI-M8-E",
+        "UI-M09-B"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M09-D",
+      "milestone": "M09",
+      "title": "Release and deploy through existing verified pipelines with provenance/health; roll out incrementally with rollback path.",
+      "depends_on": [
+        "UI-M8-E",
+        "UI-M09-C"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "UI-M09-E",
+      "milestone": "M09",
+      "title": "Dogfood via `majordomus ui` on self repo AND clean consumer repo; verify data parity, interactions and final visual differences against reference.",
+      "depends_on": [
+        "UI-M8-E",
+        "UI-M09-D"
+      ],
+      "status": "planned"
+    }
+  ],
+  "quality_gates": [
+    "typed-projection-parity",
+    "no-fabricated-production-data",
+    "real-capability-authority",
+    "server-rendered-no-js",
+    "mobile-navigation",
+    "keyboard-a11y",
+    "visual-regression",
+    "bundle-budget",
+    "site-freshness",
+    "release-evidence"
+  ]
+}

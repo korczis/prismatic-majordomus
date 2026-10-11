@@ -1,0 +1,66 @@
+# Work tracking
+
+The following is a seed checklist, NOT the source of truth. Reconcile each item to canonical `.ai/repo/project/` entities and GitHub PRs first.
+
+- [ ] M00-I01 — Map current capability registry to lifecycle actions
+- [ ] M00-I02 — Audit Cockpit routes and UI action paths
+- [ ] M00-I03 — Review current PRs and competing implementation work
+- [ ] M00-I04 — Derive execution baseline and evidence gaps
+- [ ] M00-I05 — Establish canonical mission intent and graph
+- [ ] M01-I01 — Define unified WorkTarget reference
+- [ ] M01-I02 — Define WorkRun binding to canonical executions
+- [ ] M01-I03 — Derive state machine and progress semantics
+- [ ] M01-I04 — Expose explainable work dependency graph
+- [ ] M01-I05 — Reconcile distributed ownership and reconciliation versions
+- [ ] M02-I01 — Start task and issue through canonical capability executor
+- [ ] M02-I02 — Start milestone and intent as durable supervised scopes
+- [ ] M02-I03 — Delegated authority envelope
+- [ ] M02-I04 — Preflight, dry-run, preview and safety UI
+- [ ] M02-I05 — Idempotent controls and authoritative actions
+- [ ] M03-I01 — Discover existing lifecycle and mesh facilities
+- [ ] M03-I02 — Persist supervision state and heartbeats
+- [ ] M03-I03 — Auto-dispatch eligible work to authenticated peers
+- [ ] M03-I04 — Recover stalled or abandoned tasks
+- [ ] M03-I05 — Continuous PR convergence integration
+- [ ] M04-I01 — Extend existing execution event envelope
+- [ ] M04-I02 — WebSocket subscription per work scope
+- [ ] M04-I03 — Replay snapshot and gap repair
+- [ ] M04-I04 — Backpressure and network lifecycle
+- [ ] M04-I05 — Cross-process live consistency tests
+- [ ] M05-I01 — Implement shared WorkActionBar and permission states
+- [ ] M05-I02 — Implement WorkStatus and EvidenceConfidence UI
+- [ ] M05-I03 — Implement LiveProgress and event timeline
+- [ ] M05-I04 — Implement WorkGraph, inspector and breadcrumb
+- [ ] M05-I05 — Implement virtualized tables and realtime summaries
+- [ ] M06-I01 — Intent detail: launch and satisfy
+- [ ] M06-I02 — Milestone detail: execute and supervise
+- [ ] M06-I03 — Milestone dashboard and roll-up
+- [ ] M06-I04 — Plan refinement under existing governance
+- [ ] M06-I05 — Navigation and deep-link restoration
+- [ ] M07-I01 — Issue detail: run + transitions
+- [ ] M07-I02 — Task detail and worker controls
+- [ ] M07-I03 — PR drain board and integration actions
+- [ ] M07-I04 — Execution logs and artifacts
+- [ ] M07-I05 — Issue-to-PR-to-release traceability
+- [ ] M08-I01 — Canonical descriptors and typed schemas
+- [ ] M08-I02 — REST and OpenAPI projection
+- [ ] M08-I03 — MCP/CLI execution parity
+- [ ] M08-I04 — Web topology and route registration
+- [ ] M08-I05 — Generated docs and examples
+- [ ] M09-I01 — AuthN/AuthZ threat-model for websocket and mutations
+- [ ] M09-I02 — Secrets and prompt privacy
+- [ ] M09-I03 — Efficient transport and chart performance
+- [ ] M09-I04 — Responsive mobile-first interactions
+- [ ] M09-I05 — Graceful degradation and no-JS correctness
+- [ ] M10-I01 — Migrate .ai rules/doctrines, deprecate blockers
+- [ ] M10-I02 — Register executable gates in existing CI model
+- [ ] M10-I03 — Contract and property tests
+- [ ] M10-I04 — Browser-driven E2E and visual regression
+- [ ] M10-I05 — Chaos and self-hosted dogfooding
+- [ ] M11-I01 — Canary issue execution through UI
+- [ ] M11-I02 — Canary milestone and intent supervision
+- [ ] M11-I03 — Update Docs and living landing page
+- [ ] M11-I04 — Version analysis, merge, release and deploy
+- [ ] M11-I05 — Closeout with measurable adoption evidence
+
+Progress derives from verified canonical evidence; do not manually mark checklist items complete without links.
