@@ -218,6 +218,16 @@ fn exemption_for<'a>(
         .find(|class| changed.iter().all(|path| class.covers(path)))
 }
 
+/// The policy floor as the version's mode reads it: below 1.0.0 the contract is held by
+/// minors (ADR 0051), so a `major` floor there asks what a major asks of compatibility, a
+/// minor. Every other floor is taken as written.
+fn floor_in(mode: Mode, floor: Impact) -> Impact {
+    match (mode, floor) {
+        (Mode::Pre1_0Strict, Impact::Major) => Impact::Minor,
+        (_, floor) => floor,
+    }
+}
+
 /// Decide what a landing allocates (ADR 0134 §2-4).
 ///
 /// `selected = max(required_by_compatibility, floor)`, where an exemption covering every
@@ -255,10 +265,13 @@ pub fn decide(
     let compat = CompatPolicy::for_version(trunk);
     let required = compat.required_of(observed);
     let exemption = exemption_for(policy, changed);
-    let floor = if exemption.is_some() {
+    // a floor speaks the version's mode as compatibility does: below 1.0.0 nothing costs a
+    // major, so a `major` floor asks a minor there; and a change of nothing is no landing,
+    // so no floor applies to it
+    let floor = if exemption.is_some() || changed.is_empty() {
         Impact::None
     } else {
-        policy.floor
+        floor_in(compat.mode, policy.floor)
     };
     let selected = required.max(floor);
     let next = trunk.raised_to(selected);
@@ -273,11 +286,20 @@ pub fn decide(
         format!("compatibility therefore requires {}", required.as_str()),
     ];
     match exemption {
+        None if changed.is_empty() => explanation.push(
+            "the change touches no path, which is no landing, so no policy floor applies"
+                .to_string(),
+        ),
         Some(class) => explanation.push(format!(
             "every changed path is in the exemption class {} ({}), so the policy floor of {} does not apply; the compatibility requirement still does",
             class.id,
             class.description,
             policy.floor.as_str()
+        )),
+        None if floor != policy.floor => explanation.push(format!(
+            "the policy floor is {}, which the version's mode reads as {}",
+            policy.floor.as_str(),
+            floor.as_str()
         )),
         None => explanation.push(format!("the policy floor is {}", policy.floor.as_str())),
     }
@@ -385,7 +407,7 @@ pub fn next_for(
         .map(|c| c.impact)
         .max()
         .unwrap_or(Impact::None);
-    let changed: Vec<String> = git(&["diff", "--name-only", &fork, head])?
+    let changed: Vec<String> = git(&["diff", "--name-only", "--no-renames", &fork, head])?
         .lines()
         .filter(|l| !l.is_empty())
         .map(str::to_string)
@@ -516,13 +538,6 @@ mod tests {
     }
 
     #[test]
-    fn an_empty_change_is_covered_by_no_class() {
-        let d = decide(v("0.20.0"), Impact::None, &landing(Impact::Minor), &[]);
-        assert!(d.exemption.is_none());
-        assert_eq!(d.next_version, "0.21.0");
-    }
-
-    #[test]
     fn the_same_inputs_give_the_same_decision_and_explanation() {
         let p = landing(Impact::Minor);
         let a = decide(v("0.20.0"), Impact::Minor, &p, &src());
@@ -582,6 +597,42 @@ mod tests {
         assert!(
             serde_json::from_value::<ReleasePolicy>(serde_json::json!({"skip": true})).is_err(),
             "there is no switch outside the declared keys"
+        );
+    }
+
+    #[test]
+    fn a_change_of_nothing_is_no_exempt_landing_and_owes_no_floor() {
+        let d = decide(v("0.20.0"), Impact::None, &landing(Impact::Minor), &[]);
+        assert!(d.exemption.is_none());
+        assert_eq!((d.floor, d.selected), (Impact::None, Impact::None));
+        assert_eq!(d.next_version, "0.20.0");
+        assert!(
+            d.explanation.iter().any(|l| l.contains("no landing")),
+            "{:?}",
+            d.explanation
+        );
+    }
+
+    #[test]
+    fn a_major_floor_below_one_asks_a_minor_and_from_one_a_major() {
+        let changed = ["apps/majordomus-cli/src/x.rs".to_string()];
+        let below = decide(v("0.20.0"), Impact::None, &landing(Impact::Major), &changed);
+        assert_eq!(
+            (below.floor, below.next_version.as_str()),
+            (Impact::Minor, "0.21.0")
+        );
+        assert!(
+            below
+                .explanation
+                .iter()
+                .any(|l| l.contains("reads as minor")),
+            "{:?}",
+            below.explanation
+        );
+        let above = decide(v("1.4.0"), Impact::None, &landing(Impact::Major), &changed);
+        assert_eq!(
+            (above.floor, above.next_version.as_str()),
+            (Impact::Major, "2.0.0")
         );
     }
 }

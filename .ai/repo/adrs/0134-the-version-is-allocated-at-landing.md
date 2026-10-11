@@ -63,7 +63,11 @@ serialised the choice except people.
    - `required_by_compatibility` is ADR 0051's measurement of this pull request's own
      movement of the public surface, master against the candidate, translated by the
      version's mode (below 1.0.0 a removal costs a minor, from 1.0.0 a major);
-   - `floor` is `release.floor` in the policy: `none`, `patch`, `minor` or `major`;
+   - `floor` is `release.floor` in the policy: `none`, `patch`, `minor` or `major`, read
+     through the version's mode as compatibility is, so below 1.0.0 a `major` floor asks a
+     minor; a change that touches no path is no landing and owes no floor;
+   - the changed paths are listed without rename detection, so a file moved into an exempt
+     tree is also judged at the path it left;
    - an unknown movement stays what ADR 0051 makes it, never a safe patch.
 4. **An exemption lowers the floor and nothing else.** `release.exempt` declares classes,
    each with an id, a description and the paths it covers. A pull request is exempt when

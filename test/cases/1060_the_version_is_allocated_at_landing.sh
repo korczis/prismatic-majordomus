@@ -7,6 +7,7 @@
 #   a fix behind the boundary       nothing moved, and the policy floor still asks a minor
 #   a head behind the trunk         what the trunk added since is not a removal the head made
 #   a change one exemption covers   held to no floor, so nothing is allocated
+#   a file moved into an exempt tree  judged at both paths, so the move is not exempt
 #   no floor in the policy          a fix behind the boundary allocates nothing
 #   an unreadable trunk             refused with exit 12, never a guessed number
 #
@@ -94,6 +95,16 @@ git add -A >/dev/null && git commit -qm "chore: a plan record"
 d="$(next trunk planned)"
 [ "$(printf '%s' "$d" | jq -r '[.exemption.id, .floor, .next_version] | join(" ")')" = "plan-records none 0.4.0" ] \
   || { echo "    a plan record alone should be exempt and allocate nothing:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
+
+# ---------------------------------------------------------------- a file moved into an exempt tree
+# with rename detection the move is listed only at its new path, inside the plan records, and
+# the change would pass as exempt while it removes a file from the product
+git checkout -q -b moved trunk
+mkdir -p .ai/repo/project && git mv apps/majordomus-cli/Cargo.toml .ai/repo/project/Cargo.toml
+git commit -qm "chore: a move into the plan records"
+d="$(next trunk moved)"
+[ "$(printf '%s' "$d" | jq -r '[(.exemption // {id: "none"}).id, .floor] | join(" ")')" = "none minor" ] \
+  || { echo "    a file moved into an exempt tree passed as exempt:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
 
 # ---------------------------------------------------------------- no floor in the policy
 git checkout -q trunk
