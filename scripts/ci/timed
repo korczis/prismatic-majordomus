@@ -5,6 +5,8 @@
 #   scripts/ci/timed --bound <seconds> <gate> <step> <rows-file> <command> [args...]
 #
 # The row is "<gate><TAB><step><TAB><seconds>"; the command's exit code is this script's.
+# With MJ_CI_RECEIPTS set, the step's receipt is appended there too: "<gate><TAB><success or
+# failure><TAB><job>/<step>", what scripts/ci/verdict asks every selected gate for.
 #
 # WHY THERE IS A BOUND. Until this, the only thing that measured how long a step took was
 # the arithmetic below, and it runs *after* the command returns. So a step that never
@@ -48,6 +50,10 @@ else
 fi
 elapsed=$(( $(date +%s) - t0 ))
 printf '%s\t%s\t%s\n' "$gate" "$step" "$elapsed" >> "$rows"
+if [ -n "${MJ_CI_RECEIPTS:-}" ]; then
+  if [ "$rc" = 0 ]; then outcome=success; else outcome=failure; fi
+  printf '%s\t%s\t%s/%s\n' "$gate" "$outcome" "${GITHUB_JOB:-local}" "$step" >> "$MJ_CI_RECEIPTS"
+fi
 
 # 124 is timeout(1)'s own verdict, and 137 is what a KILL after it looks like.
 if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then

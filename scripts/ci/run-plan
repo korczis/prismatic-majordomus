@@ -18,6 +18,9 @@
 #                                                            one job's gates of a written plan
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
+#   MJ_CI_RECEIPTS=FILE  append "<gate id><TAB><success or failure><TAB><job>/run-plan" per
+#                        gate: the receipt scripts/ci/verdict asks every selected gate for.
+#                        A gate skipped here writes none; the step that runs it writes its own.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
@@ -70,8 +73,9 @@ for g in $gates; do
   fi
   printf '\n==> %s: %s\n' "$g" "$cmd"
   t0="$(date +%s)"
-  if bash -c "$cmd"; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
-  else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; fi
+  if bash -c "$cmd"; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; outcome=success
+  else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; outcome=failure; fi
+  [ -z "${MJ_CI_RECEIPTS:-}" ] || printf '%s\t%s\t%s/run-plan\n' "$g" "$outcome" "${job:-plan}" >> "$MJ_CI_RECEIPTS"
   [ -n "${MJ_CI_TIMINGS:-}" ] && printf '%s\t%s\t%s\n' "${job:-plan}" "$g" "$(( $(date +%s) - t0 ))" >> "$MJ_CI_TIMINGS"
   ran=$((ran+1))
 done
