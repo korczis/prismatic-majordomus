@@ -16,7 +16,8 @@
 #
 # A merge lands as a merge commit, as GitHub's merge method makes it, so after any merge every
 # other open pull request is behind master and needs master brought in before it may merge
-# (the rule: a pull request merges only when it contains the current master). One drain can
+# (the rule: a pull request merges only when it contains the current master, or carries it,
+# which none here does: ADR 0129 and case 1040). One drain can
 # therefore merge one pull request of a queue like this one; the next is refreshed, its checks
 # run on the new head, and a later drain merges it. That is the cycle asserted here.
 #
