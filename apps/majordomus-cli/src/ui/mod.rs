@@ -45,6 +45,7 @@ pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
+pub(crate) mod issues;
 pub(crate) mod mesh;
 pub(crate) mod milestone;
 pub(crate) mod prs;
@@ -131,6 +132,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Issues & PRs",
         icon: "merge",
         answers: "Which issues are ready or blocked, and what the pull-request queue would do.",
+    },
+    Screen {
+        route: issues::ROUTE,
+        title: "Issues",
+        icon: "list",
+        answers: "Every issue of the plan, by status, milestone, priority or text.",
     },
     Screen {
         route: prs::ROUTE,
@@ -252,6 +259,7 @@ impl Ui {
             "" | PREFIX => dashboard::screen(&ctx),
             roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
+            issues::ROUTE => issues::screen(&ctx, &req.query),
             prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
             delivery::ROUTE => delivery::screen(&ctx),
@@ -421,6 +429,10 @@ mod tests {
             (
                 work::ROUTE,
                 work::screen(&ctx, &[("pr".into(), "1".into())]),
+            ),
+            (
+                issues::ROUTE,
+                issues::screen(&ctx, &[("status".into(), "READY".into())]),
             ),
             (
                 prs::ROUTE,

@@ -32851,6 +32851,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2475",
+        "kind": "issue",
+        "label": "I2475",
+        "summary": "The issues are browsed: every issue of the plan by status, milestone, priority or text, each a link onward",
+        "route": "/cockpit/objects/issue/i2475",
+        "source": ".ai/repo/project/issues/I2475.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/issues lists every issue; a status tab narrows to it",
+            "milestone, priority and text narrow together, and the pick stays picked",
+            "an issue, its milestone and what blocks it are links to their inspectors",
+            "a value that is no word of the plan is dropped"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The UI shows two short lists of issues and one issue at a time on the PR Drain.",
+          "depends_on": [
+            "I2470",
+            "I2471"
+          ],
+          "evidence_required": [
+            "ui_issues_unit_tests",
+            "ui_issues_case_1080"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/issues.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            ".ai/repo/project/issues/I2475.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1080_the_issues_are_browsed.sh"
+          ],
+          "slug": "the-issues-are-browsed",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::issues",
+            "test/run.sh 1080_the_issues_are_browsed"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -46079,6 +46122,13 @@
         "label": "test/cases/107_runtime_staleness_is_loud.sh",
         "route": "/cockpit/objects/test/test-cases-107-runtime-staleness-is-loud-sh",
         "source": "test/cases/107_runtime_staleness_is_loud.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1080_the_issues_are_browsed.sh",
+        "kind": "test",
+        "label": "test/cases/1080_the_issues_are_browsed.sh",
+        "route": "/cockpit/objects/test/test-cases-1080-the-issues-are-browsed-sh",
+        "source": "test/cases/1080_the_issues_are_browsed.sh"
       },
       {
         "id": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
@@ -70610,6 +70660,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2475",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2475",
+        "target": "majordomus://issue/I2470",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2475",
+        "target": "majordomus://issue/I2471",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2475",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -73866,6 +73936,11 @@
       },
       {
         "source": "majordomus://test/test/cases/107_runtime_staleness_is_loud.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1080_the_issues_are_browsed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -79556,8 +79631,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2599,
-      "edges": 5673,
+      "nodes": 2601,
+      "edges": 5678,
       "acyclic": false,
       "truncated": false
     }
