@@ -13,7 +13,7 @@ use crate::cockpit::view::{alert, theme_bootstrap};
 use crate::design::DesignSystem;
 
 use super::icons::icon;
-use super::source::{ask, Source};
+use super::source::{ask, Reading, Source};
 use super::view::{day, shown};
 use super::{PREFIX, SCREENS};
 
@@ -194,18 +194,25 @@ fn version_card(ctx: &Context, frame: &Frame<'_>) -> El {
                         .text("this executable"),
                 ),
         )
-        .child(el("p").class("mj-ui-version-line").text(format!(
-            "Latest release {} · {} · {}",
-            shown(&latest),
-            published
-                .text()
-                .map(|d| day(&d))
-                .unwrap_or_else(|| shown(&published)),
-            commit
-                .text()
-                .map(|c| c.chars().take(10).collect::<String>())
-                .unwrap_or_else(|| shown(&commit)),
-        )))
+        .child(
+            el("p")
+                .class("mj-ui-version-line")
+                .text(release_line(&latest, &published, &commit)),
+        )
+}
+
+/// The latest release in one line: its version, the day it was published and its short
+/// commit, each one said to be missing in the reading's own words when it is.
+fn release_line(latest: &Reading, published: &Reading, commit: &Reading) -> String {
+    let day_of = match published.text() {
+        Some(d) => day(&d),
+        None => shown(published),
+    };
+    let short = match commit.text() {
+        Some(c) => c.chars().take(10).collect::<String>(),
+        None => shown(commit),
+    };
+    format!("Latest release {} · {day_of} · {short}", shown(latest))
 }
 
 /// The top bar: the menu button of a narrow screen, the search, the other surfaces, the
@@ -278,10 +285,13 @@ fn topbar(read_at: &str) -> El {
         )
 }
 
+/// A link to another surface. Below the medium width its label is hidden and only the icon,
+/// which is `aria-hidden`, is drawn, so the link carries its name itself.
 fn tool(href: &str, glyph: &str, label: &str) -> El {
     el("a")
         .class("mj-ui-tool")
         .attr("href", href)
+        .attr("aria-label", label)
         .child(icon(glyph))
         .child(el("span").class("mj-ui-label").text(label))
 }
@@ -320,6 +330,46 @@ mod tests {
             assets_present: true,
             version: "0.0.0",
         }
+    }
+
+    /// The release line shows the day and the short commit of a release it was given, and
+    /// says which reading is missing when it was not.
+    #[test]
+    fn the_release_line_says_what_it_read_and_what_is_missing() {
+        let releases = crate::ui::source::Answer {
+            source: Source::of("distribution.releases"),
+            route: None,
+            exposure: Default::default(),
+            value: Ok(serde_json::json!({ "latest": {
+                "version": "0.20.0",
+                "published_at": "2026-10-10T16:38:00Z",
+                "commit": "c8f0e4c50123456789",
+            }})),
+            took: std::time::Duration::ZERO,
+        };
+        let line = release_line(
+            &releases.read("/latest/version"),
+            &releases.read("/latest/published_at"),
+            &releases.read("/latest/commit"),
+        );
+        assert_eq!(line, "Latest release 0.20.0 · 2026-10-10 · c8f0e4c501");
+        let missing = releases.read("/latest/nothing");
+        assert_eq!(
+            release_line(&missing, &missing, &missing),
+            "Latest release none · none · none"
+        );
+    }
+
+    /// A distribution without the UI's files still serves every screen, and says why it
+    /// is unstyled.
+    #[test]
+    fn an_unstyled_distribution_says_so_on_every_page() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let mut bare = frame("/ui");
+        bare.assets_present = false;
+        let html = page(&ctx, &bare, &View::new("Dashboard", el("p")));
+        assert!(html.contains("the UI is unstyled"), "{html}");
     }
 
     fn render(current: &str) -> String {

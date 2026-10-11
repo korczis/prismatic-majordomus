@@ -170,21 +170,28 @@ pub fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Answer> {
             .collect();
         asked
             .into_iter()
-            .map(|(source, thread)| {
-                thread.join().unwrap_or_else(|_| {
-                    let (route, exposure) = describe(ctx, source.capability);
-                    Answer {
-                        source,
-                        route,
-                        exposure,
-                        value: Err("the source panicked while answering".into()),
-                        took: Duration::ZERO,
-                    }
-                })
-            })
+            .map(|(source, thread)| joined(ctx, source, thread.join()))
             .collect()
     });
     answers.into_iter().map(|a| (a.source, a)).collect()
+}
+
+/// What a source's thread came back with: its answer, or — when asking it panicked — an
+/// answer that says so, so one broken source fails its own panel and not the screen.
+fn joined(ctx: &Context, source: Source, thread: std::thread::Result<Answer>) -> Answer {
+    match thread {
+        Ok(answer) => answer,
+        Err(_) => {
+            let (route, exposure) = describe(ctx, source.capability);
+            Answer {
+                source,
+                route,
+                exposure,
+                value: Err("the source panicked while answering".into()),
+                took: Duration::ZERO,
+            }
+        }
+    }
 }
 
 /// One capability asked with an input a reader chose (a screen's query), through the
@@ -271,6 +278,54 @@ fn describe(ctx: &Context, capability: &str) -> (Option<String>, Exposure) {
 mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// A source whose thread panicked is a failed answer of its own, named and routed like
+    /// any other; the screen around it still renders.
+    #[test]
+    fn a_source_that_panicked_is_a_failed_answer_not_a_broken_screen() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let source = Source::of("plan.status");
+        let a = joined(&ctx, source, Err(Box::new("boom")));
+        assert_eq!(a.source, source);
+        assert_eq!(
+            a.value.as_ref().err().map(String::as_str),
+            Some("the source panicked while answering")
+        );
+        assert!(a.route.is_some(), "a failed source still names its route");
+        let ok = joined(&ctx, source, Ok(answer(Ok(serde_json::json!({})))));
+        assert!(ok.value.is_ok());
+    }
+
+    /// A screen's own input that does not parse is the source's failure, said with the
+    /// capability's name; it is never asked with something else instead.
+    #[test]
+    fn a_source_whose_input_does_not_parse_fails_and_says_which() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let broken = Source::with("plan.status", "{not json");
+        assert_eq!(broken.input, "{not json");
+        let a = ask(&ctx, broken);
+        let reason = a.value.expect_err("an input that does not parse");
+        assert!(
+            reason.contains("plan.status") && reason.contains("does not parse"),
+            "{reason}"
+        );
+        let refused = ask_input(&ctx, "no.such.capability", serde_json::json!({}));
+        assert!(refused.value.is_err(), "an unknown capability is refused");
+    }
+
+    /// The provenance line names the route when there is one, and only the capability and
+    /// its time when there is none; a value that is not a string is shown as JSON.
+    #[test]
+    fn a_provenance_without_a_route_names_the_capability_alone() {
+        let mut a = answer(Ok(serde_json::json!({ "n": 3, "on": true })));
+        assert!(a.provenance().contains("GET /api/v1/health"));
+        a.route = None;
+        assert_eq!(a.provenance(), "health.report · 12 ms");
+        assert_eq!(a.read("/on").text().as_deref(), Some("true"));
+        assert_eq!(a.read("/n").text().as_deref(), Some("3"));
+    }
 
     fn answer(value: Result<Value, String>) -> Answer {
         Answer {

@@ -154,8 +154,9 @@
   .mj-ui-body {
     @apply flex min-w-0 flex-1 flex-col;
   }
+  /* below sm the search takes a row of its own, so it stays a target a thumb can hit */
   .mj-ui-topbar {
-    @apply sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:px-6;
+    @apply sticky top-0 z-30 flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap lg:px-6;
     background: var(--mj-bg);
     border-bottom: 1px solid var(--mj-line);
   }
@@ -165,7 +166,7 @@
     border: 1px solid var(--mj-line);
   }
   .mj-ui-search {
-    @apply flex min-w-0 flex-1 items-center gap-2 rounded-xl px-3 sm:max-w-2xl;
+    @apply order-last flex min-w-0 flex-1 basis-full items-center gap-2 rounded-xl px-3 sm:order-none sm:basis-0 sm:max-w-2xl;
     background: var(--mj-raised);
     border: 1px solid var(--mj-line);
     color: var(--mj-muted);
@@ -453,8 +454,10 @@
     @apply text-2xl font-semibold;
     color: var(--mj-fg);
   }
+  /* at least 10rem wide, so on a narrow panel it wraps beneath the figure rather than
+     squeezing beside it, in one column that shrinks rather than overflows */
   .mj-ui-legend {
-    @apply m-0 grid min-w-0 flex-1 list-none gap-2 p-0;
+    @apply m-0 grid min-w-0 flex-1 basis-40 list-none grid-cols-1 gap-2 p-0;
   }
   .mj-ui-legend-item {
     @apply flex items-center gap-2 text-sm;

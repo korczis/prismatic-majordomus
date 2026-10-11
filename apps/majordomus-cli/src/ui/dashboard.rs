@@ -49,7 +49,9 @@ pub fn screen(ctx: &Context) -> View {
         (Some(branch), Some(head)) => format!(
             "{branch} at {} · working tree {}",
             &head[..12.min(head.len())],
-            git("/repository/git/working_tree").unwrap_or_else(|| "unknown".into())
+            git("/repository/git/working_tree")
+                .as_deref()
+                .unwrap_or("unknown")
         ),
         _ => "The repository's version control could not be read.".into(),
     };
@@ -418,9 +420,7 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
         });
         el("div")
             .class("mj-ui-stack")
-            .when(detail.is_some(), |s| {
-                s.child(detail.clone().unwrap_or_else(|| el("div")))
-            })
+            .children(detail)
             .child(tallies)
             .child(table(
                 &["PR", "Title", "Disposition", "Lane", "Why"],
@@ -668,5 +668,168 @@ mod tests {
         assert!(queue_panel(&unobserved, None)
             .render()
             .contains("never refreshed"));
+    }
+
+    /// An answer of `source` holding `value`, as the screen would read it.
+    fn answer(source: Source, value: Value) -> Answer {
+        Answer {
+            source,
+            route: None,
+            exposure: Exposure::default(),
+            value: Ok(value),
+            took: std::time::Duration::ZERO,
+        }
+    }
+
+    /// What was published is a timeline, newest first, each entry with its channel and a
+    /// commit cut to ten characters; nothing published says so.
+    #[test]
+    fn the_releases_are_a_timeline_with_channel_and_commit() {
+        let version = answer(
+            VERSION,
+            serde_json::json!({ "declared": "0.21.0", "bump": "minor" }),
+        );
+        let releases = answer(
+            RELEASES,
+            serde_json::json!({ "releases": [
+                { "version": "0.20.0", "channel": "stable", "commit": "c8f0e4c5011234567890",
+                  "published_at": "2026-10-10T16:38:00Z" },
+                { "version": "0.19.1", "channel": "stable", "commit": "abc",
+                  "published_at": "2026-10-09T10:00:00Z" }
+            ]}),
+        );
+        let html = releases_panel(&releases, &version).render();
+        assert!(
+            html.contains("v0.20.0") && html.contains("v0.19.1"),
+            "{html}"
+        );
+        assert!(
+            html.contains("stable · c8f0e4c501<"),
+            "a commit is cut to ten: {html}"
+        );
+        assert!(
+            html.contains("stable · abc<"),
+            "a short commit is kept whole: {html}"
+        );
+        assert!(html.contains("Declared 0.21.0"), "{html}");
+        let none = answer(RELEASES, serde_json::json!({ "releases": [] }));
+        assert!(releases_panel(&none, &version)
+            .render()
+            .contains("Nothing has been released yet."));
+    }
+
+    /// A machine says whether it is this one, and each of its runtimes is its own liveness
+    /// word; a machine that does not say where it is reads as unknown, never as this one.
+    #[test]
+    fn every_machine_says_where_it_is_and_how_alive_its_runtimes_are() {
+        let mesh = answer(
+            MESH,
+            serde_json::json!({ "machines": [
+                { "name": "lundra", "local": false,
+                  "runtimes": [{ "liveness": "live" }, { "liveness": "expired" }, {}] },
+                { "name": "this-mac", "local": true, "runtimes": [{ "liveness": "own" }] },
+                { "name": "elsewhere" }
+            ]}),
+        );
+        let html = mesh_panel(&mesh).render();
+        assert!(
+            html.contains(">lundra<") && html.contains(">remote<"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">this-mac<") && html.contains(">this machine<"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">elsewhere<") && html.contains(">unknown<"),
+            "{html}"
+        );
+        for word in ["live", "expired", "own"] {
+            assert!(html.contains(&format!(">{word}<")), "{word}: {html}");
+        }
+    }
+
+    /// The queue as the lane observed it: a row per pull request, a row with no number leads
+    /// to the work screen rather than to a detail, and the time it was observed is said.
+    /// The selected one opens its detail with every gate, its evidence, what it authors and
+    /// the factors of its rank; a gate with no verdict reads as unknown.
+    #[test]
+    fn a_full_queue_opens_every_part_of_a_pull_requests_detail() {
+        let queue = answer(
+            QUEUE,
+            serde_json::json!({
+                "observed": true,
+                "queue": {
+                    "observed_at": "2026-10-11T09:00:00Z",
+                    "tallies": { "open": 3, "by_disposition": { "needs_refresh": 1 } },
+                    "assessments": [
+                        {
+                            "number": 948, "title": "the UI has every screen",
+                            "author": "korczis", "head_ref": "feature/ui", "base_ref": "master",
+                            "disposition": "ready", "lane": "train", "risk": "low",
+                            "next_action": "",
+                            "reasons": ["stacked_on:940", "ci:pass", "third"],
+                            "gates": [
+                                { "gate": "ci", "passed": true },
+                                { "gate": "freshness", "passed": false },
+                                { "gate": "review" }
+                            ],
+                            "evidence": [
+                                { "kind": "check", "status": "pass", "detail": "ci is green" },
+                                { "kind": "review", "status": "pending", "detail": "requested" }
+                            ],
+                            "authored_paths": ["apps/majordomus-cli/src/ui", "share/ui"],
+                            "rank_factors": { "lane_order": 2, "stacked_on": "940" }
+                        },
+                        { "title": "a pull request with no number", "disposition": "blocked" }
+                    ]
+                },
+                "throughput": { "merges": 4, "merges_per_day": 0.57 }
+            }),
+        );
+        let html = queue_panel(&queue, Some(948)).render();
+        assert!(html.contains("id=\"pr-948\""), "{html}");
+        assert!(
+            html.contains(&format!("href=\"{}\"", super::super::prs::ROUTE)),
+            "a row with no number leads to the drain: {html}"
+        );
+        assert!(html.contains("Observed 2026-10-11 09:00:00Z"), "{html}");
+        assert!(
+            html.contains("stacked_on:940, ci:pass<"),
+            "two reasons in a row: {html}"
+        );
+        assert!(html.contains("Next: nothing to do"), "{html}");
+        assert!(
+            html.contains(">freshness<") && html.contains(">review<"),
+            "{html}"
+        );
+        assert!(html.contains(">unknown<"), "a gate with no verdict: {html}");
+        assert!(
+            html.contains("ci is green") && html.contains("requested"),
+            "{html}"
+        );
+        assert!(
+            html.contains("apps/majordomus-cli/src/ui, share/ui"),
+            "the paths it authors: {html}"
+        );
+        assert!(html.contains("<dt>lane order</dt>"), "{html}");
+        assert!(html.contains(">2<") && html.contains(">940<"), "{html}");
+        assert!(
+            html.contains("#948 · korczis · feature/ui → master"),
+            "{html}"
+        );
+    }
+
+    /// The panel's own route reads `?pr` as the selection; a value that is no number selects
+    /// nothing rather than failing.
+    #[test]
+    fn the_panel_route_reads_its_selection_from_the_query() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        for pr in ["12", "twelve"] {
+            let view = pull_requests_panel(&ctx, &[("pr".into(), pr.into())]);
+            assert_eq!(view.status, 200);
+            assert!(view.main.render().contains("Pull-request queue"));
+        }
     }
 }
