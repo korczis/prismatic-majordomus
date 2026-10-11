@@ -12944,6 +12944,14 @@
         "source": "CONTRIBUTING.md"
       },
       {
+        "id": "majordomus://document/GEMINI.md",
+        "kind": "document",
+        "label": "GEMINI.md",
+        "summary": "GEMINI.md",
+        "route": "/cockpit/objects/document/gemini-md",
+        "source": "GEMINI.md"
+      },
+      {
         "id": "majordomus://document/README.md",
         "kind": "document",
         "label": "README.md",
@@ -38738,6 +38746,7 @@
             ".githooks/**",
             ".codex/**",
             ".gemini/**",
+            ".agents/**",
             ".mcp.json",
             ".editorconfig",
             ".envrc",
@@ -38746,6 +38755,7 @@
             "README.md",
             "AGENTS.md",
             "CLAUDE.md",
+            "GEMINI.md",
             "CONTRIBUTING.md",
             "SECURITY.md",
             "Cargo.toml",
@@ -60450,6 +60460,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/GEMINI.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/README.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -75581,8 +75596,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2499,
-      "edges": 5457,
+      "nodes": 2500,
+      "edges": 5458,
       "acyclic": false,
       "truncated": false
     }

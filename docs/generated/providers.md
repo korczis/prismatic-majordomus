@@ -11,7 +11,7 @@ Every provider the tool ships an adapter for, and what this repository does with
 | `bb` | bb | `.bb/AGENTS.md` | — | — | `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees` |
 | `claude-code` | Claude Code | `CLAUDE.md` | `.mcp.json` | `prompt-capture`, `session-lifecycle` | `<primary>/.claude/worktrees` |
 | `codex` | Codex | — | `.codex/config.toml` | — | — |
-| `gemini` | Gemini CLI | — | `.gemini/settings.json` | — | — |
+| `gemini` | Gemini CLI | `GEMINI.md` | `.gemini/settings.json` | — | — |
 | `generic` | A worker with no convention of its own | — | — | — | — |
 
 6 provider(s).

@@ -776,6 +776,13 @@
       ]
     },
     {
+      "id": "providers/gemini",
+      "source": "the policy `.ai/repo/policy.yaml` and the `gemini` template, stamped by the projection itself",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
       "id": "registry",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
@@ -1135,7 +1142,7 @@
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself",
       "bytes": 1442,
-      "sha256": "9e8014d602dbc19f005e5e2af7bf88d68d9506332cf82d37dbeddc4ea7905d53"
+      "sha256": "f54970aa78225e21279fde666f6cf24467ef767df0c8a20c02010ac73801ccf4"
     },
     {
       "path": ".dockerignore",
@@ -1151,7 +1158,7 @@
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself",
       "bytes": 7543,
-      "sha256": "bdebb3feeca231ae3d17d074517640767f6d209bf1f2f86b5d6a0784d8ff365b"
+      "sha256": "8eb3a2cd1f436ebb47612b4e02e21d75bc2bc4ecde35644057561dc847c794e2"
     },
     {
       "path": "CLAUDE.md",
@@ -1159,7 +1166,15 @@
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself",
       "bytes": 6832,
-      "sha256": "3ad12ca853d6062dfc88a04a1d8fa183b974f22d479c8dcd545139f07410f4f6"
+      "sha256": "185c8b133cd78d016bdb7c06afc4193f36128e53bed1d010252adaf147b48e3b"
+    },
+    {
+      "path": "GEMINI.md",
+      "document": "providers/gemini",
+      "format": "markdown",
+      "source": "the policy `.ai/repo/policy.yaml` and the `gemini` template, stamped by the projection itself",
+      "bytes": 7499,
+      "sha256": "65195241eaa81ff59859b532bd3c77615209bfac4da56e5ee32e3082de5b245d"
     },
     {
       "path": "apps/majordomus-cli/src/cockpit/logo-mark.svg",
@@ -1376,8 +1391,8 @@
       "format": "json",
       "schema": "majordomus/capability-graph/v1",
       "source": "the composed graph of the registry and the index",
-      "bytes": 2848764,
-      "sha256": "8197772bdb5bb5a37b99b2da1b13453e4cf40920785244c01eb6a761f8e54144"
+      "bytes": 2849185,
+      "sha256": "0f3dfab0beee9b662e83ecb399b85b2e8f82a8dc7156d48e667f4b36a5dae495"
     },
     {
       "path": "docs/generated/graph.schema.json",
@@ -1833,16 +1848,16 @@
       "format": "json",
       "schema": "majordomus/providers/v1",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
-      "bytes": 6954,
-      "sha256": "99fa0d1f59bfc65dc135902cad99dd140ca6c67e1caf32472ec7b651d4583b8d"
+      "bytes": 7073,
+      "sha256": "1cf19509ff9f7ef26610fac4d5305409a20d8eef39dd0edc0851512f9f59145a"
     },
     {
       "path": "docs/generated/providers.md",
       "document": "providers",
       "format": "markdown",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
-      "bytes": 2302,
-      "sha256": "27496ca9e8a10332a14d4030f4e2709660ddbecd13d784e78d61098fc5b097ef"
+      "bytes": 2310,
+      "sha256": "d139cb700e1f2c8d1b1c728542d34f9e6e2ef9e7b0cc8f217d3a0bb437ffd5d0"
     },
     {
       "path": "docs/generated/providers.yaml",
@@ -1850,8 +1865,8 @@
       "format": "yaml",
       "schema": "majordomus/providers/v1",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
-      "bytes": 6472,
-      "sha256": "b1178d91de907e4cecee2f536e2d5f18c12450d204869aefc00596fe3393401a"
+      "bytes": 6543,
+      "sha256": "b2886eec1436687a5b32011abe5f092104f56725c6653bb6de8cc142e39410d9"
     },
     {
       "path": "docs/generated/registry.json",
@@ -2337,7 +2352,7 @@
       "format": "json",
       "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
       "bytes": 92168,
-      "sha256": "4624467b9e25d4227e1a92f5b827494114778dd9b88a310298695774a196ca6e"
+      "sha256": "292c642c38e34aa0247d75307e316f09155dcf623d048919fe26f97aec044c56"
     },
     {
       "path": "site/data/registry/product.json",
@@ -2345,8 +2360,8 @@
       "format": "json",
       "schema": "majordomus-site-product/v1",
       "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology",
-      "bytes": 632991,
-      "sha256": "7390f2bdc8bc2e18fbfc1fe5e5e5e1d4f9c703633e57c5f2bae3e563457b4401"
+      "bytes": 633110,
+      "sha256": "8b35d064ff78944ddb9bae2e0e63e3bcf60c4df1dc735ce8d8574a8b05572158"
     },
     {
       "path": "site/data/registry/registry.json",
@@ -2354,8 +2369,8 @@
       "format": "json",
       "schema": "majordomus-site-registry/v2",
       "source": "the capability registry and the index of this repository's layer",
-      "bytes": 6207523,
-      "sha256": "9bfd2ffc073c2af218498e36bb441c24a1eea75aaeb0ea226ad547dce244aa2c"
+      "bytes": 6207887,
+      "sha256": "7092db5b2c0c170832e2a31db192ffb054103e5b7542c92415d7e5b297b38547"
     },
     {
       "path": "site/data/registry/why-graph.json",
