@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -1786,6 +1786,11 @@
       "kind": "claim",
       "subject": "claim:project-status-derived",
       "path": "/evidence/claims/project-status-derived/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:projected-record-edit-is-landable",
+      "path": "/evidence/claims/projected-record-edit-is-landable/"
     },
     {
       "kind": "claim",
@@ -9482,6 +9487,29 @@
             "docs/PLANNING.md",
             "lib/project.awk",
             "test/cases/41_project_status.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:projected-record-edit-is-landable": {
+      "kind": "claim",
+      "id": "projected-record-edit-is-landable",
+      "status": "guaranteed",
+      "page": "/evidence/claims/projected-record-edit-is-landable/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "scripts/ci/github-check",
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
           ]
         }
       ],
@@ -22343,6 +22371,16 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/rules/project/github-projection-gated.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:45_github_projection",
           "path": "test/cases/45_github_projection.sh",
           "category": "e2e",
@@ -25652,6 +25690,7 @@
     "crate:integration_dry_run_proof",
     "crate:integration_executor",
     "crate:integration_merged_branches",
+    "crate:integration_record_reopen",
     "crate:integration_refresh_trail",
     "crate:integration_repair",
     "crate:intent_binding",
@@ -25685,6 +25724,7 @@
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:102_completion_shell",
+    "suite:1036_the_executor_reopens_a_record_pull_request",
     "suite:1060_the_site_shows_what_changed_since_it_was_deployed",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",

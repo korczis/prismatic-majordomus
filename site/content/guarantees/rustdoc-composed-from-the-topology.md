@@ -1,7 +1,7 @@
 +++
 title = "The site build composes every published static surface into its output at that surface's mount, read from the committed topology with no surface named by hand, and refuses, naming the producer, when a published surface's artifact is absent"
 description = "The published site is more than what Zola renders. Every static surface the topology publishes,"
-weight = 181
+weight = 182
 [extra]
 claim_id = "rustdoc-composed-from-the-topology"
 status = "guaranteed"
