@@ -53,7 +53,7 @@ impl Node {
 
     fn declare(&self, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));
