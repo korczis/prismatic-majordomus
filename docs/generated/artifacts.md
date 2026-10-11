@@ -170,10 +170,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `7326d9bb0bf3da80` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `fbb282097fd1bfb9` |
 | `.dockerignore` | `deployment` | text | 573 | `b5411ad35adb24ea` |
-| `AGENTS.md` | `providers/agents` | markdown | 7543 | `7d7c47070f5014dd` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 6832 | `92689fa9f6371939` |
+| `AGENTS.md` | `providers/agents` | markdown | 7543 | `72eab892e4abb6d3` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 6832 | `53cf7ac865202d02` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 904 | `cae23eeef7c3b91b` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `a30cbb90c94c73f6` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9320 | `d9131b18ec754335` |
@@ -199,7 +199,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 28388 | `bf235019e3cb6287` |
 | `docs/generated/economics.md` | `economics` | markdown | 15023 | `f58adbe469e2ce7d` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 23676 | `c4be914a1f1a26cb` |
-| `docs/generated/graph.json` | `graph` | json | 2845492 | `ae11829a692d201b` |
+| `docs/generated/graph.json` | `graph` | json | 2846913 | `61e7de2fbace2651` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `d0c5d415e1b55a69` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `450aa1eccbd8d45e` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `3fef63c18bc453f2` |
@@ -317,10 +317,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `689611f430d47860` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `79b789f1dc99b4c6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `4e9cd0eca1fa1965` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 727942 | `75c0a689897d5452` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 728006 | `3eda7f01d18b7927` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `88f2283bb0f4a58d` |
-| `site/data/registry/product.json` | `site-product` | json | 633126 | `4724a1b775aab5bd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6221228 | `23373465e62da8c2` |
+| `site/data/registry/product.json` | `site-product` | json | 633126 | `f39eee40806d3a3f` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6221596 | `e8f5d156f9e10020` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `df52815e1a59a09c` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `a269b4a327f2ea2d` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `cae23eeef7c3b91b` |

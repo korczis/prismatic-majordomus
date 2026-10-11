@@ -2132,6 +2132,7 @@ impl Integrator for ForgeIntegrator<'_> {
             // rerere off: a resolution recorded during some other merge is a memory of what
             // one person decided about two other commits, and replaying it here would resolve
             // paths nobody decided on
+            let policy = super::allocate::policy_at(root, &master)?;
             if let Err(e) = git_in(&[
                 "-c",
                 "rerere.enabled=false",
@@ -2140,11 +2141,22 @@ impl Integrator for ForgeIntegrator<'_> {
                 "--no-ff",
                 &master,
             ]) {
-                let why = unmerged_paths(root, &dir, &master)
-                    .unwrap_or(format!("the merge of master conflicts after all: {e}"));
-                let _ = git_in(&["merge", "--abort"]);
-                return Err(why);
+                // under allocation at landing a conflict on the version line alone is ours
+                let resolved = policy.allocation == crate::release::landing::Allocation::Landing
+                    && super::allocate::resolve_version_conflict(&dir)?;
+                if !resolved {
+                    let why = unmerged_paths(root, &dir, &master)
+                        .unwrap_or(format!("the merge of master conflicts after all: {e}"));
+                    let _ = git_in(&["merge", "--abort"]);
+                    return Err(why);
+                }
             }
+            // the number this landing takes, from master as it is now (ADR 0134); the derive
+            // below projects it
+            let allocated = super::allocate::allocate_in(root, &dir, &master, &head, &policy)
+                .inspect_err(|_| {
+                    let _ = git_in(&["merge", "--abort"]);
+                })?;
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");
             let derive = Command::new(dir.join("scripts/derive"))
@@ -2166,7 +2178,11 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             git_in(&["add", "-A"])?;
-            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
+            let mut message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
+            if let Some(decision) = &allocated {
+                message.push_str("\n\n");
+                message.push_str(&super::allocate::trailer(decision));
+            }
             let commit = Command::new("git")
                 .arg("-C")
                 .arg(&dir)

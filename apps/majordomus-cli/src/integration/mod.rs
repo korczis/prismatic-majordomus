@@ -41,6 +41,7 @@
 //! run, so the forge calls nearly every pull request conflicting. The relation to master is
 //! decided here, by git, with the drivers ([`relation`]).
 
+pub mod allocate;
 pub mod classify;
 pub mod drain;
 pub mod exclusive;
