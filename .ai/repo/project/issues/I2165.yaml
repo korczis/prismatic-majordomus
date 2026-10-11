@@ -26,4 +26,24 @@ evidence_required:
   - "attested_release"
   - "installer_reports_verification_case"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-11T04:03:49Z
+started_at: 2026-10-11T04:03:39Z
+started_event: sha256:8c34b972915e69020a59aa0a6542e0decc3c818149cf06acac8a81784036c33d
+verified_at: 2026-10-11T04:03:45Z
+verified_event: sha256:59a7fe87bf344f8d2f1aba4011a753bd676c211d5dd69fa097a8737b5984b4ee
+completed_at: 2026-10-11T04:03:49Z
+completed_event: sha256:2fefbe83bcdca411a9ee54ee42b4847059fda42c6091a37e59f44ae6dc1e0212
+evidence:
+  - covers: attested_release
+    type: artifact
+    command: "gh release download v0.20.0 -p majordomus-v0.20.0-aarch64-apple-darwin.tar.gz && gh attestation verify majordomus-v0.20.0-aarch64-apple-darwin.tar.gz --repo korczis/prismatic-majordomus --format json"
+    result: "exit 0, 1 attestation: sourceRepositoryRef refs/tags/v0.20.0, buildConfigURI .github/workflows/release.yml@refs/tags/v0.20.0; negative control (an unattested file) exits 1"
+    artifact: "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.20.0"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T04:03:42Z
+  - covers: installer_reports_verification_case
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+    result: "1 passed, 0 failed, 0 skipped (278 s) at 399bb551ac: MAJORDOMUS_REQUIRE_PROVENANCE=1 refuses an archive whose provenance gh refuses and installs a verified one"
+    commit: 1393d9ef2a0a85209f379a87cccfb0f9cf65d253
+    recorded_at: 2026-10-11T04:03:44Z
