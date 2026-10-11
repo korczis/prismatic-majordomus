@@ -291,7 +291,11 @@ MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd 
 # fires; a mod is asked by the provider while the conversation runs, which is the only
 # place a measurement of the context window is made, so the request for a handover before
 # the window fills cannot be a shim.
-MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill'
+# The second keeps a session briefed on what surrounds it, as its status line and on an
+# interval (ADR 0136): the status line and the clock are the provider's, inside the
+# conversation, and no event fires for either.
+MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill
+claude-code majordomus-brief .claude/skills/majordomus-brief session.brief_on_interval'
 
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
@@ -1603,7 +1607,25 @@ mj_capture_session_start() {
       monitor="$(mj_rust_monitor_brief "$MJ_ROOT" "$MJ_HOME")" ;;
   esac
   mj_derive_briefing "$server" "$mesh" "$monitor" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  # How to keep itself awake and reporting (ADR 0136), told to every provider's session the
+  # policy switches it for, whether or not a mod of that provider shows the brief as well.
+  [ "$(mj_pol session.brief_on_interval)" = true ] && mj_capture_keep_awake "$psession"
   return 0
+}
+
+# What the session is told about keeping itself awake, and the brief as it stands: the
+# executable's own `brief --keep-awake`, asked of the server just ensured. Best-effort, like
+# the server and mesh lines: an executable that is missing or stale says nothing here.
+mj_capture_keep_awake() {
+  local psession="${1:-}" bin
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  { [ -x "$bin" ] && ! mj_rust_stale "$MJ_HOME" "$bin"; } || return 0
+  set -- brief --repo "$MJ_ROOT" --keep-awake --this-checkout
+  [ -n "$psession" ] && set -- "$@" --session "$psession"
+  printf '\n## Keeping awake\n\n'
+  "$bin" "$@" 2>/dev/null || true
 }
 
 # Make sure the repository's shared server serves this checkout, on the start event, and

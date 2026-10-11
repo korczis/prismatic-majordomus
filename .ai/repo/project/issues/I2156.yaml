@@ -1,0 +1,30 @@
+id: I2156
+milestone: failure-is-visible
+title: "A slow or silent HTTP client cannot hold a server worker"
+slug: a-slow-client-cannot-hold-a-worker
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Put a declared deadline on reading each request's head and body, close and count a connection that misses it, and keep handler time off the workers the probe needs."
+why: "The HTTP server has four workers (apps/majordomus-cli/src/http/server.rs:23) and reads request bodies with no deadline (apps/majordomus-cli/src/http/server.rs:208-222). Four clients that open a connection and send slowly hold every worker; the lease probe then waits behind them (I2126) and a healthy server can be taken over. Bounded waits exist on the client side only: PROBE_TIMEOUT, BUSY_GRACE and JOIN_TIMEOUT (apps/majordomus-cli/src/lease.rs:43-62) and the link REQUEST_TIMEOUT of 5 s (apps/majordomus-cli/src/mesh/link.rs:76). The gates liveness-check and step-bound cover shell only, and no test has a slow client. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 5 and the slow-peer row."
+current_state: "Any client that reaches the port can occupy a worker indefinitely."
+desired_state: "Reading a request has a deadline declared beside the lease timings in policy.yaml server:, a connection that misses it is closed and counted in the server's diagnostics, and handler time is bounded or moved off the request workers."
+scope:
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "apps/majordomus-cli/tests/http_serve.rs"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "Four clients that each send one byte per second hold no worker past the declared deadline, and a fifth client is answered"
+  - "The deadline is a declared policy key and the count of connections closed by it appears in the server's diagnostics"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test http_serve --test mcp_shared"
+evidence_required:
+  - "slow_client_released_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -18,6 +18,7 @@
       "context": "an object of kind `context`",
       "critique": "an object of kind `critique`",
       "deployment": "an object of kind `deployment`",
+      "derive-offload": "an object of kind `derive-offload`",
       "distribution-model": "an object of kind `distribution-model`",
       "doctrine": "a doctrine a scenario exercises",
       "document": "an object of kind `document`",
@@ -75,6 +76,15 @@
         "summary": "List the generated artifacts",
         "route": "/cockpit/capabilities/artifacts.list",
         "source": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:brief.session",
+        "kind": "capability",
+        "label": "brief.session",
+        "summary": "The session brief",
+        "route": "/cockpit/capabilities/brief.session",
+        "source": "apps/majordomus-cli/src/capability/builtin/brief.rs",
         "status": "query"
       },
       {
@@ -758,6 +768,15 @@
         "label": "integration.queue",
         "summary": "The integration queue",
         "route": "/cockpit/capabilities/integration.queue",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.trains",
+        "kind": "capability",
+        "label": "integration.trains",
+        "summary": "The trains of stacked pull requests",
+        "route": "/cockpit/capabilities/integration.trains",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "status": "query"
       },
@@ -2032,6 +2051,14 @@
         "external": true
       },
       {
+        "id": "file:.github/workflows/release.yml",
+        "kind": "file",
+        "label": "release.yml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".github/workflows/release.yml",
+        "external": true
+      },
+      {
         "id": "file:.github/workflows/validate.yml",
         "kind": "file",
         "label": "validate.yml",
@@ -2061,6 +2088,14 @@
         "label": "coverage.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/bench/coverage.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/brief.rs",
+        "kind": "file",
+        "label": "brief.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/brief.rs",
         "external": true
       },
       {
@@ -2333,6 +2368,14 @@
         "label": "pages.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/cockpit/pages.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/cockpit/trains.rs",
+        "kind": "file",
+        "label": "trains.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/trains.rs",
         "external": true
       },
       {
@@ -2672,11 +2715,27 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/integration/model.rs",
+        "kind": "file",
+        "label": "model.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/model.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/integration/relation.rs",
         "kind": "file",
         "label": "relation.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/integration/relation.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/repair.rs",
+        "kind": "file",
+        "label": "repair.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/repair.rs",
         "external": true
       },
       {
@@ -2693,6 +2752,14 @@
         "label": "tests.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/integration/tests.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/train.rs",
+        "kind": "file",
+        "label": "train.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/train.rs",
         "external": true
       },
       {
@@ -2757,6 +2824,14 @@
         "label": "protocol.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mcp/protocol.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mcp/surface.rs",
+        "kind": "file",
+        "label": "surface.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mcp/surface.rs",
         "external": true
       },
       {
@@ -3640,6 +3715,14 @@
         "external": true
       },
       {
+        "id": "file:share/cockpit/trains.js",
+        "kind": "file",
+        "label": "trains.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/cockpit/trains.js",
+        "external": true
+      },
+      {
         "id": "file:share/design/primitives.css",
         "kind": "file",
         "label": "primitives.css",
@@ -3696,6 +3779,14 @@
         "external": true
       },
       {
+        "id": "file:share/mods/claude-code/majordomus-brief/hooks/register.ts",
+        "kind": "file",
+        "label": "register.ts",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/mods/claude-code/majordomus-brief/hooks/register.ts",
+        "external": true
+      },
+      {
         "id": "file:share/mods/claude-code/majordomus-handover/hooks/register.ts",
         "kind": "file",
         "label": "register.ts",
@@ -3725,6 +3816,14 @@
         "label": "deployment.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/deployment/deployment.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+        "kind": "file",
+        "label": "derive-offload.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
         "external": true
       },
       {
@@ -4044,6 +4143,12 @@
         "kind": "kind",
         "label": "deployment",
         "summary": "every object of kind `deployment`"
+      },
+      {
+        "id": "kind:derive-offload",
+        "kind": "kind",
+        "label": "derive-offload",
+        "summary": "every object of kind `derive-offload`"
       },
       {
         "id": "kind:distribution-model",
@@ -6392,6 +6497,95 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0126",
+        "kind": "adr",
+        "label": "adr-0126",
+        "summary": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "route": "/cockpit/objects/adr/adr-0126",
+        "source": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-09",
+          "related": [
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "rule:project.mesh-cooperation-is-authenticated",
+            "file:apps/majordomus-cli/src/capability/model.rs",
+            "file:apps/majordomus-cli/src/http/router.rs",
+            "file:apps/majordomus-cli/src/mcp/surface.rs",
+            "test:apps/majordomus-cli/tests/remote_callers.rs",
+            "test:test/cases/1022_a_remote_caller_cannot_write.sh"
+          ],
+          "tags": [
+            "security",
+            "mesh",
+            "mcp",
+            "http"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0129",
+        "kind": "adr",
+        "label": "adr-0129",
+        "summary": "A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has",
+        "route": "/cockpit/objects/adr/adr-0129",
+        "source": ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "rule:project.integration-follows-the-current-master",
+            "rule:project.land-and-publish",
+            "file:apps/majordomus-cli/src/integration/model.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/integration/classify.rs",
+            "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/repair.rs",
+            "file:apps/majordomus-cli/src/integration/mod.rs",
+            "file:apps/majordomus-cli/src/integration/tests.rs",
+            "file:docs/INTEGRATION.md",
+            "file:.ai/repo/project/issues/I2298.yaml",
+            "test:test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh"
+          ],
+          "tags": [
+            "integration",
+            "git",
+            "github",
+            "ci",
+            "throughput"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0131",
+        "kind": "adr",
+        "label": "adr-0131",
+        "summary": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "route": "/cockpit/objects/adr/adr-0131",
+        "source": ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-10",
+          "related": [
+            "file:scripts/site-deploy",
+            "file:.github/workflows/release.yml",
+            "file:docs/DISTRIBUTION.md",
+            "file:.ai/repo/project/issues/I2303.yaml",
+            "test:test/cases/1041_a_release_publishes_its_metadata.sh",
+            "test:test/cases/96_site_deploy.sh"
+          ],
+          "tags": [
+            "release",
+            "distribution",
+            "pages",
+            "throughput"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0133",
         "kind": "adr",
         "label": "adr-0133",
@@ -6413,6 +6607,83 @@
             "mesh",
             "cooperation",
             "observability"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0135",
+        "kind": "adr",
+        "label": "adr-0135",
+        "summary": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+        "route": "/cockpit/objects/adr/adr-0135",
+        "source": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md",
+            "file:.ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+            "file:apps/majordomus-cli/src/cockpit/mod.rs",
+            "file:docs/COCKPIT.md"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "cockpit"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0136",
+        "kind": "adr",
+        "label": "adr-0136",
+        "summary": "Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it",
+        "route": "/cockpit/objects/adr/adr-0136",
+        "source": ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0123-the-worker-is-asked-for-a-handover-before-the-window-fills.md",
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "file:share/mods/claude-code/majordomus-brief/hooks/register.ts",
+            "file:lib/capture.sh",
+            "file:docs/BRIEF.md",
+            "test:test/cases/1065_a_session_briefs_itself.sh"
+          ],
+          "tags": [
+            "session",
+            "peers",
+            "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0138",
+        "kind": "adr",
+        "label": "adr-0138",
+        "summary": "A train of pull requests is a typed object that can be seen",
+        "route": "/cockpit/objects/adr/adr-0138",
+        "source": ".ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "file:apps/majordomus-cli/src/integration/train.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "file:apps/majordomus-cli/src/cockpit/trains.rs",
+            "file:share/cockpit/trains.js",
+            "file:docs/INTEGRATION.md",
+            "test:test/cases/1072_the_train_is_seen.sh"
+          ],
+          "tags": [
+            "integration",
+            "cockpit",
+            "pull-requests"
           ]
         }
       },
@@ -12326,6 +12597,32 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.offload",
+        "kind": "context",
+        "label": "ai.repo.offload",
+        "summary": "Derive offload",
+        "route": "/cockpit/objects/context/ai-repo-offload",
+        "source": ".ai/repo/offload/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+            "share/kinds.yaml",
+            "docs/OFFLOAD.md"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.profiles",
         "kind": "context",
         "label": "ai.repo.profiles",
@@ -12795,6 +13092,18 @@
         }
       },
       {
+        "id": "majordomus://derive-offload/derive",
+        "kind": "derive-offload",
+        "label": "derive",
+        "summary": "The cluster machines that derive a branch for a session, and the limits each must meet.",
+        "route": "/cockpit/objects/derive-offload/derive",
+        "source": ".ai/repo/offload/derive.yaml",
+        "facts": {
+          "base": "origin/master",
+          "min_free_gib": 10
+        }
+      },
+      {
         "id": "majordomus://distribution-model/share/distribution.yaml",
         "kind": "distribution-model",
         "label": "share/distribution.yaml",
@@ -13016,6 +13325,14 @@
         "summary": "Backlog",
         "route": "/cockpit/objects/document/docs-backlog-md",
         "source": "docs/BACKLOG.md"
+      },
+      {
+        "id": "majordomus://document/docs/BRIEF.md",
+        "kind": "document",
+        "label": "docs/BRIEF.md",
+        "summary": "The session brief — `majordomus brief`",
+        "route": "/cockpit/objects/document/docs-brief-md",
+        "source": "docs/BRIEF.md"
       },
       {
         "id": "majordomus://document/docs/CAPABILITIES.md",
@@ -13306,6 +13623,14 @@
         "source": "docs/LAUNCH.md"
       },
       {
+        "id": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "document",
+        "label": "docs/MAJORDOMUS_UI.md",
+        "summary": "`majordomus ui` — the product",
+        "route": "/cockpit/objects/document/docs-majordomus-ui-md",
+        "source": "docs/MAJORDOMUS_UI.md"
+      },
+      {
         "id": "majordomus://document/docs/MCP.md",
         "kind": "document",
         "label": "docs/MCP.md",
@@ -13336,6 +13661,14 @@
         "summary": "The monitor",
         "route": "/cockpit/objects/document/docs-monitor-md",
         "source": "docs/MONITOR.md"
+      },
+      {
+        "id": "majordomus://document/docs/OFFLOAD.md",
+        "kind": "document",
+        "label": "docs/OFFLOAD.md",
+        "summary": "The derive offload",
+        "route": "/cockpit/objects/document/docs-offload-md",
+        "source": "docs/OFFLOAD.md"
       },
       {
         "id": "majordomus://document/docs/PAGES_STATUS.md",
@@ -17096,6 +17429,65 @@
             "follow-a-skill-the-repository-defines"
           ],
           "weight": 160
+        }
+      },
+      {
+        "id": "majordomus://feature/ui",
+        "kind": "feature",
+        "label": "ui",
+        "summary": "majordomus ui: the delivery, for a person",
+        "route": "/cockpit/objects/feature/ui",
+        "source": ".ai/repo/features/ui.md",
+        "status": "draft",
+        "facts": {
+          "adrs": [
+            "adr-0135"
+          ],
+          "areas": [
+            "observability"
+          ],
+          "docs": [
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "domain": "surfaces",
+          "modules": [
+            "repository",
+            "health",
+            "release",
+            "distribution",
+            "plan",
+            "intents",
+            "mesh",
+            "integration",
+            "deploy",
+            "delivery",
+            "gates",
+            "evidence",
+            "rules",
+            "capabilities",
+            "commands",
+            "executions",
+            "objects",
+            "web"
+          ],
+          "related": [
+            "cockpit",
+            "interfaces"
+          ],
+          "rules": [
+            "project.ui-derived-state",
+            "project.interfaces-are-projections",
+            "project.web-surface-declared-once"
+          ],
+          "short_title": "UI",
+          "tags": [
+            "ui",
+            "interface"
+          ],
+          "web": [
+            "ui"
+          ],
+          "weight": 95
         }
       },
       {
@@ -30357,6 +30749,825 @@
         }
       },
       {
+        "id": "majordomus://issue/I2123",
+        "kind": "issue",
+        "label": "I2123",
+        "summary": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "route": "/cockpit/objects/issue/i2123",
+        "source": ".ai/repo/project/issues/I2123.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every HTTP route of a capability that does not admit a remote caller answers 403 forbidden to a request from a non-loopback address, before its handler runs",
+            "A remote MCP message calling a tool that changes something is refused with error code forbidden, and the same session's next message from loopback is not",
+            "A real server bound to 0.0.0.0 refuses plan/transition, executions/start, mesh/claims, mesh/handovers/consume and peers/announce from this machine's LAN address and still answers a read",
+            "The three signed mesh capabilities reach their handlers from a remote address",
+            "executions.start declares repository_mutation, so a local client is told it can write before it runs a writer through it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A remote request is admitted by any route whose browser Origin check it passes; the bind warning says a remote host can only read.",
+          "evidence_required": [
+            "remote_callers_tests",
+            "case_1022_red_on_0_18_0_green_on_branch"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/capability/handler.rs",
+            "apps/majordomus-cli/src/capability/model.rs",
+            "apps/majordomus-cli/src/capability/registry.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/tests/remote_callers.rs",
+            "test/cases/1022_a_remote_caller_cannot_write.sh",
+            "docs/MCP.md",
+            "docs/MESH.md"
+          ],
+          "slug": "a-remote-caller-cannot-write",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test remote_callers",
+            "MAJORDOMUS_BIN=<branch build> bash test/run.sh 1022_a_remote_caller_cannot_write"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2124",
+        "kind": "issue",
+        "label": "I2124",
+        "summary": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "route": "/cockpit/objects/issue/i2124",
+        "source": ".ai/repo/project/issues/I2124.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A key withdrawn from the allowlist has none of its events believed from the journal file after a restart, and they are believed again when the key is allowed again",
+            "An event whose stamp is more than MAX_LAMPORT_LEAD ahead of the receiver's clock is refused as clock_ahead, and one within the bound is accepted",
+            "The live path and the reload decide trust through one function"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Reload trusts every origin; ingest accepts any stamp.",
+          "evidence_required": [
+            "mesh_trust_reload_red_then_green"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_trust_reload.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-reloaded-event-meets-the-trust-policy",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "cargo test --test mesh_trust_reload --test mesh_cooperation --test mesh_compaction"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2126",
+        "kind": "issue",
+        "label": "I2126",
+        "summary": "A server busy with tool calls is never taken over as if it were dead",
+        "route": "/cockpit/objects/issue/i2126",
+        "source": ".ai/repo/project/issues/I2126.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With four tool calls in flight that each outlast the probe timeout plus the busy grace, a fifth client attaches to the running server and the lease file is unchanged",
+            "The lease probe asks a liveness route, not GET /, and the answer carries the repository id, leaseholder and a digest of the lease token",
+            "A process that answers the probe with a token digest other than the lease's is judged not the leaseholder"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "apps/majordomus-cli/tests/lease_busy.rs covers a live owner that answers late and one that never answers; no test holds every worker busy while a second client elects, and no probe compares the token.",
+          "depends_on": [],
+          "evidence_required": [
+            "busy_pool_is_not_taken_over_test",
+            "probe_compares_the_token_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/tests/lease_busy.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "a-busy-server-is-not-taken-over",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test lease_busy --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2127",
+        "kind": "issue",
+        "label": "I2127",
+        "summary": "A server that lost its lease hands its sessions on and ends",
+        "route": "/cockpit/objects/issue/i2127",
+        "source": ".ai/repo/project/issues/I2127.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A bridged client attached to a server whose lease is then taken over is answered by the new leaseholder within the declared grace, with no request lost",
+            "The superseded process exits by itself after its sessions moved, while the bridges are still alive",
+            "A request in flight at the moment of supersession receives its own answer, not a 404",
+            "docs/MCP.md states the grace and that a lost server ends"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "lost_server_hands_sessions_on_test",
+            "superseded_server_exits_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/tests/lease_lost.rs",
+            "apps/majordomus-cli/tests/mcp_shared.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "a-lost-server-hands-on-and-ends",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test lease_lost --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2128",
+        "kind": "issue",
+        "label": "I2128",
+        "summary": "A lease is removed only by the process that holds it, and serve stop stops the server in order",
+        "route": "/cockpit/objects/issue/i2128",
+        "source": ".ai/repo/project/issues/I2128.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A SIGTERM to a server whose lease was taken over within the same tick leaves the new owner's lease file in place",
+            "After serve stop, the stopped server's episodes are closed and recover_orphans finds none of them",
+            "Two electors that both judged one lease stale end with exactly one lease, held by the process the file names",
+            "The stopped process exits by its own return, not by signal 15, within serve stop's documented bound",
+            "The comment at apps/majordomus-cli/src/shared.rs:274-281 and the LeaseView.pid doc describe what the code does"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Lease removal by the signal handler and by take_over does not re-check the token. serve stop is a hard kill that removes the lease first.",
+          "depends_on": [],
+          "evidence_required": [
+            "sigterm_spares_a_successor_lease_test",
+            "serve_stop_closes_episodes_test",
+            "concurrent_takeover_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "objective": "Make every removal and every rewrite of the lease file conditional on the actor still holding it, and turn the SIGTERM that serve stop sends into the ordered stop the server already has.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/tests/mcp_shared.rs",
+            "apps/majordomus-cli/tests/serve_lifecycle.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "a-lease-is-removed-only-by-its-holder",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared --test serve_lifecycle --test shared_units",
+            "MJ_TEST_JOBS=4 bash test/run.sh 113_shared_server_survives_a_crash"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2129",
+        "kind": "issue",
+        "label": "I2129",
+        "summary": "The lease timings the policy declares are the ones the mcp and serve elections use",
+        "route": "/cockpit/objects/issue/i2129",
+        "source": ".ai/repo/project/issues/I2129.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A real-process test that declares a busy grace different from the default observes the election wait the declared value, in both mcp and serve",
+            "No reader of a lease timing names a compiled constant directly",
+            "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Declared lease timings reach env enter only; mcp, serve, standing_of and the spawn claim use compiled values.",
+          "depends_on": [],
+          "evidence_required": [
+            "declared_timings_reach_the_election_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "objective": "Load the policy before mcp and serve elect, make every reader of a lease timing read the declared value, and declare the idle timeout beside the other server timings.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "apps/majordomus-cli/tests/lease_declared.rs",
+            "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
+            "docs/MCP.md"
+          ],
+          "slug": "declared-lease-timings-are-used",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test lease_declared",
+            "MJ_TEST_JOBS=4 bash test/run.sh 354_a_lease_contest_is_judged_by_a_declaration"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2131",
+        "kind": "issue",
+        "label": "I2131",
+        "summary": "A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address",
+        "route": "/cockpit/objects/issue/i2131",
+        "source": ".ai/repo/project/issues/I2131.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing",
+            "Two consecutive starts of one checkout's server bind the same port when it is free",
+            "Two checkouts of one repository derive different ports",
+            "docs/MCP.md describes the derived port and the fallback"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port.",
+          "depends_on": [],
+          "evidence_required": [
+            "ui_use_keeps_server_alive_test",
+            "stable_port_per_checkout_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "non_scope": [
+            "Adding a majordomus ui command before this issue's record decides one is needed."
+          ],
+          "objective": "Count every surface's use toward the idle timeout, and bind a port derived from the checkout's identity before falling back to a random one.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/http/events.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/serve_lifecycle.rs",
+            "docs/MCP.md",
+            "docs/COCKPIT.md"
+          ],
+          "slug": "ui-use-keeps-the-server-and-its-address",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle",
+            "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2132",
+        "kind": "issue",
+        "label": "I2132",
+        "summary": "A hello names the runtime it is meant for, and no other runtime accepts it",
+        "route": "/cockpit/objects/issue/i2132",
+        "source": ".ai/repo/project/issues/I2132.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
+            "A hello replayed to A after A restarts cannot displace an established link",
+            "The rule's check order and the code's check order are the same, and a test names the order"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
+          "depends_on": [],
+          "evidence_required": [
+            "hello_replay_to_another_runtime_refused_test"
+          ],
+          "milestone": "runtime-trust",
+          "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+          ],
+          "slug": "a-hello-names-its-recipient",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh_cooperation",
+            "cargo test --lib mesh::cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2133",
+        "kind": "issue",
+        "label": "I2133",
+        "summary": "Every mesh input and answer has a bound, and a refused registration learns nothing",
+        "route": "/cockpit/objects/issue/i2133",
+        "source": ".ai/repo/project/issues/I2133.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Datagrams beyond the channel bound are dropped and counted in mesh status, and the process's memory stays bounded under a flood test",
+            "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors",
+            "A registration whose envelope is refused receives no candidate, and no answer carries a candidate of another repository",
+            "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Inputs the answerer receives are bounded; the discovery channel, replies the dialer reads, received candidates and registration answers are not.",
+          "depends_on": [],
+          "evidence_required": [
+            "discovery_flood_bounded_test",
+            "reply_bound_test",
+            "refused_registration_learns_nothing_test"
+          ],
+          "milestone": "runtime-trust",
+          "objective": "Bound the discovery channel, every reply a runtime reads and the candidates it accepts; answer a refused registration with its refusal alone; and give every link retry a floor and jitter.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/mesh/rendezvous.rs",
+            "apps/majordomus-cli/src/mesh/registry.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-inputs-are-bounded",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2134",
+        "kind": "issue",
+        "label": "I2134",
+        "summary": "A key removed from the trust list loses its links without a restart, and a node key can be rotated",
+        "route": "/cockpit/objects/issue/i2134",
+        "source": ".ai/repo/project/issues/I2134.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Removing a key from trust.allow on a running runtime closes that key's links within one heartbeat and refuses its next hello, with no restart",
+            "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused",
+            "Under a permissive umask the node key file is never readable by group or others"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Revocation takes effect only on each peer's restart. Rotation does not exist. The key file is briefly readable at umask permissions.",
+          "depends_on": [],
+          "evidence_required": [
+            "revocation_without_restart_test",
+            "key_rotation_test",
+            "key_file_created_private_test"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/trust.rs",
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "trust-can-be-revoked-and-keys-rotated",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh_cooperation",
+            "cargo test --lib mesh::identity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2135",
+        "kind": "issue",
+        "label": "I2135",
+        "summary": "The trust root is read from the default branch, not from whatever the checkout holds",
+        "route": "/cockpit/objects/issue/i2135",
+        "source": ".ai/repo/project/issues/I2135.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A working-tree edit that adds a key to trust.allow does not admit that key, and mesh doctor names the difference",
+            "A branch that adds a rendezvous endpoint does not make its runtime post to it until the change is on the default branch",
+            "A committed declaration with policy tofu fails scripts/ci/mesh-check"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Trust, seeds and rendezvous come from the working tree at server start.",
+          "depends_on": [],
+          "evidence_required": [
+            "working_tree_trust_edit_ignored_test",
+            "tofu_declaration_refused_case"
+          ],
+          "milestone": "runtime-trust",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "scripts/ci/mesh-check",
+            "apps/majordomus-cli/src/mesh/root.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_trust_root.rs",
+            "test/cases",
+            "docs/MESH.md"
+          ],
+          "slug": "the-trust-root-is-the-default-branch",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh",
+            "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem 494_the_mesh_is_declared_and_held"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2137",
+        "kind": "issue",
+        "label": "I2137",
+        "summary": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "route": "/cockpit/objects/issue/i2137",
+        "source": ".ai/repo/project/issues/I2137.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A journal whose last line is torn reloads every complete event, reports one unreadable line, and the next append is readable on the following reload",
+            "A failed write on a read-only or full file system in a test is counted, reported by mesh doctor, and the event is not acknowledged as durable",
+            "A kill during compaction leaves the old or the new journal, never a mix",
+            "The journal file is created with owner-only permissions"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Writes are best effort and unreported; a torn tail corrupts the next event; unreadable lines vanish on reload.",
+          "depends_on": [],
+          "evidence_required": [
+            "torn_tail_reload_test",
+            "write_failure_reported_test",
+            "compaction_crash_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "objective": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "test/cases",
+            "docs/MESH.md"
+          ],
+          "slug": "the-journal-is-durable",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::journal",
+            "cargo test --test mesh_compaction",
+            "MJ_TEST_JOBS=4 bash test/run.sh 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2139",
+        "kind": "issue",
+        "label": "I2139",
+        "summary": "A sync message stays under the link bound whatever the marks weigh",
+        "route": "/cockpit/objects/issue/i2139",
+        "source": ".ai/repo/project/issues/I2139.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A journal with 1024 live marks and 4096 tombstones replicates to an empty peer over several rounds, every message under MAX_LINK_MESSAGE",
+            "No sync message the dialer or the answerer builds exceeds MAX_LINK_MESSAGE, asserted where it is built"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "The event budget is a constant that does not account for the marks.",
+          "depends_on": [],
+          "desired_state": "sync_with and accept_sync compute the event budget as MAX_LINK_MESSAGE minus the serialized marks, omit tombstone marks the peer does not hold, and the message builder asserts the bound.",
+          "evidence_required": [
+            "sync_at_the_mark_bound_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "objective": "Budget each sync message as the link bound minus its marks, and stop sending tombstone marks the peer does not hold.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs"
+          ],
+          "slug": "sync-respects-the-link-bound",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2140",
+        "kind": "issue",
+        "label": "I2140",
+        "summary": "Paging mesh.events returns every event exactly once",
+        "route": "/cockpit/objects/issue/i2140",
+        "source": ".ai/repo/project/issues/I2140.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Walking mesh.events with limit 1 over a journal where several streams share a lamport returns every event once, in causal order",
+            "The cursor the schema documents is the cursor the next page accepts"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A client that follows the documented cursor misses events.",
+          "depends_on": [],
+          "desired_state": "Pages are cut by the causal key (lamport, stream, seq) (apps/majordomus-cli/src/mesh/journal.rs:858), the answer carries the last returned key as the next cursor, and mesh events --after accepts it.",
+          "evidence_required": [
+            "events_paging_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "objective": "Page mesh.events by the causal key and return the last key returned as the next cursor.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-events-paging-is-complete",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mesh",
+            "cargo test --lib mesh::journal"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2145",
+        "kind": "issue",
+        "label": "I2145",
+        "summary": "A tool call that may have run is never sent a second time",
+        "route": "/cockpit/objects/issue/i2145",
+        "source": ".ai/repo/project/issues/I2145.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A mutating tool call that outlasts the bridge timeout is executed exactly once, proved by a test tool that counts its invocations",
+            "A 413 for an oversized message reaches the client as payload too large, and no election follows",
+            "A read-only tool call that timed out is retried and returns its answer",
+            "docs/MCP.md states when the bridge resends"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A timed-out or rejected tool call is re-sent after a re-election, whatever its effect.",
+          "depends_on": [],
+          "evidence_required": [
+            "timed_out_mutation_runs_once_test",
+            "rejected_request_is_not_reelected_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "objective": "Make the stdio bridge resend a message only when the server provably did not receive or run it, and report every other failure as the error it is, so no tool call executes twice.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/tests/mcp_shared.rs",
+            "apps/majordomus-cli/tests/shared_units.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "a-tool-call-is-never-sent-twice",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared --test shared_units"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2147",
+        "kind": "issue",
+        "label": "I2147",
+        "summary": "The MCP transports bound what they read and follow the Streamable HTTP rules they claim",
+        "route": "/cockpit/objects/issue/i2147",
+        "source": ".ai/repo/project/issues/I2147.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stdin line, a request body and a response body each one byte over the declared bound are refused with a typed error, and the session survives",
+            "A request naming an unsupported MCP-Protocol-Version is answered 400",
+            "A session whose single request runs longer than the reap interval is not reaped",
+            "Session ids are drawn from the operating system's random source"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "One oversized line or response can exhaust a client or a server; a long request can lose its session.",
+          "depends_on": [],
+          "evidence_required": [
+            "transport_bounds_test",
+            "protocol_version_header_test",
+            "long_request_not_reaped_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp/stdio.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/tests/mcp_conformance.rs",
+            "apps/majordomus-cli/tests/mcp_conformance_http.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "mcp-transports-are-bounded",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_stdio"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2151",
+        "kind": "issue",
+        "label": "I2151",
+        "summary": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "route": "/cockpit/objects/issue/i2151",
+        "source": ".ai/repo/project/issues/I2151.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /swagger answers with a Content-Security-Policy that includes frame-ancestors, and every script it loads carries an integrity attribute",
+            "A GET whose Host header names another domain is refused before its handler runs",
+            "A site data value containing a closing script tag renders as text in each template that embeds JSON"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "/swagger trusts a CDN with the write routes' origin; GET answers any Host; three site templates embed JSON unescaped.",
+          "depends_on": [],
+          "evidence_required": [
+            "swagger_csp_test",
+            "rebinding_host_refused_test",
+            "site_script_escape_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "objective": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/swagger.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "site/templates/partials/graph.html",
+            "site/templates/api.html",
+            "site/templates/why-section.html",
+            "apps/majordomus-cli/tests/http_host.rs",
+            "apps/majordomus-cli/tests/http_serve.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "pages-beside-writers-are-hardened",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test http_host --test http_serve",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2156",
+        "kind": "issue",
+        "label": "I2156",
+        "summary": "A slow or silent HTTP client cannot hold a server worker",
+        "route": "/cockpit/objects/issue/i2156",
+        "source": ".ai/repo/project/issues/I2156.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Four clients that each send one byte per second hold no worker past the declared deadline, and a fifth client is answered",
+            "The deadline is a declared policy key and the count of connections closed by it appears in the server's diagnostics"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "Any client that reaches the port can occupy a worker indefinitely.",
+          "depends_on": [],
+          "evidence_required": [
+            "slow_client_released_test"
+          ],
+          "milestone": "failure-is-visible",
+          "objective": "Put a declared deadline on reading each request's head and body, close and count a connection that misses it, and keep handler time off the workers the probe needs.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "apps/majordomus-cli/tests/http_serve.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "a-slow-client-cannot-hold-a-worker",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test http_serve --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2157",
+        "kind": "issue",
+        "label": "I2157",
+        "summary": "Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready",
+        "route": "/cockpit/objects/issue/i2157",
+        "source": ".ai/repo/project/issues/I2157.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server that lost its lease answers /api/v1/ready with ready false and the reason lease_lost",
+            "A degraded index is reported on /api/v1/ready with its reason, and docs/MCP.md says whether that is ready",
+            "health.report carries a mesh check whose status follows mesh doctor's verdict when the mesh is enabled",
+            "majordomus doctor in a checkout whose server is stale reports it, or its help states that it checks governance only"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A server that lost its lease, or serves a degraded index, answers /api/v1/ready with ready true.",
+          "depends_on": [],
+          "evidence_required": [
+            "ready_false_on_lease_loss_test",
+            "health_mesh_check_test"
+          ],
+          "milestone": "failure-is-visible",
+          "objective": "Fold lease loss and a degraded index into readiness with a named reason, add a mesh check to health.report, and make majordomus doctor report the runtime or say that it does not.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "lib/doctor.sh",
+            "apps/majordomus-cli/tests/health_server.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "ready-means-ready",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test health_server --test lease_lost"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2161",
         "kind": "issue",
         "label": "I2161",
@@ -30402,6 +31613,92 @@
         }
       },
       {
+        "id": "majordomus://issue/I2162",
+        "kind": "issue",
+        "label": "I2162",
+        "summary": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "route": "/cockpit/objects/issue/i2162",
+        "source": ".ai/repo/project/issues/I2162.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The release workflow fails when the installed launcher cannot start, proved by a fixture archive whose launcher exits non-zero",
+            "install-check starts a shared server from the installed binary in a fresh repository and reads its readiness and a repository id that differs from this repository's",
+            "No step of the release smoke ends in || true"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "An installed release is proven to print its version and run init, not to serve.",
+          "depends_on": [],
+          "evidence_required": [
+            "installed_release_serves_foreign_repo_case",
+            "smoke_fails_on_launcher_failure_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "objective": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/install-check",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "an-installed-release-serves-a-foreign-repository",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2163",
+        "kind": "issue",
+        "label": "I2163",
+        "summary": "A client never attaches to a server of another version without saying so, and a newer client replaces an older server",
+        "route": "/cockpit/objects/issue/i2163",
+        "source": ".ai/repo/project/issues/I2163.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of version N+1 started beside a server of version N installed at another path ends with one server of N+1 and the old server's sessions re-attached",
+            "A client of version N-1 attaching to a server of version N reports the difference in its initialize answer",
+            "One function decides the version verdict for elect, serve ensure and server.status"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "After an upgrade through the installer, new clients are served by the old version until it idles out.",
+          "depends_on": [
+            "I2127"
+          ],
+          "evidence_required": [
+            "newer_client_replaces_older_server_test",
+            "older_client_told_test"
+          ],
+          "milestone": "safe-self-update",
+          "objective": "Make the election compare versions through the one standing verdict: a newer client takes over in an ordered hand-off, an older client attaches and says it is older.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/tests/serve_lifecycle.rs",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "versions-meet-safely",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle --test server_status",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2165",
         "kind": "issue",
         "label": "I2165",
@@ -30437,6 +31734,300 @@
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2282",
+        "kind": "issue",
+        "label": "I2282",
+        "summary": "The record pull request's dispatched verdict does not satisfy branch protection",
+        "route": "/cockpit/objects/issue/i2282",
+        "source": ".ai/repo/project/issues/I2282.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "record_pull_request_mergeable_without_reopen",
+            "distribution_claims_match_pipeline"
+          ],
+          "milestone": "test-evidence",
+          "objective": "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "docs/DISTRIBUTION.md",
+            "test/cases/996_the_record_pull_request_gets_its_verdict.sh",
+            ".ai/repo/ci/release.yaml"
+          ],
+          "slug": "the-record-dispatch-is-not-a-verdict",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 996"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2298",
+        "kind": "issue",
+        "label": "I2298",
+        "summary": "A pull request stacked on one that landed merges on the verdict its head already has",
+        "route": "/cockpit/objects/issue/i2298",
+        "source": ".ai/repo/project/issues/I2298.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "stacked_head_carries_master_case",
+            "decision_recorded"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "The executor refreshing a pull request onto another one's head by itself, and the pipeline depth in .ai/repo/ci/queue.yaml: a later issue, named in ADR 0129.",
+            "The run master's own push starts after every merge: 521 job-minutes for a tree a pull request's run judged. Not decided here.",
+            "Which pull requests are put on a train and in what order: the executor's plan."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/relation.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/repair.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/tests.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "docs/INTEGRATION.md",
+            ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+            ".ai/repo/project/issues/I2298.yaml",
+            "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+            "test/cases/850_integration_drains_cycle_by_cycle.sh",
+            "docs/generated",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-refresh-pipeline-is-a-train",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::",
+            "bash test/run.sh 1040_a_stacked_head_lands_on_the_verdict_it_has",
+            "MJ_TEST_JOBS=3 bash test/run.sh 720_integration_follows_the_current_master 850_integration_drains_cycle_by_cycle 911_repair_decides_and_moves_nothing",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2303",
+        "kind": "issue",
+        "label": "I2303",
+        "summary": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "route": "/cockpit/objects/issue/i2303",
+        "source": ".ai/repo/project/issues/I2303.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "release_metadata_published_ahead_of_record_case",
+            "decision_recorded"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Shortening the build and the publish job, which the 15-minute bound also needs: the macOS x86_64 package step, the second derivation and the rebuilt executable of the publish job.",
+            "The staging line release.yml's publish step fails on since /dist/ is ignored: I2302."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-deploy",
+            ".github/workflows/release.yml",
+            "docs/DISTRIBUTION.md",
+            ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+            ".ai/repo/project/issues/I2303.yaml",
+            "test/cases/1041_a_release_publishes_its_metadata.sh",
+            "test/cases/87_release_pipeline.sh",
+            "docs/generated",
+            "docs/PLAN_STATUS.md",
+            "docs/PAGES_STATUS.md",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-release-publishes-its-metadata",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "bash test/run.sh 1041_a_release_publishes_its_metadata",
+            "MJ_TEST_JOBS=3 bash test/run.sh 87_release_pipeline 26_ci_wiring 996_the_record_pull_request_gets_its_verdict",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2396",
+        "kind": "issue",
+        "label": "I2396",
+        "summary": "The CI critical path of 2026-10-10 is measured, recorded, and explained before anything is changed",
+        "route": "/cockpit/objects/issue/i2396",
+        "source": ".ai/repo/project/issues/I2396.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "current_state": "scripts/ci-baseline records runs, jobs and steps; nothing on master holds a measurement of the current CI, and docs/CI.md names no critical path.",
+          "evidence_required": [
+            "ci_critical_path_recorded"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Changing any workflow, gate or cache: the later V4 issues do that against this measurement."
+          ],
+          "objective": "Record what a pull request's verdict costs today, from the forge's own runs, so that every change of the V4 delivery work is compared with a measurement rather than with a belief.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/baseline-2026-10-10.json",
+            "docs/CI.md",
+            ".ai/repo/project/issues/I2396.yaml",
+            "docs/generated",
+            "docs/PLAN_STATUS.md",
+            "docs/PAGES_STATUS.md",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-ci-critical-path-is-measured",
+          "updated_at": "2026-10-10",
+          "validation": [
+            "jq '.runs | length' .ai/repo/ci/baseline-2026-10-10.json",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2398",
+        "kind": "issue",
+        "label": "I2398",
+        "summary": "A derive offloaded to another machine waits its turn in a declared queue",
+        "route": "/cockpit/objects/issue/i2398",
+        "source": ".ai/repo/project/issues/I2398.yaml",
+        "facts": {
+          "created_at": "2026-10-11",
+          "depends_on": [],
+          "evidence_required": [
+            "offload_queue_fairness_test",
+            "offload_round_trip_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Retiring ~/dev/.derive-offload.sh and ~/dev/.derive-offload-v2.sh: they are outside the repository and instances run; sessions move over by calling the command instead.",
+            "Installing the executable on the hosts or running a hub there: the host needs git, a checkout of this repository and the toolchain scripts/derive builds with, nothing of this change.",
+            "Keeping the shared build directory warm from a finished derive's private one: v2 does not, and swapping it under a builder that ignores the lock is the failure this issue removes."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/offload/derive.yaml",
+            ".ai/repo/offload/README.md",
+            "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+            "share/kinds.yaml",
+            ".ai/repo/knowledge/sources.yaml",
+            "apps/majordomus-cli/src/offload/mod.rs",
+            "apps/majordomus-cli/src/offload/declaration.rs",
+            "apps/majordomus-cli/src/offload/queue.rs",
+            "apps/majordomus-cli/src/offload/host.rs",
+            "apps/majordomus-cli/src/offload/remote.rs",
+            "apps/majordomus-cli/src/offload/run.rs",
+            "apps/majordomus-cli/src/commands/offload.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/offload.rs",
+            ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+            "docs/OFFLOAD.md",
+            ".ai/repo/project/issues/I2398.yaml",
+            "docs/generated",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-derive-offload-is-a-capability",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test offload",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2399",
+        "kind": "issue",
+        "label": "I2399",
+        "summary": "Every session briefs itself on an interval, without being asked",
+        "route": "/cockpit/objects/issue/i2399",
+        "source": ".ai/repo/project/issues/I2399.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`brief.session` answers a one-line and a multi-line brief with sections for the session, peers, mesh, integration and derive, each section saying when it could not be read rather than omitting itself",
+            "Run from the command line beside a ready server, the brief carries the server's board, not the empty board of the command's own process",
+            "A server that is not its checkout's leaseholder says its board is unreachable by the repository's gather",
+            "The Cockpit overview renders the brief",
+            "`capture install` writes .claude/skills/majordomus-brief when `session.brief_on_interval` is true and removes a copy it wrote when it is not",
+            "The mod renders the status line, injects the multi-line brief once per interval, and prints the keep-awake instruction at session start (claude plugin test)",
+            "ADR 0136 is proposed and docs/BRIEF.md documents the surface"
+          ],
+          "created_at": "2026-10-11",
+          "evidence_required": [
+            "session_brief_case",
+            "decision_recorded"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Editing .claude/settings.json or any person's settings: installing the mod's folder is `capture install`'s; any settings change is the owner's decision.",
+            "A brief for providers other than Claude Code: the capability is provider-neutral, the mod is Claude Code's alone until another provider exposes a status line and a timer.",
+            "The mesh briefing of ADR 0128 (I2285, not on master): when it lands, the brief's mesh section may read it instead of mesh.state."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I2399.yaml",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/commands/brief.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/tests/brief.rs",
+            "share/mods/claude-code/majordomus-brief/hooks/register.ts",
+            "share/mods/claude-code/majordomus-brief/hooks/register.test.ts",
+            "share/mods/claude-code/majordomus-brief/hooks/hooks.json",
+            "share/mods/claude-code/majordomus-brief/README.md",
+            "share/mods/claude-code/majordomus-brief/.claude-plugin/plugin.json",
+            "share/mods/claude-code/majordomus-brief/.gitignore",
+            "lib/capture.sh",
+            "share/allow/policy.txt",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/skeleton/policy.yaml",
+            ".ai/repo/policy.yaml",
+            "test/cases/1065_a_session_briefs_itself.sh",
+            "docs/BRIEF.md",
+            "docs/README.md",
+            "docs/generated",
+            "docs/PLAN_STATUS.md",
+            "docs/PAGES_STATUS.md",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "sessions-brief-themselves",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib brief",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test brief",
+            "bash test/run.sh 1065_a_session_briefs_itself",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -30757,6 +32348,209 @@
             "bin/majordomus plan validate"
           ],
           "why": "Owner: version bumped, deployed, used."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2460",
+        "kind": "issue",
+        "label": "I2460",
+        "summary": "The overview asks its sources at once, so it costs its slowest source and not their sum",
+        "route": "/cockpit/objects/issue/i2460",
+        "source": ".ai/repo/project/issues/I2460.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each distinct (capability, input) source of the overview is asked exactly once, in the order the cards first name it",
+            "Asked at once, every source answers as it does when asked alone, and every card is still its source's value at its pointer or unknown",
+            "On the shared server of this repository, GET /api/v1/dashboard/overview answers in no more than the slowest single source plus composition, measured before and after"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The seven sources are executed sequentially; the overview's latency is the sum of theirs.",
+          "depends_on": [],
+          "evidence_required": [
+            "overview_sources_concurrent_test",
+            "overview_latency_before_after"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+            "apps/majordomus-cli/tests/dashboard.rs",
+            ".ai/repo/project/issues/I2460.yaml"
+          ],
+          "slug": "the-overview-asks-its-sources-at-once",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib capability::builtin::dashboard",
+            "cargo test --test dashboard",
+            "MJ_TEST_JOBS=4 bash test/run.sh 534_the_overview_answers_four_questions.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2461",
+        "kind": "issue",
+        "label": "I2461",
+        "summary": "majordomus ui is served at /ui as its own product, with screens composed from capabilities",
+        "route": "/cockpit/objects/issue/i2461",
+        "source": ".ai/repo/project/issues/I2461.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /ui on a shared server answers 200 text/html with the Cockpit's CSP, and with JavaScript disabled shows the six tiles and every panel or its link",
+            "Every tile and panel of the Dashboard cites the capability it read, and a source that fails makes its tile 'not answered', never 0",
+            "The Dashboard's first paint never asks integration.queue; /ui/panels/pull-requests answers the queue as a page, and with ?fragment as the panel alone",
+            "The rail lists exactly the screens the dispatcher answers, and a test fails when the two differ",
+            "scripts/cockpit-assets --check fails when share/ui/ui.css is stale",
+            "scripts/ci/cockpit-projection-check --ui-integrity fails on a registry read or a zero-count default in src/ui (case 547)",
+            "Every panel names its sources with the API route, CLI command and MCP tool capabilities.describe declares, and the Cockpit only as their technical view"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The shared server serves the Cockpit (/cockpit), the API, Swagger, MCP and the home page. There is no high-level surface.",
+          "depends_on": [],
+          "evidence_required": [
+            "ui_surface_served_test",
+            "ui_dashboard_cites_sources_test",
+            "ui_screenshots_1440_768_375"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/generate.rs",
+            "scripts/ci/cockpit-projection-check",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/features/ui.md",
+            "test/cases/389_cockpit_projection.sh",
+            "test/cases/547_the_ui_says_only_what_is_derived.sh",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/README.md",
+            ".gitignore",
+            "apps/majordomus-cli/src/cockpit/assets.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/surfaces.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/web/discover.rs",
+            "apps/majordomus-cli/src/web/model.rs",
+            "share/ui",
+            "scripts/cockpit-assets",
+            ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            ".ai/repo/project/issues/I2461.yaml"
+          ],
+          "slug": "majordomus-ui-is-the-primary-surface",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib ui::",
+            "cargo test --lib cockpit::assets",
+            "scripts/cockpit-assets --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2462",
+        "kind": "issue",
+        "label": "I2462",
+        "summary": "The UI has every screen, and its mesh is a graph whose nodes open an inspector",
+        "route": "/cockpit/objects/issue/i2462",
+        "source": ".ai/repo/project/issues/I2462.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/command, /ui/capabilities, /ui/deployments and /ui/docs answer 200 with a hero and panels whose sources are named; a test renders every screen against a real registry",
+            "/ui/capabilities?id=plan.status shows that capability's declared input fields and its API, CLI and MCP exposure",
+            "/ui/mesh draws every machine, runtime and session the mesh runtime knows as a graph over a table fallback, and /ui/mesh?node=<name> opens that machine's inspector; an unknown name says it is unknown",
+            "The delivery report is a panel route of its own and never holds the Deployments screen back",
+            "/ui/work?pr=<n> opens that pull request's detail from the integration queue's answer, with every gate and its verdict; a queue row links to it; a number the queue did not observe says so"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The UI shows seven screens; the mesh is a table.",
+          "depends_on": [
+            "I2461"
+          ],
+          "evidence_required": [
+            "ui_every_screen_renders_test",
+            "ui_mesh_inspector_screenshot"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            ".ai/repo/project/issues/I2462.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/features/ui.md"
+          ],
+          "slug": "the-ui-has-every-screen",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::",
+            "cargo test --test ui_surface",
+            "scripts/ci/cockpit-projection-check --ui-integrity"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2463",
+        "kind": "issue",
+        "label": "I2463",
+        "summary": "A train of stacked pull requests is a typed object, served everywhere and drawn as a graph",
+        "route": "/cockpit/objects/issue/i2463",
+        "source": ".ai/repo/project/issues/I2463.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Trains are derived by pure, unit-tested functions from the recorded observation, the queue and the local refs/prep/<n> refs; nothing reaches the network or writes a ref",
+            "integration.trains is declared once with capability! and projected to the command line, HTTP and MCP by majordomus generate",
+            "/cockpit/trains draws the trains interactively and renders the same facts as a table without JavaScript; colours come from the design tokens",
+            "test/cases/1072_the_train_is_seen.sh passes with the change and fails against master without it"
+          ],
+          "created_at": "2026-10-11",
+          "depends_on": [],
+          "evidence_required": [
+            "train_model_unit_tests",
+            "trains_projection_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Moving, pushing or deleting any ref, refs/prep/<n> included: the model reads them",
+            "A new stream: the page polls the HTTP capability (majordomus monitor is I2400-I2407)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/train.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "apps/majordomus-cli/src/cockpit/nav.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/cockpit/trains.rs",
+            "share/cockpit/trains.js",
+            ".ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md",
+            "docs/INTEGRATION.md",
+            "docs/COCKPIT.md",
+            "test/cases/1072_the_train_is_seen.sh",
+            "share/version.txt",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "docs/generated",
+            "site/data",
+            "site/content"
+          ],
+          "slug": "the-train-is-seen",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::train",
+            "MJ_TEST_JOBS=4 bash test/run.sh 1072_the_train_is_seen"
+          ]
         }
       },
       {
@@ -31552,6 +33346,62 @@
         }
       },
       {
+        "id": "majordomus://milestone/failure-is-visible",
+        "kind": "milestone",
+        "label": "failure-is-visible",
+        "summary": "Every failure the runtime can suffer is bounded, tested or stated, and changes the health it reports",
+        "route": "/cockpit/objects/milestone/failure-is-visible",
+        "source": ".ai/repo/project/milestones/failure-is-visible.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/api/v1/ready reports false with a named reason after a lease loss",
+            "health.report carries a mesh check when the mesh is enabled",
+            "Slow clients hold no worker past the declared deadline",
+            "Every failure class in the published table names a CI test or a stated limitation"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "readiness_reflects_state",
+            "request_deadline_test",
+            "failure_class_table"
+          ],
+          "non_scope": [
+            "Circuit breakers; the audit found no evidence one is justified.",
+            "A metrics stack or log shipping; the runtime reports through its own capabilities.",
+            "Journal durability, which is I2137 (mesh-journal-converges)."
+          ],
+          "order": 142,
+          "priority": "p1",
+          "risks": [
+            "Making readiness stricter can make deploy health checks fail where they passed; the fly-deployment health block reads /api/v1/live and must keep doing so.",
+            "A deadline on request reads that is too short breaks slow links; it must be declared and measured."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/logging.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "lib/doctor.sh",
+            "lib/common.sh",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/DEVELOPMENT_RUNTIME.md",
+            "docs/MCP.md"
+          ],
+          "slug": "failure-is-visible",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/fly-deployment",
         "kind": "milestone",
         "label": "fly-deployment",
@@ -31809,6 +33659,112 @@
         }
       },
       {
+        "id": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "milestone",
+        "label": "mcp-transports-are-reliable",
+        "summary": "Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation",
+        "route": "/cockpit/objects/milestone/mcp-transports-are-reliable",
+        "source": ".ai/repo/project/milestones/mcp-transports-are-reliable.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A mutating tool call that outlasts the bridge timeout is executed exactly once",
+            "notifications/cancelled stops a running call within a bound",
+            "One declared message bound applies to stdin, request bodies and bridge responses, each with a test one byte over it",
+            "The three client launch configurations are generated and their diagnosis parses them"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "at_most_once_tool_calls",
+            "cancellation_test",
+            "transport_bounds_tests"
+          ],
+          "non_scope": [
+            "A GET/SSE stream on the Streamable HTTP endpoint; docs/MCP.md documents its absence and no client here needs it.",
+            "Authorization and remote callers, which are I2123.",
+            "A second tool list or MCP-specific capability metadata; the registry stays the one source."
+          ],
+          "order": 139,
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/http/server.rs",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/src/capability/builtin/mcp.rs",
+            "share/providers.yaml",
+            "lib/update.sh",
+            ".mcp.json",
+            ".gemini/settings.json",
+            ".codex/config.toml",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/MCP.md"
+          ],
+          "slug": "mcp-transports-are-reliable",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared --test mcp_conformance --test mcp_conformance_http --test shared_units --test providers_projection",
+            "MJ_TEST_JOBS=4 bash test/run.sh 620_mcp_tools_are_invoked_and_answer 940_mcp_says_nothing_its_capability_does_not"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "label": "mesh-journal-converges",
+        "summary": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "route": "/cockpit/objects/milestone/mesh-journal-converges",
+        "source": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A torn or unreadable journal line is counted and reported by mesh doctor, and no complete event before or after it is lost",
+            "A write failure is reported and the event is not acknowledged as stored",
+            "A claim that expired and revived after a partition is Conflicted, not Held, against a claim admitted during its absence, on every runtime",
+            "Two replicas fed the same authenticated events in any order and with duplicates report equal digests, by a multi-stream property test",
+            "No sync message exceeds MAX_LINK_MESSAGE, and mesh.events pages return every event once"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "journal_durability_tests",
+            "claim_fencing_tests",
+            "multi_stream_convergence_proptest"
+          ],
+          "order": 137,
+          "priority": "p0",
+          "risks": [
+            "Adding an epoch to ClaimAcquired is a wire change; it needs the link or event schema version handled as I2164 prices it, or old runtimes will refuse or misread the new field.",
+            "fsync on every append costs latency on the heartbeat path; the bound chosen must be measured, not assumed.",
+            "I2124 edits the same reload path in apps/majordomus-cli/src/mesh/journal.rs; I2137 should land after it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_compaction.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "test/cases",
+            "test/mesh-lab",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-journal-converges",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh",
+            "cargo test --test mesh_cooperation --test mesh_compaction --test mesh",
+            "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves 493_mesh_compaction_keeps_what_is_live"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/public-proof",
         "kind": "milestone",
         "label": "public-proof",
@@ -31966,6 +33922,109 @@
         }
       },
       {
+        "id": "majordomus://milestone/runtime-lifecycle",
+        "kind": "milestone",
+        "label": "runtime-lifecycle",
+        "summary": "One usable server per checkout starts, attaches, stops and reports its state without races or hidden kills",
+        "route": "/cockpit/objects/milestone/runtime-lifecycle",
+        "source": ".ai/repo/project/milestones/runtime-lifecycle.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server whose four workers are busy with tool calls is never taken over by a client that started meanwhile",
+            "A server that lost its lease has no session left after a declared grace and exits by itself",
+            "No process removes a lease file whose token is not its own, proved under a SIGTERM racing a takeover",
+            "`serve stop` runs the ordered stop and leaves no open episode",
+            "A lease timing declared in policy.yaml is the one the mcp and serve elections wait",
+            "server.status reports stopping, failed and degraded, each from a test that produces the state",
+            "A server used only through the Cockpit or /events is not stopped as idle"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "lifecycle_fault_tests",
+            "typed_server_standing",
+            "docs_describe_the_shipped_server"
+          ],
+          "non_scope": [
+            "A `majordomus ui` command, unless I2131's record decides one is needed beyond `serve ensure`.",
+            "One server for all repositories. ADR 0044 decided one per checkout and the board is gathered across them.",
+            "Graceful termination inside the production container, which is I0906 (fly-deployment).",
+            "The bridge's resend of a tool call, which is I2145 (mcp-transports-are-reliable)."
+          ],
+          "order": 136,
+          "priority": "p1",
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "apps/majordomus-cli/tests/",
+            "test/cases",
+            "docs/MCP.md",
+            "README.md"
+          ],
+          "slug": "runtime-lifecycle",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_shared --test serve_lifecycle --test lease_busy --test lease_lost --test lease_declared --test server_status",
+            "MJ_TEST_JOBS=4 bash test/run.sh 90_mcp_shared_server 113_shared_server_survives_a_crash 191_entry_races 192_entry_across_checkouts_and_clients"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "label": "runtime-trust",
+        "summary": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "route": "/cockpit/objects/milestone/runtime-trust",
+        "source": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request from an address that is not loopback runs only a capability that reads or whose input is a signed message, on every transport that knows the caller's address",
+            "Every event the journal holds passed the trust policy in force, whether it arrived over a link or was reloaded from disk",
+            "A trusted key cannot order its claim before claims already admitted, and an expired claim does not return as live",
+            "Every bound the security model names is enforced on the input it names, with a test that sends one more"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "remote_write_refused",
+            "reload_is_trust_checked"
+          ],
+          "non_scope": [
+            "Encrypting the transport. ADR 0032 decided no TLS dependency; confidentiality stays the network's.",
+            "Accounts or a login. A remote writer, when one is needed, is admitted by a key the trust policy names."
+          ],
+          "order": 135,
+          "priority": "p0",
+          "risks": [
+            "A remote MCP client loses writes it used to have (announce, mesh sessions). The route that remains is a tunnel that ends on loopback."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability",
+            "docs/MESH.md",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "slug": "runtime-trust",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test remote_callers --test mesh_cooperation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "label": "safe-self-update",
@@ -32067,6 +34126,65 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "label": "surfaces-never-disagree",
+        "summary": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "route": "/cockpit/objects/milestone/surfaces-never-disagree",
+        "source": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A test over the registry fails when a state-reporting capability answers without observed_at",
+            "The parity test covers every capability with an HTTP route and every capability with a CLI path",
+            "GET /swagger answers with a CSP and integrity hashes, and a foreign Host is refused on GET",
+            "A gate fails on a literal /api/v1/ path or a copied enum value in Cockpit or site code"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "uniform_freshness",
+            "parity_with_writers_and_cli",
+            "no_consumer_catalogue"
+          ],
+          "non_scope": [
+            "Removing the clap tree or cli/local.rs LOCAL; both are measured second declarations (SURFACES F-1, F-4) and this milestone records them rather than rewriting the CLI.",
+            "Writing a static site that claims live state; the site stays a picture labelled as one.",
+            "Reporting a replaced executable, which is I1502."
+          ],
+          "order": 140,
+          "priority": "p1",
+          "risks": [
+            "Adding observed_at to capability outputs changes their schemas and so the public surface; version-surface will price it as a change, which is correct.",
+            "Extending parity to POST routes runs writers in tests; each must run against a synthetic repository, never the checkout."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/live.rs",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/site.rs",
+            "apps/majordomus-cli/src/web/discover.rs",
+            "share/cockpit",
+            "site/templates",
+            "apps/majordomus-cli/tests/properties.rs",
+            "apps/majordomus-cli/tests/dashboard.rs",
+            "test/cases",
+            "docs/SURFACES.md",
+            "docs/COCKPIT.md",
+            ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md"
+          ],
+          "slug": "surfaces-never-disagree",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test properties --test projections --test dashboard --test http_serve --test http_host",
+            "bin/majordomus-cli generate --check",
+            "MJ_TEST_JOBS=4 bash test/run.sh 545_every_answer_says_when_it_was_observed 406_one_declaration_every_surface"
           ]
         }
       },
@@ -36846,6 +38964,26 @@
             "campaigns",
             "evidence",
             "records"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "kind": "rule",
+        "label": "project.a-derive-offload-waits-its-turn@1",
+        "summary": "A derive offloaded to another machine goes through the declared hosts and waits its turn in their queue",
+        "route": "/cockpit/objects/rule/project-a-derive-offload-waits-its-turn-1",
+        "source": ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.one-derive-at-a-time@1"
+          ],
+          "tags": [
+            "derived",
+            "machine",
+            "coordination"
           ]
         }
       },
@@ -43464,6 +45602,27 @@
         "source": "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "route": "/cockpit/objects/test/test-cases-1022-a-remote-caller-cannot-write-sh",
+        "source": "test/cases/1022_a_remote_caller_cannot_write.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "kind": "test",
+        "label": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "route": "/cockpit/objects/test/test-cases-1023-a-branch-cannot-widen-the-mesh-trust-sh",
+        "source": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "kind": "test",
+        "label": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "route": "/cockpit/objects/test/test-cases-1024-an-installed-release-serves-a-foreign-repository-sh",
+        "source": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "label": "test/cases/102_completion_shell.sh",
@@ -43483,6 +45642,20 @@
         "label": "test/cases/103_release_projection.sh",
         "route": "/cockpit/objects/test/test-cases-103-release-projection-sh",
         "source": "test/cases/103_release_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "kind": "test",
+        "label": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "route": "/cockpit/objects/test/test-cases-1040-a-stacked-head-lands-on-the-verdict-it-has-sh",
+        "source": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
+        "kind": "test",
+        "label": "test/cases/1041_a_release_publishes_its_metadata.sh",
+        "route": "/cockpit/objects/test/test-cases-1041-a-release-publishes-its-metadata-sh",
+        "source": "test/cases/1041_a_release_publishes_its_metadata.sh"
       },
       {
         "id": "majordomus://test/test/cases/104_published_site.sh",
@@ -43534,11 +45707,25 @@
         "source": "test/cases/1054_every_session_is_told_the_stream.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "kind": "test",
+        "label": "test/cases/1065_a_session_briefs_itself.sh",
+        "route": "/cockpit/objects/test/test-cases-1065-a-session-briefs-itself-sh",
+        "source": "test/cases/1065_a_session_briefs_itself.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/106_context_peers.sh",
         "kind": "test",
         "label": "test/cases/106_context_peers.sh",
         "route": "/cockpit/objects/test/test-cases-106-context-peers-sh",
         "source": "test/cases/106_context_peers.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
+        "kind": "test",
+        "label": "test/cases/1072_the_train_is_seen.sh",
+        "route": "/cockpit/objects/test/test-cases-1072-the-train-is-seen-sh",
+        "source": "test/cases/1072_the_train_is_seen.sh"
       },
       {
         "id": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -48312,6 +50499,11 @@
         "label": "artifacts"
       },
       {
+        "id": "module:brief",
+        "kind": "module",
+        "label": "brief"
+      },
+      {
         "id": "module:capabilities",
         "kind": "module",
         "label": "capabilities"
@@ -48647,6 +50839,14 @@
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/product.rs",
         "external": true
+      },
+      {
+        "id": "test:apps/majordomus-cli/tests/remote_callers.rs",
+        "kind": "test",
+        "label": "remote_callers.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/remote_callers.rs",
+        "external": true
       }
     ],
     "edges": [
@@ -48666,6 +50866,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:brief.session",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:brief.session",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:brief.session",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:brief.session",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:capabilities.describe",
         "target": "projection:cli",
         "kind": "projects"
@@ -50017,6 +52237,26 @@
       },
       {
         "source": "capability:integration.queue",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -55266,6 +57506,161 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/capability/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/http/router.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "file:apps/majordomus-cli/src/mcp/surface.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0040",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0126",
+        "target": "test:apps/majordomus-cli/tests/remote_callers.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/classify.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/drain.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/model.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/relation.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/repair.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "file:apps/majordomus-cli/src/integration/tests.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://issue/I2298",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@3",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0129",
+        "target": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "file:.github/workflows/release.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "file:scripts/site-deploy",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://issue/I2303",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0131",
+        "target": "majordomus://test/test/cases/96_site_deploy.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0133",
         "target": "file:apps/majordomus-cli/src/monitor/mod.rs",
         "kind": "put_in_force"
@@ -55293,6 +57688,116 @@
       {
         "source": "majordomus://adr/adr-0133",
         "target": "majordomus://milestone/everything-is-followed-in-one-stream",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://adr/adr-0022",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://adr/adr-0088",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/brief.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "file:share/mods/claude-code/majordomus-brief/hooks/register.ts",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://adr/adr-0123",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://document/docs/BRIEF.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:apps/majordomus-cli/src/cockpit/trains.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:apps/majordomus-cli/src/integration/train.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:share/cockpit/trains.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
         "kind": "put_in_force"
       },
       {
@@ -60476,6 +62981,26 @@
         "kind": "tracks"
       },
       {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "file:share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "majordomus://document/docs/OFFLOAD.md",
+        "kind": "tracks"
+      },
+      {
         "source": "majordomus://context/ai.repo.profiles",
         "target": "file:share/allow/profile.txt",
         "kind": "tracks"
@@ -60721,6 +63246,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://derive-offload/derive",
+        "target": "kind:derive-offload",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://distribution-model/share/distribution.yaml",
         "target": "kind:distribution-model",
         "kind": "is_a"
@@ -60857,6 +63387,11 @@
       },
       {
         "source": "majordomus://document/docs/BACKLOG.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/BRIEF.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -61041,6 +63576,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/MCP.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -61057,6 +63597,11 @@
       },
       {
         "source": "majordomus://document/docs/MONITOR.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/OFFLOAD.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -62512,6 +65057,11 @@
       },
       {
         "source": "majordomus://feature/skills",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/ui",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -67121,6 +69671,196 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2123",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2123",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2124",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2124",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2126",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2126",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2127",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2127",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2128",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2128",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2129",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2129",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2131",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2131",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2132",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2132",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2133",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2133",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2134",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2134",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2135",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2135",
+        "target": "majordomus://milestone/runtime-trust",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2137",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2137",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2139",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2139",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2140",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2140",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2145",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2145",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2147",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2147",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2151",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2151",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2156",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2156",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2157",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2157",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2161",
         "target": "kind:issue",
         "kind": "is_a"
@@ -67131,6 +69871,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2162",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2162",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2163",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2163",
+        "target": "majordomus://issue/I2127",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2163",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2165",
         "target": "kind:issue",
         "kind": "is_a"
@@ -67138,6 +69903,66 @@
       {
         "source": "majordomus://issue/I2165",
         "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2282",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2282",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2298",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2298",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2303",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2303",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2396",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2396",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2398",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2398",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2399",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2399",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -67276,6 +70101,51 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2460",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2460",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2461",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2461",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2462",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2462",
+        "target": "majordomus://issue/I2461",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2462",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2463",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2463",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -67376,6 +70246,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/failure-is-visible",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/fly-deployment",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -67409,6 +70284,16 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/mcp-transports-are-reliable",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/mesh-journal-converges",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/public-proof",
@@ -67446,6 +70331,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://milestone/runtime-lifecycle",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/runtime-trust",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/safe-self-update",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -67464,6 +70359,11 @@
         "source": "majordomus://milestone/shared-policy",
         "target": "majordomus://milestone/routing-recommendations",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/surfaces-never-disagree",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/test-evidence",
@@ -68398,6 +71298,16 @@
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "target": "majordomus://rule/project.one-derive-at-a-time@1",
         "kind": "depends_on"
       },
       {
@@ -70366,6 +73276,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/102_completion_shell.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -70377,6 +73302,16 @@
       },
       {
         "source": "majordomus://test/test/cases/103_release_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -70416,7 +73351,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/106_context_peers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75181,6 +78126,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:brief",
+        "target": "capability:brief.session",
+        "kind": "composes"
+      },
+      {
         "source": "module:capabilities",
         "target": "capability:capabilities.describe",
         "kind": "composes"
@@ -75558,6 +78508,11 @@
       {
         "source": "module:integration",
         "target": "capability:integration.queue",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.trains",
         "kind": "composes"
       },
       {
@@ -76102,8 +79057,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2512,
-      "edges": 5490,
+      "nodes": 2584,
+      "edges": 5641,
       "acyclic": false,
       "truncated": false
     }

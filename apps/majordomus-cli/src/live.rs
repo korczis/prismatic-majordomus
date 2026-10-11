@@ -482,6 +482,12 @@ impl Live {
             Ok(app) => {
                 state.ctx = Arc::new(app.context.continuing(&previous));
                 state.number += 1;
+                // the declaration may have changed with the repository: a key withdrawn from
+                // it loses its links now, not at the next restart (I2134)
+                let ended = crate::capability::builtin::mesh::retrust(&state.ctx);
+                if !ended.is_empty() {
+                    tracing::warn!(peers = ?ended, "mesh links ended: their keys are no longer trusted by the declaration");
+                }
                 state.stamp = taken;
                 tracing::info!(
                     generation = state.number,

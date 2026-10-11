@@ -49,9 +49,10 @@ registry entry, none declared in the MCP code. The decision is
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
 | freshness | the server follows the repository it serves: before a request is answered it compares a fingerprint of the git control files (`HEAD`, the staging index, `packed-refs`, the reflog, the merge and rebase markers — one `stat` each) with the one its current reading was built at, and the request that finds them different rebuilds the layer. A commit made while the server runs is visible through the API, through MCP and in the Cockpit with no restart; a client attached before the commit keeps its session and its place on the peer board. No poll, no thread, no watcher. `project.the-server-sees-the-current-tree` |
-| signals | `SIGTERM`, `SIGINT` or `SIGHUP` (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; `kill -9` cannot be caught, and the next process takes the stale lease over |
-| takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence |
-| refusal | a bridged peer whose server is serving and will not take a request — one sent before `initialize` is answered 400 `session_required` — relays that refusal to its client as a JSON-RPC error and elects nobody; an election is for a server that cannot be reached, that lost the session and will not re-open it (404), or that says it lost the lease (409 `lease_lost`) |
+| signals | `SIGTERM`, `SIGINT` or `SIGHUP` (`serve stop`, a client killing its server, Ctrl-C in a terminal) asks the server to stop in order: the handler only records the request, and the server closes its sessions and episodes, closes its listeners and releases the lease — only while the file is still its own — before it ends. A `serve` returns 0; a `majordomus mcp` serving its own client then dies of the signal, because its client's stdio session was cut. A second signal, or an ordered stop that has not finished within eight seconds, ends the process at once; `kill -9` cannot be caught, and the next process takes the stale lease over |
+| takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence. The message that met the failure is sent again only when the server provably did not run it — the connection was never made, or the server answered 404 (session lost) or 409 (lease lost) — or when it is idempotent: every method but `tools/call`, and a tool whose declared execution hints say so (every read). A call that was sent and never answered (a timeout, a dropped connection, a 5xx) is not sent again: the client gets `-32603` saying `outcome unknown` with the request's id, so a writing tool never runs twice |
+| refusal | a bridged peer whose server is serving and will not take a request — one sent before `initialize` is answered 400 `session_required`, a message over the 1 MiB body limit 413 — relays that refusal to its client as a JSON-RPC error (`-32600`) naming the status, and elects nobody; a message over the limit is answered `payload too large` without being sent. An election is for a server that cannot be reached, that took a request and never answered, that lost the session and will not re-open it (404), or that says it lost the lease (409 `lease_lost`) |
+| bounds | a message is at most 1 MiB on either transport — a stdin line over it is answered with a parse error and the session goes on, a request body over it is answered 413; a reply the bridge, a rendezvous registration or a mesh link reads is at most 32 MiB; a request naming an `MCP-Protocol-Version` this server does not speak is answered 400; a session id is 128 bits from the operating system's random source, and a session is stamped again when its answer is written, so a long request never finds its session reaped behind it (I2147) |
 | options | the server's `--discovery` and `--strict` apply to every session it serves; a bridge inherits them and the log says which server it attached to |
 | `--standalone` | the first version's behaviour: this client alone, no port, no lease, no peers, nothing written anywhere |
 | degraded | when the lease cannot be written or replaced, or the shared server cannot start, the client is served alone exactly as `--standalone` would, and the log says `cannot use the shared server` with the path and the reason |
@@ -102,8 +103,22 @@ was started from. `.ai/local/state/mcp/server.json` is still where a person read
 ### The server that is no longer the one
 
 A lease can be taken over while the process that held it is still running and still healthy
-— most often because its executable was replaced by a rebuild, which the election reads as
-"it is serving code that is no longer on disk". The superseded process is not killed. It
+— because its executable was replaced by a rebuild, which the election reads as "it is
+serving code that is no longer on disk", or because it is an older release than the client
+electing. The installer puts each release in a directory of its own, so an upgrade changes
+the executable's path and the rebuild check never sees it; the release check does. One
+verdict (`lease::version_verdict`) decides for the election, `serve ensure` and
+`server.status` alike:
+
+| the server's release is | a client of this executable |
+|---|---|
+| the same | attaches |
+| older | takes the lease over; the older server hands its sessions on as below |
+| newer | attaches, and its `initialize` answer says first that this client is the older one |
+| unpublished, or not ordered as a release (a pre-release) | attaches; `server.status` reports `outdated` |
+
+A newer server is never taken over by an older client, so two releases side by side do not
+fight over the lease: the newer one holds it (I2163). The superseded process is not killed. It
 keeps its socket, its peer board and the generation of the layer it loaded, and it goes on
 serving the sessions it already had until they end. That is deliberate: a client mid-answer
 should not lose its server because somebody ran `cargo build`.
@@ -116,7 +131,7 @@ lease no longer carries its token:
 | its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
 | the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
 | it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
-| its open sessions continue | they are its own until they end, and the process ends with them |
+| its open sessions are handed on | they are answered for the declared busy grace (`server.busy_grace_seconds`), so a request in flight and the ones behind it finish where they started; after it, each session is closed and answered 404, the client's bridge opens a new one, is refused 409 `lease_lost` and elects the current server; with no session left the superseded process ends (I2127) |
 
 A server too old to answer the third question is accepted by the probe. It cannot be told
 from a current one on that endpoint, and refusing it would be the worse failure: a live
@@ -137,7 +152,7 @@ next reader does not have to rediscover which one they are looking at.
 | the question | the answer | who asks it |
 |---|---|---|
 | Is a **surface's** producer's output on disk? | `http::Served::ready(surface_id)` — the directory a producer writes into has files in it; a route this executable answers is always ready | the home page (`GET /`), which renders a surface with no output as `not built` rather than serving a 404 |
-| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, how the layer read, and whether the executable it was loaded from is still on disk — a replaced one makes it not ready, with the reason in `stale`. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
+| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, how the layer read, and whether the executable it was loaded from is still on disk — a replaced one makes it not ready, with the reason in `stale` — and whether this process still holds the checkout's lease: a server whose lease another process took is not ready either. Every reason is listed in `reasons` as `code: words` (`lease_lost`, `stale`, and `layer_degraded`, which does not make it not ready: a degraded layer is served as read, with its diagnostics). `health.report` carries the mesh as a dimension of its own, judged as `mesh doctor` judges the runtime, and `unknown` in a process no server runs in. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
 | Does **anything** accept a connection at the address the lease published? | `environment::ServiceAvailability` — one TCP connect with a hard budget and no name resolution (`environment::probe::reachable`) | the environment snapshot, which runs on a shell prompt (`majordomus env`, `.envrc`) and may not spend an HTTP round trip or reach DNS to say what it knows |
 | Is what answers there **current**? | `ServerStanding` — `server.status`, from `lease::probe` (this checkout's identity, over HTTP) and the version and executable the lease carries | anyone who has to trust what the server says: `serve ensure`, `serve stop`, the `server` check of `health.report`, and the session briefing |
 
@@ -168,22 +183,32 @@ does, and converges: `ready` is printed and nothing is started; `starting` is wa
 `absent` and `stale` start a server as a process of its own — this executable, `serve
 --fallback --idle S`, its log at `.ai/local/state/mcp/server.log`, in its own process group
 so that it outlives the shell that asked — and wait until it is ready; `outdated` starts one
-only when the election would take the lease over (the same executable, replaced on disk)
-and is otherwise reported with the remedy, because a server of another build that answers
+only when the election would take the lease over (the same executable, replaced on disk, or
+an older release than this executable) and is otherwise reported with the remedy, because a server of another build that answers
 is not this command's to end. Run twice, it starts nothing the second time; run by three
 shells at once, the election lets one of the three servers bind and the others defer. The
 call is bounded by `--wait`; a server that did not become ready in time is reported with
 the standing it reached and exit 10.
 
-A server `ensure` starts has no client of its own. It ends when no peer has been attached
-for `--idle` seconds (fifteen minutes by default), which is what keeps ADR 0003's line —
+A server `ensure` starts has no client of its own. It ends when nothing has used it for
+`--idle` seconds (fifteen minutes by default) — no MCP session attached, no HTTP request
+answered and no live `/events` channel open, so a person reading the Cockpit or calling the
+REST API keeps the server they are using (I2131) — which is what keeps ADR 0003's line —
 there is no process without a client — true in time rather than at every instant: an
 agent's entry is owed a server before its first attach, and a checkout nobody works in
 does not keep one.
 
 `serve stop` signals the server the lease names, when that server answers for this
 checkout, and waits for *that server's* lease to go — the document it read, by its token,
-not merely the path. A `serve ensure` still waiting in the election takes the freed path
+not merely the path — and then for the process to exit. The `SIGTERM` it sends is the
+ordered stop and not a kill: the server gives attached peers two seconds to leave, closes
+their sessions and the episodes they carried, closes its listeners (an answer in flight is
+finished first), releases its lease and drains the mesh. Only the process whose token the
+file still carries removes it: every removal and every rewrite of the lease re-reads it
+under the lock beside it (`.ai/local/state/mcp/server.lock`), so a server that is stopped
+just after its lease was taken over leaves its successor's lease alone. A `serve` then
+exits 0 by its own return; a stop that does not finish within eight seconds, or a second
+`SIGTERM`, still ends it. A `serve ensure` still waiting in the election takes the freed path
 within milliseconds, so waiting for the path would report a server that would not stop
 when it had already stopped; the take-over is named in the answer instead. A lease that
 names a server of another checkout, or one that does not answer, is left alone and said
@@ -213,10 +238,13 @@ process is the server and restarts.
 **What the election now guards against.** An owner keeps its lease young while the layer
 loads (`Lease::keep_alive`), so a cold start slower than the bind grace is never taken for
 an abandoned one; a take-over removes only the file it judged, never one that arrived in the
-meantime; an owner whose lease was taken over while it was binding refuses to publish and
-degrades, rather than writing over the winner's address; and a server whose lease is taken
-over later stops claiming it — its signal handler no longer unlinks the file, which is
-somebody else's — serves the peers it has, and ends with them. The server's own reader also
+meantime, and two electors that judged one lease stale end with exactly one lease, because
+each re-reads the file under the lock beside it before removing it; an owner whose lease was
+taken over while it was binding refuses to publish and degrades, rather than writing over the
+winner's address, and it publishes through a temporary file of its own, synced before the
+rename; and a server whose lease is taken over later stops claiming it — nothing it does on
+its way out touches the file, which is somebody else's — serves the peers it has for the busy
+grace, hands each of them on to the current server, and ends. The server's own reader also
 forgets the HTTP sessions that stopped pinging on every path, not only while the owner
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 
@@ -275,15 +303,30 @@ A server already running keeps the address it bound. After setting the variable,
 `majordomus serve stop` and the next `serve ensure` — or the next session — brings it up
 on the named interface.
 
-There is no authentication on this surface. Binding beyond loopback hands every reachable
-host the read surface and the commands the registry declares as writing; do it on a
-network you would hand that to, or reach the loopback server through an SSH tunnel
-instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
+There are no accounts and no tokens on this surface, so a request is judged by where it
+came from (ADR 0126). Binding beyond loopback hands every reachable host the read surface
+and nothing else: a request from an address that is not loopback runs a capability only
+when the capability reads (`effect: read`) or when its input is a signed message the
+handler verifies against the trust policy — the mesh's `link.hello`, `link.sync` and
+`register`. Every other route, and every MCP tool that changes something, answers that
+caller `forbidden` (HTTP 403) before its handler runs, including `executions.start`, which
+would otherwise run any capability. The decision is per request, not per session: an MCP
+session id is a name, not a proof. Reads are still served to the whole network, unencrypted;
+to write from another machine, reach the loopback server through an SSH tunnel
+(`ssh -L 8741:127.0.0.1:8741 <machine>`), whose requests arrive from loopback.
+
+A request from loopback must name this server by an address or `localhost`: one that names any
+other host is refused `forbidden` before any surface answers, reads included, because that is
+what a page whose domain was made to resolve to this machine (DNS rebinding) sends. A request
+from another host may name the machine as it knows it. `/swagger` is served with a
+Content-Security-Policy that admits only its pinned CDN files, whose integrity hashes the page
+names, and its one inline script.
 
 ### What a contest is judged by
 
-Four numbers decide which process owns the lease. They are **declared**, in
-`.ai/repo/policy.yaml`'s `server:` block, and read once when the repository is opened:
+Four numbers decide which process owns the lease, and a fifth keeps the owner able to
+answer. They are **declared**, in `.ai/repo/policy.yaml`'s `server:` block, and read once
+when the repository is opened: Both `mcp` and `serve` read it before their first election, so the values below are the ones every election in the process uses (I2129); before that, a value read before the policy was the compiled default for the life of the process.
 
 | key | what it decides |
 |---|---|
@@ -291,6 +334,7 @@ Four numbers decide which process owns the lease. They are **declared**, in
 | `bind_grace_seconds` | how long a lease naming no URL yet is left alone — a server writes its lease before it can serve, so a fresh lease without a URL is a *starting* owner, not a dead one |
 | `join_timeout_seconds` | how long a process waits to join or create the lease file before refusing rather than waiting forever |
 | `busy_grace_seconds` | how long a live owner that does not answer is waited on, and asked again, before its lease is taken over. The election gives a busy owner this long, and so does `serve ensure` before it starts anything: a probe that times out against a live process is not a dead server, but one that stays silent this long is wedged and replaced. A server that `ensure` started after waiting out this grace is told which lease it judged, so its election does not wait on it a second time |
+| `read_deadline_seconds` | how long the server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection. A client sending one byte a second would otherwise hold a request thread forever, and enough of them would leave the probe above unanswered. A connection whose request is being answered, or that was upgraded to the live channel, is never closed by it. Each close is counted in `server.status` (`connections.closed_by_deadline`), beside the requests refused `503` because all 64 request handlers were busy (`connections.refused_busy`); the probe, `GET /`, is answered even then. The HTTP library keeps a thread on each connection while it lives and can queue a connection that arrives in a burst until one is free; the deadline is also what bounds that wait (I2156) |
 
 Until 2026-09-15 all of them were compiled constants in `apps/majordomus-cli/src/lease.rs`:
 unchangeable without a rebuild, stated nowhere a reader would look, and invisible to every
@@ -646,7 +690,7 @@ the `initialize` instructions name them, derived from the registry, and so does
 `majordomus mcp --inspect`. Each tool carries the canonical id in `_meta.majordomus.id` and
 its `inputSchema` and `outputSchema` from the canonical schemas. A refused call is a result with
 `isError: true`, the reason as text, and the category as one word in
-`_meta.majordomus.error.code` — `invalid_input`, `not_found` or `refused`, the same word the
+`_meta.majordomus.error.code` — `invalid_input`, `not_found`, `refused` or `forbidden`, the same word the
 HTTP route answers as `error.code`, because both read it from the error itself. A
 refused result carries no `structuredContent`: the output schema describes a success. An
 unknown tool, method or resource is a protocol error.
@@ -669,7 +713,7 @@ unknown tool, method or resource is a protocol error.
 | a bridge cannot take over (its `--strict`, a broken layer) | the client's request is answered with a JSON-RPC error (`-32603`) naming why; the stdio session stays open |
 | the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
 | the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
-| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | the lease is removed inside the handler and the process dies of the signal; its bridges elect again on their next message |
+| the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | it stops in order: sessions and episodes closed, listeners closed, the lease released if it is still the server's own; `serve` exits `0`, a `majordomus mcp` then dies of the signal; a second signal or eight seconds end it at once; its bridges elect again on their next message |
 | `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so |
 | `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind |
 | an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
@@ -716,7 +760,9 @@ stdout, non-mutation, the add–remove–break sequence of external extension, a
 bridge, `/mcp` sessions, the fallback port, `serve` deferring, `--standalone`, the takeover
 after a kill, the re-attachment, the refusal when the taker cannot serve, a corrupt, foreign,
 empty or abandoned lease being taken over, two clients starting in the same instant, an
-unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
+unwritable lease directory degrading to a standalone session, `SIGTERM` stopping the server in
+order and leaving no lease behind (`tests/lease_holder.rs`: a signal after a takeover sparing
+the successor's lease, and `serve stop` closing the server's episodes and exiting `0`),
 malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
 restarted server answer byte for byte what the first server did. The doctrine behind the
 failure table is the rule `project.shared-server-resilience`. `tests/server_status.rs` holds

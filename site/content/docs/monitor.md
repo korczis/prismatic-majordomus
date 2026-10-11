@@ -1,7 +1,7 @@
 +++
 title = "The monitor"
 description = "the monitor: everything that happens around a repository in one stream — mesh sessions, claims, handovers and reviews, the executor's outcomes, GitHub's pull requests and runs — with the noise folded away, what names you first, one cursor across every source, and the command, MCP, HTTP and Cockpit surfaces"
-weight = 58
+weight = 61
 [extra]
 source = "docs/MONITOR.md"
 +++

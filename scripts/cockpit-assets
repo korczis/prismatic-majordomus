@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# cockpit-assets — the Cockpit's static files, built from their sources.
+# cockpit-assets — the browser surfaces' static files, built from their sources: the
+# Cockpit's under share/cockpit/ and the UI's (`majordomus ui`, ADR 0135) under share/ui/.
+#
+# share/ui/ holds one compiled stylesheet, ui.css from share/ui/src/ui.css, committed and
+# drift-checked exactly as cockpit.css is, and ui.js, written by hand.
 #
 # Two kinds of file live under share/cockpit/:
 #
@@ -27,6 +31,9 @@ set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/share/cockpit"
 SRC="$OUT/src/cockpit.css"
+# every compiled stylesheet: source, then the committed output
+SHEETS="share/cockpit/src/cockpit.css share/cockpit/cockpit.css
+share/ui/src/ui.css share/ui/ui.css"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
 
@@ -35,8 +42,8 @@ CHECK=0
   exit 12
 }
 
-build_css() { # destination
-  ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SRC" -o "$1" --minify 2>/dev/null )
+build_css() { # destination [source]
+  ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "${2:-$SRC}" -o "$1" --minify 2>/dev/null )
 }
 
 # The palette is Tailwind's, quoted. share/design/tokens.yaml names every entry the way
@@ -63,17 +70,23 @@ check_palette || exit $?
 if [ "$CHECK" = 1 ]; then
   tmp="$(mktemp -t cockpit-css.XXXXXX)"
   trap 'rm -f "$tmp"' EXIT
-  build_css "$tmp"
-  if ! cmp -s "$tmp" "$OUT/cockpit.css"; then
-    echo "cockpit-assets: share/cockpit/cockpit.css is stale; run: scripts/cockpit-assets" >&2
-    exit 10
-  fi
-  echo "==> cockpit-assets: the committed stylesheet matches its source"
+  stale=0
+  while read -r src out; do
+    build_css "$tmp" "$ROOT/$src"
+    if ! cmp -s "$tmp" "$ROOT/$out"; then
+      echo "cockpit-assets: $out is stale; run: scripts/cockpit-assets" >&2
+      stale=1
+    fi
+  done <<< "$SHEETS"
+  [ "$stale" = 0 ] || exit 10
+  echo "==> cockpit-assets: every committed stylesheet matches its source"
   exit 0
 fi
 
-echo "==> cockpit-assets: compiling share/cockpit/cockpit.css"
-build_css "$OUT/cockpit.css"
+while read -r src out; do
+  echo "==> cockpit-assets: compiling $out"
+  build_css "$ROOT/$out" "$ROOT/$src"
+done <<< "$SHEETS"
 
 echo "==> cockpit-assets: vendoring the pinned libraries"
 mkdir -p "$OUT/vendor"
@@ -89,6 +102,10 @@ cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$OUT/vendor/cytoscape.m
 cp "$ROOT/node_modules/three/build/three.module.min.js" "$OUT/vendor/three.module.min.js"
 cp "$ROOT/node_modules/three/build/three.core.min.js" "$OUT/vendor/three.core.min.js"
 cp "$ROOT/node_modules/p5/lib/p5.min.js" "$OUT/vendor/p5.min.js"
+# the UI (ADR 0135) draws its relationship graphs with the same pinned Cytoscape, from its
+# own asset directory; not committed, for the same reason
+mkdir -p "$ROOT/share/ui/vendor"
+cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$ROOT/share/ui/vendor/cytoscape.min.js"
 
 printf '==> cockpit-assets: done\n'
 ls -l "$OUT" "$OUT/vendor" | sed 's/^/    /'

@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn no_endpoints_means_a_stopped_provider_with_the_reason() {
         let mut provider = RendezvousProvider::new(vec![], 60);
-        let (tx, _rx) = std::sync::mpsc::channel();
+        let (tx, _rx) = crate::mesh::provider::ObservationSender::bounded(64);
         let ctx = crate::mesh::provider::ProviderContext {
             tx,
             stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
@@ -254,7 +254,7 @@ mod tests {
         });
 
         let mut provider = RendezvousProvider::new(vec![endpoint.clone()], 1);
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, rx) = crate::mesh::provider::ObservationSender::bounded(64);
         let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let ctx = crate::mesh::provider::ProviderContext {
             tx,

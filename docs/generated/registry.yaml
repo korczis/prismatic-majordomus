@@ -11,6 +11,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 1
+  - id: brief
+    title: The session brief
+    description: "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 1
   - id: capabilities
     title: Capabilities
     description: "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
@@ -148,7 +154,7 @@ modules:
     description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
     stability: experimental
     source: builtin
-    capabilities: 5
+    capabilities: 6
   - id: intent_realization
     title: Intent realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
@@ -603,6 +609,379 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/artifacts.rs
+  - id: brief.session
+    module: brief
+    kind: query
+    title: The session brief
+    description: "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing."
+    input:
+      name: BriefInput
+      schema:
+        type: object
+        properties:
+          session:
+            type:
+              - string
+              - "null"
+            description: "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to."
+          checkouts:
+            "$ref": "#/$defs/Checkouts"
+            description: "Which checkouts the peers section covers: `repository` (every board, the default) or `this`."
+            default: repository
+          local:
+            type: boolean
+            description: "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again."
+            default: false
+        description: "What to ask of `brief.session`."
+        title: BriefInput
+        "$defs":
+          Checkouts:
+            oneOf:
+              - type: string
+                const: repository
+                description: "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+              - type: string
+                const: this
+                description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+            description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+    output:
+      name: SessionBrief
+      schema:
+        type: object
+        properties:
+          at:
+            type: string
+            description: "When it was composed, RFC 3339."
+          line:
+            type: string
+            description: "The brief in one line: the status line's text."
+          lines:
+            type: array
+            items:
+              type: string
+            description: "The brief in a few lines: one per section, then the peers it names."
+          interval_minutes:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "How often a session reports on itself, in minutes (`session.brief_interval_minutes`)."
+          keep_awake:
+            type: string
+            description: What a session is told at its start about keeping itself awake.
+          answered_by:
+            "$ref": "#/$defs/BriefOrigin"
+            description: Which process composed it.
+          session:
+            "$ref": "#/$defs/BriefSessionSection"
+            description: "This session: its episode and task."
+          peers:
+            "$ref": "#/$defs/BriefPeersSection"
+            description: The workers of every board.
+          mesh:
+            "$ref": "#/$defs/BriefMeshSection"
+            description: The mesh.
+          integration:
+            "$ref": "#/$defs/BriefIntegrationSection"
+            description: The integration queue.
+          derive:
+            "$ref": "#/$defs/BriefDeriveSection"
+            description: The derive queue.
+        required:
+          - at
+          - line
+          - lines
+          - interval_minutes
+          - keep_awake
+          - answered_by
+          - session
+          - peers
+          - mesh
+          - integration
+          - derive
+        description: "The answer of `brief.session`: what surrounds one session, in one line and in a few."
+        title: SessionBrief
+        "$defs":
+          BriefOrigin:
+            type: object
+            properties:
+              process:
+                type: string
+                description: "`leaseholder` (the server this checkout's lease names), `superseded` (a server that lost the lease), or `this_process` (no server answered, or the call asked for `local`)."
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The address of the server that composed it, when one did."
+              note:
+                type:
+                  - string
+                  - "null"
+                description: "Why this process and not the leaseholder, when it is not the leaseholder."
+            required:
+              - process
+            description: "Which process composed the brief, and why that one."
+          BriefSessionSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: Whether it could be read.
+              episode:
+                type:
+                  - string
+                  - "null"
+                description: "The open episode, when one is found."
+              provider_session:
+                type:
+                  - string
+                  - "null"
+                description: The provider session that owns it.
+              branch:
+                type: string
+                description: "The checkout's branch."
+              head:
+                type: string
+                description: "The checkout's head, abbreviated."
+              task_id:
+                type:
+                  - string
+                  - "null"
+                description: "The active task's id, when one is active."
+              task:
+                type:
+                  - string
+                  - "null"
+                description: "The active task's words."
+              caller:
+                type:
+                  - string
+                  - "null"
+                description: "The calling MCP session's place on this board, when the call came through one."
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - branch
+              - head
+              - summary
+            description: The session the brief is about.
+          BriefSectionState:
+            oneOf:
+              - type: string
+                const: read
+                description: Its owner answered in full.
+              - type: string
+                const: partial
+                description: "Its owner answered, and part of what it covers could not be asked; the summary says which."
+              - type: string
+                const: unread
+                description: Its owner did not answer; the summary says why.
+              - type: string
+                const: undeclared
+                description: "The repository declares nothing for it (no derive lock, a mesh switched off)."
+            description: Whether a section of the brief could be read.
+          BriefPeersSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: Whether every board could be read.
+              attached:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Attached peers across the boards read, the caller included."
+              boards:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many boards the answer covers.
+              unread:
+                type: array
+                items:
+                  type: string
+                description: "Every board that could not be read, as `<worktree>: <reason>`."
+              overlaps:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs of peers whose claimed scopes meet.
+              superseded:
+                type:
+                  - string
+                  - "null"
+                description: "Set when the composing server is superseded: its own board is unreachable by the repository's gather."
+              named:
+                type: array
+                items:
+                  type: string
+                description: "The attached peers, one short line each, at most a bounded number."
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - attached
+              - boards
+              - overlaps
+              - named
+              - summary
+            description: "The workers of this repository, from every board the brief could read."
+          BriefMeshSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: Whether cooperation could be read.
+              active:
+                type: boolean
+                description: Whether cooperation runs in the composing process.
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why it does not, when it does not."
+              links:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Links to other runtimes.
+              connected:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Of them, connected."
+              failing:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Of them, degraded, unreachable or expired."
+              claims_held:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Claims held across the mesh.
+              own_claims:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Of them, held by this runtime."
+              reviews_for_you:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Open review requests that name this runtime as the reviewer.
+              handovers_waiting:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Handovers another runtime published that nobody has consumed.
+              overlaps_for_you:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Overlaps between a claim of this runtime and another's."
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - active
+              - links
+              - connected
+              - failing
+              - claims_held
+              - own_claims
+              - reviews_for_you
+              - handovers_waiting
+              - overlaps_for_you
+              - summary
+            description: "The mesh: the links of this runtime and what the journal addresses to it."
+          BriefIntegrationSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: Whether this checkout ever observed the forge.
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - summary
+            description: "The integration queue, as `majordomus prs brief` says it."
+          BriefDeriveSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: "`undeclared` when the repository ships no derive lock."
+              holder:
+                type:
+                  - string
+                  - "null"
+                description: "The lock's owner line, when the lock is held."
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The holder's process id, when its line names one."
+              alive:
+                type:
+                  - boolean
+                  - "null"
+                description: Whether that process is running on this machine.
+              held_seconds:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: Seconds since the lock was taken.
+              priority:
+                type:
+                  - string
+                  - "null"
+                description: "The branches the priority marker names, when it is present."
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - summary
+            description: "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::brief
+    exposure:
+      mcp:
+        tool: majordomus_brief
+      http:
+        method: GET
+        path: /api/v1/brief
+      cli:
+        path:
+          - brief
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - session
+      - peers
+      - coordination
+      - brief
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/brief.rs
   - id: capabilities.describe
     module: capabilities
     kind: query
@@ -1002,6 +1381,9 @@ capabilities:
               concurrency:
                 "$ref": "#/$defs/ExecutionConcurrency"
                 description: Whether two of them may overlap.
+              signed_input:
+                type: boolean
+                description: "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
             required:
               - effect
               - cancellable
@@ -18289,7 +18671,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -18992,7 +19374,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -19192,7 +19574,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -19644,7 +20026,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -20185,7 +20567,7 @@ capabilities:
             properties:
               code:
                 type: string
-                description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
               message:
                 type: string
                 description: "What went wrong, for a person."
@@ -20402,7 +20784,7 @@ capabilities:
     cache:
       policy: disabled
     execution:
-      effect: process_state
+      effect: repository_mutation
       cancellable: false
       concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
@@ -21390,6 +21772,11 @@ capabilities:
               - string
               - "null"
             description: "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502)."
+          reasons:
+            type: array
+            items:
+              type: string
+            description: "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
         required:
           - ready
           - version
@@ -21645,7 +22032,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The evidence, as reason codes."
               action:
@@ -21857,7 +22244,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
@@ -22242,7 +22629,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
               gates:
@@ -22575,6 +22962,26 @@ capabilities:
                   - kind
                   - authored
                 description: The head already contains master and merges cleanly.
+              - type: object
+                properties:
+                  behind:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: Commits on master the head does not have.
+                  authored:
+                    type: array
+                    items:
+                      type: string
+                    description: Authored (non-derived) paths the merge changes.
+                  kind:
+                    type: string
+                    const: carries_master
+                required:
+                  - kind
+                  - behind
+                  - authored
+                description: "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
               - type: object
                 properties:
                   behind:
@@ -23469,7 +23876,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
               gates:
@@ -23802,6 +24209,26 @@ capabilities:
                   - kind
                   - authored
                 description: The head already contains master and merges cleanly.
+              - type: object
+                properties:
+                  behind:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: Commits on master the head does not have.
+                  authored:
+                    type: array
+                    items:
+                      type: string
+                    description: Authored (non-derived) paths the merge changes.
+                  kind:
+                    type: string
+                    const: carries_master
+                required:
+                  - kind
+                  - behind
+                  - authored
+                description: "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
               - type: object
                 properties:
                   behind:
@@ -24340,7 +24767,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
@@ -24495,6 +24922,692 @@ capabilities:
       - pull-requests
       - git
       - queue
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/integration.rs
+  - id: integration.trains
+    module: integration
+    kind: query
+    title: The trains of stacked pull requests
+    description: "Every train of open pull requests — a group joined by confirmed dependencies: a base branch that is another open pull request's head, or a `Stacked on #N` / `Depends on #N` line in the body — in landing order. Per link: number, title, author, head and base branch, head commit, the forge's page and checks, disposition, lane, reasons, next action, required-check state and every check on the head, relation to master with how far behind it is and whether it carries master, the prepared head under refs/prep/<n> with whether it is the head the forge serves (pushed) or not yet (pending), its position and depth, whether its turn has come, what it stands on and what it carries, its queue rank and whether a cycle catches it. Per train: roots, tops, the next link the order allows, the edges (STACKED_ON or DEPENDS_ON, satisfied when the link below landed), and the pull requests beneath it that are no longer open. Beside them the prepared heads no train holds, the tallies and the queue's diagnostics. Read from the recorded observation, the queue `majordomus prs status` prints and the local refs: it fetches, pushes and moves nothing. `observed: false` with the reason when this checkout has recorded no observation."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: TrainsView
+      schema:
+        type: object
+        properties:
+          observed:
+            type: boolean
+            description: Whether a forge observation is recorded in this checkout.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why there are no trains to show, when nothing is observed."
+          repository:
+            type:
+              - string
+              - "null"
+            description: "`owner/name`, when observed."
+          base:
+            type:
+              - string
+              - "null"
+            description: The integration base.
+          master_sha:
+            type:
+              - string
+              - "null"
+            description: "The master commit every link's relation was decided against."
+          observed_at:
+            type:
+              - string
+              - "null"
+            description: When the forge was observed.
+          trains:
+            type: array
+            items:
+              "$ref": "#/$defs/Train"
+            description: "Every train, the one whose next link ranks highest in the queue first."
+          unattached_prep:
+            type: array
+            items:
+              "$ref": "#/$defs/UnattachedPrep"
+            description: "Prepared heads under `refs/prep/` whose pull request is no link of any train: open\nand stacked on nothing, or not open at all (landed, closed)."
+          tallies:
+            "$ref": "#/$defs/TrainTallies"
+            description: Counts over every train.
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: "What makes this answer less than a full one: the queue's own diagnostics (a stale\nobservation first), and a dependency cycle when one is found."
+        required:
+          - observed
+          - trains
+          - unattached_prep
+          - tallies
+          - diagnostics
+        description: "Every train of the observed queue, and why there is none when there is none."
+        title: TrainsView
+        "$defs":
+          Train:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "`train-<n>`, after the first root in turn order: stable while that link is open."
+              roots:
+                type: array
+                items:
+                  type: integer
+                  format: uint64
+                  minimum: 0
+                description: "The links that land first: no open link of the train is below them."
+              tops:
+                type: array
+                items:
+                  type: integer
+                  format: uint64
+                  minimum: 0
+                description: "The links at the top: no link of the train is stacked on them."
+              next:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The first link, in turn order, whose every dependency has landed: the train's next\nmerge as far as order is concerned (its disposition says whether it can merge now)."
+              links:
+                type: array
+                items:
+                  "$ref": "#/$defs/TrainLink"
+                description: "Every open link, in turn order — `TrainLink::position` 1 first."
+              edges:
+                type: array
+                items:
+                  "$ref": "#/$defs/TrainEdge"
+                description: "Every confirmed dependency of a link, upper link first."
+              beneath:
+                type: array
+                items:
+                  "$ref": "#/$defs/BeneathLink"
+                description: "The pull requests below the train that are no longer open — landed, closed without a\nmerge, or unread — which a link still declares."
+              by_disposition:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: Links by disposition word.
+            required:
+              - id
+              - roots
+              - tops
+              - links
+              - edges
+              - beneath
+              - by_disposition
+            description: "One train: open pull requests joined by confirmed dependencies, in the order they land."
+          TrainLink:
+            type: object
+            properties:
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request number.
+              title:
+                type: string
+                description: Its title.
+              author:
+                type: string
+                description: "Its author's login."
+              head_ref:
+                type: string
+                description: Its head branch.
+              base_ref:
+                type: string
+                description: "The branch it targets: the integration base, or the head of the link below."
+              head_sha:
+                type: string
+                description: "The head commit it was assessed at, as the forge served it."
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The pull request on the forge, when the repository is known."
+              checks_url:
+                type:
+                  - string
+                  - "null"
+                description: "Its checks on the forge, when the repository is known."
+              disposition:
+                "$ref": "#/$defs/PullRequestDisposition"
+                description: "The executor's classification."
+              lane:
+                "$ref": "#/$defs/IntegrationLane"
+                description: The lane that disposition belongs to.
+              reasons:
+                type: array
+                items:
+                  type: string
+                description: "The machine-readable reasons, as every surface spells them (`stacked_on:#807`)."
+              next_action:
+                type:
+                  - string
+                  - "null"
+                description: "What happens next, in words, when anything does."
+              required_checks:
+                "$ref": "#/$defs/RequiredCheckState"
+                description: The required checks on its head.
+              checks:
+                type: array
+                items:
+                  "$ref": "#/$defs/LinkCheck"
+                description: "Every check the forge reported on its head, required or not."
+              relation:
+                "$ref": "#/$defs/RelationToMaster"
+                description: "What its head is to master, decided by git."
+              relation_kind:
+                type: string
+                description: "That relation's word (`behind`, `up_to_date`, `carries_master`, ...)."
+              behind:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "How many master commits its head lacks, when the relation counts them."
+              carries_master:
+                type: boolean
+                description: "Whether its head carries master by a merge of its own (ADR 0129) — read from the\nrelation's word, so an executable that does not know that relation says `false`."
+              prep:
+                anyOf:
+                  - "$ref": "#/$defs/PreparedHead"
+                  - type: "null"
+                description: "The head the executor prepared for it, when `refs/prep/<n>` exists."
+              position:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Its turn in the train, 1-based: every link below it comes earlier."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many links are below it on its longest path to master; a root is 0.
+              at_turn:
+                type: boolean
+                description: "Every dependency it declares has landed: it is the link the order allows next."
+              on:
+                type: array
+                items:
+                  type: integer
+                  format: uint64
+                  minimum: 0
+                description: "The pull requests it stands on, open links and those beneath alike."
+              carries:
+                type: array
+                items:
+                  type: integer
+                  format: uint64
+                  minimum: 0
+                description: The links stacked on it.
+              rank:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Its rank in the queue, 1-based."
+              in_cycle:
+                type: boolean
+                description: "Caught in a cycle of confirmed dependencies: no link of the cycle can land first."
+            required:
+              - number
+              - title
+              - author
+              - head_ref
+              - base_ref
+              - head_sha
+              - disposition
+              - lane
+              - reasons
+              - required_checks
+              - checks
+              - relation
+              - relation_kind
+              - carries_master
+              - position
+              - depth
+              - at_turn
+              - "on"
+              - carries
+              - rank
+              - in_cycle
+            description: One open pull request as a link of a train.
+          PullRequestDisposition:
+            oneOf:
+              - type: string
+                const: ready
+                description: "Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it."
+              - type: string
+                const: needs_refresh
+                description: "Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again."
+              - type: string
+                const: waiting_for_checks
+                description: Contains master; a required check has not finished on this head.
+              - type: string
+                const: waiting_for_review
+                description: A required review is missing or changes were requested.
+              - type: string
+                const: waiting_for_dependency
+                description: A declared dependency has not landed.
+              - type: string
+                const: draft
+                description: A draft.
+              - type: string
+                const: needs_repair
+                description: A required check failed on this head.
+              - type: string
+                const: conflicting
+                description: "Conflicts on authored paths: a person resolves them."
+              - type: string
+                const: blocked
+                description: "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+              - type: string
+                const: unsafe
+                description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
+              - type: string
+                const: redundant
+                description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
+              - type: string
+                const: superseded
+                description: "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+              - type: string
+                const: possibly_redundant
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
+              - type: string
+                const: other_base
+                description: Targets a branch other than the integration base.
+              - type: string
+                const: unknown
+                description: Something needed to decide could not be observed.
+              - type: string
+                const: obsolete
+                description: "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
+            description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
+          IntegrationLane:
+            oneOf:
+              - type: string
+                const: ready
+                description: The executor may merge it now.
+              - type: string
+                const: waiting
+                description: "Something will happen without a person: a refresh, a check, a dependency."
+              - type: string
+                const: repair
+                description: A person must change the branch.
+              - type: string
+                const: cleanup
+                description: "Its work is on master already, or a successor that landed replaced it."
+              - type: string
+                const: held
+                description: "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
+            description: The queues the Cockpit and the status table group pull requests into.
+          RequiredCheckState:
+            oneOf:
+              - type: string
+                const: passed
+                description: Every required check passed on this head.
+              - type: string
+                const: skipped
+                description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
+              - type: string
+                const: pending
+                description: A required check is queued or running.
+              - type: string
+                const: failed
+                description: A required check failed.
+              - type: string
+                const: missing
+                description: A required check has not reported on this head at all.
+              - type: string
+                const: unknown
+                description: "The repository's required checks could not be read."
+            description: "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass."
+          LinkCheck:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The check's name."
+              state:
+                "$ref": "#/$defs/CheckRunState"
+                description: Where it stands.
+            required:
+              - name
+              - state
+            description: "One check run on a link's head."
+          CheckRunState:
+            oneOf:
+              - type: string
+                const: passed
+                description: Completed and passed.
+              - type: string
+                const: failed
+                description: "Completed and failed (failure, timed out, cancelled, action required)."
+              - type: string
+                const: pending
+                description: "Queued or running; also what a report that says nothing is taken to be, so a\ndefault is never a pass."
+              - type: string
+                const: skipped
+                description: Completed as skipped or neutral.
+            description: Where one check run stands.
+          RelationToMaster:
+            oneOf:
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: contained
+                required:
+                  - kind
+                description: "The head is an ancestor of master: every commit already landed."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: superseded
+                required:
+                  - kind
+                description: "Merging the head into master changes nothing: its patch is already fully there."
+              - type: object
+                properties:
+                  commits:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: "How many commits, every one of them already on master."
+                  kind:
+                    type: string
+                    const: patch_ids_upstream
+                required:
+                  - kind
+                  - commits
+                description: "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
+              - type: object
+                properties:
+                  paths:
+                    type: array
+                    items:
+                      type: string
+                    description: The derived paths that would change.
+                  kind:
+                    type: string
+                    const: derived_only
+                required:
+                  - kind
+                  - paths
+                description: "Merging changes only derived artifacts: the authored change is already on master,\nand what differs is output the generators rewrite."
+              - type: object
+                properties:
+                  authored:
+                    type: array
+                    items:
+                      type: string
+                    description: Authored (non-derived) paths the merge changes.
+                  kind:
+                    type: string
+                    const: up_to_date
+                required:
+                  - kind
+                  - authored
+                description: The head already contains master and merges cleanly.
+              - type: object
+                properties:
+                  behind:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: Commits on master the head does not have.
+                  authored:
+                    type: array
+                    items:
+                      type: string
+                    description: Authored (non-derived) paths the merge changes.
+                  kind:
+                    type: string
+                    const: carries_master
+                required:
+                  - kind
+                  - behind
+                  - authored
+                description: "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
+              - type: object
+                properties:
+                  behind:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: Commits on master the head does not have.
+                  authored:
+                    type: array
+                    items:
+                      type: string
+                    description: Authored paths the merge changes.
+                  kind:
+                    type: string
+                    const: behind
+                required:
+                  - kind
+                  - behind
+                  - authored
+                description: "The head does not contain master, but the merge is clean with the derived driver."
+              - type: object
+                properties:
+                  paths:
+                    type: array
+                    items:
+                      type: string
+                    description: The conflicting authored paths.
+                  kind:
+                    type: string
+                    const: conflicting
+                required:
+                  - kind
+                  - paths
+                description: "Merging conflicts on authored paths: a person must resolve it."
+              - type: object
+                properties:
+                  reason:
+                    type: string
+                    description: Why.
+                  kind:
+                    type: string
+                    const: unknown
+                required:
+                  - kind
+                  - reason
+                description: "Git could not answer (the head is not fetched, or git failed); the reason."
+            description: "What the pull request's head is to the current master, decided locally by git with\nthis repository's own merge drivers — never by the forge's `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting."
+          PreparedHead:
+            type: object
+            properties:
+              reference:
+                type: string
+                description: The ref.
+              sha:
+                type: string
+                description: The commit it names.
+              state:
+                "$ref": "#/$defs/PrepState"
+                description: Whether that commit is the head the forge serves.
+            required:
+              - reference
+              - sha
+              - state
+            description: "The head the executor prepared for a link under `refs/prep/<n>`."
+          PrepState:
+            oneOf:
+              - type: string
+                const: pushed
+                description: "The prepared head is the pull request's head: it was pushed."
+              - type: string
+                const: pending
+                description: "The prepared head is another commit: it waits for its turn to be pushed."
+            description: Whether a prepared head has reached the forge.
+          TrainEdge:
+            type: object
+            properties:
+              from:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The upper link: the one that depends."
+              to:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request it stands on.
+              kind:
+                "$ref": "#/$defs/TrainEdgeKind"
+                description: How the dependency is declared.
+              satisfied:
+                type: boolean
+                description: "Whether it is satisfied: the pull request below landed."
+            required:
+              - from
+              - to
+              - kind
+              - satisfied
+            description: A confirmed dependency between two pull requests of a train.
+          TrainEdgeKind:
+            oneOf:
+              - type: string
+                const: stacked_on
+                description: "Its base branch is the other's head, or its body says `Stacked on #N`."
+              - type: string
+                const: depends_on
+                description: "Its body says `Depends on #N`, `Requires #N` or `Land after #N`."
+            description: How a dependency between two links is declared.
+          BeneathLink:
+            type: object
+            properties:
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Its number.
+              state:
+                "$ref": "#/$defs/DependencyState"
+                description: What the forge says became of it.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The pull request on the forge, when the repository is known."
+            required:
+              - number
+              - state
+            description: A pull request below a train that is not open any more.
+          DependencyState:
+            oneOf:
+              - type: string
+                const: open
+                description: Still open.
+              - type: string
+                const: merged
+                description: "Merged: the only state that satisfies it."
+              - type: string
+                const: closed_unmerged
+                description: "Closed without a merge: its work never landed, so a person decides."
+              - type: string
+                const: unread
+                description: "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied."
+            description: What became of a pull request another one depends on.
+          UnattachedPrep:
+            type: object
+            properties:
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request the ref is named for.
+              sha:
+                type: string
+                description: The commit it names.
+              open:
+                type: boolean
+                description: Whether that pull request is open.
+            required:
+              - number
+              - sha
+              - open
+            description: A prepared head whose pull request is no link of any train.
+          TrainTallies:
+            type: object
+            properties:
+              trains:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Trains.
+              links:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Open links across every train.
+              pending_prep:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Links whose prepared head is not the head the forge serves.
+              by_disposition:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: Links by disposition word.
+            required:
+              - trains
+              - links
+              - pending_prep
+              - by_disposition
+            description: Counts over every train.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::integration
+    exposure:
+      mcp:
+        tool: majordomus_pull_request_trains
+      http:
+        method: GET
+        path: /api/v1/pull-requests/trains
+      cli:
+        path:
+          - prs
+          - trains
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - integration
+      - pull-requests
+      - trains
+      - graph
     benchmark:
       policy: required
     cache:
@@ -29717,6 +30830,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
           CooperationCounters:
             type: object
@@ -29870,6 +30986,18 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: The highest Lamport stamp seen.
+              write_failures:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`."
+                default: 0
+              unreadable:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped."
+                default: 0
             required:
               - streams
               - events
@@ -30037,7 +31165,7 @@ capabilities:
             type: integer
             format: uint64
             minimum: 0
-            description: "The highest Lamport stamp the journal has seen: the `after` of the next page."
+            description: "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140)."
           events:
             type: array
             items:
@@ -30593,6 +31721,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -30616,6 +31747,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
+      signed_input: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.link.sync
     module: mesh
@@ -30733,6 +31865,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -30756,6 +31891,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
+      signed_input: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.nodes
     module: mesh
@@ -31547,6 +32683,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -32172,6 +33311,9 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
+              - type: string
+                const: misaddressed
+                description: "A hello addressed to another runtime: captured on its way there and replayed here."
             description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
@@ -32330,6 +33472,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
+      signed_input: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.release
     module: mesh
@@ -33497,6 +34640,12 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "This node's own datagrams, heard back and skipped."
+              overflow:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Observations dropped because the queue to the registry was full: a flood, counted\nrather than held (I2133)."
+                default: 0
             required:
               - oversized
               - malformed
@@ -48255,12 +49404,17 @@ capabilities:
             items:
               "$ref": "#/$defs/ServerView"
             description: "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+          connections:
+            anyOf:
+              - "$ref": "#/$defs/ConnectionCounts"
+              - type: "null"
+            description: "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
         required:
           - checkout_id
           - desired
           - standing
           - servers
-        description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+        description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
         title: ServerStatus
         "$defs":
           GitIdentity:
@@ -48333,7 +49487,7 @@ capabilities:
                 type: integer
                 format: uint32
                 minimum: 0
-                description: "The server's process id. Informational: nothing decides liveness from it."
+                description: "The server's process id. Not proof of a live server — only a probe that is answered\nis — but decisions are made from it: a live pid earns a server that does not answer\nthe election's busy wait before its lease is taken over, and `serve ensure`'s patience\nbefore it starts another; `serve stop` sends its `SIGTERM` to this pid."
               url:
                 type:
                   - string
@@ -48421,6 +49575,29 @@ capabilities:
               - this_checkout
               - standing
             description: "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+          ConnectionCounts:
+            type: object
+            properties:
+              read_deadline_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "`server.read_deadline_seconds:` as this process applies it."
+              closed_by_deadline:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Connections closed because no request was read in full on them within the deadline.
+              refused_busy:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Requests answered 503 because every request handler was busy.
+            required:
+              - read_deadline_seconds
+              - closed_by_deadline
+              - refused_busy
+            description: "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::server
@@ -50467,6 +51644,9 @@ capabilities:
               - type: string
                 const: cockpit
                 description: This process serves the Cockpit.
+              - type: string
+                const: ui
+                description: "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135)."
             description: "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
           SurfaceAvailability:
             oneOf:
@@ -53797,6 +54977,7 @@ declarative_kinds:
   - context
   - critique
   - deployment
+  - derive-offload
   - distribution-model
   - document
   - domain

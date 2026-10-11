@@ -9,7 +9,7 @@
 //! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Plan, Worktrees, Integration, Health, Quality,
+//! Objects, Directories, Graphs, Continuity, Plan, Worktrees, Integration, Trains, Health, Quality,
 //! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -62,6 +62,8 @@ pub enum Area {
     Peers,
     /// The pull-request integration queue and its executor.
     Integration,
+    /// The trains of stacked pull requests, drawn as a graph (ADR 0138).
+    Trains,
     /// The discovered nodes of the mesh, and the machinery that observes them.
     Mesh,
     /// The declared model catalogue and its routing.
@@ -195,6 +197,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Integration",
             href: "/cockpit/integration",
             area: Area::Integration,
+        },
+        AreaInfo {
+            id: "trains",
+            label: "Trains",
+            href: "/cockpit/trains",
+            area: Area::Trains,
         },
         AreaInfo {
             id: "mesh",

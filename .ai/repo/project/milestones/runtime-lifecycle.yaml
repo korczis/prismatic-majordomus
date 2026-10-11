@@ -1,0 +1,52 @@
+id: runtime-lifecycle
+title: "One usable server per checkout starts, attaches, stops and reports its state without races or hidden kills"
+slug: runtime-lifecycle
+order: 136
+priority: p1
+problem: "The shared server's election is sound at the create step (O_CREAT|O_EXCL at apps/majordomus-cli/src/lease.rs:516-520, proved by apps/majordomus-cli/tests/mcp_shared.rs::a_storm_of_clients_converges_on_one_server_and_one_board and case 191), but what follows it is not. The lease probe is GET / on the same four workers that run tool calls (apps/majordomus-cli/src/lease.rs:896-925, apps/majordomus-cli/src/http/server.rs:23), so four long calls make a healthy server look dead and a new client takes it over. A server that lost its lease keeps its bridged sessions forever, because bridges ping every 20 s (apps/majordomus-cli/src/mcp/bridge.rs:19) and the serve loop counts them as attached (apps/majordomus-cli/src/commands/serve.rs:136-146). `serve stop` is a SIGTERM whose handler unlinks the lease unconditionally and re-raises (apps/majordomus-cli/src/lease.rs:1164-1212), so it can delete a successor's lease and never runs the ordered stop (apps/majordomus-cli/src/shared.rs:282-289). The lease timings the policy declares never reach the mcp and serve elections (apps/majordomus-cli/src/lease.rs:89-191 OnceLock filled before apps/majordomus-cli/src/policy.rs:364 runs). Lifecycle state is an observer's reading of a file (apps/majordomus-cli/src/capability/builtin/server.rs:163-177) with no degraded, stopping or failed, and the live server of 2026-10-09 had logged nothing for eight hours because it inherited MAJORDOMUS_LOG=error (apps/majordomus-cli/src/commands/serve.rs:727-729). A UI-first server stops after 900 s while being viewed, because only MCP sessions count as use (apps/majordomus-cli/src/shared.rs:250-253). Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
+outcome: "Entering a checkout, opening the Cockpit, or starting any number of MCP clients converges on one server for that checkout, which is taken over only when it is dead, stops in order when asked, removes only its own lease, reports a typed state every surface reads, and stays up while any surface uses it."
+current_state: "Implemented and tested: atomic create, a published URL only after the socket serves (apps/majordomus-cli/src/shared.rs:294-305), stale, corrupt, abandoned, busy and superseded leases, port fallback, stdio hygiene. Partial: the probe, takeover and publish are compare-then-act (apps/majordomus-cli/src/lease.rs:778-798, 1082-1107); a lost server's existing sessions are served indefinitely (apps/majordomus-cli/src/http/mcp.rs:113-118); SIGTERM is not graceful (apps/majordomus-cli/tests/mcp_shared.rs::sigterm_removes_the_lease_before_the_process_dies asserts signal 15); declared timings are dead in mcp and serve. Absent: degraded, stopping and failed states, and liveness from non-MCP use. Refuted premises of the pack: there is no `majordomus ui` command, `serve ensure` and `env enter` are the UI-first entries (apps/majordomus-cli/src/commands/serve.rs:481-576, apps/majordomus-cli/src/commands/env.rs:701-760); `serve ensure` and `serve stop` are CLI-only by stated design and not capabilities; apps/majordomus-cli/src/served.rs is deployment observation, not server lifecycle; the top-level `majordomus doctor` is a governance doctor (lib/doctor.sh:53-77) and checks nothing about the server. The launcher rebuilding the executable in the primary checkout is I2059."
+desired_state: "Every lifecycle fault in the audit's matrix has a test: N concurrent first clients, a busy owner, a killed owner, a lost lease with live bridges, a SIGTERM racing a takeover, a declared timing, a UI-only user. server.status answers one of absent, starting, ready, degraded, outdated, stale, stopping or failed, decided in one function. docs/MCP.md and README.md describe the server that ships: one per checkout, what it writes, when it ends."
+scope:
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/commands/env.rs"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "apps/majordomus-cli/tests/"
+  - "test/cases"
+  - "docs/MCP.md"
+  - "README.md"
+non_scope:
+  - "A `majordomus ui` command, unless I2131's record decides one is needed beyond `serve ensure`."
+  - "One server for all repositories. ADR 0044 decided one per checkout and the board is gathered across them."
+  - "Graceful termination inside the production container, which is I0906 (fly-deployment)."
+  - "The bridge's resend of a tool call, which is I2145 (mcp-transports-are-reliable)."
+acceptance_criteria:
+  - "A server whose four workers are busy with tool calls is never taken over by a client that started meanwhile"
+  - "A server that lost its lease has no session left after a declared grace and exits by itself"
+  - "No process removes a lease file whose token is not its own, proved under a SIGTERM racing a takeover"
+  - "`serve stop` runs the ordered stop and leaves no open episode"
+  - "A lease timing declared in policy.yaml is the one the mcp and serve elections wait"
+  - "server.status reports stopping, failed and degraded, each from a test that produces the state"
+  - "A server used only through the Cockpit or /events is not stopped as idle"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_shared --test serve_lifecycle --test lease_busy --test lease_lost --test lease_declared --test server_status"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 90_mcp_shared_server 113_shared_server_survives_a_crash 191_entry_races 192_entry_across_checkouts_and_clients"
+evidence_required:
+  - "lifecycle_fault_tests"
+  - "typed_server_standing"
+  - "docs_describe_the_shipped_server"
+depends_on: []
+risks:
+  - "Every issue here edits apps/majordomus-cli/src/lease.rs, apps/majordomus-cli/src/shared.rs or apps/majordomus-cli/src/commands/serve.rs, so they are not parallel-safe with each other; one worker should carry them in dependency order."
+  - "A wrong takeover rule turns one healthy server into two. Each change needs the storm test (apps/majordomus-cli/tests/mcp_shared.rs) green before and after."
+  - "The live servers on the owner's machine run whatever was last built; a change to the lease schema reaches them only on restart, so a mixed fleet must be tolerated during the rollout."
+created_at: 2026-10-09
+updated_at: 2026-10-09

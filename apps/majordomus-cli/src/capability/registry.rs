@@ -470,13 +470,14 @@ impl Builder {
             if c.kind == CapabilityKind::Command {
                 permitted.push(policy.writes_repository());
                 permitted.push(policy.stoppable().writes_repository());
+                permitted.push(policy.authenticates_its_input());
             }
             if !permitted.contains(&c.execution) {
                 errors.push(RegistryError::Shape {
                     id: id.clone(),
                     provenance: prov.clone(),
                     reason: format!(
-                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), and a command may add writing the repository (`.writes_repository()`); the effect of a query and the concurrency of anything follow the kind",
+                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), a command may add writing the repository (`.writes_repository()`) or a signed input (`.authenticates_its_input()`), never both; the effect of a query and the concurrency of anything follow the kind",
                         c.execution
                     ),
                 });

@@ -31,6 +31,7 @@
 //! ```
 
 pub mod artifacts;
+pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
@@ -200,6 +201,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         reasoning,
         episodes,
         peers,
+        brief,
         server,
         mcp,
         session_domain,
@@ -322,6 +324,8 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // runs any executable capability, writers included (ADR 0126)
+                "executions.start",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"

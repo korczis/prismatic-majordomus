@@ -1,0 +1,26 @@
+id: I2124
+milestone: runtime-trust
+title: "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock"
+slug: a-reloaded-event-meets-the-trust-policy
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Apply the same trust predicate to events reloaded from the journal file as to events arriving over a link, and refuse an event whose Lamport stamp is further ahead of the receiver's clock than a declared bound."
+why: "The runtime pack's baseline audit (2026-10-09, at 1fb8d6be44) found journal.rs:1419 reloading the persisted journal with an accept-everything trust closure beside a comment saying reloaded events pass the same checks as received ones. A key withdrawn from trust.allow had its events, claims and handovers return on the next restart. The same audit found journal.rs:1952 accepting any Lamport stamp, so one trusted key could advance every runtime's clock to u64::MAX."
+current_state: "Reload trusts every origin; ingest accepts any stamp."
+desired_state: "Cooperation::new opens the journal through Journal::open_trusting with the trust definition the live path uses (key_trust, one function); refused reloads are counted in Journal::reload_report and logged. An event more than MAX_LAMPORT_LEAD (2^32) ahead of the receiver's clock is refused as clock_ahead, live or reloaded. A backdated claim, which can still outrank a claim already admitted, is recorded as a limitation in docs/MESH.md and left to the milestone's fencing work."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh_trust_reload.rs"
+  - "docs/MESH.md"
+acceptance_criteria:
+  - "A key withdrawn from the allowlist has none of its events believed from the journal file after a restart, and they are believed again when the key is allowed again"
+  - "An event whose stamp is more than MAX_LAMPORT_LEAD ahead of the receiver's clock is refused as clock_ahead, and one within the bound is accepted"
+  - "The live path and the reload decide trust through one function"
+validation:
+  - "cargo test --test mesh_trust_reload --test mesh_cooperation --test mesh_compaction"
+evidence_required:
+  - "mesh_trust_reload_red_then_green"
+created_at: 2026-10-09
+updated_at: 2026-10-09

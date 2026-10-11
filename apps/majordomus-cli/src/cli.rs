@@ -67,6 +67,8 @@ pub enum Command {
     /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
     #[command(alias = "pr")]
     Prs(PrsArgs),
+    /// A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed
+    Offload(OffloadArgs),
     /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
     Convergence(ConvergenceArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
@@ -111,6 +113,8 @@ pub enum Command {
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
+    /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
+    Brief(BriefArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -240,6 +244,46 @@ pub struct DashboardArgs {
     pub command: DashboardCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus brief`: the `brief.session` capability on the command line (ADR 0136).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BriefArgs, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "brief", "--line", "--session", "abc"]).unwrap();
+/// let Command::Brief(args) = cli.command else { panic!("not the brief command") };
+/// let args: BriefArgs = args;
+/// assert!(args.line && !args.keep_awake && !args.this_checkout);
+/// assert_eq!(args.session.as_deref(), Some("abc"));
+/// assert!(matches!(args.format, OutputFormat::Text));
+/// ```
+pub struct BriefArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Print the one-line brief alone: the status line's text
+    pub line: bool,
+
+    #[arg(long)]
+    /// Print what a session is told at its start about keeping itself awake, then the one-line brief
+    pub keep_awake: bool,
+
+    #[arg(long, value_name = "ID")]
+    /// The provider's own session identity: the brief names the open episode it owns
+    pub session: Option<String>,
+
+    #[arg(long = "this-checkout")]
+    /// Read this checkout's board alone instead of every checkout's
+    pub this_checkout: bool,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
 }
@@ -3227,10 +3271,90 @@ pub enum PrsCommand {
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
+    /// The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent
+    Trains,
     /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed
     Brief,
     /// Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
     ProveDryRun,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus offload`. The declaration is the repository's own unless `--declaration`
+/// names a file; the output shape is global, as for `worktree`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OffloadArgs, OffloadCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "offload", "probe", "--format", "json", "--declaration", "hosts.yaml",
+/// ])
+/// .unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let offload: OffloadArgs = offload;
+/// assert!(matches!(offload.command, OffloadCommand::Probe));
+/// assert_eq!(offload.format, OutputFormat::Json);
+/// assert_eq!(offload.declaration.unwrap().to_str(), Some("hosts.yaml"));
+///
+/// // there is no default subcommand: an offload names what it does
+/// assert!(Cli::try_parse_from(["majordomus", "offload"]).is_err());
+/// ```
+pub struct OffloadArgs {
+    #[command(flatten)]
+    /// Where the repository is found; its index is read for the declaration.
+    pub repo: RepoArgs,
+
+    /// Read this derive-offload declaration file instead of the repository's
+    #[arg(long, value_name = "FILE", global = true)]
+    pub declaration: Option<PathBuf>,
+
+    #[command(subcommand)]
+    /// The subcommand.
+    pub command: OffloadCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus offload`: `hosts` reads the declaration and contacts
+/// nobody, `probe` measures every declared host over ssh and names the one a derive would
+/// take, and `derive` sends a worktree there and stages what the derive changed.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OffloadCommand};
+///
+/// // with nothing named, the current directory is derived on the host the probe chooses
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "derive"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
+/// assert_eq!((worktree.to_str(), host, keep), (Some("."), None, false));
+///
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "derive", "../wt", "--host", "lundra", "--keep"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
+/// assert_eq!((worktree.to_str(), host.as_deref(), keep), (Some("../wt"), Some("lundra"), true));
+/// ```
+pub enum OffloadCommand {
+    /// The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0
+    Hosts,
+    /// Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one
+    Probe,
+    /// Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out
+    Derive {
+        /// The worktree to derive
+        #[arg(default_value = ".")]
+        worktree: PathBuf,
+        /// A declared host, by id or address, instead of the one the probe chooses
+        #[arg(long, value_name = "HOST")]
+        host: Option<String>,
+        /// Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)
+        #[arg(long)]
+        keep: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -4621,6 +4745,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "brief",
+        examples: &[ExampleDoc {
+            id: "brief-line",
+            title: "The one-line brief, composed here when no server answers",
+            description: "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+            argv: &["brief", "--line", "--this-checkout"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
         command: "dashboard overview",
         examples: &[ExampleDoc {
             id: "dashboard-overview-json",
@@ -4959,6 +5094,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "events"],
             setup: &[],
             expect: Expect::StdoutContains(&["no integration action"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs trains",
+        examples: &[ExampleDoc {
+            id: "prs-trains-unobserved",
+            title: "The trains of stacked pull requests, where nothing is observed",
+            description: "Every open pull request stacked on another, grouped into trains in landing order, with each link's prepared head under refs/prep/<n> and whether it was pushed. The same answer `GET /api/v1/pull-requests/trains` gives and /cockpit/trains draws. With no observation recorded it says why and exits 10.",
+            argv: &["prs", "trains"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {
@@ -6294,6 +6440,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["devcontext", "policy"],
             setup: &[],
             expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
+    },
+    CommandExamples {
+        command: "offload hosts",
+        examples: &[ExampleDoc {
+            id: "offload-hosts-json",
+            title: "The declared hosts, or the answer that there are none",
+            description: "Reads the repository's derive-offload declaration (.ai/repo/offload/*.yaml) and prints it with every default filled in: the hosts in tie-break order, each one's free-space minimum and ssh identity file, the queue's paths and the layout on a host. No host is contacted. This fixture declares none, which is an answer, not an error: `declared` is false and the declaration is null.",
+            argv: &["offload", "hosts", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/declared", "/declaration"]),
+        }],
+    },
+    CommandExamples {
+        command: "offload probe",
+        examples: &[ExampleDoc {
+            id: "offload-probe-undeclared",
+            title: "No declared host, no probe",
+            description: "Measures every declared host over ssh — free space under its home, derives running or waiting in its queue — and names the one a derive would take: the eligible host with the fewest, ties to the one declared first. A repository that declares no host has nothing to measure, and the probe refuses with 12 rather than reporting an empty success.",
+            argv: &["offload", "probe"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "offload derive",
+        examples: &[ExampleDoc {
+            id: "offload-derive-undeclared",
+            title: "A derive with nowhere to go is refused before anything travels",
+            description: "Sends the worktree as it stands to a declared host as a git bundle, waits its turn in the host's FIFO queue, derives in a build directory of its own and stages the files the derive changed; nothing is committed or pushed. With no host declared it refuses with 12 before it reads the worktree, contacts anything or writes a ref.",
+            argv: &["offload", "derive", "."],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

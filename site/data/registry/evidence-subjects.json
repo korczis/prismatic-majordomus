@@ -49,6 +49,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:brief.session",
+      "path": "/evidence/capabilities/brief-session/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:capabilities.describe",
       "path": "/evidence/capabilities/capabilities-describe/"
     },
@@ -426,6 +431,11 @@
       "kind": "capability",
       "subject": "capability:integration.queue",
       "path": "/evidence/capabilities/integration-queue/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:integration.trains",
+      "path": "/evidence/capabilities/integration-trains/"
     },
     {
       "kind": "capability",
@@ -2179,6 +2189,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:brief",
+      "path": "/evidence/commands/brief/"
+    },
+    {
+      "kind": "command",
       "subject": "command:capabilities describe",
       "path": "/evidence/commands/capabilities-describe/"
     },
@@ -2779,6 +2794,21 @@
     },
     {
       "kind": "command",
+      "subject": "command:offload derive",
+      "path": "/evidence/commands/offload-derive/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload hosts",
+      "path": "/evidence/commands/offload-hosts/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload probe",
+      "path": "/evidence/commands/offload-probe/"
+    },
+    {
+      "kind": "command",
       "subject": "command:pack build",
       "path": "/evidence/commands/pack-build/"
     },
@@ -2886,6 +2916,11 @@
       "kind": "command",
       "subject": "command:prs status",
       "path": "/evidence/commands/prs-status/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:prs trains",
+      "path": "/evidence/commands/prs-trains/"
     },
     {
       "kind": "command",
@@ -3374,6 +3409,11 @@
     },
     {
       "kind": "feature",
+      "subject": "feature:ui",
+      "path": "/evidence/features/ui/"
+    },
+    {
+      "kind": "feature",
       "subject": "feature:use-cases",
       "path": "/evidence/features/use-cases/"
     },
@@ -3635,6 +3675,18 @@
       "page": "/evidence/capabilities/artifacts-list/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:brief.session": {
+      "kind": "capability",
+      "id": "brief.session",
+      "page": "/evidence/capabilities/brief-session/",
+      "programs": [],
+      "members": [
+        "command:brief"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -4497,6 +4549,18 @@
       "programs": [],
       "members": [
         "command:prs status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.trains": {
+      "kind": "capability",
+      "id": "integration.trains",
+      "page": "/evidence/capabilities/integration-trains/",
+      "programs": [],
+      "members": [
+        "command:prs trains"
       ],
       "routes": [],
       "mechanisms": [],
@@ -11299,6 +11363,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:brief": {
+      "kind": "command",
+      "id": "brief",
+      "page": "/evidence/commands/brief/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:capabilities describe": {
       "kind": "command",
       "id": "capabilities describe",
@@ -11407,6 +11490,12 @@
           "via": "behaviour",
           "test": "suite:1016_the_worker_is_asked_before_compaction",
           "path": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:1065_a_session_briefs_itself",
+          "path": "test/cases/1065_a_session_briefs_itself.sh",
           "category": "e2e"
         },
         {
@@ -11521,6 +11610,12 @@
           "via": "negative",
           "test": "suite:1016_the_worker_is_asked_before_compaction",
           "path": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1065_a_session_briefs_itself",
+          "path": "test/cases/1065_a_session_briefs_itself.sh",
           "category": "e2e"
         },
         {
@@ -14725,6 +14820,63 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:offload derive": {
+      "kind": "command",
+      "id": "offload derive",
+      "page": "/evidence/commands/offload-derive/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload hosts": {
+      "kind": "command",
+      "id": "offload hosts",
+      "page": "/evidence/commands/offload-hosts/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload probe": {
+      "kind": "command",
+      "id": "offload probe",
+      "page": "/evidence/commands/offload-probe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:pack build": {
       "kind": "command",
       "id": "pack build",
@@ -15261,6 +15413,25 @@
       "kind": "command",
       "id": "prs status",
       "page": "/evidence/commands/prs-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:prs trains": {
+      "kind": "command",
+      "id": "prs trains",
+      "page": "/evidence/commands/prs-trains/",
       "programs": [
         "native"
       ],
@@ -17838,6 +18009,21 @@
       "mechanisms": [],
       "findings": []
     },
+    "feature:ui": {
+      "kind": "feature",
+      "id": "ui",
+      "status": "draft",
+      "page": "/evidence/features/ui/",
+      "programs": [],
+      "members": [
+        "rule:project.interfaces-are-projections",
+        "rule:project.ui-derived-state",
+        "rule:project.web-surface-declared-once"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "feature:use-cases": {
       "kind": "feature",
       "id": "use-cases",
@@ -17926,6 +18112,18 @@
       "programs": [],
       "members": [
         "capability:artifacts.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_brief": {
+      "kind": "mcp",
+      "id": "majordomus_brief",
+      "alias_of": "capability:brief.session",
+      "programs": [],
+      "members": [
+        "capability:brief.session"
       ],
       "routes": [],
       "mechanisms": [],
@@ -19462,6 +19660,18 @@
       "programs": [],
       "members": [
         "capability:integration.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_pull_request_trains": {
+      "kind": "mcp",
+      "id": "majordomus_pull_request_trains",
+      "alias_of": "capability:integration.trains",
+      "programs": [],
+      "members": [
+        "capability:integration.trains"
       ],
       "routes": [],
       "mechanisms": [],
@@ -21261,6 +21471,27 @@
       "mechanisms": [
         "scripts/ci/campaigns-check"
       ],
+      "findings": []
+    },
+    "rule:project.a-derive-offload-waits-its-turn": {
+      "kind": "rule",
+      "id": "project.a-derive-offload-waits-its-turn",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:offload",
+          "path": "apps/majordomus-cli/tests/offload.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/offload.rs",
+            ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.a-derive-sees-what-the-commit-will": {
@@ -25680,6 +25911,7 @@
   "excluded": [
     "crate:availability",
     "crate:bench",
+    "crate:brief",
     "crate:cli",
     "crate:cli_docs",
     "crate:cli_validate_violations",
@@ -25696,7 +25928,9 @@
     "crate:generated_documents",
     "crate:health_server",
     "crate:hot_path",
+    "crate:http_busy_probe",
     "crate:http_host",
+    "crate:http_slow_client",
     "crate:index_behavior",
     "crate:integration_across_machines",
     "crate:integration_cleanup_read",
@@ -25708,13 +25942,20 @@
     "crate:intent_binding",
     "crate:lease_busy",
     "crate:lease_declared",
+    "crate:lease_holder",
+    "crate:lease_policy_process",
     "crate:live_own_writes",
+    "crate:mcp_bridge_resend",
     "crate:mcp_conformance",
     "crate:mcp_conformance_http",
     "crate:mcp_conformance_projection",
     "crate:mcp_prose",
     "crate:mcp_stdio",
+    "crate:mcp_transport_bounds",
     "crate:mesh_compaction",
+    "crate:mesh_sync_bound",
+    "crate:mesh_trust_reload",
+    "crate:mesh_trust_root",
     "crate:metadata_contract",
     "crate:no_answer_carries_a_credential",
     "crate:objects",
@@ -25724,23 +25965,32 @@
     "crate:providers_projection",
     "crate:reasoning_mesh",
     "crate:redaction",
+    "crate:remote_callers",
     "crate:repository_discovery",
     "crate:response_schema",
     "crate:rules",
     "crate:scope",
+    "crate:serve_in_use",
     "crate:serve_lifecycle",
     "crate:server_status",
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_surface",
     "crate:worktree",
     "suite:09_site_mobile_first",
+    "suite:1022_a_remote_caller_cannot_write",
+    "suite:1023_a_branch_cannot_widen_the_mesh_trust",
+    "suite:1024_an_installed_release_serves_a_foreign_repository",
     "suite:102_completion_shell",
+    "suite:1040_a_stacked_head_lands_on_the_verdict_it_has",
+    "suite:1041_a_release_publishes_its_metadata",
     "suite:1050_the_monitor_folds_the_noise",
     "suite:1051_a_followed_stream_can_be_waited_on",
     "suite:1052_an_absent_source_is_reported",
     "suite:1053_the_cockpit_follows_the_stream",
     "suite:1054_every_session_is_told_the_stream",
+    "suite:1072_the_train_is_seen",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",
