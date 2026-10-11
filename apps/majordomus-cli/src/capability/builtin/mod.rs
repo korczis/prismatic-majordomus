@@ -320,6 +320,8 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // the mesh declaration's trust list, this machine's key only (ADR 0139)
+                "mesh.enrol",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"
