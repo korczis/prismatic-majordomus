@@ -9,8 +9,8 @@
 //!
 //! It is a projection, never an application. Every screen composes capabilities through the
 //! executor every transport calls, and every value carries the capability and pointer it
-//! was read from ([`source`]): inferred, derived and projected, never kept. It holds no data,
-//! no status vocabulary and no route list beyond [`SCREENS`] and [`PANELS`], which a test
+//! was read from (`source`): inferred, derived and projected, never kept. It holds no data,
+//! no status vocabulary and no route list beyond `SCREENS` and `PANELS`, which a test
 //! holds against the dispatcher. It shares mechanics rather than copying them:
 //! - the element builder and the asset server, pointed at `share/ui/`;
 //! - the content-security policy, with its one hash-pinned inline script;
@@ -25,6 +25,16 @@
 //! With no JavaScript, every screen is complete HTML and the menu still opens. The one
 //! script adds two things: it pulls in the panels whose sources are slow, which are
 //! otherwise reached by their own links, and it reveals the theme toggle.
+//!
+//! The UI is mounted on its own prefix, named in the web topology and among the local
+//! services by one id, and is a surface apart from the Cockpit:
+//!
+//! ```
+//! use majordomus_cli::ui::{PREFIX, SURFACE};
+//! assert_eq!(PREFIX, "/ui");
+//! assert_eq!(SURFACE, "ui");
+//! assert_ne!(PREFIX, majordomus_cli::cockpit::PREFIX, "the Cockpit is another surface");
+//! ```
 
 pub(crate) mod capabilities;
 pub(crate) mod command;
@@ -34,11 +44,11 @@ pub(crate) mod deployments;
 pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
-pub mod icons;
+pub(crate) mod icons;
 pub(crate) mod mesh;
 pub(crate) mod roadmap;
 pub(crate) mod shell;
-pub mod source;
+pub(crate) mod source;
 pub(crate) mod view;
 pub(crate) mod work;
 
@@ -50,6 +60,10 @@ use crate::live::{IntoLive, Live};
 
 /// Every UI route starts here.
 pub const PREFIX: &str = "/ui";
+
+/// The UI's id in the web topology and among the local services, the one name every
+/// reader of "which surface is the UI" asks.
+pub const SURFACE: &str = "ui";
 
 /// The directory of the distribution's `share/` that holds the UI's files.
 pub const ASSETS_DIR: &str = "ui";
@@ -76,7 +90,7 @@ pub const FRAGMENT: &str = "fragment";
 /// One screen of the UI: where it is, what the navigation calls it, its icon in the kit's
 /// set, and the question it answers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Screen {
+pub(crate) struct Screen {
     /// The route.
     pub route: &'static str,
     /// The navigation label, in the project's vocabulary.
@@ -90,7 +104,7 @@ pub struct Screen {
 /// The screens there are, in the order the navigation shows them. A screen of the owner's
 /// concept that has no route yet is not listed, because a link to nothing is a dead end
 /// (`every_screen_is_answered_and_every_answered_route_is_a_screen_or_a_panel`).
-pub const SCREENS: &[Screen] = &[
+pub(crate) const SCREENS: &[Screen] = &[
     Screen {
         route: PREFIX,
         title: "Dashboard",
@@ -161,10 +175,11 @@ pub const SCREENS: &[Screen] = &[
 
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
-pub const PANELS: &[&str] = &[dashboard::PULL_REQUESTS_PANEL, deployments::DELIVERY_PANEL];
+#[cfg(test)]
+pub(crate) const PANELS: &[&str] = &[dashboard::PULL_REQUESTS_PANEL, deployments::DELIVERY_PANEL];
 
 /// The UI over the repository as it is now.
-pub struct Ui {
+pub(crate) struct Ui {
     live: Arc<Live>,
     version: &'static str,
     assets: Assets,
@@ -172,7 +187,7 @@ pub struct Ui {
 
 impl Ui {
     /// A UI over a view of the repository, serving its assets from `share_dir/ui`.
-    pub fn new(
+    pub(crate) fn new(
         live: impl IntoLive,
         version: &'static str,
         share_dir: Option<&std::path::Path>,
@@ -193,21 +208,15 @@ impl Ui {
         }
     }
 
-    /// Does this request belong to the UI?
-    ///
-    /// ```
-    /// use majordomus_cli::ui::Ui;
-    /// assert!(Ui::owns("/ui"));
-    /// assert!(Ui::owns("/ui/panels/pull-requests"));
-    /// assert!(!Ui::owns("/uix"));
-    /// assert!(!Ui::owns("/cockpit"));
-    /// ```
-    pub fn owns(path: &str) -> bool {
+    /// Does this request belong to the UI? The prefix itself and every path below it, and
+    /// nothing that merely starts with the same letters.
+    #[cfg(test)]
+    pub(crate) fn owns(path: &str) -> bool {
         path == PREFIX || path.starts_with(&format!("{PREFIX}/"))
     }
 
     /// Answer one request under [`PREFIX`].
-    pub fn handle(&self, req: &Request) -> Response {
+    pub(crate) fn handle(&self, req: &Request) -> Response {
         if req.method != "GET" {
             return Response::error(
                 405,
@@ -303,6 +312,9 @@ mod tests {
         for panel in PANELS {
             assert!(Ui::owns(panel), "{panel} is outside the UI");
         }
+        // the prefix and what is below it, and nothing that only shares its letters
+        assert!(Ui::owns("/ui") && Ui::owns("/ui/panels/pull-requests"));
+        assert!(!Ui::owns("/uix") && !Ui::owns("/cockpit"));
         let mut routes: Vec<&str> = SCREENS.iter().map(|s| s.route).collect();
         routes.extend(PANELS);
         routes.sort_unstable();

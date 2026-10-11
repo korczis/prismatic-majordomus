@@ -98,7 +98,17 @@ impl Assets {
         }
     }
 
-    /// No asset directory, for a surface whose files would live under `dir` and `prefix`.
+    /// No asset directory, for a surface whose files would live under `dir` and `prefix`:
+    /// nothing is servable, and every URL keeps its plain path under that surface's prefix,
+    /// so a missing file is a 404 that names where it was looked for.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::assets::Assets;
+    /// let ui = Assets::none_under("ui", "/ui/assets/");
+    /// assert!(!ui.present());
+    /// assert!(!ui.has("ui.css"));
+    /// assert_eq!(ui.url("ui.css"), "/ui/assets/ui.css");
+    /// ```
     pub fn none_under(dir: &'static str, prefix: &'static str) -> Self {
         Assets {
             dir,

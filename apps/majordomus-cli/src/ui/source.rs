@@ -12,7 +12,7 @@
 //! Neither is ever shown as a zero.
 
 use std::collections::BTreeMap;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 
 use serde_json::Value;
 
@@ -56,8 +56,6 @@ pub struct Answer {
     pub value: Result<Value, String>,
     /// How long the executor took to answer.
     pub took: Duration,
-    /// When the answer was taken.
-    pub at: SystemTime,
 }
 
 impl Answer {
@@ -141,6 +139,7 @@ impl Reading {
     }
 
     /// The value as a count, when it is a number.
+    #[cfg(test)]
     pub fn count(&self) -> Option<u64> {
         match &self.state {
             Availability::Available(v) => v.as_u64(),
@@ -180,7 +179,6 @@ pub fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Answer> {
                         exposure,
                         value: Err("the source panicked while answering".into()),
                         took: Duration::ZERO,
-                        at: SystemTime::now(),
                     }
                 })
             })
@@ -193,7 +191,6 @@ pub fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Answer> {
 /// executor like any other source. The source line names the capability; the input is the
 /// reader's, so it is not a constant of the screen.
 pub fn ask_input(ctx: &Context, capability: &'static str, input: Value) -> Answer {
-    let at = SystemTime::now();
     let started = Instant::now();
     let value = ctx.execute(capability, input).map_err(|e| e.to_string());
     let took = started.elapsed();
@@ -204,13 +201,11 @@ pub fn ask_input(ctx: &Context, capability: &'static str, input: Value) -> Answe
         exposure,
         value,
         took,
-        at,
     }
 }
 
 /// One source asked through the executor.
 pub fn ask(ctx: &Context, source: Source) -> Answer {
-    let at = SystemTime::now();
     let started = Instant::now();
     let value = serde_json::from_str::<Value>(source.input)
         .map_err(|e| {
@@ -231,7 +226,6 @@ pub fn ask(ctx: &Context, source: Source) -> Answer {
         exposure,
         value,
         took,
-        at,
     }
 }
 
@@ -285,7 +279,6 @@ mod tests {
             exposure: Exposure::default(),
             value,
             took: Duration::from_millis(12),
-            at: SystemTime::now(),
         }
     }
 

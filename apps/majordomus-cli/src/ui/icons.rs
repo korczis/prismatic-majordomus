@@ -41,6 +41,7 @@ fn parse(text: &str) -> BTreeMap<String, String> {
 }
 
 /// Whether the set holds `name`.
+#[cfg(test)]
 pub fn has(name: &str) -> bool {
     ICONS.contains_key(name)
 }
