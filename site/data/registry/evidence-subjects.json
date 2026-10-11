@@ -24357,6 +24357,37 @@
       ],
       "findings": []
     },
+    "rule:project.worktrees-share-build-intermediates": {
+      "kind": "rule",
+      "id": "project.worktrees-share-build-intermediates",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1022_worktrees_share_build_intermediates",
+          "path": "test/cases/1022_worktrees_share_build_intermediates.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1022_worktrees_share_build_intermediates.sh",
+            ".ai/repo/rules/project/worktrees-share-build-intermediates.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:276_disk_is_bounded",
+          "path": "test/cases/276_disk_is_bounded.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/276_disk_is_bounded.sh",
+            ".ai/repo/rules/project/worktrees-share-build-intermediates.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "use_case:accept-or-refuse-finished-work": {
       "kind": "use_case",
       "id": "accept-or-refuse-finished-work",

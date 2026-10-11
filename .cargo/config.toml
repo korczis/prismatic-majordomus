@@ -1,0 +1,14 @@
+# One build directory for the intermediates of every worktree of this repository (ADR 0139,
+# project.worktrees-share-build-intermediates).
+#
+# `build-dir` is where cargo keeps what it compiles on the way — dependencies, fingerprints,
+# incremental state. `target-dir` is where the finished artifacts land, and stays per
+# worktree: the executable a checkout runs or borrows is never another checkout's, which is
+# the failure project.reclaim-only-what-you-own was written about. A shared CARGO_TARGET_DIR
+# would give up exactly that, because every worktree would overwrite one debug/majordomus.
+#
+# The location is under cargo's own home so that it is the same path in every worktree
+# whatever its depth, which a relative path in a committed file cannot be. It accumulates, so
+# scripts/reap-orphans measures it, bounds it and reduces it.
+[build]
+build-dir = "{cargo-cache-home}/build-shared/majordomus"

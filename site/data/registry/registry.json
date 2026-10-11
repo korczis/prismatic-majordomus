@@ -6,23 +6,23 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "1cc81a4715cd8de672f935fc74ccc8c8fb1e92564e73217a5bd937696f7bf045",
+    "fingerprint": "ceb29000665136414fed9547d09352a6bec71e65137ae282fbe43251f1758b37",
     "summary": {
-      "total": 2118,
+      "total": 2121,
       "builtin": 184,
-      "declarative": 1934,
+      "declarative": 1937,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1934
+        "resource": 1937
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1942
+        "implemented": 1945
       },
       "mcp_tools": 177,
-      "mcp_resources": 1988,
+      "mcp_resources": 1991,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -74997,7 +74997,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75963,7 +75963,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 165,
+        "capabilities": 166,
         "capability_ids": []
       },
       {
@@ -76106,7 +76106,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 414,
+        "capabilities": 415,
         "capability_ids": []
       },
       {
@@ -76196,7 +76196,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1a853d21813fa42de3f4381845c79ca96bcf9a51a1e195349a43eb25b94d7319",
+    "fingerprint": "776bd01c440245bc00ab0d20ac006f874378981cef699683c4dc84df1ea34877",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76219,7 +76219,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76244,12 +76244,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 20,
-      "rule": 165,
+      "rule": 166,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 414,
+      "test": 415,
       "use-case": 48,
       "workspace": 1
     },
@@ -77654,6 +77654,22 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0139",
+        "kind": "adr",
+        "identity": "adr-0139",
+        "title": "Worktrees share what cargo compiles on the way, and keep their own finished artifacts",
+        "description": "Worktrees share what cargo compiles on the way, and keep their own finished artifacts",
+        "path": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5035,
+        "tags": [
+          "operations",
+          "worktrees",
+          "disk"
         ]
       },
       {
@@ -91912,6 +91928,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.worktrees-share-build-intermediates@1",
+        "kind": "rule",
+        "identity": "project.worktrees-share-build-intermediates@1",
+        "title": "Worktrees share what cargo compiles on the way, and never the finished artifact",
+        "description": "This repository's .cargo/config.toml names one build directory for the intermediates of every worktree and no target directory; the shared directory is measured, bounded and reduced by scripts/reap-orphans, and a worker neither points CARGO_TARGET_DIR at a directory another checkout builds into nor removes the shared directory by hand.",
+        "path": ".ai/repo/rules/project/worktrees-share-build-intermediates.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3727,
+        "tags": [
+          "operations",
+          "worktrees",
+          "disk",
+          "build"
+        ]
+      },
+      {
         "uri": "majordomus://scope/.ai/repo/scope.yaml",
         "kind": "scope",
         "identity": ".ai/repo/scope.yaml",
@@ -93208,6 +93241,14 @@
         "path": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
         "source_class": "case",
         "bytes": 3019
+      },
+      {
+        "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
+        "kind": "test",
+        "identity": "test/cases/1022_worktrees_share_build_intermediates.sh",
+        "path": "test/cases/1022_worktrees_share_build_intermediates.sh",
+        "source_class": "case",
+        "bytes": 6763
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -96942,7 +96983,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -97192,7 +97233,7 @@
         "id",
         "version"
       ],
-      "objects": 165
+      "objects": 166
     },
     {
       "name": "scope",
@@ -97247,7 +97288,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 414
+      "objects": 415
     },
     {
       "name": "use-case",
