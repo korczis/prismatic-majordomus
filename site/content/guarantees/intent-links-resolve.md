@@ -1,7 +1,7 @@
 +++
 title = "An intent whose criterion names evidence that resolves to nothing is refused by name"
 description = "Every reference an intent makes has to land on something the repository holds: each milestone in the plan, each governance entry among the rules and decisions, and each criterion's evidence — a test file, a claim of docs/CLAIMS.yaml, a deployment object. A reference to nothing is a failure named after the intent, not an intent that silently stays unmet."
-weight = 111
+weight = 112
 [extra]
 claim_id = "intent-links-resolve"
 status = "guaranteed"

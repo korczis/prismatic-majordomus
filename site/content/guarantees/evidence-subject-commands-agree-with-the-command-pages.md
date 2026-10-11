@@ -1,7 +1,7 @@
 +++
 title = "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case"
 description = "A case says which public commands it exercises and which it refutes, in its own header:"
-weight = 200
+weight = 201
 [extra]
 claim_id = "evidence-subject-commands-agree-with-the-command-pages"
 status = "guaranteed"
