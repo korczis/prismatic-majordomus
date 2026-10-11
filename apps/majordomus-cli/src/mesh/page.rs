@@ -1360,4 +1360,96 @@ mod tests {
         assert_eq!(full.view(), View::Full);
         assert!(serde_json::from_str::<Query>(r#"{"bogus":1}"#).is_err());
     }
+
+    #[test]
+    fn the_summary_counts_every_standing_and_a_runtime_heard_only_through_its_claim() {
+        let (_j, mut state) = history();
+        state.sessions[0].state = SessionState::Expired;
+        state.claims[0].state = ClaimState::Conflicted("c1".into());
+        state.claims[1].state = ClaimState::Expired("its runtime fell silent".into());
+        state.claims[2].runtime = "0000000000000009".into();
+        let summary = summarize(&state, &streams(&state));
+        assert_eq!(summary.sessions.expired, 1);
+        assert_eq!(summary.claims.conflicted, 1);
+        assert_eq!(summary.claims.expired, 1);
+        assert!(
+            summary
+                .runtimes
+                .iter()
+                .any(|r| r.runtime == "0000000000000009"),
+            "a runtime no session names is still a runtime: {:?}",
+            summary.runtimes
+        );
+    }
+
+    #[test]
+    fn a_page_keeps_the_overlaps_of_the_claims_it_keeps() {
+        let (_j, mut state) = history();
+        let live: Vec<String> = state
+            .claims
+            .iter()
+            .filter(|c| c.state.is_live())
+            .map(|c| c.key.clone())
+            .collect();
+        state.overlaps.push(crate::mesh::state::ClaimOverlap {
+            first: live[0].clone(),
+            second: live[1].clone(),
+            paths: vec![("apps/c38".into(), "apps/c38".into())],
+        });
+        let page = narrow(&state, &Query::default());
+        assert_eq!(page.overlaps.len(), 1);
+        assert_eq!(page.reviews.len(), 2);
+        // an overlap of claims the page dropped is dropped with them
+        let released = narrow(
+            &state,
+            &Query {
+                matching: Some("apps/c0".into()),
+                ..Query::default()
+            },
+        );
+        assert!(released.overlaps.is_empty());
+    }
+
+    #[test]
+    fn a_review_is_matched_by_the_paths_it_asks_about() {
+        let (_j, mut state) = history();
+        state
+            .reviews
+            .iter_mut()
+            .find(|r| r.subject.ends_with("r2"))
+            .unwrap()
+            .scope = vec!["apps/paged".into()];
+        let page = narrow(
+            &state,
+            &Query {
+                matching: Some("apps/paged".into()),
+                ..Query::default()
+            },
+        );
+        assert_eq!(page.reviews.len(), 1);
+        assert!(page.reviews[0].subject.ends_with("r2"));
+    }
+
+    #[test]
+    fn a_page_after_a_stamp_keeps_the_reviews_of_the_sessions_it_keeps() {
+        let (_j, state) = history();
+        let page = narrow(
+            &state,
+            &Query {
+                after: Some(0),
+                ..Query::default()
+            },
+        );
+        assert!(!page.sessions.is_empty());
+        assert_eq!(page.reviews.len(), 2, "s39 asked both and is on the page");
+        let late = narrow(
+            &state,
+            &Query {
+                after: Some(u64::MAX),
+                ..Query::default()
+            },
+        );
+        assert!(late.sessions.is_empty());
+        assert!(late.reviews.is_empty(), "no session on the page, no review");
+    }
 }

@@ -433,24 +433,23 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
     for (key, node) in runtimes.iter_mut() {
         node.link = links.get(key).cloned();
     }
-    for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
-        if let Some(runtime) = runtimes.get_mut(&claim.runtime) {
-            let newer = runtime
-                .newest_claim
-                .as_ref()
-                .is_none_or(|b| claim.acquired_lamport > b.acquired_lamport);
-            if newer {
-                runtime.newest_claim = Some(ClaimBrief {
-                    key: claim.key.clone(),
-                    session: claim.session.clone(),
-                    issue: claim.issue.clone(),
-                    intent: claim.intent.as_deref().map(page::cut),
-                    paths: claim.scope.len(),
-                    mode: claim.mode,
-                    acquired_lamport: claim.acquired_lamport,
-                });
-            }
-        }
+    // Each runtime's newest live claim. Every claim was folded from a stream the journal
+    // holds, so every claim's runtime is among the runtimes above.
+    for runtime in runtimes.values_mut() {
+        runtime.newest_claim = state
+            .claims
+            .iter()
+            .filter(|cl| cl.state.is_live() && cl.runtime == runtime.runtime)
+            .max_by_key(|cl| cl.acquired_lamport)
+            .map(|claim| ClaimBrief {
+                key: claim.key.clone(),
+                session: claim.session.clone(),
+                issue: claim.issue.clone(),
+                intent: claim.intent.as_deref().map(page::cut),
+                paths: claim.scope.len(),
+                mode: claim.mode,
+                acquired_lamport: claim.acquired_lamport,
+            });
     }
     for session in &state.sessions {
         if summary && session.state != SessionState::Active {
@@ -1754,5 +1753,119 @@ mod tests {
                 c.id
             );
         }
+    }
+
+    /// A running runtime of its own, journal in memory, linked to nobody.
+    fn cooperation() -> std::sync::Arc<Cooperation> {
+        use crate::mesh::config::{CooperationConfig, TrustConfig};
+        use crate::mesh::cooperation::{CheckoutFacts, CooperationSetup};
+        Cooperation::new(CooperationSetup {
+            identity: std::sync::Arc::new(
+                crate::mesh::identity::NodeIdentity::ephemeral().unwrap(),
+            ),
+            runtime: "0000000000000001".into(),
+            repository: crate::mesh::repository::of_root_commits(&["root".into()]),
+            endpoints: vec!["127.0.0.1:9".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: std::sync::Arc::new(crate::mesh::registry::MeshRegistry::new()),
+            transport: std::sync::Arc::new(crate::mesh::link::HttpTransport),
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap()
+    }
+
+    /// The one runtime of the one machine a lone runtime's tree holds.
+    fn only_runtime(tree: &PeerTree) -> &RuntimeNode {
+        let runtimes: Vec<&RuntimeNode> = tree.machines.iter().flat_map(|m| &m.runtimes).collect();
+        assert_eq!(runtimes.len(), 1, "{runtimes:?}");
+        runtimes[0]
+    }
+
+    #[test]
+    fn the_peer_tree_names_the_newest_live_claim_and_its_summary_lists_only_active_sessions() {
+        let c = cooperation();
+        let working = SessionInfo::named("s1", "claude-code");
+        c.open_session(working.clone()).unwrap();
+        for (path, intent) in [
+            ("apps/a", "first"),
+            ("apps/b", "second"),
+            ("apps/c", "third"),
+        ] {
+            c.claim(
+                &working,
+                vec![path.into()],
+                Some(intent.into()),
+                ClaimMode::Advisory,
+                None,
+            )
+            .unwrap();
+        }
+        c.open_session(SessionInfo::named("s2", "codex")).unwrap();
+        c.close_session("s2").unwrap();
+
+        let summary = peer_tree(&c, &Query::default());
+        let node = only_runtime(&summary);
+        assert_eq!(
+            node.newest_claim.as_ref().and_then(|b| b.intent.as_deref()),
+            Some("third")
+        );
+        assert_eq!(node.sessions.len(), 1, "a closed session is no summary's");
+        assert!(
+            node.sessions[0].claims.is_empty(),
+            "the summary counts claims"
+        );
+        assert_eq!(node.sessions[0].claims_held, 3);
+
+        let full = peer_tree(
+            &c,
+            &Query {
+                view: Some(View::Full),
+                ..Query::default()
+            },
+        );
+        let node = only_runtime(&full);
+        assert_eq!(node.sessions.len(), 2, "the full view keeps every session");
+        let s1 = node.sessions.iter().find(|s| s.claims_held == 3).unwrap();
+        assert_eq!(
+            s1.claims.len(),
+            3,
+            "the full view lists the claims it counts"
+        );
+    }
+
+    #[test]
+    fn a_peer_is_found_by_its_runtime_and_a_declared_trust_in_force_ends_no_link_of_a_lone_runtime()
+    {
+        let repo = crate::cli::RepoArgs {
+            repo: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")),
+            ..Default::default()
+        };
+        let app = crate::app::App::load(&repo).unwrap();
+        let c = cooperation();
+        app.context
+            .mesh
+            .attach_cooperation(std::sync::Arc::clone(&c));
+
+        let peer = mesh_peer(
+            &app.context,
+            PeerInput {
+                runtime: c.runtime_key().to_string(),
+            },
+        )
+        .unwrap();
+        assert!(peer.found, "{peer:?}");
+        assert_eq!(
+            peer.runtime.map(|r| r.runtime).as_deref(),
+            Some(c.runtime_key())
+        );
+
+        // this repository declares its mesh, so the trust is put in force; nothing is linked
+        assert!(matches!(declaration(&app.context), Some(Ok(_))));
+        assert!(retrust(&app.context).is_empty());
+        c.stop();
     }
 }

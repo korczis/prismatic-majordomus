@@ -326,6 +326,23 @@ mod tests {
     }
 
     #[test]
+    fn a_full_queue_drops_the_observation_and_counts_it_and_a_closed_one_does_not() {
+        let observation = || Observation {
+            source: crate::mesh::MeshSource::UdpMulticast,
+            path: "a".into(),
+            bytes: vec![],
+        };
+        let (tx, rx) = ObservationSender::bounded(1);
+        assert!(tx.send(observation()));
+        assert_eq!(tx.dropped(), 0);
+        assert!(!tx.send(observation()), "the queue holds one");
+        assert_eq!(tx.dropped(), 1, "a drop is counted");
+        drop(rx);
+        assert!(!tx.send(observation()));
+        assert_eq!(tx.dropped(), 1, "nobody reading is not a drop");
+    }
+
+    #[test]
     fn jitter_stays_under_its_bound_and_zero_is_zero() {
         assert_eq!(jitter_ms(0), 0);
         for _ in 0..32 {

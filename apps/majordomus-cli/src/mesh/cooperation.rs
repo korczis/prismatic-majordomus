@@ -2208,6 +2208,12 @@ impl Cooperation {
                 events,
                 report: report.clone(),
             });
+        self.answer_reply(answer)
+    }
+
+    /// The reply a sync answer makes: accepted, with the events it serves counted, or
+    /// refused as oversized when not even an answer without events fits the link bound.
+    fn answer_reply(&self, answer: Result<(Signed, usize), String>) -> LinkReply {
         match answer {
             Ok((signed, served)) => {
                 self.counters
@@ -2238,9 +2244,9 @@ impl Cooperation {
         let signed = |events: Vec<MeshEvent>| -> Result<(Signed, usize), String> {
             let body = serde_json::to_value(message(events)).map_err(|e| e.to_string())?;
             let signed = sign(&self.identity, domain, body);
-            let size = serde_json::to_vec(&signed)
-                .map_err(|e| e.to_string())?
-                .len();
+            // a body that is already a value serializes; one that did not would be too
+            // large to send, as an event that does not serialize is below
+            let size = serde_json::to_vec(&signed).map_or(MAX_LINK_MESSAGE + 1, |b| b.len());
             Ok((signed, size))
         };
         let (bare, overhead) = signed(Vec::new())?;
@@ -4015,6 +4021,235 @@ mod tests {
         assert!(
             b.dial(&["a:1".into()]).is_ok(),
             "trusted again, linked again"
+        );
+    }
+
+    /// The link this runtime dialed ends as well: a peer held only outbound has no inbound
+    /// link to drop, and its next round finds no link to sync under.
+    #[test]
+    fn a_withdrawn_key_ends_the_link_this_runtime_dialed() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let _b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).expect("linked under tofu");
+        assert_eq!(a.retrust(TrustConfig::default()), vec![key.clone()]);
+        let round = a.sync_with(&key);
+        assert!(matches!(round, Err(RoundError::NoLink)), "{round:?}");
+    }
+
+    /// A message the test shapes: a bulk that grows with the events it carries, which the
+    /// estimate the bound is first checked by cannot see, and a refusal to serialize.
+    struct Shaped {
+        pad: String,
+        events: Vec<MeshEvent>,
+        refuse: bool,
+    }
+
+    impl Serialize for Shaped {
+        fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            if self.refuse {
+                return Err(serde::ser::Error::custom(
+                    "this message refuses to serialize",
+                ));
+            }
+            serde_json::json!({ "pad": self.pad, "events": self.events }).serialize(s)
+        }
+    }
+
+    /// A sync carries what fits the link bound as signed, not what the estimate said would:
+    /// a message that outgrows it drops events from the end, down to none, and a message
+    /// that cannot be built or that is over the bound with no events at all is an error.
+    #[test]
+    fn a_sync_message_is_cut_to_the_link_bound_as_signed() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        for (s, path) in [("s1", "apps"), ("s2", "docs"), ("s3", "site")] {
+            a.claim(
+                &session(s),
+                vec![path.into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        }
+        let none = Marks::new();
+        let held = a.journal.missing_for(&none, usize::MAX).len();
+        assert!(held >= 3, "{held}");
+        // a bulk of a whole link bound, carried from `pad_from` events on; a refusal from
+        // `refuse_from` events on
+        let shaped = |pad_from: usize, refuse_from: usize| {
+            move |events: Vec<MeshEvent>| Shaped {
+                pad: if events.len() >= pad_from {
+                    "x".repeat(MAX_LINK_MESSAGE)
+                } else {
+                    String::new()
+                },
+                refuse: events.len() >= refuse_from,
+                events,
+            }
+        };
+        let sync = |pad_from, refuse_from| {
+            a.sync_within_bound(Domain::SyncRequest, &none, shaped(pad_from, refuse_from))
+        };
+        let (_, all) = sync(usize::MAX, usize::MAX).unwrap();
+        assert_eq!(all, held, "nothing in the way: every event goes");
+        let (_, one) = sync(2, usize::MAX).unwrap();
+        assert_eq!(
+            one, 1,
+            "two events outgrow the bound as signed, one does not"
+        );
+        let (_, nothing) = sync(1, usize::MAX).unwrap();
+        assert_eq!(nothing, 0, "no event fits: the message goes without one");
+        let bare = sync(0, usize::MAX).unwrap_err();
+        assert!(bare.contains("over the"), "{bare}");
+        let unbuilt = sync(usize::MAX, 0).unwrap_err();
+        assert!(unbuilt.contains("refuses to serialize"), "{unbuilt}");
+        let unbuilt_with_events = sync(usize::MAX, 1).unwrap_err();
+        assert!(
+            unbuilt_with_events.contains("refuses to serialize"),
+            "{unbuilt_with_events}"
+        );
+    }
+
+    #[test]
+    fn an_answer_that_cannot_fit_the_link_bound_is_refused_as_oversized() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let reply = a.answer_reply(Err("a sync message without events is over the bound".into()));
+        assert!(reply.signed.is_none());
+        assert_eq!(reply.refusal.map(|r| r.code), Some(RefusalCode::Oversized));
+    }
+
+    /// Hands every message to the runtime it is addressed to, and gives the dialer back a
+    /// link id too long for any sync under it to fit the link bound — re-signed by the
+    /// answerer, so the welcome itself is genuine.
+    struct LongLink {
+        net: Arc<InProcess>,
+        answerer: Arc<NodeIdentity>,
+    }
+
+    impl LinkTransport for LongLink {
+        fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String> {
+            let mut reply = self.net.post(endpoint, path, message)?;
+            if path == HELLO_PATH {
+                if let Some(signed) = reply.signed.as_mut() {
+                    let mut body = signed.body.clone();
+                    body["link"] = serde_json::Value::String("l".repeat(MAX_LINK_MESSAGE));
+                    *signed = sign(&self.answerer, Domain::Welcome, body);
+                }
+            }
+            Ok(reply)
+        }
+    }
+
+    /// A dialer with its own transport, as `runtime` builds one.
+    fn dialer(transport: Arc<dyn LinkTransport>, endpoint: &str) -> Arc<Cooperation> {
+        Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: crate::mesh::repository::runtime_id(endpoint),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec![endpoint.into()],
+            version: "test".into(),
+            config: CooperationConfig {
+                heartbeat_seconds: 1,
+                expiry_seconds: 3,
+                ..CooperationConfig::default()
+            },
+            trust: TrustConfig {
+                policy: TrustPolicy::Tofu,
+                allow: vec![],
+            },
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport,
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap()
+    }
+
+    /// A round whose request cannot fit the link bound even without events is not sent:
+    /// it fails as unreachable here, and the peer never sees an oversized message.
+    #[test]
+    fn a_round_whose_request_cannot_fit_the_bound_is_not_sent() {
+        let net = Arc::new(InProcess::default());
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let a = dialer(
+            Arc::new(LongLink {
+                net: Arc::clone(&net),
+                answerer: Arc::clone(&b.identity),
+            }),
+            "a:1",
+        );
+        let key = a.dial(&["b:1".into()]).expect("the welcome is genuine");
+        let round = a.sync_with(&key);
+        assert!(
+            matches!(round, Err(RoundError::Unreachable(ref why)) if why.contains("link bound")),
+            "{round:?}"
+        );
+        assert_eq!(
+            b.counters.syncs_in.load(Ordering::Relaxed),
+            0,
+            "nothing was sent"
+        );
+    }
+
+    /// Passes every hello on and refuses every sync as a link it does not know: a peer
+    /// that welcomes and forgets, round after round.
+    #[derive(Default)]
+    struct Forgetful {
+        net: Arc<InProcess>,
+        syncs: Mutex<Vec<Instant>>,
+    }
+
+    impl LinkTransport for Forgetful {
+        fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String> {
+            if path == SYNC_PATH {
+                self.syncs.lock().unwrap().push(Instant::now());
+                return Ok(LinkReply::refused(RefusalCode::UnknownLink, "no such link"));
+            }
+            self.net.post(endpoint, path, message)
+        }
+    }
+
+    /// An answerer that restarted forgets the link once, and the dialer says hello again at
+    /// once; one that keeps forgetting it is retried no faster than a heartbeat.
+    #[test]
+    fn a_second_unknown_link_in_a_row_waits_a_heartbeat() {
+        let forgetful = Arc::new(Forgetful::default());
+        let _b = runtime(&forgetful.net, "b:1", "root", TrustPolicy::Tofu);
+        let a = dialer(Arc::clone(&forgetful) as Arc<dyn LinkTransport>, "a:1");
+        let flag = Arc::new(AtomicBool::new(false));
+        let worker = {
+            let (a, flag) = (Arc::clone(&a), Arc::clone(&flag));
+            std::thread::spawn(move || {
+                a.work(
+                    Target {
+                        id: "b".into(),
+                        key: None,
+                        endpoints: vec!["b:1".into()],
+                    },
+                    flag,
+                )
+            })
+        };
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while forgetful.syncs.lock().unwrap().len() < 3 && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        flag.store(true, Ordering::SeqCst);
+        a.stop();
+        worker.join().unwrap();
+        let syncs = forgetful.syncs.lock().unwrap().clone();
+        assert!(syncs.len() >= 3, "{} rounds", syncs.len());
+        assert!(
+            syncs[1] - syncs[0] < Duration::from_millis(500),
+            "the first unknown link is answered by a hello at once"
+        );
+        assert!(
+            syncs[2] - syncs[1] >= Duration::from_millis(900),
+            "the second in a row waits a heartbeat"
         );
     }
 

@@ -2541,7 +2541,6 @@ fn owner_only(options: &mut std::fs::OpenOptions) -> &mut std::fs::OpenOptions {
 /// newline — the tail a crash tore — gets one first, so the torn line stays one unreadable
 /// line and the events appended after it read.
 fn append_synced(path: &Path, text: &str) -> std::io::Result<()> {
-    use std::io::{Read, Seek, SeekFrom};
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
     }
@@ -2552,18 +2551,24 @@ fn append_synced(path: &Path, text: &str) -> std::io::Result<()> {
             .append(true),
     )
     .open(path)?;
-    let mut torn = false;
-    if file.metadata()?.len() > 0 {
-        let mut last = [0u8; 1];
-        file.seek(SeekFrom::End(-1))?;
-        file.read_exact(&mut last)?;
-        torn = last[0] != b'\n';
+    // the newline a torn tail needs goes out in the same write as the text
+    let mut bytes = Vec::with_capacity(text.len() + 1);
+    if ends_torn(&mut file) {
+        bytes.push(b'\n');
     }
-    if torn {
-        file.write_all(b"\n")?;
-    }
-    file.write_all(text.as_bytes())?;
-    file.sync_data()
+    bytes.extend_from_slice(text.as_bytes());
+    file.write_all(&bytes).and_then(|()| file.sync_data())
+}
+
+/// Whether the last byte of `file` is not a newline. A tail that cannot be read is taken as
+/// whole: the append that follows it fails on its own if the file cannot be written.
+fn ends_torn(file: &mut std::fs::File) -> bool {
+    use std::io::{Read, Seek, SeekFrom};
+    let mut last = [0u8; 1];
+    file.metadata().is_ok_and(|m| m.len() > 0)
+        && file.seek(SeekFrom::End(-1)).is_ok()
+        && file.read_exact(&mut last).is_ok()
+        && last[0] != b'\n'
 }
 
 /// Write `text` to a new file at `path`, owner-only, and sync it before it is renamed anywhere.
@@ -2575,16 +2580,15 @@ fn write_synced(path: &Path, text: &str) -> std::io::Result<()> {
             .truncate(true),
     )
     .open(path)?;
-    file.write_all(text.as_bytes())?;
-    file.sync_all()
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.sync_all())
 }
 
-/// Sync the directory holding `path`, so a rename into it survives a crash too.
+/// Sync the directory holding `path`, so a rename into it survives a crash too. A path with
+/// no directory, or one that cannot be opened, has nothing to sync.
 fn sync_parent(path: &Path) {
-    if let Some(dir) = path.parent() {
-        if let Ok(handle) = std::fs::File::open(dir) {
-            let _ = handle.sync_all();
-        }
+    if let Some(handle) = path.parent().and_then(|dir| std::fs::File::open(dir).ok()) {
+        let _ = handle.sync_all();
     }
 }
 
@@ -3089,8 +3093,24 @@ mod tests {
         write_synced(&path, "second\n").unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "second\n");
         sync_parent(&path);
-        // a path with no directory to open is not an error
+        // a path with no directory to open is not an error, nor one with no directory at all
         sync_parent(Path::new("journal.jsonl"));
+        sync_parent(Path::new("/"));
+    }
+
+    #[test]
+    fn a_journal_that_cannot_be_placed_or_opened_is_an_error_not_a_write() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("a-file");
+        std::fs::write(&file, "x").unwrap();
+        // its directory would have to be made under a file
+        let under = file.join("deeper").join("journal.jsonl");
+        assert!(append_synced(&under, "{}\n").is_err());
+        // a path with no parent names no file to open
+        assert!(append_synced(Path::new("/"), "{}\n").is_err());
+        // a synced write does not make the directory it is asked to write in
+        assert!(write_synced(&dir.path().join("absent").join("j.tmp"), "{}\n").is_err());
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "x");
     }
 
     #[test]

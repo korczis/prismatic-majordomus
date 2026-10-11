@@ -798,6 +798,28 @@ mod tests {
         assert!(!report.ok);
     }
 
+    /// The `runtime` check alone, as health reads it, judges as the whole doctor does.
+    #[test]
+    fn the_runtime_verdict_alone_fails_only_an_enabled_declaration_a_server_declined() {
+        let server = super::super::MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = runtime_verdict(Some(Ok(config(true))), Some(&server.status()));
+        assert!(!declined.ok);
+        assert!(
+            declined.detail.contains("the node identity did not load"),
+            "{}",
+            declined.detail
+        );
+        assert!(
+            runtime_verdict(None, Some(&server.status())).ok,
+            "no declaration, nothing owed"
+        );
+        assert!(
+            runtime_verdict(Some(Ok(config(true))), None).ok,
+            "a runtime nobody decided on is an absence, never a failure"
+        );
+    }
+
     /// A firewall report as [`firewall::report`] builds one, for a host this suite does
     /// not run on: ufw on Linux, asked `status`, with the multicast group the one rule an
     /// enabled declaration with no hub implies. The report is assembled from the module's

@@ -773,12 +773,13 @@ fn render_peer(v: &Value) -> String {
 
 /// `path` with the view's flags as its query string, each value encoded.
 fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
+    // every pair is `key=value`, and only the value is the person's text to encode
     let pairs: Vec<String> = v
         .pairs()
         .iter()
-        .map(|pair| match pair.split_once('=') {
-            Some((key, value)) => format!("{key}={}", encode(value)),
-            None => pair.clone(),
+        .map(|pair| {
+            let (key, value) = pair.split_once('=').unwrap_or((pair.as_str(), ""));
+            format!("{key}={}", encode(value))
         })
         .collect();
     if pairs.is_empty() {
@@ -1923,6 +1924,87 @@ mod tests {
         assert!(
             refused.is_err(),
             "a port that is not a number was answered: {refused:?}"
+        );
+    }
+
+    /// The view's flags, as the command line holds them.
+    fn view(full: bool, matching: Option<&str>) -> crate::cli::MeshViewArgs {
+        crate::cli::MeshViewArgs {
+            full,
+            live_claims: full,
+            after: full.then_some(42),
+            session: full.then(|| "s 1".to_string()),
+            runtime: None,
+            kind: None,
+            limit: full.then_some(5),
+            open: false,
+            matching: matching.map(str::to_string),
+            query: MeshQueryArgs {
+                repo: crate::cli::RepoArgs::default(),
+                format: OutputFormat::Text,
+            },
+        }
+    }
+
+    #[test]
+    fn a_view_asks_its_flags_with_every_value_encoded_and_no_flag_asks_the_bare_path() {
+        assert_eq!(
+            viewed("/api/v1/mesh/state", &view(false, None)),
+            "/api/v1/mesh/state"
+        );
+        // only the first `=` separates: the rest of the text is the value, encoded with it
+        assert_eq!(
+            viewed("/api/v1/mesh/state", &view(true, Some("a b&c=d"))),
+            "/api/v1/mesh/state?view=full&claims=live&after=42&session=s%201&limit=5&matching=a%20b%26c%3Dd"
+        );
+    }
+
+    #[test]
+    fn the_summary_names_each_runtime_review_and_handover_and_counts_what_it_left_out() {
+        let r1 = runtime_key(NODE_A, "r1");
+        let r2 = runtime_key(NODE_B, "r2");
+        let r3 = runtime_key(NODE_A, "r3");
+        let answer = json!({
+            "active": true,
+            "summary": {
+                "sessions": { "active": 2, "closed": 1, "expired": 0 },
+                "claims": { "held": 3, "conflicted": 1, "released": 4, "expired": 0 },
+                "overlaps": 1,
+                "runtimes": [
+                    {
+                        "runtime": r1, "liveness": "live", "last_beat_ms": 1500,
+                        "sessions": { "active": 2 }, "claims": { "held": 3 },
+                        "newest_claim": { "issue": "I2414", "intent": "page the mesh" },
+                    },
+                    // a newest claim with neither issue nor intent, and no beat heard
+                    { "runtime": r2, "liveness": "expired", "newest_claim": {} },
+                    { "runtime": r3, "liveness": "live" },
+                ],
+                "runtimes_not_listed": 2,
+                "open_reviews": [{ "key": "r-1", "subject": "PR #927" }],
+                "open_reviews_not_listed": 0,
+                "untaken_handovers": [
+                    { "id": "h1", "runtime": r1, "branch": "feature/x" },
+                    { "id": "h2", "runtime": r2 },
+                ],
+                "untaken_handovers_not_listed": 3,
+                "digest": "d1g",
+            },
+        });
+        assert_eq!(
+            render_state(&answer),
+            "sessions   2 active, 1 closed, 0 expired\n\
+             claims     3 held, 1 conflicted, 4 released, 0 expired\n\
+             overlaps   1\n\
+             runtime    aaaaaaaa…-r1 live beat 1.5s ago sessions 2 active claims 3 held newest I2414 — page the mesh\n\
+             runtime    bbbbbbbb…-r2 expired sessions 0 active claims 0 held newest -\n\
+             runtime    aaaaaaaa…-r3 live sessions 0 active claims 0 held\n           \
+             and 2 more runtime(s)\n\
+             review     r-1 PR #927 open\n\
+             handover   h1 from aaaaaaaa…-r1 branch feature/x untaken\n\
+             handover   h2 from bbbbbbbb…-r2 branch - untaken\n           \
+             and 3 more untaken handover(s)\n\
+             digest     d1g"
         );
     }
 }
