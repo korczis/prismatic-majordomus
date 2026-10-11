@@ -434,6 +434,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:integration.timings",
+      "path": "/evidence/capabilities/integration-timings/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:integration.trains",
       "path": "/evidence/capabilities/integration-trains/"
     },
@@ -1836,6 +1841,11 @@
       "kind": "claim",
       "subject": "claim:project-status-derived",
       "path": "/evidence/claims/project-status-derived/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:projected-record-edit-is-landable",
+      "path": "/evidence/claims/projected-record-edit-is-landable/"
     },
     {
       "kind": "claim",
@@ -4600,6 +4610,16 @@
       "members": [
         "command:prs status"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.timings": {
+      "kind": "capability",
+      "id": "integration.timings",
+      "page": "/evidence/capabilities/integration-timings/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -9742,6 +9762,29 @@
             "docs/PLANNING.md",
             "lib/project.awk",
             "test/cases/41_project_status.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:projected-record-edit-is-landable": {
+      "kind": "claim",
+      "id": "projected-record-edit-is-landable",
+      "status": "guaranteed",
+      "page": "/evidence/claims/projected-record-edit-is-landable/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "scripts/ci/github-check",
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
           ]
         }
       ],
@@ -18458,6 +18501,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_ci_timings": {
+      "kind": "mcp",
+      "id": "majordomus_ci_timings",
+      "alias_of": "capability:integration.timings",
+      "programs": [],
+      "members": [
+        "capability:integration.timings"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_command": {
       "kind": "mcp",
       "id": "majordomus_command",
@@ -22930,6 +22985,16 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:1038_a_head_is_judged_against_what_it_changes",
+          "path": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/rules/project/github-projection-gated.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:45_github_projection",
           "path": "test/cases/45_github_projection.sh",
           "category": "e2e",
@@ -26242,6 +26307,7 @@
     "crate:integration_dry_run_proof",
     "crate:integration_executor",
     "crate:integration_merged_branches",
+    "crate:integration_record_reopen",
     "crate:integration_refresh_trail",
     "crate:integration_repair",
     "crate:intent_binding",
@@ -26288,6 +26354,7 @@
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
     "suite:1024_an_installed_release_serves_a_foreign_repository",
     "suite:102_completion_shell",
+    "suite:1036_the_executor_reopens_a_record_pull_request",
     "suite:1040_a_stacked_head_lands_on_the_verdict_it_has",
     "suite:1041_a_release_publishes_its_metadata",
     "suite:1050_the_monitor_folds_the_noise",
@@ -26301,6 +26368,10 @@
     "suite:1071_the_site_searches_from_everywhere",
     "suite:1072_the_train_is_seen",
     "suite:1074_a_script_that_sources_the_library_leaves_no_temp_files",
+    "suite:1075_the_pull_requests_drain_in_the_ui",
+    "suite:1076_the_roadmap_opens_a_milestone",
+    "suite:1077_ci_timings_are_measured",
+    "suite:1078_a_pull_request_shows_its_trail",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

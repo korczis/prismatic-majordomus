@@ -54,6 +54,7 @@ pub mod repair;
 pub mod retry;
 #[cfg(test)]
 mod tests;
+pub mod timings;
 pub mod train;
 pub mod wait;
 

@@ -136,3 +136,25 @@ pub fn screen(ctx: &Context) -> View {
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ui::deployments::tests::furnished;
+
+    /// Every feature the layer declares is a card with its identity and its title, as the
+    /// one file that declares it says.
+    #[test]
+    fn every_declared_feature_is_a_card() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        assert!(html.contains("mj-ui-card"), "{html}");
+        assert!(html.contains(">synthetic<"), "{html}");
+        assert!(html.contains("A synthetic feature"), "{html}");
+        assert!(
+            !html.contains("objects.list could not answer"),
+            "the furnished repository has the kind: {html}"
+        );
+    }
+}

@@ -153,7 +153,7 @@ pub struct TrainLink {
     pub disposition: PullRequestDisposition,
     /// The lane that disposition belongs to.
     pub lane: IntegrationLane,
-    /// The machine-readable reasons, as every surface spells them (`stacked_on:#807`).
+    /// The machine-readable reasons, as every surface spells them (`stacked_on:#<number>`).
     pub reasons: Vec<String>,
     /// What happens next, in words, when anything does.
     pub next_action: Option<String>,

@@ -25,9 +25,17 @@ const ROADMAP: Source = Source::of("plan.roadmap");
 const PLAN: Source = Source::of("plan.status");
 const INTENTS: Source = Source::of("intents.list");
 
-/// The Roadmap screen.
-pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[ROADMAP, PLAN, INTENTS]);
+const ISSUES: Source = Source::of("plan.issues");
+
+/// The Roadmap screen; `query` may pick one milestone to inspect (`?milestone=M004`).
+pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
+    let picked = super::milestone::picked(query);
+    // the issues are asked only when a milestone is inspected, which is the one reader of them
+    let mut sources = vec![ROADMAP, PLAN, INTENTS];
+    if picked.is_some() {
+        sources.push(ISSUES);
+    }
+    let answers = ask_all(ctx, &sources);
     let (roadmap, plan, intents) = (&answers[&ROADMAP], &answers[&PLAN], &answers[&INTENTS]);
 
     let top = hero(
@@ -110,7 +118,7 @@ pub fn screen(ctx: &Context) -> View {
                     GraphNode {
                         label: id.clone(),
                         tone: status_tone(&text(m, "status")),
-                        href: format!("#milestone-{id}"),
+                        href: super::milestone::href(&id),
                         kind: "node",
                         id,
                     }
@@ -159,8 +167,11 @@ pub fn screen(ctx: &Context) -> View {
         )
     });
 
-    let grid = el("div")
-        .class("mj-ui-grid")
+    let mut grid = el("div").class("mj-ui-grid");
+    if let (Some(id), Some(issues)) = (&picked, answers.get(&ISSUES)) {
+        grid = grid.child(wide(super::milestone::inspector(roadmap, issues, id)));
+    }
+    let grid = grid
         .child(wide(panel(
             "Milestones",
             "Every milestone, in the plan's order; the plan declares no dates, so none are drawn.",
@@ -185,4 +196,105 @@ pub fn screen(ctx: &Context) -> View {
         "Roadmap",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::capability::{builtin, CapabilityRegistry};
+    use crate::synthetic::SyntheticRepository;
+
+    /// A context over `repo` whose registry holds every built-in module except those named:
+    /// a screen asked there meets a capability that cannot answer, as it would on a server
+    /// whose registry lost one.
+    fn context_without(repo: &SyntheticRepository, absent: &[&str]) -> std::sync::Arc<Context> {
+        let index = repo.index().expect("an index");
+        let modules = builtin::modules()
+            .into_iter()
+            .filter(|m| !absent.contains(&m.id.as_str()))
+            .collect();
+        let registry = CapabilityRegistry::builder()
+            .with_modules(modules)
+            .with_index(&index)
+            .build()
+            .expect("a registry");
+        std::sync::Arc::new(Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::new(registry),
+        ))
+    }
+
+    /// `planned` with one intent that serves its first milestone.
+    fn planned_with_an_intent() -> SyntheticRepository {
+        let repo = SyntheticRepository::planned();
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).expect("the sources");
+        text.push_str(
+            "  - id: intent\n    kind: intent\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/project/intents/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).expect("the sources");
+        let intent = repo.root().join(".ai/repo/project/intents/i-first.yaml");
+        std::fs::create_dir_all(intent.parent().expect("a parent")).expect("a directory");
+        std::fs::write(
+            &intent,
+            "id: i-first\ntitle: The first intent\nstatement: \"The first milestone is real.\"\n\
+             invariants:\n  - It stays real\nmilestones:\n  - m-first\nsatisfaction:\n  - id: it-holds\n    \
+             criterion: It holds\n    evidence: test\n    ref: tests/first.rs\n",
+        )
+        .expect("an intent");
+        repo
+    }
+
+    /// Every dependency the plan records is a row and an edge, every milestone a node led to
+    /// its row, and every intent a row with its stage and verdict.
+    #[test]
+    fn the_dependencies_are_a_table_and_a_graph_and_the_intents_are_listed() {
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let view = screen(&ctx, &[]);
+        let html = view.main.render();
+        assert_eq!(view.status, 200);
+        // m-second depends on m-first: its row in the table, its edge in the graph
+        assert!(html.contains(">m-second<"), "{html}");
+        assert!(
+            !html.contains("No milestone depends on another."),
+            "a recorded dependency is a row: {html}"
+        );
+        assert!(
+            html.contains("/ui/roadmap?milestone=m-first#milestone"),
+            "a node opens its milestone's inspector"
+        );
+        assert!(html.contains("data-graph"), "{html}");
+        assert!(
+            html.contains("i-first") && html.contains("The first intent"),
+            "{html}"
+        );
+        assert!(!html.contains("No intent is recorded."), "{html}");
+    }
+
+    /// A roadmap that cannot be asked says so in every panel that reads it, and draws no
+    /// sequence, no table and no graph of its own.
+    #[test]
+    fn a_roadmap_that_cannot_answer_draws_no_sequence() {
+        let repo = SyntheticRepository::planned();
+        let ctx = context_without(&repo, &["plan", "intents"]);
+        let html = screen(&ctx, &[]).main.render();
+        assert!(html.contains("plan.roadmap could not answer"), "{html}");
+        assert!(!html.contains("#milestone-m-first"), "{html}");
+        assert!(
+            !html.contains("data-graph"),
+            "no graph is drawn from nothing: {html}"
+        );
+    }
+
+    /// A plan with no dependency and no intent says so rather than drawing empty tables.
+    #[test]
+    fn a_plan_without_dependencies_or_intents_says_so() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[]).main.render();
+        assert!(html.contains("No milestone depends on another."), "{html}");
+        assert!(html.contains("No intent is recorded."), "{html}");
+    }
 }

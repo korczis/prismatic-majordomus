@@ -101,3 +101,32 @@ pub fn screen(ctx: &Context) -> View {
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ui::deployments::tests::furnished;
+
+    /// A guarantee no test supports is a finding with its reason, and every claim is a row
+    /// with its state and the test that would settle it.
+    #[test]
+    fn every_claim_is_a_row_and_an_unsupported_guarantee_is_a_finding() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        assert!(
+            html.contains("the claim guarantees a behaviour and names no test at all"),
+            "{html}"
+        );
+        assert!(html.contains("synthetic-guarantee"), "{html}");
+        assert!(html.contains("A guarantee no test supports"), "{html}");
+        assert!(html.contains("An advisory claim"), "{html}");
+        assert!(html.contains("test/cases/1_synthetic.sh"), "{html}");
+        assert!(
+            html.contains("no_test") || html.contains("no test"),
+            "{html}"
+        );
+        assert!(!html.contains("Every claim holds."), "{html}");
+        assert!(!html.contains("No claim is made."), "{html}");
+    }
+}

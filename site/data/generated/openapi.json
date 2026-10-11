@@ -76,6 +76,7 @@
     "op-integration-explain": "docs/api/integration/",
     "op-integration-prove_dry_run": "docs/api/integration/",
     "op-integration-queue": "docs/api/integration/",
+    "op-integration-timings": "docs/api/integration/",
     "op-integration-trains": "docs/api/integration/",
     "op-intent_realization-explain": "docs/api/intent-realization/",
     "op-intent_realization-work": "docs/api/intent-realization/",
@@ -273,7 +274,9 @@
     "schema-Channel": "docs/api/distribution/",
     "schema-CheckRunState": "docs/api/integration/",
     "schema-CheckState": "docs/api/distribution/",
+    "schema-CheckTiming": "docs/api/integration/",
     "schema-Checkouts": "docs/api/shared/",
+    "schema-CiTimings": "docs/api/integration/",
     "schema-ClaimEvidence": "docs/api/evidence/",
     "schema-ClaimInput": "docs/api/mesh/",
     "schema-ClaimMode": "docs/api/mesh/",
@@ -557,6 +560,7 @@
     "schema-HandoverConsumeInput": "docs/api/mesh/",
     "schema-HandoverPublishInput": "docs/api/mesh/",
     "schema-HandoverView": "docs/api/mesh/",
+    "schema-HeadTiming": "docs/api/integration/",
     "schema-Health": "docs/api/health/",
     "schema-HealthCheck": "docs/api/health/",
     "schema-HealthRoutes": "docs/api/deploy/",
@@ -592,6 +596,7 @@
     "schema-IntegrationRisk": "docs/api/integration/",
     "schema-IntegrationStatus": "docs/api/integration/",
     "schema-IntegrationThroughput": "docs/api/integration/",
+    "schema-IntegrationTimings": "docs/api/integration/",
     "schema-IntentBinding": "docs/api/intents/",
     "schema-IntentCoverage": "docs/api/intents/",
     "schema-IntentCriterion": "docs/api/shared/",
@@ -1177,8 +1182,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 186,
-    "schemas": 933,
+    "operations": 187,
+    "schemas": 937,
     "tags": 55
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1346,6 +1351,7 @@
     "integration.explain": "integration",
     "integration.prove_dry_run": "integration",
     "integration.queue": "integration",
+    "integration.timings": "integration",
     "integration.trains": "integration",
     "intent_realization.explain": "intent-realization",
     "intent_realization.work": "intent-realization",
@@ -1547,7 +1553,9 @@
     "Channel": "distribution",
     "CheckRunState": "integration",
     "CheckState": "distribution",
+    "CheckTiming": "integration",
     "Checkouts": "shared",
+    "CiTimings": "integration",
     "ClaimEvidence": "evidence",
     "ClaimInput": "mesh",
     "ClaimMode": "mesh",
@@ -1831,6 +1839,7 @@
     "HandoverConsumeInput": "mesh",
     "HandoverPublishInput": "mesh",
     "HandoverView": "mesh",
+    "HeadTiming": "integration",
     "Health": "health",
     "HealthCheck": "health",
     "HealthRoutes": "deploy",
@@ -1866,6 +1875,7 @@
     "IntegrationRisk": "integration",
     "IntegrationStatus": "integration",
     "IntegrationThroughput": "integration",
+    "IntegrationTimings": "integration",
     "IntentBinding": "intents",
     "IntentCoverage": "intents",
     "IntentCriterion": "shared",
@@ -6805,6 +6815,70 @@
       "variants": []
     },
     {
+      "description": "How one check takes, across the open heads that ran it.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "CheckTiming",
+      "properties": [
+        {
+          "description": "The check's name, as the forge reports it.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Runs that started and completed, so were measured.",
+          "name": "runs",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Of those, how many passed.",
+          "name": "passed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Of those, how many failed.",
+          "name": "failed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The median duration, in seconds.",
+          "name": "median_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The 90th percentile duration (nearest rank), in seconds.",
+          "name": "p90_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The longest run, in seconds.",
+          "name": "slowest_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CiTimings"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```",
       "home": "shared",
       "is_enum": true,
@@ -6827,6 +6901,60 @@
           "value": "this"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "CI timings over every open head the observation holds.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "CiTimings",
+      "properties": [
+        {
+          "description": "When the forge was observed, RFC 3339: the moment these timings describe.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Check runs measured, across every check and head.",
+          "name": "measured_runs",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Check runs the observation holds without both a start and a completion: running,\nqueued, or recorded before starts were read. Counted, never measured as zero.",
+          "name": "unmeasured_runs",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Every check, the slowest median first.",
+          "name": "checks",
+          "refs": [
+            "CheckTiming"
+          ],
+          "required": true,
+          "type": "array of CheckTiming"
+        },
+        {
+          "description": "Every head with a measured check, the longest wall time first.",
+          "name": "heads",
+          "refs": [
+            "HeadTiming"
+          ],
+          "required": true,
+          "type": "array of HeadTiming"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationTimings"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -18301,6 +18429,7 @@
         "integration.events",
         "integration.explain",
         "integration.prove_dry_run",
+        "integration.timings",
         "integration.trains",
         "quality.report",
         "quality.rustdoc",
@@ -23204,6 +23333,77 @@
       "variants": []
     },
     {
+      "description": "How long CI took on one open pull request's head: from its first check's start to its last\ncheck's completion, and the check that took longest.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "HeadTiming",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The head the checks ran on.",
+          "name": "head_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When its first measured check started, RFC 3339.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When its last measured check completed, RFC 3339.",
+          "name": "completed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The wall time between them, in seconds: what a reader waited for CI on this head.",
+          "name": "wall_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The measured check that took longest.",
+          "name": "slowest_check",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long it took, in seconds.",
+          "name": "slowest_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether any measured check on the head failed.",
+          "name": "failed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CiTimings"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The health of what this process serves.",
       "home": "health",
       "is_enum": false,
@@ -24197,7 +24397,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -24291,6 +24491,18 @@
         {
           "description": "Closing it failed.",
           "value": "close_failed"
+        },
+        {
+          "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`).",
+          "value": "reopen_attempted"
+        },
+        {
+          "description": "It was closed and reopened; its required check can report now.",
+          "value": "reopened"
+        },
+        {
+          "description": "Reopening it failed; the detail says whether the pull request was left closed.",
+          "value": "reopen_failed"
         },
         {
           "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts.",
@@ -25119,6 +25331,44 @@
       "used_by_schemas": [
         "IntegrationStatus"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How long CI takes on the open pull requests, or why it is not known.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationTimings",
+      "properties": [
+        {
+          "description": "Whether a forge observation is recorded in this checkout.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why there are no timings, when there are none.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The timings measured from the observation, when there is one.",
+          "name": "timings",
+          "refs": [
+            "CiTimings"
+          ],
+          "required": false,
+          "type": "CiTimings | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.timings"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -52689,7 +52939,7 @@
           "type": "IntegrationLane"
         },
         {
-          "description": "The machine-readable reasons, as every surface spells them (`stacked_on:#807`).",
+          "description": "The machine-readable reasons, as every surface spells them (`stacked_on:#<number>`).",
           "name": "reasons",
           "refs": [],
           "required": true,
@@ -59838,6 +60088,60 @@
           "result_schema": "DryRunProof",
           "stability": "experimental",
           "summary": "Proof that a dry run moves nothing"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/timings\"",
+          "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+          "home": "integration",
+          "id": "integration.timings",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_ci_timings",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests/timings",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "How long CI takes: the result.",
+              "schema": "IntegrationTimings",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationTimings",
+          "stability": "experimental",
+          "summary": "How long CI takes"
         },
         {
           "benchmark": "required",

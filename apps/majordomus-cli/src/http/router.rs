@@ -1135,6 +1135,27 @@ pub fn percent_decode(s: &str) -> String {
 mod tests {
     use super::*;
 
+    /// A topology resolved while the UI was there, answered after it is gone, says so
+    /// rather than serving an empty page or another surface.
+    #[test]
+    fn a_ui_route_with_no_ui_behind_it_says_so() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let mut router = Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        assert!(
+            router.served().is_ok(),
+            "the topology resolves with the UI in it"
+        );
+        router.ui = None;
+        let r = router.handle(&Request::parse_target("GET", crate::ui::PREFIX, Vec::new()));
+        assert_eq!(r.status, 500, "{}", r.body.text());
+        assert!(
+            r.body.text().contains("no UI behind it"),
+            "{}",
+            r.body.text()
+        );
+    }
+
     #[test]
     fn every_capability_error_has_its_status_and_keeps_its_word() {
         for (e, status, code) in [

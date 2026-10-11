@@ -57,5 +57,5 @@ The same stream is the MCP tool `majordomus_monitor`, `GET /api/v1/monitor`, and
 
 The monitor writes nothing and keeps no store. Every signal comes from a record that already existed, and acting on a signal stays with the capability that owns the act. It does not make the mesh smarter. It makes what the mesh already knew readable.
 
-The manual is [`docs/MONITOR.md`](/docs/monitor/). The decision is ADR 0133. The proof is in three cases, which run a server with a declared mesh and, for GitHub, a `gh` that prints fixtures, plus the unit tests of every fold rule mentioned here.
+The manual is [`docs/MONITOR.md`](@/docs/monitor.md). The decision is ADR 0133. The proof is in three cases, which run a server with a declared mesh and, for GitHub, a `gh` that prints fixtures, plus the unit tests of every fold rule mentioned here.
 {% endraw %}
