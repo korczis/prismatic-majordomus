@@ -1,7 +1,7 @@
 +++
 title = "A task that names the issue or the intent it serves is briefed with what that intent asks of the work, and a handover tells the next worker when the intent moved"
 description = "A worker starts from what must become true, not from an edit. A task that says which issue it executes, or which intent it serves, is handed that intent in its briefing: the statement, the invariants, the criteria this work serves with the state of their evidence, the critique of the plan and the recorded gap. Nobody copies an intent into a prompt."
-weight = 117
+weight = 118
 [extra]
 claim_id = "intent-in-session-context"
 status = "guaranteed"
