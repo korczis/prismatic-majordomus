@@ -15,16 +15,19 @@ use crate::cockpit::html::{el, El};
 use super::source::Answer;
 use super::view::{list, meter, nothing, panel, state, table, text, unanswered};
 
-/// A plan milestone id: `M` and digits, nothing a link could carry anything else in.
+/// A plan milestone id: letters, digits, `-` and `_`, as the plan's own ids are (`M004`,
+/// `development-runtime`), and nothing a link could carry anything else in.
 ///
 /// ```text
-/// assert!(is_milestone_id("M004") && !is_milestone_id("M0\"4") && !is_milestone_id("x"));
+/// assert!(is_milestone_id("M004") && is_milestone_id("development-runtime"));
+/// assert!(!is_milestone_id("M0\"4") && !is_milestone_id(""));
 /// ```
 pub fn is_milestone_id(id: &str) -> bool {
-    id.len() >= 2
-        && id.len() <= 12
-        && id.starts_with('M')
-        && id[1..].bytes().all(|b| b.is_ascii_digit())
+    !id.is_empty()
+        && id.len() <= 64
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
 }
 
 /// The milestone a query names, when it names one.
@@ -365,6 +368,11 @@ mod tests {
             .contains("M999 is not a milestone of the plan."));
         let q = |v: &str| vec![("milestone".to_string(), v.to_string())];
         assert_eq!(picked(&q("M004")), Some("M004".into()));
+        assert_eq!(
+            picked(&q("development-runtime")),
+            Some("development-runtime".into()),
+            "a milestone named by a slug is a milestone"
+        );
         assert_eq!(picked(&q("M0\" onclick=\"x")), None);
         assert_eq!(picked(&q("")), None);
     }
