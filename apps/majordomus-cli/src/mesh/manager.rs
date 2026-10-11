@@ -381,6 +381,9 @@ impl MeshRuntime {
     ///
     /// let mesh = MeshRuntime::new();
     /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// // a machine whose key the declaration does not list stays closed (see `closed_to`)
+    /// let mut config = config;
+    /// config.trust.allow = vec![identity.public.public_key.clone()];
     /// mesh.activate_as(&config, Arc::clone(&identity), "0000000000000001",
     ///     vec!["127.0.0.1:8742".into()], vec!["root".into()], "doc").unwrap();
     ///
@@ -410,6 +413,10 @@ impl MeshRuntime {
         if !config.enabled {
             *self.reason.lock().expect("mesh reason") =
                 "not active: the mesh declaration is disabled".into();
+            return Ok(());
+        }
+        if let Some(why) = closed_to(config, &identity.public.public_key) {
+            *self.reason.lock().expect("mesh reason") = why;
             return Ok(());
         }
         let beacon = Arc::new(
@@ -695,6 +702,42 @@ fn ingest(
     }
 }
 
+/// Why the mesh stays closed on a machine the declaration does not name, or `None` when
+/// it may open. Under `deny_unknown` and `allowlist` a machine joins only when its own
+/// public key is in `trust.allow`: an unlisted machine — a contributor's clone of a public
+/// repository, a new machine nobody enrolled — would otherwise announce itself on its
+/// network and dial whatever endpoints the repository commits, trusted by nobody. It
+/// opens no socket instead, and says which key to list. `tofu` trusts whoever answers
+/// first, so it never closes on this ground.
+///
+/// ```
+/// use majordomus_cli::mesh::config::MeshConfig;
+/// use majordomus_cli::mesh::manager::closed_to;
+///
+/// let declared = |allow: &[&str], policy: &str| -> MeshConfig {
+///     serde_json::from_value(serde_json::json!({
+///         "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true,
+///         "trust": { "policy": policy, "allow": allow },
+///     })).unwrap()
+/// };
+/// let key = "ab".repeat(32);
+/// assert!(closed_to(&declared(&[], "deny_unknown"), &key).unwrap().starts_with("closed: "));
+/// assert!(closed_to(&declared(&["cd"], "allowlist"), &key).is_some());
+/// assert_eq!(closed_to(&declared(&[&key], "deny_unknown"), &key), None, "listed: it opens");
+/// assert_eq!(closed_to(&declared(&[], "tofu"), &key), None);
+/// ```
+pub fn closed_to(config: &MeshConfig, public_key: &str) -> Option<String> {
+    if config.trust.policy == trust::TrustPolicy::Tofu
+        || config.trust.allow.iter().any(|k| k == public_key)
+    {
+        return None;
+    }
+    Some(format!(
+        "closed: this machine's key {public_key} is not in trust.allow of the {} declaration, so it neither announces nor dials; to join, list the key there (`majordomus mesh identity` prints it) and commit",
+        config.id
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -704,6 +747,13 @@ mod tests {
 
     fn identity_in(dir: &tempfile::TempDir, name: &str) -> NodeIdentity {
         NodeIdentity::load_or_create(&dir.path().join(name)).unwrap()
+    }
+
+    /// [`quiet_config`] with `identity`'s key listed: an unlisted machine stays closed.
+    fn listed(identity: &NodeIdentity) -> MeshConfig {
+        let mut config = quiet_config();
+        config.trust.allow = vec![identity.public.public_key.clone()];
+        config
     }
 
     fn quiet_config() -> MeshConfig {
@@ -772,7 +822,7 @@ mod tests {
         let runtime = MeshRuntime::new();
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "self.json")),
                 identity_in(&dir, "self.json"),
                 vec![],
                 vec![],
@@ -811,7 +861,7 @@ mod tests {
         let own = identity_in(&dir, "self.json");
         let own_envelope = advertise(&own, 1, &[], &[], &[], "0.5.0");
         runtime
-            .activate(&quiet_config(), own, vec![], vec![], "0.5.0")
+            .activate(&listed(&own), own, vec![], vec![], "0.5.0")
             .unwrap();
         let bytes = serde_json::to_vec(&own_envelope).unwrap();
         runtime
@@ -832,7 +882,7 @@ mod tests {
         let runtime = MeshRuntime::new();
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "self.json")),
                 identity_in(&dir, "self.json"),
                 vec![],
                 vec![],
@@ -859,7 +909,7 @@ mod tests {
         let own = identity_in(&dir, "self.json");
         let own_node = own.public.node_id.clone();
         runtime
-            .activate(&quiet_config(), own, vec![], vec![], "0.5.0")
+            .activate(&listed(&own), own, vec![], vec![], "0.5.0")
             .unwrap();
         let caller = identity_in(&dir, "caller.json");
         let envelope = advertise(&caller, 1, &["127.0.0.1:2".into()], &[], &[], "0.5.0");
@@ -883,7 +933,7 @@ mod tests {
         let runtime = MeshRuntime::new();
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "self.json")),
                 identity_in(&dir, "self.json"),
                 vec![],
                 vec![],
@@ -894,6 +944,52 @@ mod tests {
         assert!(!answer.accepted);
         assert_eq!(answer.refusal.as_deref(), Some("malformed"));
         runtime.stop();
+    }
+
+    #[test]
+    fn an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider() {
+        let runtime = MeshRuntime::new();
+        let dir = tempfile::tempdir().unwrap();
+        let mut config = quiet_config();
+        config.multicast.enabled = true;
+        config.rendezvous.endpoints = vec!["http://127.0.0.1:9".into()];
+        config.trust.allow = vec!["cd".repeat(32)];
+        let own = identity_in(&dir, "self.json");
+        let key = own.public.public_key.clone();
+        runtime
+            .activate(&config, own, vec![], vec![], "0.5.0")
+            .unwrap();
+        let status = runtime.status();
+        assert!(
+            !status.active,
+            "an unlisted machine announces and dials nothing"
+        );
+        assert!(
+            status.providers.is_empty(),
+            "no provider started: {:?}",
+            status.providers
+        );
+        let reason = status.reason.unwrap();
+        assert!(
+            reason.starts_with("closed: ") && reason.contains(&key),
+            "{reason}"
+        );
+        assert!(runtime.decided(), "closed is a decision, not an absence");
+        // listed, the same declaration opens
+        let open = MeshRuntime::new();
+        config.multicast.enabled = false;
+        config.rendezvous.endpoints.clear();
+        config.trust.allow.push(key);
+        open.activate(
+            &config,
+            identity_in(&dir, "self.json"),
+            vec![],
+            vec![],
+            "0.5.0",
+        )
+        .unwrap();
+        assert!(open.status().active);
+        open.stop();
     }
 
     #[test]
@@ -930,7 +1026,7 @@ mod tests {
         assert!(!runtime.decided(), "reading a runtime decides nothing");
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "a.json")),
                 identity_in(&dir, "a.json"),
                 vec![],
                 vec![],
@@ -946,7 +1042,7 @@ mod tests {
     fn activation_is_idempotent() {
         let dir = tempfile::tempdir().unwrap();
         let runtime = MeshRuntime::new();
-        let config = quiet_config();
+        let config = listed(&identity_in(&dir, "a.json"));
         runtime
             .activate(
                 &config,

@@ -136,6 +136,15 @@ This machine's own key is trusted as itself, which is what lets two worktrees li
 reappearing under a different key is rejected under every policy. Trust is a precondition of
 a link, not a link: discovery never admits one.
 
+Under `deny_unknown` and `allowlist`, a machine whose own key is not in `trust.allow` keeps the
+mesh **closed**: it binds no multicast socket, registers with no hub, dials no seed and opens no
+link, and `mesh status` gives the reason with the key to list. This covers a contributor's
+clone of a public repository and a new machine nobody has enrolled yet. Without the rule, such
+a machine would announce itself on its network and dial every endpoint the repository commits,
+while every peer refused it. `mesh doctor` fails its `trust` check with the key and the remedy,
+its `runtime` check reads `closed: …`, and the session's briefing says `Mesh: CLOSED — …`.
+Listing the key and restarting the server opens it. `tofu` never closes on this ground.
+
 ## The handshake
 
 A dialer — the runtime with the lower runtime key, or either one when only one can reach the
@@ -514,9 +523,9 @@ hook library, which sends no request of its own (SECURITY.md); with no ready ser
 line, and the server line above says why.
 
 **What holds it.** `test/cases/491_the_mesh_is_on_here.sh`: the committed declaration is the
-reviewed one as the executable reads it, the self-check holds over this repository, two
-worktrees under one key link, an unlisted key is refused `untrusted`, and a machine whose key is
-missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
+reviewed one as the executable reads it, the self-check holds over this repository, a machine
+whose key is not listed keeps the mesh closed and dials nobody, two worktrees under one listed
+key link, and a machine whose key is missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
 tracked, enabled, `deny_unknown`, allowlists at least as many keys as the trust row above names
 machines, and names a hub — so adding a machine is a key under `trust.allow` and a node id in
 that row, in one commit — and a disposable repository proves every briefing answer and exit 10

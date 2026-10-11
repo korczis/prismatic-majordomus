@@ -1662,6 +1662,8 @@ mj_capture_mesh_line() {
       elif ($rt.detail | startswith("active as ")) then
         "active — " + ($rt.detail | sub("^active as [^ ]+ since [^ ]+: "; ""))
         + (if $tr != null and ($tr.ok | not) then "; TRUST: " + $tr.detail else "" end)
+      elif ($rt.detail | startswith("closed: ")) then
+        "CLOSED — " + ($rt.detail | sub("^closed: "; ""))
       elif ($rt.ok | not) then
         "DECLARED ENABLED BUT NOT ACTIVE — "
         + ($rt.detail | sub("^the declaration is enabled and this server.s mesh is not active — "; ""))
