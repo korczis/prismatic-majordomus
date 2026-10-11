@@ -7,7 +7,8 @@
 #   scripts/site-probe            probe every route at the widths share/design/tokens.yaml declares
 #   scripts/site-probe --quick    homepage and one page per section only
 #   scripts/site-probe --self-check   measure fixtures whose answer is known, and say whether
-#                                 this probe still names what overflows. Needs no built site.
+#                                 this probe still names what overflows and still refuses a
+#                                 page that shifts or paints over its budget. Needs no built site.
 #   SITE_PROBE_JOBS=N             N routes measured at a time, each in its own browser process
 #                                 (default 1); the findings are rendered in route order whatever
 #                                 the order they came in
@@ -43,7 +44,7 @@
 # declared). A finding names the route, the width, the assertion and what was measured.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"; QUICK=0; SELF=0
-usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; }
 # An unknown flag used to fall through to the full sweep, so a person asking --help waited out
 # every route to be told nothing. `--route` is the worker the pool spawns, not a public flag.
 case "${1:-}" in
@@ -65,7 +66,8 @@ case "$JOBS" in ''|*[!0-9]*|0) echo "site-probe: SITE_PROBE_JOBS must be a posit
 # The self-check needs neither: it measures fixtures, not the site.
 DESIGN="$SITE/data/registry/design.json"
 if [ "$SELF" = 1 ]; then
-  WIDTHS="${SITE_PROBE_WIDTHS:-320 390 1280}"; DESIGN_FP=""
+  # the fixtures are measured in a frame of their own width (below); no sweep width is read
+  WIDTHS="${SITE_PROBE_WIDTHS:-}"; DESIGN_FP=""
 else
   [ -f "$DESIGN" ] || { echo "site-probe: $DESIGN missing; run majordomus generate design" >&2; exit 12; }
   # SITE_PROBE_WIDTHS narrows or moves the set while a layout fix is iterated on — a
@@ -135,6 +137,125 @@ function measure(f){
 JS
 )"
 
+# ---------------------------------------------------------------- the rendering measurement
+# How the homepage renders, measured in the browser this probe already drives (I2379): the
+# largest contentful paint and the cumulative layout shift the page itself reports, read
+# from its buffered performance entries after it has settled. Each width is measured on
+# cold loads in a browser of its own, driven over the debugging pipe — the frames the sweep
+# measures share one process and a virtual clock, which paints nothing on time, and a figure
+# taken there would be a figure of the harness. The median of the loads is compared with the
+# budget site/data/homepage.toml declares beside the byte budgets; a figure without a budget
+# is unbounded, a page that reports no paint is within no budget, and both are failures.
+#
+#   render_check <url> <label> "<widths>" <loads> <homepage.toml>
+#
+# prints one OK line per width, or a FAIL line naming the figure, the measurement and the
+# budget, in the format of the lines above.
+RENDER_PY="$(cat <<'PY'
+import json, os, select, statistics, subprocess, sys, tempfile, time, shutil
+chrome, url, label, widths, runs, decl = sys.argv[1], sys.argv[2], sys.argv[3], [int(w) for w in sys.argv[4].split()], int(sys.argv[5]), sys.argv[6]
+# the budgets, from the declaration; a figure without one is unbounded, which is a finding
+try:
+    import tomllib
+    with open(decl, "rb") as f:
+        budget = tomllib.load(f).get("budget") or {}
+except Exception as e:
+    print(f"FAIL rendering  {label}: {decl} cannot be read ({e})"); sys.exit(0)
+LCP, CLS = "largest_contentful_paint_ms", "cumulative_layout_shift"
+lcp_budget, cls_budget = budget.get(LCP), budget.get(CLS)
+undeclared = [k for k, v in ((LCP, lcp_budget), (CLS, cls_budget)) if not isinstance(v, (int, float)) or isinstance(v, bool)]
+# what the page itself reports, read from its buffered entries after it settled: the last
+# largest-contentful-paint candidate, and the largest session window of layout shifts not
+# caused by input (a gap of 1 s or a span of 5 s closes a window), as the metric defines it
+COLLECT = r"""new Promise((done) => {
+  let lcp = null, cur = null; const windows = [], obs = [];
+  const watch = (type, fn) => { try { const o = new PerformanceObserver((l) => l.getEntries().forEach(fn)); o.observe({ type, buffered: true }); obs.push(o); } catch (e) {} };
+  watch('largest-contentful-paint', (e) => { lcp = e.renderTime || e.loadTime || e.startTime; });
+  watch('layout-shift', (e) => {
+    if (e.hadRecentInput) return;
+    if (cur && e.startTime - cur.last < 1000 && e.startTime - cur.first < 5000) { cur.value += e.value; cur.last = e.startTime; }
+    else { cur = { first: e.startTime, last: e.startTime, value: e.value }; windows.push(cur); }
+  });
+  setTimeout(() => { obs.forEach((o) => o.disconnect()); done(JSON.stringify({ lcp, cls: windows.reduce((m, w) => Math.max(m, w.value), 0) })); }, 50);
+})"""
+
+def load(width):
+    """One cold load in a browser of its own, driven over the debugging pipe (fd 3 and 4)."""
+    to_chrome, chrome_in = os.pipe(); chrome_out, from_chrome = os.pipe()
+    profile = tempfile.mkdtemp(prefix="mj-render-")
+    def fds():
+        a, b = os.dup(to_chrome), os.dup(from_chrome)
+        os.dup2(a, 3); os.dup2(b, 4)
+    proc = subprocess.Popen([chrome, "--headless=new", "--disable-gpu", "--remote-debugging-pipe", "--no-first-run",
+                             "--no-default-browser-check", f"--user-data-dir={profile}", f"--window-size={width},900", "about:blank"],
+                            preexec_fn=fds, close_fds=False, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    os.close(to_chrome); os.close(from_chrome)
+    state = {"buf": b"", "id": 0, "events": []}
+    def recv(deadline):
+        while b"\0" not in state["buf"]:
+            left = deadline - time.time()
+            if left <= 0: raise TimeoutError("the browser did not answer")
+            if select.select([chrome_out], [], [], left)[0]:
+                chunk = os.read(chrome_out, 65536)
+                if not chunk: raise EOFError("the browser closed its pipe")
+                state["buf"] += chunk
+        msg, state["buf"] = state["buf"].split(b"\0", 1)
+        return json.loads(msg)
+    def call(method, params=None, session=None, timeout=60):
+        state["id"] += 1; i = state["id"]
+        os.write(chrome_in, json.dumps({"id": i, "method": method, "params": params or {}, **({"sessionId": session} if session else {})}).encode() + b"\0")
+        deadline = time.time() + timeout
+        while True:
+            m = recv(deadline)
+            if m.get("id") == i:
+                if "error" in m: raise RuntimeError(f"{method}: {m['error'].get('message')}")
+                return m.get("result", {})
+            state["events"].append(m)
+    def event(name, session, timeout=60):
+        deadline = time.time() + timeout
+        while True:
+            for m in state["events"]:
+                if m.get("method") == name and m.get("sessionId") == session: return m
+            state["events"].append(recv(deadline))
+    try:
+        target = call("Target.createTarget", {"url": "about:blank"})["targetId"]
+        session = call("Target.attachToTarget", {"targetId": target, "flatten": True})["sessionId"]
+        call("Page.enable", session=session)
+        call("Emulation.setDeviceMetricsOverride", {"width": width, "height": 900, "deviceScaleFactor": 1, "mobile": False}, session=session)
+        call("Page.navigate", {"url": url}, session=session)
+        event("Page.loadEventFired", session)
+        time.sleep(2.5)                              # what the page does after load is measured too
+        got = call("Runtime.evaluate", {"expression": COLLECT, "awaitPromise": True, "returnByValue": True}, session=session)
+        return json.loads(got["result"]["value"])
+    finally:
+        proc.kill(); proc.wait()
+        os.close(chrome_in); os.close(chrome_out)
+        shutil.rmtree(profile, ignore_errors=True)
+
+for width in widths:
+    where = f"{label} @{width}px"
+    try:
+        loads = [load(width) for _ in range(runs)]
+    except Exception as e:
+        print(f"FAIL rendering  {where}: no measurement ({e})"); continue
+    paints = [l["lcp"] for l in loads if isinstance(l.get("lcp"), (int, float))]
+    if len(paints) < len(loads):
+        print(f"FAIL rendering  {where}: the page reported no largest contentful paint in {len(loads) - len(paints)} of {len(loads)} load(s), so it is not within any budget"); continue
+    lcp, cls = round(statistics.median(paints)), statistics.median(l["cls"] for l in loads)
+    measured = f"largest contentful paint {lcp} ms, cumulative layout shift {cls:.3f} (median of {len(loads)} cold load(s))"
+    if undeclared:
+        print(f"FAIL rendering  {where}: {measured}; {decl} declares no [budget] {' and '.join(undeclared)}, so the homepage's rendering is unbounded"); continue
+    over = []
+    if lcp > lcp_budget: over.append(f"largest contentful paint {lcp} ms is over its budget of {lcp_budget} ms")
+    if cls > cls_budget: over.append(f"cumulative layout shift {cls:.3f} is over its budget of {cls_budget}")
+    if over:
+        for o in over: print(f"FAIL rendering  {where}: {o}")
+    else:
+        print(f"OK   rendering  {where}: {measured}, within {lcp_budget} ms and {cls_budget}")
+PY
+)"
+render_check() { python3 -I -c "$RENDER_PY" "$CHROME" "$@"; }
+
 # ---------------------------------------------------------------- one route (a worker)
 # The parent spawns `site-probe --route <n> <route>` through xargs; the worker writes its
 # findings to $SITE_PROBE_WORK/res/<n> and exits 0 whatever it found, so that xargs keeps
@@ -194,7 +315,18 @@ fi
 #                this is the one a walk that asks an element about its own overflow loses.
 #   prescroller  a long unbreakable run of text inside a `<pre>` that scrolls. Not named:
 #                a text run is clipped by the element it lives in.
+#
+# And four for the rendering measurement, each against a budget written here:
+#
+#   still        text that paints once and never moves, within a generous budget.
+#   shifter      the same text pushed down by a block inserted after it painted: over a
+#                layout-shift budget of 0.05, and named as that figure.
+#   lowered      the still page against a paint budget of 1 ms, which no page meets: a budget
+#                lowered below the measurement fails naming the figure and both numbers.
+#   undeclared   the still page against a declaration with byte budgets alone: a figure with
+#                no budget is unbounded, and fails as one rather than passing unmeasured.
 if [ "$SELF" = 1 ]; then
+  FIXTURE_WIDTH=320                              # one frame's width; the fixtures are not the sweep
   PORT="${SITE_PROBE_PORT:-}"
   if [ -z "$PORT" ]; then for c in 8791 8792 8793 8794 8795 8796; do lsof -ti ":$c" >/dev/null 2>&1 || { PORT=$c; break; }; done; fi
   [ -n "$PORT" ] || { echo "site-probe: no free port in 8791-8796 (set SITE_PROBE_PORT)" >&2; exit 12; }
@@ -233,7 +365,7 @@ HTML
   frames=""; names=""; i=0
   for n in $FIXTURES; do frames="$frames<iframe id=f$i src=\"$n.html\"></iframe>"; names="$names'$n',"; i=$((i+1)); done
   cat > "$WORK/srv/run.html" <<HTML
-<!doctype html><title>probe</title><style>body{margin:0}#row{display:flex;align-items:flex-start}iframe{width:320px;height:900px;border:0;flex:none}</style>
+<!doctype html><title>probe</title><style>body{margin:0}#row{display:flex;align-items:flex-start}iframe{width:${FIXTURE_WIDTH}px;height:900px;border:0;flex:none}</style>
 <div id=row>$frames</div>
 <script>const F=[$names];let loaded=0;
 $MEASURE_JS
@@ -258,6 +390,32 @@ HTML
     printf '%s' "$w" | grep -qF -- "$want" || { printf 'FAIL %-10s %s\n' selfcheck "$n: '$want' must be named, measured '$w'"; wrong=1; }
     [ -z "$deny" ] || ! printf '%s' "$w" | grep -qF -- "$deny" || { printf 'FAIL %-10s %s\n' selfcheck "$n: '$deny' is inside a scroller and must not be named, measured '$w'"; wrong=1; }
     [ "$wrong" = 0 ] && printf 'OK   %-10s %s\n' selfcheck "$n: $w" || fails=$((fails+1))
+  done
+  cat > "$WORK/srv/still.html" <<'HTML'
+<!doctype html><title>still</title><style>body{margin:0;font:16px/1.4 system-ui,sans-serif}</style>
+<h1 id=lead>A heading that paints once and stays where it painted</h1><p>and a line of text under it</p>
+HTML
+  cat > "$WORK/srv/shifter.html" <<'HTML'
+<!doctype html><title>shifter</title><style>body{margin:0;font:16px/1.4 system-ui,sans-serif}</style>
+<h1 id=lead>A heading that paints once and is then pushed down the page</h1><p>and a line of text under it</p>
+<script>setTimeout(()=>{const b=document.createElement('div');b.style.height='300px';b.textContent='late';document.body.insertBefore(b,document.getElementById('lead'))},600)</script>
+HTML
+  printf '[budget]\nlargest_contentful_paint_ms = 60000\ncumulative_layout_shift = 0.05\n' > "$WORK/budget.toml"
+  printf '[budget]\nlargest_contentful_paint_ms = 1\ncumulative_layout_shift = 0.05\n' > "$WORK/lowered.toml"
+  printf '[budget]\nassets_bytes = 340000\ninline_json_bytes = 8000\n' > "$WORK/undeclared.toml"
+  for n in still shifter lowered undeclared; do
+    case "$n" in
+      still)   page=still;   toml=budget;  want='^OK   rendering  still @' ;;
+      shifter) page=shifter; toml=budget;  want='^FAIL rendering  shifter @[0-9]+px: cumulative layout shift 0\.[0-9]+ is over its budget of 0\.05$' ;;
+      lowered) page=still;   toml=lowered; want='^FAIL rendering  lowered @[0-9]+px: largest contentful paint [0-9]+ ms is over its budget of 1 ms$' ;;
+      undeclared) page=still; toml=undeclared; want='^FAIL rendering  undeclared @[0-9]+px: .* declares no \[budget\] largest_contentful_paint_ms and cumulative_layout_shift, so the homepage.s rendering is unbounded$' ;;
+    esac
+    m="$(render_check "http://127.0.0.1:$PORT/$page.html" "$n" "$FIXTURE_WIDTH" 1 "$WORK/$toml.toml" 2>&1 || true)"
+    if printf '%s\n' "$m" | grep -qE -- "$want" && [ "$(printf '%s\n' "$m" | grep -c .)" = 1 ]; then
+      printf 'OK   %-10s %s\n' selfcheck "$n: $m"
+    else
+      printf 'FAIL %-10s %s\n' selfcheck "$n: expected /$want/, measured '$m'"; fails=$((fails+1))
+    fi
   done
   printf 'site-probe: %s self-check failure(s) with %s — the fixtures only; run without --self-check for the site\n' "$fails" "$CHROME"
   [ "$fails" = 0 ] && exit 0 || exit 10
@@ -367,7 +525,7 @@ n=0
 for i in $(seq 1 "$n_routes"); do
   f="$WORK/res/$(printf '%04d' "$i")"
   [ -f "$f" ] || { bad probe "route $i of $n_routes produced no result file"; continue; }
-  n=$((n+3))
+  n=$((n + $(set -- $SITE_PROBE_WIDTHS; echo $#)))
   while IFS= read -r line; do [ -n "$line" ] || continue; printf '%s\n' "$line"; fails=$((fails+1)); done < "$f"
 done
 ok overflow "$n route×width measurements without horizontal overflow (or listed above)"
@@ -389,6 +547,13 @@ cat > "$WORK/srv/d.html" <<HTML
 HTML
 t="$(title_of "http://127.0.0.1:$PORT/d.html")"
 printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown opens (site/nav.js)" || bad dropdown "dropdown did not open ($t)"
+
+# how the homepage renders, at the narrowest and the widest width the dataset declares, against
+# the budgets homepage.toml declares beside the bytes homepage-check weighs
+narrow="${SITE_PROBE_WIDTHS%% *}"; wide="${SITE_PROBE_WIDTHS##* }"
+( cd "$ROOT" && render_check "http://127.0.0.1:$PORT$PREFIX/" / "$narrow $wide" 3 site/data/homepage.toml ) > "$WORK/render.txt" 2>&1 || true
+[ -s "$WORK/render.txt" ] || echo "FAIL rendering   /: the measurement printed nothing" > "$WORK/render.txt"
+while IFS= read -r line; do printf '%s\n' "$line"; case "$line" in OK*) ;; *) fails=$((fails+1)) ;; esac; done < "$WORK/render.txt"
 
 # A sample that passes is not a verdict about the site. Saying which question was answered
 # costs one line and stops "ok" from being read as a claim about every route: a --quick run

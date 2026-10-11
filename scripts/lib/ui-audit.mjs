@@ -5,7 +5,9 @@
 // breakpoint. What it adds is what only a browser can answer: whether the document overflows
 // its viewport and which element does it, what an accessibility engine finds, whether the
 // landmarks and headings make a document, whether every id is unique, whether a component's
-// trigger names a target that exists, and whether the page logged an error while loading.
+// trigger names a target that exists, whether the page logged an error while loading, and —
+// at each page's narrowest width, with the reader's reduced-motion preference emulated —
+// whether anything on it still moves.
 //
 // The server it drives is the repository's own — `majordomus serve` — so the audit does not
 // hold a second opinion about how the site is served or on which port.
@@ -30,6 +32,65 @@ export const OVERFLOW_TOLERANCE = 1;
  */
 export const VISIT_DEADLINE_MS = 60000;
 
+/**
+ * How long an animation or a transition must run, per iteration, before it is motion.
+ *
+ * The site honours `prefers-reduced-motion` by shortening every animation and transition to
+ * 0.01ms rather than removing it (share/design/base.css), because a component that waits for
+ * `animationend` must still hear one. Such an animation finishes before anybody sees a frame,
+ * so a duration under one millisecond is the preference honoured, not the preference ignored.
+ */
+export const MOTION_FLOOR_MS = 1;
+
+/**
+ * Everything on the page that still moves while the reader has asked for reduced motion, as
+ * the browser reports it: every animation it is running (CSS, transitions in flight, and
+ * script animations through the Web Animations API), and every element whose computed style
+ * would still animate or transition — a menu that is hidden now is not exempt, because it
+ * slides the moment it opens. A subtree the page declares foreign (`data-mj-foreign`) is not
+ * this repository's to fix, exactly as the accessibility engine is told. What this cannot see
+ * is a script that moves something frame by frame without the animation API (a canvas, a
+ * `requestAnimationFrame` loop): those honour the preference in their own code (site/graph.js).
+ *
+ * Evaluated in the page; `floor` is MOTION_FLOOR_MS.
+ */
+export function stillMoving(floor) {
+  const ms = (value) => Math.max(0, ...String(value || '0s').split(',').map((part) => {
+    const v = Number.parseFloat(part);
+    return Number.isFinite(v) ? (part.trim().endsWith('ms') ? v : v * 1000) : 0;
+  }));
+  const describe = (el) => el.tagName.toLowerCase() +
+    (el.id ? `#${el.id}` : '') +
+    (el.className && typeof el.className === 'string' ? `.${el.className.trim().split(/\s+/).slice(0, 3).join('.')}` : '');
+  const foreign = (el) => Boolean(el.closest?.('[data-mj-foreign]'));
+  const moving = new Map();
+  const note = (el, what) => {
+    if (!el || el.nodeType !== 1 || foreign(el)) return;
+    const key = describe(el);
+    if (!moving.has(key)) moving.set(key, { selector: key, motion: what });
+  };
+  for (const animation of document.getAnimations()) {
+    if (animation.playState !== 'running') continue;
+    const timing = animation.effect?.getComputedTiming?.() ?? {};
+    if (!(Number(timing.duration) >= floor)) continue;
+    const what = animation.animationName
+      ? `animation ${animation.animationName}`
+      : animation.transitionProperty
+        ? `transition of ${animation.transitionProperty}`
+        : 'a script animation';
+    note(animation.effect?.target, `${what} running, ${Math.round(Number(timing.duration))}ms`);
+  }
+  for (const el of document.querySelectorAll('body, body *')) {
+    const style = getComputedStyle(el);
+    if (style.animationName && style.animationName !== 'none' && ms(style.animationDuration) >= floor) {
+      note(el, `animation ${style.animationName}, ${style.animationDuration}`);
+    } else if (style.transitionProperty && style.transitionProperty !== 'none' && ms(style.transitionDuration) >= floor) {
+      note(el, `transition of ${style.transitionProperty}, ${style.transitionDuration}`);
+    }
+  }
+  return [...moving.values()];
+}
+
 /** Run a promise against a deadline, rejecting with a message a report can print. */
 function withDeadline(work, ms, what) {
   let timer;
@@ -44,8 +105,12 @@ function withDeadline(work, ms, what) {
 /**
  * Visit one page at one width and return every finding, each already carrying the route, the
  * width, the rule it broke and enough of the DOM to find it again.
+ *
+ * With `reducedMotion` the visit is made with `prefers-reduced-motion: reduce` emulated, and
+ * whatever still moves is a finding (`motion.reduced-motion-ignored`). The other invariants
+ * are measured on that visit as on any other: none of them depends on motion.
  */
-export async function auditPage(page, origin, route, width) {
+export async function auditPage(page, origin, route, width, { reducedMotion = false } = {}) {
   const findings = [];
   const console_errors = [];
   const failed_requests = [];
@@ -77,6 +142,9 @@ export async function auditPage(page, origin, route, width) {
   });
 
   await page.setViewportSize({ width, height: 900 });
+  // set on every visit, both ways: the tab is reused, and a preference left over from the
+  // previous visit would make this one measure something nobody asked for
+  await page.emulateMedia({ reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
   // A page that never loads is a finding about that page, not the end of the run. An audit
   // that aborts on the first slow navigation reports nothing about the 1600 visits after
   // it, which is how a whole sweep is lost to one asset that hung.
@@ -216,6 +284,16 @@ export async function auditPage(page, origin, route, width) {
       findings.push({ rule: 'component.trigger-unnamed', detail: `a ${trigger.component} trigger has no accessible name` });
     }
   }
+  if (reducedMotion) {
+    const moving = await page.evaluate(stillMoving, MOTION_FLOOR_MS);
+    if (moving.length) {
+      findings.push({
+        rule: 'motion.reduced-motion-ignored',
+        detail: `${moving.length} element(s) still animate or transition while the reader asks for reduced motion`,
+        elements: moving.slice(0, 10),
+      });
+    }
+  }
   for (const error of console_errors) {
     findings.push({ rule: 'runtime.console-error', detail: error });
   }
@@ -272,6 +350,7 @@ export async function auditPage(page, origin, route, width) {
     route,
     width,
     status,
+    reduced_motion: reducedMotion,
     findings,
     foreign: measured.foreign,
     components: observed.triggers.map((t) => t.component),
@@ -303,14 +382,26 @@ export function jobs() {
 export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {}) {
   // the browser the repository already drives for the cockpit probe: the system Chrome,
   // so a CI runner and a laptop use one browser and neither downloads another
-  const browser = await chromium.launch({ channel: 'chrome' });
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: 'chrome' });
+  } catch (error) {
+    // no browser is not a clean site: the caller reports SKIP and exits 13, and nothing this
+    // run would have measured — the reduced-motion pass included — is counted as passed
+    throw Object.assign(new Error(`no browser: ${String(error?.message ?? error).split('\n')[0]}`), { code: 'NO_BROWSER' });
+  }
   const context = await browser.newContext();
 
   // the whole target set, flattened, so the workers share one queue rather than a page each:
-  // a page with twelve widths would otherwise hold a worker while the others idled
+  // a page with twelve widths would otherwise hold a worker while the others idled. Each
+  // page's narrowest width — the reflow floor, which every tier visits — is the visit made
+  // with reduced motion emulated: one per page, and no visit added for it.
   const targets = [];
   for (const target of pages) {
-    for (const width of target.widths) targets.push({ route: target.route, width, tier: target.tier });
+    const narrowest = Math.min(...target.widths);
+    for (const width of target.widths) {
+      targets.push({ route: target.route, width, tier: target.tier, reducedMotion: width === narrowest });
+    }
   }
   const visits = new Array(targets.length);
   let next = 0;
@@ -328,7 +419,7 @@ export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {
         let visit;
         try {
           visit = await withDeadline(
-            auditPage(page, origin, target.route, target.width),
+            auditPage(page, origin, target.route, target.width, { reducedMotion: target.reducedMotion }),
             VISIT_DEADLINE_MS,
             `${target.route} at ${target.width}px`,
           );
@@ -351,6 +442,8 @@ export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {
             route: target.route,
             width: target.width,
             status: 0,
+            // abandoned before anything was measured: not a reduced-motion visit that passed
+            reduced_motion: false,
             findings: [{
               rule: 'page.audit-failed',
               detail: String(error?.message ?? error).split('\n')[0],

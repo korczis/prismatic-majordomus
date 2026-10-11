@@ -299,9 +299,21 @@ test('every page is visited, and the sweep is spent on one page per section', ()
 });
 
 test('the critical widths always hold the reflow floor and the desktop end', () => {
-  const widths = criticalWidths(viewports([640, 768, 1024]));
+  const widths = criticalWidths(viewports([640, 768, 1024], [320, 1600]));
   assert.equal(widths[0], REFLOW_FLOOR);
-  assert.equal(widths[widths.length - 1], 1440);
+  assert.equal(widths[widths.length - 1], 1600, 'the widest width the design declares');
+  // with no declaration the theme's widest boundary is the end: no width is invented here
+  const bare = criticalWidths(viewports([640, 768, 1024]));
+  assert.equal(bare[bare.length - 1], 1024);
+});
+
+test('the widths the design declares are each audited, and none is added beside them', () => {
+  const declared = [320, 375, 390, 768, 1024, 1280, 1600];
+  const widths = viewports([640, 768, 1024, 1280, 1536], declared);
+  assert.ok(declared.every((w) => widths.includes(w)), 'every declared width is visited');
+  const boundaries = new Set([640, 768, 1024, 1280, 1536].flatMap((b) => [b - 1, b]));
+  const invented = widths.filter((w) => !declared.includes(w) && !boundaries.has(w) && w !== REFLOW_FLOOR);
+  assert.deepEqual(invented, [], 'a width nobody declared and no media query implies');
 });
 
 test('a new section brings its own sweep without a list changing', () => {

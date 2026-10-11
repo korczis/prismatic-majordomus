@@ -33,7 +33,9 @@
 # therefore needs the server, which is why `pages` starts one too.
 #
 # The widths come from the media queries the CSS build emitted, so a breakpoint added to the
-# theme is audited without a test changing.
+# theme is audited without a test changing. Each page's narrowest visit is made with
+# prefers-reduced-motion emulated, and whatever still animates or transitions is a finding; a
+# run without a browser reports SKIP, never a page that stopped moving.
 #
 # Exit: 0 clean, 10 findings, 12 the site is not built, 13 no browser.
 set -eu
@@ -49,7 +51,7 @@ CSS="$ROOT/site/static/app.css"
 # cargo does not necessarily build into apps/majordomus-cli/target; ask it where
 MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-cargo)/debug/majordomus}"
 
-usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
 json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""
@@ -230,19 +232,31 @@ import { run, write } from "'"$ROOT"'/scripts/lib/ui-run.mjs";
 const surfaces = JSON.parse(readFileSync(process.argv[1], "utf8"));
 const only = "'"$only"'" || undefined;
 const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
-const results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
-  select: only, limit,
-  onVisit: (visit, done) => {
-    if (visit.findings.length || done % 50 === 0)
-      process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
-  },
-});
+let results;
+try {
+  results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
+    select: only, limit,
+    onVisit: (visit, done) => {
+      if (visit.findings.length || done % 50 === 0)
+        process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
+    },
+  });
+} catch (error) {
+  // no browser: nothing was measured, the reduced-motion pass included, and nothing is passed
+  if (error?.code !== "NO_BROWSER") throw error;
+  console.log(`SKIP ui audit: ${error.message}; nothing was measured, the reduced-motion pass included`);
+  process.exit(13);
+}
 write("'"$out"'", results);
 const total = results.findings.length;
 if ('"$json"') { console.log(JSON.stringify(results, null, 2)); }
 else {
   for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
   const scope = results.complete ? "every page" : "a selected part of the site";
+  const motion = results.reduced_motion;
+  console.log(motion.measured
+    ? `reduced motion: ${motion.measured} visit(s) at ${motion.at}, ${motion.findings} finding(s)`
+    : "reduced motion: not measured — no visit loaded with the preference emulated");
   console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s at ${results.concurrency} job(s) -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
 }
 process.exitCode = total ? 10 : 0;
