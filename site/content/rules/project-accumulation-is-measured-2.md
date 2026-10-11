@@ -92,9 +92,13 @@ before it acts*, and until version 2 there was no such command.
    not only the history.
 5. **Build output is reclaimed by predicate, and only build output.** The reaper removes
    `apps/majordomus-cli/target` and never a worktree, so that a false positive costs a
-   rebuild and can never cost a byte of source. A build directory is reclaimed only when it
-   is merged into `origin/master`, nobody is working in that worktree, `git status` is
-   empty, and the directory is provably cargo's own and inside that worktree. Liveness is
+   rebuild and can never cost a byte of source. A build directory is reclaimed only when its
+   worktree's tip is merged into `origin/master` **or contained in a remote-tracking ref**,
+   nobody is working in that worktree, `git status` is empty, and the directory is provably
+   cargo's own and inside that worktree. Pushed counts as landed for this purpose: on
+   2026-10-10 the merged-only form could reclaim 3 of 31 build directories while 270GB sat in
+   branches that were pushed and queued, or in detached offload trees, and the volume reached
+   99% on two machines at once. Liveness is
    read from the machine — `ps` and every process's working directory — and never from the
    peer board: an announcement belongs to a connection, and a worker that reconnects keeps
    its work while losing its place on the board, which is exactly the window a reaper runs
@@ -108,13 +112,28 @@ before it acts*, and until version 2 there was no such command.
    An mtime is never the predicate — it is the one whose missing input becomes an extreme
    value, `find -newermt` matches nothing on macOS, and a status sweep that refreshes an
    index fakes liveness for every tree it touches.
-7. **A build is bounded before it starts.** Every path that starts a build on a worker's
-   behalf asks one shared check whether there is room, and refuses below the floor. The
+7. **A build is bounded before it starts, and reclaims before it is refused.** Every path
+   that starts a build on a worker's behalf asks one shared check whether there is room.
+   Below a high-water mark (`MAJORDOMUS_RECLAIM_BELOW_MB`, default 50GiB) that check first
+   runs the reaper's classified reclaim, at most once per ten minutes per machine, so the
+   sweep happens because builds happen and not because somebody remembered it; then it
+   refuses below the floor. A reaper that is absent or refuses never fails the build: the
+   floor decides. The test runner sets the mark to zero, because a case must not act on the
+   machine it measures. The
    floor is derived from a measurement of what one build of this crate consumes, and the
    measurement is written beside the number. A bound whose own input cannot be measured says
    so and lets the build run — the opposite of a deleting predicate, and deliberately so:
    refusing every build on a machine whose `df` is unreadable stops all work to prevent a
    hypothetical.
+9. **Build concurrency is bounded per machine.** At most two builds of this repository's
+   crates compile at once on one machine (`MAJORDOMUS_BUILD_SLOTS`, default 2), whoever
+   started them. It is held below every caller rather than asked of each: `.cargo/config.toml`
+   names `scripts/build-slot` as cargo's workspace compiler wrapper, so a `cargo build`,
+   `test`, `clippy` or `llvm-cov` typed by a person or an agent waits like a script's does. A
+   build is one target directory; a slot is freed by its compilers' processes ending, never by
+   a clock, and a build that waits longer than `MAJORDOMUS_BUILD_SLOT_WAIT_S` is refused rather
+   than left waiting forever. On 2026-10-10 three sessions' builds at ~500% CPU each put the
+   machine at load 50, against a two-slot convention nothing held.
 8. **Growth is loud before it is a cliff.** `scripts/ci/backlog-check` reports the landable
    backlog and fails when it exceeds its threshold, so that "nothing is being deployed" is
    a gate's finding and not a person's.
@@ -123,13 +142,19 @@ before it acts*, and until version 2 there was no such command.
 
 - `scripts/ci/backlog-check` — the gate: the reaper and the integrator exist and are
   executable, the reaper matches processes by predicate and deletes only build directories,
-  it still holds all three conditions for reclaiming one and still refuses when liveness is
-  unmeasurable, every path that starts a build asks the shared space check, the doctrine
+  it still holds all three conditions for reclaiming one (landed or pushed, not live, clean)
+  and still refuses when liveness is unmeasurable, every path that starts a build asks the
+  shared space check, that check reclaims below its mark before the floor and the test
+  runner turns that off, the doctrine
   names the forge constraint, no document advertises the merge button, and (with a token)
   the landable backlog is within its threshold.
 - `test/cases/131_backlog_hygiene.sh` — the behavioural case for the servers and the gate.
+- `scripts/build-slot` and `.cargo/config.toml` — the machine-wide build cap, held by
+  `scripts/ci/backlog-check` (the wrapper is wired and caps at two) and exercised by case 276.
 - `test/cases/276_disk_is_bounded.sh` — the behavioural case for the build output and the
-  bound: what the reaper refuses, and that a build below the floor does not start.
+  bound: what the reaper refuses, that a pushed clean unattended worktree is reclaimed and an
+  unpushed one kept, that a build below the mark reclaims first and once per interval, and
+  that a build below the floor does not start.
 - `scripts/reap-orphans` — the reaper, dry-run by default, with `--kill` and `--reclaim` as
   two separate consents.
 {% endraw %}

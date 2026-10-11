@@ -307,6 +307,52 @@ mj_rust_bin_missing() {
 # 23.4GB each, median 3.4GB, which is what a worktree costs over its working life.
 MJ_MIN_FREE_MB_DEFAULT=5120
 
+#   MAJORDOMUS_RECLAIM_BELOW_MB   free MiB below which a build first runs the reaper's
+#                                 classified reclaim (default 51200); 0 disables it.
+#
+# The floor alone was a cliff edge, not a bound. On 2026-10-10 two machines reached 99% (12GB
+# and 7GB free) with 270GB and 48GB of build output in worktrees nobody was working in, and
+# nothing ran the reaper: it is a command a person must remember, and the floor only refuses
+# once there is nothing left to refuse with. So reclaiming moved to the demand side. Every
+# build that starts with less than this free asks `scripts/reap-orphans --targets --reclaim`
+# first — the classified sweep, safe unattended by construction (it removes build output of
+# landed or pushed, clean worktrees nobody is in, and nothing else) — and only then applies the
+# floor. 51200MiB is ten builds of the crate at their measured working size (the median build
+# directory here is 3.4GB, the largest 25GB): far enough above the floor that the sweep runs
+# while several sessions are still building, not after the last one has failed.
+MJ_RECLAIM_BELOW_MB_DEFAULT=51200
+
+# How often one machine runs that sweep at most, in seconds. The sweep reads `git status` of
+# every worktree and takes about a minute on a machine with thirty of them; a build that waits
+# a minute every time it starts under pressure would be its own outage. The stamp is a rate
+# limit, never a deletion predicate: a stamp that cannot be read means "run the sweep".
+MJ_RECLAIM_EVERY_S=600
+
+# mj_rust_reclaim <repository-root> <free-mb>
+#
+# The demand-side half of project.accumulation-is-measured: below the high-water mark, run
+# the reaper's reclaim once per interval, machine-wide, and say what it did on stderr. Never
+# fails the build: a reaper that is missing or refuses leaves the floor to decide.
+mj_rust_reclaim() {
+  mj_rr_root="$1"; mj_rr_free="$2"
+  mj_rr_mark="${MAJORDOMUS_RECLAIM_BELOW_MB:-$MJ_RECLAIM_BELOW_MB_DEFAULT}"
+  case "$mj_rr_mark" in ''|*[!0-9]*) mj_rr_mark="$MJ_RECLAIM_BELOW_MB_DEFAULT" ;; esac
+  [ "$mj_rr_mark" -gt 0 ] || return 0
+  [ "$mj_rr_free" -lt "$mj_rr_mark" ] || return 0
+  [ -x "$mj_rr_root/scripts/reap-orphans" ] || return 0
+  mj_rr_stamp="${XDG_CACHE_HOME:-$HOME/.cache}/majordomus/reclaim.stamp"
+  mj_rr_last="$(cat "$mj_rr_stamp" 2>/dev/null || true)"
+  case "$mj_rr_last" in ''|*[!0-9]*) mj_rr_last=0 ;; esac
+  mj_rr_now="$(date +%s)"
+  [ $((mj_rr_now - mj_rr_last)) -ge "$MJ_RECLAIM_EVERY_S" ] || return 0
+  mkdir -p "$(dirname "$mj_rr_stamp")" 2>/dev/null && printf '%s\n' "$mj_rr_now" > "$mj_rr_stamp" 2>/dev/null || true
+  printf 'majordomus: %sMB free, below %sMB: reclaiming unattended build output first (scripts/reap-orphans --targets --reclaim)\n' \
+    "$mj_rr_free" "$mj_rr_mark" >&2
+  env -u MAJORDOMUS_SHARE "$mj_rr_root/scripts/reap-orphans" --targets --reclaim 2>&1 \
+    | grep -E '^reap-orphans: ' | sed 's/^/  /' >&2 || true
+  return 0
+}
+
 # mj_free_mb <path>
 #
 # MiB free on the volume that path is on, or nothing at all when it cannot be read. The path
@@ -347,6 +393,9 @@ mj_rust_space_check() {
       "$mj_sc_target" "$mj_sc_what" >&2
     return 0
   fi
+  # below the high-water mark the classified sweep runs first, and the floor reads what is left
+  mj_rust_reclaim "$mj_sc_root" "$mj_sc_free"
+  mj_sc_free="$(mj_free_mb "$mj_sc_target" || printf '%s' "$mj_sc_free")"
   [ "$mj_sc_free" -lt "$mj_sc_floor" ] || return 0
 
   {
@@ -358,7 +407,7 @@ mj_rust_space_check() {
     printf '  other session on this machine dies at a point where nothing can write a file any more,\n'
     printf '  which reads to each of them as broken tooling rather than as a full disk.\n'
     printf '  Reclaim first:         scripts/reap-orphans --targets    (what is reclaimable; changes nothing)\n'
-    printf '                         scripts/reap-orphans --reclaim    (build output of landed, unattended worktrees)\n'
+    printf '                         scripts/reap-orphans --reclaim    (build output of landed or pushed, unattended worktrees)\n'
     printf '  To override:           MAJORDOMUS_MIN_FREE_MB=0\n'
   } >&2
   return 1

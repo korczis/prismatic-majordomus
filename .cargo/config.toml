@@ -1,0 +1,7 @@
+# Every compilation of a workspace member in any checkout of this repository passes through
+# scripts/build-slot, which lets at most two builds compile at once on one machine
+# (MAJORDOMUS_BUILD_SLOTS; project.accumulation-is-measured, "build concurrency is bounded").
+# A workspace wrapper and not `rustc-wrapper`: sccache keeps that one (RUSTC_WRAPPER), and
+# dependencies, which sccache serves from its cache, need no slot.
+[build]
+rustc-workspace-wrapper = "scripts/build-slot"
