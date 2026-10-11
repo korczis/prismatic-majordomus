@@ -1463,9 +1463,14 @@ pub(crate) fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String
     // "the tree in front of you is the tree the run measured" about a tree carrying code
     // the run never saw. Ignored files stay ignored: `--exclude-standard` is what makes
     // this the set a person would call "new here" rather than every build artifact.
-    let mut changed: BTreeSet<String> = git(&["diff", "--name-only", commit, "--"])?
-        .into_iter()
-        .collect();
+    //
+    // `--no-renames`: with rename detection a moved file is listed by its new path only, so
+    // the path the run measured, now gone, never counted as changed; and pairing thousands
+    // of differing paths into renames was half of what each comparison cost.
+    let mut changed: BTreeSet<String> =
+        git(&["diff", "--no-renames", "--name-only", commit, "--"])?
+            .into_iter()
+            .collect();
     changed.extend(git(&["ls-files", "--others", "--exclude-standard"])?);
     Some(changed)
 }
