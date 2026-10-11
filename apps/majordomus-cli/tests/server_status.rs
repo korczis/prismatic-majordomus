@@ -283,30 +283,43 @@ fn a_worktree_without_a_server_asks_the_primarys_for_the_mesh() {
         "the primary's server answered, not the absence: {answer}"
     );
 
-    // the commands that write to the mesh reach the primary's server too: whatever it
+    // a command that writes to the mesh reaches the primary's server too: whatever it
     // answers (this fixture declares no mesh), the answer is its, never the absence
-    for command in [
-        &[
-            "mesh",
-            "claim",
-            "site",
-            "--session",
-            "s",
-            "--format",
-            "json",
-        ][..],
-        &["mesh", "handover", "publish", "--format", "json"][..],
-    ] {
-        let (_, out, err) = common::run_in(&wt, command, "");
-        assert!(
-            err.contains("asking the server of") && err.contains(&primary.address),
-            "{command:?} borrows the primary's server: {err}"
-        );
-        assert!(
-            !out.contains("no running server"),
-            "{command:?} reached the primary's server: {out}"
-        );
-    }
+    let claim = [
+        "mesh",
+        "claim",
+        "site",
+        "--session",
+        "s",
+        "--format",
+        "json",
+    ];
+    let (_, out, err) = common::run_in(&wt, &claim, "");
+    assert!(
+        err.contains("asking the server of") && err.contains(&primary.address),
+        "a claim borrows the primary's server: {err}"
+    );
+    assert!(
+        !out.contains("no running server"),
+        "a claim reached the primary's server: {out}"
+    );
+
+    // a publish would read the primary's handovers, not the worktree's: refused by name
+    let (code, out, _) = common::run_in(
+        &wt,
+        &["mesh", "handover", "publish", "--format", "json"],
+        "",
+    );
+    assert_eq!(code, 10, "{out}");
+    let refused: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(refused["error"]["code"], "borrowed_server", "{refused}");
+    assert!(
+        refused["error"]["message"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("that checkout's handovers"),
+        "{refused}"
+    );
 
     // a consume would write the handover into the primary's checkout: refused by name
     let consume = [

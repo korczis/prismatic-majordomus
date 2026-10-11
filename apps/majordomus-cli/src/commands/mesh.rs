@@ -310,12 +310,23 @@ fn server_url(args: &MeshQueryArgs) -> Result<Option<Serving>> {
     Ok(serving)
 }
 
-/// Whether a request would write a record into the checkout whose server answers it: a
-/// consumed handover is materialized there, so through a borrowed server it would land in
-/// another checkout's `.ai/local`.
-fn writes_into_the_serving_checkout(target: &str, body: Option<&Value>) -> bool {
-    target == "/api/v1/mesh/handovers/consume"
-        && body.is_some_and(|b| b["materialize"] != json!(false))
+/// Why a request cannot go through another checkout's server, when it cannot: it reads or
+/// writes the files of the checkout whose server answers it. A published handover is read
+/// from that checkout's `.ai/local/state/handovers/` (the latest, or the path named under
+/// it), so through a borrowed server it would publish the other checkout's record; a
+/// consumed handover is materialized there, so it would land in the other checkout.
+fn touches_the_serving_checkout(target: &str, body: Option<&Value>) -> Option<&'static str> {
+    match target {
+        "/api/v1/mesh/handovers" => Some(
+            "publishing through it would read that checkout's handovers, not this one's: publish from a checkout with its own running server (`majordomus serve ensure` here)",
+        ),
+        "/api/v1/mesh/handovers/consume"
+            if body.is_some_and(|b| b["materialize"] != json!(false)) =>
+        {
+            Some("consuming through it would write the handover into that checkout: pass --no-materialize, or consume it there")
+        }
+        _ => None,
+    }
 }
 
 /// Ask the running server that answers for this checkout ([`choose`]), and render the
@@ -338,9 +349,9 @@ fn ask(
         return Ok(if method == "GET" { 0 } else { EXIT_REFUSED });
     };
     if let Some(worktree) = &serving.borrowed_from {
-        if writes_into_the_serving_checkout(target, body.as_ref()) {
+        if let Some(why) = touches_the_serving_checkout(target, body.as_ref()) {
             let message = format!(
-                "this checkout has no running server, and consuming through the server of {worktree} would write the handover into that checkout: pass --no-materialize, or consume it there"
+                "this checkout has no running server, and the one answering is {worktree}'s; {why}"
             );
             match args.format {
                 OutputFormat::Json => println!(
@@ -935,21 +946,32 @@ mod tests {
     }
 
     #[test]
-    fn only_a_materializing_consume_writes_into_the_serving_checkout() {
+    fn a_publish_and_a_materializing_consume_touch_the_serving_checkout() {
         let consume = "/api/v1/mesh/handovers/consume";
-        assert!(writes_into_the_serving_checkout(
+        assert!(touches_the_serving_checkout(
             consume,
             Some(&json!({ "handover": "h", "materialize": true }))
-        ));
-        assert!(!writes_into_the_serving_checkout(
-            consume,
-            Some(&json!({ "handover": "h", "materialize": false }))
-        ));
-        assert!(!writes_into_the_serving_checkout(
+        )
+        .is_some_and(|why| why.contains("--no-materialize")));
+        assert_eq!(
+            touches_the_serving_checkout(
+                consume,
+                Some(&json!({ "handover": "h", "materialize": false }))
+            ),
+            None
+        );
+        // a publish reads the serving checkout's handovers, named or latest
+        assert!(touches_the_serving_checkout(
             "/api/v1/mesh/handovers",
             Some(&json!({ "path": "p" }))
-        ));
-        assert!(!writes_into_the_serving_checkout("/api/v1/mesh", None));
+        )
+        .is_some_and(|why| why.contains("that checkout's handovers")));
+        assert!(touches_the_serving_checkout("/api/v1/mesh/handovers", None).is_some());
+        assert_eq!(
+            touches_the_serving_checkout("/api/v1/mesh/claims", None),
+            None
+        );
+        assert_eq!(touches_the_serving_checkout("/api/v1/mesh", None), None);
     }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.
