@@ -256,12 +256,21 @@ impl LiveStream {
         let mut truncated = false;
         match &self.filter {
             Filter::Only(ids) => {
+                // each cursor is set as its replay is collected rather than as it is written:
+                // a socket that fails mid-replay ends the connection before the live stream
+                // reads a cursor, so the two only differ on a connection that is already gone
                 for id in ids {
-                    written.insert(id.clone(), self.after);
+                    let mut cursor = self.after;
                     if let Some(page) = self.store.events(id, self.after, MAX_REPLAY) {
                         truncated |= page.truncated;
+                        cursor = page
+                            .events
+                            .iter()
+                            .map(|e| e.sequence)
+                            .fold(cursor, u64::max);
                         replayed.extend(page.events);
                     }
+                    written.insert(id.clone(), cursor);
                 }
             }
             // an all-executions connection has no cursor to replay from; a client that needs
@@ -286,9 +295,6 @@ impl LiveStream {
         for event in replayed {
             if !alive {
                 break;
-            }
-            if let Some(cursor) = written.get_mut(&event.execution_id) {
-                *cursor = (*cursor).max(event.sequence);
             }
             alive = write(&mut socket, &*event);
         }
