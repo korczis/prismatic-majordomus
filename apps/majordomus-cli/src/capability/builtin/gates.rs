@@ -418,6 +418,14 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         }
     };
 
+    // The closing half of the done invariant — did the recorded debt grow, is a branch or a
+    // worktree created since the task started still here, is a pull request opened since
+    // still open — is read from git and the recorded forge observation, measured from where
+    // the task started. With no task there is no start, and the three stay unknown.
+    let closing = task
+        .as_ref()
+        .map(|t| gates::closing::read(&root, &t.head, &t.started_at));
+
     Ok(gates::complete(
         &m,
         &changed,
@@ -428,6 +436,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         &standing,
         closure_reachable,
         convergence.as_ref(),
+        closing.as_ref(),
         input.on_demand.unwrap_or(false),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
         findings,
@@ -564,6 +573,60 @@ mod tests {
             .execute("gates.completion", serde_json::json!({ "changed": [] }))
             .expect("the completion report answers");
         serde_json::from_value(value).expect("a completion report")
+    }
+
+    /// With a task record there is a start to measure from, so the closing readings are taken
+    /// and reach the report. Here there is no git, so the debt cannot be compared — and the
+    /// question says that, where before the task existed it said there was no start.
+    #[test]
+    fn a_task_brings_the_closing_readings_into_the_report() {
+        let debt_of = |c: &crate::gates::Completion| {
+            c.questions
+                .iter()
+                .find(|q| q.id == "no-new-debt")
+                .expect("the invariant asks it")
+                .clone()
+        };
+        let without = debt_of(&completion_with(super::super::modules()));
+        assert_eq!(without.status, crate::gates::GateStatus::Unknown);
+        assert!(
+            without.evidence.contains("no task record"),
+            "{}",
+            without.evidence
+        );
+
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let record = crate::gates::task_path(repo.root());
+        std::fs::create_dir_all(record.parent().unwrap()).unwrap();
+        std::fs::write(
+            &record,
+            "id: t-1\ntask: \"closing\"\nprofile: implementation\noutcome: active\n\
+             started_at: 2026-10-10T12:00:00Z\nhead: 0123456789012345678901234567890123456789\n",
+        )
+        .unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let value = ctx
+            .execute("gates.completion", serde_json::json!({ "changed": [] }))
+            .expect("the completion report answers");
+        let with: crate::gates::Completion = serde_json::from_value(value).unwrap();
+        assert!(with.present, "the task record was read");
+        let debt = debt_of(&with);
+        assert_eq!(
+            debt.status,
+            crate::gates::GateStatus::Unknown,
+            "unread is never a pass"
+        );
+        assert!(
+            debt.evidence.contains("could not be compared"),
+            "{}",
+            debt.evidence
+        );
     }
 
     /// Whether work is left behind is `convergence.report`'s answer. When that answer cannot

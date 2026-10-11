@@ -2148,6 +2148,15 @@
       "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
     },
     {
+      "id": "claim:the-closing-question-is-measured",
+      "kind": "claim",
+      "label": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
+      "status": "guaranteed",
+      "route": "/guarantees/the-closing-question-is-measured/",
+      "external": false,
+      "note": "the readings are the repository's, not one worker's; the case adds an entry to a baseline, creates a branch and a worktree, and breaks the task's starting commit to see unknown instead of pass."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -2326,6 +2335,13 @@
       "id": "impl:apps/majordomus-cli/src/evidence/subject.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/subject.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/gates/closing.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/gates/closing.rs",
       "route": null,
       "external": false
     },
@@ -3560,6 +3576,13 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/1037_the_closing_question_is_measured.sh",
+      "kind": "test",
+      "label": "test/cases/1037_the_closing_question_is_measured.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/1037_the_closing_question_is_measured.sh"
     },
     {
       "id": "test:test/cases/103_obligations.sh",
@@ -5533,6 +5556,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:the-closing-question-is-measured",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -6658,6 +6686,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:the-closing-question-is-measured",
+      "target": "impl:apps/majordomus-cli/src/gates/closing.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -7780,6 +7813,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:the-closing-question-is-measured",
+      "target": "test:test/cases/1037_the_closing_question_is_measured.sh",
       "kind": "proved_by"
     }
   ]
