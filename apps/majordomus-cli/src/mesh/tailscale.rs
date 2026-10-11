@@ -43,6 +43,19 @@ const STATUS_TIMEOUT: Duration = Duration::from_secs(10);
 const SLICE: Duration = Duration::from_millis(500);
 
 /// The provider: its declaration, the counters its status reports, and its state.
+///
+/// ```
+/// use majordomus_cli::mesh::config::TailscaleConfig;
+/// use majordomus_cli::mesh::provider::{MeshProvider, MeshProviderState};
+/// use majordomus_cli::mesh::tailscale::TailscaleProvider;
+///
+/// let provider = TailscaleProvider::new(TailscaleConfig::default());
+/// assert_eq!(provider.id(), "tailscale");
+/// // nothing asked yet: stopped, and nothing sent
+/// let status = provider.status();
+/// assert!(matches!(status.state, MeshProviderState::Stopped));
+/// assert_eq!(status.sent, 0);
+/// ```
 pub struct TailscaleProvider {
     config: TailscaleConfig,
     counters: Arc<Counters>,
@@ -51,6 +64,16 @@ pub struct TailscaleProvider {
 
 impl TailscaleProvider {
     /// A provider over its declaration; nothing is asked until the manager calls `start`.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::TailscaleConfig;
+    /// use majordomus_cli::mesh::provider::MeshProvider;
+    /// use majordomus_cli::mesh::tailscale::TailscaleProvider;
+    ///
+    /// // a declared command that does not exist is only read at `start`, never here
+    /// let config = TailscaleConfig { command: "no-such-tailscale".into(), ..TailscaleConfig::default() };
+    /// assert_eq!(TailscaleProvider::new(config).status().id, "tailscale");
+    /// ```
     pub fn new(config: TailscaleConfig) -> Self {
         TailscaleProvider {
             config,
