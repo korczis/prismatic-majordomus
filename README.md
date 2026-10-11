@@ -352,6 +352,7 @@ To follow all of it, and the executor's merges and GitHub's runs beside it, in o
 use `majordomus monitor`. It folds away the heartbeat noise, puts what names you first, and
 resumes from one cursor across every source:
 
+<!-- majordomus:unrun they follow a running server's stream, and --follow does not end on its own; cases 1050 and 1051 run these commands against a server with a declared mesh -->
 ```sh
 majordomus monitor --for 1b                # the last hour, what names 1b first
 majordomus monitor --follow                # keep printing what is new
