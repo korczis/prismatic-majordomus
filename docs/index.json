@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "1393d9ef2a0a85209f379a87cccfb0f9cf65d253",
+  "commit": "7377fe6568a360bb6ca7d5ea589ef2e552fb06af",
   "source_version": "0.20.0",
-  "registry_fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0"
+  "registry_fingerprint": "1404e4002fc0fb656703ad3310b9f910c4ee4254b09a2560d822dc6e4e333eda"
  },
  "counts": {
-  "pages": 1994,
-  "capabilities": 2112,
+  "pages": 1996,
+  "capabilities": 2116,
   "cli_commands": 101,
   "http_routes": 181,
   "mcp_tools": 177,
-  "mcp_resources": 1982,
+  "mcp_resources": 1986,
   "modules": 86
  },
  "kinds": [
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 237
+   "count": 238
   },
   {
    "kind": "command",
@@ -102,7 +102,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 327
+   "count": 328
   },
   {
    "kind": "domain",
@@ -150,7 +150,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 271
+   "count": 272
   },
   {
    "kind": "knowledge",
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 412
+   "count": 413
   },
   {
    "kind": "use-case",
@@ -4158,6 +4158,11 @@
    "description": "There is no status: field in an issue or a milestone. Writing one is an unknown key. An issue records what happened to it — started_at, verified_at, completed_at, cancelled, and its evidence — and BLOCKED, READY, ACTIVE, VERIFY, DONE or CANCELLED follows from those facts together with the state of the issues it depends on. A milestone's status follows from its issues and its own evidence."
   },
   {
+   "route": "/guarantees/projected-record-edit-is-landable/",
+   "title": "A pull request that edits a projected plan record is not refused because GitHub does not show the edit yet, and the trunk is refused for it once a declared window has passed",
+   "description": "GitHub's issues and milestones are a projection of the plan on the trunk. A pull request"
+  },
+  {
    "route": "/guarantees/projection-fingerprint/",
    "title": "Every generated instruction file carries its own stamp, and a hand edit is detected",
    "description": "When update writes a projection it stamps it: the first line of a file-mode target, or the begin marker of a region-mode target, names the hash of the policy it was rendered from and the hash of the content the stamp covers. doctor and watch hash the content on disk and compare it with the stamp; a difference means somebody edited a generated file by hand, and it is reported by name. Nothing is recorded anywhere else, so a fresh clone is checked exactly as the checkout that generated the file was."
@@ -6006,6 +6011,11 @@
    "route": "/plan/i2165/",
    "title": "I2165 — A released archive carries a provenance attestation the installer can check",
    "description": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies."
+  },
+  {
+   "route": "/plan/i2300/",
+   "title": "I2300 — A head is judged against what it changes, not against GitHub's live state",
+   "description": "Make scripts/ci/github-check report as pending, and not refuse, the drift an apply would write on the records a head changed since its merge base, and on the trunk on the records that changed in a landing younger than a declared window; refuse the same drift on every other record, and on the trunk past the window with the remedy named."
   },
   {
    "route": "/plan/intent-bound-work/",
@@ -8690,7 +8700,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.20.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.20.0, built from commit 1393d9ef2a0a85209f379a87cccfb0f9cf65d253: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.20.0, built from commit 7377fe6568a360bb6ca7d5ea589ef2e552fb06af: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
