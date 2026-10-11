@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "c6804666618c5b4bf845a9b48a1c775820939f099200f37915fa75b2169fb767",
     "summary": {
-      "total": 2112,
+      "total": 2113,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1929,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1929
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1937
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1983,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 272,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "b6c57a53f219085f33499ae64da2f70374d89080a5d17c06d9ed8bde25d430c1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,7 +76190,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 272,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 27,
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 133395
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87959,6 +87959,17 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2416",
+        "kind": "issue",
+        "identity": "I2416",
+        "title": "The ci verdict asks every selected gate for a receipt, and a gate whose step never ran is red",
+        "description": "Make scripts/ci/verdict green only when every gate the plan selected left a receipt from the step that ran it, every receipt `success`: a job's success is not a gate's, because a job carries many gates and a step its condition skipped does not fail the job. Cancelled, skipped, missing and absent never pass, and each has a fixture.",
+        "path": ".ai/repo/project/issues/I2416.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3726
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -93833,7 +93844,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 20835
+        "bytes": 22170
       },
       {
         "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
@@ -96057,7 +96068,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 23361
+        "bytes": 27701
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -96993,7 +97004,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 272
     },
     {
       "name": "knowledge",

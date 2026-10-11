@@ -30391,6 +30391,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I2416",
+        "kind": "issue",
+        "label": "I2416",
+        "summary": "The ci verdict asks every selected gate for a receipt, and a gate whose step never ran is red",
+        "route": "/cockpit/objects/issue/i2416",
+        "source": ".ai/repo/project/issues/I2416.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A selected gate whose job succeeded and which left no receipt makes the verdict red, naming the gate and its job",
+            "A selected gate with a receipt `skipped`, `cancelled`, `failure` or an empty outcome makes the verdict red, naming the outcome, whatever its job reported",
+            "No receipts directory, or an empty one, is red for every selected gate; a verdict asked without --receipts is a usage error",
+            "A receipt of a gate the plan did not select changes nothing",
+            "scripts/ci/timed and scripts/ci/run-plan write one receipt per step and per gate they ran, and none for a gate run-plan skips",
+            "Every gate job of validate.yml uploads ci-receipts-<job>, and the ci job passes --receipts"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "scripts/ci/verdict reads the plan and the `needs` context only. scripts/ci/timed and scripts/ci/run-plan record timings, not outcomes. No artifact says which gate's step ran.",
+          "depends_on": [],
+          "evidence_required": [
+            "receipt_verdict_fixtures"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Cancelling moot runs (V4-02-04), the build-once artifact (V4-03), case selection by impact (V4-04-01), the long tail (V4-04-02) and the 300 s budget (V4-05-04): the other items of the mission.",
+            "Requiring receipts from each matrix lane by name: a gate is green with at least one receipt and every receipt `success`; which lanes must each report is not declared in the gate model."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/verdict",
+            "scripts/ci/timed",
+            "scripts/ci/run-plan",
+            ".github/workflows/validate.yml",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/26_ci_wiring.sh"
+          ],
+          "slug": "every-selected-gate-leaves-a-receipt",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan 26_ci_wiring",
+            "actionlint .github/workflows/validate.yml"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -66615,6 +66662,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2416",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2416",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -75406,8 +75463,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2494,
+      "edges": 5448,
       "acyclic": false,
       "truncated": false
     }
