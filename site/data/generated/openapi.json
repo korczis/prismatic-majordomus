@@ -1214,6 +1214,12 @@
       "id": "cockpit",
       "path": "/cockpit",
       "what": "The registry, rendered for a person"
+    },
+    {
+      "availability": "served-only",
+      "id": "ui",
+      "path": "/ui",
+      "what": "The delivery, for a person: majordomus ui"
     }
   ],
   "op_homes": {
@@ -20181,7 +20187,7 @@
       "is_enum": true,
       "name": "Feature",
       "properties": [],
-      "type": "\"mcp\" | \"cockpit\"",
+      "type": "\"mcp\" | \"cockpit\" | \"ui\"",
       "used_by": [],
       "used_by_schemas": [
         "Surface"
@@ -20194,6 +20200,10 @@
         {
           "description": "This process serves the Cockpit.",
           "value": "cockpit"
+        },
+        {
+          "description": "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135).",
+          "value": "ui"
         }
       ],
       "variants": []

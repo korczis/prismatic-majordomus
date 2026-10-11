@@ -70789,6 +70789,11 @@
                   "type": "string",
                   "const": "cockpit",
                   "description": "This process serves the Cockpit."
+                },
+                {
+                  "type": "string",
+                  "const": "ui",
+                  "description": "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135)."
                 }
               ],
               "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."

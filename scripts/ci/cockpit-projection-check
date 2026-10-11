@@ -15,7 +15,9 @@
 # catalogue in the navigation, the kind filter and the subtitle of the objects page — each
 # of them a fact `repository.info` and `objects.list` already answer.
 #
-# The subject is every Rust file under the Cockpit's own directory. A finding is a file
+# The subject is every Rust file under the directories of the two surfaces a person reads,
+# the Cockpit's and the UI's (`majordomus ui`, ADR 0135): both are projections, and a rule
+# that held one of them would let the other grow what it refuses. A finding is a file
 # that reaches a field named `index` on a context value at all: `ctx.index`, `context.index`
 # or `&ctx.index` handed to something else. A page that names none of them cannot have read
 # the index; a page that names one has stepped around the executor.
@@ -63,6 +65,8 @@ set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 COCKPIT="apps/majordomus-cli/src/cockpit"
+# the UI's own directory (ADR 0135); every check that holds the Cockpit holds it too
+UI_SURFACE="apps/majordomus-cli/src/ui"
 UI=0 STRICT=0 WRITE=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -131,7 +135,7 @@ match(t, /(^|[^A-Za-z0-9_])fn [A-Za-z0-9_]+/) { s = substr(t, RSTART, RLENGTH); 
   }
   prev = t
 }' "$f"
-  done < <(find "$COCKPIT" -name '*.rs' -type f | LC_ALL=C sort)
+  done < <(find "$COCKPIT" "$UI_SURFACE" -name '*.rs' -type f | LC_ALL=C sort)
 }
 
 ui_unconditional_ok() {
@@ -171,7 +175,9 @@ pending {
 }
 
 ui_count_default() {
-  awk -v F="$UI_PAGES" "$UI_AWK_COMMON"'
+  local f
+  while IFS= read -r f; do
+  awk -v F="$f" "$UI_AWK_COMMON"'
 { t = trim($0) }
 is_comment(t) { if (marks(t)) exempt = 1; next }
 match(t, /(^|[^A-Za-z0-9_])fn [A-Za-z0-9_]+/) { s = substr(t, RSTART, RLENGTH); sub(/.*fn /, "", s); fn = s }
@@ -185,12 +191,13 @@ match(t, /(^|[^A-Za-z0-9_])fn [A-Za-z0-9_]+/) { s = substr(t, RSTART, RLENGTH); 
     printf "count-default %s %s %s\t%s:%d\tan absent count renders as zero in fn %s; render it as unknown, or say why zero is the fact (// ui-integrity: <reason>)\n", F, fn, squash(t), F, NR, fn
   w1 = w2; w2 = w3; w3 = w4; w4 = t; w5 = t
   exempt = 0
-}' "$UI_PAGES"
+}' "$f"
+  done < <({ printf '%s\n' "$UI_PAGES"; find "$UI_SURFACE" -name '*.rs' -type f | LC_ALL=C sort; })
 }
 
 ui_integrity() {
   local subject
-  for subject in "$COCKPIT" "$UI_HEALTH" "$UI_PAGES" "$UI_SRC"; do
+  for subject in "$COCKPIT" "$UI_SURFACE" "$UI_HEALTH" "$UI_PAGES" "$UI_SRC"; do
     if [ ! -e "$subject" ]; then
       echo "cockpit-projection-check: --ui-integrity cannot read $subject; nothing was measured" >&2
       exit 12
@@ -265,9 +272,13 @@ if [ ! -d "$COCKPIT" ]; then
   echo "cockpit-projection-check: no Cockpit at $COCKPIT; nothing to measure" >&2
   exit 12
 fi
+if [ ! -d "$UI_SURFACE" ]; then
+  echo "cockpit-projection-check: no UI at $UI_SURFACE; nothing to measure" >&2
+  exit 12
+fi
 
-files="$(find "$COCKPIT" -name '*.rs' -type f | LC_ALL=C sort)"
-[ -n "$files" ] || { echo "cockpit-projection-check: $COCKPIT holds no Rust file" >&2; exit 12; }
+files="$(find "$COCKPIT" "$UI_SURFACE" -name '*.rs' -type f | LC_ALL=C sort)"
+[ -n "$files" ] || { echo "cockpit-projection-check: $COCKPIT and $UI_SURFACE hold no Rust file" >&2; exit 12; }
 n="$(printf '%s\n' "$files" | wc -l | tr -d ' ')"
 
 # A comment may say the word: the module documentation of nav.rs explains why the kinds are
