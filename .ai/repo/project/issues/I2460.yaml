@@ -1,0 +1,30 @@
+id: I2460
+milestone: development-runtime
+title: "The overview asks its sources at once, so it costs its slowest source and not their sum"
+slug: the-overview-asks-its-sources-at-once
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "dashboard.overview executes its distinct sources concurrently through the shared executor, so the Cockpit's first page and every screen built on the overview paint in the time of the slowest source rather than the sum of all seven."
+why: "The first slice of the owner's unified real-data UI pack (campaigns/majordomus-ui-unified-real-data-v2-20261011, milestones M03 and M11-I04; the M00 audit is tmp/owner-packs/majordomus-ui-unified-real-data-v2-20261011/AUDIT-M00.md). Measured on 2026-10-11 against the shared server 0.20.0 at master 4dfd185: GET /cockpit loaded in 13.1 s with JavaScript and 17.6 s without, and GET /api/v1/dashboard/overview answered in 7.4-10.6 s. Its handler (apps/majordomus-cli/src/capability/builtin/dashboard.rs, fn overview) asked health.report, release.version, plan.status, worktree.status, plan.next, continuity.state and peers.list one after another. Asked alone, continuity.state took 4.9 s, worktree.status 2.0 s, health.report 0.9 s, release.version 0.6 s and the rest under 20 ms, so the overview cost their sum. Every dashboard screen the pack asks for composes this answer, and a dashboard that needs ten seconds before its first byte cannot be the product's front page."
+current_state: "The seven sources are executed sequentially; the overview's latency is the sum of theirs."
+desired_state: "The distinct sources are asked on scoped threads and joined; the answer, its cards, their order and the progress steps (reported after the last answer, in declaration order) are what they were. A source whose thread panics yields unknown cards that carry the reason, as any failed source does. Not done here: caching the composition (ADR 0088 refuses it, because a card must not be older than the source a reader drills into), and making continuity.state or worktree.status themselves faster."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - ".ai/repo/project/issues/I2460.yaml"
+depends_on: []
+acceptance_criteria:
+  - "Each distinct (capability, input) source of the overview is asked exactly once, in the order the cards first name it"
+  - "Asked at once, every source answers as it does when asked alone, and every card is still its source's value at its pointer or unknown"
+  - "On the shared server of this repository, GET /api/v1/dashboard/overview answers in no more than the slowest single source plus composition, measured before and after"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib capability::builtin::dashboard"
+  - "cargo test --test dashboard"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 534_the_overview_answers_four_questions.sh"
+evidence_required:
+  - "overview_sources_concurrent_test"
+  - "overview_latency_before_after"
+created_at: 2026-10-11
+updated_at: 2026-10-11

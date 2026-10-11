@@ -1,7 +1,7 @@
 +++
 title = "The derive offload"
 description = "the derive offload: a branch's derive run on a declared cluster machine in its turn — the commands and exit codes, the `derive-offload` declaration, host choice by free space and queue length, the FIFO queue with dead-waiter removal, the bundle round trip with its refusals and a build directory of each derive's own, and the board and mesh etiquette"
-weight = 56
+weight = 57
 [extra]
 source = "docs/OFFLOAD.md"
 +++

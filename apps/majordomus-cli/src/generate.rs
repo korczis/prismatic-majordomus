@@ -1036,6 +1036,7 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
     for path in [
         render::COMPILED_MARK,
         "share/cockpit/favicon.svg",
+        crate::ui::FAVICON,
         "site/static/favicon.svg",
         "site/static/images/logo-mark.svg",
     ] {
@@ -1053,6 +1054,18 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
         logo_source,
         version,
         &logo,
+    ));
+
+    // the kit's icons, declared once beside the site's templates and compiled into the
+    // crate for the UI's shell (ADR 0135), so the two surfaces draw one icon set
+    let icons_path = app.repository.root().join(crate::ui::icons::SOURCE);
+    let icons = std::fs::read_to_string(&icons_path).map_err(|e| Error::io(&icons_path, e))?;
+    out.push(Artifact::comment_text(
+        crate::ui::icons::COMPILED,
+        "ui-icons",
+        format!("{}, the kit's icons", crate::ui::icons::SOURCE),
+        version,
+        &icons,
     ));
 
     // the site's dataset and the reference documents
