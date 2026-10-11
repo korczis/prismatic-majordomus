@@ -37,6 +37,7 @@
 //! ```
 
 pub(crate) mod capabilities;
+pub(crate) mod claim;
 pub(crate) mod command;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
@@ -268,7 +269,7 @@ impl Ui {
             command::ROUTE => command::screen(&ctx, &req.query),
             capabilities::ROUTE => capabilities::screen(&ctx, &req.query),
             docs::ROUTE => docs::screen(&ctx),
-            evidence::ROUTE => evidence::screen(&ctx),
+            evidence::ROUTE => evidence::screen(&ctx, &req.query),
             governance::ROUTE => governance::screen(&ctx),
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(&ctx, &req.query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(&ctx),
@@ -444,7 +445,10 @@ mod tests {
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
             (delivery::ROUTE, delivery::screen(&ctx)),
-            (evidence::ROUTE, evidence::screen(&ctx)),
+            (
+                evidence::ROUTE,
+                evidence::screen(&ctx, &[("claim".into(), "no-such-claim".into())]),
+            ),
             (governance::ROUTE, governance::screen(&ctx)),
             (command::ROUTE, command::screen(&ctx, &[])),
             (

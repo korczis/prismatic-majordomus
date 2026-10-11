@@ -447,7 +447,11 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
 /// and the factors of its rank. Read from the queue's own answer, so it costs nothing more.
 fn pull_request_detail(a: &Value) -> El {
     let s = |k: &str| text(a, k);
-    let number = a.get("number").and_then(Value::as_u64).unwrap_or_default();
+    // an assessment without a number is shown as unknown, never as #0
+    let number = a
+        .get("number")
+        .and_then(Value::as_u64)
+        .map_or_else(|| "unknown".to_string(), |n| n.to_string());
     let strings = |k: &str| -> Vec<String> {
         a.get(k)
             .and_then(Value::as_array)

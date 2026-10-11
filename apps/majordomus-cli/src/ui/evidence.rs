@@ -16,10 +16,14 @@ pub const ROUTE: &str = "/ui/evidence";
 
 const EVIDENCE: Source = Source::of("evidence.report");
 
-/// The Evidence screen.
-pub fn screen(ctx: &Context) -> View {
+/// The Evidence screen; `query` may pick one claim to inspect (`?claim=<id>`).
+pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[EVIDENCE]);
     let evidence = &answers[&EVIDENCE];
+    let picked = super::claim::picked(query);
+    let inspected = picked
+        .as_deref()
+        .map(|id| super::claim::inspector(&super::claim::ask(ctx, id), id));
 
     let top = hero(
         "file-check",
@@ -41,7 +45,14 @@ pub fn screen(ctx: &Context) -> View {
             .take(ROWS * 2)
             .map(|f| {
                 el("tr")
-                    .child(el("td").class("mj-ui-mono").text(text(f, "claim")))
+                    .child(
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-mono")
+                                .attr("href", super::claim::href(&text(f, "claim")))
+                                .text(text(f, "claim")),
+                        ),
+                    )
                     .child(el("td").child(state(f, "state")))
                     .child(el("td").class("mj-ui-dim").text(text(f, "reason")))
             })
@@ -60,9 +71,13 @@ pub fn screen(ctx: &Context) -> View {
             .map(|c| {
                 el("tr")
                     .child(
-                        el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(c, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(c, "claim"))),
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr("href", super::claim::href(&text(c, "id")))
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(c, "id")))
+                                .child(el("span").class("mj-ui-cell-title").text(text(c, "claim"))),
+                        ),
                     )
                     .child(el("td").child(state(c, "state")))
                     .child(
@@ -75,8 +90,11 @@ pub fn screen(ctx: &Context) -> View {
         table(&["Claim", "State", "Settled by"], rows, "No claim is made.")
     });
 
-    let grid = el("div")
-        .class("mj-ui-grid")
+    let mut grid = el("div").class("mj-ui-grid");
+    if let Some(inspector) = inspected {
+        grid = grid.child(wide(inspector));
+    }
+    let grid = grid
         .child(panel(
             "Claims without a verdict",
             "The claims the report could not settle, by why.",
@@ -113,7 +131,7 @@ mod tests {
     fn every_claim_is_a_row_and_an_unsupported_guarantee_is_a_finding() {
         let repo = furnished();
         let ctx = repo.context().expect("a context");
-        let html = screen(&ctx).main.render();
+        let html = screen(&ctx, &[]).main.render();
         assert!(
             html.contains("the claim guarantees a behaviour and names no test at all"),
             "{html}"

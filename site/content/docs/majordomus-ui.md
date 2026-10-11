@@ -60,7 +60,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list`; `delivery.report` on its own route |
-| Evidence | `/ui/evidence` | `evidence.report` |
+| Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report` |
 
