@@ -34,15 +34,28 @@ mkdir -p "$T/state" "$T/bin"
 printf '#!/bin/sh\necho "gh: not here in this case" >&2\nexit 4\n' > "$T/bin/gh"
 chmod +x "$T/bin/gh"
 ( cd "$R" && PATH="$T/bin:$PATH" XDG_STATE_HOME="$T/state" exec "$RB" serve --port 0 --idle 0 --discovery filesystem </dev/null >"$T/serve.log" 2>&1 ) &
-PIDS="$PIDS $!"
-ready() { [ -n "$(jq -r '.url // empty' "$R/.ai/local/state/mcp/server.json" 2>/dev/null)" ]; }
-i=0; until ready; do i=$((i + 1)); [ "$i" -lt 200 ] || { cat "$T/serve.log"; exit 1; }; sleep 0.2; done
+SRV_PID=$!
+PIDS="$PIDS $SRV_PID"
+# Ready is the server answering that it is, not its lease naming a URL: a lease can name one
+# before the server serves it. The wait follows the load rather than a fixed count — a loaded
+# runner took over 40 s (lundra, six cases at a time at load 19) — and a server that exits
+# is said at once rather than at the end of the wait.
+ready() {
+  local url
+  url="$(jq -r '.url // empty' "$R/.ai/local/state/mcp/server.json" 2>/dev/null)"
+  [ -n "$url" ] && curl -sS --max-time 10 "$url/api/v1/ready" 2>/dev/null | jq -e '.ready == true' >/dev/null 2>&1
+}
+i=0; until ready; do
+  kill -0 "$SRV_PID" 2>/dev/null || { echo "    the server exited before it was ready"; cat "$T/serve.log"; exit 1; }
+  i=$((i + 1)); [ "$i" -lt 600 ] || { echo "    the server was not ready in 120 s"; cat "$T/serve.log"; exit 1; }
+  sleep 0.2
+done
 cd "$R" || exit
 
 # ---------------------------------------------------------------- 1. --count ends a follow; NDJSON is one signal per line
 expect_exit 0 "$RB" mesh session open --session s1 --worker 3d --intent "the runtime train"
 expect_exit 0 "$RB" mesh session open --session s2 --worker cd --intent "the executor lane"
-LINES="$("$RB" monitor --follow --sources mesh --count 2 --format json --timeout 20 2>/dev/null)" \
+LINES="$("$RB" monitor --follow --sources mesh --count 2 --format json --timeout 120 2>/dev/null)" \
   || { echo "    a follow with --count did not end with 0"; exit 1; }
 [ "$(printf '%s\n' "$LINES" | wc -l | tr -d ' ')" = 2 ] || { echo "    not two lines: $LINES"; exit 1; }
 printf '%s\n' "$LINES" | jq -e -s 'length == 2 and all(.[]; .source == "mesh" and (.summary | length) > 0)' >/dev/null \
@@ -50,12 +63,17 @@ printf '%s\n' "$LINES" | jq -e -s 'length == 2 and all(.[]; .source == "mesh" an
 
 # ---------------------------------------------------------------- 2. --until waits for what happens next, --match narrows it
 ( "$RB" monitor --follow --sources mesh --since 1s --match 'release' --until session_changed \
-    --interval 1 --timeout 60 >"$T/until.out" 2>"$T/until.err"; echo $? >"$T/until.rc" ) &
+    --interval 1 --timeout 120 >"$T/until.out" 2>"$T/until.err"; echo $? >"$T/until.rc" ) &
 PIDS="$PIDS $!"
-sleep 3
+# what follows must happen after the follow has read its first page, or it falls before the
+# follow's window: wait for the page (its sources line), not for a fixed time
+i=0; until grep -q '^sources' "$T/until.out" 2>/dev/null; do
+  i=$((i + 1)); [ "$i" -lt 600 ] || { echo "    the follow never read its first page"; cat "$T/until.err"; exit 1; }
+  sleep 0.2
+done
 expect_exit 0 "$RB" mesh session open --session s2 --worker cd --intent "the executor lane, again"
 expect_exit 0 "$RB" mesh session open --session s1 --worker 3d --intent "release 0.21.0"
-i=0; until [ -s "$T/until.rc" ]; do i=$((i + 1)); [ "$i" -lt 300 ] || { echo "    --until never ended"; cat "$T/until.err"; exit 1; }; sleep 0.2; done
+i=0; until [ -s "$T/until.rc" ]; do i=$((i + 1)); [ "$i" -lt 750 ] || { echo "    --until never ended"; cat "$T/until.err"; exit 1; }; sleep 0.2; done
 [ "$(cat "$T/until.rc")" = 0 ] || { echo "    --until ended with $(cat "$T/until.rc")"; cat "$T/until.err"; exit 1; }
 grep -q '3d (s1) now: release 0.21.0' "$T/until.out" || { echo "    the awaited signal is not printed"; cat "$T/until.out"; exit 1; }
 grep -q 'executor lane, again' "$T/until.out" && { echo "    --match let another signal through"; cat "$T/until.out"; exit 1; }
