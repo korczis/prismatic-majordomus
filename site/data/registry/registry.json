@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "68dd3f39873fdb39bd801311258979c45fbe922eb0a6d427c294cb9f2c5e5a9c",
     "summary": {
-      "total": 2112,
+      "total": 2116,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1932,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1932
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1940
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1986,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -70314,6 +70314,11 @@
                     "type": "string",
                     "const": "cockpit",
                     "description": "This process serves the Cockpit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ui",
+                    "description": "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135)."
                   }
                 ],
                 "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
@@ -74952,7 +74957,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75257,7 +75262,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 327,
+        "capabilities": 328,
         "capability_ids": []
       },
       {
@@ -75388,7 +75393,7 @@
         "title": "feature",
         "description": "Declarative objects of kind 'feature' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -75526,7 +75531,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 272,
         "capability_ids": []
       },
       {
@@ -76151,7 +76156,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "ca7e3b95716aceda0f7a0975bf4c6f881a72ef53d5f109277401aaba995c7328",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +76179,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76184,13 +76189,13 @@
       "critique": 2,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 328,
       "domain": 6,
-      "feature": 27,
+      "feature": 28,
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 272,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 27,
@@ -77609,6 +77614,23 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0135",
+        "kind": "adr",
+        "identity": "adr-0135",
+        "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+        "description": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+        "path": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5572,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "cockpit"
         ]
       },
       {
@@ -81610,6 +81632,15 @@
         "bytes": 3764
       },
       {
+        "uri": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "document",
+        "identity": "docs/MAJORDOMUS_UI.md",
+        "title": "`majordomus ui` — the product",
+        "path": "docs/MAJORDOMUS_UI.md",
+        "source_class": "document",
+        "bytes": 9246
+      },
+      {
         "uri": "majordomus://document/docs/MCP.md",
         "kind": "document",
         "identity": "docs/MCP.md",
@@ -81670,7 +81701,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 134167
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -81706,7 +81737,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22777
+        "bytes": 23144
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -84459,6 +84490,21 @@
         "bytes": 1365,
         "tags": [
           "skills"
+        ]
+      },
+      {
+        "uri": "majordomus://feature/ui",
+        "kind": "feature",
+        "identity": "ui",
+        "title": "majordomus ui: the delivery, for a person",
+        "description": "At /ui the shared server lays out the delivery in the project's own words, composed only of what capabilities answered, asked together so the first screen paints in the time of its slowest source; a panel whose source is slow arrives on its own route, and the Cockpit beneath it is one click away for the source of any value.",
+        "path": ".ai/repo/features/ui.md",
+        "section": "features",
+        "source_class": "feature",
+        "bytes": 2644,
+        "tags": [
+          "ui",
+          "interface"
         ]
       },
       {
@@ -87957,6 +88003,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2285
+      },
+      {
+        "uri": "majordomus://issue/I2461",
+        "kind": "issue",
+        "identity": "I2461",
+        "title": "majordomus ui is served at /ui as its own product, with screens composed from capabilities",
+        "description": "Serve the UI, the primary human surface the owner names `majordomus ui`, as its own native surface on the shared server: its own mount, shell, delivery-vocabulary navigation and assets, with a first Dashboard composed only from capabilities, each value citing the capability and pointer it was read from.",
+        "path": ".ai/repo/project/issues/I2461.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5046
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -94369,7 +94426,7 @@
         "identity": "test/cases/389_cockpit_projection.sh",
         "path": "test/cases/389_cockpit_projection.sh",
         "source_class": "case",
-        "bytes": 4647
+        "bytes": 5093
       },
       {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -94849,7 +94906,7 @@
         "identity": "test/cases/547_the_ui_says_only_what_is_derived.sh",
         "path": "test/cases/547_the_ui_says_only_what_is_derived.sh",
         "source_class": "case",
-        "bytes": 8294
+        "bytes": 10085
       },
       {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
@@ -96840,7 +96897,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96936,7 +96993,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 327
+      "objects": 328
     },
     {
       "name": "domain",
@@ -96956,7 +97013,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 28
     },
     {
       "name": "gap",
@@ -96993,7 +97050,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 272
     },
     {
       "name": "knowledge",
@@ -130984,6 +131041,12 @@
         "id": "cockpit",
         "path": "/cockpit",
         "what": "The registry, rendered for a person",
+        "availability": "served-only"
+      },
+      {
+        "id": "ui",
+        "path": "/ui",
+        "what": "The delivery, for a person: majordomus ui",
         "availability": "served-only"
       }
     ],

@@ -84,6 +84,7 @@ pub(crate) mod shared;
 pub mod site;
 pub mod skill;
 pub mod synthetic;
+pub mod ui;
 pub mod web;
 pub mod why;
 pub mod worktree;

@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -3361,6 +3361,11 @@
       "kind": "feature",
       "subject": "feature:skills",
       "path": "/evidence/features/skills/"
+    },
+    {
+      "kind": "feature",
+      "subject": "feature:ui",
+      "path": "/evidence/features/ui/"
     },
     {
       "kind": "feature",
@@ -17799,6 +17804,21 @@
       "mechanisms": [],
       "findings": []
     },
+    "feature:ui": {
+      "kind": "feature",
+      "id": "ui",
+      "status": "draft",
+      "page": "/evidence/features/ui/",
+      "programs": [],
+      "members": [
+        "rule:project.interfaces-are-projections",
+        "rule:project.ui-derived-state",
+        "rule:project.web-surface-declared-once"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "feature:use-cases": {
       "kind": "feature",
       "id": "use-cases",
@@ -25682,6 +25702,7 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_surface",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:102_completion_shell",

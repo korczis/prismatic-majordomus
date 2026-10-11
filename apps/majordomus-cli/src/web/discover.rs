@@ -50,6 +50,8 @@ pub struct Runtime {
     pub mcp: bool,
     /// This process serves the Cockpit.
     pub cockpit: bool,
+    /// This process serves the UI (ADR 0135).
+    pub ui: bool,
 }
 
 impl Runtime {
@@ -59,6 +61,7 @@ impl Runtime {
         Runtime {
             mcp: true,
             cockpit: true,
+            ui: true,
         }
     }
 
@@ -74,6 +77,7 @@ impl Runtime {
         match feature {
             Feature::Mcp => self.mcp,
             Feature::Cockpit => self.cockpit,
+            Feature::Ui => self.ui,
         }
     }
 }
@@ -255,6 +259,21 @@ pub fn native_all() -> Vec<Surface> {
             mount: Mount::parse(cockpit::PREFIX).expect("the Cockpit prefix is a mount"),
             producer: "cockpit".into(),
             feature: Some(Feature::Cockpit),
+            artifact: None,
+            index: None,
+            availability: Availability::ServedOnly,
+            built_from: None,
+            provenance: provenance([("mount", Provenance::Registry)]),
+        },
+        Surface {
+            id: "ui".into(),
+            title: "The delivery, for a person: majordomus ui".into(),
+            category: Category::Interface,
+            visibility: Visibility::Public,
+            kind: SurfaceKind::NativeRoute,
+            mount: Mount::parse(crate::ui::PREFIX).expect("the UI prefix is a mount"),
+            producer: "ui".into(),
+            feature: Some(Feature::Ui),
             artifact: None,
             index: None,
             availability: Availability::ServedOnly,

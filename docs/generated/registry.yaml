@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.20.0
+# Generator: majordomus-cli 0.21.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.20.0
+generator: majordomus-cli 0.21.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -50210,6 +50210,9 @@ capabilities:
               - type: string
                 const: cockpit
                 description: This process serves the Cockpit.
+              - type: string
+                const: ui
+                description: "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135)."
             description: "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
           SurfaceAvailability:
             oneOf:

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -6371,6 +6371,31 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0135",
+        "kind": "adr",
+        "label": "adr-0135",
+        "summary": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+        "route": "/cockpit/objects/adr/adr-0135",
+        "source": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md",
+            "file:.ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+            "file:apps/majordomus-cli/src/cockpit/mod.rs",
+            "file:docs/COCKPIT.md"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "cockpit"
           ]
         }
       },
@@ -13264,6 +13289,14 @@
         "source": "docs/LAUNCH.md"
       },
       {
+        "id": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "document",
+        "label": "docs/MAJORDOMUS_UI.md",
+        "summary": "`majordomus ui` — the product",
+        "route": "/cockpit/objects/document/docs-majordomus-ui-md",
+        "source": "docs/MAJORDOMUS_UI.md"
+      },
+      {
         "id": "majordomus://document/docs/MCP.md",
         "kind": "document",
         "label": "docs/MCP.md",
@@ -17046,6 +17079,60 @@
             "follow-a-skill-the-repository-defines"
           ],
           "weight": 160
+        }
+      },
+      {
+        "id": "majordomus://feature/ui",
+        "kind": "feature",
+        "label": "ui",
+        "summary": "majordomus ui: the delivery, for a person",
+        "route": "/cockpit/objects/feature/ui",
+        "source": ".ai/repo/features/ui.md",
+        "status": "draft",
+        "facts": {
+          "adrs": [
+            "adr-0135"
+          ],
+          "areas": [
+            "observability"
+          ],
+          "docs": [
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "domain": "surfaces",
+          "modules": [
+            "repository",
+            "health",
+            "release",
+            "distribution",
+            "plan",
+            "intents",
+            "mesh",
+            "integration",
+            "deploy",
+            "gates",
+            "evidence",
+            "rules",
+            "capabilities"
+          ],
+          "related": [
+            "cockpit",
+            "interfaces"
+          ],
+          "rules": [
+            "project.ui-derived-state",
+            "project.interfaces-are-projections",
+            "project.web-surface-declared-once"
+          ],
+          "short_title": "UI",
+          "tags": [
+            "ui",
+            "interface"
+          ],
+          "web": [
+            "ui"
+          ],
+          "weight": 95
         }
       },
       {
@@ -30387,6 +30474,68 @@
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2461",
+        "kind": "issue",
+        "label": "I2461",
+        "summary": "majordomus ui is served at /ui as its own product, with screens composed from capabilities",
+        "route": "/cockpit/objects/issue/i2461",
+        "source": ".ai/repo/project/issues/I2461.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /ui on a shared server answers 200 text/html with the Cockpit's CSP, and with JavaScript disabled shows the six tiles and every panel or its link",
+            "Every tile and panel of the Dashboard cites the capability it read, and a source that fails makes its tile 'not answered', never 0",
+            "The Dashboard's first paint never asks integration.queue; /ui/panels/pull-requests answers the queue as a page, and with ?fragment as the panel alone",
+            "The rail lists exactly the screens the dispatcher answers, and a test fails when the two differ",
+            "scripts/cockpit-assets --check fails when share/ui/ui.css is stale",
+            "scripts/ci/cockpit-projection-check --ui-integrity fails on a registry read or a zero-count default in src/ui (case 547)",
+            "Every panel names its sources with the API route, CLI command and MCP tool capabilities.describe declares, and the Cockpit only as their technical view"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The shared server serves the Cockpit (/cockpit), the API, Swagger, MCP and the home page. There is no high-level surface.",
+          "depends_on": [],
+          "evidence_required": [
+            "ui_surface_served_test",
+            "ui_dashboard_cites_sources_test",
+            "ui_screenshots_1440_768_375"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/generate.rs",
+            "scripts/ci/cockpit-projection-check",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/features/ui.md",
+            "test/cases/389_cockpit_projection.sh",
+            "test/cases/547_the_ui_says_only_what_is_derived.sh",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/README.md",
+            ".gitignore",
+            "apps/majordomus-cli/src/cockpit/assets.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/http/surfaces.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/web/discover.rs",
+            "apps/majordomus-cli/src/web/model.rs",
+            "share/ui",
+            "scripts/cockpit-assets",
+            ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            ".ai/repo/project/issues/I2461.yaml"
+          ],
+          "slug": "majordomus-ui-is-the-primary-surface",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib ui::",
+            "cargo test --lib cockpit::assets",
+            "scripts/cockpit-assets --check"
           ]
         }
       },
@@ -54775,6 +54924,36 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0135",
+        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://adr/adr-0022",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://adr/adr-0088",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0135",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -60520,6 +60699,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/MCP.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -61986,6 +62170,11 @@
       },
       {
         "source": "majordomus://feature/skills",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/ui",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -66612,6 +66801,16 @@
       {
         "source": "majordomus://issue/I2165",
         "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2461",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2461",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -75406,8 +75605,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2497,
+      "edges": 5456,
       "acyclic": false,
       "truncated": false
     }
