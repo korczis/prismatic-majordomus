@@ -426,6 +426,19 @@ executor first sees the pull request as actionable, not when the forge was first
 A merge moves every other pull request behind master, so the next step always starts from a
 new observation.
 
+A merge that changes a projected plan record leaves GitHub behind by exactly that change.
+The records are the files under `.ai/repo/project/issues/` and `.ai/repo/project/milestones/`
+and every record whose derived status moves with one of them. `scripts/github-sync --apply`
+projects master and nothing else, and `prs drain` never runs it. So after landing such a pull
+request, whoever operates the executor runs `scripts/github-sync --apply` from master as the
+next step. `scripts/ci/github-check` gives that step a declared window, `apply.window` in
+`.ai/repo/ci/github.yaml`. On the pull request's own head the records it changed are reported
+`PENDING` and not refused. On master they stay `PENDING` while the landing is younger than the
+window. Past it the gate refuses master and names the command. A job on every push to master
+that applies with a token allowed to write issues would remove the manual step. That is the
+owner's open choice and nothing runs one: the workflow token reads issues, and applying stays
+a deliberate act (`project.github-projection-gated`).
+
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
 --no-commit` with the derived driver (rerere off, so no remembered resolution decides a path
@@ -452,6 +465,29 @@ most of its run. A `missing` check holds the pipeline only for `REFRESHED_HEAD_R
 request is refreshed, so one silent check cannot stop every refresh. A check running on a head
 the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
 no head, so a pull request refreshed by an older executor does not hold the pipeline.
+
+### The record pull request it reopens
+
+A release proposes its record as `release/record-<tag>`, opened with the workflow's own
+token, and a forge starts no workflow from an event that token caused. Such a pull request
+has no check of its own and never will: it reads `waiting_for_checks` with
+`required_checks:missing` for as long as nobody closes and reopens it, and until the record
+is on master the release check fails on every other open head.
+
+So when nothing is ready, and before any refresh, `prs drain` looks for a pull request from
+a `release/record-` branch in that state and asks the forge what the queue does not carry:
+who opened it, when, and whether it has a single check of its own. If it is open at the head
+decided on, was opened by `app/github-actions`, is older than two minutes
+(`RECORD_REOPEN_GRACE`) and its rollup is empty, the executor closes it with a comment
+saying why and reopens it at once, which is the event that starts its run. The act is taken
+once per head: a head the trail names in `reopen_attempted` or `reopened` is never tried
+again, because a reopened pull request also reads `missing` until its run's last job exists.
+It pushes nothing, so it needs no `--refresh`, and `--dry-run` only names it.
+
+A record a person opened, one that has any check of its own, one still inside the grace,
+one the forge cannot show and every branch that is no record are left alone. If the forge
+refuses the reopen after the closure, the pull request is closed: the drain says so, names
+`gh pr reopen <n>`, records `reopen_failed` and exits 10.
 
 ## Repair
 
@@ -597,7 +633,8 @@ json` stays the list of pull requests to close.
   diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is
   on the trail, a refresh is pushed only after `refresh_attempted`, a repair only after
-  `repair_attempted`, and a pull request is closed only after `close_attempted`. When that
+  `repair_attempted`, a pull request is closed only after `close_attempted`, and a record
+  pull request is closed and reopened only after `reopen_attempted`. When that
   line cannot be written, the act is not taken: the step reports `trail_unwritable`, the
   drain stops, and `prs drain` exits 12 (`prs repair --apply` exits 12 too). A lease the
   trail cannot record is given back and refused. Any other write the trail refuses ends the
@@ -622,6 +659,8 @@ json` stays the list of pull requests to close.
   | `repaired` (with the head it pushed), `repair_refused` (with its class) | after it, or when the classification refused it |
   | `close_attempted` | before a redundant or superseded pull request is closed |
   | `closed_redundant`, `closed_superseded` (with its evidence), `close_failed` | after it |
+  | `reopen_attempted` | before a record pull request the workflow's token opened is closed and reopened |
+  | `reopened`, `reopen_failed` (with its class, saying whether it was left closed) | after it |
   | `idle` | nothing was ready |
   | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
 
