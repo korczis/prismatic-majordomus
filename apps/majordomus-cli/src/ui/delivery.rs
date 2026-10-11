@@ -118,3 +118,36 @@ pub fn screen(ctx: &Context) -> View {
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ui::deployments::tests::furnished;
+
+    /// Every declared deployment is a row, and every gate of the CI model says when it
+    /// runs: in every plan, on demand, or when its paths change.
+    #[test]
+    fn every_deployment_and_every_gate_is_a_row_that_says_when_it_runs() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        assert!(
+            html.contains("The Majordomus layer, served from one machine"),
+            "{html}"
+        );
+        assert!(!html.contains("No deployment is declared."), "{html}");
+        for (gate, when) in [
+            ("every-plan", "every plan"),
+            ("when-asked", "on demand"),
+            ("by-path", "when its paths change"),
+        ] {
+            assert!(html.contains(gate), "{gate} is missing: {html}");
+            assert!(html.contains(when), "{gate} does not say {when}: {html}");
+        }
+        assert!(
+            html.contains("runs in every plan"),
+            "the gate's own summary: {html}"
+        );
+        assert!(!html.contains("The CI model declares no gate."), "{html}");
+    }
+}

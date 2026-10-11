@@ -183,3 +183,178 @@ fn delivery(report: &Answer) -> El {
         &[report],
     )
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+    use serde_json::json;
+    use std::time::Duration;
+
+    /// The sources a furnished repository adds to the synthetic one's: the objects the
+    /// screens draw rows from.
+    const FURNISHED_SOURCES: &str = "
+  - id: deployment
+    kind: deployment
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/deployments/*.yaml'
+    required: false
+  - id: feature
+    kind: feature
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/features/*.md'
+    required: false
+  - id: claims
+    kind: claim
+    discovery: vcs
+    pathspec: ':(glob)docs/CLAIMS.yaml'
+    required: false
+";
+
+    /// A synthetic repository furnished with what the screens draw rows from: this
+    /// repository's own deployment, one feature, two claims (one of them a guarantee no
+    /// test supports, so the report has a finding) and a CI model with a gate of each kind
+    /// of selection.
+    pub(crate) fn furnished() -> SyntheticRepository {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let write = |rel: &str, body: &str| {
+            let path = repo.root().join(rel);
+            std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+            std::fs::write(path, body).expect("a file");
+        };
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).expect("the sources");
+        text.push_str(FURNISHED_SOURCES);
+        std::fs::write(&sources, text).expect("the sources");
+        let deployment = std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../.ai/repo/deployments/majordomus.yaml"
+        ))
+        .expect("this repository's deployment");
+        write(".ai/repo/deployments/majordomus.yaml", &deployment);
+        write(
+            ".ai/repo/features/synthetic.md",
+            "---\nschema: feature/v1\nid: synthetic\nkind: feature\ntitle: A synthetic feature\n\
+             headline: A feature that exists for a test.\n\
+             summary: What a synthetic feature does.\nstatus: stable\n---\n\n## What it does\n\nIt is a fixture.\n",
+        );
+        write(
+            "docs/CLAIMS.yaml",
+            "version: 1\nclaims:\n  - id: synthetic-guarantee\n    claim: A guarantee no test supports\n\
+             \x20   source: docs/DOC_0.md\n    status: guaranteed\n\
+             \x20 - id: synthetic-advice\n    claim: An advisory claim\n    source: docs/DOC_0.md\n\
+             \x20   test: test/cases/1_synthetic.sh\n    status: advisory\n",
+        );
+        write(
+            ".ai/repo/ci/gates.yaml",
+            "version: 1\ngates:\n  - id: every-plan\n    job: structure\n    always: true\n\
+             \x20   runs: scripts/ci/every-plan\n    summary: runs in every plan\n\
+             \x20 - id: when-asked\n    job: bench\n    on-demand: true\n    runs: scripts/ci/when-asked\n\
+             \x20   summary: runs when asked\n  - id: by-path\n    job: rust\n    runs: scripts/ci/by-path\n\
+             \x20   summary: runs when its paths change\nclasses:\n  - id: rust\n    paths: [lib/**]\n\
+             \x20   gates: [by-path]\n",
+        );
+        repo
+    }
+
+    /// An answer as a capability would give it, built here so every branch of a panel can
+    /// be drawn from rows the fixture repository does not hold.
+    pub(crate) fn answer(source: Source, value: Result<Value, String>) -> Answer {
+        Answer {
+            source,
+            route: None,
+            exposure: Default::default(),
+            value,
+            took: Duration::ZERO,
+        }
+    }
+
+    /// Every declared deployment is a row: its identity, its title, the application it
+    /// ships and its own status word.
+    #[test]
+    fn every_declared_deployment_is_a_row_with_its_own_status() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let view = screen(&ctx);
+        let html = view.main.render();
+        assert_eq!(view.status, 200);
+        assert!(
+            html.contains("The Majordomus layer, served from one machine"),
+            "{html}"
+        );
+        assert!(html.contains(">majordomus<"), "{html}");
+        assert!(html.contains("declared"), "{html}");
+        assert!(!html.contains("No deployment is declared."), "{html}");
+        assert!(
+            html.contains(&format!("data-panel-src=\"{DELIVERY_PANEL}\"")),
+            "the slow report is a panel of its own: {html}"
+        );
+    }
+
+    /// The panel route asks the report itself; a repository with no public address says
+    /// so rather than inventing one.
+    #[test]
+    fn the_delivery_panel_asks_the_report_and_says_when_there_is_no_public_address() {
+        let repo = furnished();
+        let ctx = repo.context().expect("a context");
+        let view = delivery_panel(&ctx);
+        let html = view.main.render();
+        assert_eq!(view.title, "Delivery");
+        assert!(html.contains("no public address"), "{html}");
+        assert!(html.contains("unmeasured"), "{html}");
+        assert!(
+            html.contains("delivery.report"),
+            "the panel names its source: {html}"
+        );
+    }
+
+    /// A report with a publication and features draws the tallies, the verification with
+    /// its detail, and every feature with its stage, its state and what blocks it; a
+    /// feature that carries no delivery is `unknown`, never delivered.
+    #[test]
+    fn a_report_draws_every_feature_with_its_stage_state_and_blockers() {
+        let report = answer(
+            DELIVERY,
+            Ok(json!({
+                "publication": {
+                    "url": "https://example.test/",
+                    "verification": { "state": "verified", "detail": "the site serves the trunk" }
+                },
+                "tallies": { "features": 2, "on_master": 2, "deployed": 1, "publicly_verified": 1 },
+                "features": [
+                    { "id": "ci", "title": "CI from one model",
+                      "delivery": { "stage": "deployed", "state": "partial", "blocking": ["publication", 7, "site"] } },
+                    { "id": "bare", "title": "A feature with no delivery" }
+                ]
+            })),
+        );
+        let html = delivery(&report).render();
+        assert!(
+            html.contains("https://example.test/ — the site serves the trunk"),
+            "{html}"
+        );
+        assert!(html.contains("verified"), "{html}");
+        assert!(
+            html.contains("CI from one model") && html.contains("deployed"),
+            "{html}"
+        );
+        assert!(
+            html.contains("publication, site"),
+            "only the words block: {html}"
+        );
+        assert!(html.contains("A feature with no delivery"), "{html}");
+        assert!(html.contains("unknown"), "{html}");
+        assert!(!html.contains("No feature is declared."), "{html}");
+    }
+
+    /// A report that could not be made is said to be unanswered, with its reason.
+    #[test]
+    fn a_report_that_could_not_be_made_says_why() {
+        let report = answer(DELIVERY, Err("the probe timed out".into()));
+        let html = delivery(&report).render();
+        assert!(
+            html.contains("delivery.report could not answer: the probe timed out"),
+            "{html}"
+        );
+    }
+}
