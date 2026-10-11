@@ -2769,6 +2769,21 @@
     },
     {
       "kind": "command",
+      "subject": "command:offload derive",
+      "path": "/evidence/commands/offload-derive/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload hosts",
+      "path": "/evidence/commands/offload-hosts/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload probe",
+      "path": "/evidence/commands/offload-probe/"
+    },
+    {
+      "kind": "command",
       "subject": "command:pack build",
       "path": "/evidence/commands/pack-build/"
     },
@@ -14686,6 +14701,63 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:offload derive": {
+      "kind": "command",
+      "id": "offload derive",
+      "page": "/evidence/commands/offload-derive/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload hosts": {
+      "kind": "command",
+      "id": "offload hosts",
+      "page": "/evidence/commands/offload-hosts/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload probe": {
+      "kind": "command",
+      "id": "offload probe",
+      "page": "/evidence/commands/offload-probe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:pack build": {
       "kind": "command",
       "id": "pack build",
@@ -21210,6 +21282,27 @@
       "mechanisms": [
         "scripts/ci/campaigns-check"
       ],
+      "findings": []
+    },
+    "rule:project.a-derive-offload-waits-its-turn": {
+      "kind": "rule",
+      "id": "project.a-derive-offload-waits-its-turn",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:offload",
+          "path": "apps/majordomus-cli/tests/offload.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/offload.rs",
+            ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.a-derive-sees-what-the-commit-will": {

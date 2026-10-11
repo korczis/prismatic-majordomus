@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+  "x-majordomus-schema": "majordomus.derive-offload/v1",
+  "title": "Derive offload",
+  "description": "The machines a repository's derive may be offloaded to, under .ai/repo/offload/: each host's ssh address and identity file, the free space a host must have to be chosen, the FIFO queue and the lock every waiter on a host joins, and the layout of a host (its checkout, the worktrees, the shared build directory every derive clones its own from, and the command that derives). `majordomus offload` reads it and nothing else does; no host address belongs in a script. Nothing secret belongs here: an identity file is named, never carried.",
+  "x-majordomus-allow": "derive-offload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "id", "hosts"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "derive-offload/v1"
+    },
+    "kind": {
+      "const": "derive-offload"
+    },
+    "id": {
+      "description": "The declaration's identity within the kind. A repository declares one.",
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "description": "What the declaration is for, in a sentence a person reads.",
+      "type": "string"
+    },
+    "base": {
+      "description": "The ref the bundle is cut against (default origin/master): the host has every commit it reaches, so only the branch's own commits travel.",
+      "type": "string",
+      "minLength": 1
+    },
+    "min_free_gib": {
+      "description": "GiB that must be free under a host's home directory for it to be chosen (default 10). A host may state its own.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "queue": {
+      "description": "The FIFO queue on every host: one ticket file per waiter, named <arrival>-<pid>-<tag>, served oldest first; the lock is a directory made by mkdir holding one file per process of the derive that holds it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "directory": { "description": "The ticket directory, absolute on the host (default /tmp/offload-queue).", "type": "string", "pattern": "^/" },
+        "lock": { "description": "The lock directory, absolute on the host (default /tmp/offload-derive.lock).", "type": "string", "pattern": "^/" },
+        "poll_seconds": { "description": "Seconds between looks at the queue (default 5).", "type": "integer", "minimum": 1 },
+        "wait_max_seconds": { "description": "Seconds a waiter waits in all before it withdraws (default 14400).", "type": "integer", "minimum": 1 }
+      }
+    },
+    "remote": {
+      "description": "The layout of a host, each path relative to the host's home unless absolute.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checkout": { "description": "The host's checkout of this repository (default dev/prismatic-majordomus).", "type": "string", "minLength": 1 },
+        "worktrees": { "description": "Where each derive's detached worktree offload-<tag> is made (default dev/prismatic-majordomus-wt).", "type": "string", "minLength": 1 },
+        "target": { "description": "The shared build directory each derive's private one is cloned from, copy-on-write where the filesystem can (default .cache/majordomus-offload-target).", "type": "string", "minLength": 1 },
+        "spool": { "description": "Where the bundles and the derive's log are written on the host (default /tmp).", "type": "string", "minLength": 1 },
+        "path": { "description": "Directories put before the host's PATH.", "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "derive": { "description": "The command that derives, relative to the worktree (default scripts/derive).", "type": "string", "minLength": 1 },
+        "touch": { "description": "Files touched before the derive, so a build directory cloned from another tree's build never judges this tree's sources older than its executable.", "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "hosts": {
+      "description": "The machines that may derive, in the order a tie between them is broken.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "address"],
+        "properties": {
+          "id": { "description": "A short name, unique in the declaration: what --host names.", "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+          "address": { "description": "user@host, as ssh takes it.", "type": "string", "pattern": "^[^-@\\s][^@\\s]*@[^@\\s]+$" },
+          "identity_file": { "description": "The ssh identity file, when the host needs one; ~/ is the invoking user's home.", "type": "string", "minLength": 1 },
+          "min_free_gib": { "description": "This host's own free-space minimum in GiB.", "type": "integer", "minimum": 0 },
+          "description": { "description": "What the machine is, for a person.", "type": "string" }
+        }
+      }
+    }
+  }
+}

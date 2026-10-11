@@ -18,6 +18,7 @@
       "context": "an object of kind `context`",
       "critique": "an object of kind `critique`",
       "deployment": "an object of kind `deployment`",
+      "derive-offload": "an object of kind `derive-offload`",
       "distribution-model": "an object of kind `distribution-model`",
       "doctrine": "a doctrine a scenario exercises",
       "document": "an object of kind `document`",
@@ -3711,6 +3712,14 @@
         "external": true
       },
       {
+        "id": "file:share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+        "kind": "file",
+        "label": "derive-offload.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+        "external": true
+      },
+      {
         "id": "file:share/schemas/majordomus/domain/domain.v1.schema.json",
         "kind": "file",
         "label": "domain.v1.schema.json",
@@ -4027,6 +4036,12 @@
         "kind": "kind",
         "label": "deployment",
         "summary": "every object of kind `deployment`"
+      },
+      {
+        "id": "kind:derive-offload",
+        "kind": "kind",
+        "label": "derive-offload",
+        "summary": "every object of kind `derive-offload`"
       },
       {
         "id": "kind:distribution-model",
@@ -12284,6 +12299,32 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.offload",
+        "kind": "context",
+        "label": "ai.repo.offload",
+        "summary": "Derive offload",
+        "route": "/cockpit/objects/context/ai-repo-offload",
+        "source": ".ai/repo/offload/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+            "share/kinds.yaml",
+            "docs/OFFLOAD.md"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.profiles",
         "kind": "context",
         "label": "ai.repo.profiles",
@@ -12750,6 +12791,18 @@
           "created_at": "2026-09-06",
           "region": "fra",
           "updated_at": "2026-09-06"
+        }
+      },
+      {
+        "id": "majordomus://derive-offload/derive",
+        "kind": "derive-offload",
+        "label": "derive",
+        "summary": "The cluster machines that derive a branch for a session, and the limits each must meet.",
+        "route": "/cockpit/objects/derive-offload/derive",
+        "source": ".ai/repo/offload/derive.yaml",
+        "facts": {
+          "base": "origin/master",
+          "min_free_gib": 10
         }
       },
       {
@@ -13286,6 +13339,14 @@
         "summary": "The model catalogue",
         "route": "/cockpit/objects/document/docs-models-md",
         "source": "docs/MODELS.md"
+      },
+      {
+        "id": "majordomus://document/docs/OFFLOAD.md",
+        "kind": "document",
+        "label": "docs/OFFLOAD.md",
+        "summary": "The derive offload",
+        "route": "/cockpit/objects/document/docs-offload-md",
+        "source": "docs/OFFLOAD.md"
       },
       {
         "id": "majordomus://document/docs/PAGES_STATUS.md",
@@ -30346,6 +30407,60 @@
         }
       },
       {
+        "id": "majordomus://issue/I2398",
+        "kind": "issue",
+        "label": "I2398",
+        "summary": "A derive offloaded to another machine waits its turn in a declared queue",
+        "route": "/cockpit/objects/issue/i2398",
+        "source": ".ai/repo/project/issues/I2398.yaml",
+        "facts": {
+          "created_at": "2026-10-11",
+          "depends_on": [],
+          "evidence_required": [
+            "offload_queue_fairness_test",
+            "offload_round_trip_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Retiring ~/dev/.derive-offload.sh and ~/dev/.derive-offload-v2.sh: they are outside the repository and instances run; sessions move over by calling the command instead.",
+            "Installing the executable on the hosts or running a hub there: the host needs git, a checkout of this repository and the toolchain scripts/derive builds with, nothing of this change.",
+            "Keeping the shared build directory warm from a finished derive's private one: v2 does not, and swapping it under a builder that ignores the lock is the failure this issue removes."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/offload/derive.yaml",
+            ".ai/repo/offload/README.md",
+            "share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+            "share/kinds.yaml",
+            ".ai/repo/knowledge/sources.yaml",
+            "apps/majordomus-cli/src/offload/mod.rs",
+            "apps/majordomus-cli/src/offload/declaration.rs",
+            "apps/majordomus-cli/src/offload/queue.rs",
+            "apps/majordomus-cli/src/offload/host.rs",
+            "apps/majordomus-cli/src/offload/remote.rs",
+            "apps/majordomus-cli/src/offload/run.rs",
+            "apps/majordomus-cli/src/commands/offload.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/offload.rs",
+            ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+            "docs/OFFLOAD.md",
+            ".ai/repo/project/issues/I2398.yaml",
+            "docs/generated",
+            "site/content",
+            "site/data"
+          ],
+          "slug": "the-derive-offload-is-a-capability",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib offload::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test offload",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -36306,6 +36421,26 @@
             "campaigns",
             "evidence",
             "records"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "kind": "rule",
+        "label": "project.a-derive-offload-waits-its-turn@1",
+        "summary": "A derive offloaded to another machine goes through the declared hosts and waits its turn in their queue",
+        "route": "/cockpit/objects/rule/project-a-derive-offload-waits-its-turn-1",
+        "source": ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.one-derive-at-a-time@1"
+          ],
+          "tags": [
+            "derived",
+            "machine",
+            "coordination"
           ]
         }
       },
@@ -59851,6 +59986,26 @@
         "kind": "tracks"
       },
       {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "file:share/schemas/majordomus/derive-offload/derive-offload.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.offload",
+        "target": "majordomus://document/docs/OFFLOAD.md",
+        "kind": "tracks"
+      },
+      {
         "source": "majordomus://context/ai.repo.profiles",
         "target": "file:share/allow/profile.txt",
         "kind": "tracks"
@@ -60093,6 +60248,11 @@
       {
         "source": "majordomus://deployment/majordomus",
         "target": "kind:deployment",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://derive-offload/derive",
+        "target": "kind:derive-offload",
         "kind": "is_a"
       },
       {
@@ -60427,6 +60587,11 @@
       },
       {
         "source": "majordomus://document/docs/MODELS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/OFFLOAD.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -66501,6 +66666,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2398",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2398",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -67613,6 +67788,16 @@
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "target": "majordomus://rule/project.one-derive-at-a-time@1",
         "kind": "depends_on"
       },
       {
@@ -75287,8 +75472,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2491,
-      "edges": 5443,
+      "nodes": 2498,
+      "edges": 5453,
       "acyclic": false,
       "truncated": false
     }
