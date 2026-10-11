@@ -391,6 +391,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "runs mesh.review.answer on this checkout's running server, whose journal holds the request.",
     },
     LocalCommand {
+        command: "mesh review withdraw",
+        reason: LocalReason::RendersCapability("mesh.review.withdraw"),
+        note: "runs mesh.review.withdraw on this checkout's running server, whose journal holds the request.",
+    },
+    LocalCommand {
         command: "capabilities validate",
         reason: LocalReason::RendersCapability("repository.info"),
         note: "reports the registry's own validation, which repository.info answers as the diagnostics of the process that built it.",

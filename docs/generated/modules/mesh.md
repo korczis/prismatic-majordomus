@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 21.
+Stability: experimental. Capabilities: 22.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
@@ -354,6 +354,31 @@ Ask for a review of a branch, commit or pull request, optionally of one named ru
 | `scope` | array | no | The paths it covers. |
 | `issue` | string or null | no | The issue. |
 | `reviewer` | string or null | no | The runtime asked (`<node>-<runtime>`); anyone when omitted. |
+| `body` | string or null | no | What the reviewer needs beyond the subject: evidence, commands, the question. Up to
+8 KiB, several lines. |
+
+Output: `Written`.
+
+## `mesh.review.withdraw` — Withdraw a review request
+
+End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_review_withdraw` |
+| HTTP | `POST /api/v1/mesh/reviews/withdraw` |
+| cache | — |
+| benchmark | waived (transient_state) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, cooperation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `request` | string | yes | The request's key, `<stream>/<review>`. |
+| `session` | string or null | no | The requesting session; the calling MCP session's own when omitted. |
+| `note` | string or null | no | The requester's result or reason, up to 8 KiB: what came of it, or why it is void. |
 
 Output: `Written`.
 

@@ -979,6 +979,10 @@ pub struct ReviewRequestInput {
     /// The runtime asked (`<node>-<runtime>`); anyone when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// What the reviewer needs beyond the subject: evidence, commands, the question. Up to
+    /// 8 KiB, several lines.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
 }
 
 impl BenchmarkCases for ReviewRequestInput {
@@ -991,6 +995,7 @@ impl BenchmarkCases for ReviewRequestInput {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                body: None,
             },
         )]
     }
@@ -1008,6 +1013,7 @@ fn mesh_review_request(
         input.scope,
         input.issue,
         input.reviewer,
+        input.body,
     )
     .map_err(map_error)
 }
@@ -1046,6 +1052,43 @@ fn mesh_review_answer(ctx: &Context, input: ReviewAnswerInput) -> Result<Written
     let c = cooperation(ctx)?;
     let session = session_of(ctx, input.session)?;
     c.answer_review(&input.request, &session, input.verdict, input.note)
+        .map_err(map_error)
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.review.withdraw`.
+pub struct ReviewWithdrawInput {
+    /// The request's key, `<stream>/<review>`.
+    pub request: String,
+    /// The requesting session; the calling MCP session's own when omitted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// The requester's result or reason, up to 8 KiB: what came of it, or why it is void.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+}
+
+impl BenchmarkCases for ReviewWithdrawInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "unknown",
+            ReviewWithdrawInput {
+                request: "none/r-0".into(),
+                session: Some("bench".into()),
+                note: Some("superseded".into()),
+            },
+        )]
+    }
+}
+
+fn mesh_review_withdraw(
+    ctx: &Context,
+    input: ReviewWithdrawInput,
+) -> Result<Written, CapabilityError> {
+    let c = cooperation(ctx)?;
+    let session = session_of(ctx, input.session)?;
+    c.withdraw_review(&input.request, &session, input.note)
         .map_err(map_error)
 }
 
@@ -1343,6 +1386,19 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_review_answer,
             },
             capability! {
+                id: "mesh.review.withdraw",
+                kind: CapabilityKind::Command,
+                title: "Withdraw a review request",
+                description: "End a review request the calling session asked for — done, void or superseded — with an optional result note the request then carries. Only the asking session may; it is never counted as an answer. An unanswered request also ends on its own when its session closes or its runtime stops beating. Replicated to every linked runtime. Writes this runtime's journal only.",
+                input: ReviewWithdrawInput,
+                output: Written,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_review_withdraw"), http: post("/api/v1/mesh/reviews/withdraw"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: mesh_review_withdraw,
+            },
+            capability! {
                 id: "mesh.link.hello",
                 kind: CapabilityKind::Command,
                 title: "Open a link (the handshake)",
@@ -1471,6 +1527,11 @@ mod tests {
                 "mesh.review.answer",
                 Some("majordomus_mesh_review_answer"),
                 "/api/v1/mesh/reviews/answer",
+            ),
+            (
+                "mesh.review.withdraw",
+                Some("majordomus_mesh_review_withdraw"),
+                "/api/v1/mesh/reviews/withdraw",
             ),
             ("mesh.link.hello", None, HELLO_PATH),
             ("mesh.link.sync", None, SYNC_PATH),

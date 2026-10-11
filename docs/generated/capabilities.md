@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -38,7 +38,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 21 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 22 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
@@ -177,6 +177,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.release` | `mesh` | command | experimental | `majordomus_mesh_release` | — | `POST /api/v1/mesh/claims/release` | — | — | waived (transient_state) |
 | `mesh.review.answer` | `mesh` | command | experimental | `majordomus_mesh_review_answer` | — | `POST /api/v1/mesh/reviews/answer` | — | — | waived (transient_state) |
 | `mesh.review.request` | `mesh` | command | experimental | `majordomus_mesh_review_request` | — | `POST /api/v1/mesh/reviews` | — | — | waived (transient_state) |
+| `mesh.review.withdraw` | `mesh` | command | experimental | `majordomus_mesh_review_withdraw` | — | `POST /api/v1/mesh/reviews/withdraw` | — | — | waived (transient_state) |
 | `mesh.session.close` | `mesh` | command | experimental | `majordomus_mesh_session_close` | — | `POST /api/v1/mesh/sessions/close` | — | — | waived (transient_state) |
 | `mesh.session.open` | `mesh` | command | experimental | `majordomus_mesh_session_open` | — | `POST /api/v1/mesh/sessions` | — | — | waived (transient_state) |
 | `mesh.state` | `mesh` | query | experimental | `majordomus_mesh_state` | — | `GET /api/v1/mesh/state` | — | — | required |

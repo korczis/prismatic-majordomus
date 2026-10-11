@@ -193,7 +193,7 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`. An event carries its stream, a dense sequence, a
+`review_requested`, `review_answered`, `review_withdrawn`. An event carries its stream, a dense sequence, a
 Lamport stamp, its origin's wall clock (informational), the repository identity, the origin
 key, a body and an Ed25519 signature over the canonical JSON of all of it.
 
@@ -292,6 +292,16 @@ with it. So compaction forgets the ended sessions and claims, the taken handover
 requests of what it drops — never a claim that holds or a session that is open, never a
 handover still offered, and never who took or answered what stays. A property test holds
 that over random histories of dead and live runs.
+
+A review request ends in one of three ways, and the fold says which: `answered` when another
+session gives a verdict; `withdrawn` when the session that asked ends it with
+`mesh review withdraw` (done, void or superseded), whose note is the requester's own `result`
+and never an answer; and `expired` when nobody answered and the asking session closed or its
+runtime stopped beating. Expiry is decided like a claim's, from the journal and the streams'
+beats, so no runtime reads another's clock. A request may carry a `body` of up to 8 KiB
+beside its one-line subject: the evidence, the commands and the question. A runtime older
+than the field reads the request without its body, and holds `review_withdrawn` as an opaque
+event it relays but does not fold.
 
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last
@@ -542,6 +552,7 @@ majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>
 majordomus mesh review answer <request-key> --session s2 --verdict approved
+majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by the rebuilt head'
 ```
 
 Every command has `--format json`, which prints the capability's answer unchanged.
@@ -549,12 +560,13 @@ Every command has `--format json`, which prints the capability's answer unchange
 **HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/cooperation`,
 `/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
-`/handovers/consume`, `/reviews`, `/reviews/answer`, `/link/hello`, `/link/sync`. The schemas
+`/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.
 
 **MCP.** `majordomus_mesh`, `_nodes`, `_identity`, `_doctor`, `_register`, `_cooperation`, `_peers`,
 `_peer`, `_state`, `_events`, `_verify`, `_session_open`, `_session_close`, `_claim`,
-`_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`. An
+`_release`, `_handover_publish`, `_handover_consume`, `_review_request`, `_review_answer`,
+`_review_withdraw`. An
 agent claims work with `majordomus_mesh_claim` instead of inventing a coordination channel;
 without a `session` the call acts for the agent's own board session.
 

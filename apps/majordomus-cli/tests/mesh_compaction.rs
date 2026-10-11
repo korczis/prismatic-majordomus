@@ -208,7 +208,7 @@ fn who_took_a_handover_and_who_answered_a_review_outlive_the_takers_run() {
     let offered = handover("carry the mesh");
     publisher.publish_handover(offered.clone()).unwrap();
     let asked = publisher
-        .request_review("s1", "feature/mesh".into(), Vec::new(), None, None)
+        .request_review("s1", "feature/mesh".into(), Vec::new(), None, None, None)
         .unwrap();
     round(&taker, "publisher:1", &key);
     taker.consume_handover(&offered.id, "t1").unwrap();
