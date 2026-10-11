@@ -178,6 +178,18 @@
     @apply min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm focus:ring-0;
     color: var(--mj-fg);
   }
+  /* a filter form inside a panel (the Issues and Capabilities browsers) holds choices beside
+     its search: it wraps, and a choice whose options are long (a milestone with its title)
+     shrinks to the panel instead of widening the page */
+  .mj-ui-panel .mj-ui-search {
+    @apply flex-wrap basis-auto py-1.5 sm:max-w-none;
+  }
+  .mj-ui-panel .mj-ui-search > label {
+    @apply mb-0 flex min-w-0 max-w-full items-center gap-1;
+  }
+  .mj-ui-panel .mj-ui-search select {
+    @apply min-w-0 max-w-full truncate;
+  }
   .mj-ui-tools {
     @apply ml-auto flex shrink-0 items-center gap-1 xl:ml-0;
   }

@@ -6,7 +6,7 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "931b69d8d6409d1dbc957510722faf3507e6e5015829d998df1a7743487de0e0",
+    "fingerprint": "d523d8817bbaf7978024c04f889d7e42c1d561a8c44d0364d1208f9770011a58",
     "summary": {
       "total": 2249,
       "builtin": 191,
@@ -80349,7 +80349,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fbe774dfcb4aaa029c6e4a1f53073267efc2d20d4309fef8997e93cf6f14bea7",
+    "fingerprint": "2e9f62e1740aabdd5693fbb843ec5ea05a7b0c98c46dc74b5d0de99b52997550",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89089,7 +89089,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 9162
+        "bytes": 9238
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -98576,7 +98576,7 @@
         "identity": "test/cases/1060_the_version_is_allocated_at_landing.sh",
         "path": "test/cases/1060_the_version_is_allocated_at_landing.sh",
         "source_class": "case",
-        "bytes": 8884
+        "bytes": 9975
       },
       {
         "uri": "majordomus://test/test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
@@ -122854,6 +122854,20 @@
                   "state"
                 ],
                 "command": "majordomus mesh state",
+                "setup": [],
+                "expectation": "exits 0; prints cooperation inactive"
+              },
+              {
+                "id": "mesh-state-live-claims",
+                "title": "Every claim still held",
+                "description": "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+                "argv": [
+                  "mesh",
+                  "state",
+                  "--full",
+                  "--live-claims"
+                ],
+                "command": "majordomus mesh state --full --live-claims",
                 "setup": [],
                 "expectation": "exits 0; prints cooperation inactive"
               }

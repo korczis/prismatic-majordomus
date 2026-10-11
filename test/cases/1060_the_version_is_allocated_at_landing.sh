@@ -63,6 +63,19 @@ git add -A >/dev/null && git commit -qm "feat: an added capability"
 d="$(next trunk added)" || { echo "    release next refused a readable landing"; exit 1; }
 [ "$(printf '%s' "$d" | jq -r '[.observed, .selected, .next_version] | join(" ")')" = "minor minor 0.5.0" ] \
   || { echo "    an added capability should be a minor to 0.5.0:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
+# the MCP tool, as a client calls it, decides the same landing
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case1060","version":"0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_release_next","arguments":{"base":"trunk","head":"added"}}}'
+} > mcp.in
+"$RB" mcp < mcp.in > mcp.out 2> mcp.err || { echo "    the MCP server failed"; tail -5 mcp.err; exit 1; }
+mcp="$(jq -c 'select(.id == 2)' mcp.out)"
+[ "$(printf '%s' "$mcp" | jq -r '.result.isError')" = false ] \
+  || { echo "    majordomus_release_next failed:"; printf '%s' "$mcp" | head -c 600; exit 1; }
+[ "$(printf '%s' "$mcp" | jq -cS '.result.structuredContent | {observed, selected, next_version}')" = "$(printf '%s' "$d" | jq -cS '{observed, selected, next_version}')" ] \
+  || { echo "    the MCP tool and the command line disagree:"; printf '%s' "$mcp" | head -c 600; exit 1; }
+rm -f mcp.in mcp.out mcp.err
 
 # ---------------------------------------------------------------- a fix behind the boundary
 git checkout -q -b fixed trunk

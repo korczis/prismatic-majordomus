@@ -1346,7 +1346,8 @@ mod tests {
     #[test]
     fn a_text_is_cut_on_a_character_and_says_so() {
         assert_eq!(cut("short"), "short");
-        let long = "č".repeat(SUMMARY_TEXT + 1);
+        // a two-byte character, written as its escape: the source stays English-only
+        let long = "\u{10d}".repeat(SUMMARY_TEXT + 1);
         let cut = cut(&long);
         assert!(cut.ends_with('…'));
         assert_eq!(cut.chars().count(), SUMMARY_TEXT + 1);

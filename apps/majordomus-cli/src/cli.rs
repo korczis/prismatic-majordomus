@@ -6784,6 +6784,13 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "state"],
             setup: &[],
             expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }, ExampleDoc {
+            id: "mesh-state-live-claims",
+            title: "Every claim still held",
+            description: "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+            argv: &["mesh", "state", "--full", "--live-claims"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
         }],
     },
     CommandExamples {

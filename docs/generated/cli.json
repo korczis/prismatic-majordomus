@@ -20096,6 +20096,20 @@
                 "command": "majordomus mesh state",
                 "setup": [],
                 "expectation": "exits 0; prints cooperation inactive"
+              },
+              {
+                "id": "mesh-state-live-claims",
+                "title": "Every claim still held",
+                "description": "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+                "argv": [
+                  "mesh",
+                  "state",
+                  "--full",
+                  "--live-claims"
+                ],
+                "command": "majordomus mesh state --full --live-claims",
+                "setup": [],
+                "expectation": "exits 0; prints cooperation inactive"
               }
             ],
             "subcommands": []

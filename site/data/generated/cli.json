@@ -23348,6 +23348,20 @@
           "id": "mesh-state",
           "setup": [],
           "title": "The state every linked runtime converges on"
+        },
+        {
+          "argv": [
+            "mesh",
+            "state",
+            "--full",
+            "--live-claims"
+          ],
+          "command": "majordomus mesh state --full --live-claims",
+          "description": "The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.",
+          "expectation": "exits 0; prints cooperation inactive",
+          "id": "mesh-state-live-claims",
+          "setup": [],
+          "title": "Every claim still held"
         }
       ],
       "executable": true,
@@ -35983,7 +35997,7 @@
   "counts": {
     "arguments": 1564,
     "commands": 226,
-    "examples": 226,
+    "examples": 227,
     "runnable": 199
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",

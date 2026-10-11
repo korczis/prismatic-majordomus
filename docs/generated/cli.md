@@ -4474,6 +4474,14 @@ Examples:
 
   Verified: exits 0; prints cooperation inactive.
 
+- **Every claim still held** — The whole state with only the claims still held, as docs/MESH.md lists it — or, with no running server, why there is none.
+
+  ```console
+  $ majordomus mesh state --full --live-claims
+  ```
+
+  Verified: exits 0; prints cooperation inactive.
+
 <a id="majordomus-mesh-events"></a>
 ## `majordomus mesh events`
 
