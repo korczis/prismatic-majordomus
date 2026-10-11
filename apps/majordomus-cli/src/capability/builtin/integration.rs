@@ -445,4 +445,48 @@ mod tests {
             );
         }
     }
+
+    /// The timings are measured from the recorded observation when there is one, and an
+    /// observation that cannot be read is said as the reason, never as no observation.
+    #[test]
+    fn the_timings_are_measured_from_the_observation_or_say_why_not() {
+        use crate::integration::{
+            state_path, store_observation, ForgeObservation, OBSERVATION_FILE, OBSERVATION_SCHEMA,
+        };
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let root = Path::new(&ctx.index.repository.root).to_path_buf();
+
+        let none = integration_timings(&ctx, Empty {}).unwrap();
+        assert!(!none.observed && none.timings.is_none());
+        assert!(none.reason.unwrap().contains("prs refresh"));
+
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: "0".repeat(40),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                review_policy: None,
+                up_to_date_required: None,
+                merge_methods: vec!["merge".into()],
+                pull_requests: Vec::new(),
+                resolved: Default::default(),
+                delete_branch_on_merge: None,
+            },
+        )
+        .unwrap();
+        let read = integration_timings(&ctx, Empty {}).unwrap();
+        assert!(read.observed && read.reason.is_none(), "{read:?}");
+        assert!(read.timings.is_some());
+
+        std::fs::write(state_path(&root, OBSERVATION_FILE), "not an observation").unwrap();
+        let unreadable = integration_timings(&ctx, Empty {}).unwrap();
+        assert!(!unreadable.observed && unreadable.timings.is_none());
+        let reason = unreadable.reason.unwrap();
+        assert!(!reason.contains("prs refresh"), "{reason}");
+    }
 }

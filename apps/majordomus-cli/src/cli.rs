@@ -7111,3 +7111,71 @@ pub enum CommitCommand {
         rev: Option<String>,
     },
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    fn view(args: &[&str]) -> MeshViewArgs {
+        let cli = Cli::try_parse_from(["majordomus", "mesh", "state"].iter().chain(args))
+            .expect("the flags parse");
+        let Command::Mesh(mesh) = cli.command else {
+            panic!("expected `mesh`")
+        };
+        let MeshCommand::State(view) = mesh.command else {
+            panic!("expected `state`")
+        };
+        view
+    }
+
+    /// Every flag of a mesh view is one pair of the query, in the order the flags are
+    /// declared whatever order they were written in; no flag is no pair.
+    #[test]
+    fn every_mesh_view_flag_is_one_query_pair_in_declared_order() {
+        let all = view(&[
+            "--matching",
+            "src/x.rs",
+            "--open",
+            "--limit",
+            "5",
+            "--kind",
+            "claims",
+            "--runtime",
+            "n1-r1",
+            "--session",
+            "s-1",
+            "--after",
+            "42",
+            "--live-claims",
+            "--full",
+        ]);
+        assert_eq!(
+            all.pairs(),
+            [
+                "view=full",
+                "claims=live",
+                "after=42",
+                "session=s-1",
+                "runtime=n1-r1",
+                "kind=claims",
+                "limit=5",
+                "open=true",
+                "matching=src/x.rs",
+            ]
+        );
+        assert!(view(&[]).pairs().is_empty());
+    }
+
+    /// A duration is seconds when it names no unit, and each unit scales it; a number that
+    /// is not one and a unit that is not known are refused in words that say which.
+    #[test]
+    fn a_duration_is_read_in_its_unit_and_refused_in_words() {
+        assert_eq!(parse_duration(" 90 "), Ok(90));
+        assert_eq!(parse_duration("2d"), Ok(172_800));
+        let not_a_number = parse_duration("soon").unwrap_err();
+        assert!(not_a_number.contains("is not a duration"), "{not_a_number}");
+        let unknown = parse_duration("3w").unwrap_err();
+        assert!(unknown.contains("unknown unit"), "{unknown}");
+    }
+}

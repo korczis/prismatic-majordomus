@@ -655,3 +655,33 @@ pub fn module() -> ModuleDescriptor {
         ]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A server whose version cannot be ordered against this executable's — a pre-release
+    /// beside its release — is outdated, and the reason names both versions without
+    /// claiming which is older.
+    #[test]
+    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
+        let doc = LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid: 1,
+            token: "t".into(),
+            root: "/r".into(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-09-10T00:00:00Z".into(),
+            executable: None,
+            version: Some("1.0.0-rc.1".into()),
+        };
+        let (standing, reason) =
+            standing_of(&LeaseFile::Document(doc), Duration::ZERO, |_| true, "1.0.0");
+        assert_eq!(standing, ServerStanding::Outdated);
+        let reason = reason.expect("a reason");
+        assert_eq!(
+            reason,
+            "the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
+        );
+    }
+}

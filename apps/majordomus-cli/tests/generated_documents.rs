@@ -567,7 +567,8 @@ fn a_hand_edited_encoding_is_refused_and_regenerating_the_document_restores_ever
 
 /// The design target writes the UI's favicon from the canonical mark, and compiles the kit's
 /// icon set into the crate when the repository holds the set; a repository without the site
-/// has no set, and its design is still projected.
+/// has no set, and its design is still projected. A set that is there but cannot be read
+/// refuses the plan, naming the file, rather than compiling no icons.
 #[test]
 fn the_design_projects_the_uis_mark_and_its_icons_only_where_the_set_is() {
     fn copy_tree(from: &std::path::Path, to: &std::path::Path) {
@@ -582,7 +583,7 @@ fn the_design_projects_the_uis_mark_and_its_icons_only_where_the_set_is() {
             }
         }
     }
-    let plan = |with_icons: bool| -> Vec<String> {
+    let plan = |icons: Option<&[u8]>| -> Result<Vec<String>, String> {
         let f = common::Fixture::new();
         let share = fixture_with_its_own_share(&f);
         copy_tree(&common::dist_share().join("design"), &share.join("design"));
@@ -593,10 +594,10 @@ fn the_design_projects_the_uis_mark_and_its_icons_only_where_the_set_is() {
             &manifest,
         )
         .unwrap();
-        if with_icons {
+        if let Some(icons) = icons {
             let set = f.root().join("site/data/kit/icons.toml");
             std::fs::create_dir_all(set.parent().unwrap()).unwrap();
-            std::fs::write(&set, "[icons]\nbook = '<path d=\"M0 0\"/>'\n").unwrap();
+            std::fs::write(&set, icons).unwrap();
         }
         let args = majordomus_cli::cli::RepoArgs {
             repo: Some(f.root()),
@@ -605,12 +606,10 @@ fn the_design_projects_the_uis_mark_and_its_icons_only_where_the_set_is() {
         };
         let app = majordomus_cli::app::App::load(&args).expect("app loads");
         generate::plan(&app, &[Target::Design])
-            .expect("a plan")
-            .into_iter()
-            .map(|a| a.path)
-            .collect()
+            .map(|plan| plan.into_iter().map(|a| a.path).collect())
+            .map_err(|e| e.to_string())
     };
-    let with = plan(true);
+    let with = plan(Some(&b"[icons]\nbook = '<path d=\"M0 0\"/>'\n"[..])).expect("a plan");
     assert!(
         with.iter().any(|p| p == majordomus_cli::ui::FAVICON),
         "{with:?}"
@@ -620,12 +619,18 @@ fn the_design_projects_the_uis_mark_and_its_icons_only_where_the_set_is() {
             .any(|p| p == "apps/majordomus-cli/src/ui/icons.toml"),
         "{with:?}"
     );
-    let without = plan(false);
+    let without = plan(None).expect("a plan");
     assert!(without.iter().any(|p| p == majordomus_cli::ui::FAVICON));
     assert!(
         !without
             .iter()
             .any(|p| p == "apps/majordomus-cli/src/ui/icons.toml"),
         "no set, nothing compiled: {without:?}"
+    );
+    // bytes that are no UTF-8 text cannot be read as the set
+    let unreadable = plan(Some(&b"[icons]\nbook = '\xff\xfe'\n"[..])).expect_err("a refused plan");
+    assert!(
+        unreadable.contains("site/data/kit/icons.toml"),
+        "{unreadable}"
     );
 }
