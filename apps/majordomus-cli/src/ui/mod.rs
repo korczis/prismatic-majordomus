@@ -45,6 +45,7 @@ pub(crate) mod docs;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
+pub(crate) mod intent;
 pub(crate) mod issues;
 pub(crate) mod mesh;
 pub(crate) mod milestone;

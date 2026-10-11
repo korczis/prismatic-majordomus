@@ -30,9 +30,10 @@ const ISSUES: Source = Source::of("plan.issues");
 /// The Roadmap screen; `query` may pick one milestone to inspect (`?milestone=M004`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let picked = super::milestone::picked(query);
-    // the issues are asked only when a milestone is inspected, which is the one reader of them
+    let intent = super::intent::picked(query);
+    // the issues are asked only when a milestone or an intent is inspected, their one reader
     let mut sources = vec![ROADMAP, PLAN, INTENTS];
-    if picked.is_some() {
+    if picked.is_some() || intent.is_some() {
         sources.push(ISSUES);
     }
     let answers = ask_all(ctx, &sources);
@@ -152,9 +153,13 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
             .map(|i| {
                 el("tr")
                     .child(
-                        el("td")
-                            .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(i, "id")))
-                            .child(el("span").class("mj-ui-cell-title").text(text(i, "title"))),
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr("href", super::intent::href(&text(i, "id")))
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(i, "id")))
+                                .child(el("span").class("mj-ui-cell-title").text(text(i, "title"))),
+                        ),
                     )
                     .child(el("td").child(state(i, "stage")))
                     .child(el("td").child(state(i, "verdict")))
@@ -168,6 +173,9 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     });
 
     let mut grid = el("div").class("mj-ui-grid");
+    if let (Some(id), Some(issues)) = (&intent, answers.get(&ISSUES)) {
+        grid = grid.child(wide(super::intent::inspector(intents, issues, id)));
+    }
     if let (Some(id), Some(issues)) = (&picked, answers.get(&ISSUES)) {
         grid = grid.child(wide(super::milestone::inspector(roadmap, issues, id)));
     }

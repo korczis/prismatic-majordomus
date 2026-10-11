@@ -152,7 +152,11 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
             let path = critical_path(&mine);
             let serves: Vec<String> = mine
                 .iter()
-                .flat_map(|i| strings(i, "serves"))
+                .flat_map(|i| {
+                    strings(i, "serves")
+                        .into_iter()
+                        .map(|s| super::intent::intent_of(&s).to_string())
+                })
                 .collect::<BTreeSet<_>>()
                 .into_iter()
                 .collect();
@@ -251,10 +255,7 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
                             "Unblocks",
                             chips(&strings(&m, "dependents"), href_owned),
                         ))
-                        .child(fact(
-                            "Serves",
-                            chips(&serves, |_| super::roadmap::ROUTE.to_string()),
-                        )),
+                        .child(fact("Serves", chips(&serves, super::intent::href))),
                 )
                 .child(el("h4").class("mj-ui-panel-title").text("Critical path"))
                 .child(if path.is_empty() {

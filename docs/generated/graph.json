@@ -32894,6 +32894,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I2476",
+        "kind": "issue",
+        "label": "I2476",
+        "summary": "An intent opens what serves it: its statement, its criteria and their evidence, and the milestones and issues that serve it",
+        "route": "/cockpit/objects/issue/i2476",
+        "source": ".ai/repo/project/issues/I2476.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "?intent=<id> opens the inspector with its criteria and the milestones and issues serving it as links",
+            "an issue serving one of its criteria serves the intent",
+            "the roadmap's intent rows and the milestone inspector's Serves lead to it",
+            "an unknown id says so and a value that is no id opens nothing"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "An intent is a row of the roadmap; the milestone inspector's Serves leads to the roadmap.",
+          "depends_on": [
+            "I2471"
+          ],
+          "evidence_required": [
+            "ui_intent_unit_tests",
+            "ui_intent_case_1081"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/intent.rs",
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            ".ai/repo/project/issues/I2476.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1081_an_intent_opens_what_serves_it.sh"
+          ],
+          "slug": "an-intent-opens-what-serves-it",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::intent",
+            "test/run.sh 1081_an_intent_opens_what_serves_it"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -46129,6 +46173,13 @@
         "label": "test/cases/1080_the_issues_are_browsed.sh",
         "route": "/cockpit/objects/test/test-cases-1080-the-issues-are-browsed-sh",
         "source": "test/cases/1080_the_issues_are_browsed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1081_an_intent_opens_what_serves_it.sh",
+        "kind": "test",
+        "label": "test/cases/1081_an_intent_opens_what_serves_it.sh",
+        "route": "/cockpit/objects/test/test-cases-1081-an-intent-opens-what-serves-it-sh",
+        "source": "test/cases/1081_an_intent_opens_what_serves_it.sh"
       },
       {
         "id": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
@@ -70680,6 +70731,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2476",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2476",
+        "target": "majordomus://issue/I2471",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2476",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -73941,6 +74007,11 @@
       },
       {
         "source": "majordomus://test/test/cases/1080_the_issues_are_browsed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1081_an_intent_opens_what_serves_it.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -79631,8 +79702,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2601,
-      "edges": 5678,
+      "nodes": 2603,
+      "edges": 5682,
       "acyclic": false,
       "truncated": false
     }
