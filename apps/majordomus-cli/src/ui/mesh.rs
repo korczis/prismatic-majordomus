@@ -223,6 +223,20 @@ fn machine_row(m: &Value) -> El {
         )
 }
 
+/// How many claims a session holds. The summary view of `mesh.peers` counts them in
+/// `claims_held` and leaves the `claims` list empty; an answer without the count lists them.
+fn live_claims(session: &Value) -> u64 {
+    session
+        .get("claims_held")
+        .and_then(Value::as_u64)
+        .unwrap_or_else(|| {
+            session
+                .get("claims")
+                .and_then(Value::as_array)
+                .map_or(0, |c| c.len() as u64)
+        })
+}
+
 /// The inspector of one machine: what it is, its runtimes, the sessions they hold, their
 /// claims, and the events the journal holds from it.
 fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) -> El {
@@ -278,10 +292,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                     .unwrap_or_default()
                     .to_string()
             };
-            let claims = s
-                .get("claims")
-                .and_then(Value::as_array)
-                .map_or(0, Vec::len);
+            let claims = live_claims(&s);
             let intent: String = info("intent").chars().take(160).collect();
             el("tr")
                 .child(el("td").class("mj-ui-mono").text(info("session")))
@@ -322,12 +333,12 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
             ),
         )
         .child(table(
-            &["Runtime", "Liveness", "Last beat", "Sessions"],
+            &["Runtime", "Liveness", "Last beat", "Active sessions"],
             runtime_rows,
             "It runs no runtime the mesh knows.",
         ))
         .child(table(
-            &["Session", "Worker", "Claims", "What it said"],
+            &["Session", "Worker", "Claims held", "What it said"],
             session_rows,
             "No session is open on it.",
         ))
@@ -416,6 +427,16 @@ mod tests {
         assert_eq!(liveness_tone("own"), "blue");
         assert_eq!(liveness_tone("expired"), "rose");
         assert_eq!(liveness_tone("something-new"), "orange");
+    }
+
+    /// The summary view counts a session's claims and lists none; the count is what is drawn.
+    #[test]
+    fn a_session_shows_the_claims_the_summary_counts() {
+        let summarised = serde_json::json!({ "claims": [], "claims_held": 3 });
+        assert_eq!(live_claims(&summarised), 3);
+        let listed = serde_json::json!({ "claims": [{}, {}] });
+        assert_eq!(live_claims(&listed), 2);
+        assert_eq!(live_claims(&serde_json::json!({})), 0);
     }
 
     /// Selecting a machine is a URL, so it survives a reload and the browser's Back.

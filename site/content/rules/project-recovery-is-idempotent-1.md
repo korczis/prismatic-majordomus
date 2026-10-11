@@ -1,7 +1,7 @@
 +++
 title = "Recovery looks before it repeats"
 description = "Recovery looks before it repeats"
-weight = 136
+weight = 137
 [extra]
 kind = "rule"
 slug = "project-recovery-is-idempotent-1"

@@ -248,7 +248,7 @@ Output: `PeerDetail`.
 
 ## `mesh.peers` — Who cooperates, machine by machine
 
-Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.
+Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state.
 
 | | |
 |---|---|
@@ -261,7 +261,22 @@ Machine → runtime → session → claim: every runtime this one is linked to o
 | provenance | builtin majordomus_cli::capability::builtin::mesh |
 | tags | mesh, coordination, cooperation |
 
-Input: none.
+| input | type | required | description |
+|---|---|---|---|
+| `view` | object | no | `summary` (the default) or `full`. |
+| `claims` | object | no | `all` (the default) or `live`: whether ended claims are kept. |
+| `after` | integer or null | no | Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews
+and overlaps carry no stamp of their own and are kept or dropped with their sessions. |
+| `session` | string or null | no | Only what belongs to this session: its key (`<stream>/<session>`) or its bare id. |
+| `runtime` | string or null | no | Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime
+of that machine. |
+| `kind` | object | no | Only this collection; the others are answered empty. |
+| `limit` | integer or null | no | At most this many of each collection: the newest by Lamport stamp where it has one,
+kept in the fold's own order. |
+| `open` | boolean or null | no | Only what is still open: active sessions, live claims, review requests nobody has
+answered and handovers nobody has taken. |
+| `matching` | string or null | no | Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
+request, a word of an intent or a subject. |
 
 Output: `PeerTree`.
 
@@ -411,7 +426,7 @@ Output: `Written`.
 
 ## `mesh.state` — The state every linked runtime converges on
 
-The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.
+The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.
 
 | | |
 |---|---|
@@ -424,7 +439,22 @@ The journal folded: every session, every claim with its standing (held, released
 | provenance | builtin majordomus_cli::capability::builtin::mesh |
 | tags | mesh, coordination, cooperation |
 
-Input: none.
+| input | type | required | description |
+|---|---|---|---|
+| `view` | object | no | `summary` (the default) or `full`. |
+| `claims` | object | no | `all` (the default) or `live`: whether ended claims are kept. |
+| `after` | integer or null | no | Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews
+and overlaps carry no stamp of their own and are kept or dropped with their sessions. |
+| `session` | string or null | no | Only what belongs to this session: its key (`<stream>/<session>`) or its bare id. |
+| `runtime` | string or null | no | Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime
+of that machine. |
+| `kind` | object | no | Only this collection; the others are answered empty. |
+| `limit` | integer or null | no | At most this many of each collection: the newest by Lamport stamp where it has one,
+kept in the fold's own order. |
+| `open` | boolean or null | no | Only what is still open: active sessions, live claims, review requests nobody has
+answered and handovers nobody has taken. |
+| `matching` | string or null | no | Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
+request, a word of an intent or a subject. |
 
 Output: `MeshStateAnswer`.
 
