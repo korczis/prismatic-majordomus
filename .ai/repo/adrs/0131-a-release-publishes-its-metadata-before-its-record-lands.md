@@ -1,0 +1,106 @@
+---
+schema: adr/v1
+id: adr-0131
+kind: adr
+title: A release publishes its metadata to the site before its record lands, and the site never goes back a release
+status: proposed
+date: 2026-10-10
+tags:
+  - release
+  - distribution
+  - pages
+  - throughput
+provenance:
+  origin: authored
+related:
+  - file:scripts/site-deploy
+  - file:.github/workflows/release.yml
+  - file:docs/DISTRIBUTION.md
+  - file:.ai/repo/project/issues/I2303.yaml
+  - test:test/cases/1041_a_release_publishes_its_metadata.sh
+  - test:test/cases/96_site_deploy.sh
+---
+# 131. A release publishes its metadata to the site before its record lands, and the site never goes back a release
+
+## Context
+
+The installer reads two files from majordomus.dev: `releases/latest.json` and
+`releases/<tag>.json`. Both are projections of the release record, and until now the only
+way they reached the site was the record's pull request landing on master and master being
+deployed.
+
+Measured on 2026-10-10:
+
+- v0.19.1 was published on GitHub at 01:46Z. Its record pull request (#866) ran `ci` for
+  106 minutes, set by a suite shard of 86 minutes, and merged at 07:09Z.
+- v0.20.0 was tagged at 16:14Z and published at 16:38Z. Its publish job died before
+  proposing the record, the record was proposed by hand at 17:23Z, merged at 17:25Z without
+  waiting for its `ci` on the owner's word, and the site served 0.20.0 at 17:42Z.
+- `scripts/ci-plan` selects the whole shell suite for a record's change, and a grep of the
+  cases that read release metadata finds 41 of them, 8202 seconds, one of them 35 to 58
+  minutes alone. A narrower verdict for the record cannot be short either.
+
+The owner set the bound at 15 minutes from tag to served release and chose, asked on
+2026-10-10, that the release run publish its metadata itself, before the record lands.
+
+## Decision
+
+1. **The release publishes its own metadata.** The publish job, after the record and every
+   projection of it are derived and judged by `scripts/derive-check`, runs `scripts/site-deploy
+   --release-metadata <tag>`. It copies `site/static/releases/<tag>.json` and
+   `site/static/releases/latest.json` of that tree onto what `gh-pages` serves, commits them
+   alone, and pushes. It is the one deploy script with one more mode, not a second deploy
+   path.
+
+2. **Two files and nothing else.** `build.json`, every page and every other file stay what
+   master's last deploy published. The `pages-live` gate, which asks that the site was built
+   from a commit on master, still reads master's commit.
+
+3. **The mode refuses what it cannot vouch for.** A tag whose file is missing, a `latest.json`
+   that names another tag or differs from the tag's file, a remote without `gh-pages`, and a
+   release older than the one `gh-pages` serves are each refused with exit 10, and nothing is
+   pushed.
+
+4. **The site never goes back a release.** Between the metadata's publication and the record
+   landing, every deploy of master carries the previous release's `latest.json`. An ordinary
+   deploy therefore keeps the `releases/latest.json` `gh-pages` serves, and the tag file it
+   names, when that names a version newer than the build's, says so on its output, and names
+   it in the `gh-pages` commit message. Once the build names the same version or a newer one,
+   nothing is kept. Versions are compared numerically field by field; an unreadable side keeps
+   nothing.
+
+5. **The record still lands under the full verdict.** Its pull request is proposed as before
+   and merges when its `ci` passes. What changes is that nobody waits for it to install the
+   release.
+
+## Consequences
+
+From tag to served metadata is the plan, the slowest build and the publish job: 28 to 31
+minutes in the two runs measured, of which the macOS x86_64 `package` step is 866 seconds and
+the publish job re-derives the tree it has just derived (271 seconds) and rebuilds the
+executable the build jobs already built (117 seconds). The 15 minutes the owner set are not
+reached by this decision alone; they need the build and the publish job shortened as well,
+which is not decided here.
+
+For the time between publication and the record landing, the site serves metadata that is
+not on master. It is the published record's projection, judged by the derivation check of the
+tree that proposes it, and its archives are already on GitHub Releases; the record's pull
+request then puts the same bytes on master. A record that never lands leaves the site serving
+a release master does not record, and `release-check` names that state as it named the v0.19.1
+and v0.20.0 windows.
+
+The smoke job, which waits for `latest.json` to name the release, no longer waits for a
+person to merge the record.
+
+## Alternatives rejected
+
+- **Merge the record on a narrower verdict.** Measured above: the cases that read release
+  metadata include one that runs for most of an hour.
+- **Merge the record with administrator rights on every release.** It bypasses the branch
+  protection each time, and v0.20.0 needed a person for it.
+- **Deploy the whole site from the record's tree.** `build.json` would name a commit that is
+  not on master, the `pages-live` gate would refuse it, and the next deploy of master would
+  replace it anyway.
+- **Let the next master deploy overwrite the metadata.** The site would serve the new release
+  for minutes and the old one again after the next merge: the installer would hand out two
+  versions in one afternoon.

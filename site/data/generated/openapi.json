@@ -1,6 +1,7 @@
 {
   "anchors": {
     "op-artifacts-list": "docs/api/artifacts/",
+    "op-brief-session": "docs/api/brief/",
     "op-capabilities-describe": "docs/api/capabilities/",
     "op-capabilities-list": "docs/api/capabilities/",
     "op-capabilities-projections": "docs/api/capabilities/",
@@ -233,6 +234,13 @@
     "schema-BoardView": "docs/api/peers/",
     "schema-BranchState": "docs/api/worktree/",
     "schema-BranchTrace": "docs/api/trace/",
+    "schema-BriefDeriveSection": "docs/api/brief/",
+    "schema-BriefIntegrationSection": "docs/api/brief/",
+    "schema-BriefMeshSection": "docs/api/brief/",
+    "schema-BriefOrigin": "docs/api/brief/",
+    "schema-BriefPeersSection": "docs/api/brief/",
+    "schema-BriefSectionState": "docs/api/brief/",
+    "schema-BriefSessionSection": "docs/api/brief/",
     "schema-Budget": "docs/api/devcontext/",
     "schema-Budgets": "docs/api/deploy/",
     "schema-Build": "docs/api/deploy/",
@@ -953,6 +961,7 @@
     "schema-ServerView": "docs/api/server/",
     "schema-ServiceAvailability": "docs/api/environment/",
     "schema-ServiceState": "docs/api/environment/",
+    "schema-SessionBrief": "docs/api/brief/",
     "schema-SessionCloseInput": "docs/api/mesh/",
     "schema-SessionInfo": "docs/api/mesh/",
     "schema-SessionInput": "docs/api/mesh/",
@@ -1088,6 +1097,7 @@
     "schema-WorktreeState": "docs/api/worktree/",
     "schema-Written": "docs/api/mesh/",
     "tag-artifacts": "docs/api/artifacts/",
+    "tag-brief": "docs/api/brief/",
     "tag-capabilities": "docs/api/capabilities/",
     "tag-commands": "docs/api/commands/",
     "tag-commit": "docs/api/commit/",
@@ -1143,9 +1153,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 182,
-    "schemas": 905,
-    "tags": 53
+    "operations": 183,
+    "schemas": 913,
+    "tags": 54
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1179,7 +1189,7 @@
   "info": {
     "contact_name": "Majordomus",
     "contact_url": "https://github.com/korczis/prismatic-majordomus",
-    "description_md": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "description_md": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
@@ -1227,10 +1237,17 @@
       "id": "cockpit",
       "path": "/cockpit",
       "what": "The registry, rendered for a person"
+    },
+    {
+      "availability": "served-only",
+      "id": "ui",
+      "path": "/ui",
+      "what": "The delivery, for a person: majordomus ui"
     }
   ],
   "op_homes": {
     "artifacts.list": "artifacts",
+    "brief.session": "brief",
     "capabilities.describe": "capabilities",
     "capabilities.list": "capabilities",
     "capabilities.projections": "capabilities",
@@ -1467,6 +1484,13 @@
     "BoardView": "peers",
     "BranchState": "worktree",
     "BranchTrace": "trace",
+    "BriefDeriveSection": "brief",
+    "BriefIntegrationSection": "brief",
+    "BriefMeshSection": "brief",
+    "BriefOrigin": "brief",
+    "BriefPeersSection": "brief",
+    "BriefSectionState": "brief",
+    "BriefSessionSection": "brief",
     "Budget": "devcontext",
     "Budgets": "deploy",
     "Build": "deploy",
@@ -2187,6 +2211,7 @@
     "ServerView": "server",
     "ServiceAvailability": "environment",
     "ServiceState": "environment",
+    "SessionBrief": "brief",
     "SessionCloseInput": "mesh",
     "SessionInfo": "mesh",
     "SessionInput": "mesh",
@@ -4945,6 +4970,428 @@
       "variants": []
     },
     {
+      "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`).",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefDeriveSection",
+      "properties": [
+        {
+          "description": "`undeclared` when the repository ships no derive lock.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "The lock's owner line, when the lock is held.",
+          "name": "holder",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The holder's process id, when its line names one.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether that process is running on this machine.",
+          "name": "alive",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Seconds since the lock was taken.",
+          "name": "held_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The branches the priority marker names, when it is present.",
+          "name": "priority",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The integration queue, as `majordomus prs brief` says it.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefIntegrationSection",
+      "properties": [
+        {
+          "description": "Whether this checkout ever observed the forge.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The mesh: the links of this runtime and what the journal addresses to it.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefMeshSection",
+      "properties": [
+        {
+          "description": "Whether cooperation could be read.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "Whether cooperation runs in the composing process.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it does not, when it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Links to other runtimes.",
+          "name": "links",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of them, connected.",
+          "name": "connected",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of them, degraded, unreachable or expired.",
+          "name": "failing",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Claims held across the mesh.",
+          "name": "claims_held",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of them, held by this runtime.",
+          "name": "own_claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Open review requests that name this runtime as the reviewer.",
+          "name": "reviews_for_you",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Handovers another runtime published that nobody has consumed.",
+          "name": "handovers_waiting",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Overlaps between a claim of this runtime and another's.",
+          "name": "overlaps_for_you",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which process composed the brief, and why that one.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefOrigin",
+      "properties": [
+        {
+          "description": "`leaseholder` (the server this checkout's lease names), `superseded` (a server that lost the lease), or `this_process` (no server answered, or the call asked for `local`).",
+          "name": "process",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The address of the server that composed it, when one did.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why this process and not the leaseholder, when it is not the leaseholder.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The workers of this repository, from every board the brief could read.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefPeersSection",
+      "properties": [
+        {
+          "description": "Whether every board could be read.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "Attached peers across the boards read, the caller included.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many boards the answer covers.",
+          "name": "boards",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every board that could not be read, as `<worktree>: <reason>`.",
+          "name": "unread",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Pairs of peers whose claimed scopes meet.",
+          "name": "overlaps",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Set when the composing server is superseded: its own board is unreachable by the repository's gather.",
+          "name": "superseded",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The attached peers, one short line each, at most a bounded number.",
+          "name": "named",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a section of the brief could be read.",
+      "home": "brief",
+      "is_enum": true,
+      "name": "BriefSectionState",
+      "properties": [],
+      "type": "\"read\" | \"partial\" | \"unread\" | \"undeclared\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefDeriveSection",
+        "BriefIntegrationSection",
+        "BriefMeshSection",
+        "BriefPeersSection",
+        "BriefSessionSection"
+      ],
+      "values": [
+        {
+          "description": "Its owner answered in full.",
+          "value": "read"
+        },
+        {
+          "description": "Its owner answered, and part of what it covers could not be asked; the summary says which.",
+          "value": "partial"
+        },
+        {
+          "description": "Its owner did not answer; the summary says why.",
+          "value": "unread"
+        },
+        {
+          "description": "The repository declares nothing for it (no derive lock, a mesh switched off).",
+          "value": "undeclared"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The session the brief is about.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefSessionSection",
+      "properties": [
+        {
+          "description": "Whether it could be read.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "The open episode, when one is found.",
+          "name": "episode",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The provider session that owns it.",
+          "name": "provider_session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout's branch.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The checkout's head, abbreviated.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The active task's id, when one is active.",
+          "name": "task_id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The active task's words.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The calling MCP session's place on this board, when the call came through one.",
+          "name": "caller",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The budget, and what became of it.\n\n`over_budget` is the field to read and the one most likely to be misread. It does not\nmean the compiler overspent by accident: every entry the budget has a say over is refused\nthe moment it would not fit, so the only way past the ceiling is through the entries that\nmay not be dropped — the seeds, the policy, the scope, a blocking rule. So\n`over_budget` means *the things this context cannot do without already cost more than you\nallowed*, and `required_tokens` is the explanation of it. The honest answer to that is to\nsay so, not to return a context missing the thing it was compiled about.\n\n`remaining_tokens` is floored at zero rather than going negative, so it is safe to\ndisplay; the overspend is read from `used_tokens` against `limit_tokens`, which is why\nboth are carried.\n\n```\nuse majordomus_cli::devcontext::{Budget, Tier, BYTES_PER_TOKEN};\nuse serde_json::json;\n\nlet tier = |name: &str, tokens: u64, required: usize| json!({\n    \"tier\": name, \"meaning\": \"as this tier is for\", \"selected\": 1,\n    \"excluded\": 0, \"tokens\": tokens, \"required\": required,\n});\n\n// the undroppable entries alone cost more than the caller allowed\nlet b: Budget = serde_json::from_value(json!({\n    \"limit_tokens\": 1_000,\n    \"used_tokens\": 2_500,\n    \"required_tokens\": 2_500,\n    \"remaining_tokens\": 0,\n    \"over_budget\": true,\n    \"bytes_per_token\": BYTES_PER_TOKEN,\n    \"tiers\": [tier(\"task\", 2_000, 1), tier(\"governance\", 500, 1)],\n})).unwrap();\n\nassert!(b.over_budget);\nassert!(b.used_tokens > b.limit_tokens, \"the overspend is read from these two\");\nassert_eq!(b.required_tokens, b.used_tokens, \"all of it was undroppable\");\nassert_eq!(b.remaining_tokens, 0, \"floored, so it is safe to display\");\n\n// the divisor is carried so a caller measuring tokens differently can convert\n// rather than guess what the estimate meant\nassert_eq!(b.bytes_per_token, BYTES_PER_TOKEN);\n\n// and the tiers are reported in the order the budget spends in\nlet order: Vec<Tier> = b.tiers.iter().map(|t| t.tier).collect();\nassert_eq!(order, [Tier::Task, Tier::Governance]);\nassert!(order.windows(2).all(|w| w[0] < w[1]));\n```",
       "home": "devcontext",
       "is_enum": false,
@@ -6222,6 +6669,7 @@
       "properties": [],
       "type": "\"repository\" | \"this\"",
       "used_by": [
+        "brief.session",
         "peers.list",
         "server.status"
       ],
@@ -17532,6 +17980,7 @@
       "type": "object",
       "used_by": [
         "artifacts.list",
+        "brief.session",
         "capabilities.list",
         "capabilities.projections",
         "capabilities.describe",
@@ -19133,7 +19582,7 @@
       "name": "ExecutionError",
       "properties": [
         {
-          "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.",
+          "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.",
           "name": "code",
           "refs": [],
           "required": true,
@@ -19654,6 +20103,13 @@
           ],
           "required": true,
           "type": "ExecutionConcurrency"
+        },
+        {
+          "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`.",
+          "name": "signed_input",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
         }
       ],
       "type": "object",
@@ -20271,7 +20727,7 @@
       "is_enum": true,
       "name": "Feature",
       "properties": [],
-      "type": "\"mcp\" | \"cockpit\"",
+      "type": "\"mcp\" | \"cockpit\" | \"ui\"",
       "used_by": [],
       "used_by_schemas": [
         "Surface"
@@ -20284,6 +20740,10 @@
         {
           "description": "This process serves the Cockpit.",
           "value": "cockpit"
+        },
+        {
+          "description": "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135).",
+          "value": "ui"
         }
       ],
       "variants": []
@@ -26283,6 +26743,20 @@
           "name": "lamport",
           "refs": [],
           "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+          "name": "write_failures",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+          "name": "unreadable",
+          "refs": [],
+          "required": false,
           "type": "integer (uint64)"
         }
       ],
@@ -39789,7 +40263,7 @@
       "is_enum": false,
       "name": "RelationToMaster",
       "properties": [],
-      "type": "one of 8 variants",
+      "type": "one of 9 variants",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment",
@@ -39879,6 +40353,33 @@
               "refs": [],
               "required": true,
               "type": "\"up_to_date\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it.",
+          "properties": [
+            {
+              "description": "Commits on master the head does not have.",
+              "name": "behind",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "Authored (non-derived) paths the merge changes.",
+              "name": "authored",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"carries_master\""
             }
           ],
           "type": "object"
@@ -45921,6 +46422,110 @@
       "used_by_schemas": [
         "RepositoryEnvironment"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "SessionBrief",
+      "properties": [
+        {
+          "description": "When it was composed, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The brief in one line: the status line's text.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The brief in a few lines: one per section, then the peers it names.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "How often a session reports on itself, in minutes (`session.brief_interval_minutes`).",
+          "name": "interval_minutes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What a session is told at its start about keeping itself awake.",
+          "name": "keep_awake",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which process composed it.",
+          "name": "answered_by",
+          "refs": [
+            "BriefOrigin"
+          ],
+          "required": true,
+          "type": "BriefOrigin"
+        },
+        {
+          "description": "This session: its episode and task.",
+          "name": "session",
+          "refs": [
+            "BriefSessionSection"
+          ],
+          "required": true,
+          "type": "BriefSessionSection"
+        },
+        {
+          "description": "The workers of every board.",
+          "name": "peers",
+          "refs": [
+            "BriefPeersSection"
+          ],
+          "required": true,
+          "type": "BriefPeersSection"
+        },
+        {
+          "description": "The mesh.",
+          "name": "mesh",
+          "refs": [
+            "BriefMeshSection"
+          ],
+          "required": true,
+          "type": "BriefMeshSection"
+        },
+        {
+          "description": "The integration queue.",
+          "name": "integration",
+          "refs": [
+            "BriefIntegrationSection"
+          ],
+          "required": true,
+          "type": "BriefIntegrationSection"
+        },
+        {
+          "description": "The derive queue.",
+          "name": "derive",
+          "refs": [
+            "BriefDeriveSection"
+          ],
+          "required": true,
+          "type": "BriefDeriveSection"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "brief.session"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -52887,6 +53492,104 @@
         }
       ],
       "slug": "artifacts"
+    },
+    {
+      "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
+      "name": "brief",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "brief",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/brief?session=00000000-0000-0000-0000-000000000000&checkouts=this&local=true\"",
+          "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+          "home": "brief",
+          "id": "brief.session",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_brief",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "\"00000000-0000-0000-0000-000000000000\""
+                }
+              ],
+              "name": "session",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Which checkouts the peers section covers: `repository` (every board, the default) or `this`.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "\"this\""
+                }
+              ],
+              "name": "checkouts",
+              "required": false,
+              "type": "Checkouts"
+            },
+            {
+              "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "true"
+                }
+              ],
+              "name": "local",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/brief",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::brief",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The session brief: the result.",
+              "schema": "SessionBrief",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SessionBrief",
+          "stability": "behaviorally_verified",
+          "summary": "The session brief"
+        }
+      ],
+      "slug": "brief"
     },
     {
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",

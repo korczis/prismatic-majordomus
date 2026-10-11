@@ -1,7 +1,7 @@
 +++
 title = "majordomus executions list"
 description = "Every execution the server remembers, newest first"
-weight = 118
+weight = 122
 [extra]
 route = "/docs/cli/executions/list/"
 command = "majordomus executions list"

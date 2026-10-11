@@ -125,6 +125,15 @@
           "type": "boolean",
           "description": "Install the provider mod that asks the worker for a continuation record when the context window nears its fill line, while there is still room for the writing turn. PreCompact derives a checkpoint because the worker cannot be asked at that moment; this asks before it. `capture install` converges on the value: only true installs it, and anything else removes a mod it wrote. Absent means off, because the mod writes into the adopter's own .claude/ tree and an absent key is not consent to that; the skeleton declares true (ADR 0123)."
         },
+        "brief_on_interval": {
+          "type": "boolean",
+          "description": "Install the provider mod that keeps a session briefed on what surrounds it: the one-line `majordomus brief` as its status line, the full brief put before the model once per interval, and a prompt of its own when the session is idle, so that it reports on itself without being asked; and have the start event tell the session how to keep itself awake. `capture install` converges on the value: only true installs the mod, and anything else removes a mod it wrote. Absent means off, for the reason handover_on_fill gives; the skeleton declares true (ADR 0136)."
+        },
+        "brief_interval_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How often a session reports on itself without being asked, in minutes. `brief.session` carries it, and the provider mod reads it from that answer. Absent means 20 (ADR 0136)."
+        },
         "knowledge_on_end": {
           "type": "boolean",
           "description": "Derive the knowledge an episode produced into candidate records under the tracked knowledge section as the episode closes, on every close path: the ledger lines it stamped are the evidence, and they are about to stop being reachable. Deterministic and without a model; a second run over the same evidence writes nothing (ADR 0091). Absent means on."

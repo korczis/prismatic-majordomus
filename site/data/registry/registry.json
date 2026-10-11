@@ -6,27 +6,27 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "ef51116391971fa544aa15bbf082a91a79af1d7853de52c3162ee220b37de552",
+    "fingerprint": "ec8bf7d8526aaa700570c2c6426204368c066dd059355de62b2a7a86d49dfe0a",
     "summary": {
-      "total": 2116,
-      "builtin": 185,
-      "declarative": 1931,
+      "total": 2153,
+      "builtin": 186,
+      "declarative": 1967,
       "by_kind": {
         "command": 26,
-        "query": 159,
-        "resource": 1931
+        "query": 160,
+        "resource": 1967
       },
       "by_stability": {
-        "behaviorally_verified": 132,
+        "behaviorally_verified": 133,
         "experimental": 45,
-        "implemented": 1939
+        "implemented": 1975
       },
-      "mcp_tools": 178,
-      "mcp_resources": 1985,
-      "http_routes": 182,
-      "cli_commands": 102,
-      "modules": 86,
-      "benchmark_required": 161,
+      "mcp_tools": 179,
+      "mcp_resources": 2021,
+      "http_routes": 183,
+      "cli_commands": 103,
+      "modules": 88,
+      "benchmark_required": 162,
       "benchmark_waived": 24,
       "cached": 41
     },
@@ -416,6 +416,507 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
+      },
+      {
+        "id": "brief.session",
+        "module": "brief",
+        "kind": "query",
+        "title": "The session brief",
+        "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+        "input": {
+          "name": "BriefInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to."
+              },
+              "checkouts": {
+                "$ref": "#/$defs/Checkouts",
+                "description": "Which checkouts the peers section covers: `repository` (every board, the default) or `this`.",
+                "default": "repository"
+              },
+              "local": {
+                "type": "boolean",
+                "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+                "default": false
+              }
+            },
+            "description": "What to ask of `brief.session`.",
+            "title": "BriefInput",
+            "$defs": {
+              "Checkouts": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "repository",
+                    "description": "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+                  },
+                  {
+                    "type": "string",
+                    "const": "this",
+                    "description": "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+                  }
+                ],
+                "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "SessionBrief",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string",
+                "description": "When it was composed, RFC 3339."
+              },
+              "line": {
+                "type": "string",
+                "description": "The brief in one line: the status line's text."
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The brief in a few lines: one per section, then the peers it names."
+              },
+              "interval_minutes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How often a session reports on itself, in minutes (`session.brief_interval_minutes`)."
+              },
+              "keep_awake": {
+                "type": "string",
+                "description": "What a session is told at its start about keeping itself awake."
+              },
+              "answered_by": {
+                "$ref": "#/$defs/BriefOrigin",
+                "description": "Which process composed it."
+              },
+              "session": {
+                "$ref": "#/$defs/BriefSessionSection",
+                "description": "This session: its episode and task."
+              },
+              "peers": {
+                "$ref": "#/$defs/BriefPeersSection",
+                "description": "The workers of every board."
+              },
+              "mesh": {
+                "$ref": "#/$defs/BriefMeshSection",
+                "description": "The mesh."
+              },
+              "integration": {
+                "$ref": "#/$defs/BriefIntegrationSection",
+                "description": "The integration queue."
+              },
+              "derive": {
+                "$ref": "#/$defs/BriefDeriveSection",
+                "description": "The derive queue."
+              }
+            },
+            "required": [
+              "at",
+              "line",
+              "lines",
+              "interval_minutes",
+              "keep_awake",
+              "answered_by",
+              "session",
+              "peers",
+              "mesh",
+              "integration",
+              "derive"
+            ],
+            "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few.",
+            "title": "SessionBrief",
+            "$defs": {
+              "BriefOrigin": {
+                "type": "object",
+                "properties": {
+                  "process": {
+                    "type": "string",
+                    "description": "`leaseholder` (the server this checkout's lease names), `superseded` (a server that lost the lease), or `this_process` (no server answered, or the call asked for `local`)."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The address of the server that composed it, when one did."
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why this process and not the leaseholder, when it is not the leaseholder."
+                  }
+                },
+                "required": [
+                  "process"
+                ],
+                "description": "Which process composed the brief, and why that one."
+              },
+              "BriefSessionSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether it could be read."
+                  },
+                  "episode": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The open episode, when one is found."
+                  },
+                  "provider_session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider session that owns it."
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "The checkout's branch."
+                  },
+                  "head": {
+                    "type": "string",
+                    "description": "The checkout's head, abbreviated."
+                  },
+                  "task_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The active task's id, when one is active."
+                  },
+                  "task": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The active task's words."
+                  },
+                  "caller": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The calling MCP session's place on this board, when the call came through one."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "branch",
+                  "head",
+                  "summary"
+                ],
+                "description": "The session the brief is about."
+              },
+              "BriefSectionState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "Its owner answered in full."
+                  },
+                  {
+                    "type": "string",
+                    "const": "partial",
+                    "description": "Its owner answered, and part of what it covers could not be asked; the summary says which."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "Its owner did not answer; the summary says why."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undeclared",
+                    "description": "The repository declares nothing for it (no derive lock, a mesh switched off)."
+                  }
+                ],
+                "description": "Whether a section of the brief could be read."
+              },
+              "BriefPeersSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether every board could be read."
+                  },
+                  "attached": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Attached peers across the boards read, the caller included."
+                  },
+                  "boards": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many boards the answer covers."
+                  },
+                  "unread": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every board that could not be read, as `<worktree>: <reason>`."
+                  },
+                  "overlaps": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Pairs of peers whose claimed scopes meet."
+                  },
+                  "superseded": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Set when the composing server is superseded: its own board is unreachable by the repository's gather."
+                  },
+                  "named": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The attached peers, one short line each, at most a bounded number."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "attached",
+                  "boards",
+                  "overlaps",
+                  "named",
+                  "summary"
+                ],
+                "description": "The workers of this repository, from every board the brief could read."
+              },
+              "BriefMeshSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether cooperation could be read."
+                  },
+                  "active": {
+                    "type": "boolean",
+                    "description": "Whether cooperation runs in the composing process."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it does not, when it does not."
+                  },
+                  "links": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Links to other runtimes."
+                  },
+                  "connected": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of them, connected."
+                  },
+                  "failing": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of them, degraded, unreachable or expired."
+                  },
+                  "claims_held": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Claims held across the mesh."
+                  },
+                  "own_claims": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of them, held by this runtime."
+                  },
+                  "reviews_for_you": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Open review requests that name this runtime as the reviewer."
+                  },
+                  "handovers_waiting": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Handovers another runtime published that nobody has consumed."
+                  },
+                  "overlaps_for_you": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Overlaps between a claim of this runtime and another's."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "active",
+                  "links",
+                  "connected",
+                  "failing",
+                  "claims_held",
+                  "own_claims",
+                  "reviews_for_you",
+                  "handovers_waiting",
+                  "overlaps_for_you",
+                  "summary"
+                ],
+                "description": "The mesh: the links of this runtime and what the journal addresses to it."
+              },
+              "BriefIntegrationSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "Whether this checkout ever observed the forge."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "summary"
+                ],
+                "description": "The integration queue, as `majordomus prs brief` says it."
+              },
+              "BriefDeriveSection": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/BriefSectionState",
+                    "description": "`undeclared` when the repository ships no derive lock."
+                  },
+                  "holder": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The lock's owner line, when the lock is held."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The holder's process id, when its line names one."
+                  },
+                  "alive": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether that process is running on this machine."
+                  },
+                  "held_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since the lock was taken."
+                  },
+                  "priority": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branches the priority marker names, when it is present."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "The section in words."
+                  }
+                },
+                "required": [
+                  "state",
+                  "summary"
+                ],
+                "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::brief"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_brief"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/brief"
+          },
+          "cli": {
+            "path": [
+              "brief"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "session",
+          "peers",
+          "coordination",
+          "brief"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/brief.rs"
       },
       {
         "id": "capabilities.describe",
@@ -1011,6 +1512,10 @@
                   "concurrency": {
                     "$ref": "#/$defs/ExecutionConcurrency",
                     "description": "Whether two of them may overlap."
+                  },
+                  "signed_input": {
+                    "type": "boolean",
+                    "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
                   }
                 },
                 "required": [
@@ -25433,7 +25938,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -26436,7 +26941,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -26718,7 +27223,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -27361,7 +27866,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -28110,7 +28615,7 @@
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
                   },
                   "message": {
                     "type": "string",
@@ -28423,7 +28928,7 @@
           "policy": "disabled"
         },
         "execution": {
-          "effect": "process_state",
+          "effect": "repository_mutation",
           "cancellable": false,
           "concurrency": "serial"
         },
@@ -30130,7 +30635,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "The evidence, as reason codes."
@@ -30432,7 +30937,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
@@ -31016,7 +31521,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
@@ -31533,6 +32038,34 @@
                       "authored"
                     ],
                     "description": "The head already contains master and merges cleanly."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "behind": {
+                        "type": "integer",
+                        "format": "uint64",
+                        "minimum": 0,
+                        "description": "Commits on master the head does not have."
+                      },
+                      "authored": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Authored (non-derived) paths the merge changes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "carries_master"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "behind",
+                      "authored"
+                    ],
+                    "description": "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
                   },
                   {
                     "type": "object",
@@ -32825,7 +33358,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
@@ -33342,6 +33875,34 @@
                       "authored"
                     ],
                     "description": "The head already contains master and merges cleanly."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "behind": {
+                        "type": "integer",
+                        "format": "uint64",
+                        "minimum": 0,
+                        "description": "Commits on master the head does not have."
+                      },
+                      "authored": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Authored (non-derived) paths the merge changes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "carries_master"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "behind",
+                      "authored"
+                    ],
+                    "description": "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
                   },
                   {
                     "type": "object",
@@ -34137,7 +34698,7 @@
                   "reasons": {
                     "type": "array",
                     "items": {
-                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+                      "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
                       "type": "string"
                     },
                     "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
@@ -35000,6 +35561,34 @@
                       "authored"
                     ],
                     "description": "The head already contains master and merges cleanly."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "behind": {
+                        "type": "integer",
+                        "format": "uint64",
+                        "minimum": 0,
+                        "description": "Commits on master the head does not have."
+                      },
+                      "authored": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Authored (non-derived) paths the merge changes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "carries_master"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "behind",
+                      "authored"
+                    ],
+                    "description": "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
                   },
                   {
                     "type": "object",
@@ -42887,6 +43476,20 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "The highest Lamport stamp seen."
+                  },
+                  "write_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+                    "default": 0
+                  },
+                  "unreadable": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+                    "default": 0
                   }
                 },
                 "required": [
@@ -43918,7 +44521,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -44129,7 +44733,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -46346,7 +46951,8 @@
         "execution": {
           "effect": "process_state",
           "cancellable": false,
-          "concurrency": "serial"
+          "concurrency": "serial",
+          "signed_input": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -71261,6 +71867,11 @@
                     "type": "string",
                     "const": "cockpit",
                     "description": "This process serves the Cockpit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ui",
+                    "description": "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135)."
                   }
                 ],
                 "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
@@ -75899,7 +76510,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 86,
+        "capabilities": 91,
         "capability_ids": []
       },
       {
@@ -75942,6 +76553,18 @@
         "source": "declarative",
         "capabilities": 8,
         "capability_ids": []
+      },
+      {
+        "id": "brief",
+        "title": "The session brief",
+        "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "brief.session"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/brief.rs"
       },
       {
         "id": "capabilities",
@@ -76017,7 +76640,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 36,
+        "capabilities": 37,
         "capability_ids": []
       },
       {
@@ -76117,6 +76740,14 @@
         "capability_ids": []
       },
       {
+        "id": "derive-offload",
+        "title": "derive-offload",
+        "description": "Declarative objects of kind 'derive-offload' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "design",
         "title": "Design system",
         "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
@@ -76204,7 +76835,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 327,
+        "capabilities": 330,
         "capability_ids": []
       },
       {
@@ -76335,7 +76966,7 @@
         "title": "feature",
         "description": "Declarative objects of kind 'feature' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -76474,7 +77105,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 272,
+        "capabilities": 287,
         "capability_ids": []
       },
       {
@@ -76587,7 +77218,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 30,
         "capability_ids": []
       },
       {
@@ -76866,7 +77497,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 165,
+        "capabilities": 166,
         "capability_ids": []
       },
       {
@@ -77009,7 +77640,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 413,
+        "capabilities": 419,
         "capability_ids": []
       },
       {
@@ -77099,7 +77730,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4bf2912c78aa7d3ff17ef707e2942f05959648b950c4822eaa9c058f80ee1517",
+    "fingerprint": "b8690d04c339eb81dc8b0c96ddd3e3c97b39c6b403b9f3cf25dca0e34a55d976",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -77122,37 +77753,38 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 86,
+      "adr": 91,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 237,
       "command": 31,
-      "context": 36,
+      "context": 37,
       "critique": 2,
       "deployment": 1,
+      "derive-offload": 1,
       "distribution-model": 1,
-      "document": 327,
+      "document": 330,
       "domain": 6,
-      "feature": 27,
+      "feature": 28,
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 272,
+      "issue": 287,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 30,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 20,
-      "rule": 165,
+      "rule": 166,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 413,
+      "test": 419,
       "use-case": 48,
       "workspace": 1
     },
@@ -78556,6 +79188,91 @@
         "tags": [
           "session",
           "handover",
+          "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0126",
+        "kind": "adr",
+        "identity": "adr-0126",
+        "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "description": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "path": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6458,
+        "tags": [
+          "security",
+          "mesh",
+          "mcp",
+          "http"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0129",
+        "kind": "adr",
+        "identity": "adr-0129",
+        "title": "A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has",
+        "description": "A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has",
+        "path": ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 10728,
+        "tags": [
+          "integration",
+          "git",
+          "github",
+          "ci",
+          "throughput"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0131",
+        "kind": "adr",
+        "identity": "adr-0131",
+        "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "description": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "path": ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5427,
+        "tags": [
+          "release",
+          "distribution",
+          "pages",
+          "throughput"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0135",
+        "kind": "adr",
+        "identity": "adr-0135",
+        "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+        "description": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+        "path": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5572,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "cockpit"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0136",
+        "kind": "adr",
+        "identity": "adr-0136",
+        "title": "Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it",
+        "description": "Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it",
+        "path": ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6104,
+        "tags": [
+          "session",
+          "peers",
           "provider"
         ]
       },
@@ -81752,6 +82469,16 @@
         "bytes": 1763
       },
       {
+        "uri": "majordomus://context/ai.repo.offload",
+        "kind": "context",
+        "identity": "ai.repo.offload",
+        "title": "Derive offload",
+        "description": "The one declaration of the machines a branch's derive may be offloaded to and the limits each must meet; `majordomus offload` reads it, and no script carries a host address.",
+        "path": ".ai/repo/offload/README.md",
+        "source_class": "context",
+        "bytes": 1486
+      },
+      {
         "uri": "majordomus://context/ai.repo.profiles",
         "kind": "context",
         "identity": "ai.repo.profiles",
@@ -81979,6 +82706,15 @@
         "section": "deployments",
         "source_class": "deployment",
         "bytes": 2877
+      },
+      {
+        "uri": "majordomus://derive-offload/derive",
+        "kind": "derive-offload",
+        "identity": "derive",
+        "description": "The cluster machines that derive a branch for a session, and the limits each must meet.",
+        "path": ".ai/repo/offload/derive.yaml",
+        "source_class": "derive-offload",
+        "bytes": 1937
       },
       {
         "uri": "majordomus://distribution-model/share/distribution.yaml",
@@ -82250,13 +82986,22 @@
         "bytes": 13475
       },
       {
+        "uri": "majordomus://document/docs/BRIEF.md",
+        "kind": "document",
+        "identity": "docs/BRIEF.md",
+        "title": "The session brief — `majordomus brief`",
+        "path": "docs/BRIEF.md",
+        "source_class": "document",
+        "bytes": 6600
+      },
+      {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "document",
         "identity": "docs/CAPABILITIES.md",
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 44346
+        "bytes": 44447
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -82274,7 +83019,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 30088
+        "bytes": 32639
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -82400,7 +83145,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 27445
+        "bytes": 29585
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -82544,7 +83289,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 57772
+        "bytes": 60714
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -82574,13 +83319,22 @@
         "bytes": 3764
       },
       {
+        "uri": "majordomus://document/docs/MAJORDOMUS_UI.md",
+        "kind": "document",
+        "identity": "docs/MAJORDOMUS_UI.md",
+        "title": "`majordomus ui` — the product",
+        "path": "docs/MAJORDOMUS_UI.md",
+        "source_class": "document",
+        "bytes": 10732
+      },
+      {
         "uri": "majordomus://document/docs/MCP.md",
         "kind": "document",
         "identity": "docs/MCP.md",
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 58914
+        "bytes": 60072
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -82589,7 +83343,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 42214
+        "bytes": 45502
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -82599,6 +83353,15 @@
         "path": "docs/MODELS.md",
         "source_class": "document",
         "bytes": 4411
+      },
+      {
+        "uri": "majordomus://document/docs/OFFLOAD.md",
+        "kind": "document",
+        "identity": "docs/OFFLOAD.md",
+        "title": "The derive offload",
+        "path": "docs/OFFLOAD.md",
+        "source_class": "document",
+        "bytes": 11321
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -82634,7 +83397,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 133965
+        "bytes": 182979
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -82670,7 +83433,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22777
+        "bytes": 23916
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -85426,6 +86189,21 @@
         ]
       },
       {
+        "uri": "majordomus://feature/ui",
+        "kind": "feature",
+        "identity": "ui",
+        "title": "majordomus ui: the delivery, for a person",
+        "description": "At /ui the shared server lays out the delivery in the project's own words, composed only of what capabilities answered, asked together so the first screen paints in the time of its slowest source; a panel whose source is slow arrives on its own route, and the Cockpit beneath it is one click away for the source of any value.",
+        "path": ".ai/repo/features/ui.md",
+        "section": "features",
+        "source_class": "feature",
+        "bytes": 2690,
+        "tags": [
+          "ui",
+          "interface"
+        ]
+      },
+      {
         "uri": "majordomus://feature/use-cases",
         "kind": "feature",
         "identity": "use-cases",
@@ -85554,7 +86332,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 157804
+        "bytes": 159063
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -85730,7 +86508,7 @@
         "identity": "lib/knowledge.awk",
         "path": "lib/knowledge.awk",
         "source_class": "engine",
-        "bytes": 30021
+        "bytes": 30036
       },
       {
         "uri": "majordomus://implementation/lib/knowledge.sh",
@@ -85738,7 +86516,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 87974
+        "bytes": 87989
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -88901,6 +89679,61 @@
         "bytes": 2884
       },
       {
+        "uri": "majordomus://issue/I2123",
+        "kind": "issue",
+        "identity": "I2123",
+        "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+        "description": "Refuse every capability that changes something to a request from an address that is not loopback, unless the capability's input is a signed message its handler verifies, on the HTTP routes and on MCP over HTTP alike.",
+        "path": ".ai/repo/project/issues/I2123.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2951
+      },
+      {
+        "uri": "majordomus://issue/I2124",
+        "kind": "issue",
+        "identity": "I2124",
+        "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
+        "description": "Apply the same trust predicate to events reloaded from the journal file as to events arriving over a link, and refuse an event whose Lamport stamp is further ahead of the receiver's clock than a declared bound.",
+        "path": ".ai/repo/project/issues/I2124.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2293
+      },
+      {
+        "uri": "majordomus://issue/I2135",
+        "kind": "issue",
+        "identity": "I2135",
+        "title": "The trust root is read from the default branch, not from whatever the checkout holds",
+        "description": "Let a working tree narrow the mesh's trust and never widen it: obey the working tree's declaration with every widening of the trunk's committed copy removed, report each ignored line, and refuse a committed declaration that trusts on first use.",
+        "path": ".ai/repo/project/issues/I2135.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3186
+      },
+      {
+        "uri": "majordomus://issue/I2137",
+        "kind": "issue",
+        "identity": "I2137",
+        "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
+        "description": "Make journal appends and compaction rewrites durable and failure-reporting, and make reload survive a torn tail without losing or fusing a complete event.",
+        "path": ".ai/repo/project/issues/I2137.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3430
+      },
+      {
+        "uri": "majordomus://issue/I2151",
+        "kind": "issue",
+        "identity": "I2151",
+        "title": "A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
+        "description": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
+        "path": ".ai/repo/project/issues/I2151.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3518
+      },
+      {
         "uri": "majordomus://issue/I2161",
         "kind": "issue",
         "identity": "I2161",
@@ -88912,6 +89745,17 @@
         "bytes": 3307
       },
       {
+        "uri": "majordomus://issue/I2162",
+        "kind": "issue",
+        "identity": "I2162",
+        "title": "A released archive, installed, serves a foreign repository over the shared server in CI",
+        "description": "Make the install check and the release smoke start a shared server from the installed binary in a fresh repository that is not this one, and stop the smoke from swallowing the launcher's failure.",
+        "path": ".ai/repo/project/issues/I2162.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2498
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -88921,6 +89765,105 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2285
+      },
+      {
+        "uri": "majordomus://issue/I2282",
+        "kind": "issue",
+        "identity": "I2282",
+        "title": "The record pull request's dispatched verdict does not satisfy branch protection",
+        "description": "Make the record pull request a release proposes mergeable without a person closing and reopening it, or stop docs/DISTRIBUTION.md and case 996 from saying that it is.",
+        "path": ".ai/repo/project/issues/I2282.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3972
+      },
+      {
+        "uri": "majordomus://issue/I2298",
+        "kind": "issue",
+        "identity": "I2298",
+        "title": "A pull request stacked on one that landed merges on the verdict its head already has",
+        "description": "Give the integration queue a typed relation for a head that lacks master's commits and whose merge writes its own tree, so that the links of a stacked train land one after another in a single run of the required check, and record the train as a decision.",
+        "path": ".ai/repo/project/issues/I2298.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5137
+      },
+      {
+        "uri": "majordomus://issue/I2303",
+        "kind": "issue",
+        "identity": "I2303",
+        "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+        "description": "Make majordomus.dev serve a release's releases/latest.json and releases/<tag>.json from the release run itself, minutes after its archives are published, instead of after its record's pull request has passed its ci, without the site ever going back a release.",
+        "path": ".ai/repo/project/issues/I2303.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3785
+      },
+      {
+        "uri": "majordomus://issue/I2396",
+        "kind": "issue",
+        "identity": "I2396",
+        "title": "The CI critical path of 2026-10-10 is measured, recorded, and explained before anything is changed",
+        "description": "Record what a pull request's verdict costs today, from the forge's own runs, so that every change of the V4 delivery work is compared with a measurement rather than with a belief.",
+        "path": ".ai/repo/project/issues/I2396.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2101
+      },
+      {
+        "uri": "majordomus://issue/I2398",
+        "kind": "issue",
+        "identity": "I2398",
+        "title": "A derive offloaded to another machine waits its turn in a declared queue",
+        "description": "Make the derive offload a capability of the executable: the hosts and their limits declared once under .ai/repo, the host chosen by free disk and queue length, a FIFO queue on the host in which a dead waiter's ticket blocks nobody, a build directory of each derive's own, and the bundle-in/bundle-back round trip with its refusals, tested without a network and documented.",
+        "path": ".ai/repo/project/issues/I2398.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5404
+      },
+      {
+        "uri": "majordomus://issue/I2399",
+        "kind": "issue",
+        "identity": "I2399",
+        "title": "Every session briefs itself on an interval, without being asked",
+        "description": "Give every worker of a supervised repository one short, typed brief of what surrounds it (its own episode and task, the peers of every board, the mesh, the integration queue and the derive queue), projected to the command line, HTTP, MCP and the Cockpit, and have a Claude Code provider mod the policy switches keep that brief in front of the session on its own: as the status line, injected on an interval, and with the session told at its start how to keep itself awake.",
+        "path": ".ai/repo/project/issues/I2399.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5743
+      },
+      {
+        "uri": "majordomus://issue/I2460",
+        "kind": "issue",
+        "identity": "I2460",
+        "title": "The overview asks its sources at once, so it costs its slowest source and not their sum",
+        "description": "dashboard.overview executes its distinct sources concurrently through the shared executor, so the Cockpit's first page and every screen built on the overview paint in the time of the slowest source rather than the sum of all seven.",
+        "path": ".ai/repo/project/issues/I2460.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3062
+      },
+      {
+        "uri": "majordomus://issue/I2461",
+        "kind": "issue",
+        "identity": "I2461",
+        "title": "majordomus ui is served at /ui as its own product, with screens composed from capabilities",
+        "description": "Serve the UI, the primary human surface the owner names `majordomus ui`, as its own native surface on the shared server: its own mount, shell, delivery-vocabulary navigation and assets, with a first Dashboard composed only from capabilities, each value citing the capability and pointer it was read from.",
+        "path": ".ai/repo/project/issues/I2461.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5046
+      },
+      {
+        "uri": "majordomus://issue/I2462",
+        "kind": "issue",
+        "identity": "I2462",
+        "title": "The UI has every screen, and its mesh is a graph whose nodes open an inspector",
+        "description": "Complete the navigation of majordomus ui against the owner's references with the Command, Capabilities, Deployments and Documentation screens. Make the Mesh screen interactive: a graph of machines, runtimes and sessions, each node selectable into an inspector whose selection is a URL.",
+        "path": ".ai/repo/project/issues/I2462.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3933
       },
       {
         "uri": "majordomus://issue/I2463",
@@ -88954,7 +89897,7 @@
         "identity": "majordomus",
         "path": ".ai/repo/mesh/majordomus.yaml",
         "source_class": "mesh-declaration",
-        "bytes": 3153
+        "bytes": 3385
       },
       {
         "uri": "majordomus://milestone/M000",
@@ -89155,6 +90098,17 @@
         "bytes": 2652
       },
       {
+        "uri": "majordomus://milestone/mesh-journal-converges",
+        "kind": "milestone",
+        "identity": "mesh-journal-converges",
+        "title": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win",
+        "description": "An event the runtime accepted survives a crash or is reported lost; replicas with the same authenticated event set produce the same digest after any delivery order; a claim that expired never returns to beat a claim admitted while it was gone, and every claim conflict is announced; every page of the journal returns every event once.",
+        "path": ".ai/repo/project/milestones/mesh-journal-converges.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5484
+      },
+      {
         "uri": "majordomus://milestone/public-proof",
         "kind": "milestone",
         "identity": "public-proof",
@@ -89188,6 +90142,17 @@
         "bytes": 1571
       },
       {
+        "uri": "majordomus://milestone/runtime-trust",
+        "kind": "milestone",
+        "identity": "runtime-trust",
+        "title": "A runtime is safe to reach from another machine, and joining the mesh trusts nobody by accident",
+        "description": "Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces.",
+        "path": ".ai/repo/project/milestones/runtime-trust.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3322
+      },
+      {
         "uri": "majordomus://milestone/safe-self-update",
         "kind": "milestone",
         "identity": "safe-self-update",
@@ -89208,6 +90173,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1441
+      },
+      {
+        "uri": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "milestone",
+        "identity": "surfaces-never-disagree",
+        "title": "Every surface projects the same state, says when it was observed, and keeps no list of its own",
+        "description": "A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped.",
+        "path": ".ai/repo/project/milestones/surfaces-never-disagree.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4606
       },
       {
         "uri": "majordomus://milestone/test-evidence",
@@ -89905,7 +90881,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 20714
+        "bytes": 20985
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -91096,6 +92072,22 @@
           "campaigns",
           "evidence",
           "records"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+        "kind": "rule",
+        "identity": "project.a-derive-offload-waits-its-turn@1",
+        "title": "A derive offloaded to another machine goes through the declared hosts and waits its turn in their queue",
+        "description": "majordomus offload derive is the one way a derive runs on another machine; the hosts and their limits are declared once under .ai/repo/offload, waiters are served in arrival order, a dead waiter blocks nobody, and each derive builds in a directory of its own.",
+        "path": ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3976,
+        "tags": [
+          "derived",
+          "machine",
+          "coordination"
         ]
       },
       {
@@ -94099,6 +95091,30 @@
         "bytes": 3019
       },
       {
+        "uri": "majordomus://test/test/cases/1022_a_remote_caller_cannot_write.sh",
+        "kind": "test",
+        "identity": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "path": "test/cases/1022_a_remote_caller_cannot_write.sh",
+        "source_class": "case",
+        "bytes": 3603
+      },
+      {
+        "uri": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "kind": "test",
+        "identity": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "path": "test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
+        "source_class": "case",
+        "bytes": 2776
+      },
+      {
+        "uri": "majordomus://test/test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "kind": "test",
+        "identity": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "path": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+        "source_class": "case",
+        "bytes": 6034
+      },
+      {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
         "kind": "test",
         "identity": "test/cases/102_completion_shell.sh",
@@ -94123,6 +95139,22 @@
         "bytes": 32804
       },
       {
+        "uri": "majordomus://test/test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "kind": "test",
+        "identity": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "path": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+        "source_class": "case",
+        "bytes": 11989
+      },
+      {
+        "uri": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
+        "kind": "test",
+        "identity": "test/cases/1041_a_release_publishes_its_metadata.sh",
+        "path": "test/cases/1041_a_release_publishes_its_metadata.sh",
+        "source_class": "case",
+        "bytes": 6790
+      },
+      {
         "uri": "majordomus://test/test/cases/104_published_site.sh",
         "kind": "test",
         "identity": "test/cases/104_published_site.sh",
@@ -94137,6 +95169,14 @@
         "path": "test/cases/104_strict_derivation.sh",
         "source_class": "case",
         "bytes": 5465
+      },
+      {
+        "uri": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "kind": "test",
+        "identity": "test/cases/1065_a_session_briefs_itself.sh",
+        "path": "test/cases/1065_a_session_briefs_itself.sh",
+        "source_class": "case",
+        "bytes": 4355
       },
       {
         "uri": "majordomus://test/test/cases/106_context_peers.sh",
@@ -95272,7 +96312,7 @@
         "identity": "test/cases/368_mesh_handover_resolves.sh",
         "path": "test/cases/368_mesh_handover_resolves.sh",
         "source_class": "case",
-        "bytes": 5397
+        "bytes": 5791
       },
       {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -95352,7 +96392,7 @@
         "identity": "test/cases/389_cockpit_projection.sh",
         "path": "test/cases/389_cockpit_projection.sh",
         "source_class": "case",
-        "bytes": 4647
+        "bytes": 5093
       },
       {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -95832,7 +96872,7 @@
         "identity": "test/cases/547_the_ui_says_only_what_is_derived.sh",
         "path": "test/cases/547_the_ui_says_only_what_is_derived.sh",
         "source_class": "case",
-        "bytes": 8294
+        "bytes": 10085
       },
       {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
@@ -96592,7 +97632,7 @@
         "identity": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "source_class": "case",
-        "bytes": 16264
+        "bytes": 16327
       },
       {
         "uri": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
@@ -96704,7 +97744,7 @@
         "identity": "test/cases/87_release_pipeline.sh",
         "path": "test/cases/87_release_pipeline.sh",
         "source_class": "case",
-        "bytes": 11068
+        "bytes": 13116
       },
       {
         "uri": "majordomus://test/test/cases/87b_release_archive_shape.sh",
@@ -96856,7 +97896,7 @@
         "identity": "test/cases/924_one_executor_across_machines.sh",
         "path": "test/cases/924_one_executor_across_machines.sh",
         "source_class": "case",
-        "bytes": 6390
+        "bytes": 6524
       },
       {
         "uri": "majordomus://test/test/cases/925_a_bound_check_is_only_its_apps_run.sh",
@@ -97823,7 +98863,7 @@
       "identity": [
         "id"
       ],
-      "objects": 86
+      "objects": 91
     },
     {
       "name": "application",
@@ -97883,7 +98923,7 @@
       "identity": [
         "id"
       ],
-      "objects": 36
+      "objects": 37
     },
     {
       "name": "critique",
@@ -97906,6 +98946,16 @@
       "objects": 1
     },
     {
+      "name": "derive-offload",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.derive-offload/v1",
+      "identity": [
+        "id"
+      ],
+      "objects": 1
+    },
+    {
       "name": "distribution-model",
       "format": "yaml",
       "front_matter": "none",
@@ -97919,7 +98969,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 327
+      "objects": 330
     },
     {
       "name": "domain",
@@ -97939,7 +98989,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 28
     },
     {
       "name": "gap",
@@ -97976,7 +99026,7 @@
       "identity": [
         "id"
       ],
-      "objects": 272
+      "objects": 287
     },
     {
       "name": "knowledge",
@@ -98006,7 +99056,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 30
     },
     {
       "name": "moment",
@@ -98073,7 +99123,7 @@
         "id",
         "version"
       ],
-      "objects": 165
+      "objects": 166
     },
     {
       "name": "scope",
@@ -98128,7 +99178,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 413
+      "objects": 419
     },
     {
       "name": "use-case",
@@ -111436,6 +112486,531 @@
                   "prove-dry-run"
                 ],
                 "command": "majordomus prs prove-dry-run",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "offload"
+        ],
+        "route": "/docs/cli/offload/",
+        "executable": false,
+        "usage": "majordomus offload [OPTIONS] <COMMAND>",
+        "about": "A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "declaration",
+            "long": "declaration",
+            "positional": false,
+            "help": "Read this derive-offload declaration file instead of the repository's",
+            "value_name": "FILE",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "offload",
+              "hosts"
+            ],
+            "route": "/docs/cli/offload/hosts/",
+            "executable": true,
+            "usage": "majordomus offload hosts [OPTIONS]",
+            "about": "The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "declaration",
+                "long": "declaration",
+                "positional": false,
+                "help": "Read this derive-offload declaration file instead of the repository's",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "offload-hosts-json",
+                "title": "The declared hosts, or the answer that there are none",
+                "description": "Reads the repository's derive-offload declaration (.ai/repo/offload/*.yaml) and prints it with every default filled in: the hosts in tie-break order, each one's free-space minimum and ssh identity file, the queue's paths and the layout on a host. No host is contacted. This fixture declares none, which is an answer, not an error: `declared` is false and the declaration is null.",
+                "argv": [
+                  "offload",
+                  "hosts",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus offload hosts --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /declared, /declaration"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "offload",
+              "probe"
+            ],
+            "route": "/docs/cli/offload/probe/",
+            "executable": true,
+            "usage": "majordomus offload probe [OPTIONS]",
+            "about": "Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "declaration",
+                "long": "declaration",
+                "positional": false,
+                "help": "Read this derive-offload declaration file instead of the repository's",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "offload-probe-undeclared",
+                "title": "No declared host, no probe",
+                "description": "Measures every declared host over ssh — free space under its home, derives running or waiting in its queue — and names the one a derive would take: the eligible host with the fewest, ties to the one declared first. A repository that declares no host has nothing to measure, and the probe refuses with 12 rather than reporting an empty success.",
+                "argv": [
+                  "offload",
+                  "probe"
+                ],
+                "command": "majordomus offload probe",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "offload",
+              "derive"
+            ],
+            "route": "/docs/cli/offload/derive/",
+            "executable": true,
+            "usage": "majordomus offload derive [OPTIONS] [WORKTREE]",
+            "about": "Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out",
+            "args": [
+              {
+                "name": "worktree",
+                "positional": true,
+                "help": "The worktree to derive",
+                "value_name": "WORKTREE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "."
+                ]
+              },
+              {
+                "name": "host",
+                "long": "host",
+                "positional": false,
+                "help": "A declared host, by id or address, instead of the one the probe chooses",
+                "value_name": "HOST",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "keep",
+                "long": "keep",
+                "positional": false,
+                "help": "Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)",
+                "value_name": "KEEP",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "declaration",
+                "long": "declaration",
+                "positional": false,
+                "help": "Read this derive-offload declaration file instead of the repository's",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "offload-derive-undeclared",
+                "title": "A derive with nowhere to go is refused before anything travels",
+                "description": "Sends the worktree as it stands to a declared host as a git bundle, waits its turn in the host's FIFO queue, derives in a build directory of its own and stages the files the derive changed; nothing is committed or pushed. With no host declared it refuses with 12 before it reads the worktree, contacts anything or writes a ref.",
+                "argv": [
+                  "offload",
+                  "derive",
+                  "."
+                ],
+                "command": "majordomus offload derive .",
                 "setup": [],
                 "expectation": "exits 12"
               }
@@ -125661,6 +127236,172 @@
       {
         "path": [
           "majordomus",
+          "brief"
+        ],
+        "route": "/docs/cli/brief/",
+        "executable": true,
+        "usage": "majordomus brief [OPTIONS]",
+        "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "line",
+            "long": "line",
+            "positional": false,
+            "help": "Print the one-line brief alone: the status line's text",
+            "value_name": "LINE",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "keep_awake",
+            "long": "keep-awake",
+            "positional": false,
+            "help": "Print what a session is told at its start about keeping itself awake, then the one-line brief",
+            "value_name": "KEEP_AWAKE",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "session",
+            "long": "session",
+            "positional": false,
+            "help": "The provider's own session identity: the brief names the open episode it owns",
+            "value_name": "ID",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "this_checkout",
+            "long": "this-checkout",
+            "positional": false,
+            "help": "Read this checkout's board alone instead of every checkout's",
+            "value_name": "THIS_CHECKOUT",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "brief-line",
+            "title": "The one-line brief, composed here when no server answers",
+            "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+            "argv": [
+              "brief",
+              "--line",
+              "--this-checkout"
+            ],
+            "command": "majordomus brief --line --this-checkout",
+            "setup": [],
+            "expectation": "exits 0"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "skills"
         ],
         "route": "/docs/cli/skills/",
@@ -127575,6 +129316,23 @@
         "output": "ArtifactReport"
       },
       {
+        "name": "majordomus_brief",
+        "id": "brief.session",
+        "title": "The session brief",
+        "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "BriefInput",
+        "output": "SessionBrief"
+      },
+      {
         "name": "majordomus_capability",
         "id": "capabilities.describe",
         "title": "Describe one capability",
@@ -128618,10 +130376,10 @@
         "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
         "kind": "command",
         "read_only": false,
-        "effect": "process_state",
+        "effect": "repository_mutation",
         "hints": {
           "read_only": false,
-          "destructive": false,
+          "destructive": true,
           "idempotent": false,
           "open_world": false
         },
@@ -130976,6 +132734,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/brief",
+        "id": "brief.session",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/capability",
         "id": "capabilities.describe",
         "kind": "query"
@@ -132103,6 +133867,12 @@
         "path": "/cockpit",
         "what": "The registry, rendered for a person",
         "availability": "served-only"
+      },
+      {
+        "id": "ui",
+        "path": "/ui",
+        "what": "The delivery, for a person: majordomus ui",
+        "availability": "served-only"
       }
     ],
     "openapi_path": "docs/generated/openapi.json"
@@ -132166,6 +133936,35 @@
         "case": "one-encoding",
         "cached": true,
         "route": "GET /api/v1/artifacts"
+      },
+      {
+        "key": "brief.session|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "brief.session",
+        "module": "brief",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "brief.session|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "brief.session",
+        "module": "brief",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_brief"
+      },
+      {
+        "key": "brief.session|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "brief.session",
+        "module": "brief",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/brief"
       },
       {
         "key": "capabilities.describe|direct|repository-info",
@@ -138740,6 +140539,27 @@
           "cases": 2
         },
         {
+          "subject": "brief.session",
+          "module": "brief",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "brief.session",
+          "module": "brief",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "brief.session",
+          "module": "brief",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "capabilities.describe",
           "module": "capabilities",
           "transport": "direct",
@@ -142693,22 +144513,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 185,
-          "covered": 161,
+          "required": 186,
+          "covered": 162,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "http": {
-          "required": 182,
-          "covered": 161,
+          "required": 183,
+          "covered": 162,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 178,
-          "covered": 157,
+          "required": 179,
+          "covered": 158,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
@@ -142721,8 +144541,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 558,
-          "covered": 492,
+          "required": 561,
+          "covered": 495,
           "missing": 0,
           "waived": 66,
           "inapplicable": 0

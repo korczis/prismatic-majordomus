@@ -438,6 +438,60 @@ per step, with the commit, the runner, the event and whether the caches hit, so 
 regression has a table to be compared with. The budgets are those measurements; a budget
 written here would be stale the day after.
 
+## The critical path, measured on 2026-10-10
+
+`.ai/repo/ci/baseline-2026-10-10.json` holds the last 60 `validate` runs before the V4
+delivery work, written by `scripts/ci-baseline --runs 60 --workflow validate`. It is the
+evidence later changes are compared with, and nothing reads it to plan a run.
+
+| Measure | Value |
+|---|---|
+| a pull request's verdict, when green | p50 104 min, p95 148 min (10 runs) |
+| a push to master, when green | p50 95 min (5 runs) |
+| pull-request runs that ended green | 10 of 49: 20 failed, 19 were cancelled |
+| runner time spent on runs that did not end green | 15624 of 22210 job-minutes, 70 % |
+| runner time of one green pull-request run | p50 399, p95 497 job-minutes |
+
+The jobs that set the wall clock, as medians of the green runs, with their queue time at
+the 95th percentile:
+
+| Job | Run p50 | Run p95 | Queue p95 |
+|---|---|---|---|
+| suite-shard (1) | 68 min | 86 min | 48 min |
+| suite-shard (2) | 68 min | 69 min | 58 min |
+| suite-shard (4) | 55 min | 71 min | 62 min |
+| suite-shard (3) | 50 min | 65 min | 73 min |
+| ui | 48 min | 50 min | 43 min |
+| site | 35 min | 40 min | 50 min |
+| interactions | 35 min | 36 min | 103 min |
+| coverage | 30 min | 34 min | 59 min |
+| structure | 28 min | 33 min | 35 min |
+| rust (3) | 28 min | 32 min | 75 min |
+
+Inside the jobs, the longest single steps of one run (38078789620) were the browser probe of
+the site (1360 s) and `rust-check` in rust (3) (1726 s).
+
+Why the runs that failed failed, by the gate or case each failing job named:
+
+| Cause | Where it failed | Count |
+|---|---|---|
+| a published tag whose record was not on master yet | `release-check` in structure | 11 of 16 structure failures |
+| the same, seen by the suite | case 103 in the suite shards | 26 |
+| changed lines without a test | coverage | 10 |
+| version and generated projections | rust (3) | 7 |
+
+The release window is the largest single cause, and `release-check` stays strict by the
+owner's decision: the remedy is a record that reaches master within minutes of its tag
+(ADR 0131). Coverage, the version surface and generated projections are gates that answer
+in minutes on a workstation, and in CI they answered after 30 to 100 minutes.
+
+The figures are reproduced from the file:
+
+```bash
+jq '[.runs[] | select(.event == "pull_request")] | group_by(.conclusion) | map({(.[0].conclusion): length}) | add' .ai/repo/ci/baseline-2026-10-10.json
+jq '[.runs[] | select(.conclusion != "success") | .jobs[].seconds // 0] | add / 60 | floor' .ai/repo/ci/baseline-2026-10-10.json
+```
+
 ## Reproducing CI locally
 
 ```bash

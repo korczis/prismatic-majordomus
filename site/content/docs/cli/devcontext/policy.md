@@ -1,7 +1,7 @@
 +++
 title = "majordomus devcontext policy"
 description = "The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults"
-weight = 126
+weight = 130
 [extra]
 route = "/docs/cli/devcontext/policy/"
 command = "majordomus devcontext policy"

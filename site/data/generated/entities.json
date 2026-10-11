@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 86,
+      "count": 91,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 165,
+      "count": 166,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 86
+      "count": 91
     },
     {
       "kind": "application",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 36
+      "count": 37
     },
     {
       "kind": "critique",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 330
     },
     {
       "kind": "domain",
@@ -133,7 +133,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 27
+      "count": 28
     },
     {
       "kind": "gap",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 272
+      "count": 287
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 27
+      "count": 30
     },
     {
       "kind": "moment",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 165
+      "count": 166
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 413
+      "count": 419
     },
     {
       "kind": "use-case",
@@ -382,6 +382,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0103/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
         }
       ]
     },
@@ -420,6 +427,13 @@
           "label": "adr-0110",
           "kind": "adr",
           "route": "/adrs/adr-0110/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0136",
+          "kind": "adr",
+          "route": "/adrs/adr-0136/",
           "external": false
         }
       ]
@@ -731,6 +745,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
           "external": false
         }
       ]
@@ -1220,7 +1241,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2443,6 +2472,13 @@
           "label": "adr-0110",
           "kind": "adr",
           "route": "/adrs/adr-0110/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
           "external": false
         }
       ]
@@ -3908,6 +3944,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0105/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
         }
       ]
     },
@@ -5111,7 +5154,15 @@
           "external": true
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -5841,6 +5892,13 @@
       "referenced_by": [
         {
           "edge": "put_in_force",
+          "label": "adr-0129",
+          "kind": "adr",
+          "route": "/adrs/adr-0129/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0138",
           "kind": "adr",
           "route": "/adrs/adr-0138/",
@@ -6425,6 +6483,389 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0136",
+          "kind": "adr",
+          "route": "/adrs/adr-0136/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0126",
+      "identity": "adr-0126",
+      "slug": "adr-0126",
+      "cockpit": "/cockpit/objects/adr/adr-0126",
+      "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+      "status": "proposed",
+      "tags": [
+        "security",
+        "mesh",
+        "mcp",
+        "http"
+      ],
+      "source": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/router.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mcp/surface.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0040",
+          "kind": "adr",
+          "route": "/adrs/adr-0040/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-cooperation-is-authenticated@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/remote_callers.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0129",
+      "identity": "adr-0129",
+      "slug": "adr-0129",
+      "cockpit": "/cockpit/objects/adr/adr-0129",
+      "title": "A train of stacked pull requests lands in one run of the required check, each link on the verdict its head already has",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "git",
+        "github",
+        "ci",
+        "throughput"
+      ],
+      "source": ".ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/classify.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/drain.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/relation.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/repair.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/tests.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I2298",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@3",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-3/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0131",
+      "identity": "adr-0131",
+      "slug": "adr-0131",
+      "cockpit": "/cockpit/objects/adr/adr-0131",
+      "title": "A release publishes its metadata to the site before its record lands, and the site never goes back a release",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "distribution",
+        "pages",
+        "throughput"
+      ],
+      "source": ".ai/repo/adrs/0131-a-release-publishes-its-metadata-before-its-record-lands.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/release.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-deploy",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/DISTRIBUTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I2303",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1041_a_release_publishes_its_metadata.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/96_site_deploy.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0135",
+      "identity": "adr-0135",
+      "slug": "adr-0135",
+      "cockpit": "/cockpit/objects/adr/adr-0135",
+      "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "ui",
+        "cockpit"
+      ],
+      "source": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0022",
+          "kind": "adr",
+          "route": "/adrs/adr-0022/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0136",
+      "identity": "adr-0136",
+      "slug": "adr-0136",
+      "cockpit": "/cockpit/objects/adr/adr-0136",
+      "title": "Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it",
+      "status": "proposed",
+      "tags": [
+        "session",
+        "peers",
+        "provider"
+      ],
+      "source": ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/mods/claude-code/majordomus-brief/hooks/register.ts",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0123",
+          "kind": "adr",
+          "route": "/adrs/adr-0123/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/BRIEF.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1065_a_session_briefs_itself.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -9287,6 +9728,31 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-derive-offload-waits-its-turn@1",
+      "identity": "project.a-derive-offload-waits-its-turn@1",
+      "slug": "project-a-derive-offload-waits-its-turn-1",
+      "cockpit": "/cockpit/objects/rule/project-a-derive-offload-waits-its-turn-1",
+      "title": "A derive offloaded to another machine goes through the declared hosts and waits its turn in their queue",
+      "status": "active",
+      "tags": [
+        "derived",
+        "machine",
+        "coordination"
+      ],
+      "source": ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.one-derive-at-a-time@1",
+          "kind": "rule",
+          "route": "/rules/project-one-derive-at-a-time-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
       "identity": "project.a-derive-sees-what-the-commit-will@1",
       "slug": "project-a-derive-sees-what-the-commit-will-1",
@@ -11588,6 +12054,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0101/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0129",
+          "kind": "adr",
+          "route": "/adrs/adr-0129/",
+          "external": false
         }
       ]
     },
@@ -11978,6 +12451,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0129",
+          "kind": "adr",
+          "route": "/adrs/adr-0129/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.integration-follows-the-current-master@3",
           "kind": "rule",
@@ -12037,6 +12517,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
           "external": false
         },
         {
@@ -12772,6 +13259,13 @@
       "source": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
       "references": [],
       "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-derive-offload-waits-its-turn@1",
+          "kind": "rule",
+          "route": "/rules/project-a-derive-offload-waits-its-turn-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.a-derive-sees-what-the-commit-will@1",

@@ -261,19 +261,34 @@ jobs:
       # the tree CI checks out: whatever the derivation wrote is staged first, rather than a
       # list of trees that can fall behind it — a release changes more than its own metadata;
       # the installation guide gains a row, and the site's data and content are projections
-      # of that guide. Only the downloaded artifacts are kept out; the build outputs are
-      # already ignored. A tree this refuses is not proposed: a pull request born red is one
+      # of that guide. The downloaded artifacts in dist/ and the build outputs are kept out by
+      # .gitignore, not by a pathspec: git refuses a pathspec that names an ignored path, exit
+      # 1, which is how v0.20.0 was published with no record. A tree this refuses is not proposed: a pull request born red is one
       # a person has to repair before the release can reach the site, which is the state the
       # staging above exists to prevent and this step exists to prove absent.
       - name: the proposal is what the derivation produces, judged before it is proposed
         env:
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: |
-          git add -A -- . ':(exclude)dist'
+          git add -A -- .
           scripts/derive-check || {
             echo "::error::the record and its projections are not what scripts/derive produces from them, so the record pull request would fail generate --check; nothing was pushed. Run scripts/derive over the record and propose the result by hand."
             exit 1
           }
+
+      # The release reaches the site now, not after its record's pull request has passed a
+      # suite of an hour and a half (ADR 0131). What the installer reads is releases/latest.json
+      # and releases/<tag>.json; both are projections of the record just derived and judged
+      # above, and nothing else of the site depends on them. They go onto what gh-pages serves
+      # and nothing else does: build.json keeps naming the master commit the site was built
+      # from, so the pages-live gate still reads master. A deploy of master before the record
+      # lands keeps this release as the latest rather than taking the site back a version
+      # (scripts/site-deploy). The record's pull request follows, under the full verdict.
+      - name: the site serves this release's metadata, ahead of its record
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: scripts/site-deploy --release-metadata '${{ needs.plan.outputs.tag }}'
 
       - name: propose the record and the metadata it publishes
         id: record
@@ -404,31 +419,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RECORD_PR: ${{ needs.publish.outputs.record_pr }}
         run: |
-          # The record now reaches the default branch through review, so there is a window in
-          # which the release is published and its metadata is not. Waiting sixty times for a
-          # file that a human has not merged yet is not a smoke test, it is a timeout wearing
-          # one — so the wait does not begin while the record is still a proposal. Nor does
-          # the step pass: it used to exit 0 here with a notice, and the next step then failed
-          # inside the installer with a message about a download, not about the unmerged pull
-          # request that was the whole cause. So the step fails, and names what to merge.
-          tag='${{ needs.plan.outputs.tag }}'
-          record=".ai/repo/releases/$tag.yaml"
-          branch='${{ github.event.repository.default_branch }}'
-          rc=0
-          answer="$(gh api "repos/${{ github.repository }}/contents/$record?ref=$branch" 2>&1 >/dev/null)" || rc=$?
-          if [ "$rc" != 0 ]; then
-            case "$answer" in
-              *'HTTP 404'*)
-                pr="${RECORD_PR:-the pull request from release/record-$tag (${{ github.server_url }}/${{ github.repository }}/pulls?q=is%3Apr+head%3Arelease%2Frecord-$tag)}"
-                echo "::error::$tag is published, but $record is not on $branch: its record is still a proposal, so the site cannot name it and the installer cannot install it. Merge $pr, then re-run this job; its wait gives Pages fifteen minutes to publish the metadata."
-                ;;
-              *)
-                # a question that could not be asked is not an answer that the record is absent
-                echo "::error::could not ask whether $record is on $branch, so this release was not smoked: $(printf '%s' "$answer" | tr '\n' ' ')"
-                ;;
-            esac
-            exit 1
-          fi
+          # The publish job put this release's metadata on the site itself, ahead of its record
+          # (ADR 0131), so the wait no longer begins with the record being on the default
+          # branch: until 2026-10-10 it did, and it failed every release whose record was still
+          # a proposal, which was every release. What is waited on is what the installer reads.
           base="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
           base="${base%/install.sh}"
           url="$(sed -n 's/.*"latest_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
@@ -449,28 +443,17 @@ jobs:
             echo "body      $(curl -fsSL --max-time 60 "$url" 2>/dev/null | head -c 400)"
             echo "site is built from commit $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
             echo "reproduce: curl -fsSL $url"
-            echo "the record was committed to the default branch; if that commit is on the branch"
-            echo "and Pages has run since, the pages workflow is where this failed."
+            echo "the publish job puts the metadata on gh-pages (scripts/site-deploy --release-metadata);"
+            echo "if its step passed, GitHub's own Pages build of gh-pages is where this failed."
+            echo "the record itself: ${RECORD_PR:-the pull request from release/record-$tag}"
           } >&2
           echo "::error::$url still does not name $tag after 15 minutes"
           exit 1
 
-      - name: install the published release with the published installer
-        run: |
-          installer="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
-          curl -fsSL --max-time 120 "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
-
-      - name: the installed tool is the release that was published
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          majordomus --version
-          [ "$(majordomus version)" = "majordomus ${{ needs.plan.outputs.version }}" ]
-          majordomus-mcp --help >/dev/null 2>&1 || true
-
-      - name: and it initialises a repository that has none
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          mkdir -p "$RUNNER_TEMP/smoke" && cd "$RUNNER_TEMP/smoke"
-          git init -q .
-          majordomus init
-          test -f .ai/repo/policy.yaml
+      # The published installer installs the published tag, and the installed tool does what
+      # a client configuration asks of it: it initialises a repository that is not this one
+      # and serves it over the shared server, ready and naming that repository (I2162). One
+      # gate, scripts/ci/install-check, measures this for a person, for the nightly run and
+      # here; --expect pins it to this tag, and nothing in this job swallows a failure.
+      - name: the published release installs, initialises and serves a foreign repository
+        run: scripts/ci/install-check --expect "${{ needs.plan.outputs.tag }}"
