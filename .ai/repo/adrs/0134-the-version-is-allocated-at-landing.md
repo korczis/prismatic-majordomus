@@ -68,6 +68,10 @@ serialised the choice except people.
      minor; a change that touches no path is no landing and owes no floor;
    - the changed paths are listed without rename detection, so a file moved into an exempt
      tree is also judged at the path it left;
+   - a change that writes `.ai/repo/releases/v<trunk>.yaml`, the record of the release the
+     trunk already declares, owes no floor: the record follows its tag and may change more
+     than the record class covers (the v0.20.0 record also changed `.gitattributes` and
+     `docs/INSTALL.md`), and raising it would carry it past the tag it records;
    - an unknown movement stays what ADR 0051 makes it, never a safe patch.
 4. **An exemption lowers the floor and nothing else.** `release.exempt` declares classes,
    each with an id, a description and the paths it covers. A pull request is exempt when

@@ -218,6 +218,19 @@ fn exemption_for<'a>(
         .find(|class| changed.iter().all(|path| class.covers(path)))
 }
 
+/// Where a release's record lives: `<RECORDS>v<version>.yaml`.
+const RECORDS: &str = ".ai/repo/releases/";
+
+/// The record of the release `trunk` declares, when the change writes it. A release is tagged
+/// at the commit that declares its version and its record follows in a pull request of its
+/// own, which may carry more than the record class covers (the v0.20.0 record also changed
+/// `.gitattributes` and `docs/INSTALL.md`): held to the floor, it would be raised past the
+/// tag it records. What makes it the record is the file it writes, not the paths around it.
+fn records_release_of(trunk: Version, changed: &[String]) -> Option<String> {
+    let path = format!("{RECORDS}v{trunk}.yaml");
+    changed.contains(&path).then_some(path)
+}
+
 /// The policy floor as the version's mode reads it: below 1.0.0 the contract is held by
 /// minors (ADR 0051), so a `major` floor there asks what a major asks of compatibility, a
 /// minor. Every other floor is taken as written.
@@ -265,10 +278,12 @@ pub fn decide(
     let compat = CompatPolicy::for_version(trunk);
     let required = compat.required_of(observed);
     let exemption = exemption_for(policy, changed);
+    let record = records_release_of(trunk, changed);
     // a floor speaks the version's mode as compatibility does: below 1.0.0 nothing costs a
-    // major, so a `major` floor asks a minor there; and a change of nothing is no landing,
-    // so no floor applies to it
-    let floor = if exemption.is_some() || changed.is_empty() {
+    // major, so a `major` floor asks a minor there; a change of nothing is no landing; and
+    // the record of the release the trunk already declares lands at that release's number,
+    // so no floor applies to either
+    let floor = if exemption.is_some() || changed.is_empty() || record.is_some() {
         Impact::None
     } else {
         floor_in(compat.mode, policy.floor)
@@ -286,6 +301,10 @@ pub fn decide(
         format!("compatibility therefore requires {}", required.as_str()),
     ];
     match exemption {
+        None if record.is_some() => explanation.push(format!(
+            "the change writes {}, the record of the release the trunk declares, which lands at that release's number, so no policy floor applies",
+            record.unwrap_or_default()
+        )),
         None if changed.is_empty() => explanation.push(
             "the change touches no path, which is no landing, so no policy floor applies"
                 .to_string(),
@@ -634,5 +653,30 @@ mod tests {
             (above.floor, above.next_version.as_str()),
             (Impact::Major, "2.0.0")
         );
+    }
+
+    #[test]
+    fn the_record_of_the_trunks_release_lands_at_its_number() {
+        let changed = [
+            ".ai/repo/releases/v0.20.0.yaml".to_string(),
+            "docs/INSTALL.md".to_string(),
+            ".gitattributes".to_string(),
+        ];
+        let d = decide(v("0.20.0"), Impact::None, &landing(Impact::Minor), &changed);
+        assert_eq!((d.floor, d.next_version.as_str()), (Impact::None, "0.20.0"));
+        assert!(
+            d.explanation
+                .iter()
+                .any(|l| l.contains("record of the release")),
+            "{:?}",
+            d.explanation
+        );
+        // the record of another release is no reason: the floor applies
+        let other = [
+            ".ai/repo/releases/v0.19.0.yaml".to_string(),
+            "docs/INSTALL.md".to_string(),
+        ];
+        let d = decide(v("0.20.0"), Impact::None, &landing(Impact::Minor), &other);
+        assert_eq!(d.next_version, "0.21.0");
     }
 }

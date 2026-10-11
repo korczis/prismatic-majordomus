@@ -8,6 +8,7 @@
 #   a head behind the trunk         what the trunk added since is not a removal the head made
 #   a change one exemption covers   held to no floor, so nothing is allocated
 #   a file moved into an exempt tree  judged at both paths, so the move is not exempt
+#   the record of the trunk's release   lands at that release's number, though it changes more
 #   no floor in the policy          a fix behind the boundary allocates nothing
 #   an unreadable trunk             refused with exit 12, never a guessed number
 #
@@ -105,6 +106,17 @@ git commit -qm "chore: a move into the plan records"
 d="$(next trunk moved)"
 [ "$(printf '%s' "$d" | jq -r '[(.exemption // {id: "none"}).id, .floor] | join(" ")')" = "none minor" ] \
   || { echo "    a file moved into an exempt tree passed as exempt:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
+
+# ---------------------------------------------------------------- the record of the trunk's release
+# a release's record follows its tag in a pull request that may change more than the record
+# class covers; held to the floor it would be raised past the tag it records
+git checkout -q -b recorded trunk
+mkdir -p .ai/repo/releases docs && printf 'version: 0.4.0\n' > .ai/repo/releases/v0.4.0.yaml
+printf 'install 0.4.0\n' > docs/INSTALL.md
+git add -A >/dev/null && git commit -qm "chore(release): record v0.4.0"
+d="$(next trunk recorded)"
+[ "$(printf '%s' "$d" | jq -r '[.floor, .next_version] | join(" ")')" = "none 0.4.0" ] \
+  || { echo "    the record of the trunk's release was raised past its tag:"; printf '%s\n' "$d" | sed 's/^/    | /'; exit 1; }
 
 # ---------------------------------------------------------------- no floor in the policy
 git checkout -q trunk
