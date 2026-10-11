@@ -339,11 +339,13 @@ mj_context_sections() {
       # the scope is read once: reading it again for every touched file was one awk per
       # file, thousands of them in a tree with a long diff
       scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"
-      for f in $(mj_git_touched "$(mj_cur head)"); do
+      # lines, not words: a touched path may hold a space
+      while IFS= read -r f; do
+        [ -n "$f" ] || continue
         mj_is_ai_path "$f" && continue
         inside=0; for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
         [ "$inside" = 1 ] && { printf '%s\n' "$f" >> "$tmpf"; n=$((n + 1)); }
-      done
+      done < <(mj_git_touched "$(mj_cur head)")
       if [ "$n" -gt 0 ]; then
         { printf '## FILES TOUCHED IN SCOPE (%s)\n' "$n"; head -n "$maxi" "$tmpf"
           [ "$n" -gt "$maxi" ] && printf '(%s more; git status)\n' "$((n - maxi))"; } > "$MJ_CTX_TMP/80.files"

@@ -218,7 +218,7 @@ mj_changed_files() {
     printf '%s\n' "$f"; n=$((n + 1))
   done <<EOF
 $(if [ -n "$base" ] && [ "$base" != NONE ]; then mj_git_touched "$base"
-   else mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | LC_ALL=C sort -u | sed '/^$/d'; fi)
+   else mj_git_dirty_paths | LC_ALL=C sort -u | sed '/^$/d'; fi)
 EOF
   return 0
 }

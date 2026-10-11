@@ -74,7 +74,7 @@ mj_derive_changed() {
   if [ -n "$base" ] && [ "$base" != NONE ] && mj_git merge-base --is-ancestor "$base" HEAD 2>/dev/null; then
     mj_git diff --name-only "$base..HEAD" 2>/dev/null >> "$tmp"
   fi
-  mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' >> "$tmp"
+  mj_git_dirty_paths >> "$tmp"
   LC_ALL=C sort -u "$tmp" | sed '/^$/d'
   rm -f "$tmp"
   return 0

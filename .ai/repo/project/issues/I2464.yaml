@@ -1,0 +1,32 @@
+id: I2464
+milestone: adopter-upgrades
+title: "A path that holds a space is one path to the scope doctrine"
+slug: a-path-with-a-space-is-one-path
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Read the files a task touched as one path per line, with git's -z output, everywhere the shell layer lists them, so that a file name holding a space is judged as the one path it is."
+why: "On 2026-10-11 session 25's pre-push refused #931 for four concept images inside its scope, each named like \"Futuristic PR Drain Developer Dashboard.png\": lib/check.sh iterated `for f in $(mj_git_touched ...)`, which splits on whitespace, and mj_git_touched read `git status --porcelain` without -z, which wraps such a path in quotes. One image became five out-of-scope \"paths\" (\"assets/concept/Futuristic, PR, Drain, Developer, Dashboard.png\"). The session renamed the files to get past its own gate. lib/context.sh, lib/changed.sh, lib/evidence.sh and lib/derive.sh read the same quoted output."
+current_state: "mj_git_touched and four other readers take `git status --porcelain` without -z, and two callers split its output into words; a path with a space is refused as several paths outside the scope."
+desired_state: "mj_git_touched reads status and log with -z through one helper, mj_git_dirty_paths, and every caller reads lines; case 1073 holds a committed, a staged, a modified, an untracked and a renamed path with spaces inside the scope, and an out-of-scope one reported whole."
+scope:
+  - "lib/common.sh"
+  - "lib/check.sh"
+  - "lib/context.sh"
+  - "lib/changed.sh"
+  - "lib/evidence.sh"
+  - "lib/derive.sh"
+  - "test/cases/1073_a_path_with_a_space_is_one_path.sh"
+  - ".ai/repo/project/issues/I2464.yaml"
+depends_on: []
+acceptance_criteria:
+  - "majordomus check passes a task whose in-scope files hold spaces, committed, staged, modified, untracked and renamed"
+  - "an out-of-scope path with a space is reported once, whole, never in pieces or in quotes"
+  - "case 1073 fails against master without the change"
+validation:
+  - "bash test/run.sh 1073_a_path_with_a_space_is_one_path 04_start_check 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "path_with_space_case"
+created_at: 2026-10-11
+updated_at: 2026-10-11

@@ -273,7 +273,7 @@ mj_obl_est_commit() {
   local head base dirty f s inside out="" n=0 first=""
   head="$(mj_git_head)"
   [ "$head" = NONE ] && { mj_obl_say "the checkout has no commit at all; nothing of this task is in any history" "git log -1"; return 1; }
-  dirty="$(mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //')"
+  dirty="$(mj_git_dirty_paths)"
   local scope_list; scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope 2>/dev/null || true)"
   while IFS= read -r f; do
     [ -n "$f" ] || continue

@@ -348,9 +348,16 @@ mj_git_label() {
 # arrived by a fast-forward, or that a rebase used as its base, has no such entry. A commit
 # the task made and pushed to the trunk is therefore still the task's. Without a trunk
 # (no remote, or no refs/remotes/<remote>/HEAD) nothing is left out, as before.
+#
+# One path per line, the path as git stores it, so a caller reads lines and never words:
+# a file named "Futuristic PR Drain Developer Dashboard.png" is one path. Both git
+# commands are read with -z, because without it `status --porcelain` wraps a path that
+# holds a space in quotes and `log --name-only` octal-escapes one outside ASCII, and either
+# way the name no longer matches the scope it is inside (2026-10-11, a pre-push refused
+# four images as twenty out-of-scope "paths").
 mj_git_touched() {
   local base="$1" trunk all foreign own keep
-  { mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //'
+  { mj_git_dirty_paths
     if [ -n "$base" ] && [ "$base" != "NONE" ]; then
       trunk="$(mj_git_trunk_ref)"
       foreign=""
@@ -365,13 +372,28 @@ mj_git_touched() {
         fi
       fi
       if [ -z "$foreign" ]; then
-        mj_git log --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null
+        mj_git log -z --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null \
+          | tr '\0' '\n'
       else
         LC_ALL=C comm -23 <(printf '%s\n' "$all" | sed '/^$/d') <(printf '%s\n' "$foreign") \
-          | sed '/^$/d' | mj_git log --no-walk --stdin --name-only --format= 2>/dev/null
+          | sed '/^$/d' | mj_git log -z --no-walk --stdin --name-only --format= 2>/dev/null \
+          | tr '\0' '\n'
       fi
     fi
   } | LC_ALL=C sort -u | sed '/^$/d'
+}
+
+# The paths the working tree and the index change, one per line, as git stores them.
+# Read with -z for the reason above; a rename or a copy is followed by its source path,
+# which is not a changed path of its own, so the entry after one is skipped. The path kept
+# is the new one, as `sed 's/^.* -> //'` kept it before.
+mj_git_dirty_paths() {
+  local e skip=0
+  mj_git status --porcelain=v1 -z 2>/dev/null | while IFS= read -r -d '' e; do
+    if [ "$skip" = 1 ]; then skip=0; continue; fi
+    case "${e:0:2}" in *R* | *C*) skip=1 ;; esac
+    printf '%s\n' "${e:3}"
+  done
 }
 
 # The trunk's remote-tracking branch, as a full ref, or nothing. The default branch is

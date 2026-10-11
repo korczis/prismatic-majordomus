@@ -176,7 +176,10 @@ mj_validate_scope() {
   # tree with a long diff paid thousands of them for a list that does not change
   scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"; scope_words="$(printf '%s\n' "$scope_list" | paste -sd, -)"
   repro="git status --porcelain; git log --first-parent --no-merges --name-only --format= $(mj_cur head)..HEAD"
-  for f in $(mj_git_touched "$(mj_cur head)"); do
+  # read as lines, not words: a path may hold a space, and as words "a b.png" was two
+  # paths outside every scope
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
     mj_is_ai_path "$f" && continue
     case " $allow_gen " in *" $f "*) continue ;; esac
     inside=0
@@ -187,7 +190,7 @@ mj_validate_scope() {
       if [ "$soft" = 1 ]; then mj_warn scope "$f" "outside claimed scope ($scope_words)" "$repro"
       else mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "$repro"; fi
     fi
-  done
+  done < <(mj_git_touched "$(mj_cur head)")
   if [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
   elif [ "$soft" = 1 ]; then
     mj_doctrine_skip scope "$id" "$n_out file(s) outside scope; outcome is $MJ_FINISH_OUTCOME, not completed, so scope does not refuse it"

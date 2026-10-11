@@ -30391,6 +30391,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2464",
+        "kind": "issue",
+        "label": "I2464",
+        "summary": "A path that holds a space is one path to the scope doctrine",
+        "route": "/cockpit/objects/issue/i2464",
+        "source": ".ai/repo/project/issues/I2464.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus check passes a task whose in-scope files hold spaces, committed, staged, modified, untracked and renamed",
+            "an out-of-scope path with a space is reported once, whole, never in pieces or in quotes",
+            "case 1073 fails against master without the change"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "mj_git_touched and four other readers take `git status --porcelain` without -z, and two callers split its output into words; a path with a space is refused as several paths outside the scope.",
+          "depends_on": [],
+          "evidence_required": [
+            "path_with_space_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Read the files a task touched as one path per line, with git's -z output, everywhere the shell layer lists them, so that a file name holding a space is judged as the one path it is.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/check.sh",
+            "lib/context.sh",
+            "lib/changed.sh",
+            "lib/evidence.sh",
+            "lib/derive.sh",
+            "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+            ".ai/repo/project/issues/I2464.yaml"
+          ],
+          "slug": "a-path-with-a-space-is-one-path",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "bash test/run.sh 1073_a_path_with_a_space_is_one_path 04_start_check 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -43068,6 +43110,13 @@
         "label": "test/cases/106_context_peers.sh",
         "route": "/cockpit/objects/test/test-cases-106-context-peers-sh",
         "source": "test/cases/106_context_peers.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "kind": "test",
+        "label": "test/cases/1073_a_path_with_a_space_is_one_path.sh",
+        "route": "/cockpit/objects/test/test-cases-1073-a-path-with-a-space-is-one-path-sh",
+        "source": "test/cases/1073_a_path_with_a_space_is_one_path.sh"
       },
       {
         "id": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -66615,6 +66664,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2464",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2464",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69726,6 +69785,11 @@
       },
       {
         "source": "majordomus://test/test/cases/106_context_peers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1073_a_path_with_a_space_is_one_path.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -75406,8 +75470,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2495,
+      "edges": 5449,
       "acyclic": false,
       "truncated": false
     }
