@@ -1268,6 +1268,9 @@ pub struct MonitorArgs {
     /// Start after this cursor (a page's `cursor`), instead of the newest signals
     #[arg(long)]
     pub after: Option<String>,
+    /// Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing
+    #[arg(long, value_name = "FILE")]
+    pub cursor_file: Option<std::path::PathBuf>,
     /// At most this many signals per page (default 50, at most 500)
     #[arg(long)]
     pub limit: Option<u64>,

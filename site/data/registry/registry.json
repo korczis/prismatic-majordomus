@@ -6,7 +6,7 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "73aabdeca11a93aa5c4cf935db20a29f2e006da9aa75f8e066e629103b3ffa34",
+    "fingerprint": "de01f1b448b091878428b73af1296ad85cee32b25c3726b316fc7a4d208f449c",
     "summary": {
       "total": 2192,
       "builtin": 187,
@@ -78168,7 +78168,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7fd08fdba5431554341214694e148726d13e7b7e18cb6af41cc944b053f8f620",
+    "fingerprint": "22b4120a239fb71acdcb5162a8c12f7471defdd7e6885534a2aba393bb6ee408",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -83826,7 +83826,7 @@
         "title": "The monitor",
         "path": "docs/MONITOR.md",
         "source_class": "document",
-        "bytes": 9094
+        "bytes": 9781
       },
       {
         "uri": "majordomus://document/docs/OFFLOAD.md",
@@ -95983,7 +95983,7 @@
         "identity": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
         "path": "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
         "source_class": "case",
-        "bytes": 4073
+        "bytes": 5806
       },
       {
         "uri": "majordomus://test/test/cases/1052_an_absent_source_is_reported.sh",
@@ -121194,6 +121194,18 @@
             "positional": false,
             "help": "Start after this cursor (a page's `cursor`), instead of the newest signals",
             "value_name": "AFTER",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "cursor_file",
+            "long": "cursor-file",
+            "positional": false,
+            "help": "Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing",
+            "value_name": "FILE",
             "takes_value": true,
             "required": false,
             "global": false,

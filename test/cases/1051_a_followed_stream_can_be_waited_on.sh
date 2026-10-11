@@ -4,6 +4,8 @@
 # `--match` keeps only what names a text, and `--timeout` gives up with exit 10. While
 # following, `--format json` prints one signal per line (NDJSON), and what happens after
 # the follow started reaches it without anything already printed coming back.
+# `--cursor-file` keeps the cursor on disk, so a restarted watcher repeats nothing, and a
+# cursor in it that cannot be read is refused naming the file.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -62,3 +64,20 @@ grep -q '^sources  mesh ok' "$T/until.out" || { echo "    a text follow does not
 # ---------------------------------------------------------------- 3. --timeout gives up with 10
 expect_exit 10 "$RB" monitor --follow --sources mesh --since 1s --until merged --interval 1 --timeout 2
 expect_grep 'timeout reached before .*count or .*until was met'
+
+# ---------------------------------------------------------------- 4. --cursor-file: a restarted watcher repeats nothing
+"$RB" monitor --sources mesh --since 1h --cursor-file "$T/cursor" --format json >"$T/first.json" 2>"$T/first.err" \
+  || { echo "    the first page did not answer"; cat "$T/first.err"; exit 1; }
+jq -e '.signals | length > 0' "$T/first.json" >/dev/null || { echo "    the first page is empty"; cat "$T/first.json"; exit 1; }
+[ "$(cat "$T/cursor")" = "$(jq -r .cursor "$T/first.json")" ] \
+  || { echo "    the file does not hold the page's cursor: $(cat "$T/cursor")"; exit 1; }
+expect_exit 0 "$RB" mesh session open --session s3 --worker 1b --intent "the cursor survives a restart"
+"$RB" monitor --sources mesh --since 1h --cursor-file "$T/cursor" --format json >"$T/second.json" 2>"$T/second.err" \
+  || { echo "    the restarted read did not answer"; cat "$T/second.err"; exit 1; }
+jq -e -s '[.[0].signals[] | [.at, .summary]] as $seen | [.[1].signals[] | select([.at, .summary] as $k | $seen | index([$k]))] | length == 0' \
+  "$T/first.json" "$T/second.json" >/dev/null || { echo "    a signal came back after a restart"; cat "$T/second.json"; exit 1; }
+jq -e '[.signals[] | select(.summary | contains("the cursor survives a restart"))] | length == 1' "$T/second.json" >/dev/null \
+  || { echo "    what happened between the runs is missing"; cat "$T/second.json"; exit 1; }
+printf 'not-a-cursor\n' > "$T/cursor"
+expect_exit 10 "$RB" monitor --sources mesh --cursor-file "$T/cursor"
+expect_grep 'the cursor came from .*cursor; remove it to start afresh'
