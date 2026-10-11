@@ -9,9 +9,64 @@
 #                                   second generation for the same answer (scripts/pages does,
 #                                   by fingerprint; the site job of validate.yml does, by the
 #                                   `generate-site-data --check` step that precedes the build).
+#   scripts/site-check --prose-figures <dir>
+#                                   check 19 alone, over every *.md and *.toml under <dir>, with
+#                                   no built site: the scan a case runs on a fixture. Exit 0 when
+#                                   no count is typed by hand, 10 naming each one, 12 no <dir>.
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
+# The scan of check 19, "prose states no count by hand": every line of the given files on which
+# a number of two or more digits stands within three words before a counted noun. A count
+# typed into prose is the author's on the day it was typed, and the site goes on printing it
+# after the repository has moved; a count the prose cites, `{{ <cite_figure name="..." /> }}`,
+# is read from generated data on every build (site/data/figures.toml declares what may be cited).
+# What is not prose is not read: code fences, inline code, HTML comments, the comment lines of
+# a TOML file, and the citations themselves. What is not a count is not reported: a number
+# named by the word before it (ADR 0123, case 1060, issue 42, version 12), and a year beside
+# its month. The nouns are stems, English and the Czech of the one published translation; the
+# Czech stems are written as UTF-8 octal escapes so that this file stays in English
+# (scripts/ci/english-only-check). Prints `<file>:<line>: "<number> ... <noun>"` per finding.
+prose_counts() { # file... -> findings
+  LC_ALL=C awk '
+    BEGIN {
+      ns = split("capabilit command tool resource route operation claim rule execution feature module case test function gate file tvrzen pravid funkc operac soubor p\305\231\303\255kaz b\304\233h", stem, " ")
+      split("adr case issue pr i wp version port", tmp, " "); for (k in tmp) named[tmp[k]] = 1
+      split("january february march april may june july august september october november december", tmp, " "); for (k in tmp) month[tmp[k]] = 1
+    }
+    FNR == 1 { fence = 0; toml = (FILENAME ~ /\.toml$/) }
+    /^[ \t]*(```|~~~)/ { fence = !fence; next }
+    fence { next }
+    toml && /^[ \t]*#/ { next }
+    {
+      line = $0
+      gsub(/`[^`]*`/, " ", line); gsub(/[{][{] *<cite_figure [^}]*[}][}]/, " ", line); gsub(/<!--.*-->/, " ", line)
+      nw = split(line, w, /[ \t]+/)
+      for (i = 1; i <= nw; i++) { t = w[i]; sub(/^[(*_["]+/, "", t); sub(/[].,;:)*_!?"]+$/, "", t); o[i] = t; w[i] = tolower(t) }
+      for (i = 1; i <= nw; i++) {
+        t = w[i]
+        if (t ~ /^[0-9][0-9]?[0-9]?(,[0-9][0-9][0-9])+$/) gsub(/,/, "", t)
+        if (t !~ /^[0-9][0-9]+$/) continue
+        if (i > 1 && (w[i-1] in named)) continue
+        if (t ~ /^(19|20)[0-9][0-9]$/ && ((i > 1 && (w[i-1] in month)) || (i < nw && (w[i+1] in month)))) continue
+        hit = 0
+        for (j = i + 1; j <= i + 3 && j <= nw && !hit; j++) {
+          if (w[j] == "|") break
+          for (s = 1; s <= ns; s++) if (index(w[j], stem[s]) == 1) { hit = j; break }
+        }
+        if (hit) { said = o[i]; for (j = i + 1; j <= hit; j++) said = said " " o[j]; printf "%s:%d: \"%s\"\n", FILENAME, FNR, said; break }
+      }
+    }' "$@"
+}
+if [ "${1:-}" = --prose-figures ]; then
+  [ -d "${2:-}" ] || { echo "site-check: --prose-figures needs a directory" >&2; exit 12; }
+  pfiles=(); while IFS= read -r f; do pfiles+=("$f"); done < <(find "$2" -type f \( -name '*.md' -o -name '*.toml' \) | LC_ALL=C sort)
+  [ "${#pfiles[@]}" -gt 0 ] || { echo "site-check: no *.md or *.toml under $2" >&2; exit 12; }
+  found="$(prose_counts "${pfiles[@]}")"
+  if [ -z "$found" ]; then echo "OK   prose        no count is typed by hand in $2"; exit 0; fi
+  printf '%s\n' "$found" | sed 's#^#FAIL prose        a count typed by hand (declare it in site/data/figures.toml and cite it): #'
+  exit 10
+fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
@@ -1296,5 +1351,21 @@ for route in $served; do
 done
 grep -qF 'while a server runs' "$PUB/docs/api/index.html" || { bad surface "/docs/api/ does not say which routes need a server"; surfbad=1; }
 [ "$surfbad" = 0 ] && ok surface "every served-only route is named on /docs/api/ and linked from nowhere: $(printf '%s ' $served)"
+
+# 19. prose states no count by hand. A number the hand-written pages and site data state
+# beside a counted noun is cited from site/data/figures.toml, never typed: the scan is
+# prose_counts, above, and `--prose-figures <dir>` runs it alone. The citations themselves
+# are held by the build, which fails on a figure that is not declared or does not resolve
+# (templates/shortcodes/cite_figure.html), so what is left to check here is the typed
+# alternative.
+pfiles=(); while IFS= read -r f; do pfiles+=("$f"); done < <(
+  { find "$SITE/content-src" -name '*.md'; find "$SITE/data" -maxdepth 1 -name '*.toml'; } | LC_ALL=C sort)
+found="$(prose_counts "${pfiles[@]}")"
+if [ -z "$found" ]; then ok prose "no count is typed by hand in site/content-src/ or site/data/*.toml; every one is a cited figure"
+else
+  while IFS= read -r hit; do
+    bad prose "${hit#"$ROOT"/}: a count typed by hand; declare the figure in site/data/figures.toml and cite it with {{ <cite_figure name=\"...\" /> }}"
+  done <<< "$found"
+fi
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

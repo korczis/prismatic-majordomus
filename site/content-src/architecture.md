@@ -13,6 +13,9 @@ template = "architecture.html"
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/**` |
 | claims | every capability, with status, source, implementation, test | `docs/CLAIMS.yaml` |
 | marketing copy | headline, leads, button labels; no claims, no numbers, a line budget | `site/data/marketing.toml` |
+| hand-written settings | the manifesto, the homepage's order and budgets, the navigation, the challenge page, the proof tiles, how each kind is published; words, order and settings, never a count | `site/data/*.toml` |
+| hand-written pages | long-form articles and pages like this one; a number they state is cited from `site/data/figures.toml`, and `scripts/site-check` refuses one typed beside a counted noun | `site/content-src/**` |
+| cited figures | each number hand-written prose may state: its name, the generated file it is read from at build, and what it counts | `site/data/figures.toml` |
 | derived data | stable JSON the templates read | `site/data/generated/**` (committed, checked) |
 | derived content | canonical Markdown with generated front matter | `site/content/docs/**` (gitignored, rebuilt) |
 | presentation | Zola templates, Flowbite components, Tailwind utilities, Alpine enhancements | `site/templates/**`, `site/tailwind.css` |
