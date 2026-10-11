@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 86,
+      "count": 88,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 86
+      "count": 88
     },
     {
       "kind": "application",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 328
     },
     {
       "kind": "domain",
@@ -133,7 +133,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 27
+      "count": 28
     },
     {
       "kind": "gap",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 272
+      "count": 282
     },
     {
       "kind": "knowledge",
@@ -189,7 +189,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 27
+      "count": 30
     },
     {
       "kind": "moment",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 413
+      "count": 416
     },
     {
       "kind": "use-case",
@@ -381,6 +381,13 @@
           "label": "adr-0103",
           "kind": "adr",
           "route": "/adrs/adr-0103/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
           "external": false
         }
       ]
@@ -731,6 +738,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
           "external": false
         }
       ]
@@ -1220,7 +1234,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2443,6 +2465,13 @@
           "label": "adr-0110",
           "kind": "adr",
           "route": "/adrs/adr-0110/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
           "external": false
         }
       ]
@@ -3908,6 +3937,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0105/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
         }
       ]
     },
@@ -5111,7 +5147,15 @@
           "external": true
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -6434,6 +6478,88 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0126",
+      "identity": "adr-0126",
+      "slug": "adr-0126",
+      "cockpit": "/cockpit/objects/adr/adr-0126",
+      "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
+      "status": "proposed",
+      "tags": [
+        "security",
+        "mesh",
+        "mcp",
+        "http"
+      ],
+      "source": ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/router.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mcp/surface.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0040",
+          "kind": "adr",
+          "route": "/adrs/adr-0040/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-cooperation-is-authenticated@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1022_a_remote_caller_cannot_write.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/remote_callers.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0129",
       "identity": "adr-0129",
       "slug": "adr-0129",
@@ -6537,6 +6663,60 @@
           "edge": "put_in_force",
           "label": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
           "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0135",
+      "identity": "adr-0135",
+      "slug": "adr-0135",
+      "cockpit": "/cockpit/objects/adr/adr-0135",
+      "title": "`majordomus ui` is the primary surface, and the Cockpit is the technical layer beneath it",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "ui",
+        "cockpit"
+      ],
+      "source": ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0022",
+          "kind": "adr",
+          "route": "/adrs/adr-0022/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
           "route": null,
           "external": false
         }
@@ -12095,6 +12275,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
           "external": false
         },
         {

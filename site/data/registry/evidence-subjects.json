@@ -3364,6 +3364,11 @@
     },
     {
       "kind": "feature",
+      "subject": "feature:ui",
+      "path": "/evidence/features/ui/"
+    },
+    {
+      "kind": "feature",
       "subject": "feature:use-cases",
       "path": "/evidence/features/use-cases/"
     },
@@ -17799,6 +17804,21 @@
       "mechanisms": [],
       "findings": []
     },
+    "feature:ui": {
+      "kind": "feature",
+      "id": "ui",
+      "status": "draft",
+      "page": "/evidence/features/ui/",
+      "programs": [],
+      "members": [
+        "rule:project.interfaces-are-projections",
+        "rule:project.ui-derived-state",
+        "rule:project.web-surface-declared-once"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "feature:use-cases": {
       "kind": "feature",
       "id": "use-cases",
@@ -25664,6 +25684,8 @@
     "crate:mcp_prose",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
+    "crate:mesh_trust_reload",
+    "crate:mesh_trust_root",
     "crate:metadata_contract",
     "crate:no_answer_carries_a_credential",
     "crate:objects",
@@ -25673,6 +25695,7 @@
     "crate:providers_projection",
     "crate:reasoning_mesh",
     "crate:redaction",
+    "crate:remote_callers",
     "crate:repository_discovery",
     "crate:response_schema",
     "crate:rules",
@@ -25682,8 +25705,12 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_surface",
     "crate:worktree",
     "suite:09_site_mobile_first",
+    "suite:1022_a_remote_caller_cannot_write",
+    "suite:1023_a_branch_cannot_widen_the_mesh_trust",
+    "suite:1024_an_installed_release_serves_a_foreign_repository",
     "suite:102_completion_shell",
     "suite:1040_a_stacked_head_lands_on_the_verdict_it_has",
     "suite:107_runtime_staleness_is_loud",
