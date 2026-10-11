@@ -695,13 +695,14 @@ pub struct MeshEventsArgs {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, MeshCommand};
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshViewArgs};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "mesh", "state", "--full", "--live-claims",
 ///     "--after", "42", "--session", "s1", "--runtime", "a1b2", "--kind", "claims",
 ///     "--limit", "5", "--open", "--matching", "#905"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::State(view) = mesh.command else { panic!("expected `state`") };
+/// let view: &MeshViewArgs = &view;
 /// assert!(view.full && view.live_claims);
 /// assert_eq!(view.pairs(), ["view=full", "claims=live", "after=42", "session=s1",
 ///     "runtime=a1b2", "kind=claims", "limit=5", "open=true", "matching=#905"]);
@@ -746,7 +747,19 @@ pub struct MeshViewArgs {
 }
 
 impl MeshViewArgs {
-    /// The query string's pairs, unencoded, in the order the flags are declared.
+    /// The query string's pairs, unencoded, in the order the flags are declared: what `mesh
+    /// state` and `mesh peers` send to the running server. No flag is no pair, which asks the
+    /// server for its default, the summary.
+    ///
+    /// ```
+    /// use clap::Parser;
+    /// use majordomus_cli::cli::{Cli, Command, MeshCommand};
+    ///
+    /// let cli = Cli::try_parse_from(["majordomus", "mesh", "peers", "--open"]).unwrap();
+    /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+    /// let MeshCommand::Peers(view) = mesh.command else { panic!("expected `peers`") };
+    /// assert_eq!(view.pairs(), ["open=true"]);
+    /// ```
     pub fn pairs(&self) -> Vec<String> {
         let mut pairs = Vec::new();
         if self.full {

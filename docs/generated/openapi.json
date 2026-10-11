@@ -38648,7 +38648,7 @@
           "mode",
           "acquired_lamport"
         ],
-        "description": "One live claim, told briefly."
+        "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
       },
       "MeshClaimCounts": {
         "type": "object",
@@ -38684,7 +38684,7 @@
           "released",
           "expired"
         ],
-        "description": "Claims by standing."
+        "description": "Claims by standing: held, conflicted, released and expired. Held and conflicted are\nlive; the other two are history, counted rather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```"
       },
       "MeshClaimFilter": {
         "oneOf": [
@@ -38699,7 +38699,7 @@
             "description": "Only claims that are still live: held, or conflicted and still held."
           }
         ],
-        "description": "Which claims a full answer keeps."
+        "description": "Which claims a full answer keeps: all of them, the ended ones included, or only those\nstill live — the question an executor asks before it takes a lease.\n\n```\nuse majordomus_cli::mesh::page::ClaimFilter;\n\nassert_eq!(ClaimFilter::default(), ClaimFilter::All);\nassert_eq!(serde_json::from_str::<ClaimFilter>(r#\"\"live\"\"#).unwrap(), ClaimFilter::Live);\n```"
       },
       "MeshDoctorReport": {
         "type": "object",
@@ -38819,7 +38819,7 @@
           "runtime",
           "published_lamport"
         ],
-        "description": "A handover nobody has taken, told briefly."
+        "description": "A handover nobody has taken, told briefly: the id `mesh.handover.consume` takes, who\npublished it and what it continues. Its body stays in the full view.\n\n```\nuse majordomus_cli::mesh::page::HandoverBrief;\n\nlet brief = HandoverBrief { id: \"ab12\".into(), runtime: \"n-r\".into(),\n    branch: Some(\"feature/x\".into()), issue: None, published_lamport: 7 };\nassert_eq!(serde_json::to_value(&brief).unwrap()[\"branch\"], \"feature/x\");\n```"
       },
       "MeshIdentityReport": {
         "type": "object",
@@ -38887,7 +38887,7 @@
             "description": "The review requests."
           }
         ],
-        "description": "One collection of the folded state."
+        "description": "One collection of the folded state, as `kind` names it: a reader that wants only the\nreviews is not sent the claims.\n\n```\nuse majordomus_cli::mesh::page::Kind;\n\nassert_eq!(serde_json::from_str::<Kind>(r#\"\"reviews\"\"#).unwrap(), Kind::Reviews);\nassert!(serde_json::from_str::<Kind>(r#\"\"everything\"\"#).is_err());\n```"
       },
       "MeshProviderState": {
         "oneOf": [
@@ -38977,7 +38977,7 @@
           "key",
           "subject"
         ],
-        "description": "An open review request, told briefly."
+        "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None };\nassert!(serde_json::to_value(&brief).unwrap().get(\"issue\").is_none(), \"absent, not null\");\n```"
       },
       "MeshRuntimeSummary": {
         "type": "object",
@@ -39025,7 +39025,7 @@
           "sessions",
           "claims"
         ],
-        "description": "One runtime, counted."
+        "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```"
       },
       "MeshSessionCounts": {
         "type": "object",
@@ -39054,7 +39054,7 @@
           "closed",
           "expired"
         ],
-        "description": "Sessions by standing."
+        "description": "Sessions by standing: how many are active, closed and expired. A count stays the same\nsize however many sessions the mesh has seen, which is why the summary carries counts.\n\n```\nuse majordomus_cli::mesh::page::SessionCounts;\n\nlet none = SessionCounts::default();\nassert_eq!(serde_json::to_value(&none).unwrap(),\n    serde_json::json!({ \"active\": 0, \"closed\": 0, \"expired\": 0 }));\n```"
       },
       "MeshSource": {
         "oneOf": [
@@ -39272,7 +39272,7 @@
           "untaken_handovers",
           "untaken_handovers_not_listed"
         ],
-        "description": "The mesh in an answer a worker reads whole."
+        "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```"
       },
       "MeshVerifyCheck": {
         "type": "object",
@@ -39367,7 +39367,7 @@
             "description": "Everything, narrowed only by the filters."
           }
         ],
-        "description": "How much an answer about the mesh carries."
+        "description": "How much an answer about the mesh carries. The summary is the default because it is the\nanswer a worker can read whole whatever the mesh's history; the full fold is one word\naway when a reader needs every record.\n\n```\nuse majordomus_cli::mesh::page::View;\n\nassert_eq!(View::default(), View::Summary);\nassert_eq!(serde_json::to_value(View::Full).unwrap(), \"full\");\n```"
       },
       "MigrationAction": {
         "oneOf": [
