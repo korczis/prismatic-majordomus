@@ -18,7 +18,7 @@ use crate::cockpit::view::word_badge;
 
 use super::icons::icon;
 use super::shell::View;
-use super::source::{ask, ask_all, Answer, Source};
+use super::source::{ask_all, Answer, Source};
 use super::view::{
     day, graph, hero, kpi, kpi_to, list, meter, nothing, panel, panel_to, state, status_tone,
     strip, table, text, unanswered, wide, GraphNode, Layout,
@@ -31,6 +31,10 @@ pub const ROUTE: &str = "/ui/prs";
 pub const PANEL: &str = "/ui/panels/drain";
 
 const QUEUE: Source = Source::of("integration.queue");
+const EVENTS: Source = Source::of("integration.events");
+
+/// How many of the executor's events the inspector and the activity list show.
+const TRAIL: usize = 15;
 const PLAN: Source = Source::of("plan.status");
 const ISSUES: Source = Source::of("plan.issues");
 
@@ -240,13 +244,33 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 /// The drain as a panel: what the fragment request and the page without JavaScript show.
 pub fn panel_view(ctx: &Context, query: &[(String, String)]) -> View {
     let filter = Filter::from_query(query);
-    View::new("Pull-request drain", drain(&ask(ctx, QUEUE), &filter))
+    let answers = ask_all(ctx, &[QUEUE, EVENTS]);
+    View::new(
+        "Pull-request drain",
+        drain_with(&answers[&QUEUE], Some(&answers[&EVENTS]), &filter),
+    )
 }
 
 /// The drain: the lane's tallies, what it does next, the tabs and the search, the pull
 /// requests the filter admits in the queue's rank order, the one inspected, the blockers, and
 /// the graph of what depends on what.
+#[cfg(test)]
 pub fn drain(queue: &Answer, filter: &Filter) -> El {
+    drain_with(queue, None, filter)
+}
+
+/// [`drain`] with the executor's trail (`integration.events`): the inspected pull request's
+/// own events, newest first, and the most recent events of the lane.
+pub fn drain_with(queue: &Answer, events: Option<&Answer>, filter: &Filter) -> El {
+    // newest first: the trail is recorded oldest first
+    let trail: Vec<Value> = events
+        .filter(|e| unanswered(e).is_none())
+        .map(|e| {
+            let mut all = list(e, "/events");
+            all.reverse();
+            all
+        })
+        .unwrap_or_default();
     let body = unanswered(queue).unwrap_or_else(|| {
         if queue.ok().and_then(|v| v.get("observed")) != Some(&Value::Bool(true)) {
             return nothing(&format!(
@@ -273,7 +297,27 @@ pub fn drain(queue: &Answer, filter: &Filter) -> El {
                         "#{n} is not among the open pull requests the queue observed."
                     ))
                 },
-                |a| inspector(a, &all, &repository, filter),
+                |a| {
+                    let own: Vec<Value> = trail
+                        .iter()
+                        .filter(|e| e.get("pr").and_then(Value::as_u64) == Some(n))
+                        .take(TRAIL)
+                        .cloned()
+                        .collect();
+                    inspector(a, &all, &repository, filter)
+                        .child(
+                            el("h4")
+                                .class("mj-ui-panel-title")
+                                .text("What the executor did"),
+                        )
+                        .child(if events.is_none() {
+                            nothing("The executor's trail was not asked.")
+                        } else if own.is_empty() {
+                            nothing("The executor has recorded nothing about it.")
+                        } else {
+                            trail_of(&own, filter)
+                        })
+                },
             )
         });
         el("div")
@@ -299,13 +343,82 @@ pub fn drain(queue: &Answer, filter: &Filter) -> El {
             )))
             .child(blockers(&all, filter))
             .child(dependency_graph(&all, &repository, filter))
+            .when(events.is_some(), |s| {
+                let recent: Vec<Value> = trail
+                    .iter()
+                    .filter(|e| e.get("pr").and_then(Value::as_u64).is_some())
+                    .take(TRAIL)
+                    .cloned()
+                    .collect();
+                s.child(
+                    el("div")
+                        .attr("id", "activity")
+                        .child(el("h3").class("mj-ui-panel-title").text("Recent activity"))
+                        .child(if recent.is_empty() {
+                            nothing("The executor has recorded nothing about a pull request.")
+                        } else {
+                            trail_of(&recent, filter)
+                        }),
+                )
+            })
     });
+    let mut answers = vec![queue];
+    answers.extend(events);
     panel_to(
         "Pull-request drain",
         "What the integration lane would merge, refresh, repair or wait for, and why.",
         Some(ROUTE),
         body,
-        &[queue],
+        &answers,
+    )
+}
+
+/// Events of the executor's trail as a timeline, newest first: what it did, to which pull
+/// request (a link to its inspector), why, and who did it.
+fn trail_of(events: &[Value], filter: &Filter) -> El {
+    super::view::timeline(
+        events
+            .iter()
+            .map(|e| {
+                let pr = e.get("pr").and_then(Value::as_u64);
+                let action = text(e, "action").replace('_', " ");
+                let title = match pr {
+                    Some(n) => format!("#{n} {action}"),
+                    None => action,
+                };
+                let reasons = strings(e, "reasons").join(", ");
+                let detail = el("span")
+                    .class("mj-ui-dim")
+                    .when(pr.is_some(), |d| {
+                        d.child(
+                            el("a")
+                                .class("mj-ui-more")
+                                .attr(
+                                    "href",
+                                    format!(
+                                        "{}#pr",
+                                        filter.href(
+                                            ROUTE,
+                                            "pr",
+                                            pr.map(|n| n.to_string()).as_deref()
+                                        )
+                                    ),
+                                )
+                                .text("open"),
+                        )
+                    })
+                    .child(el("span").text(format!(
+                        " {}{}{}",
+                        text(e, "detail"),
+                        if reasons.is_empty() { String::new() } else { format!(" · {reasons}") },
+                        Some(text(e, "actor"))
+                            .filter(|a| !a.is_empty())
+                            .map(|a| format!(" · {a}"))
+                            .unwrap_or_default()
+                    )));
+                (text(e, "at"), title, detail)
+            })
+            .collect(),
     )
 }
 
@@ -1109,6 +1222,60 @@ mod tests {
                 ]
             }
         })
+    }
+
+    fn events(value: Value) -> Answer {
+        Answer {
+            source: EVENTS,
+            route: Some("GET /api/v1/pull-requests/events".into()),
+            exposure: Exposure::default(),
+            value: Ok(value),
+            took: Duration::from_millis(1),
+        }
+    }
+
+    #[test]
+    fn the_inspector_shows_what_the_executor_did_and_the_drain_its_recent_activity() {
+        let trail = events(serde_json::json!({ "events": [
+            { "at": "2026-10-11T01:00:00Z", "action": "observed", "pr": null, "detail": "3 open", "reasons": [], "actor": "x" },
+            { "at": "2026-10-11T02:00:00Z", "action": "refresh_selected", "pr": 820, "detail": "behind", "reasons": ["behind_master:2"], "actor": "3d" },
+            { "at": "2026-10-11T03:00:00Z", "action": "merge_attempted", "pr": 931, "detail": "", "reasons": [], "actor": "3d" },
+            { "at": "2026-10-11T04:00:00Z", "action": "repaired", "pr": 820, "detail": "derived", "reasons": [], "actor": "3d" }
+        ]}));
+        let html = drain_with(
+            &queue(sample()),
+            Some(&trail),
+            &Filter::from_query(&q(&[("pr", "820")])),
+        )
+        .render();
+        let inspector = html
+            .split("What the executor did")
+            .nth(1)
+            .unwrap_or_default();
+        let inspector = inspector.split("</ol>").next().unwrap_or_default();
+        assert!(
+            inspector.contains("#820 repaired") && inspector.contains("#820 refresh selected"),
+            "{inspector}"
+        );
+        assert!(
+            !inspector.contains("#931"),
+            "another pull request's events are not its own"
+        );
+        assert!(
+            inspector.find("#820 repaired") < inspector.find("#820 refresh selected"),
+            "newest first"
+        );
+        let activity = html.split("id=\"activity\"").nth(1).unwrap_or_default();
+        assert!(
+            activity.contains("#931 merge attempted") && activity.contains("/ui/prs?pr=931#pr")
+        );
+        assert!(
+            !activity.contains(">observed<"),
+            "an event about no pull request is not activity"
+        );
+        let without = drain(&queue(sample()), &Filter::from_query(&q(&[("pr", "820")]))).render();
+        assert!(without.contains("trail was not asked."));
+        assert!(!without.contains("id=\"activity\""));
     }
 
     #[test]
