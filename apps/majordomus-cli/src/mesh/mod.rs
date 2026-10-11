@@ -59,6 +59,7 @@ pub mod registry;
 pub mod rendezvous;
 pub mod repository;
 pub mod state;
+pub mod tailscale;
 pub mod trust;
 
 pub use config::{MeshConfig, KIND};

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1055,6 +1055,15 @@
         "label": "mesh.review.request",
         "summary": "Ask the mesh for a review",
         "route": "/cockpit/capabilities/mesh.review.request",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.review.withdraw",
+        "kind": "capability",
+        "label": "mesh.review.withdraw",
+        "summary": "Withdraw a review request",
+        "route": "/cockpit/capabilities/mesh.review.withdraw",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "command"
       },
@@ -50387,6 +50396,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.review.withdraw",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.withdraw",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.withdraw",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.session.close",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -75393,6 +75417,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.review.withdraw",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.session.close",
         "kind": "composes"
       },
@@ -75763,8 +75792,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2500,
-      "edges": 5459,
+      "nodes": 2501,
+      "edges": 5463,
       "acyclic": false,
       "truncated": false
     }

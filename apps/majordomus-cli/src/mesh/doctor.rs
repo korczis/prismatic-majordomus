@@ -692,6 +692,7 @@ mod tests {
         let mut quiet = config(true);
         quiet.multicast.enabled = false;
         quiet.trust.allow = vec![identity.public.public_key.clone()];
+        quiet.tailscale.enabled = false;
         server
             .activate(&quiet, identity, vec![], vec![], "test")
             .unwrap();
