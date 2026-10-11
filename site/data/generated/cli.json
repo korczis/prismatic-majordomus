@@ -18011,6 +18011,12 @@
           "route": "/docs/cli/release/analyze/"
         },
         {
+          "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+          "command": "majordomus release next",
+          "name": "next",
+          "route": "/docs/cli/release/next/"
+        },
+        {
           "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
           "command": "majordomus release bump",
           "name": "bump",
@@ -18461,6 +18467,165 @@
       ],
       "route": "/docs/cli/release/analyze/",
       "usage": "majordomus release analyze [OPTIONS]"
+    },
+    {
+      "about": "The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "origin/master"
+          ],
+          "global": false,
+          "help": "The trunk the landing raises from",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "HEAD"
+          ],
+          "global": false,
+          "help": "What lands",
+          "long": "head",
+          "name": "head",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release next",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "next",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release next --format json",
+          "description": "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
+          "expectation": "exits 12",
+          "id": "release-next",
+          "setup": [],
+          "title": "What a landing would raise the version to"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "next",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "next"
+      ],
+      "route": "/docs/cli/release/next/",
+      "usage": "majordomus release next [OPTIONS]"
     },
     {
       "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
@@ -34067,13 +34232,13 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1477,
+    "commands": 217,
+    "examples": 217,
+    "runnable": 191
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.20.0",
+  "generator_version": "0.21.0",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

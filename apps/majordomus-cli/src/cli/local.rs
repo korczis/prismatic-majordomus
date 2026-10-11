@@ -591,6 +591,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints what the public contract did since the last release and the smallest version it allows.",
     },
     LocalCommand {
+        command: "release next",
+        reason: LocalReason::RendersCapability("release.next"),
+        note: "prints the version a landing of HEAD onto the trunk would allocate, and why.",
+    },
+    LocalCommand {
         command: "release bump",
         reason: LocalReason::WritesRepository,
         note: "raises the version in the one place it is authored, and the lock's record of it; the one writer, and a deliberate act.",

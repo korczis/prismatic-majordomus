@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `release` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Module `release` — Release
 
 What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.
 
-Stability: implemented. Capabilities: 3.
+Stability: implemented. Capabilities: 4.
 
 ## `release.analysis` — What the public contract did, and the smallest version it allows
 
@@ -50,6 +50,28 @@ Every release the layer records, newest first, with the work that has not been r
 | `version` | string or null | no | One version, or `unreleased`; every section when absent. |
 
 Output: `ReleaseChangelog`.
+
+## `release.next` — The version a landing allocates, and why
+
+What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.
+
+| | |
+|---|---|
+| kind | query |
+| stability | implemented |
+| MCP tool | `majordomus_release_next` |
+| HTTP | `GET /api/v1/release/next` |
+| cache | — |
+| benchmark | waived (published_history) |
+| provenance | builtin majordomus_cli::capability::builtin::release |
+| tags | release, version, integration |
+
+| input | type | required | description |
+|---|---|---|---|
+| `base` | string or null | no | The trunk the landing raises from; `origin/master` when absent. |
+| `head` | string or null | no | What lands; `HEAD` when absent. |
+
+Output: `LandingDecision`.
 
 ## `release.version` — The version, and the one the contract requires next
 

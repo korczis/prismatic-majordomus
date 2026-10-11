@@ -2789,6 +2789,23 @@
       "tool": "majordomus_changelog"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-next",
+      "claims": [],
+      "cli": null,
+      "id": "release.next",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-next/",
+      "slug": "release-next",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The version a landing allocates, and why",
+      "tool": "majordomus_release_next"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-version",
       "claims": [],
       "cli": null,
@@ -3907,11 +3924,11 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
+    "capabilities": 185,
     "claims": 89,
     "modules": 53
   },
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "modules": [
     {
       "capabilities": [
@@ -5167,6 +5184,11 @@
           "id": "release.changelog",
           "route": "/registry/capabilities/release-changelog/",
           "slug": "release-changelog"
+        },
+        {
+          "id": "release.next",
+          "route": "/registry/capabilities/release-next/",
+          "slug": "release-next"
         },
         {
           "id": "release.version",

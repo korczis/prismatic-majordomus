@@ -1384,6 +1384,15 @@ pub enum ReleaseCommand {
         #[arg(long)]
         explain: bool,
     },
+    /// The version a landing of HEAD onto the trunk allocates, and why: the trunk's version, the measured movement, the policy floor and any exemption (ADR 0134)
+    Next {
+        /// The trunk the landing raises from
+        #[arg(long, value_name = "REF", default_value = "origin/master")]
+        base: String,
+        /// What lands
+        #[arg(long, value_name = "REF", default_value = "HEAD")]
+        head: String,
+    },
     /// Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest
     Bump {
         /// Raise by this much instead of by the measured minimum; never below it
@@ -4285,6 +4294,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "What the contract did, and the smallest version it allows",
             description: "The public capability surface of this tree against the one the last release published, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command or required field a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. The same value answers `GET /api/v1/release/analysis`, the `majordomus_release_analysis` MCP tool, the Cockpit's Release page and the `version-surface` gate. A repository that has published nothing has no baseline to measure against, and says so with exit 12 rather than reporting an empty diff — which would read as \"nothing changed\".",
             argv: &["release", "analyze", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "release next",
+        examples: &[ExampleDoc {
+            id: "release-next",
+            title: "What a landing would raise the version to",
+            description: "The version the integration executor allocates when it lands a head on the trunk (ADR 0134): the trunk's version, the head's movement of the public contract measured against the trunk's committed registry, the policy floor and any exemption, and the larger of the requirement and the floor — read from git at the two refs, never from the branch's own version. This fixture has no trunk to raise from, and says so with exit 12 rather than inventing a number.",
+            argv: &["release", "next", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],
