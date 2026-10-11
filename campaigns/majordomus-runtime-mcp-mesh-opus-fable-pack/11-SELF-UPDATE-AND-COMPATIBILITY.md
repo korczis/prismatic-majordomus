@@ -1,0 +1,7 @@
+# M11: Safe self-update and rolling protocol upgrades
+
+Audit current update/distribution/release implementation; extend it, never build a second installer or updater. Define versioned wire/protocol/registry/data schemas and tested compatibility matrix for adjacent released client/server and mesh versions. Negotiate protocol features; unknown mandatory features fail explicitly, optional features degrade. Plan migrations for local leases, snapshots and journals; preserve provenance/signatures, do not rewrite signed history. Protect against downgrade/replay and truncated package delivery.
+
+Auto-detect available updates in background only through opt-in repository policy and bounded checks; cryptographically verify integrity/provenance against configured trusted release channel. Never run network fetch on repo `cd`. Do not restart active MCP clients or in-flight work unexpectedly. Stage immutable artifact, verify, use transactional swap and rollback, preserve executable permissions and cross-platform paths. Surface available/staged/applied/failed/rolled-back state in CLI/MCP/API/UI; do not expose secrets or update across unrelated checkouts.
+
+Tests: upgrade while peers active, old MCP client/new server, newer mesh envelope, interrupted download, invalid signature/checksum, rollback, offline/no permission, concurrent update attempts, unfinished task, corrupted migration, new release not yet available. Gate: no interrupted active work or silent incompatible fleet, and all versions/rollback results evidenced.

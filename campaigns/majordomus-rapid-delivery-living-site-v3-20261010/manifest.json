@@ -1,0 +1,320 @@
+{
+  "pack": "majordomus-rapid-delivery-living-site-v3",
+  "date": "2026-10-10",
+  "basis": {
+    "repo": "https://github.com/korczis/prismatic-majordomus",
+    "site": "https://majordomus.dev/",
+    "observations": [
+      "Homepage shows v0.19.0 in fetched HTML",
+      "Install releases index showed v0.19.1; GitHub commits reference v0.20.0",
+      "Feature cards and homepage are intended to derive from .ai/repo/features/",
+      "Previous V2 pack contains autonomous delivery milestones; reconcile rather than duplicate"
+    ]
+  },
+  "milestones": [
+    {
+      "id": "RDV3-00",
+      "title": "Reality, site baseline & delta discovery",
+      "prompt": "prompts/00-reality-site-baseline-and-delta-discovery.md",
+      "depends_on": [],
+      "issues": [
+        {
+          "id": "RDV3-00-01",
+          "title": "Pin master, current release, latest successful deployment and homepage SHA"
+        },
+        {
+          "id": "RDV3-00-02",
+          "title": "Inventory open PRs, worktrees, mesh jobs, CI queues and status"
+        },
+        {
+          "id": "RDV3-00-03",
+          "title": "Trace last landing-page update to source commit and deployed artifact"
+        },
+        {
+          "id": "RDV3-00-04",
+          "title": "Compute capability and documentation changes since site baseline"
+        },
+        {
+          "id": "RDV3-00-05",
+          "title": "Measure warm/cold derive, test, CI, merge and deploy critical path"
+        },
+        {
+          "id": "RDV3-00-06",
+          "title": "Produce scope-aware impact map and reusable evidence baseline"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-01",
+      "title": "Fast path policy and operation contracts",
+      "prompt": "prompts/01-fast-path-policy-and-operation-contracts.md",
+      "depends_on": [
+        "RDV3-00"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-01-01",
+          "title": "Identify governance rules that cause reauthorization or redundant work"
+        },
+        {
+          "id": "RDV3-01-02",
+          "title": "Define intent-backed unattended delivery authority envelope"
+        },
+        {
+          "id": "RDV3-01-03",
+          "title": "Make authorized continuation default across handovers and mesh workers"
+        },
+        {
+          "id": "RDV3-01-04",
+          "title": "Replace rigid scope locks with auditable bounded scope evolution"
+        },
+        {
+          "id": "RDV3-01-05",
+          "title": "Preserve immutable safety, secrets, provenance and release constraints"
+        },
+        {
+          "id": "RDV3-01-06",
+          "title": "Implement policy migration, negative tests and canonical documentation"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-02",
+      "title": "Incremental delivery execution",
+      "prompt": "prompts/02-incremental-delivery-execution.md",
+      "depends_on": [
+        "RDV3-01"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-02-01",
+          "title": "Instrument execution DAG and per-operation costs"
+        },
+        {
+          "id": "RDV3-02-02",
+          "title": "Introduce precise input/output digests and invalidation evidence"
+        },
+        {
+          "id": "RDV3-02-03",
+          "title": "Reuse unaffected tests, derivations and docs safely"
+        },
+        {
+          "id": "RDV3-02-04",
+          "title": "Single-flight identical operations with scoped locks and fencing"
+        },
+        {
+          "id": "RDV3-02-05",
+          "title": "Prioritize short critical path without starving full validation"
+        },
+        {
+          "id": "RDV3-02-06",
+          "title": "Benchmark workloads on representative machines and guard regressions"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-03",
+      "title": "Continuous PR convergence and mesh",
+      "prompt": "prompts/03-continuous-pr-convergence-and-mesh.md",
+      "depends_on": [
+        "RDV3-02"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-03-01",
+          "title": "Connect durable supervisor to existing prs drain and mesh dispatch"
+        },
+        {
+          "id": "RDV3-03-02",
+          "title": "Classify stale/conflicted/check-failing PR with actionable repair plan"
+        },
+        {
+          "id": "RDV3-03-03",
+          "title": "Spawn trusted workers with bounded idempotent tasks and evidence"
+        },
+        {
+          "id": "RDV3-03-04",
+          "title": "Safely rebase/update branches, re-plan conflicts, maintain queue fairness"
+        },
+        {
+          "id": "RDV3-03-05",
+          "title": "Merge continuously with current-base checks and atomic reconciliation"
+        },
+        {
+          "id": "RDV3-03-06",
+          "title": "Recovery tests for crashes, restarts, dead peers and approval blockers"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-04",
+      "title": "Product narrative and derived information architecture",
+      "prompt": "prompts/04-product-narrative-and-derived-information-architecture.md",
+      "depends_on": [
+        "RDV3-03"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-04-01",
+          "title": "Audit existing homepage copy, features and navigation for user comprehension"
+        },
+        {
+          "id": "RDV3-04-02",
+          "title": "Define beginner-to-expert product narrative and explicit limitations"
+        },
+        {
+          "id": "RDV3-04-03",
+          "title": "Derive feature groups and proof links from canonical feature files"
+        },
+        {
+          "id": "RDV3-04-04",
+          "title": "Derive what-changed timeline from baseline to current deployed revision"
+        },
+        {
+          "id": "RDV3-04-05",
+          "title": "Build interactive system walkthrough from real execution/evidence data"
+        },
+        {
+          "id": "RDV3-04-06",
+          "title": "Add clear setup, CTA, screenshots/demo and responsive information hierarchy"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-05",
+      "title": "Visual design, performance and accessibility",
+      "prompt": "prompts/05-visual-design-performance-and-accessibility.md",
+      "depends_on": [
+        "RDV3-04"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-05-01",
+          "title": "Refine typography, spacing, visual identity and Flowbite/Tailwind existing tokens"
+        },
+        {
+          "id": "RDV3-05-02",
+          "title": "Build responsive first screen with understandable hero and key outcome"
+        },
+        {
+          "id": "RDV3-05-03",
+          "title": "Create mobile-first feature exploration and linked architecture overview"
+        },
+        {
+          "id": "RDV3-05-04",
+          "title": "Use accessible progressive enhancement and appropriate chart/graph libraries"
+        },
+        {
+          "id": "RDV3-05-05",
+          "title": "Implement reduced-motion, keyboard, contrast and narrow-view tests"
+        },
+        {
+          "id": "RDV3-05-06",
+          "title": "Measure page weight, rendering cost, web vitals, crawlability and SEO"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-06",
+      "title": "Version, release and deploy on the go",
+      "prompt": "prompts/06-version-release-and-deploy-on-the-go.md",
+      "depends_on": [
+        "RDV3-05"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-06-01",
+          "title": "Integrate semantic release analyze and canonical version bump"
+        },
+        {
+          "id": "RDV3-06-02",
+          "title": "Ensure all surfaces consume single derived version and release identity"
+        },
+        {
+          "id": "RDV3-06-03",
+          "title": "Publish signed/provenance artifacts with required checks"
+        },
+        {
+          "id": "RDV3-06-04",
+          "title": "Deploy site and relevant services incrementally using existing workflow"
+        },
+        {
+          "id": "RDV3-06-05",
+          "title": "Verify canonical SHA/version in live page, assets, metadata and APIs"
+        },
+        {
+          "id": "RDV3-06-06",
+          "title": "Rollback/promote safely and capture release/deploy evidence"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-07",
+      "title": "Living-site enforcement and regression",
+      "prompt": "prompts/07-living-site-enforcement-and-regression.md",
+      "depends_on": [
+        "RDV3-06"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-07-01",
+          "title": "Derive feature release notes and changelog delta from canonical evidence"
+        },
+        {
+          "id": "RDV3-07-02",
+          "title": "Prevent homepage promising undelivered or unverified capabilities"
+        },
+        {
+          "id": "RDV3-07-03",
+          "title": "Add typed site projection/drift, snapshot, contract and link tests"
+        },
+        {
+          "id": "RDV3-07-04",
+          "title": "Ensure UI, docs, OpenAPI, MCP and landing use compatible source semantics"
+        },
+        {
+          "id": "RDV3-07-05",
+          "title": "CI gate stale deployment/site mismatch without blocking unrelated local work"
+        },
+        {
+          "id": "RDV3-07-06",
+          "title": "Dogfood update with representative capability addition and removal"
+        }
+      ]
+    },
+    {
+      "id": "RDV3-08",
+      "title": "Production proof, adoption and cleanup",
+      "prompt": "prompts/08-production-proof-adoption-and-cleanup.md",
+      "depends_on": [
+        "RDV3-07"
+      ],
+      "issues": [
+        {
+          "id": "RDV3-08-01",
+          "title": "Install from public endpoint into clean consumer repo and run guided demo"
+        },
+        {
+          "id": "RDV3-08-02",
+          "title": "Run autonomous PR drain campaign in controlled real environment"
+        },
+        {
+          "id": "RDV3-08-03",
+          "title": "Record before/after p50/p95 turnaround and failure recovery"
+        },
+        {
+          "id": "RDV3-08-04",
+          "title": "Verify mobile accessibility, lighthouse-like budgets and source links"
+        },
+        {
+          "id": "RDV3-08-05",
+          "title": "Remove obsolete scripts, inventories and superseded governance"
+        },
+        {
+          "id": "RDV3-08-06",
+          "title": "Publish verified final release, rollout report, screenshots and evidence"
+        }
+      ]
+    }
+  ]
+}

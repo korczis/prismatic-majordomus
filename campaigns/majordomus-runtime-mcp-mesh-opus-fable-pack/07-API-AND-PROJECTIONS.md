@@ -1,0 +1,7 @@
+# M07: Server/API/OpenAPI/CLI/Cockpit/Docs convergence
+
+Trace every server/MCP/mesh/peer/work operation to its canonical descriptor and typed executor, deriving CLI metadata, REST routes, OpenAPI JSON, Swagger, MCP, Cockpit, `majordomus ui` and docs indexes. Expose health/readiness/liveness/peer/cooperation/diagnostic/event history/capability flows through existing modules and schemas, no speculative duplicate REST hierarchy. Introduce versioned typed DTOs only at genuine transport boundaries. Preserve deterministic ordering and normalized identifiers; stable pagination/cursors where needed; explicit updated_at, observed_at, source, stale, permissions, trust and refusal reasons. Do not confuse inferred estimates with observed state.
+
+Use authoritative integration fixtures to compare CLI JSON, MCP and HTTP read outputs for semantic equality and consistent authorization outcomes. Generate OpenAPI from actual schema; check drift. Interactive UIs must query canonical APIs and reuse canonical mutation endpoints, not create frontend-only hidden actions. Static website can project documentation and proofs, but must never present live state as live without runtime connectivity.
+
+Tests: new fake capability added only to canonical registry auto-appears where permitted; remove a capability and all derived surfaces update; auth denied is consistent; API/CLI/MCP parity; route/schema link checks; empty/stale/error conditions; no server and no network. Gate: zero consumer-side parallel catalogs or hardcoded peer statuses.
