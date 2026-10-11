@@ -224,4 +224,11 @@ fresh; claims guaranteed true
 sed -i.bak 's#{"id":"draft","route":"/features/draft/","status":"draft"}#{"id":"draft","route":"/features/draft/","status":"draft","short_title":"Deployments"}#' "$F/site/data/registry/product.json"
 printf '[intro]\nlead = "Deployments are one object."\n' > "$F/site/data/manifesto.toml"
 promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployments'\), which the product model calls draft" "a draft feature named in the copy"
+# a copy file that is missing is a finding of promises alone: every other check still runs, and a
+# caller asking --only for another check is not stopped (case 544 builds a tree without them)
+fresh; rm "$F/site/data/marketing.toml"
+expect_finding 10 'promises +site/data/marketing.toml cannot be read as TOML' "a missing copy file"
+grep -q '^OK   narrative ' out.txt || { echo "    a missing copy file stopped the other checks"; cat out.txt; exit 1; }
+rc=0; MJ_ROOT="$F" "$CHECK" --only narrative > out.txt 2>&1 || rc=$?
+[ "$rc" = 0 ] || { echo "    --only narrative exited $rc when a copy file was missing"; cat out.txt; exit 1; }
 exit 0

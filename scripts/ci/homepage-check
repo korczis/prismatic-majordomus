@@ -471,12 +471,21 @@ claim_status = {c.get("id"): c.get("status") for c in caps.get("claims") or []}
 ev_claims = ev.get("claims") if isinstance(ev, dict) and isinstance(ev.get("claims"), dict) else {}
 ev_available = isinstance(ev, dict) and ev.get("available") is True
 copy_lines = []
+problems, permits = [], []
+# A copy file that is missing or is not TOML is a finding of this check, never a clean pass and
+# never the end of the run: the other checks (and a caller asking --only for one of them) do
+# not read these files and must not be stopped by them.
 for rel in ("site/data/marketing.toml", "site/data/manifesto.toml"):
-    load_toml(rel)   # a file that is not TOML, or is missing, is not judged as clean copy
-    for n, line in enumerate(open(os.path.join(root, rel)), 1):
+    p = os.path.join(root, rel)
+    try:
+        with open(p, "rb") as f:
+            tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        problems.append(f"{rel} cannot be read as TOML ({e.__class__.__name__}), so its copy is not judged")
+        continue
+    for n, line in enumerate(open(p), 1):
         if not line.lstrip().startswith("#"):
             copy_lines.append((rel, n, line))
-problems, permits = [], []
 if not isinstance(promise_decl, dict) or not promise_decl:
     problems.append("site/data/homepage.toml declares no [promises], so nothing holds the hand-written copy to the claims")
 else:
