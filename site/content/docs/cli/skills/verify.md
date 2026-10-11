@@ -1,7 +1,7 @@
 +++
 title = "majordomus skills verify"
 description = "Every finding over the skills; exit 10 when any is a failure"
-weight = 205
+weight = 206
 [extra]
 route = "/docs/cli/skills/verify/"
 command = "majordomus skills verify"

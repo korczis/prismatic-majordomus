@@ -9399,6 +9399,113 @@
         "x-majordomus-cli": "mesh doctor"
       }
     },
+    "/api/v1/mesh/enrol": {
+      "post": {
+        "operationId": "mesh.enrol",
+        "summary": "Enrol this machine in the mesh",
+        "description": "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+        "tags": [
+          "mesh"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `mesh.enrol`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Empty"
+              },
+              "examples": {
+                "default": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrol this machine in the mesh: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeshEnrolment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.enrol",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "repository_mutation",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_enrol"
+        },
+        "x-majordomus-cli": "mesh enrol"
+      }
+    },
     "/api/v1/mesh/events": {
       "get": {
         "operationId": "mesh.events",
@@ -38505,6 +38612,34 @@
           "checks"
         ],
         "description": "The whole self-check."
+      },
+      "MeshEnrolment": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The declaration file, repository-relative."
+          },
+          "key": {
+            "type": "string",
+            "description": "This machine's public key: what is listed, never a secret."
+          },
+          "added": {
+            "type": "boolean",
+            "description": "Whether the key was added now; `false` when it was listed already."
+          },
+          "next": {
+            "type": "string",
+            "description": "What to do next: commit the file, or nothing."
+          }
+        },
+        "required": [
+          "path",
+          "key",
+          "added",
+          "next"
+        ],
+        "description": "The answer of `mesh.enrol`: which declaration, which key, and whether it changed."
       },
       "MeshEvent": {
         "type": "object",

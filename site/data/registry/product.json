@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "57a9eed5fe8ab97dac3ce640bfab21d4408a900a24083ed03526006b266ab73d",
+  "fingerprint": "e9f2cfded0b9c051398716d6d7490f46af764a3b0aecfa624e55e0fd17e69634",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1005,7 +1005,7 @@
         },
         {
           "id": "mesh-off-by-default",
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         },
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 64,
+        "capabilities": 65,
         "moments": 17
       },
       "evidence": {
@@ -5356,6 +5356,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -5606,7 +5615,7 @@
         },
         {
           "id": "mesh-off-by-default",
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
           "status": "guaranteed",
           "test": "apps/majordomus-cli/tests/mesh.rs"
         }
@@ -5626,11 +5635,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 22,
-        "mcp_tools": 20,
+        "capabilities": 23,
+        "mcp_tools": 21,
         "mcp_resources": 2,
-        "http_routes": 22,
-        "cli_paths": 2,
+        "http_routes": 23,
+        "cli_paths": 3,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7148,7 +7157,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 85
+          "objects": 86
         },
         {
           "name": "knowledge",
@@ -7429,11 +7438,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 416,
+        "mcp_resources": 417,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 413,
+        "objects": 414,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -14297,7 +14306,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (85)",
+        "title": "adr (86)",
         "features": [
           "knowledge"
         ]
@@ -15381,19 +15390,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2120,
-    "builtin": 185,
-    "declarative": 1935,
+    "capabilities": 2122,
+    "builtin": 186,
+    "declarative": 1936,
     "modules": 53,
-    "mcp_tools": 178,
-    "mcp_resources": 1989,
-    "http_routes": 182,
-    "cli_commands": 191,
+    "mcp_tools": 179,
+    "mcp_resources": 1990,
+    "http_routes": 183,
+    "cli_commands": 192,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1935,
+    "objects": 1936,
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,

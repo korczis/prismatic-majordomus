@@ -20913,6 +20913,12 @@
           "route": "/docs/cli/mesh/identity/"
         },
         {
+          "about": "Add this machine's public key to the mesh declaration's trust list, once; commit it to join",
+          "command": "majordomus mesh enrol",
+          "name": "enrol",
+          "route": "/docs/cli/mesh/enrol/"
+        },
+        {
           "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
           "command": "majordomus mesh doctor",
           "name": "doctor",
@@ -21379,6 +21385,135 @@
       ],
       "route": "/docs/cli/mesh/identity/",
       "usage": "majordomus mesh identity [OPTIONS]"
+    },
+    {
+      "about": "Add this machine's public key to the mesh declaration's trust list, once; commit it to join",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh enrol",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "enrol"
+          ],
+          "command": "majordomus mesh enrol",
+          "description": "Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.",
+          "expectation": "exits 13",
+          "id": "mesh-enrol",
+          "setup": [],
+          "title": "Enrol this machine in the repository's mesh"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "enrol",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "enrol"
+      ],
+      "route": "/docs/cli/mesh/enrol/",
+      "usage": "majordomus mesh enrol [OPTIONS]"
     },
     {
       "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
@@ -34261,10 +34396,10 @@
     }
   ],
   "counts": {
-    "arguments": 1479,
-    "commands": 217,
-    "examples": 217,
-    "runnable": 191
+    "arguments": 1484,
+    "commands": 218,
+    "examples": 218,
+    "runnable": 192
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.21.0",

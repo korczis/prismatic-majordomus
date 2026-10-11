@@ -47,6 +47,7 @@ pub mod broadcast;
 pub mod config;
 pub mod cooperation;
 pub mod doctor;
+pub mod enrol;
 pub mod handover;
 pub mod identity;
 pub mod journal;

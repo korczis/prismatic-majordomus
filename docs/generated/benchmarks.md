@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 185 | 160 | 0 | 25 |
-| http | 182 | 160 | 0 | 22 |
-| mcp | 178 | 156 | 0 | 22 |
+| direct | 186 | 160 | 0 | 26 |
+| http | 183 | 160 | 0 | 23 |
+| mcp | 179 | 156 | 0 | 23 |
 | system | 13 | 13 | 0 | 0 |
-| total | 558 | 489 | 0 | 69 |
+| total | 561 | 489 | 0 | 72 |
 
 ## Capabilities
 
@@ -116,6 +116,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.enrol` | mesh | command | — | waived | waived | waived | — |
 | `mesh.events` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.handover.consume` | mesh | command | — | waived | waived | waived | — |
 | `mesh.handover.publish` | mesh | command | — | waived | waived | waived | — |

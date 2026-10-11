@@ -101,6 +101,10 @@ H
   mkdir -p "$deployments_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
+  # The mesh: a declaration that is enabled and closed until a machine is enrolled. A
+  # machine whose key is not in trust.allow opens no socket (`mesh::manager::closed_to`), so
+  # shipping it enabled sends nothing anywhere; `majordomus mesh enrol` is the one step left.
+  mj_init_tree "$skel/ai/repo/mesh" "$MJ_AI_REPO_DIR/mesh" '*'
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \

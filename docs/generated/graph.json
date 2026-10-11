@@ -942,6 +942,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.enrol",
+        "kind": "capability",
+        "label": "mesh.enrol",
+        "summary": "Enrol this machine in the mesh",
+        "route": "/cockpit/capabilities/mesh.enrol",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.events",
         "kind": "capability",
         "label": "mesh.events",
@@ -2776,11 +2785,27 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/enrol.rs",
+        "kind": "file",
+        "label": "enrol.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/enrol.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/journal.rs",
         "kind": "file",
         "label": "journal.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mesh/journal.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/manager.rs",
+        "kind": "file",
+        "label": "manager.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/manager.rs",
         "external": true
       },
       {
@@ -3789,6 +3814,14 @@
         "label": "README.md",
         "summary": "named by the layer; not an object of this index",
         "source": "share/skeleton/ai/repo/knowledge/candidates/README.md",
+        "external": true
+      },
+      {
+        "id": "file:share/skeleton/ai/repo/mesh/mesh.yaml",
+        "kind": "file",
+        "label": "mesh.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/skeleton/ai/repo/mesh/mesh.yaml",
         "external": true
       },
       {
@@ -6380,6 +6413,31 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0139",
+        "kind": "adr",
+        "label": "adr-0139",
+        "summary": "Init declares the mesh, closed until a machine is enrolled",
+        "route": "/cockpit/objects/adr/adr-0139",
+        "source": ".ai/repo/adrs/0139-init-declares-the-mesh-closed-until-a-machine-is-enrolled.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+            "file:share/skeleton/ai/repo/mesh/mesh.yaml",
+            "file:apps/majordomus-cli/src/mesh/enrol.rs",
+            "file:apps/majordomus-cli/src/mesh/manager.rs",
+            "test:test/cases/01_init.sh"
+          ],
+          "tags": [
+            "mesh",
+            "init",
+            "trust"
           ]
         }
       },
@@ -9117,12 +9175,11 @@
         "id": "majordomus://claim/mesh-off-by-default",
         "kind": "claim",
         "label": "mesh-off-by-default",
-        "summary": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+        "summary": "No mesh discovery socket opens until the repository commits an enabled mesh declaration that lists this machine's key, and a disabled, absent or unlisting declaration is reported as the reason, not an error",
         "route": "/cockpit/objects/claim/mesh-off-by-default",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
           "implementation": "apps/majordomus-cli/src/shared.rs",
           "responsibility": "none",
           "source": "docs/MESH.md",
@@ -50206,6 +50263,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.enrol",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.enrol",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.events",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -55088,6 +55165,41 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "file:apps/majordomus-cli/src/mesh/enrol.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "file:apps/majordomus-cli/src/mesh/manager.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "file:share/skeleton/ai/repo/mesh/mesh.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "majordomus://adr/adr-0059",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0139",
+        "target": "majordomus://test/test/cases/01_init.sh",
         "kind": "put_in_force"
       },
       {
@@ -75352,6 +75464,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.enrol",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.events",
         "kind": "composes"
       },
@@ -75792,8 +75909,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2501,
-      "edges": 5463,
+      "nodes": 2506,
+      "edges": 5475,
       "acyclic": false,
       "truncated": false
     }

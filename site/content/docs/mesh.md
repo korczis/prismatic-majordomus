@@ -477,9 +477,10 @@ would be written into the other checkout.
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
-this repository's reviewed decision, not the tool's default: the skeleton a new repository
-starts from ships no declaration, and nothing opens there until its own operator commits one
-(the guarantee `mesh-off-by-default`).
+this repository's reviewed decision about who is listed. The tool's default is the same shape
+with an empty trust list: `majordomus init` seeds `.ai/repo/mesh/mesh.yaml` enabled and
+`deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
+is committed (ADR 0139; the guarantee `mesh-off-by-default`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -582,6 +583,7 @@ is owed as a typed capability or a Rhai workflow (ADR 0059).
 ```sh
 majordomus mesh doctor            # prerequisites and the server's runtime verdict; exits 10 on a failed check
 majordomus mesh identity          # this machine's key, for trust.allow
+majordomus mesh enrol             # list this machine's key in trust.allow, once; then commit
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
 majordomus mesh peers             # machines → runtimes → sessions → claims, each link's state
