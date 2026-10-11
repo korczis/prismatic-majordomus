@@ -217,6 +217,9 @@ pub fn to_body(
     milestone: Option<String>,
 ) -> Result<HandoverBody, String> {
     let (front, body) = read(path)?;
+    // signed into the journal and replicated to every linked runtime, in clear: a credential
+    // the author pasted into the record is replaced by a marker before anything is signed
+    let body = crate::redaction::redact_secrets(&body).text;
     if body.trim().is_empty() {
         return Err(format!("{}: the handover has no body", path.display()));
     }
