@@ -31,6 +31,10 @@
       "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."
     },
     {
+      "name": "brief",
+      "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
+    },
+    {
       "name": "capabilities",
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
     },
@@ -355,6 +359,132 @@
             "name": "artifacts"
           }
         }
+      }
+    },
+    "/api/v1/brief": {
+      "get": {
+        "operationId": "brief.session",
+        "summary": "The session brief",
+        "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+        "tags": [
+          "brief"
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.",
+            "examples": {
+              "default": {
+                "value": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          {
+            "name": "checkouts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Checkouts",
+              "default": "repository"
+            },
+            "description": "Which checkouts the peers section covers: `repository` (every board, the default) or `this`.",
+            "examples": {
+              "default": {
+                "value": "this"
+              }
+            }
+          },
+          {
+            "name": "local",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+            "examples": {
+              "default": {
+                "value": true
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The session brief: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBrief"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "brief.session",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::brief"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_brief"
+        },
+        "x-majordomus-cli": "brief"
       }
     },
     "/api/v1/capabilities": {
@@ -20165,6 +20295,343 @@
           "commits"
         ],
         "description": "One branch that names an issue, with the commits it holds."
+      },
+      "BriefDeriveSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "`undeclared` when the repository ships no derive lock."
+          },
+          "holder": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The lock's owner line, when the lock is held."
+          },
+          "pid": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The holder's process id, when its line names one."
+          },
+          "alive": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether that process is running on this machine."
+          },
+          "held_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since the lock was taken."
+          },
+          "priority": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branches the priority marker names, when it is present."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "summary"
+        ],
+        "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+      },
+      "BriefIntegrationSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether this checkout ever observed the forge."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "summary"
+        ],
+        "description": "The integration queue, as `majordomus prs brief` says it."
+      },
+      "BriefMeshSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether cooperation could be read."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether cooperation runs in the composing process."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it does not, when it does not."
+          },
+          "links": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Links to other runtimes."
+          },
+          "connected": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of them, connected."
+          },
+          "failing": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of them, degraded, unreachable or expired."
+          },
+          "claims_held": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Claims held across the mesh."
+          },
+          "own_claims": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of them, held by this runtime."
+          },
+          "reviews_for_you": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open review requests that name this runtime as the reviewer."
+          },
+          "handovers_waiting": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Handovers another runtime published that nobody has consumed."
+          },
+          "overlaps_for_you": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Overlaps between a claim of this runtime and another's."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "active",
+          "links",
+          "connected",
+          "failing",
+          "claims_held",
+          "own_claims",
+          "reviews_for_you",
+          "handovers_waiting",
+          "overlaps_for_you",
+          "summary"
+        ],
+        "description": "The mesh: the links of this runtime and what the journal addresses to it."
+      },
+      "BriefOrigin": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "type": "string",
+            "description": "`leaseholder` (the server this checkout's lease names), `superseded` (a server that lost the lease), or `this_process` (no server answered, or the call asked for `local`)."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The address of the server that composed it, when one did."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why this process and not the leaseholder, when it is not the leaseholder."
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "description": "Which process composed the brief, and why that one."
+      },
+      "BriefPeersSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether every board could be read."
+          },
+          "attached": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Attached peers across the boards read, the caller included."
+          },
+          "boards": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many boards the answer covers."
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every board that could not be read, as `<worktree>: <reason>`."
+          },
+          "overlaps": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs of peers whose claimed scopes meet."
+          },
+          "superseded": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Set when the composing server is superseded: its own board is unreachable by the repository's gather."
+          },
+          "named": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The attached peers, one short line each, at most a bounded number."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "attached",
+          "boards",
+          "overlaps",
+          "named",
+          "summary"
+        ],
+        "description": "The workers of this repository, from every board the brief could read."
+      },
+      "BriefSectionState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "read",
+            "description": "Its owner answered in full."
+          },
+          {
+            "type": "string",
+            "const": "partial",
+            "description": "Its owner answered, and part of what it covers could not be asked; the summary says which."
+          },
+          {
+            "type": "string",
+            "const": "unread",
+            "description": "Its owner did not answer; the summary says why."
+          },
+          {
+            "type": "string",
+            "const": "undeclared",
+            "description": "The repository declares nothing for it (no derive lock, a mesh switched off)."
+          }
+        ],
+        "description": "Whether a section of the brief could be read."
+      },
+      "BriefSessionSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether it could be read."
+          },
+          "episode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The open episode, when one is found."
+          },
+          "provider_session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider session that owns it."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The checkout's branch."
+          },
+          "head": {
+            "type": "string",
+            "description": "The checkout's head, abbreviated."
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The active task's id, when one is active."
+          },
+          "task": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The active task's words."
+          },
+          "caller": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The calling MCP session's place on this board, when the call came through one."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "branch",
+          "head",
+          "summary"
+        ],
+        "description": "The session the brief is about."
       },
       "Budget": {
         "type": "object",
@@ -51611,6 +52078,74 @@
           "availability"
         ],
         "description": "One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does."
+      },
+      "SessionBrief": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "description": "When it was composed, RFC 3339."
+          },
+          "line": {
+            "type": "string",
+            "description": "The brief in one line: the status line's text."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The brief in a few lines: one per section, then the peers it names."
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How often a session reports on itself, in minutes (`session.brief_interval_minutes`)."
+          },
+          "keep_awake": {
+            "type": "string",
+            "description": "What a session is told at its start about keeping itself awake."
+          },
+          "answered_by": {
+            "$ref": "#/components/schemas/BriefOrigin",
+            "description": "Which process composed it."
+          },
+          "session": {
+            "$ref": "#/components/schemas/BriefSessionSection",
+            "description": "This session: its episode and task."
+          },
+          "peers": {
+            "$ref": "#/components/schemas/BriefPeersSection",
+            "description": "The workers of every board."
+          },
+          "mesh": {
+            "$ref": "#/components/schemas/BriefMeshSection",
+            "description": "The mesh."
+          },
+          "integration": {
+            "$ref": "#/components/schemas/BriefIntegrationSection",
+            "description": "The integration queue."
+          },
+          "derive": {
+            "$ref": "#/components/schemas/BriefDeriveSection",
+            "description": "The derive queue."
+          }
+        },
+        "required": [
+          "at",
+          "line",
+          "lines",
+          "interval_minutes",
+          "keep_awake",
+          "answered_by",
+          "session",
+          "peers",
+          "mesh",
+          "integration",
+          "derive"
+        ],
+        "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few."
       },
       "SessionCloseInput": {
         "type": "object",

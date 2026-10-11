@@ -109,6 +109,8 @@ pub enum Command {
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
+    /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
+    Brief(BriefArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -238,6 +240,46 @@ pub struct DashboardArgs {
     pub command: DashboardCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus brief`: the `brief.session` capability on the command line (ADR 0136).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BriefArgs, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "brief", "--line", "--session", "abc"]).unwrap();
+/// let Command::Brief(args) = cli.command else { panic!("not the brief command") };
+/// let args: BriefArgs = args;
+/// assert!(args.line && !args.keep_awake && !args.this_checkout);
+/// assert_eq!(args.session.as_deref(), Some("abc"));
+/// assert!(matches!(args.format, OutputFormat::Text));
+/// ```
+pub struct BriefArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Print the one-line brief alone: the status line's text
+    pub line: bool,
+
+    #[arg(long)]
+    /// Print what a session is told at its start about keeping itself awake, then the one-line brief
+    pub keep_awake: bool,
+
+    #[arg(long, value_name = "ID")]
+    /// The provider's own session identity: the brief names the open episode it owns
+    pub session: Option<String>,
+
+    #[arg(long = "this-checkout")]
+    /// Read this checkout's board alone instead of every checkout's
+    pub this_checkout: bool,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
 }
@@ -4522,6 +4564,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "report", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "brief",
+        examples: &[ExampleDoc {
+            id: "brief-line",
+            title: "The one-line brief, composed here when no server answers",
+            description: "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+            argv: &["brief", "--line", "--this-checkout"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

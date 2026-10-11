@@ -619,7 +619,7 @@ fn ago(at: &str) -> String {
 /// The briefing line: what the last queue built here said, who holds the lease, and the last
 /// merge — from files alone. `None` when this checkout never observed the forge, so that a
 /// briefing does not grow a section about nothing.
-fn brief(root: &std::path::Path) -> Option<String> {
+pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
     let obs = integration::load_observation(root).ok().flatten()?;
     let mut parts = Vec::new();
     match integration::QueueSummary::load(root) {

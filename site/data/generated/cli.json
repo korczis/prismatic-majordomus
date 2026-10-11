@@ -222,6 +222,12 @@
           "route": "/docs/cli/dashboard/"
         },
         {
+          "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+          "command": "majordomus brief",
+          "name": "brief",
+          "route": "/docs/cli/brief/"
+        },
+        {
           "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
           "command": "majordomus skills",
           "name": "skills",
@@ -31842,6 +31848,184 @@
       "usage": "majordomus dashboard overview [OPTIONS]"
     },
     {
+      "about": "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print the one-line brief alone: the status line's text",
+          "long": "line",
+          "name": "line",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "LINE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print what a session is told at its start about keeping itself awake, then the one-line brief",
+          "long": "keep-awake",
+          "name": "keep_awake",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "KEEP_AWAKE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The provider's own session identity: the brief names the open episode it owns",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Read this checkout's board alone instead of every checkout's",
+          "long": "this-checkout",
+          "name": "this_checkout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "THIS_CHECKOUT"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus brief",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "brief",
+            "--line",
+            "--this-checkout"
+          ],
+          "command": "majordomus brief --line --this-checkout",
+          "description": "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.",
+          "expectation": "exits 0",
+          "id": "brief-line",
+          "setup": [],
+          "title": "The one-line brief, composed here when no server answers"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "brief",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "brief"
+      ],
+      "route": "/docs/cli/brief/",
+      "usage": "majordomus brief [OPTIONS]"
+    },
+    {
       "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
       "ancestors": [
         {
@@ -34067,10 +34251,10 @@
     }
   ],
   "counts": {
-    "arguments": 1470,
-    "commands": 216,
-    "examples": 216,
-    "runnable": 190
+    "arguments": 1479,
+    "commands": 217,
+    "examples": 217,
+    "runnable": 191
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.20.0",

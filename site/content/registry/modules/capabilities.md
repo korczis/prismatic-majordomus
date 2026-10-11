@@ -1,7 +1,7 @@
 +++
 title = "Capabilities"
 description = "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
-weight = 2
+weight = 3
 slug = "capabilities"
 [extra]
 id = "capabilities"

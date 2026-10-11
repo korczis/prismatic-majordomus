@@ -111,6 +111,9 @@ session:
   handover_on_end: true
   handover_on_fill: true                 # ask the worker for a handover while the context
                                          # window still has room to write one (ADR 0123)
+  brief_on_interval: true                # keep the session briefed on what surrounds it, as
+                                         # its status line and on an interval (ADR 0136)
+  brief_interval_minutes: 20             # how often a session reports on itself unasked
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path

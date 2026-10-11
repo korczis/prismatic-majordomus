@@ -146,7 +146,7 @@ pub struct PeerList {
 /// server of *this* version that rejected the parameter for any other reason would answer
 /// the repository, and the two of us would ask each other until a timeout. A board that
 /// cannot be read narrowly is reported unread, with the reason.
-fn board_of(ctx: &Context, url: &str) -> Result<Vec<Peer>, String> {
+pub(crate) fn board_of(ctx: &Context, url: &str) -> Result<Vec<Peer>, String> {
     let path = ctx
         .registry
         .get("peers.list")

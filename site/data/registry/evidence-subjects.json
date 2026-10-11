@@ -49,6 +49,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:brief.session",
+      "path": "/evidence/capabilities/brief-session/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:capabilities.describe",
       "path": "/evidence/capabilities/capabilities-describe/"
     },
@@ -2174,6 +2179,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:brief",
+      "path": "/evidence/commands/brief/"
+    },
+    {
+      "kind": "command",
       "subject": "command:capabilities describe",
       "path": "/evidence/commands/capabilities-describe/"
     },
@@ -3625,6 +3635,18 @@
       "page": "/evidence/capabilities/artifacts-list/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:brief.session": {
+      "kind": "capability",
+      "id": "brief.session",
+      "page": "/evidence/capabilities/brief-session/",
+      "programs": [],
+      "members": [
+        "command:brief"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -11279,6 +11301,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:brief": {
+      "kind": "command",
+      "id": "brief",
+      "page": "/evidence/commands/brief/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:capabilities describe": {
       "kind": "command",
       "id": "capabilities describe",
@@ -11387,6 +11428,12 @@
           "via": "behaviour",
           "test": "suite:1016_the_worker_is_asked_before_compaction",
           "path": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:1065_a_session_briefs_itself",
+          "path": "test/cases/1065_a_session_briefs_itself.sh",
           "category": "e2e"
         },
         {
@@ -11501,6 +11548,12 @@
           "via": "negative",
           "test": "suite:1016_the_worker_is_asked_before_compaction",
           "path": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1065_a_session_briefs_itself",
+          "path": "test/cases/1065_a_session_briefs_itself.sh",
           "category": "e2e"
         },
         {
@@ -17887,6 +17940,18 @@
       "programs": [],
       "members": [
         "capability:artifacts.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_brief": {
+      "kind": "mcp",
+      "id": "majordomus_brief",
+      "alias_of": "capability:brief.session",
+      "programs": [],
+      "members": [
+        "capability:brief.session"
       ],
       "routes": [],
       "mechanisms": [],
@@ -25629,6 +25694,7 @@
   "excluded": [
     "crate:availability",
     "crate:bench",
+    "crate:brief",
     "crate:cli",
     "crate:cli_docs",
     "crate:cli_validate_violations",

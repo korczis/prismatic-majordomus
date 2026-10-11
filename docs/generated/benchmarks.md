@@ -9,17 +9,18 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 184 | 160 | 0 | 24 |
-| http | 181 | 160 | 0 | 21 |
-| mcp | 177 | 156 | 0 | 21 |
+| direct | 185 | 161 | 0 | 24 |
+| http | 182 | 161 | 0 | 21 |
+| mcp | 178 | 157 | 0 | 21 |
 | system | 13 | 13 | 0 | 0 |
-| total | 555 | 489 | 0 | 66 |
+| total | 558 | 492 | 0 | 66 |
 
 ## Capabilities
 
 | capability | module | kind | cache | direct | mcp | http | cases |
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
+| `brief.session` | brief | query | — | covered | covered | covered | `default` |
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
 | `capabilities.projections` | capabilities | query | process, 8 entries | covered | covered | covered | `all`, `unmet` |

@@ -354,6 +354,7 @@ pub fn overview(ctx: &Context) -> Page {
         el("div")
             .class("mj-grid")
             .child(four_questions(ctx))
+            .child(brief_card(ctx))
             .child(statistics)
             .child(identity)
             .child(health_card)
@@ -363,6 +364,63 @@ pub fn overview(ctx: &Context) -> Page {
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The session brief, beside the four questions: `brief.session` laid out, section by section
+/// (ADR 0136). The line a provider mod shows as its status line, then each section with
+/// the state its owner answered in, so that a section that could not be read reads so here
+/// as it does on the command line.
+fn brief_card(ctx: &Context) -> El {
+    use crate::capability::builtin::brief::{state_word, BriefSectionState, SessionBrief};
+    let b: SessionBrief = match ask(ctx, "brief.session", json!({})) {
+        Ok(b) => b,
+        Err(e) => return card("Session brief", alert("fail", e)),
+    };
+    let status = |s: BriefSectionState| match s {
+        BriefSectionState::Read => "ok",
+        BriefSectionState::Partial => "warn",
+        BriefSectionState::Unread => "fail",
+        BriefSectionState::Undeclared => "info",
+    };
+    let section = |name: &str, s: BriefSectionState, summary: &str| {
+        row(vec![
+            text_cell(name),
+            cell(badge(status(s), state_word(s))),
+            text_cell(summary),
+        ])
+    };
+    let mut body = el("div").child(el("p").child(mono(&b.line))).child(table(
+        &["Section", "State", "What its owner answered"],
+        vec![
+            section("session", b.session.state, &b.session.summary),
+            section("peers", b.peers.state, &b.peers.summary),
+            section("mesh", b.mesh.state, &b.mesh.summary),
+            section("integration", b.integration.state, &b.integration.summary),
+            section("derive", b.derive.state, &b.derive.summary),
+        ],
+    ));
+    if !b.peers.named.is_empty() {
+        body = body.child(
+            el("ul").class("mj-checklist").children(
+                b.peers
+                    .named
+                    .iter()
+                    .map(|n| el("li").class("mj-checklist-item").child(mono(n)))
+                    .collect::<Vec<_>>(),
+            ),
+        );
+    }
+    body = body.child(el("p").class("mj-empty").text(format!(
+        "Answered by the {} process at {}; a session reports this every {} minutes.",
+        b.answered_by.process.replace('_', " "),
+        b.at,
+        b.interval_minutes
+    )));
+    card_with(
+        "Session brief",
+        link("/cockpit/capabilities/brief.session", "brief.session"),
+        body,
+    )
 }
 
 /// The four questions, first on the overview: `dashboard.overview` laid out, card by card.

@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 85,
+      "count": 86,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 85
+      "count": 86
     },
     {
       "kind": "application",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 327
+      "count": 328
     },
     {
       "kind": "domain",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 271
+      "count": 272
     },
     {
       "kind": "knowledge",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 412
+      "count": 413
     },
     {
       "kind": "use-case",
@@ -420,6 +420,13 @@
           "label": "adr-0110",
           "kind": "adr",
           "route": "/adrs/adr-0110/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0136",
+          "kind": "adr",
+          "route": "/adrs/adr-0136/",
           "external": false
         }
       ]
@@ -6417,6 +6424,81 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/1016_the_worker_is_asked_before_compaction.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0136",
+          "kind": "adr",
+          "route": "/adrs/adr-0136/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0136",
+      "identity": "adr-0136",
+      "slug": "adr-0136",
+      "cockpit": "/cockpit/objects/adr/adr-0136",
+      "title": "Every session briefs itself on an interval, from one capability a provider mod the policy switches keeps in front of it",
+      "status": "proposed",
+      "tags": [
+        "session",
+        "peers",
+        "provider"
+      ],
+      "source": ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/mods/claude-code/majordomus-brief/hooks/register.ts",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0123",
+          "kind": "adr",
+          "route": "/adrs/adr-0123/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/BRIEF.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/1065_a_session_briefs_itself.sh",
           "kind": "test",
           "route": null,
           "external": false

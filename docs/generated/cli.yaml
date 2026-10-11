@@ -20337,6 +20337,130 @@ cli:
           subcommands: []
     - path:
         - majordomus
+        - brief
+      route: /docs/cli/brief/
+      executable: true
+      usage: "majordomus brief [OPTIONS]"
+      about: "What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: line
+          long: line
+          positional: false
+          help: "Print the one-line brief alone: the status line's text"
+          value_name: LINE
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+        - name: keep_awake
+          long: keep-awake
+          positional: false
+          help: "Print what a session is told at its start about keeping itself awake, then the one-line brief"
+          value_name: KEEP_AWAKE
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+        - name: session
+          long: session
+          positional: false
+          help: "The provider's own session identity: the brief names the open episode it owns"
+          value_name: ID
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: this_checkout
+          long: this-checkout
+          positional: false
+          help: "Read this checkout's board alone instead of every checkout's"
+          value_name: THIS_CHECKOUT
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: false
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: brief-line
+          title: "The one-line brief, composed here when no server answers"
+          description: "The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form."
+          argv:
+            - brief
+            - "--line"
+            - "--this-checkout"
+          command: majordomus brief --line --this-checkout
+          setup: []
+          expectation: exits 0
+      subcommands: []
+    - path:
+        - majordomus
         - skills
       route: /docs/cli/skills/
       executable: false
