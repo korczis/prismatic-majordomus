@@ -1,7 +1,7 @@
 +++
 title = "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name"
 description = "An issue names the criterion it serves in serves (ADR 0073). From those links the coverage of every criterion is derived, and every issue under an intent's milestones answers why it exists. Once an intent has work, a criterion nothing serves is criterion_uncovered, an issue that serves nothing is issue_without_purpose, and a link to an unknown intent or criterion is refused."
-weight = 112
+weight = 113
 [extra]
 claim_id = "intent-criteria-covered"
 status = "guaranteed"

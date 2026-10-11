@@ -1,7 +1,7 @@
 +++
 title = "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation"
 description = "Planning starts from two records a worker writes: a gap, which answers every criterion of the intent with what was observed at a commit, and a critique, the adversarial pass over the plan with each finding resolved. A gap that skips a criterion is refused. Work under an intent that is ACTIVE, VERIFY or DONE while the intent has no critique is executing_without_critique, and while a blocking finding is open, executing_with_open_blocker."
-weight = 113
+weight = 114
 [extra]
 claim_id = "intent-plan-reviewed"
 status = "guaranteed"

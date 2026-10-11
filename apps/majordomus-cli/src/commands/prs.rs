@@ -590,7 +590,10 @@ fn drain_exit(report: &drain::DrainReport) -> u8 {
     } else if stopped_on(|s| {
         matches!(
             s,
-            DrainStepOutcome::VerificationFailed { .. } | DrainStepOutcome::Halted { .. }
+            // a reopen that failed may have left a release's record closed: a person looks
+            DrainStepOutcome::VerificationFailed { .. }
+                | DrainStepOutcome::Halted { .. }
+                | DrainStepOutcome::ReopenFailed { .. }
         )
     }) {
         FINDING
@@ -789,6 +792,16 @@ pub(crate) fn describe(s: &DrainStepOutcome) -> String {
         }
         DrainStepOutcome::RefreshFailed { pr, reason, class } => {
             format!("#{pr}: bringing master in failed ({class}): {reason}")
+        }
+        DrainStepOutcome::WouldReopen { pr } => {
+            format!("would close and reopen #{pr}, a record pull request no run was started for")
+        }
+        DrainStepOutcome::Reopened { pr, head } => format!(
+            "closed and reopened #{pr} at {}: a run of its own starts now",
+            short(head)
+        ),
+        DrainStepOutcome::ReopenFailed { pr, reason, class } => {
+            format!("#{pr}: reopening failed ({class}): {reason}")
         }
         DrainStepOutcome::TrailUnwritable {
             pr,
@@ -1465,6 +1478,16 @@ mod tests {
                 unrecorded: IntegrationAction::MergeAttempted,
                 reason: "read-only".into(),
             },
+            DrainStepOutcome::WouldReopen { pr: 11 },
+            DrainStepOutcome::Reopened {
+                pr: 12,
+                head: "e".repeat(40),
+            },
+            DrainStepOutcome::ReopenFailed {
+                pr: 13,
+                reason: "left closed".into(),
+                class: drain::FailureClass::PolicyViolation,
+            },
         ];
         let said: std::collections::BTreeSet<String> = outcomes.iter().map(describe).collect();
         assert_eq!(
@@ -1474,6 +1497,15 @@ mod tests {
         );
         assert!(describe(&outcomes[3]).contains("aaaaaaaaaa -> bbbbbbbbbb"));
         assert!(describe(&outcomes[10]).contains("merge_attempted"));
+        assert!(describe(&outcomes[12]).contains("#12 at eeeeeeeeee"));
+        // a failed reopen is a finding: the record may have been left closed
+        let report = drain::DrainReport {
+            dry_run: false,
+            steps: vec![outcomes[13].clone()],
+            merged: Vec::new(),
+            stopped: String::new(),
+        };
+        assert_eq!(drain_exit(&report), FINDING);
     }
 
     #[test]

@@ -1,7 +1,7 @@
 +++
 title = "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause"
 description = "A worker about to take an issue can ask which intent the work serves and whether it may"
-weight = 115
+weight = 116
 [extra]
 claim_id = "intent-preflight-names-the-intent"
 status = "guaranteed"
