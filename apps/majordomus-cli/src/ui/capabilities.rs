@@ -194,3 +194,23 @@ fn detail(ctx: &Context, id: &str) -> El {
     )
     .attr("id", "detail")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+
+    /// A capability that takes no input says so instead of drawing an empty table, and one
+    /// that takes fields lists each with what it means.
+    #[test]
+    fn a_capability_without_input_says_it_takes_none() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = detail(&ctx, "deploy.list").render();
+        assert!(html.contains("It takes no input."), "{html}");
+        assert!(html.contains("id=\"detail\""), "{html}");
+        let html = detail(&ctx, "objects.list").render();
+        assert!(html.contains("Input field"), "{html}");
+        assert!(!html.contains("It takes no input."), "{html}");
+    }
+}

@@ -121,10 +121,9 @@ pub fn shown(r: &Reading) -> String {
 }
 
 fn number(n: &serde_json::Number) -> String {
-    match (n.as_u64(), n.as_i64(), n.as_f64()) {
-        (Some(u), _, _) => u.to_string(),
-        (_, Some(i), _) => i.to_string(),
-        (_, _, Some(f)) => {
+    // an integer is written as the source wrote it; only a fraction is rounded
+    match n.as_f64() {
+        Some(f) if n.is_f64() => {
             let s = format!("{f:.2}");
             s.trim_end_matches('0').trim_end_matches('.').to_string()
         }
@@ -562,6 +561,143 @@ mod tests {
             value,
             took: Duration::from_millis(5),
         }
+    }
+
+    fn reading(value: Value) -> Reading {
+        answer(Ok(serde_json::json!({ "v": value }))).read("/v")
+    }
+
+    /// A count tile counts the list or the map at its pointer, and says which way it is
+    /// missing otherwise; a state tile draws the word as a badge.
+    #[test]
+    fn a_count_tile_counts_the_answers_own_list_or_map() {
+        let list = kpi_count("Items", &reading(serde_json::json!([1, 2, 3]))).render();
+        assert!(list.contains(">3<"), "{list}");
+        let map = kpi_count("Keys", &reading(serde_json::json!({ "a": 1, "b": 2 }))).render();
+        assert!(map.contains(">2<"), "{map}");
+        let failed = answer(Err("refused".into())).read("/v");
+        assert!(kpi_count("Items", &failed)
+            .render()
+            .contains("not answered"));
+        let state = kpi_state("Health", &reading(serde_json::json!("warn"))).render();
+        assert!(
+            state.contains("mj-badge") && state.contains("warn"),
+            "{state}"
+        );
+        let blank = kpi_state("Health", &reading(serde_json::json!(""))).render();
+        assert!(
+            !blank.contains("mj-badge"),
+            "an empty word is no badge: {blank}"
+        );
+    }
+
+    /// Every kind of value has one way of being shown, and a negative integer is not
+    /// rounded as if it were a fraction.
+    #[test]
+    fn every_kind_of_value_is_shown_one_way() {
+        assert_eq!(shown(&reading(serde_json::json!(true))), "yes");
+        assert_eq!(shown(&reading(serde_json::json!(false))), "no");
+        assert_eq!(shown(&reading(serde_json::json!(-4))), "-4");
+        assert_eq!(shown(&reading(serde_json::json!(0.5))), "0.5");
+        assert_eq!(shown(&reading(serde_json::json!(2.0))), "2");
+        assert_eq!(shown(&reading(serde_json::json!(["a"]))), "[\"a\"]");
+    }
+
+    /// A meter of a total of zero draws no bar, only the two numbers.
+    #[test]
+    fn a_meter_of_nothing_draws_the_numbers_and_no_bar() {
+        let html = meter(Some(0), Some(0)).render();
+        assert!(
+            html.contains("0 of 0") && !html.contains("mj-ui-meter-fill"),
+            "{html}"
+        );
+        let full = meter(Some(5), Some(4)).render();
+        assert!(
+            full.contains("width:100%"),
+            "a meter never overflows: {full}"
+        );
+        assert!(meter(None, Some(4)).render().contains("unknown"));
+    }
+
+    /// A graph draws only the nodes that take part in an edge between known nodes, and an
+    /// edge to a node it does not have is left out rather than drawn to nowhere.
+    #[test]
+    fn a_graph_draws_only_related_nodes_and_known_edges() {
+        let node = |id: &str| GraphNode {
+            id: id.into(),
+            label: id.to_uppercase(),
+            tone: "blue",
+            href: format!("/ui/roadmap#{id}"),
+            kind: "milestone",
+        };
+        let html = graph(
+            "Milestones",
+            Layout::Directed,
+            &[node("a"), node("b"), node("lonely")],
+            &[("a".into(), "b".into()), ("b".into(), "ghost".into())],
+            el("p").text("the table"),
+        )
+        .render();
+        let data: Value = serde_json::from_str(
+            &html
+                .split("data-graph=\"")
+                .nth(1)
+                .and_then(|r| r.split('"').next())
+                .expect("the graph's data")
+                .replace("&quot;", "\"")
+                .replace("&amp;", "&"),
+        )
+        .expect("the graph's data is JSON");
+        assert_eq!(data["layout"], "directed");
+        let ids: Vec<&str> = data["nodes"]
+            .as_array()
+            .expect("nodes")
+            .iter()
+            .filter_map(|n| n["id"].as_str())
+            .collect();
+        assert_eq!(ids, ["a", "b"], "only nodes on a known edge: {html}");
+        assert_eq!(data["edges"].as_array().map(Vec::len), Some(1));
+        assert!(html.contains("the table"), "the fallback stays beneath");
+        let force = graph("Mesh", Layout::Force, &[], &[], el("p")).render();
+        assert!(force.contains("force"), "{force}");
+    }
+
+    /// A plan status is drawn in its word's tone, and an unknown word in the neutral one.
+    #[test]
+    fn a_status_is_drawn_in_its_words_tone() {
+        for (word, tone) in [
+            ("done", "green"),
+            ("ACTIVE", "blue"),
+            ("verify", "blue"),
+            ("ready", "cyan"),
+            ("blocked", "rose"),
+            ("planned", "violet"),
+            ("something-new", "orange"),
+        ] {
+            assert_eq!(status_tone(word), tone, "{word}");
+        }
+    }
+
+    /// A timeline keeps the source's order and shows each entry's day, with the full
+    /// timestamp in its datetime.
+    #[test]
+    fn a_timeline_keeps_the_order_and_shows_the_day() {
+        let html = timeline(vec![
+            (
+                "2026-10-11T09:00:00Z".into(),
+                "second".into(),
+                el("p").text("b"),
+            ),
+            (
+                "2026-10-10T09:00:00Z".into(),
+                "first".into(),
+                el("p").text("a"),
+            ),
+        ])
+        .render();
+        assert!(html.find("second") < html.find("first"), "{html}");
+        assert!(html.contains("datetime=\"2026-10-11T09:00:00Z\""));
+        assert!(html.contains(">2026-10-11<"));
     }
 
     #[test]

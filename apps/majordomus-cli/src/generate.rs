@@ -1057,16 +1057,21 @@ pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
     ));
 
     // the kit's icons, declared once beside the site's templates and compiled into the
-    // crate for the UI's shell (ADR 0135), so the two surfaces draw one icon set
+    // crate for the UI's shell (ADR 0135), so the two surfaces draw one icon set. A tree
+    // without the site (a design fixture holds `share/` alone) has no set to compile and no
+    // crate to compile it into; in this repository the set is present, and `ui::icons`
+    // holds the compiled copy equal to it in a test, so its absence cannot pass unnoticed.
     let icons_path = app.repository.root().join(crate::ui::icons::SOURCE);
-    let icons = std::fs::read_to_string(&icons_path).map_err(|e| Error::io(&icons_path, e))?;
-    out.push(Artifact::comment_text(
-        crate::ui::icons::COMPILED,
-        "ui-icons",
-        format!("{}, the kit's icons", crate::ui::icons::SOURCE),
-        version,
-        &icons,
-    ));
+    if icons_path.is_file() {
+        let icons = std::fs::read_to_string(&icons_path).map_err(|e| Error::io(&icons_path, e))?;
+        out.push(Artifact::comment_text(
+            crate::ui::icons::COMPILED,
+            "ui-icons",
+            format!("{}, the kit's icons", crate::ui::icons::SOURCE),
+            version,
+            &icons,
+        ));
+    }
 
     // the site's dataset and the reference documents
     out.push(Artifact::verbatim(
