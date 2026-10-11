@@ -4158,6 +4158,40 @@ mod tests {
     }
 
     #[test]
+    fn only_the_asking_runtime_withdraws_a_request_and_an_unknown_one_is_not_found() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).unwrap();
+        let asked = a
+            .request_review(
+                "s1",
+                "pre-flight".into(),
+                vec![],
+                None,
+                None,
+                Some("body".into()),
+            )
+            .unwrap();
+        a.sync_with(&key).unwrap();
+        assert!(matches!(
+            b.withdraw_review(&asked.key, "s1", None),
+            Err(CooperationError::Invalid(_))
+        ));
+        assert!(matches!(
+            a.withdraw_review("nobody/r-0", "s1", None),
+            Err(CooperationError::NotFound(_))
+        ));
+        // another session of the asking runtime: a reconnect, still the asker
+        a.withdraw_review(&asked.key, "s2", Some("superseded".into()))
+            .unwrap();
+        let review = &a.state().reviews[0];
+        assert_eq!(review.state, crate::mesh::state::ReviewState::Withdrawn);
+        assert_eq!(review.body.as_deref(), Some("body"));
+        assert_eq!(review.result.as_deref(), Some("superseded"));
+    }
+
+    #[test]
     fn a_reviewer_must_carry_the_feature_and_stop_ends_every_thread() {
         let net = Arc::new(InProcess::default());
         let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);

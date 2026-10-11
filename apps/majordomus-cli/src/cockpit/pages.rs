@@ -3256,7 +3256,7 @@ pub fn mesh(ctx: &Context) -> Page {
     // that column to the whole sentence: the card then overflows a 320px viewport, which is
     // what the Cockpit probe measured. A `<p>` is also not a child a `<dl>` may have.
     if let Some(reason) = &status.reason {
-        overview = overview.child(el("p").class("mj-prose").text(reason));
+        overview = overview.child(prose_with_identities(reason));
     }
     if let Some(identity) = &status.identity {
         overview = overview.child(facts(vec![
@@ -7203,9 +7203,68 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
     ])
 }
 
+/// A sentence as prose, its long hexadecimal identifiers — a public key, a node id — each
+/// in `.mj-identity`, which may break anywhere: a closed mesh's reason names this machine's
+/// 64-hex key, one token wider than a 320px viewport. The words around it wrap as prose,
+/// because breaking anywhere is right for a name and wrong for a sentence.
+fn prose_with_identities(text: &str) -> El {
+    let is_identity = |w: &str| w.len() >= 32 && w.bytes().all(|b| b.is_ascii_hexdigit());
+    let mut paragraph = el("p").class("mj-prose");
+    let mut run = String::new();
+    for (i, word) in text.split(' ').enumerate() {
+        if i > 0 {
+            run.push(' ');
+        }
+        let core = word.trim_matches(|c: char| !c.is_ascii_hexdigit());
+        match word.find(core).filter(|_| is_identity(core)) {
+            Some(at) => {
+                run.push_str(&word[..at]);
+                paragraph = paragraph
+                    .text(std::mem::take(&mut run))
+                    .child(el("span").class("mj-identity").text(core));
+                run.push_str(&word[at + core.len()..]);
+            }
+            None => run.push_str(word),
+        }
+    }
+    if !run.is_empty() {
+        paragraph = paragraph.text(run);
+    }
+    paragraph
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_reason_breaks_inside_its_key_and_nowhere_else() {
+        let key = "ab".repeat(32);
+        let html = prose_with_identities(&format!(
+            "closed: this machine's key {key} is not in trust.allow; list it ({key})."
+        ))
+        .render();
+        assert_eq!(
+            html.matches(&format!("<span class=\"mj-identity\">{key}</span>"))
+                .count(),
+            2,
+            "{html}"
+        );
+        assert!(
+            html.starts_with("<p class=\"mj-prose\">closed: this machine&#39;s key "),
+            "{html}"
+        );
+        assert!(
+            html.contains("</span> is not in trust.allow; list it ("),
+            "{html}"
+        );
+        assert!(html.ends_with("</span>).</p>"), "{html}");
+        // a sentence without one is one text run
+        assert_eq!(
+            prose_with_identities("not active: disabled").render(),
+            "<p class=\"mj-prose\">not active: disabled</p>"
+        );
+    }
 
     fn command(origin: &str, effect: &str) -> CommandSummary {
         serde_json::from_value(json!({
@@ -7900,6 +7959,49 @@ mod tests {
     /// The page asks the capability every other surface asks: the workers this process's
     /// own board holds are on it, with their claims and the pair they make — and when the
     /// capability cannot answer, the page is a failure that says so, never an empty board.
+    #[test]
+    fn the_mesh_page_shows_a_review_by_its_state_word() {
+        use crate::mesh::config::{CooperationConfig, TrustConfig};
+        use crate::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let cooperation = Cooperation::new(CooperationSetup {
+            identity: std::sync::Arc::new(crate::mesh::NodeIdentity::ephemeral().unwrap()),
+            runtime: "0000000000000001".into(),
+            repository: crate::mesh::repository::of_root_commits(&["root".into()]),
+            endpoints: vec!["127.0.0.1:9".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: std::sync::Arc::new(crate::mesh::MeshRegistry::new()),
+            transport: std::sync::Arc::new(crate::mesh::link::HttpTransport),
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        let asked = cooperation
+            .request_review(
+                "s1",
+                "pre-flight of the segment".into(),
+                vec![],
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+        cooperation
+            .withdraw_review(&asked.key, "s1", Some("clean".into()))
+            .unwrap();
+        ctx.mesh.attach_cooperation(cooperation);
+        let html = mesh(&ctx).main.render();
+        assert!(
+            html.contains("Review of pre-flight of the segment"),
+            "{html}"
+        );
+        assert!(html.contains("withdrawn"), "the state's own word: {html}");
+    }
+
     #[test]
     fn the_peers_page_renders_the_board_the_capability_answers_and_fails_when_it_cannot() {
         use crate::peers::Transport;

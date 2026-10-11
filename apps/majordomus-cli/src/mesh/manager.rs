@@ -957,6 +957,37 @@ mod tests {
     }
 
     #[test]
+    fn a_listed_machine_asks_the_tailnet_when_the_declaration_does() {
+        let runtime = MeshRuntime::new();
+        let dir = tempfile::tempdir().unwrap();
+        let mut config = listed(&identity_in(&dir, "self.json"));
+        config.tailscale.enabled = true;
+        config.tailscale.command = "/nonexistent/majordomus-no-tailscale".into();
+        runtime
+            .activate(
+                &config,
+                identity_in(&dir, "self.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        let status = runtime.status();
+        assert!(status.active);
+        let tailnet = status
+            .providers
+            .iter()
+            .find(|p| p.id == "tailscale")
+            .expect("the tailnet provider is attached");
+        assert_eq!(
+            tailnet.state,
+            crate::mesh::provider::MeshProviderState::Stopped,
+            "{tailnet:?}"
+        );
+        runtime.stop();
+    }
+
+    #[test]
     fn an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider() {
         let runtime = MeshRuntime::new();
         let dir = tempfile::tempdir().unwrap();

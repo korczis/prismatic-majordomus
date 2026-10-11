@@ -32,6 +32,18 @@ pub struct SharedServer {
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
 fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
+    activate_mesh_with(ctx, version, url, crate::mesh::default_identity_path())
+}
+
+/// [`activate_mesh`] with the node identity at `identity_path`: the user's state directory
+/// for a server, a temporary one for a test, so that no test reads or creates the identity
+/// of the machine it runs on.
+fn activate_mesh_with(
+    ctx: &Arc<Context>,
+    version: &str,
+    url: &str,
+    identity_path: Option<std::path::PathBuf>,
+) {
     let Some(parsed) = crate::capability::builtin::mesh::declaration(ctx) else {
         return;
     };
@@ -48,7 +60,7 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         ctx.mesh.decline("the mesh declaration is disabled");
         return;
     }
-    let Some(identity_path) = crate::mesh::default_identity_path() else {
+    let Some(identity_path) = identity_path else {
         ctx.mesh
             .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
         return;
@@ -336,6 +348,55 @@ mod tests {
             }
             std::thread::sleep(Duration::from_millis(20));
         }
+    }
+
+    #[test]
+    fn a_declaration_that_does_not_list_this_machine_activates_nothing_and_no_link() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let root = fixture.root();
+        let sources = root.join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        std::fs::create_dir_all(root.join(".ai/repo/mesh")).unwrap();
+        let skeleton = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../share/skeleton/ai/repo/mesh/mesh.yaml");
+        std::fs::copy(skeleton, root.join(".ai/repo/mesh/mesh.yaml")).unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(root.to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let state = tempfile::tempdir().unwrap();
+        activate_mesh_with(
+            &app.context,
+            "test",
+            "http://127.0.0.1:1",
+            Some(state.path().join("node.json")),
+        );
+        let status = app.context.mesh.status();
+        assert!(!status.active, "{status:?}");
+        assert!(
+            status
+                .reason
+                .as_deref()
+                .is_some_and(|r| r.starts_with("closed: ")),
+            "{status:?}"
+        );
+        assert!(status.providers.is_empty(), "no socket: {status:?}");
+        let cooperation = app.context.mesh.cooperation_status();
+        assert!(!cooperation.active);
+        assert!(
+            cooperation
+                .reason
+                .as_deref()
+                .is_some_and(|r| r.starts_with("closed: ")),
+            "no link either: {cooperation:?}"
+        );
+        // the identity was created where it was asked to be, and nowhere else
+        assert!(state.path().join("node.json").is_file());
     }
 
     #[test]

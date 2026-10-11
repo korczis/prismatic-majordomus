@@ -66,3 +66,7 @@ one.
   freshly initialised repository does not fail its first doctor.
 - Enrolment is a change to a tracked file, made by a person who works on that machine and
   reviewed like any other commit. Nothing enrols a machine on its own.
+- Continuity follows the same list. A repository with no declaration resumes a handover from
+  any signing device with a warning. Under the seeded declaration, a handover is resumed only
+  from a device whose key is listed, so two machines continue each other's work once both are
+  enrolled.
