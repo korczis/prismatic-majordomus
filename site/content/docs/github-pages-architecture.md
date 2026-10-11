@@ -407,9 +407,9 @@ one. The words around it — the title, the mantra, the section leads and the bu
 are `marketing.toml`'s, which carries no number and no capability claim and is held to a
 sixty-line budget.
 
-The one thing a person decides is which features are chapters and in what order, and that
-decision lives in the feature files themselves (`featured` and `weight`), not here: a
-feature becomes a chapter by declaring itself one. `docs/PRODUCT.md` is the contract, ADR 23
+The one thing a person decides is where a feature belongs and in what order, and that
+decision lives in the feature files themselves (`domain` and `weight`), not here: a
+feature reaches the homepage map by naming its domain. `docs/PRODUCT.md` is the contract, ADR 23
 is the decision, and `project.product-surface-derived` is the rule.
 
 Routes that moved are declared once, in `nav.toml` under `[[redirects]]`, beside the routes

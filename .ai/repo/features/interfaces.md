@@ -9,7 +9,6 @@ summary: The Rust executable serves the layer read-only over stdio MCP, MCP over
 status: stable
 weight: 20
 domain: surfaces
-featured: false
 areas: [documentation, observability, coordination]
 modules: [repository, objects, web, environment, executions, commands]
 rules: [project.web-surface-declared-once, project.web-surface-topology, project.native-cli-documented, project.shared-server-resilience]

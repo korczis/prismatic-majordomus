@@ -9,7 +9,6 @@ summary: Moments, audiences and areas are kinds of the layer; a moment names the
 status: stable
 weight: 170
 domain: surfaces
-featured: false
 areas: [documentation]
 modules: [why]
 kinds: [moment, audience, area]

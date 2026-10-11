@@ -9,7 +9,6 @@ summary: One distribution model owns every platform, artifact name and URL; the 
 status: stable
 weight: 120
 domain: surfaces
-featured: false
 areas: [verification, documentation]
 modules: [distribution, release]
 commands: [init, migrate, version, archive]

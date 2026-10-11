@@ -56,8 +56,6 @@ pub struct FeatureSummary {
     pub status: String,
     /// Presentation order.
     pub weight: u32,
-    /// Whether the homepage shows it.
-    pub featured: bool,
     /// The product domain it belongs to, when it names one.
     pub domain: Option<String>,
     /// The operational areas it serves.
@@ -87,7 +85,6 @@ impl FeatureSummary {
             summary: f.summary.clone(),
             status: f.status.clone(),
             weight: f.weight,
-            featured: f.featured,
             domain: f.domain.clone(),
             areas: f.areas.clone(),
             audiences: f.audiences.clone(),
@@ -120,8 +117,6 @@ pub struct ProductCounts {
     pub features: usize,
     /// Features of every status, drafts included.
     pub features_all: usize,
-    /// Stable features the homepage shows.
-    pub featured: usize,
     /// Providers the tool has an adapter for.
     pub providers: usize,
     /// Builtin modules of the executable, and how many a stable feature names.
@@ -265,9 +260,6 @@ pub struct ProductValidationReport {
 #[serde(deny_unknown_fields)]
 pub struct ProductQuery {
     #[serde(default)]
-    /// Only the features the homepage shows.
-    pub featured: Option<bool>,
-    #[serde(default)]
     /// Only features of this status. Absent means the stable ones; pass `any` for
     /// everything the model holds.
     pub status: Option<String>,
@@ -295,13 +287,6 @@ pub struct ProductQuery {
 impl BenchmarkCases for ProductQuery {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         let mut cases = vec![NamedCase::new("all", ProductQuery::default())];
-        cases.push(NamedCase::new(
-            "featured",
-            ProductQuery {
-                featured: Some(true),
-                ..ProductQuery::default()
-            },
-        ));
         if let Some(a) = ctx
             .index
             .objects
@@ -377,7 +362,6 @@ fn counts(m: &ProductModel) -> ProductCounts {
     ProductCounts {
         features: m.public().len(),
         features_all: m.all().len(),
-        featured: m.featured().len(),
         providers: m.providers().len(),
         modules: m.module_coverage().len(),
         modules_covered: covered(m.module_coverage()),
@@ -449,7 +433,6 @@ fn product_features(ctx: &Context, input: ProductQuery) -> Result<FeatureList, C
         .all()
         .iter()
         .filter(|r| status == "any" || r.feature.status == status)
-        .filter(|r| input.featured.is_none_or(|v| r.feature.featured == v))
         .filter(|r| {
             input
                 .area
@@ -578,7 +561,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "product.features",
                 title: "The features",
-                description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+                description: "Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
                 input: ProductQuery,
                 output: FeatureList,
                 stability: Stability::BehaviorallyVerified,
@@ -670,7 +653,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "product.validate",
                 title: "Validate the model",
-                description: "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
+                description: "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
                 input: Empty,
                 output: ProductValidationReport,
                 stability: Stability::BehaviorallyVerified,

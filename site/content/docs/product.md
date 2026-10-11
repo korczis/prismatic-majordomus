@@ -50,7 +50,7 @@ or a count is refused at validation rather than silently believed.
 | `docs`, `adrs`, `use_cases` | titles, statuses and the routes the site gives them |
 | `cockpit`, `web` | the Cockpit areas and the mounts of the web topology |
 | `areas`, `audiences` — the why catalogue's own taxonomies | the operational moments that name any of the feature's mechanisms |
-| `headline`, `summary`, `short_title`, `status`, `weight`, `featured`, `tags`, `related` | nothing: these are the editorial decisions |
+| `headline`, `summary`, `short_title`, `status`, `weight`, `tags`, `related` | nothing: these are the editorial decisions |
 
 </div>
 
@@ -133,7 +133,7 @@ templates read the dataset and name nothing:
 
 | Route | Template | What it renders |
 |---|---|---|
-| `/` | `site/templates/index.html` | the chapters (features that declare themselves featured, in weight order), the interfaces, the matrix, the graph, the providers, the kinds and the doctrine |
+| `/` | `site/templates/index.html` | the map of the domains, each with the stable features that name it, the interfaces, the matrix, the graph, the providers, the kinds and the doctrine |
 | `/features/` | `features-section.html` | every non-draft feature as a card, grouped by the domain it names in the domains' weight order, with any feature no shown domain holds listed apart; the interfaces, the graph, the providers |
 | `/features/<id>/` | `feature.html` | a breadcrumb through its domain, its promise, its own prose, then everything derived from its references: why it exists, how it works, where it sits, its interfaces, its evidence, how to use it, where the page came from and the features related to it |
 | `/features/matrix/` | `features-matrix.html` | features against interfaces, and modules, commands and kinds against the features that name them, and how much of each feature is proven |
@@ -259,8 +259,7 @@ detail pages: add its name to `[indexing] unlisted`.
 - A reference that resolves to nothing. The message names the file, the key and the
   nearest candidate, which makes it a repair rather than an investigation.
 - A derived key in a feature file — `surfaces`, `route`, a count, a list of moments.
-- A `featured` feature that is not `stable`; a `stable` feature that names no mechanism, or
-  no document, or whose body lacks `## What it does` and `## What it does not do`.
+- A `stable` feature that names no mechanism, or no document, or whose body lacks `## What it does` and `## What it does not do`.
 - A stale dataset: `majordomus generate --check` fails a tree whose `product.json` does not
   match the repository, so the homepage cannot describe an executable this repository does
   not have.

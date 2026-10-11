@@ -158,7 +158,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
-| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |
+| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `by-area`, `by-domain` |
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |

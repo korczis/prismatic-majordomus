@@ -9,7 +9,6 @@ summary: Every rule is a portable Markdown object with front matter, and it is e
 status: stable
 weight: 70
 domain: governance
-featured: true
 areas: [governance, verification]
 modules: [health, rules]
 commands: [rules, doctrine, doctor, check, watch]

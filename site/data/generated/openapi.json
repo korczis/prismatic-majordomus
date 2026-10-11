@@ -14075,7 +14075,7 @@
       "variants": []
     },
     {
-      "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```",
+      "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```",
       "home": "product",
       "is_enum": false,
       "name": "DomainMember",
@@ -14114,13 +14114,6 @@
           "refs": [],
           "required": true,
           "type": "string"
-        },
-        {
-          "description": "Whether the homepage shows it as a chapter.",
-          "name": "featured",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
         },
         {
           "description": "The interfaces it is exposed through.",
@@ -20518,13 +20511,6 @@
           "refs": [],
           "required": true,
           "type": "integer (uint32)"
-        },
-        {
-          "description": "Whether the homepage shows it.",
-          "name": "featured",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
         },
         {
           "description": "The product domain it belongs to, when it names one.",
@@ -34643,13 +34629,6 @@
           "type": "integer (uint)"
         },
         {
-          "description": "Stable features the homepage shows.",
-          "name": "featured",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint)"
-        },
-        {
           "description": "Providers the tool has an adapter for.",
           "name": "providers",
           "refs": [],
@@ -42115,13 +42094,6 @@
           "refs": [],
           "required": false,
           "type": "integer (uint32)"
-        },
-        {
-          "description": "Whether the homepage shows it as a chapter.",
-          "name": "featured",
-          "refs": [],
-          "required": false,
-          "type": "boolean"
         },
         {
           "description": "The product domain it belongs to, by id: exactly one. Editorial; the domain's\nmembers are derived from this field and listed nowhere else.",
@@ -61478,8 +61450,8 @@
           "cache": "process",
           "cache_detail": "max_entries=32",
           "cli": "product list",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?featured=true&area=context&domain=completion\"",
-          "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?area=context&domain=completion\"",
+          "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
           "home": "product",
           "id": "product.features",
           "kind": "query",
@@ -61490,18 +61462,6 @@
           "mcp_tool": "majordomus_features",
           "method": "GET",
           "parameters": [
-            {
-              "description": "Only the features the homepage shows.",
-              "examples": [
-                {
-                  "case": "featured",
-                  "value": "true"
-                }
-              ],
-              "name": "featured",
-              "required": false,
-              "type": "boolean"
-            },
             {
               "description": "Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds.",
               "examples": [],
@@ -61722,7 +61682,7 @@
           "cache_detail": "max_entries=2",
           "cli": "product validate",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/validate\"",
-          "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
+          "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
           "home": "product",
           "id": "product.validate",
           "kind": "query",

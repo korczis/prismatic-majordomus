@@ -75,9 +75,6 @@ fn query_of(f: &ProductArgs) -> Value {
     put("command", &f.names_command);
     put("surface", &f.surface);
     put("q", &f.query);
-    if f.featured {
-        o.insert("featured".into(), Value::Bool(true));
-    }
     if f.all {
         o.insert("status".into(), Value::String("any".into()));
     }
@@ -168,25 +165,19 @@ fn list_text(v: &Value) -> String {
     )];
     for f in &features {
         out.push(format!(
-            "{:<width$}  {:<26}  {}{}",
+            "{:<width$}  {:<26}  {}",
             s(f, "id"),
             marks(&f["surfaces"]),
             s(f, "title"),
-            if f["featured"].as_bool().unwrap_or(false) {
-                "  [featured]"
-            } else {
-                ""
-            },
             width = width
         ));
     }
     let c = &v["counts"];
     out.push(String::new());
     out.push(format!(
-        "{} feature(s) listed; {} stable, {} featured, {} provider(s); modules {}/{}, commands {}/{}, kinds {}/{} named by a feature  [{}]",
+        "{} feature(s) listed; {} stable, {} provider(s); modules {}/{}, commands {}/{}, kinds {}/{} named by a feature  [{}]",
         features.len(),
         c["features"],
-        c["featured"],
         c["providers"],
         c["modules_covered"],
         c["modules"],
@@ -249,10 +240,9 @@ fn feature_text(v: &Value) -> String {
         format!("  {}", s(v, "summary")),
         String::new(),
         format!(
-            "  status {}   weight {}   featured {}   route {}",
+            "  status {}   weight {}   route {}",
             s(v, "status"),
             v["weight"],
-            v["featured"],
             s(v, "route")
         ),
         format!("  source {}", s(v, "source")),
@@ -512,8 +502,8 @@ fn validation_text(v: &Value) -> String {
     }
     let c = &v["counts"];
     out.push(format!(
-        "{} feature(s) ({} of every status), {} featured, {} provider(s); modules {}/{}, commands {}/{}, kinds {}/{} named by a feature",
-        c["features"], c["features_all"], c["featured"], c["providers"], c["modules_covered"], c["modules"], c["commands_covered"], c["commands"], c["kinds_covered"], c["kinds"]
+        "{} feature(s) ({} of every status), {} provider(s); modules {}/{}, commands {}/{}, kinds {}/{} named by a feature",
+        c["features"], c["features_all"], c["providers"], c["modules_covered"], c["modules"], c["commands_covered"], c["commands"], c["kinds_covered"], c["kinds"]
     ));
     out.push(format!(
         "{}: {} error(s), {} warning(s)",

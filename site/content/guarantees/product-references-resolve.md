@@ -29,8 +29,7 @@ the model exists to make visible, so it is never quietly absent.
 registry, the command registry, the Why catalogue and the web topology, and computes the
 nearest candidate by edit distance over the ids that registry actually holds. The floors a
 stable feature is held to are checked in the same pass: it names at least one mechanism and
-at least one document, its body carries `## What it does` and `## What it does not do`, and
-only a stable feature may be featured.
+at least one document, and its body carries `## What it does` and `## What it does not do`.
 
 ## How to see it
 

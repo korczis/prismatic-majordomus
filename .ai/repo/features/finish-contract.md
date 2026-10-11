@@ -9,7 +9,6 @@ summary: A task starts with a declared scope and a profile; check reports whethe
 status: stable
 weight: 80
 domain: completion
-featured: true
 areas: [verification]
 commands: [start, check, finish, question]
 modules: [gates, obligations]

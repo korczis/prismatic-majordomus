@@ -9,7 +9,6 @@ summary: Decisions are recorded with their reason and their task, open questions
 status: stable
 weight: 60
 domain: context
-featured: true
 areas: [decisions, context]
 modules: [graph, knowledge_base]
 commands: [decision, adr, knowledge, search, history, question]

@@ -9,7 +9,6 @@ summary: A use case names the commands, rules, claims and applications it relies
 status: stable
 weight: 150
 domain: evidence
-featured: false
 areas: [verification, documentation]
 commands: [usecase]
 kinds: [use-case, application, taxonomy]

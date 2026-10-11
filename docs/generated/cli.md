@@ -3223,7 +3223,6 @@ majordomus product [OPTIONS] [COMMAND]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3258,7 +3257,6 @@ majordomus product list [OPTIONS]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3269,7 +3267,7 @@ majordomus product list [OPTIONS]
 
 Examples:
 
-- **Every stable feature, in presentation order** — Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.
+- **Every stable feature, in presentation order** — Drafts are excluded unless `--all` is given. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.
 
   ```console
   $ majordomus product list
@@ -3302,7 +3300,6 @@ majordomus product show [OPTIONS] <ID>
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3337,7 +3334,6 @@ majordomus product domains [OPTIONS]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3372,7 +3368,6 @@ majordomus product matrix [OPTIONS]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3407,7 +3402,6 @@ majordomus product providers [OPTIONS]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3442,7 +3436,6 @@ majordomus product validate [OPTIONS]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
-| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
 | `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
@@ -3453,7 +3446,7 @@ majordomus product validate [OPTIONS]
 
 Examples:
 
-- **Check the model before anything projects it** — A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.
+- **Check the model before anything projects it** — A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.
 
   ```console
   $ majordomus product validate

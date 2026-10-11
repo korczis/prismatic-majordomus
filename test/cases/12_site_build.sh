@@ -7,12 +7,12 @@ command -v jq >/dev/null || skip "jq absent"
 expect_exit 0 "$ROOT/scripts/site-build"
 P="$ROOT/site/public"
 for r in "" why why/two-agents-one-bug features features/matrix getting-started limitations roadmap profiles profiles/debugging policy guarantees guarantees/guaranteed guarantees/init-refuses supervises supervises/finish commands commands/doctor architecture docs docs/cli docs/design render-test; do [ -f "$P/$r/index.html" ] || { echo "    missing route /$r/"; exit 1; }; done
-# homepage sections come from data, not templates: every chapter is a feature that declares
-# itself featured, and the marks beside it are the ones the model derived
+# homepage sections come from data, not templates: the map carries every feature of every
+# domain it draws, and each of them has its page
 PD="$ROOT/site/data/registry/product.json"
-for id in $(jq -r '.features[] | select(.featured and .status != "draft") | .id' "$PD"); do
+for id in $(jq -r '.domains[]? | select(.status == "stable") | .features[].id' "$PD"); do
   expect_grep "/features/$id/" "$P/index.html"
-  [ -f "$P/features/$id/index.html" ] || { echo "    featured feature $id has no page"; exit 1; }
+  [ -f "$P/features/$id/index.html" ] || { echo "    feature $id of the homepage map has no page"; exit 1; }
 done
 # every public feature has its page, and the section lists it
 for id in $(jq -r '.features[] | select(.status != "draft") | .id' "$PD"); do

@@ -38112,9 +38112,6 @@ capabilities:
               route:
                 type: string
                 description: "`/features/<id>/`."
-              featured:
-                type: boolean
-                description: Whether the homepage shows it as a chapter.
               surfaces:
                 "$ref": "#/$defs/Surfaces"
                 description: The interfaces it is exposed through.
@@ -38139,12 +38136,11 @@ capabilities:
               - title
               - headline
               - route
-              - featured
               - surfaces
               - claims
               - tested
               - use_cases
-            description: "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
+            description: "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
           Surfaces:
             type: object
             properties:
@@ -38387,10 +38383,6 @@ capabilities:
             minimum: 0
             description: "Presentation order, lowest first."
             default: 0
-          featured:
-            type: boolean
-            description: Whether the homepage shows it as a chapter.
-            default: false
           domain:
             type:
               - string
@@ -39047,19 +39039,13 @@ capabilities:
     module: product
     kind: query
     title: The features
-    description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
+    description: "Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
     input:
       name: ProductQuery
       schema:
         type: object
         additionalProperties: false
         properties:
-          featured:
-            type:
-              - boolean
-              - "null"
-            description: Only the features the homepage shows.
-            default: null
           status:
             type:
               - string
@@ -39150,11 +39136,6 @@ capabilities:
                 format: uint
                 minimum: 0
                 description: "Features of every status, drafts included."
-              featured:
-                type: integer
-                format: uint
-                minimum: 0
-                description: Stable features the homepage shows.
               providers:
                 type: integer
                 format: uint
@@ -39193,7 +39174,6 @@ capabilities:
             required:
               - features
               - features_all
-              - featured
               - providers
               - modules
               - modules_covered
@@ -39251,9 +39231,6 @@ capabilities:
                 format: uint32
                 minimum: 0
                 description: Presentation order.
-              featured:
-                type: boolean
-                description: Whether the homepage shows it.
               domain:
                 type:
                   - string
@@ -39294,7 +39271,6 @@ capabilities:
               - summary
               - status
               - weight
-              - featured
               - areas
               - audiences
               - tags
@@ -39841,7 +39817,7 @@ capabilities:
     module: product
     kind: query
     title: Validate the model
-    description: "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not."
+    description: "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not."
     input:
       name: Empty
       schema:
@@ -39897,11 +39873,6 @@ capabilities:
                 format: uint
                 minimum: 0
                 description: "Features of every status, drafts included."
-              featured:
-                type: integer
-                format: uint
-                minimum: 0
-                description: Stable features the homepage shows.
               providers:
                 type: integer
                 format: uint
@@ -39940,7 +39911,6 @@ capabilities:
             required:
               - features
               - features_all
-              - featured
               - providers
               - modules
               - modules_covered

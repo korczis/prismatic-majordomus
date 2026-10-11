@@ -9,7 +9,6 @@ summary: One deployment object per hosted instance of the executable, validated 
 status: draft
 weight: 200
 domain: surfaces
-featured: false
 areas: [governance]
 modules: [deploy, delivery]
 kinds: [deployment]

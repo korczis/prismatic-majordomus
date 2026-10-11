@@ -18,7 +18,7 @@ A **feature** is one thing this repository's product does for a person, stated o
 Markdown file here (`schema: feature/v1`). The front matter names what the feature is made
 of — capability modules, commands, object kinds, rules, documents, decisions, claims, use
 cases — each a typed reference the tool validates, and the presentation decisions nothing
-can infer: the headline, the order, whether it is featured. Everything else a page or an
+can infer: the headline, the order, the domain. Everything else a page or an
 API says about a feature is derived from those references and never written here.
 
 The contract is `share/schemas/majordomus/feature/feature.v1.schema.json` of the tool

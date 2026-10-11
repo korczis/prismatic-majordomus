@@ -6,7 +6,7 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "8d9621d7f0ecfa087b4fbb979f61cf83edf51bbca044f675ca2f869b0b8e2d54",
     "summary": {
       "total": 2112,
       "builtin": 184,
@@ -53269,10 +53269,6 @@
                     "type": "string",
                     "description": "`/features/<id>/`."
                   },
-                  "featured": {
-                    "type": "boolean",
-                    "description": "Whether the homepage shows it as a chapter."
-                  },
                   "surfaces": {
                     "$ref": "#/$defs/Surfaces",
                     "description": "The interfaces it is exposed through."
@@ -53302,13 +53298,12 @@
                   "title",
                   "headline",
                   "route",
-                  "featured",
                   "surfaces",
                   "claims",
                   "tested",
                   "use_cases"
                 ],
-                "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
+                "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
               },
               "Surfaces": {
                 "type": "object",
@@ -53628,11 +53623,6 @@
                 "minimum": 0,
                 "description": "Presentation order, lowest first.",
                 "default": 0
-              },
-              "featured": {
-                "type": "boolean",
-                "description": "Whether the homepage shows it as a chapter.",
-                "default": false
               },
               "domain": {
                 "type": [
@@ -54507,21 +54497,13 @@
         "module": "product",
         "kind": "query",
         "title": "The features",
-        "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+        "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
         "input": {
           "name": "ProductQuery",
           "schema": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "featured": {
-                "type": [
-                  "boolean",
-                  "null"
-                ],
-                "description": "Only the features the homepage shows.",
-                "default": null
-              },
               "status": {
                 "type": [
                   "string",
@@ -54640,12 +54622,6 @@
                     "minimum": 0,
                     "description": "Features of every status, drafts included."
                   },
-                  "featured": {
-                    "type": "integer",
-                    "format": "uint",
-                    "minimum": 0,
-                    "description": "Stable features the homepage shows."
-                  },
                   "providers": {
                     "type": "integer",
                     "format": "uint",
@@ -54692,7 +54668,6 @@
                 "required": [
                   "features",
                   "features_all",
-                  "featured",
                   "providers",
                   "modules",
                   "modules_covered",
@@ -54766,10 +54741,6 @@
                     "minimum": 0,
                     "description": "Presentation order."
                   },
-                  "featured": {
-                    "type": "boolean",
-                    "description": "Whether the homepage shows it."
-                  },
                   "domain": {
                     "type": [
                       "string",
@@ -54823,7 +54794,6 @@
                   "summary",
                   "status",
                   "weight",
-                  "featured",
                   "areas",
                   "audiences",
                   "tags",
@@ -55550,7 +55520,7 @@
         "module": "product",
         "kind": "query",
         "title": "Validate the model",
-        "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
+        "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -55618,12 +55588,6 @@
                     "minimum": 0,
                     "description": "Features of every status, drafts included."
                   },
-                  "featured": {
-                    "type": "integer",
-                    "format": "uint",
-                    "minimum": 0,
-                    "description": "Stable features the homepage shows."
-                  },
                   "providers": {
                     "type": "integer",
                     "format": "uint",
@@ -55670,7 +55634,6 @@
                 "required": [
                   "features",
                   "features_all",
-                  "featured",
                   "providers",
                   "modules",
                   "modules_covered",
@@ -76151,7 +76114,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "e9c789baebd83dd138e9137329111e154a3ea758a1b39ce582f88720a6cef691",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -80731,7 +80694,7 @@
         "path": ".ai/repo/features/README.md",
         "section": "features",
         "source_class": "context",
-        "bytes": 5052
+        "bytes": 4950
       },
       {
         "uri": "majordomus://context/ai.repo.features.domains",
@@ -81535,7 +81498,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 52225
+        "bytes": 52223
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -81688,7 +81651,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 18587
+        "bytes": 18523
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -82885,7 +82848,7 @@
         "title": "The homepage names nothing of its own",
         "path": "docs/claims/landing-page-is-a-projection.md",
         "source_class": "claim_page",
-        "bytes": 2456
+        "bytes": 2457
       },
       {
         "uri": "majordomus://document/docs/claims/ledger-integrity.md",
@@ -83290,7 +83253,7 @@
         "title": "A reference that resolves to nothing is an error, not a broken link",
         "path": "docs/claims/product-references-resolve.md",
         "source_class": "claim_page",
-        "bytes": 2387
+        "bytes": 2348
       },
       {
         "uri": "majordomus://document/docs/claims/product-surfaces-derived.md",
@@ -84090,7 +84053,7 @@
         "path": ".ai/repo/features/benchmarks.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1966,
+        "bytes": 1950,
         "tags": [
           "performance",
           "benchmarks"
@@ -84105,7 +84068,7 @@
         "path": ".ai/repo/features/ci.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1712,
+        "bytes": 1696,
         "tags": [
           "ci",
           "deployment"
@@ -84120,7 +84083,7 @@
         "path": ".ai/repo/features/cockpit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2475,
+        "bytes": 2460,
         "tags": [
           "cockpit",
           "interface"
@@ -84135,7 +84098,7 @@
         "path": ".ai/repo/features/commit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3583,
+        "bytes": 3568,
         "tags": [
           "git",
           "commit",
@@ -84151,7 +84114,7 @@
         "path": ".ai/repo/features/context.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2283,
+        "bytes": 2267,
         "tags": [
           "context",
           "scope"
@@ -84166,7 +84129,7 @@
         "path": ".ai/repo/features/continuity.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3029,
+        "bytes": 3014,
         "tags": [
           "sessions",
           "handover",
@@ -84182,7 +84145,7 @@
         "path": ".ai/repo/features/coordination.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2548,
+        "bytes": 2533,
         "tags": [
           "agents",
           "parallelism",
@@ -84198,7 +84161,7 @@
         "path": ".ai/repo/features/coverage.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3000,
+        "bytes": 2984,
         "tags": [
           "coverage",
           "testing"
@@ -84213,7 +84176,7 @@
         "path": ".ai/repo/features/declare-once.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2965,
+        "bytes": 2950,
         "tags": [
           "architecture",
           "projections"
@@ -84228,7 +84191,7 @@
         "path": ".ai/repo/features/deployments.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1558,
+        "bytes": 1542,
         "tags": [
           "deployment"
         ]
@@ -84242,7 +84205,7 @@
         "path": ".ai/repo/features/doctrine.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3066,
+        "bytes": 3051,
         "tags": [
           "rules",
           "doctrine",
@@ -84258,7 +84221,7 @@
         "path": ".ai/repo/features/economics.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2162,
+        "bytes": 2146,
         "tags": [
           "economics",
           "tokens",
@@ -84275,7 +84238,7 @@
         "path": ".ai/repo/features/evidence.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3093,
+        "bytes": 3078,
         "tags": [
           "evidence",
           "claims",
@@ -84293,7 +84256,7 @@
         "path": ".ai/repo/features/finish-contract.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3406,
+        "bytes": 3391,
         "tags": [
           "verification",
           "contract"
@@ -84308,7 +84271,7 @@
         "path": ".ai/repo/features/install.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2222,
+        "bytes": 2206,
         "tags": [
           "install",
           "distribution",
@@ -84324,7 +84287,7 @@
         "path": ".ai/repo/features/interfaces.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3318,
+        "bytes": 3302,
         "tags": [
           "mcp",
           "http",
@@ -84341,7 +84304,7 @@
         "path": ".ai/repo/features/knowledge.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2711,
+        "bytes": 2696,
         "tags": [
           "decisions",
           "adr",
@@ -84357,7 +84320,7 @@
         "path": ".ai/repo/features/mesh.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 4031,
+        "bytes": 4016,
         "tags": [
           "mesh",
           "discovery",
@@ -84376,7 +84339,7 @@
         "path": ".ai/repo/features/models.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2380,
+        "bytes": 2365,
         "tags": [
           "models",
           "catalogue",
@@ -84392,7 +84355,7 @@
         "path": ".ai/repo/features/planning.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3230,
+        "bytes": 3214,
         "tags": [
           "plan",
           "milestones",
@@ -84408,7 +84371,7 @@
         "path": ".ai/repo/features/policy.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2770,
+        "bytes": 2754,
         "tags": [
           "policy",
           "providers",
@@ -84424,7 +84387,7 @@
         "path": ".ai/repo/features/provenance.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2552,
+        "bytes": 2537,
         "tags": [
           "audit",
           "ledger",
@@ -84440,7 +84403,7 @@
         "path": ".ai/repo/features/reasoning.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2547,
+        "bytes": 2532,
         "tags": [
           "reasoning",
           "advisors",
@@ -84456,7 +84419,7 @@
         "path": ".ai/repo/features/skills.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1365,
+        "bytes": 1349,
         "tags": [
           "skills"
         ]
@@ -84470,7 +84433,7 @@
         "path": ".ai/repo/features/use-cases.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1792,
+        "bytes": 1776,
         "tags": [
           "use-cases",
           "evidence"
@@ -84485,7 +84448,7 @@
         "path": ".ai/repo/features/why.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 1612,
+        "bytes": 1596,
         "tags": [
           "why",
           "catalogue"
@@ -84500,7 +84463,7 @@
         "path": ".ai/repo/features/worktrees.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2404,
+        "bytes": 2389,
         "tags": [
           "git",
           "worktree"
@@ -93377,7 +93340,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 11884
+        "bytes": 11866
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -94153,7 +94116,7 @@
         "identity": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
         "path": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
         "source_class": "case",
-        "bytes": 5812
+        "bytes": 5796
       },
       {
         "uri": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
@@ -94689,7 +94652,7 @@
         "identity": "test/cases/503_every_use_case_has_a_feature.sh",
         "path": "test/cases/503_every_use_case_has_a_feature.sh",
         "source_class": "case",
-        "bytes": 7318
+        "bytes": 7303
       },
       {
         "uri": "majordomus://test/test/cases/504_public_text_is_redacted_once.sh",
@@ -94721,7 +94684,7 @@
         "identity": "test/cases/507_evidence_subjects_are_derived.sh",
         "path": "test/cases/507_evidence_subjects_are_derived.sh",
         "source_class": "case",
-        "bytes": 24364
+        "bytes": 24347
       },
       {
         "uri": "majordomus://test/test/cases/50_blocker_across_handover.sh",
@@ -96169,7 +96132,7 @@
         "identity": "test/cases/97_product_features.sh",
         "path": "test/cases/97_product_features.sh",
         "source_class": "case",
-        "bytes": 9032
+        "bytes": 9247
       },
       {
         "uri": "majordomus://test/test/cases/97_site_probe_attribution.sh",
@@ -111191,20 +111154,6 @@
             ]
           },
           {
-            "name": "featured",
-            "long": "featured",
-            "positional": false,
-            "help": "Only the features the homepage shows",
-            "value_name": "FEATURED",
-            "takes_value": false,
-            "required": false,
-            "global": true,
-            "possible_values": [],
-            "defaults": [
-              "false"
-            ]
-          },
-          {
             "name": "all",
             "long": "all",
             "positional": false,
@@ -111402,20 +111351,6 @@
                 ]
               },
               {
-                "name": "featured",
-                "long": "featured",
-                "positional": false,
-                "help": "Only the features the homepage shows",
-                "value_name": "FEATURED",
-                "takes_value": false,
-                "required": false,
-                "global": true,
-                "possible_values": [],
-                "defaults": [
-                  "false"
-                ]
-              },
-              {
                 "name": "all",
                 "long": "all",
                 "positional": false,
@@ -111507,7 +111442,7 @@
               {
                 "id": "product-list",
                 "title": "Every stable feature, in presentation order",
-                "description": "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
+                "description": "Drafts are excluded unless `--all` is given. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
                 "argv": [
                   "product",
                   "list"
@@ -111637,20 +111572,6 @@
                 ],
                 "defaults": [
                   "text"
-                ]
-              },
-              {
-                "name": "featured",
-                "long": "featured",
-                "positional": false,
-                "help": "Only the features the homepage shows",
-                "value_name": "FEATURED",
-                "takes_value": false,
-                "required": false,
-                "global": true,
-                "possible_values": [],
-                "defaults": [
-                  "false"
                 ]
               },
               {
@@ -111854,20 +111775,6 @@
                 ]
               },
               {
-                "name": "featured",
-                "long": "featured",
-                "positional": false,
-                "help": "Only the features the homepage shows",
-                "value_name": "FEATURED",
-                "takes_value": false,
-                "required": false,
-                "global": true,
-                "possible_values": [],
-                "defaults": [
-                  "false"
-                ]
-              },
-              {
                 "name": "all",
                 "long": "all",
                 "positional": false,
@@ -112064,20 +111971,6 @@
                 ],
                 "defaults": [
                   "text"
-                ]
-              },
-              {
-                "name": "featured",
-                "long": "featured",
-                "positional": false,
-                "help": "Only the features the homepage shows",
-                "value_name": "FEATURED",
-                "takes_value": false,
-                "required": false,
-                "global": true,
-                "possible_values": [],
-                "defaults": [
-                  "false"
                 ]
               },
               {
@@ -112280,20 +112173,6 @@
                 ]
               },
               {
-                "name": "featured",
-                "long": "featured",
-                "positional": false,
-                "help": "Only the features the homepage shows",
-                "value_name": "FEATURED",
-                "takes_value": false,
-                "required": false,
-                "global": true,
-                "possible_values": [],
-                "defaults": [
-                  "false"
-                ]
-              },
-              {
                 "name": "all",
                 "long": "all",
                 "positional": false,
@@ -112493,20 +112372,6 @@
                 ]
               },
               {
-                "name": "featured",
-                "long": "featured",
-                "positional": false,
-                "help": "Only the features the homepage shows",
-                "value_name": "FEATURED",
-                "takes_value": false,
-                "required": false,
-                "global": true,
-                "possible_values": [],
-                "defaults": [
-                  "false"
-                ]
-              },
-              {
                 "name": "all",
                 "long": "all",
                 "positional": false,
@@ -112598,7 +112463,7 @@
               {
                 "id": "product-validate",
                 "title": "Check the model before anything projects it",
-                "description": "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
+                "description": "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
                 "argv": [
                   "product",
                   "validate"
@@ -128727,7 +128592,7 @@
         "name": "majordomus_features",
         "id": "product.features",
         "title": "The features",
-        "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+        "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -128778,7 +128643,7 @@
         "name": "majordomus_product_validate",
         "id": "product.validate",
         "title": "Validate the model",
-        "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
+        "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -135717,15 +135582,6 @@
         "cached": true
       },
       {
-        "key": "product.features|direct|featured",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "product.features",
-        "module": "product",
-        "case": "featured",
-        "cached": true
-      },
-      {
         "key": "product.features|direct|by-area",
         "kind": "capability",
         "transport": "direct",
@@ -135750,16 +135606,6 @@
         "id": "product.features",
         "module": "product",
         "case": "all",
-        "cached": true,
-        "tool": "majordomus_features"
-      },
-      {
-        "key": "product.features|mcp|featured",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "product.features",
-        "module": "product",
-        "case": "featured",
         "cached": true,
         "tool": "majordomus_features"
       },
@@ -135790,16 +135636,6 @@
         "id": "product.features",
         "module": "product",
         "case": "all",
-        "cached": true,
-        "route": "GET /api/v1/product/features"
-      },
-      {
-        "key": "product.features|http|featured",
-        "kind": "capability",
-        "transport": "http",
-        "id": "product.features",
-        "module": "product",
-        "case": "featured",
         "cached": true,
         "route": "GET /api/v1/product/features"
       },
@@ -140498,21 +140334,21 @@
           "module": "product",
           "transport": "direct",
           "state": "covered",
-          "cases": 4
+          "cases": 3
         },
         {
           "subject": "product.features",
           "module": "product",
           "transport": "mcp",
           "state": "covered",
-          "cases": 4
+          "cases": 3
         },
         {
           "subject": "product.features",
           "module": "product",
           "transport": "http",
           "state": "covered",
-          "cases": 4
+          "cases": 3
         },
         {
           "subject": "product.matrix",

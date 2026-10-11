@@ -9,7 +9,6 @@ summary: scripts/rust-coverage is the one coverage authority: a single cargo-llv
 status: stable
 weight: 72
 domain: completion
-featured: false
 areas: [verification]
 modules: []
 commands: []

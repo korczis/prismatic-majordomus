@@ -9,7 +9,6 @@ summary: At /cockpit the shared server lays out what a capability answered — t
 status: stable
 weight: 100
 domain: surfaces
-featured: true
 areas: [observability]
 modules: [health, design]
 rules: [project.interfaces-are-projections]

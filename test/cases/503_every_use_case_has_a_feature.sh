@@ -82,7 +82,6 @@ headline: 'One feature, naming one of the use cases beside it.'
 summary: 'A feature that exists so that one use case has an owner and another does not.'
 status: stable
 weight: 10
-featured: true
 modules: [repository]
 kinds: [rule]
 docs: [.ai/repo/workflows/task-lifecycle.md]

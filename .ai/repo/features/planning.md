@@ -9,7 +9,6 @@ summary: Milestones are outcome specifications and issues are execution contract
 status: stable
 weight: 130
 domain: coordination
-featured: false
 areas: [work-tracking]
 commands: [plan]
 modules: [trace, plan, devtask, intents, intent_realization]

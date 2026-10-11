@@ -9,7 +9,6 @@ summary: The container is the primary checkout's sibling named with -wt, a branc
 status: stable
 weight: 40
 domain: coordination
-featured: true
 areas: [coordination, work-tracking]
 modules: [worktree]
 rules: [project.worktree-topology, project.no-machine-paths]

@@ -27,7 +27,6 @@ fn model(f: &Fixture) -> (majordomus_cli::app::App, ProductModel) {
 fn second_feature(id: &str) -> String {
     common::FEATURE
         .replace("id: fixture-feature", &format!("id: {id}"))
-        .replace("featured: true", "featured: false")
         .replace("weight: 10", "weight: 20")
         .replace(
             "short_title: Fixture feature",
@@ -47,7 +46,6 @@ fn a_valid_model_reads_the_feature_and_derives_its_surfaces_from_what_it_names()
     assert_eq!(r.feature.route, "/features/fixture-feature/");
     assert_eq!(r.feature.source, ".ai/repo/features/fixture-feature.md");
     assert!(r.feature.body.contains("## What it does"));
-    assert!(r.feature.featured);
 
     // the module resolved to its capabilities, and the surfaces follow from their exposures
     let module = r
@@ -248,6 +246,17 @@ fn a_derived_key_written_into_a_source_is_refused() {
 }
 
 #[test]
+fn a_homepage_placement_written_into_a_feature_is_refused() {
+    // `featured` once claimed a homepage chapter the page no longer renders; the field is
+    // retired, so a file that still sets it is refused rather than silently obeyed
+    refused(
+        &second_feature("broken").replace("weight: 20", "weight: 20\nfeatured: true"),
+        "unknown_key",
+        "featured",
+    );
+}
+
+#[test]
 fn a_missing_required_field_is_refused() {
     refused(
         &second_feature("broken").replace(
@@ -292,13 +301,11 @@ fn an_unresolved_reference_is_an_error_with_the_nearest_candidate() {
 }
 
 #[test]
-fn a_draft_may_not_be_featured_and_a_reserved_id_is_refused() {
+fn a_reserved_id_is_refused() {
     let f = Fixture::new();
     f.write(
         ".ai/repo/features/matrix.md",
-        &second_feature("matrix")
-            .replace("status: stable", "status: draft")
-            .replace("featured: false", "featured: true"),
+        &second_feature("matrix").replace("status: stable", "status: draft"),
     );
     f.commit("bad");
     let (_app, m) = model(&f);
@@ -308,7 +315,6 @@ fn a_draft_may_not_be_featured_and_a_reserved_id_is_refused() {
         .filter(|x| x.id.as_deref() == Some("matrix"))
         .map(|x| x.code.as_str())
         .collect();
-    assert!(codes.contains(&"featured_draft"), "{codes:?}");
     assert!(codes.contains(&"reserved_identity"), "{codes:?}");
 }
 
@@ -577,10 +583,7 @@ fn domain(id: &str, weight: u32) -> String {
 
 /// The fixture's feature, filed under a domain.
 fn feature_in(domain: &str) -> String {
-    common::FEATURE.replace(
-        "featured: true",
-        &format!("featured: true\ndomain: {domain}"),
-    )
+    common::FEATURE.replace("weight: 10", &format!("weight: 10\ndomain: {domain}"))
 }
 
 #[test]
@@ -591,7 +594,7 @@ fn a_domain_holds_the_features_that_name_it_and_lists_none_itself() {
     f.write(".ai/repo/features/fixture-feature.md", &feature_in("beta"));
     f.write(
         ".ai/repo/features/second.md",
-        &second_feature("second").replace("featured: false", "featured: false\ndomain: alpha"),
+        &second_feature("second").replace("weight: 20", "weight: 20\ndomain: alpha"),
     );
     f.commit("two domains, one feature each");
     let (_app, m) = model(&f);

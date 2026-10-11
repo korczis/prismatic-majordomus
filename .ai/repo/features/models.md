@@ -9,7 +9,6 @@ summary: share/models.yaml declares vendors and models in one place, in routing'
 status: stable
 weight: 46
 domain: coordination
-featured: true
 areas: [coordination]
 modules: [models]
 rules: []

@@ -9,7 +9,6 @@ summary: The same parse the changelog reads the history with decides whether a n
 status: stable
 weight: 205
 domain: governance
-featured: true
 areas: [governance, work-tracking]
 modules: [commit]
 rules: [project.conventional-commits, project.derived-files-regenerated, project.interfaces-are-projections]

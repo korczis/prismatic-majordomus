@@ -9,7 +9,6 @@ summary: Every README under .ai/ is a context document with an identity, a scope
 status: stable
 weight: 140
 domain: context
-featured: false
 areas: [context]
 modules: [directories, repository, devcontext]
 commands: [context]
