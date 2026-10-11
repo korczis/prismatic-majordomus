@@ -44,7 +44,7 @@ pub fn bind(host: &str, port: u16) -> Result<Bound> {
     {
         tracing::warn!(
             address = %address,
-            "bound to {address}, which is not a loopback address: every host that can reach this interface can read this repository's AI layer, its diagnostics and its peers; bind 127.0.0.1 unless that is intended"
+            "bound to {address}, which is not a loopback address: every host that can reach this interface can read this repository's AI layer, its diagnostics and its peers, unencrypted; it can change nothing but through a signed mesh message (ADR 0126); bind 127.0.0.1 unless that is intended"
         );
     }
     Ok(Bound { server, address })
@@ -181,7 +181,8 @@ fn upgrade(router: &Router, request: tiny_http::Request) -> Option<tiny_http::Re
         .collect();
     let probe =
         super::Request::parse_target(&request.method().to_string(), request.url(), Vec::new())
-            .with_headers(headers);
+            .with_headers(headers)
+            .with_remote(request.remote_addr().map(|a| a.ip()));
     let accepted = match router.websocket(&probe) {
         None => return Some(request),
         Some(Ok(accepted)) => accepted,
@@ -210,6 +211,7 @@ fn answer_http(router: &Router, mut request: tiny_http::Request) {
     let head = method == "HEAD";
     let method = if head { "GET".to_string() } else { method };
     let target = request.url().to_string();
+    let remote = request.remote_addr().map(|a| a.ip());
     let headers: Vec<(String, String)> = request
         .headers()
         .iter()
@@ -231,7 +233,11 @@ fn answer_http(router: &Router, mut request: tiny_http::Request) {
             &format!("the body is over {MAX_BODY_BYTES} bytes"),
         )
     } else {
-        router.handle(&super::Request::parse_target(&method, &target, body).with_headers(headers))
+        router.handle(
+            &super::Request::parse_target(&method, &target, body)
+                .with_headers(headers)
+                .with_remote(remote),
+        )
     };
     // the target carries the query string, where a careless client puts a token
     tracing::debug!(

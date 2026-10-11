@@ -1,0 +1,53 @@
+id: I2461
+milestone: development-runtime
+title: "majordomus ui is served at /ui as its own product, with screens composed from capabilities"
+slug: majordomus-ui-is-the-primary-surface
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Serve the UI, the primary human surface the owner names `majordomus ui`, as its own native surface on the shared server: its own mount, shell, delivery-vocabulary navigation and assets, with a first Dashboard composed only from capabilities, each value citing the capability and pointer it was read from."
+why: "The owner's unified real-data UI pack (campaigns/majordomus-ui-unified-real-data-v2-20261011) asks for eleven screens. On 2026-10-11 the owner settled where they live: 'it is majordomus ui primary, not cockpit (low level)'. ADR 0135 records the decision. The M00 audit (tmp/owner-packs/majordomus-ui-unified-real-data-v2-20261011/AUDIT-M00.md) found that the data for most panels exists but the Cockpit's overview needed 13-18 s to paint, and that integration.queue alone takes 50 s, so the first screen must ask only fast sources and draw the queue as a panel of its own. Before this change `majordomus ui` was an unknown command and no surface of the server was the high-level one."
+current_state: "The shared server serves the Cockpit (/cockpit), the API, Swagger, MCP and the home page. There is no high-level surface."
+desired_state: "A native surface `ui` is mounted at /ui (topology, binding, router; Feature::Ui) and served by the shared server beside the Cockpit, which it refers to only as the technical view of a source. Its frame follows the owner's references: a sidebar of screens with the kit's icons (compiled from site/data/kit/icons.toml by majordomus generate) and a version card read from distribution.releases, a top bar with the search, the time the screen was read and the other surfaces, and a menu that opens without JavaScript. Seven screens — Dashboard, Roadmap, Issues & PRs, Mesh, CI/CD & Releases, Evidence, Governance — each a hero band with KPI tiles and a grid of panels, compose only capability answers asked at once. Every panel names its sources with the API route, CLI command and MCP tool capabilities.describe declares. Tiles, panels and rows lead to the screen holding the whole. Milestone dependencies are drawn as a graph with the vendored Cytoscape over a table fallback. Donuts, meters and timelines are drawn server-side from the counts they list, and a missing value reads none, unknown or not answered, never zero. The pull-request queue is the panel /ui/panels/pull-requests, pulled in after paint. A visible screen is read again every minute and says when. ui-integrity and the ADR 0012 index check cover src/ui (cases 389 and 547), and the CI class ui selects the asset check whenever share/ui or src/ui changes. Not done here: the majordomus ui command (I2231, to be amended), and the Command, Capabilities, Deployments, Documentation and Settings screens."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "scripts/ci/cockpit-projection-check"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/features/ui.md"
+  - "test/cases/389_cockpit_projection.sh"
+  - "test/cases/547_the_ui_says_only_what_is_derived.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/README.md"
+  - ".gitignore"
+  - "apps/majordomus-cli/src/cockpit/assets.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/http/surfaces.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/web/discover.rs"
+  - "apps/majordomus-cli/src/web/model.rs"
+  - "share/ui"
+  - "scripts/cockpit-assets"
+  - ".ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md"
+  - ".ai/repo/project/issues/I2461.yaml"
+depends_on: []
+acceptance_criteria:
+  - "GET /ui on a shared server answers 200 text/html with the Cockpit's CSP, and with JavaScript disabled shows the six tiles and every panel or its link"
+  - "Every tile and panel of the Dashboard cites the capability it read, and a source that fails makes its tile 'not answered', never 0"
+  - "The Dashboard's first paint never asks integration.queue; /ui/panels/pull-requests answers the queue as a page, and with ?fragment as the panel alone"
+  - "The rail lists exactly the screens the dispatcher answers, and a test fails when the two differ"
+  - "scripts/cockpit-assets --check fails when share/ui/ui.css is stale"
+  - "scripts/ci/cockpit-projection-check --ui-integrity fails on a registry read or a zero-count default in src/ui (case 547)"
+  - "Every panel names its sources with the API route, CLI command and MCP tool capabilities.describe declares, and the Cockpit only as their technical view"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib ui::"
+  - "cargo test --lib cockpit::assets"
+  - "scripts/cockpit-assets --check"
+evidence_required:
+  - "ui_surface_served_test"
+  - "ui_dashboard_cites_sources_test"
+  - "ui_screenshots_1440_768_375"
+created_at: 2026-10-11
+updated_at: 2026-10-11

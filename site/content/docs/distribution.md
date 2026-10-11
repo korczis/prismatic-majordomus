@@ -230,8 +230,10 @@ build    one archive per supported target, on the runner the model names, verifi
 publish  digests, the GitHub release, the record written from what was uploaded and staged,
          every projection derived from it and judged by scripts/derive-check, then both
          proposed to the default branch as one pull request, release/record-<tag>
-smoke    the published installer, from its published URL, installing the release that was
-         just published, on every runner whose target it was built for
+smoke    scripts/ci/install-check --expect <tag>: the published installer, from its published
+         URL, installs the release that was just published, and the installed tool
+         initialises and serves a repository that is not this one, on every runner whose
+         target it was built for; no step of it swallows a failure
 ```
 
 Only `publish` has `contents: write`, and with it the `id-token` and `attestations` writes
@@ -381,7 +383,17 @@ published site:
 5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a
    launcher out passes every check that only reads the archive's file list, and fails here
 6  the installed tool initialises a repository that has none
+7  and serves it: the installed MCP launcher, started there without --standalone, answers
+   initialize and tools/list over stdio and elects itself that repository's shared server,
+   which reports itself ready and names that repository — its identity is the digest of
+   the repository's root, so a server that answered for this checkout instead is refused
 ```
+
+The release smoke runs the same gate on the tag it published (`--expect <tag>` refuses
+metadata that names any other release), so the promise is measured by one gate at
+publication, every night and on request. Case 1024
+(`test/cases/1024_an_installed_release_serves_a_foreign_repository.sh`) proves that it fails
+on an archive whose MCP launcher cannot start.
 
 Nothing outside its temporary tree is written: the install goes to a `HOME` of the run's
 own, so the prefix, the launchers and the PATH hint all land inside it.
