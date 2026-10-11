@@ -3328,6 +3328,9 @@ pub enum HostOrigin {
     Environment,
     /// Neither: [`LOOPBACK_HOST`].
     Default,
+    /// [`HTTP_HOST_ENV`] named one, and the checkout is a linked worktree, which does not
+    /// take it: [`LOOPBACK_HOST`] ([`checkout_http_host`]).
+    LinkedWorktree,
 }
 
 /// The interface a local server binds: the flag when one was given, else what
@@ -3384,6 +3387,75 @@ pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
         );
     }
     (host, origin)
+}
+
+/// The machine's interface for one checkout: a linked worktree does not take the one
+/// [`HTTP_HOST_ENV`] names. The variable is the machine's face on its network, and that
+/// face is the repository's primary server — the one other machines dial and whose mesh
+/// the worktrees cooperate through; a worktree's own server serves its own sessions, and
+/// a variable inherited by every shell would otherwise put each of them on the network
+/// beside it. A flag still binds where it says, because a person typed it.
+///
+/// ```
+/// use majordomus_cli::cli::{checkout_http_host, HostOrigin};
+/// // a directory that is not a linked worktree reads the machine's resolution unchanged
+/// let plain = tempfile::tempdir().unwrap();
+/// assert_eq!(
+///     checkout_http_host(Some("10.0.0.1"), plain.path()),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn checkout_http_host(flag: Option<&str>, root: &std::path::Path) -> (String, HostOrigin) {
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let linked = crate::repository::git_identity(root).is_some_and(|g| g.linked);
+    let (host, origin) = resolve_checkout_http_host(flag, environment.as_deref(), linked);
+    match origin {
+        HostOrigin::Environment => tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        ),
+        HostOrigin::LinkedWorktree => tracing::info!(
+            "binding {LOOPBACK_HOST}: {HTTP_HOST_ENV} names the machine's interface, and a \
+             linked worktree leaves it to the primary checkout's server (--host binds one)"
+        ),
+        _ => {}
+    }
+    (host, origin)
+}
+
+/// [`resolve_http_host`] for a checkout that is, or is not, a linked worktree: an
+/// environment's interface becomes loopback in a linked worktree; a flag never changes.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_checkout_http_host, HostOrigin};
+/// assert_eq!(
+///     resolve_checkout_http_host(None, Some("0.0.0.0"), true),
+///     ("127.0.0.1".to_string(), HostOrigin::LinkedWorktree)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(None, Some("0.0.0.0"), false),
+///     ("0.0.0.0".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(Some("0.0.0.0"), None, true),
+///     ("0.0.0.0".to_string(), HostOrigin::Flag)
+/// );
+/// assert_eq!(
+///     resolve_checkout_http_host(None, None, true),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// ```
+pub fn resolve_checkout_http_host(
+    flag: Option<&str>,
+    environment: Option<&str>,
+    linked: bool,
+) -> (String, HostOrigin) {
+    match resolve_http_host(flag, environment) {
+        (_, HostOrigin::Environment) if linked => {
+            (LOOPBACK_HOST.to_string(), HostOrigin::LinkedWorktree)
+        }
+        resolved => resolved,
+    }
 }
 
 #[derive(Debug, Args)]

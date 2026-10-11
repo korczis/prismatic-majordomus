@@ -252,6 +252,95 @@ fn every_checkout_of_a_repository_lists_every_server_of_it() {
 }
 
 #[test]
+fn a_worktree_without_a_server_asks_the_primarys_for_the_mesh() {
+    let f = Fixture::new();
+    let wt = f.container().join("feature").join("y");
+    std::fs::create_dir_all(f.container()).unwrap();
+    f.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        "feature/y",
+        wt.to_str().unwrap(),
+    ]);
+    let wt = wt.canonicalize().unwrap();
+    let mut primary = Served::start(&f.root(), &[]);
+
+    // the linked worktree has no server: the primary's answers, and the command says whose
+    let (code, out, err) = common::run_in(&wt, &["mesh", "status", "--format", "json"], "");
+    assert_eq!(code, 0, "{out}\n{err}");
+    assert!(
+        err.contains("asking the server of") && err.contains(&primary.address),
+        "the borrowed server is named: {err}"
+    );
+    let answer: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert!(
+        !answer["reason"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("no running server"),
+        "the primary's server answered, not the absence: {answer}"
+    );
+
+    // the commands that write to the mesh reach the primary's server too: whatever it
+    // answers (this fixture declares no mesh), the answer is its, never the absence
+    for command in [
+        &[
+            "mesh",
+            "claim",
+            "site",
+            "--session",
+            "s",
+            "--format",
+            "json",
+        ][..],
+        &["mesh", "handover", "publish", "--format", "json"][..],
+    ] {
+        let (_, out, err) = common::run_in(&wt, command, "");
+        assert!(
+            err.contains("asking the server of") && err.contains(&primary.address),
+            "{command:?} borrows the primary's server: {err}"
+        );
+        assert!(
+            !out.contains("no running server"),
+            "{command:?} reached the primary's server: {out}"
+        );
+    }
+
+    // a consume would write the handover into the primary's checkout: refused by name
+    let consume = [
+        "mesh",
+        "handover",
+        "consume",
+        "h",
+        "--session",
+        "s",
+        "--format",
+        "json",
+    ];
+    let (code, out, _) = common::run_in(&wt, &consume, "");
+    assert_eq!(code, 10, "{out}");
+    let refused: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(refused["error"]["code"], "borrowed_server", "{refused}");
+
+    // no server anywhere in the repository: the absence is the answer, nothing is borrowed
+    assert_eq!(primary.stop(), 0);
+    let (code, out, err) = common::run_in(&wt, &["mesh", "status", "--format", "json"], "");
+    assert_eq!(code, 0, "{out}\n{err}");
+    assert!(!err.contains("asking the server of"), "{err}");
+    let answer: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(answer["active"], false);
+    assert!(
+        answer["reason"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("no running server for any checkout"),
+        "{answer}"
+    );
+}
+
+#[test]
 fn a_lease_naming_a_server_of_another_checkout_is_stale_and_says_so() {
     let f = Fixture::new();
     let other = Fixture::new();

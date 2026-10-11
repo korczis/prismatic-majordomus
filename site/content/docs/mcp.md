@@ -277,6 +277,7 @@ export MAJORDOMUS_HTTP_HOST=0.0.0.0     # every interface; or one address of thi
 | `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
 | `majordomus serve ensure` (session start, shell entry) | it passes no host; the server it starts inherits the variable |
 | `majordomus serve --deployment <id>` | the deployment object's `listen` block, and nothing else: a declared address is not overridden by a machine's environment |
+| any of the first three, in a linked worktree | `127.0.0.1` when only `MAJORDOMUS_HTTP_HOST` names an interface; a flag still binds where it says. The variable is the machine's face on its network, which is the primary checkout's server; a worktree's server serves its own sessions, and its mesh commands go through the primary's ([`MESH.md`](@/docs/mesh.md#configuration)) |
 
 </div>
 

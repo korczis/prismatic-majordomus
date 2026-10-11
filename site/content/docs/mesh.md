@@ -419,6 +419,14 @@ configuration — it names the interface every local server of this machine bind
 starts it — and [`MCP.md`](@/docs/mcp.md#the-machine-names-the-interface) says what it
 exposes.
 
+A linked worktree does not take that variable: its own server stays on loopback unless
+`--host` says otherwise, because the machine's face on the network is the primary checkout's
+server. A worktree needs no server of its own for the mesh either. `majordomus mesh` in a
+checkout with no running server asks a ready server of the same repository — the primary's
+first — and names it on stderr (`asking the server of <checkout> at <url>`). The one command
+it refuses there is `mesh handover consume` without `--no-materialize`, because the handover
+would be written into the other checkout.
+
 ## This repository's mesh
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
