@@ -5,9 +5,10 @@
 // ones the page itself carries, and nothing here names a route. The kinds and their counts are
 // site/data/generated/entities.json's catalogue (a projection of site/data/publication.toml
 // and the index), the interface counts are the registry's own summary, and the build identity
-// is the /build.json the same build serves. A reader of this file — the documentation hub's
-// search, the Cockpit, an agent — therefore sees exactly the site a visitor sees, and a page
-// that was not built cannot appear in it.
+// is the /build.json the same build serves. A reader of this file — the site's one search
+// (site/search.js, opened from the navbar of every page and inline on the documentation hub),
+// the Cockpit, an agent — therefore sees exactly the site a visitor sees, and a page that was
+// not built cannot appear in it.
 //
 // Deterministic: pages are sorted by route, keys are written in a fixed order, and nothing is
 // timestamped; two builds of one tree write the same bytes.
@@ -80,6 +81,15 @@ export function build({ publicDir, entities, registry, buildInfo }) {
       : { route, title: page.title, description: page.description });
   }
   pages.sort((a, b) => (a.route < b.route ? -1 : a.route > b.route ? 1 : 0));
+  // The section a page sits in is the title of the page at its first path segment, as that page
+  // states it: /adrs/adr-0001/ is in "Decisions" because /adrs/ calls itself that. Read off the
+  // built pages like everything else here, so a section renamed in its template is renamed in
+  // the site's search with it, and the root page, which sits in no section, carries none.
+  const titles = new Map(pages.map((p) => [p.route, p.title]));
+  for (const p of pages) {
+    const top = p.route.split('/')[1];
+    p.section = top ? titles.get(`/${top}/`) ?? null : null;
+  }
   const s = registry.registry.summary;
   return {
     schema: 1,

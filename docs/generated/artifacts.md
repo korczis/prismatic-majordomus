@@ -199,7 +199,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 28388 | `bf235019e3cb6287` |
 | `docs/generated/economics.md` | `economics` | markdown | 15023 | `f58adbe469e2ce7d` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 23676 | `c4be914a1f1a26cb` |
-| `docs/generated/graph.json` | `graph` | json | 2879639 | `57fd0879d6701d4f` |
+| `docs/generated/graph.json` | `graph` | json | 2880172 | `68be757a60083bf9` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `d0c5d415e1b55a69` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `450aa1eccbd8d45e` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `3fef63c18bc453f2` |
@@ -317,10 +317,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `689611f430d47860` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `79b789f1dc99b4c6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `4e9cd0eca1fa1965` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 736000 | `1bfc72e9f53e5cec` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 736052 | `07818a4a08d2cba4` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `9aea2290a56cedac` |
-| `site/data/registry/product.json` | `site-product` | json | 634436 | `81d2c1cacc50ebd0` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6294112 | `a1bcdc2f04288ffe` |
+| `site/data/registry/product.json` | `site-product` | json | 634436 | `b0b5f26c7a74968b` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6294444 | `48cc44abcfc2b29c` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `df52815e1a59a09c` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `a269b4a327f2ea2d` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `cae23eeef7c3b91b` |
