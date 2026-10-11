@@ -209,7 +209,9 @@ F="$S/site"; fixture_repo "$F" AGENTS.md docs
 rm -rf "$F/.ai/repo/skills"; mkdir -p "$F/.ai/repo/skills"
 cp -R "$ROOT/.ai/repo/skills/README.md" "$F/.ai/repo/skills/" 2>/dev/null || true
 cp -R .ai/repo/skills/review .ai/repo/skills/alpha "$F/.ai/repo/skills/"
-mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$F/site/data/"; cp -R "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" "$F/site/"; cp -R "$ROOT/test/cases" "$F/test/"
+# figures.toml too: the pages of content-src cite their counts through it, and the build
+# refuses a citation it cannot resolve
+mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$ROOT/site/data/figures.toml" "$F/site/data/"; cp -R "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" "$F/site/"; cp -R "$ROOT/test/cases" "$F/test/"
 # site/static/app.css is a Tailwind build product and is ignored, so whether it exists in
 # the tree depends on whether anyone has run a full build here. base.html links it with
 # cachebust=true, which makes zola read it, so the fixture build below passed on a machine

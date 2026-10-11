@@ -5,7 +5,7 @@
     "title": "Majordomus",
     "version": "0.21.0",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
-    "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
       "name": "MIT",
       "identifier": "MIT"
@@ -29,6 +29,10 @@
     {
       "name": "artifacts",
       "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."
+    },
+    {
+      "name": "brief",
+      "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
     },
     {
       "name": "capabilities",
@@ -149,6 +153,10 @@
     {
       "name": "models",
       "description": "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
+    },
+    {
+      "name": "monitor",
+      "description": "Everything that happens around this repository, followed in one stream: the mesh journal (sessions on every linked machine, this checkout's board among them, their claims, handovers and reviews), the executor's trail (merges, refreshes, repairs, closures, failures) and GitHub (pull requests opened, merged and closed, finished workflow runs), folded so that a session re-announcing itself unchanged and a step that decided nothing are counted rather than shown, with what is addressed to the reader marked (ADR 0133)."
     },
     {
       "name": "objects",
@@ -355,6 +363,132 @@
             "name": "artifacts"
           }
         }
+      }
+    },
+    "/api/v1/brief": {
+      "get": {
+        "operationId": "brief.session",
+        "summary": "The session brief",
+        "description": "One line and a few: this session's episode and task (the one the given provider session owns, else the pointer's), the peers of every board with the boards that could not be read named, the mesh's links and what its journal addresses to this runtime, the integration queue as `majordomus prs brief` says it, and the machine's derive lock. Composed by the server holding this checkout's lease, which holds the board and the mesh: the command line asks it and composes the brief itself only when none answers, saying so; a superseded server says its own board is unreachable by the repository's gather. Carries the reporting interval the policy declares (`session.brief_interval_minutes`) and the keep-awake text a session is told at its start. Writes nothing.",
+        "tags": [
+          "brief"
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.",
+            "examples": {
+              "default": {
+                "value": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          },
+          {
+            "name": "checkouts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Checkouts",
+              "default": "repository"
+            },
+            "description": "Which checkouts the peers section covers: `repository` (every board, the default) or `this`.",
+            "examples": {
+              "default": {
+                "value": "this"
+              }
+            }
+          },
+          {
+            "name": "local",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+            "examples": {
+              "default": {
+                "value": true
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The session brief: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBrief"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "brief.session",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::brief"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_brief"
+        },
+        "x-majordomus-cli": "brief"
       }
     },
     "/api/v1/capabilities": {
@@ -5842,7 +5976,7 @@
             "description": "The claim id, as `docs/CLAIMS.yaml` spells it.",
             "examples": {
               "first-claim": {
-                "value": "a-finding-names-how-to-see-it-again"
+                "value": "a-candidate-is-routed-by-what-it-is-about"
               }
             }
           }
@@ -5938,7 +6072,7 @@
             "description": "`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity.",
             "examples": {
               "first-test": {
-                "value": "suite:138_governance_gates"
+                "value": "suite:982_a_candidate_is_routed_by_what_it_is_about"
               }
             }
           }
@@ -6766,7 +6900,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
-        "x-majordomus-effect": "process_state",
+        "x-majordomus-effect": "repository_mutation",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution_start"
         },
@@ -7606,7 +7740,7 @@
             "description": "The intent's id.",
             "examples": {
               "first-intent": {
-                "value": "intent-bound-work"
+                "value": "a-session-leaves-what-it-observed"
               }
             }
           }
@@ -7813,7 +7947,7 @@
             "description": "An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out.",
             "examples": {
               "first-intent": {
-                "value": "intent-bound-work"
+                "value": "a-session-leaves-what-it-observed"
               }
             }
           }
@@ -7909,7 +8043,7 @@
             "description": "The intent's id, which is also its file name under `.ai/repo/project/intents/`.",
             "examples": {
               "first-intent": {
-                "value": "intent-bound-work"
+                "value": "a-session-leaves-what-it-observed"
               }
             }
           }
@@ -9614,6 +9748,101 @@
         }
       }
     },
+    "/api/v1/mesh/firewall": {
+      "get": {
+        "operationId": "mesh.firewall",
+        "summary": "The host firewall, as the mesh needs it",
+        "description": "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "description": "The port this checkout's server listens on beyond loopback, when it does: a peer\ndials it there on the link protocol, so it needs admitting too. Omitted, the plan\nholds the discovery ports and the hub ports the declaration gives this machine."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The host firewall, as the mesh needs it: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirewallReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.firewall",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_firewall"
+        },
+        "x-majordomus-cli": "mesh firewall"
+      }
+    },
     "/api/v1/mesh/handovers": {
       "post": {
         "operationId": "mesh.handover.publish",
@@ -10300,11 +10529,123 @@
       "get": {
         "operationId": "mesh.peers",
         "summary": "Who cooperates, machine by machine",
-        "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
+        "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose, its link and its newest live claim. The default `summary` view lists only the active sessions, each with its live claims counted and its intent cut; `view=full` lists every session with every claim. `session` and `runtime` narrow either. Remote and local runtimes share one shape, and the whole fold's digest closes the answer: equal digests, equal state.",
         "tags": [
           "mesh"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshView"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`summary` (the default) or `full`.",
+            "examples": {
+              "full": {
+                "value": "full"
+              }
+            }
+          },
+          {
+            "name": "claims",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshClaimFilter"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`all` (the default) or `live`: whether ended claims are kept."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions."
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this session: its key (`<stream>/<session>`) or its bare id."
+          },
+          {
+            "name": "runtime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime\nof that machine."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshKind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this collection; the others are answered empty."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold's own order."
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken."
+          },
+          {
+            "name": "matching",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Who cooperates, machine by machine: the result.",
@@ -11036,11 +11377,123 @@
       "get": {
         "operationId": "mesh.state",
         "summary": "The state every linked runtime converges on",
-        "description": "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
+        "description": "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
         "tags": [
           "mesh"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshView"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`summary` (the default) or `full`.",
+            "examples": {
+              "full": {
+                "value": "full"
+              }
+            }
+          },
+          {
+            "name": "claims",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshClaimFilter"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "`all` (the default) or `live`: whether ended claims are kept."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "Only sessions, claims and handovers whose latest Lamport stamp is above this. Reviews\nand overlaps carry no stamp of their own and are kept or dropped with their sessions."
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this session: its key (`<stream>/<session>`) or its bare id."
+          },
+          {
+            "name": "runtime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what belongs to this runtime: `<node>-<runtime>`, or a node id for every runtime\nof that machine."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MeshKind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this collection; the others are answered empty."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "At most this many of each collection: the newest by Lamport stamp where it has one,\nkept in the fold's own order."
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only what is still open: active sessions, live claims, review requests nobody has\nanswered and handovers nobody has taken."
+          },
+          {
+            "name": "matching",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+          }
+        ],
         "responses": {
           "200": {
             "description": "The state every linked runtime converges on: the result.",
@@ -11480,6 +11933,173 @@
           "tool": "majordomus_models_route"
         },
         "x-majordomus-cli": "models route"
+      }
+    },
+    "/api/v1/monitor": {
+      "get": {
+        "operationId": "monitor.stream",
+        "summary": "Follow everything in one stream",
+        "description": "A page of signals after a cursor, oldest first, or without one the newest of the last `since` seconds: each with its time, source, kind, severity, machine, session, actor, pull request, branch, issue, paths, a one-line summary and whether it is for the reader. Re-projections and undecided steps are counted as `suppressed`; a source that cannot be read is listed with its reason, never answered as empty. The page's `cursor` is the next page's `after`, and nothing on this page comes back. Reads only.",
+        "tags": [
+          "monitor"
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The `cursor` of the previous page; without it, the page is the newest signals of the\nlast `since` seconds.",
+            "examples": {
+              "local-resumed": {
+                "value": "x0"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "At most this many signals (default 50, at most 500).",
+            "examples": {
+              "local-first-page": {
+                "value": 50
+              },
+              "local-resumed": {
+                "value": 20
+              }
+            }
+          },
+          {
+            "name": "sources",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A comma-separated subset of `mesh`, `executor` and `github` (default: all three).",
+            "examples": {
+              "local-first-page": {
+                "value": "mesh,executor"
+              },
+              "local-resumed": {
+                "value": "mesh,executor"
+              }
+            }
+          },
+          {
+            "name": "for",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what\nis addressed to it is marked `for_you`. An MCP caller is also its own board session.",
+            "examples": {
+              "local-first-page": {
+                "value": "1b"
+              },
+              "local-resumed": {
+                "value": "1b,cd"
+              }
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "How far back a first page reaches, in seconds (default 3600).",
+            "examples": {
+              "local-first-page": {
+                "value": 3600
+              },
+              "local-resumed": {
+                "value": 600
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Follow everything in one stream: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "monitor.stream",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::monitor"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_monitor"
+        }
       }
     },
     "/api/v1/object": {
@@ -14343,6 +14963,167 @@
         "x-majordomus-cli": "prs prove-dry-run"
       }
     },
+    "/api/v1/pull-requests/timings": {
+      "get": {
+        "operationId": "integration.timings",
+        "summary": "How long CI takes",
+        "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+        "tags": [
+          "integration"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "How long CI takes: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationTimings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "integration.timings",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::integration"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_ci_timings"
+        }
+      }
+    },
+    "/api/v1/pull-requests/trains": {
+      "get": {
+        "operationId": "integration.trains",
+        "summary": "The trains of stacked pull requests",
+        "description": "Every train of open pull requests — a group joined by confirmed dependencies: a base branch that is another open pull request's head, or a `Stacked on #N` / `Depends on #N` line in the body — in landing order. Per link: number, title, author, head and base branch, head commit, the forge's page and checks, disposition, lane, reasons, next action, required-check state and every check on the head, relation to master with how far behind it is and whether it carries master, the prepared head under refs/prep/<n> with whether it is the head the forge serves (pushed) or not yet (pending), its position and depth, whether its turn has come, what it stands on and what it carries, its queue rank and whether a cycle catches it. Per train: roots, tops, the next link the order allows, the edges (STACKED_ON or DEPENDS_ON, satisfied when the link below landed), and the pull requests beneath it that are no longer open. Beside them the prepared heads no train holds, the tallies and the queue's diagnostics. Read from the recorded observation, the queue `majordomus prs status` prints and the local refs: it fetches, pushes and moves nothing. `observed: false` with the reason when this checkout has recorded no observation.",
+        "tags": [
+          "integration"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The trains of stacked pull requests: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainsView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "integration.trains",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::integration"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_pull_request_trains"
+        },
+        "x-majordomus-cli": "prs trains"
+      }
+    },
     "/api/v1/quality": {
       "get": {
         "operationId": "quality.report",
@@ -15497,6 +16278,106 @@
         "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_release_analysis"
+        }
+      }
+    },
+    "/api/v1/release/next": {
+      "get": {
+        "operationId": "release.next",
+        "summary": "The version a landing allocates, and why",
+        "description": "What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "base",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The trunk the landing raises from; `origin/master` when absent."
+          },
+          {
+            "name": "head",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "What lands; `HEAD` when absent."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version a landing allocates, and why: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandingDecision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.next",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "implemented",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "published_history"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_next"
         }
       }
     },
@@ -18558,6 +19439,32 @@
         ],
         "description": "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI."
       },
+      "AdmitCommand": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string",
+            "description": "The rule it admits."
+          },
+          "argv": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The program and its arguments, as executed."
+          },
+          "line": {
+            "type": "string",
+            "description": "The same, quoted for a shell."
+          }
+        },
+        "required": [
+          "rule",
+          "argv",
+          "line"
+        ],
+        "description": "One command that admits a rule: the rule's label, its argument vector exactly as\n`apply` executes it, and the same quoted as one line a person pastes into a root\nshell. The two are projections of one vector, so what the report shows is what runs.\n\n```\nuse std::net::Ipv4Addr;\nuse majordomus_cli::mesh::firewall::{plan, render, AdmitCommand, Backend};\nuse majordomus_cli::mesh::MeshConfig;\n\nlet config: MeshConfig = serde_json::from_value(serde_json::json!({\n    \"schema\": \"mesh/v1\", \"kind\": \"mesh-declaration\", \"id\": \"doc\", \"enabled\": true,\n})).unwrap();\nlet p = plan(Some(&config), &[Ipv4Addr::new(10, 0, 0, 2)], None);\nlet commands: Vec<AdmitCommand> = render(Backend::Ufw, &p, None);\nassert_eq!(commands[0].argv[0], \"ufw\");\nassert_eq!(commands[0].rule, \"udp/7741 to 239.255.77.77 from any\");\nassert_eq!(commands[0].line, \"ufw allow in proto udp to 239.255.77.77 port 7741 comment 'majordomus mesh: multicast discovery'\");\n```"
+      },
       "AdrRef": {
         "type": "object",
         "properties": {
@@ -19109,6 +20016,24 @@
           "content"
         ],
         "description": "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an `ObjectView` where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
+      },
+      "AppliedExemption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The class's id."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The class's description, which is the reason the floor did not apply."
+          }
+        },
+        "required": [
+          "id",
+          "reason"
+        ],
+        "description": "The exemption a decision applied, by class.\n\n```\nuse majordomus_cli::release::landing::AppliedExemption;\nlet e = AppliedExemption { id: \"plan-records\".into(), reason: \"plan records\".into() };\nassert_eq!(e.id, \"plan-records\");\n```"
       },
       "Arch": {
         "oneOf": [
@@ -19850,6 +20775,31 @@
         ],
         "description": "One audience, with the membership nobody authored."
       },
+      "Backend": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "ufw",
+            "description": "Uncomplicated Firewall, the Debian and Ubuntu front: `ufw` is on the path."
+          },
+          {
+            "type": "string",
+            "const": "nftables",
+            "description": "nftables without ufw in front: `nft` is on the path."
+          },
+          {
+            "type": "string",
+            "const": "application_firewall",
+            "description": "macOS: the application firewall (`socketfilterfw`), which admits executables, not ports."
+          },
+          {
+            "type": "string",
+            "const": "none",
+            "description": "No firewall front this executable knows; nothing is observed and nothing is applied."
+          }
+        ],
+        "description": "The firewall front this host runs, as far as the executable can tell without privilege:\ndecided by `detect` from the platform and the path, and the thing `render`,\n`observe` and `apply` are specific to.\n\n```\nuse majordomus_cli::mesh::firewall::Backend;\n\nassert_eq!(serde_json::to_value(Backend::ApplicationFirewall).unwrap(), \"application_firewall\");\nassert_eq!(Backend::None.as_str(), \"none\");\n```"
+      },
       "Balance": {
         "type": "object",
         "properties": {
@@ -19958,6 +20908,33 @@
           }
         ],
         "description": "What a repository must hold before a conditional benchmark requirement applies to it.\nTyped, like a waiver's reason, so that the condition is a reviewable statement on the\ndescriptor and never a provider quietly returning nothing.\n\n```\nuse majordomus_cli::capability::BenchmarkPrecondition;\nlet p: BenchmarkPrecondition = serde_json::from_str(r#\"\"plan_holds_an_issue\"\"#).unwrap();\nassert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);\n```"
+      },
+      "BeneathLink": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Its number."
+          },
+          "state": {
+            "$ref": "#/components/schemas/DependencyState",
+            "description": "What the forge says became of it."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The pull request on the forge, when the repository is known."
+          }
+        },
+        "required": [
+          "number",
+          "state"
+        ],
+        "description": "A pull request below a train that is not open any more."
       },
       "BindingCause": {
         "oneOf": [
@@ -20382,6 +21359,343 @@
           "commits"
         ],
         "description": "One branch that names an issue, with the commits it holds."
+      },
+      "BriefDeriveSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "`undeclared` when the repository ships no derive lock."
+          },
+          "holder": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The lock's owner line, when the lock is held."
+          },
+          "pid": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The holder's process id, when its line names one."
+          },
+          "alive": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether that process is running on this machine."
+          },
+          "held_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since the lock was taken."
+          },
+          "priority": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branches the priority marker names, when it is present."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "summary"
+        ],
+        "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+      },
+      "BriefIntegrationSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether this checkout ever observed the forge."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "summary"
+        ],
+        "description": "The integration queue, as `majordomus prs brief` says it."
+      },
+      "BriefMeshSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether cooperation could be read."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether cooperation runs in the composing process."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it does not, when it does not."
+          },
+          "links": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Links to other runtimes."
+          },
+          "connected": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of them, connected."
+          },
+          "failing": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of them, degraded, unreachable or expired."
+          },
+          "claims_held": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Claims held across the mesh."
+          },
+          "own_claims": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of them, held by this runtime."
+          },
+          "reviews_for_you": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open review requests that name this runtime as the reviewer."
+          },
+          "handovers_waiting": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Handovers another runtime published that nobody has consumed."
+          },
+          "overlaps_for_you": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Overlaps between a claim of this runtime and another's."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "active",
+          "links",
+          "connected",
+          "failing",
+          "claims_held",
+          "own_claims",
+          "reviews_for_you",
+          "handovers_waiting",
+          "overlaps_for_you",
+          "summary"
+        ],
+        "description": "The mesh: the links of this runtime and what the journal addresses to it."
+      },
+      "BriefOrigin": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "type": "string",
+            "description": "`leaseholder` (the server this checkout's lease names), `superseded` (a server that lost the lease), or `this_process` (no server answered, or the call asked for `local`)."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The address of the server that composed it, when one did."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why this process and not the leaseholder, when it is not the leaseholder."
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "description": "Which process composed the brief, and why that one."
+      },
+      "BriefPeersSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether every board could be read."
+          },
+          "attached": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Attached peers across the boards read, the caller included."
+          },
+          "boards": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many boards the answer covers."
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every board that could not be read, as `<worktree>: <reason>`."
+          },
+          "overlaps": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs of peers whose claimed scopes meet."
+          },
+          "superseded": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Set when the composing server is superseded: its own board is unreachable by the repository's gather."
+          },
+          "named": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The attached peers, one short line each, at most a bounded number."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "attached",
+          "boards",
+          "overlaps",
+          "named",
+          "summary"
+        ],
+        "description": "The workers of this repository, from every board the brief could read."
+      },
+      "BriefSectionState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "read",
+            "description": "Its owner answered in full."
+          },
+          {
+            "type": "string",
+            "const": "partial",
+            "description": "Its owner answered, and part of what it covers could not be asked; the summary says which."
+          },
+          {
+            "type": "string",
+            "const": "unread",
+            "description": "Its owner did not answer; the summary says why."
+          },
+          {
+            "type": "string",
+            "const": "undeclared",
+            "description": "The repository declares nothing for it (no derive lock, a mesh switched off)."
+          }
+        ],
+        "description": "Whether a section of the brief could be read."
+      },
+      "BriefSessionSection": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/BriefSectionState",
+            "description": "Whether it could be read."
+          },
+          "episode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The open episode, when one is found."
+          },
+          "provider_session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider session that owns it."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The checkout's branch."
+          },
+          "head": {
+            "type": "string",
+            "description": "The checkout's head, abbreviated."
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The active task's id, when one is active."
+          },
+          "task": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The active task's words."
+          },
+          "caller": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The calling MCP session's place on this board, when the call came through one."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The section in words."
+          }
+        },
+        "required": [
+          "state",
+          "branch",
+          "head",
+          "summary"
+        ],
+        "description": "The session the brief is about."
       },
       "Budget": {
         "type": "object",
@@ -21274,6 +22588,31 @@
         ],
         "description": "Which releases an unpinned installation may resolve to."
       },
+      "CheckRunState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "passed",
+            "description": "Completed and passed."
+          },
+          {
+            "type": "string",
+            "const": "failed",
+            "description": "Completed and failed (failure, timed out, cancelled, action required)."
+          },
+          {
+            "type": "string",
+            "const": "pending",
+            "description": "Queued or running; also what a report that says nothing is taken to be, so a\ndefault is never a pass."
+          },
+          {
+            "type": "string",
+            "const": "skipped",
+            "description": "Completed as skipped or neutral."
+          }
+        ],
+        "description": "Where one check run stands."
+      },
       "CheckState": {
         "oneOf": [
           {
@@ -21294,6 +22633,61 @@
         ],
         "description": "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see."
       },
+      "CheckTiming": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The check's name, as the forge reports it."
+          },
+          "runs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Runs that started and completed, so were measured."
+          },
+          "passed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Of those, how many passed."
+          },
+          "failed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Of those, how many failed."
+          },
+          "median_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The median duration, in seconds."
+          },
+          "p90_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The 90th percentile duration (nearest rank), in seconds."
+          },
+          "slowest_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The longest run, in seconds."
+          }
+        },
+        "required": [
+          "name",
+          "runs",
+          "passed",
+          "failed",
+          "median_seconds",
+          "p90_seconds",
+          "slowest_seconds"
+        ],
+        "description": "How one check takes, across the open heads that ran it."
+      },
       "Checkouts": {
         "oneOf": [
           {
@@ -21308,6 +22702,49 @@
           }
         ],
         "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+      },
+      "CiTimings": {
+        "type": "object",
+        "properties": {
+          "observed_at": {
+            "type": "string",
+            "description": "When the forge was observed, RFC 3339: the moment these timings describe."
+          },
+          "measured_runs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Check runs measured, across every check and head."
+          },
+          "unmeasured_runs": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Check runs the observation holds without both a start and a completion: running,\nqueued, or recorded before starts were read. Counted, never measured as zero."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckTiming"
+            },
+            "description": "Every check, the slowest median first."
+          },
+          "heads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeadTiming"
+            },
+            "description": "Every head with a measured check, the longest wall time first."
+          }
+        },
+        "required": [
+          "observed_at",
+          "measured_runs",
+          "unmeasured_runs",
+          "checks",
+          "heads"
+        ],
+        "description": "CI timings over every open head the observation holds."
       },
       "ClaimEvidence": {
         "type": "object",
@@ -21796,7 +23233,7 @@
           "reasons": {
             "type": "array",
             "items": {
-              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
             "description": "The evidence, as reason codes."
@@ -23557,7 +24994,7 @@
             "items": {
               "$ref": "#/components/schemas/DoneQuestion"
             },
-            "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates and the change set; a question nothing here\nreaches is `unknown` and names the command that would answer it."
+            "description": "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository's convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it."
           },
           "findings": {
             "type": "array",
@@ -23809,6 +25246,35 @@
           "detail"
         ],
         "description": "Two things in the answer that do not agree, named rather than silently ordered.\n\nThe compiler could have resolved every disagreement by keeping one side, and for\ndeduplication it does. A conflict is what is left when both sides are legitimately in\nthe answer and they still do not agree — so the resolution belongs to the session\nreading it, and the compiler's job is to make sure the disagreement is visible rather\nthan implied by the order of two rows.\n\n`current` is the side the compiler treats as current, which is a statement about\nrecency, not correctness: `supersedes` means the layer declared one to replace the other,\n`version` means two versions of one thing are both here.\n\n```\nuse majordomus_cli::devcontext::Conflict;\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |current: &str, against: &str, kind: &str| -> Conflict {\n    serde_json::from_value(json!({\n        \"current\": current, \"against\": against, \"kind\": kind,\n        \"detail\": \"both are in the answer and they disagree\",\n    })).unwrap()\n};\n\nlet mut conflicts = vec![\n    row(\"majordomus://rule/project.x@2\", \"majordomus://rule/project.x@1\", \"version\"),\n    row(\"majordomus://adr/0052\", \"majordomus://adr/0031\", \"supersedes\"),\n];\ncanonical(&mut conflicts);\n\n// filed under the kind of disagreement, so like reads with like\nlet kinds: Vec<&str> = conflicts.iter().map(|c| c.kind.as_str()).collect();\nassert_eq!(kinds, [\"supersedes\", \"version\"]);\n\n// and both sides are always named: the pair is the fact, not the winner alone\nfor c in &conflicts {\n    assert_ne!(c.current, c.against);\n    assert!(!c.detail.is_empty());\n}\n```"
+      },
+      "ConnectionCounts": {
+        "type": "object",
+        "properties": {
+          "read_deadline_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "`server.read_deadline_seconds:` as this process applies it."
+          },
+          "closed_by_deadline": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Connections closed because no request was read in full on them within the deadline."
+          },
+          "refused_busy": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Requests answered 503 because every request handler was busy."
+          }
+        },
+        "required": [
+          "read_deadline_seconds",
+          "closed_by_deadline",
+          "refused_busy"
+        ],
+        "description": "What this process's HTTP server has done to clients that held a connection without using\nit: the deadline it applies and what that deadline cost, since the process started.\nAbsent while this process serves no HTTP.\n\n```\nuse majordomus_cli::http::deadline::{counts, ConnectionCounts};\n// a process that has started no server reports nothing, rather than zeroes that would\n// read as \"no slow client was seen\"\nassert_eq!(counts(), None);\nlet c = ConnectionCounts { read_deadline_seconds: 30, closed_by_deadline: 4, refused_busy: 0 };\nlet text = serde_json::to_string(&c).unwrap();\nassert_eq!(serde_json::from_str::<ConnectionCounts>(&text).unwrap(), c);\n```"
       },
       "ConnectionEpisode": {
         "type": "object",
@@ -30103,7 +31569,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
-            "description": "The highest Lamport stamp the journal has seen: the `after` of the next page."
+            "description": "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140)."
           },
           "events": {
             "type": "array",
@@ -31037,7 +32503,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+            "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
           },
           "message": {
             "type": "string",
@@ -31529,6 +32995,10 @@
           "concurrency": {
             "$ref": "#/components/schemas/ExecutionConcurrency",
             "description": "Whether two of them may overlap."
+          },
+          "signed_input": {
+            "type": "boolean",
+            "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
           }
         },
         "required": [
@@ -32045,6 +33515,11 @@
             "type": "string",
             "const": "cockpit",
             "description": "This process serves the Cockpit."
+          },
+          {
+            "type": "string",
+            "const": "ui",
+            "description": "This process serves the UI: `majordomus ui`, the primary surface (ADR 0135)."
           }
         ],
         "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
@@ -32477,6 +33952,222 @@
           "message"
         ],
         "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching."
+      },
+      "FirewallObservation": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/FirewallObservationState",
+            "description": "The verdict."
+          },
+          "detail": {
+            "type": "string",
+            "description": "The evidence: the status line, the rules found, or the refusal."
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The rules not admitted, by label, when `state` is `missing`."
+          }
+        },
+        "required": [
+          "state",
+          "detail"
+        ],
+        "description": "The firewall's own word, judged against the plan: the state, the evidence behind it,\nand the labels of the rules not admitted when the state is `missing`.\n\n```\nuse majordomus_cli::mesh::firewall::{judge_ufw, plan, FirewallObservation, FirewallObservationState};\n\nlet o: FirewallObservation = judge_ufw(\"Status: inactive\\n\", &plan(None, &[], None));\nassert_eq!(o.state, FirewallObservationState::Inactive);\nassert!(o.missing.is_empty() && o.detail.contains(\"inactive\"));\n```"
+      },
+      "FirewallObservationState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "no_backend",
+            "description": "No backend to ask."
+          },
+          {
+            "type": "string",
+            "const": "inactive",
+            "description": "The firewall is off: nothing filters, nothing is needed."
+          },
+          {
+            "type": "string",
+            "const": "present",
+            "description": "Every rule of the plan is admitted."
+          },
+          {
+            "type": "string",
+            "const": "missing",
+            "description": "At least one rule of the plan is not admitted."
+          },
+          {
+            "type": "string",
+            "const": "unobservable",
+            "description": "The firewall could not be asked from this process — it needs root."
+          }
+        ],
+        "description": "What the host's firewall says about the plan, as one word. Only `missing` is a failure\non its own; `unobservable` is an absence that the kernel log may still turn into one.\n\n```\nuse majordomus_cli::mesh::firewall::FirewallObservationState;\n\nassert_eq!(serde_json::to_value(FirewallObservationState::Unobservable).unwrap(), \"unobservable\");\n```"
+      },
+      "FirewallPlan": {
+        "type": "object",
+        "properties": {
+          "local_addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "This machine's addresses, as the plan saw them."
+          },
+          "networks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The private networks peers come from: the enclosing ranges of every address the\ndeclaration names, or of this machine's own when it names none."
+          },
+          "hub_ports": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "description": "The ports of the declared hubs this machine is."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FirewallRule"
+            },
+            "description": "The admissions, in a fixed order."
+          }
+        },
+        "required": [
+          "local_addresses",
+          "networks",
+          "hub_ports",
+          "rules"
+        ],
+        "description": "What the declaration implies this host must admit: the rules, the networks they admit\nfrom, the hub ports this machine is listed for, and the addresses the plan saw. The\nanswer of `plan`; an empty `rules` is \"nothing is needed\", which is the answer for no\ndeclaration and for a disabled one.\n\n```\nuse majordomus_cli::mesh::firewall::{plan, FirewallPlan};\n\nlet nothing: FirewallPlan = plan(None, &[], None);\nassert!(nothing.rules.is_empty() && nothing.hub_ports.is_empty() && nothing.networks.is_empty());\n```"
+      },
+      "FirewallReport": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Whether the host admits the mesh as far as it can be observed: nothing missing, and\nnothing logged as dropped."
+          },
+          "platform": {
+            "type": "string",
+            "description": "The platform (`linux`, `macos`, …)."
+          },
+          "backend": {
+            "$ref": "#/components/schemas/Backend",
+            "description": "The firewall front found."
+          },
+          "executable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The executable the server runs as, which is what the macOS firewall admits."
+          },
+          "plan": {
+            "$ref": "#/components/schemas/FirewallPlan",
+            "description": "What the declaration implies this host must admit."
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdmitCommand"
+            },
+            "description": "The commands that admit it on this backend; what `apply` runs."
+          },
+          "observation": {
+            "$ref": "#/components/schemas/FirewallObservation",
+            "description": "The firewall's own word about the plan."
+          },
+          "window_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The window `blocked_recently` covers, in seconds."
+          },
+          "blocked_recently": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "Drops the kernel logged toward the plan's ports within the window, per port;\nabsent when the log could not be read."
+          },
+          "verdict": {
+            "type": "string",
+            "description": "The sentence a person reads."
+          }
+        },
+        "required": [
+          "ok",
+          "platform",
+          "backend",
+          "plan",
+          "commands",
+          "observation",
+          "window_seconds",
+          "verdict"
+        ],
+        "description": "The whole report: the plan, the backend, the commands, the firewall's word and the\nkernel's, with one verdict sentence and one `ok`. What `mesh.firewall` answers and\nwhat the doctor's `firewall` check reads.\n\n```\nuse majordomus_cli::mesh::firewall::{report, FirewallReport, BLOCK_WINDOW_SECONDS};\n\nlet r: FirewallReport = report(None, &[], None);\nassert!(r.ok && r.commands.is_empty());\nassert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);\nassert_eq!(r.platform, std::env::consts::OS);\n```"
+      },
+      "FirewallRule": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role",
+            "description": "Why."
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/Protocol",
+            "description": "The transport protocol."
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535,
+            "description": "The destination port."
+          },
+          "destination": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The destination address when it is a multicast group; `None` for this host's own."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The networks the traffic may come from, as CIDR; empty admits any source, which is\nonly ever the case for the multicast group, whose TTL keeps it on the segment."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The sentence a person reads beside the rule."
+          }
+        },
+        "required": [
+          "role",
+          "protocol",
+          "port",
+          "sources",
+          "reason"
+        ],
+        "description": "One inbound admission the mesh needs on this host: a protocol and a port, the group it is\naddressed to when it is multicast, the networks it may come from, and the sentence that\nsays why. A rule is derived, never written by hand; `FirewallRule::label` is how a\nverdict names it.\n\n```\nuse majordomus_cli::mesh::firewall::{FirewallRule, Protocol, Role};\n\nlet rule = FirewallRule {\n    role: Role::Hub,\n    protocol: Protocol::Tcp,\n    port: 8791,\n    destination: None,\n    sources: vec![\"192.168.7.0/24\".into()],\n    reason: \"this machine is a declared rendezvous hub\".into(),\n};\nassert_eq!(rule.label(), \"tcp/8791 from 192.168.7.0/24\");\n```"
       },
       "Fixtures": {
         "type": "object",
@@ -33610,6 +35301,60 @@
         ],
         "description": "A handover anywhere in the mesh, with everyone who has taken it. The id is the digest\nof the body, so the same handover published twice — by a retry, or by two runtimes that\nboth saw it — is one handover here; and `consumed_by` is what keeps two workers from\nsilently picking up the same continuity, since the list is folded from events every\nruntime holds.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, HandoverView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet body = \"# Objective\\nship\\n\".to_string();\nlet handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,\n    milestone: None, branch: Some(\"feature/x\".into()), head: None, created_at: None,\n    name: None, body };\nlet id = handover.id.clone();\nj.append_own(EventBody::HandoverPublished { handover }).unwrap();\nj.append_own(EventBody::HandoverConsumed { handover: id.clone(), session: \"s1\".into() })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &HandoverView = &state.handovers[0];\nassert_eq!(view.id, id, \"identified by what it says, not by who said it\");\nassert_eq!(view.consumed_by.len(), 1, \"somebody has picked this one up\");\n```"
       },
+      "HeadTiming": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request."
+          },
+          "head_sha": {
+            "type": "string",
+            "description": "The head the checks ran on."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When its first measured check started, RFC 3339."
+          },
+          "completed_at": {
+            "type": "string",
+            "description": "When its last measured check completed, RFC 3339."
+          },
+          "wall_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The wall time between them, in seconds: what a reader waited for CI on this head."
+          },
+          "slowest_check": {
+            "type": "string",
+            "description": "The measured check that took longest."
+          },
+          "slowest_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How long it took, in seconds."
+          },
+          "failed": {
+            "type": "boolean",
+            "description": "Whether any measured check on the head failed."
+          }
+        },
+        "required": [
+          "number",
+          "head_sha",
+          "started_at",
+          "completed_at",
+          "wall_seconds",
+          "slowest_check",
+          "slowest_seconds",
+          "failed"
+        ],
+        "description": "How long CI took on one open pull request's head: from its first check's start to its last\ncheck's completion, and the check that took longest."
+      },
       "Health": {
         "type": "object",
         "properties": {
@@ -34447,6 +36192,21 @@
           },
           {
             "type": "string",
+            "const": "reopen_attempted",
+            "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+          },
+          {
+            "type": "string",
+            "const": "reopened",
+            "description": "It was closed and reopened; its required check can report now."
+          },
+          {
+            "type": "string",
+            "const": "reopen_failed",
+            "description": "Reopening it failed; the detail says whether the pull request was left closed."
+          },
+          {
+            "type": "string",
             "const": "repair_selected",
             "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
           },
@@ -34581,7 +36341,7 @@
           "reasons": {
             "type": "array",
             "items": {
-              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
             "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
@@ -35186,6 +36946,37 @@
           "unreadable_events"
         ],
         "description": "The integrator's throughput over a window of the trail."
+      },
+      "IntegrationTimings": {
+        "type": "object",
+        "properties": {
+          "observed": {
+            "type": "boolean",
+            "description": "Whether a forge observation is recorded in this checkout."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there are no timings, when there are none."
+          },
+          "timings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CiTimings"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The timings measured from the observation, when there is one."
+          }
+        },
+        "required": [
+          "observed"
+        ],
+        "description": "How long CI takes on the open pull requests, or why it is not known."
       },
       "IntentBinding": {
         "type": "object",
@@ -36756,6 +38547,20 @@
             "format": "uint64",
             "minimum": 0,
             "description": "The highest Lamport stamp seen."
+          },
+          "write_failures": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Appends to the journal file that failed since start: the events were held in memory\nand replicated, and are not on this machine's disk. Nonzero fails `mesh doctor`.",
+            "default": 0
+          },
+          "unreadable": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Lines of the journal file the last reload could not read: torn, corrupt, or written\nby something that is not this journal. Counted, never silently dropped.",
+            "default": 0
           }
         },
         "required": [
@@ -37018,6 +38823,14 @@
           "age_source": {
             "$ref": "#/components/schemas/AgeSource",
             "description": "Where the wait was read from."
+          },
+          "about": {
+            "type": "string",
+            "description": "What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else."
+          },
+          "route": {
+            "type": "string",
+            "description": "Which owner should look first, derived from `about`'s structure; empty without one."
           }
         },
         "required": [
@@ -37067,6 +38880,13 @@
             },
             "description": "Every candidate, in canonical order of id."
           },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeGroup"
+            },
+            "description": "The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject."
+          },
           "cap": {
             "type": [
               "integer",
@@ -37096,6 +38916,45 @@
           "over_cap"
         ],
         "description": "The candidates awaiting review, against the policy's cap.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidates;\nlet empty: KnowledgeCandidates = serde_json::from_str(\n    r#\"{\"total\":0,\"on_this_branch\":0,\"unattributed\":0,\"branch\":\"master\",\"candidates\":[],\"over_cap\":false}\"#,\n).unwrap();\nassert_eq!(empty.total, 0, \"an empty queue is an answer\");\nassert_eq!(empty.cap, None, \"and a policy without the key declares no cap\");\n```"
+      },
+      "KnowledgeGroup": {
+        "type": "object",
+        "properties": {
+          "about": {
+            "type": "string",
+            "description": "The subject, as written."
+          },
+          "route": {
+            "type": "string",
+            "description": "The route of its records."
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The candidates awaiting review, by id."
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The records rejected and kept, by id."
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The episodes behind all of them, each once, in order."
+          }
+        },
+        "required": [
+          "about",
+          "route"
+        ],
+        "description": "The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode's own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\"{\"about\":\"lib/a.sh\",\"route\":\"project\",\"candidates\":[\"e1-a\",\"e2-b\"],\"episodes\":[\"e1\",\"e2\"]}\"#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \"two episodes observed it\");\nassert!(g.rejected.is_empty(), \"and nobody rejected it\");\n```"
       },
       "KnowledgeRecord": {
         "type": "object",
@@ -37324,6 +39183,78 @@
         ],
         "description": "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively."
       },
+      "LandingDecision": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "`DECISION_SCHEMA`."
+          },
+          "trunk_version": {
+            "type": "string",
+            "description": "What the trunk declares: the number the next one is raised from."
+          },
+          "observed": {
+            "$ref": "#/components/schemas/ReleaseImpact",
+            "description": "How far the change moves the public contract, measured (ADR 0051)."
+          },
+          "required_by_compatibility": {
+            "$ref": "#/components/schemas/ReleaseImpact",
+            "description": "What that movement requires under the version's mode."
+          },
+          "floor": {
+            "$ref": "#/components/schemas/ReleaseImpact",
+            "description": "The policy's floor, or `none` when an exemption applied."
+          },
+          "exemption": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AppliedExemption"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The exemption that lowered the floor, if one did."
+          },
+          "selected": {
+            "$ref": "#/components/schemas/ReleaseImpact",
+            "description": "The larger of the requirement and the floor."
+          },
+          "next_version": {
+            "type": "string",
+            "description": "The trunk's version raised by `selected`."
+          },
+          "allocation": {
+            "$ref": "#/components/schemas/ReleaseAllocation",
+            "description": "Whether the policy allocates at landing; the decision is computed either way."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ReleasePolicyMode",
+            "description": "The compatibility mode the trunk's version puts in force."
+          },
+          "explanation": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One sentence per step, in the order the decision was made."
+          }
+        },
+        "required": [
+          "schema",
+          "trunk_version",
+          "observed",
+          "required_by_compatibility",
+          "floor",
+          "selected",
+          "next_version",
+          "allocation",
+          "mode",
+          "explanation"
+        ],
+        "description": "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```"
+      },
       "LayerSummary": {
         "type": "object",
         "properties": {
@@ -37431,7 +39362,7 @@
             "type": "integer",
             "format": "uint32",
             "minimum": 0,
-            "description": "The server's process id. Informational: nothing decides liveness from it."
+            "description": "The server's process id. Not proof of a live server — only a probe that is answered\nis — but decisions are made from it: a live pid earns a server that does not answer\nthe election's busy wait before its lease is taken over, and `serve ensure`'s patience\nbefore it starts another; `serve stop` sends its `SIGTERM` to this pid."
           },
           "url": {
             "type": [
@@ -37732,6 +39663,24 @@
           "heads"
         ],
         "description": "A line of work as `status` shows it."
+      },
+      "LinkCheck": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The check's name."
+          },
+          "state": {
+            "$ref": "#/components/schemas/CheckRunState",
+            "description": "Where it stands."
+          }
+        },
+        "required": [
+          "name",
+          "state"
+        ],
+        "description": "One check run on a link's head."
       },
       "LinkRefusal": {
         "type": "object",
@@ -38592,6 +40541,108 @@
         ],
         "description": "One measured pair: a foreground on a ground, in one theme."
       },
+      "MeshClaimBrief": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "`<stream>/<claim>`."
+          },
+          "session": {
+            "type": "string",
+            "description": "The holding session's key."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue it is for."
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it is for, cut to `SUMMARY_TEXT` characters."
+          },
+          "paths": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many paths it claims."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ClaimMode",
+            "description": "Exclusive or advisory."
+          },
+          "acquired_lamport": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The Lamport stamp of the acquisition."
+          }
+        },
+        "required": [
+          "key",
+          "session",
+          "paths",
+          "mode",
+          "acquired_lamport"
+        ],
+        "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
+      },
+      "MeshClaimCounts": {
+        "type": "object",
+        "properties": {
+          "held": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Live and, for an exclusive claim, the winner of its scope."
+          },
+          "conflicted": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Live, exclusive, and beaten to its scope."
+          },
+          "released": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Released by the holder."
+          },
+          "expired": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Ended without a release."
+          }
+        },
+        "required": [
+          "held",
+          "conflicted",
+          "released",
+          "expired"
+        ],
+        "description": "Claims by standing: held, conflicted, released and expired. Held and conflicted are\nlive; the other two are history, counted rather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```"
+      },
+      "MeshClaimFilter": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "all",
+            "description": "Every claim, ended ones included."
+          },
+          {
+            "type": "string",
+            "const": "live",
+            "description": "Only claims that are still live: held, or conflicted and still held."
+          }
+        ],
+        "description": "Which claims a full answer keeps: all of them, the ended ones included, or only those\nstill live — the question an executor asks before it takes a lease.\n\n```\nuse majordomus_cli::mesh::page::ClaimFilter;\n\nassert_eq!(ClaimFilter::default(), ClaimFilter::All);\nassert_eq!(serde_json::from_str::<ClaimFilter>(r#\"\"live\"\"#).unwrap(), ClaimFilter::Live);\n```"
+      },
       "MeshDoctorReport": {
         "type": "object",
         "properties": {
@@ -38701,6 +40752,45 @@
         ],
         "description": "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines' idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\n\nlet event: &MeshEvent = &j.events()[0];\nassert_eq!(event.seq, 1, \"dense from 1 within its stream\");\nassert_eq!(event.kind(), \"session_closed\");\nassert_eq!(event.id(), format!(\"{}/1\", event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \"another-repository\".into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```"
       },
+      "MeshHandoverBrief": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The content digest: what `mesh.handover.consume` takes."
+          },
+          "runtime": {
+            "type": "string",
+            "description": "`<node>-<runtime>` of the publisher."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch it continues."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue it continues."
+          },
+          "published_lamport": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The Lamport stamp of the first publication."
+          }
+        },
+        "required": [
+          "id",
+          "runtime",
+          "published_lamport"
+        ],
+        "description": "A handover nobody has taken, told briefly: the id `mesh.handover.consume` takes, who\npublished it and what it continues. Its body stays in the full view.\n\n```\nuse majordomus_cli::mesh::page::HandoverBrief;\n\nlet brief = HandoverBrief { id: \"ab12\".into(), runtime: \"n-r\".into(),\n    branch: Some(\"feature/x\".into()), issue: None, published_lamport: 7 };\nassert_eq!(serde_json::to_value(&brief).unwrap()[\"branch\"], \"feature/x\");\n```"
+      },
       "MeshIdentityReport": {
         "type": "object",
         "properties": {
@@ -38738,6 +40828,36 @@
           "present"
         ],
         "description": "The answer of `mesh.identity`: this machine's node identity, public half only."
+      },
+      "MeshKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "sessions",
+            "description": "The sessions."
+          },
+          {
+            "type": "string",
+            "const": "claims",
+            "description": "The claims."
+          },
+          {
+            "type": "string",
+            "const": "overlaps",
+            "description": "The advisory overlaps."
+          },
+          {
+            "type": "string",
+            "const": "handovers",
+            "description": "The handovers."
+          },
+          {
+            "type": "string",
+            "const": "reviews",
+            "description": "The review requests."
+          }
+        ],
+        "description": "One collection of the folded state, as `kind` names it: a reader that wants only the\nreviews is not sent the claims.\n\n```\nuse majordomus_cli::mesh::page::Kind;\n\nassert_eq!(serde_json::from_str::<Kind>(r#\"\"reviews\"\"#).unwrap(), Kind::Reviews);\nassert!(serde_json::from_str::<Kind>(r#\"\"everything\"\"#).is_err());\n```"
       },
       "MeshProviderState": {
         "oneOf": [
@@ -38797,6 +40917,115 @@
         ],
         "description": "A repository's mesh identity, carried by every advertisement, link and event, together\nwith the account of where it came from. The `detail` exists so that a person told two\ncheckouts are not the same repository can see what each one was derived from instead of\ncomparing two opaque digests.\n\n```\nuse majordomus_cli::mesh::repository::MeshRepositoryIdentity;\nuse majordomus_cli::mesh::repository::of_root_commits;\n\nlet identity: MeshRepositoryIdentity = of_root_commits(&[\"a\".repeat(40)]);\nassert_eq!(identity.id.len(), 32, \"32 hex characters, on every machine\");\nassert_eq!(identity.detail, \"aaaaaaaaaaaa\", \"the evidence, short enough to read\");\n```"
       },
+      "MeshReviewBrief": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "`<stream>/<review>`."
+          },
+          "subject": {
+            "type": "string",
+            "description": "What is to be reviewed, cut to `SUMMARY_TEXT` characters."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue."
+          },
+          "reviewer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The runtime asked, when one was."
+          }
+        },
+        "required": [
+          "key",
+          "subject"
+        ],
+        "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None };\nassert!(serde_json::to_value(&brief).unwrap().get(\"issue\").is_none(), \"absent, not null\");\n```"
+      },
+      "MeshRuntimeSummary": {
+        "type": "object",
+        "properties": {
+          "runtime": {
+            "type": "string",
+            "description": "`<node>-<runtime>`."
+          },
+          "liveness": {
+            "$ref": "#/components/schemas/StreamLiveness",
+            "description": "Own, live or expired."
+          },
+          "last_beat_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Milliseconds since its beat last rose, on this runtime's clock."
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/MeshSessionCounts",
+            "description": "Its sessions by standing."
+          },
+          "claims": {
+            "$ref": "#/components/schemas/MeshClaimCounts",
+            "description": "Its claims by standing."
+          },
+          "newest_claim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshClaimBrief"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its newest live claim."
+          }
+        },
+        "required": [
+          "runtime",
+          "liveness",
+          "sessions",
+          "claims"
+        ],
+        "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```"
+      },
+      "MeshSessionCounts": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open, on a runtime that beats."
+          },
+          "closed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Closed by their own runtime."
+          },
+          "expired": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Never closed, on a runtime that stopped beating."
+          }
+        },
+        "required": [
+          "active",
+          "closed",
+          "expired"
+        ],
+        "description": "Sessions by standing: how many are active, closed and expired. A count stays the same\nsize however many sessions the mesh has seen, which is why the summary carries counts.\n\n```\nuse majordomus_cli::mesh::page::SessionCounts;\n\nlet none = SessionCounts::default();\nassert_eq!(serde_json::to_value(&none).unwrap(),\n    serde_json::json!({ \"active\": 0, \"closed\": 0, \"expired\": 0 }));\n```"
+      },
       "MeshSource": {
         "oneOf": [
           {
@@ -38834,12 +41063,27 @@
             "type": "boolean",
             "description": "Whether cooperation runs."
           },
+          "view": {
+            "$ref": "#/components/schemas/MeshView",
+            "description": "What the answer carries: `summary` or `full`."
+          },
           "reason": {
             "type": [
               "string",
               "null"
             ],
             "description": "Why not."
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The summary, in the summary view: counts, each runtime's newest live claim, the\nopen reviews and the untaken handovers."
           },
           "state": {
             "anyOf": [
@@ -38850,7 +41094,7 @@
                 "type": "null"
               }
             ],
-            "description": "The folded state, when cooperation runs."
+            "description": "The folded state narrowed by the filters, in the full view; its digest is the whole\nfold's."
           },
           "streams": {
             "type": "array",
@@ -38862,6 +41106,7 @@
         },
         "required": [
           "active",
+          "view",
           "streams"
         ],
         "description": "The answer of `mesh.state`."
@@ -38928,6 +41173,81 @@
           "refusals"
         ],
         "description": "The whole mesh, as every surface reports it."
+      },
+      "MeshSummary": {
+        "type": "object",
+        "properties": {
+          "digest": {
+            "type": "string",
+            "description": "The whole fold's digest: equal digests, equal state."
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/MeshSessionCounts",
+            "description": "Every session by standing."
+          },
+          "claims": {
+            "$ref": "#/components/schemas/MeshClaimCounts",
+            "description": "Every claim by standing."
+          },
+          "overlaps": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Advisory overlaps between live claims."
+          },
+          "runtimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeshRuntimeSummary"
+            },
+            "description": "Each runtime counted, the living first; at most `SUMMARY_LIST`."
+          },
+          "runtimes_not_listed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Runtimes past the list, counted."
+          },
+          "open_reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeshReviewBrief"
+            },
+            "description": "Review requests nobody has answered; at most `SUMMARY_LIST`."
+          },
+          "open_reviews_not_listed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open reviews past the list, counted."
+          },
+          "untaken_handovers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeshHandoverBrief"
+            },
+            "description": "Handovers nobody has consumed; at most `SUMMARY_LIST`."
+          },
+          "untaken_handovers_not_listed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Untaken handovers past the list, counted."
+          }
+        },
+        "required": [
+          "digest",
+          "sessions",
+          "claims",
+          "overlaps",
+          "runtimes",
+          "runtimes_not_listed",
+          "open_reviews",
+          "open_reviews_not_listed",
+          "untaken_handovers",
+          "untaken_handovers_not_listed"
+        ],
+        "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```"
       },
       "MeshVerifyCheck": {
         "type": "object",
@@ -39008,6 +41328,21 @@
           "peers"
         ],
         "description": "What `mesh verify` found: the local checks, every peer's round, and the state digest\nafterwards. The digest is what makes the report worth running on two machines — two\nruntimes that print the same digest have the same sessions, claims, handovers and\nreviews, and two that do not have something to reconcile, whatever their links say.\n\n`ok` is the conjunction of everything below it, so a caller may act on the one field\nand a person may read the rest to find out which part of it was false.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyReport;\n\nlet report: MeshVerifyReport = cooperation.verify();\nassert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert_eq!(report.digest, Some(cooperation.state().digest), \"what a peer is compared to\");\nassert_eq!(report.ok, report.checks.iter().all(|c| c.ok), \"one field for every check\");\n```"
+      },
+      "MeshView": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "summary",
+            "description": "Counts, each runtime's newest live claim, the open reviews and the untaken handovers:\nbounded, whatever the history."
+          },
+          {
+            "type": "string",
+            "const": "full",
+            "description": "Everything, narrowed only by the filters."
+          }
+        ],
+        "description": "How much an answer about the mesh carries. The summary is the default because it is the\nanswer a worker can read whole whatever the mesh's history; the full fold is one word\naway when a reader needs every record.\n\n```\nuse majordomus_cli::mesh::page::View;\n\nassert_eq!(View::default(), View::Summary);\nassert_eq!(serde_json::to_value(View::Full).unwrap(), \"full\");\n```"
       },
       "MigrationAction": {
         "oneOf": [
@@ -40102,6 +42437,256 @@
           "examples"
         ],
         "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
+      },
+      "MonitorPage": {
+        "type": "object",
+        "properties": {
+          "signals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitorSignal"
+            },
+            "description": "The signals, oldest first."
+          },
+          "for_you": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of them are for the reader."
+          },
+          "suppressed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many records were read and folded away as noise."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitorSourceState"
+            },
+            "description": "Every source, read or not, with its reason."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The cursor of the next page: ask with `after` set to it and nothing on this page\ncomes back."
+          },
+          "more": {
+            "type": "boolean",
+            "description": "Whether more signals wait after this page than its limit let through."
+          }
+        },
+        "required": [
+          "signals",
+          "for_you",
+          "suppressed",
+          "sources",
+          "cursor",
+          "more"
+        ],
+        "description": "A page of the stream."
+      },
+      "MonitorSeverity": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "info",
+            "description": "Something happened; nothing is asked."
+          },
+          {
+            "type": "string",
+            "const": "attention",
+            "description": "Something failed or waits for someone: worth a look."
+          },
+          {
+            "type": "string",
+            "const": "action",
+            "description": "Something waits for the reader: a review asked of them, a handover for them."
+          }
+        ],
+        "description": "How much a signal asks of its reader."
+      },
+      "MonitorSignal": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "When it happened, in Unix seconds, on the clock of whoever recorded it."
+          },
+          "source": {
+            "$ref": "#/components/schemas/MonitorSource",
+            "description": "Which record it comes from."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`."
+          },
+          "severity": {
+            "$ref": "#/components/schemas/MonitorSeverity",
+            "description": "How much it asks of the reader."
+          },
+          "machine": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The machine it happened on, by its display name when the mesh knows it."
+          },
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The session that did it."
+          },
+          "actor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who did it: a session's worker or client, the executor's actor, a GitHub login."
+          },
+          "pr": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request it is about."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch it is about."
+          },
+          "issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The issue it is about."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The repository paths it is about."
+          },
+          "summary": {
+            "type": "string",
+            "description": "What happened, in one line of at most 200 characters."
+          },
+          "for_you": {
+            "type": "boolean",
+            "description": "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.",
+            "default": false
+          },
+          "link": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where to read more, when there is a page for it."
+          }
+        },
+        "required": [
+          "at",
+          "source",
+          "kind",
+          "severity",
+          "summary"
+        ],
+        "description": "One thing that happened, as one line a person or an agent can act on."
+      },
+      "MonitorSource": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews."
+          },
+          {
+            "type": "string",
+            "const": "executor",
+            "description": "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures."
+          },
+          {
+            "type": "string",
+            "const": "github",
+            "description": "GitHub: pull requests opened, merged and closed, and finished workflow runs."
+          }
+        ],
+        "description": "Where a signal comes from."
+      },
+      "MonitorSourceHealth": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "ok",
+            "description": "Read."
+          },
+          {
+            "type": "string",
+            "const": "absent",
+            "description": "Not there to read: the mesh is not running, there is no trail, `gh` is missing."
+          },
+          {
+            "type": "string",
+            "const": "error",
+            "description": "There, but reading it failed."
+          },
+          {
+            "type": "string",
+            "const": "skipped",
+            "description": "Not asked for in `sources`."
+          }
+        ],
+        "description": "Whether a source could be read, and what it contributed to the page."
+      },
+      "MonitorSourceState": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/MonitorSource",
+            "description": "The source."
+          },
+          "state": {
+            "$ref": "#/components/schemas/MonitorSourceHealth",
+            "description": "Whether it was read."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it was not, when it was not."
+          },
+          "signals": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of its signals are on this page."
+          },
+          "suppressed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many of its records were read and folded away as noise."
+          }
+        },
+        "required": [
+          "source",
+          "state",
+          "signals",
+          "suppressed"
+        ],
+        "description": "One source's standing on a page."
       },
       "Mount": {
         "type": "string",
@@ -41724,6 +44309,10 @@
             "type": "boolean",
             "description": "Whether cooperation runs."
           },
+          "view": {
+            "$ref": "#/components/schemas/MeshView",
+            "description": "What the answer carries: `summary` or `full`."
+          },
           "reason": {
             "type": [
               "string",
@@ -41769,6 +44358,7 @@
         },
         "required": [
           "active",
+          "view",
           "machines",
           "refused"
         ],
@@ -43225,6 +45815,44 @@
         ],
         "description": "What the repository can show about one claim.\n\nNine words, not a boolean, because the actions they call for differ: `stale` is re-run\nthe proof, `unavailable` is nothing is there, `unknown` is nobody looked, and\n`not_applicable` is there is nothing to look for.\n\n```\nuse majordomus_cli::environment::preflight::Verdict;\nassert!(Verdict::Verified.proves() && Verdict::Active.proves() && Verdict::Fresh.proves());\nassert!(!Verdict::Stale.proves() && !Verdict::NotApplicable.proves());\nassert_eq!(Verdict::NotApplicable.as_str(), \"not_applicable\");\n// the most urgent first: a failure outranks a stale proof, which outranks an absence\nassert!(Verdict::Failed.urgency() < Verdict::Stale.urgency());\nassert_eq!(Verdict::Verified.urgency(), None);\n```"
       },
+      "PrepState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "pushed",
+            "description": "The prepared head is the pull request's head: it was pushed."
+          },
+          {
+            "type": "string",
+            "const": "pending",
+            "description": "The prepared head is another commit: it waits for its turn to be pushed."
+          }
+        ],
+        "description": "Whether a prepared head has reached the forge."
+      },
+      "PreparedHead": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "The ref."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The commit it names."
+          },
+          "state": {
+            "$ref": "#/components/schemas/PrepState",
+            "description": "Whether that commit is the head the forge serves."
+          }
+        },
+        "required": [
+          "reference",
+          "sha",
+          "state"
+        ],
+        "description": "The head the executor prepared for a link under `refs/prep/<n>`."
+      },
       "Presence": {
         "oneOf": [
           {
@@ -43686,6 +46314,21 @@
           "summary"
         ],
         "description": "One step of the cycle and what it said."
+      },
+      "Protocol": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "udp",
+            "description": "Datagrams: discovery."
+          },
+          {
+            "type": "string",
+            "const": "tcp",
+            "description": "Connections: the hub's registrations and the link protocol."
+          }
+        ],
+        "description": "The transport protocol of a rule: discovery is datagrams, registration and the link\nprotocol are connections. Serialised as the word a firewall front takes.\n\n```\nuse majordomus_cli::mesh::firewall::Protocol;\n\nassert_eq!(serde_json::to_value(Protocol::Udp).unwrap(), \"udp\");\nassert_eq!(serde_json::to_value(Protocol::Tcp).unwrap(), \"tcp\");\n```"
       },
       "ProtocolReport": {
         "type": "object",
@@ -44332,7 +46975,7 @@
           "reasons": {
             "type": "array",
             "items": {
-              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
             "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
@@ -44847,6 +47490,13 @@
               "null"
             ],
             "description": "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502)."
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
           }
         },
         "required": [
@@ -46998,6 +49648,11 @@
             "type": "string",
             "const": "feature_unsupported",
             "description": "The peer lacks a feature the operation needs."
+          },
+          {
+            "type": "string",
+            "const": "misaddressed",
+            "description": "A hello addressed to another runtime: captured on its way there and replayed here."
           }
         ],
         "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
@@ -47046,6 +49701,13 @@
             "format": "uint64",
             "minimum": 0,
             "description": "This node's own datagrams, heard back and skipped."
+          },
+          "overflow": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Observations dropped because the queue to the registry was full: a flood, counted\nrather than held (I2133).",
+            "default": 0
           }
         },
         "required": [
@@ -47259,6 +49921,13 @@
                 },
                 "description": "Authored (non-derived) paths the merge changes."
               },
+              "owes_version": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The version a landing of this head allocates, when master allocates at landing\n(ADR 0134) and the head does not carry it: the head owes a refresh even though it\ncontains master. Absent when the policy does not allocate, or the head carries it."
+              },
               "kind": {
                 "type": "string",
                 "const": "up_to_date"
@@ -47269,6 +49938,34 @@
               "authored"
             ],
             "description": "The head already contains master and merges cleanly."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "behind": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Commits on master the head does not have."
+              },
+              "authored": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Authored (non-derived) paths the merge changes."
+              },
+              "kind": {
+                "type": "string",
+                "const": "carries_master"
+              }
+            },
+            "required": [
+              "kind",
+              "behind",
+              "authored"
+            ],
+            "description": "The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head's own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it."
           },
           {
             "type": "object",
@@ -47339,6 +50036,21 @@
           }
         ],
         "description": "What the pull request's head is to the current master, decided locally by git with\nthis repository's own merge drivers — never by the forge's `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting."
+      },
+      "ReleaseAllocation": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "off",
+            "description": "The version is raised by whoever changes the contract, as before ADR 0134."
+          },
+          {
+            "type": "string",
+            "const": "landing",
+            "description": "The integration executor raises it at landing; a pull request does not."
+          }
+        ],
+        "description": "Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\"\\\"landing\\\"\").unwrap();\nassert_eq!(a.as_str(), \"landing\");\n```"
       },
       "ReleaseArtifactView": {
         "type": "object",
@@ -49946,6 +52658,31 @@
         ],
         "description": "The input of `mesh.review.withdraw`."
       },
+      "Role": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "multicast",
+            "description": "The declared multicast group: every runtime of the segment advertises to it."
+          },
+          {
+            "type": "string",
+            "const": "broadcast",
+            "description": "The declared broadcast port, when broadcast is a permitted fallback."
+          },
+          {
+            "type": "string",
+            "const": "hub",
+            "description": "This machine is a declared rendezvous hub: the fleet registers here."
+          },
+          {
+            "type": "string",
+            "const": "link",
+            "description": "This machine's server is dialed by peers on the link protocol."
+          }
+        ],
+        "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
+      },
       "Route": {
         "type": "string",
         "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
@@ -50856,12 +53593,23 @@
             ],
             "description": "This runtime's link to it, when there is one."
           },
+          "newest_claim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeshClaimBrief"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its newest live claim, told briefly."
+          },
           "sessions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SessionNode"
             },
-            "description": "Its sessions."
+            "description": "Its sessions; in the summary view only the active ones."
           }
         },
         "required": [
@@ -51789,6 +54537,17 @@
               "$ref": "#/components/schemas/ServerView"
             },
             "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+          },
+          "connections": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConnectionCounts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What this process's HTTP server did to connections that held it without a request:\nthe read deadline it applies, the connections that deadline closed, and the requests\nrefused because every handler was busy. Absent when this process serves no HTTP."
           }
         },
         "required": [
@@ -51797,7 +54556,7 @@
           "standing",
           "servers"
         ],
-        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
       },
       "ServerView": {
         "type": "object",
@@ -51920,6 +54679,74 @@
           "availability"
         ],
         "description": "One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does."
+      },
+      "SessionBrief": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "description": "When it was composed, RFC 3339."
+          },
+          "line": {
+            "type": "string",
+            "description": "The brief in one line: the status line's text."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The brief in a few lines: one per section, then the peers it names."
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How often a session reports on itself, in minutes (`session.brief_interval_minutes`)."
+          },
+          "keep_awake": {
+            "type": "string",
+            "description": "What a session is told at its start about keeping itself awake."
+          },
+          "answered_by": {
+            "$ref": "#/components/schemas/BriefOrigin",
+            "description": "Which process composed it."
+          },
+          "session": {
+            "$ref": "#/components/schemas/BriefSessionSection",
+            "description": "This session: its episode and task."
+          },
+          "peers": {
+            "$ref": "#/components/schemas/BriefPeersSection",
+            "description": "The workers of every board."
+          },
+          "mesh": {
+            "$ref": "#/components/schemas/BriefMeshSection",
+            "description": "The mesh."
+          },
+          "integration": {
+            "$ref": "#/components/schemas/BriefIntegrationSection",
+            "description": "The integration queue."
+          },
+          "derive": {
+            "$ref": "#/components/schemas/BriefDeriveSection",
+            "description": "The derive queue."
+          }
+        },
+        "required": [
+          "at",
+          "line",
+          "lines",
+          "interval_minutes",
+          "keep_awake",
+          "answered_by",
+          "session",
+          "peers",
+          "mesh",
+          "integration",
+          "derive"
+        ],
+        "description": "The answer of `brief.session`: what surrounds one session, in one line and in a few."
       },
       "SessionCloseInput": {
         "type": "object",
@@ -52127,7 +54954,13 @@
             "items": {
               "$ref": "#/components/schemas/ClaimView"
             },
-            "description": "The claims it holds or held."
+            "description": "The claims it holds or held; empty in the summary view, which counts them instead."
+          },
+          "claims_held": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of its claims are live."
           },
           "reviews": {
             "type": "array",
@@ -52142,6 +54975,7 @@
           "info",
           "state",
           "claims",
+          "claims_held",
           "reviews"
         ],
         "description": "One session in the peer tree."
@@ -55665,6 +58499,423 @@
         ],
         "description": "The counts of one report."
       },
+      "Train": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`train-<n>`, after the first root in turn order: stable while that link is open."
+          },
+          "roots": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "The links that land first: no open link of the train is below them."
+          },
+          "tops": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "The links at the top: no link of the train is stacked on them."
+          },
+          "next": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The first link, in turn order, whose every dependency has landed: the train's next\nmerge as far as order is concerned (its disposition says whether it can merge now)."
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrainLink"
+            },
+            "description": "Every open link, in turn order — `TrainLink::position` 1 first."
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrainEdge"
+            },
+            "description": "Every confirmed dependency of a link, upper link first."
+          },
+          "beneath": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BeneathLink"
+            },
+            "description": "The pull requests below the train that are no longer open — landed, closed without a\nmerge, or unread — which a link still declares."
+          },
+          "by_disposition": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "Links by disposition word."
+          }
+        },
+        "required": [
+          "id",
+          "roots",
+          "tops",
+          "links",
+          "edges",
+          "beneath",
+          "by_disposition"
+        ],
+        "description": "One train: open pull requests joined by confirmed dependencies, in the order they land."
+      },
+      "TrainEdge": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The upper link: the one that depends."
+          },
+          "to": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request it stands on."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TrainEdgeKind",
+            "description": "How the dependency is declared."
+          },
+          "satisfied": {
+            "type": "boolean",
+            "description": "Whether it is satisfied: the pull request below landed."
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "kind",
+          "satisfied"
+        ],
+        "description": "A confirmed dependency between two pull requests of a train."
+      },
+      "TrainEdgeKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "stacked_on",
+            "description": "Its base branch is the other's head, or its body says `Stacked on #N`."
+          },
+          {
+            "type": "string",
+            "const": "depends_on",
+            "description": "Its body says `Depends on #N`, `Requires #N` or `Land after #N`."
+          }
+        ],
+        "description": "How a dependency between two links is declared."
+      },
+      "TrainLink": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request number."
+          },
+          "title": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "author": {
+            "type": "string",
+            "description": "Its author's login."
+          },
+          "head_ref": {
+            "type": "string",
+            "description": "Its head branch."
+          },
+          "base_ref": {
+            "type": "string",
+            "description": "The branch it targets: the integration base, or the head of the link below."
+          },
+          "head_sha": {
+            "type": "string",
+            "description": "The head commit it was assessed at, as the forge served it."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The pull request on the forge, when the repository is known."
+          },
+          "checks_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its checks on the forge, when the repository is known."
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/PullRequestDisposition",
+            "description": "The executor's classification."
+          },
+          "lane": {
+            "$ref": "#/components/schemas/IntegrationLane",
+            "description": "The lane that disposition belongs to."
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The machine-readable reasons, as every surface spells them (`stacked_on:#<number>`)."
+          },
+          "next_action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What happens next, in words, when anything does."
+          },
+          "required_checks": {
+            "$ref": "#/components/schemas/RequiredCheckState",
+            "description": "The required checks on its head."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkCheck"
+            },
+            "description": "Every check the forge reported on its head, required or not."
+          },
+          "relation": {
+            "$ref": "#/components/schemas/RelationToMaster",
+            "description": "What its head is to master, decided by git."
+          },
+          "relation_kind": {
+            "type": "string",
+            "description": "That relation's word (`behind`, `up_to_date`, `carries_master`, ...)."
+          },
+          "behind": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many master commits its head lacks, when the relation counts them."
+          },
+          "carries_master": {
+            "type": "boolean",
+            "description": "Whether its head carries master by a merge of its own (ADR 0129) — read from the\nrelation's word, so an executable that does not know that relation says `false`."
+          },
+          "prep": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreparedHead"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The head the executor prepared for it, when `refs/prep/<n>` exists."
+          },
+          "position": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Its turn in the train, 1-based: every link below it comes earlier."
+          },
+          "depth": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many links are below it on its longest path to master; a root is 0."
+          },
+          "at_turn": {
+            "type": "boolean",
+            "description": "Every dependency it declares has landed: it is the link the order allows next."
+          },
+          "on": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "The pull requests it stands on, open links and those beneath alike."
+          },
+          "carries": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "The links stacked on it."
+          },
+          "rank": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Its rank in the queue, 1-based."
+          },
+          "in_cycle": {
+            "type": "boolean",
+            "description": "Caught in a cycle of confirmed dependencies: no link of the cycle can land first."
+          }
+        },
+        "required": [
+          "number",
+          "title",
+          "author",
+          "head_ref",
+          "base_ref",
+          "head_sha",
+          "disposition",
+          "lane",
+          "reasons",
+          "required_checks",
+          "checks",
+          "relation",
+          "relation_kind",
+          "carries_master",
+          "position",
+          "depth",
+          "at_turn",
+          "on",
+          "carries",
+          "rank",
+          "in_cycle"
+        ],
+        "description": "One open pull request as a link of a train."
+      },
+      "TrainTallies": {
+        "type": "object",
+        "properties": {
+          "trains": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Trains."
+          },
+          "links": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Open links across every train."
+          },
+          "pending_prep": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Links whose prepared head is not the head the forge serves."
+          },
+          "by_disposition": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "Links by disposition word."
+          }
+        },
+        "required": [
+          "trains",
+          "links",
+          "pending_prep",
+          "by_disposition"
+        ],
+        "description": "Counts over every train."
+      },
+      "TrainsView": {
+        "type": "object",
+        "properties": {
+          "observed": {
+            "type": "boolean",
+            "description": "Whether a forge observation is recorded in this checkout."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there are no trains to show, when nothing is observed."
+          },
+          "repository": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`owner/name`, when observed."
+          },
+          "base": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The integration base."
+          },
+          "master_sha": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The master commit every link's relation was decided against."
+          },
+          "observed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When the forge was observed."
+          },
+          "trains": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Train"
+            },
+            "description": "Every train, the one whose next link ranks highest in the queue first."
+          },
+          "unattached_prep": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnattachedPrep"
+            },
+            "description": "Prepared heads under `refs/prep/` whose pull request is no link of any train: open\nand stacked on nothing, or not open at all (landed, closed)."
+          },
+          "tallies": {
+            "$ref": "#/components/schemas/TrainTallies",
+            "description": "Counts over every train."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What makes this answer less than a full one: the queue's own diagnostics (a stale\nobservation first), and a dependency cycle when one is found."
+          }
+        },
+        "required": [
+          "observed",
+          "trains",
+          "unattached_prep",
+          "tallies",
+          "diagnostics"
+        ],
+        "description": "Every train of the observed queue, and why there is none when there is none."
+      },
       "Transition": {
         "oneOf": [
           {
@@ -55876,6 +59127,31 @@
           }
         ],
         "description": "What the policy decided about one node."
+      },
+      "UnattachedPrep": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request the ref is named for."
+          },
+          "sha": {
+            "type": "string",
+            "description": "The commit it names."
+          },
+          "open": {
+            "type": "boolean",
+            "description": "Whether that pull request is open."
+          }
+        },
+        "required": [
+          "number",
+          "sha",
+          "open"
+        ],
+        "description": "A prepared head whose pull request is no link of any train."
       },
       "UpstreamState": {
         "type": "object",
@@ -56841,6 +60117,12 @@
         "id": "cockpit",
         "path": "/cockpit",
         "what": "The registry, rendered for a person",
+        "availability": "served-only"
+      },
+      {
+        "id": "ui",
+        "path": "/ui",
+        "what": "The delivery, for a person: majordomus ui",
         "availability": "served-only"
       }
     ],

@@ -1,6 +1,7 @@
-//! The `integration` module: the pull-request integration queue, projected (ADR 0101).
+//! The `integration` module: the pull-request integration queue, projected (ADR 0101), and
+//! the trains of stacked pull requests in it (ADR 0138).
 //!
-//! Four questions, all read-only and all offline but the dry-run proof. Each renders the queue
+//! Six questions, all read-only and all offline but the dry-run proof. Each renders the queue
 //! [`crate::integration::queue_of`] builds from the last recorded forge observation and
 //! this clone's fetched master — the value `majordomus prs status` prints — so the HTTP
 //! route, the MCP tool, the Cockpit and the command line cannot disagree. None reaches the
@@ -50,6 +51,17 @@ pub struct IntegrationStatus {
     /// How fast the executor has turned work into master over the last
     /// [`THROUGHPUT_WINDOW_DAYS`] days, folded from the same trail.
     pub throughput: IntegrationThroughput,
+}
+
+/// How long CI takes on the open pull requests, or why it is not known.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntegrationTimings {
+    /// Whether a forge observation is recorded in this checkout.
+    pub observed: bool,
+    /// Why there are no timings, when there are none.
+    pub reason: Option<String>,
+    /// The timings measured from the observation, when there is one.
+    pub timings: Option<crate::integration::timings::CiTimings>,
 }
 
 /// What cleanup would do, decided offline: the pull requests it would close or leave for a
@@ -235,6 +247,35 @@ fn integration_cleanup(ctx: &Context, _: Empty) -> Result<IntegrationCleanup, Ca
     Ok(cleanup_status(root(ctx), now))
 }
 
+fn integration_timings(ctx: &Context, _: Empty) -> Result<IntegrationTimings, CapabilityError> {
+    Ok(match crate::integration::load_observation(root(ctx)) {
+        Ok(Some(obs)) => IntegrationTimings {
+            observed: true,
+            reason: None,
+            timings: Some(crate::integration::timings::timings(&obs)),
+        },
+        Ok(None) => IntegrationTimings {
+            observed: false,
+            reason: Some(
+                "no forge observation is recorded in this checkout; majordomus prs refresh".into(),
+            ),
+            timings: None,
+        },
+        Err(e) => IntegrationTimings {
+            observed: false,
+            reason: Some(e),
+            timings: None,
+        },
+    })
+}
+
+fn integration_trains(
+    ctx: &Context,
+    _: Empty,
+) -> Result<crate::integration::train::TrainsView, CapabilityError> {
+    Ok(crate::integration::train::trains_of(root(ctx)))
+}
+
 fn integration_prove_dry_run(
     ctx: &Context,
     _: Empty,
@@ -315,6 +356,38 @@ pub fn module() -> ModuleDescriptor {
                 handler: integration_cleanup,
             },
             capability! {
+                id: "integration.timings",
+                title: "How long CI takes",
+                description: "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+                input: Empty,
+                output: IntegrationTimings,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_ci_timings"),
+                    http: get("/api/v1/pull-requests/timings"),
+                    cli: None,
+                },
+                tags: ["integration", "pull-requests", "ci", "timings"],
+                cache: CachePolicy::Disabled,
+                handler: integration_timings,
+            },
+            capability! {
+                id: "integration.trains",
+                title: "The trains of stacked pull requests",
+                description: "Every train of open pull requests — a group joined by confirmed dependencies: a base branch that is another open pull request's head, or a `Stacked on #N` / `Depends on #N` line in the body — in landing order. Per link: number, title, author, head and base branch, head commit, the forge's page and checks, disposition, lane, reasons, next action, required-check state and every check on the head, relation to master with how far behind it is and whether it carries master, the prepared head under refs/prep/<n> with whether it is the head the forge serves (pushed) or not yet (pending), its position and depth, whether its turn has come, what it stands on and what it carries, its queue rank and whether a cycle catches it. Per train: roots, tops, the next link the order allows, the edges (STACKED_ON or DEPENDS_ON, satisfied when the link below landed), and the pull requests beneath it that are no longer open. Beside them the prepared heads no train holds, the tallies and the queue's diagnostics. Read from the recorded observation, the queue `majordomus prs status` prints and the local refs: it fetches, pushes and moves nothing. `observed: false` with the reason when this checkout has recorded no observation.",
+                input: Empty,
+                output: crate::integration::train::TrainsView,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_pull_request_trains"),
+                    http: get("/api/v1/pull-requests/trains"),
+                    cli: Some(CliExposure { path: vec!["prs".into(), "trains".into()] }),
+                },
+                tags: ["integration", "pull-requests", "trains", "graph"],
+                cache: CachePolicy::Disabled,
+                handler: integration_trains,
+            },
+            capability! {
                 id: "integration.prove_dry_run",
                 title: "Proof that a dry run moves nothing",
                 description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
@@ -354,6 +427,8 @@ mod tests {
                 "integration.explain",
                 "integration.events",
                 "integration.cleanup",
+                "integration.timings",
+                "integration.trains",
                 "integration.prove_dry_run"
             ]
         );

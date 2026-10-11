@@ -133,7 +133,8 @@ fn enrolment_in_process_lists_the_key_once_and_refuses_a_repository_without_a_me
     );
     assert!(refused.is_err(), "{refused:?}");
 
-    // listed now: the doctor's trust check passes on the enrolled declaration
+    // listed and committed on the trunk, which is the copy a runtime obeys: trust passes
+    f.commit("enrol this machine");
     let app = common::load_app(&f);
     let doctor = app
         .context

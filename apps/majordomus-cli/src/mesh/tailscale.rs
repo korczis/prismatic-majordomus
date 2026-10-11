@@ -319,7 +319,7 @@ mod tests {
     use super::*;
 
     fn context() -> (ProviderContext, std::sync::mpsc::Receiver<Observation>) {
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, rx) = crate::mesh::provider::ObservationSender::bounded(64);
         let identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
         let beacon =
             crate::mesh::provider::Beacon::new(Arc::new(identity), vec![], vec![], vec![], "test");

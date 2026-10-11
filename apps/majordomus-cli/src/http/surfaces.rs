@@ -40,6 +40,8 @@ pub enum Native {
     Mcp,
     /// The Cockpit.
     Cockpit,
+    /// The UI: `majordomus ui`, the primary surface (ADR 0135).
+    Ui,
     /// The live channel over which executions report what they are doing.
     Events,
 }
@@ -54,6 +56,7 @@ impl Native {
             "swagger" => Native::Swagger,
             "mcp" => Native::Mcp,
             "cockpit" => Native::Cockpit,
+            crate::ui::SURFACE => Native::Ui,
             "events" => Native::Events,
             _ => return None,
         })

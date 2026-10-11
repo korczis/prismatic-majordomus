@@ -113,7 +113,20 @@ fi
 grep -q 'kind: mesh-declaration' "$root/share/skeleton/ai/repo/knowledge/sources.yaml" 2>/dev/null \
   || finding "share/skeleton/ai/repo/knowledge/sources.yaml has no mesh-declaration class — an initialised repository would never read .ai/repo/mesh/*.yaml"
 
+# 7. No committed declaration trusts on first use (I2135). The runtime honours `tofu` only
+#    from the trunk's committed copy, so the trunk is the one place it could still arrive
+#    from: a key nobody listed would be trusted by every runtime of the repository. A
+#    declaration that needs it for a test writes it in that test's fixture, never here.
+while IFS= read -r declared; do
+  [ -n "$declared" ] || continue
+  if grep -Eq '^[[:space:]]+policy:[[:space:]]*tofu([[:space:]]|$)' "$root/$declared"; then
+    finding "$declared sets trust.policy tofu — a committed declaration trusts no key it does not list; use deny_unknown and list each machine's key"
+  fi
+done <<EOF
+$(cd "$root" && git ls-files -- '.ai/repo/mesh/*.yaml' 2>/dev/null)
+EOF
+
 if [ "$fail" -ne 0 ]; then
   exit 10
 fi
-printf 'mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete\n'
+printf 'mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete, no committed tofu\n'

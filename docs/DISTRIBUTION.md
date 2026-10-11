@@ -194,12 +194,11 @@ scripts/ci/release-verdict --commit HEAD
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
 
-# 5. the pipeline publishes, then proposes the record as release/record-v0.3.0:
-#    merge that pull request — until it lands, releases/latest.json still names the
-#    previous release and the installer installs it
-# 6. Pages deploys the record; confirm with scripts/pages verify --commit <merge sha> and
-#    curl -fsSL https://majordomus.dev/releases/latest.json, and re-run the smoke job if it
-#    ran before the record was published
+# 5. the pipeline publishes, puts releases/v0.3.0.json and releases/latest.json on the
+#    site at once (ADR 0131), then proposes the record as release/record-v0.3.0; confirm
+#    with curl -fsSL https://majordomus.dev/releases/latest.json
+# 6. merge the record's pull request once its ci is green; Pages then deploys master with
+#    the record, and scripts/pages verify --commit <merge sha> confirms it
 ```
 
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
@@ -217,8 +216,10 @@ build    one archive per supported target, on the runner the model names, verifi
 publish  digests, the GitHub release, the record written from what was uploaded and staged,
          every projection derived from it and judged by scripts/derive-check, then both
          proposed to the default branch as one pull request, release/record-<tag>
-smoke    the published installer, from its published URL, installing the release that was
-         just published, on every runner whose target it was built for
+smoke    scripts/ci/install-check --expect <tag>: the published installer, from its published
+         URL, installs the release that was just published, and the installed tool
+         initialises and serves a repository that is not this one, on every runner whose
+         target it was built for; no step of it swallows a failure
 ```
 
 Only `publish` has `contents: write`, and with it the `id-token` and `attestations` writes
@@ -274,7 +275,7 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
-| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (the pipeline asked for that verdict; if it could not, `gh workflow run validate.yml --ref release/record-<tag> -f plan=change`), then rerun `smoke` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names once its `ci` is green (`majordomus prs drain` reopens it so that its own run starts; by hand, `gh pr close <n>` then `gh pr reopen <n>`), then rerun `smoke` | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
 #### Why the release asks for the verdict of its record
@@ -295,6 +296,35 @@ required check read. A dispatch that cannot be started is a warning naming the r
 does not fail the job, because the release is published either way and `smoke` must still
 run to say so. `test/cases/996_the_record_pull_request_gets_its_verdict.sh` holds both
 workflows to this.
+
+That dispatch has not, by itself, made a record mergeable. On `v0.19.1` its `ci` passed at
+the record's head and the merge was still refused; the record landed only after a person
+closed and reopened the pull request, 3.4 hours after it was proposed, with every open head
+red meanwhile (I2282). So the integration executor does that part: `majordomus prs drain`
+closes and reopens a `release/record-<tag>` pull request that the workflow's token opened
+and that has no check of its own, once per head, and the run its reopening starts is the one
+the merge waits for ([INTEGRATION.md](INTEGRATION.md), "The record pull request it reopens";
+`test/cases/1036_the_executor_reopens_a_record_pull_request.sh`). Without a drain running,
+the remedy is the same two commands by hand: `gh pr close <n>` and `gh pr reopen <n>`.
+
+#### The site serves a release before its record lands
+
+What the installer reads is `releases/latest.json` and `releases/<tag>.json`, both projections
+of the release record. The record reaches master through a pull request whose `ci` ran for
+106 minutes for v0.19.1, and on 2026-10-10 v0.20.0 was published on GitHub at 16:38Z and
+served by the site at 17:42Z, after the record was merged by hand. So the publish job, once
+the record and its projections are derived and judged, runs `scripts/site-deploy
+--release-metadata <tag>`: those two files go onto what `gh-pages` serves, and nothing else
+does. `build.json` keeps naming the master commit the site was built from, so the
+`pages-live` gate still reads master (ADR 0131).
+
+Until the record lands, master's own deploys carry the previous release's `latest.json`. An
+ordinary deploy therefore keeps the `latest.json` that `gh-pages` serves, and the tag file it
+names, when it names a newer version than the build; it says so in its output and in the
+`gh-pages` commit. `--release-metadata` refuses a tag the metadata does not name, a
+`latest.json` that differs from the tag's file, and a release older than the one served: a
+site never goes back a release. `test/cases/1041_a_release_publishes_its_metadata.sh` holds
+all of it.
 
 #### Why the release asks Pages to publish
 
@@ -363,7 +393,17 @@ published site:
 5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a
    launcher out passes every check that only reads the archive's file list, and fails here
 6  the installed tool initialises a repository that has none
+7  and serves it: the installed MCP launcher, started there without --standalone, answers
+   initialize and tools/list over stdio and elects itself that repository's shared server,
+   which reports itself ready and names that repository — its identity is the digest of
+   the repository's root, so a server that answered for this checkout instead is refused
 ```
+
+The release smoke runs the same gate on the tag it published (`--expect <tag>` refuses
+metadata that names any other release), so the promise is measured by one gate at
+publication, every night and on request. Case 1024
+(`test/cases/1024_an_installed_release_serves_a_foreign_repository.sh`) proves that it fails
+on an archive whose MCP launcher cannot start.
 
 Nothing outside its temporary tree is written: the install goes to a `HOME` of the run's
 own, so the prefix, the launchers and the PATH hint all land inside it.

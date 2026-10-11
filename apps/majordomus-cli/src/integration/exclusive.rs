@@ -123,19 +123,17 @@ impl MeshClaim {
             Some((stream, _)) => format!("{stream}/{}", self.session),
             None => self.session.clone(),
         };
-        let held: Vec<String> = match self.mesh.ask("GET", "/api/v1/mesh/state", None) {
-            Ok((200, v)) => v["state"]["claims"]
-                .as_array()
-                .into_iter()
-                .flatten()
+        let held: Vec<String> = match live_claims(self.mesh.as_ref()) {
+            Ok(claims) => claims
+                .iter()
                 .filter(|c| c["state"]["state"] == json!("held"))
                 .filter(|c| c["session"] == json!(own))
                 .filter_map(|c| c["key"].as_str())
                 .filter(|k| *k != self.key)
                 .map(str::to_string)
                 .collect(),
-            other => {
-                eprintln!("majordomus: the mesh's claims could not be read: {other:?}");
+            Err(e) => {
+                eprintln!("majordomus: the mesh's claims could not be read: {e}");
                 return;
             }
         };
@@ -144,6 +142,20 @@ impl MeshClaim {
                 eprintln!("majordomus: a leftover integration claim {key} stays held: {e}");
             }
         }
+    }
+}
+
+/// The mesh's live claims, from the full view of its state. A server older than that view
+/// refuses the query as invalid input and answers the whole state when asked bare, so the
+/// one refusal is asked again without it: the claims are the same either way.
+fn live_claims(mesh: &dyn Mesh) -> Result<Vec<Value>, String> {
+    let answer = match mesh.ask("GET", "/api/v1/mesh/state?view=full&claims=live", None)? {
+        (400, _) => mesh.ask("GET", "/api/v1/mesh/state", None)?,
+        other => other,
+    };
+    match answer {
+        (200, v) => Ok(v["state"]["claims"].as_array().cloned().unwrap_or_default()),
+        (status, v) => Err(format!("status {status}: {v}")),
     }
 }
 
@@ -228,13 +240,11 @@ pub fn claim(
 /// ", held by session S (intent)" for the live claims on `scope`, read from the mesh's
 /// state; empty when the state cannot be read, the refusal itself still naming the key.
 fn holder(mesh: &dyn Mesh, scope: &str) -> String {
-    let Ok((200, v)) = mesh.ask("GET", "/api/v1/mesh/state", None) else {
+    let Ok(claims) = live_claims(mesh) else {
         return String::new();
     };
-    let named: Vec<String> = v["state"]["claims"]
-        .as_array()
-        .into_iter()
-        .flatten()
+    let named: Vec<String> = claims
+        .iter()
         .filter(|c| c["state"]["state"] == json!("held"))
         .filter(|c| {
             c["scope"]
@@ -558,6 +568,40 @@ mod tests {
         held.release_leftovers();
         drop(held);
         assert_eq!(mesh.asked().len(), 3);
+    }
+
+    #[test]
+    fn the_claims_are_read_from_the_full_view_and_asked_again_bare_of_an_older_server() {
+        let held = json!([{ "key": "s/c1", "session": "x", "scope": ["integration/o/r/master"],
+                            "intent": "land", "state": { "state": "held" } }]);
+        let mesh = Scripted::new(vec![state(held.clone())]);
+        assert_eq!(
+            live_claims(&mesh).unwrap(),
+            held.as_array().unwrap().clone()
+        );
+        assert_eq!(
+            mesh.asked()[0].1,
+            "/api/v1/mesh/state?view=full&claims=live"
+        );
+
+        // a server that predates the view refuses the query, and answers the whole state bare
+        let older = Scripted::new(vec![
+            Ok((400, json!({ "error": { "code": "invalid_input" } }))),
+            state(held.clone()),
+        ]);
+        assert!(holder(&older, "integration/o/r/master").contains("session x (land)"));
+        let asked: Vec<String> = older.asked().into_iter().map(|(_, t, _)| t).collect();
+        assert_eq!(
+            asked,
+            [
+                "/api/v1/mesh/state?view=full&claims=live",
+                "/api/v1/mesh/state"
+            ]
+        );
+
+        // any other answer is the reason, not an empty list
+        let broken = Scripted::new(vec![Ok((503, json!({ "error": "busy" })))]);
+        assert!(live_claims(&broken).unwrap_err().contains("status 503"));
     }
 
     #[test]

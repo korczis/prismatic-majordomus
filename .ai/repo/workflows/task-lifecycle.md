@@ -53,6 +53,18 @@ The work between `start` and `finish` follows the repository's skills, each read
 this task did not create follows `majordomus://skill/assess-before-deleting`; the final
 report and every handover body follow `majordomus://skill/report-verification-state`.
 
+## Answering "is it done?"
+
+When a person asks whether the work is done — merged, deployed, no debt added, no more
+branches, worktrees or pull requests than at the start — run `majordomus check` and report
+its `done` line: every question of the done invariant still owed, as `id=status`, with the
+evidence for each in `gates.completion`. Three of those questions are the repository's
+closing readings, measured from where the task started: `no-new-debt` (the entries of every
+`.ai/repo/*-baseline.txt`), `nothing-accumulated` (branches and worktrees created since and
+still there) and `backlog-not-grown` (pull requests opened since and still open). Report
+what the reading says, including `unknown`, and only then what you know on top of it; never
+answer from what you remember doing (`project.a-closing-question-is-answered-by-measurement`).
+
 Never author identity fields. `repository_id`, `branch`, `head`, `working_tree` and
 `changed_files` on any record are computed from Git; a body that carries them is refused.
 

@@ -195,6 +195,12 @@ pub struct Readiness {
     /// holding nothing but this answer (I1502).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stale: Option<String>,
+    /// Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and
+    /// `stale` make `ready` false: another process holds this checkout's lease, or this one
+    /// serves code that is gone. `layer_degraded` does not: the layer is served with its
+    /// diagnostics, and a client decides whether that is enough.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reasons: Vec<String>,
 }
 
 /// Liveness. No filesystem, no index traversal, no network: two fields this process can
@@ -215,8 +221,23 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
     let capabilities = ctx.registry.summary().total;
     let objects = ctx.index.objects.len();
     let stale = crate::lease::serving_replaced_code();
+    let lost = crate::lease::was_lost();
+    let mut reasons = Vec::new();
+    if lost {
+        reasons.push("lease_lost: another process holds this checkout's lease; this one serves the sessions it had and takes on nobody new".to_string());
+    }
+    if let Some(why) = &stale {
+        reasons.push(format!("stale: {why}"));
+    }
+    if ctx.index.state == State::Degraded {
+        reasons.push(format!(
+            "layer_degraded: the layer was read with {} diagnostic(s); it is served as read",
+            ctx.index.diagnostics.len()
+        ));
+    }
     Ok(Readiness {
-        ready: capabilities > 0 && stale.is_none(),
+        ready: capabilities > 0 && stale.is_none() && !lost,
+        reasons,
         version: crate::VERSION.into(),
         commit: crate::COMMIT.into(),
         dirty: crate::DIRTY,
@@ -636,6 +657,39 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
                 .as_deref(),
         ),
     );
+
+    // --- the mesh, as the server running it decided: only a process a shared server runs in
+    // decided anything, and in any other the answer is unknown, never a guess
+    let mesh = if ctx.mesh.decided() {
+        let verdict = crate::mesh::doctor::runtime_verdict(
+            super::mesh::declaration(ctx),
+            Some(&ctx.mesh.status()),
+        );
+        HealthCheck {
+            id: "mesh".into(),
+            title: "The mesh runtime".into(),
+            status: if verdict.ok {
+                HealthStatus::Ok
+            } else {
+                HealthStatus::Fail
+            },
+            detail: verdict.detail,
+            decided_by: "mesh doctor's runtime check, over this server's mesh.status".into(),
+            evidence: Vec::new(),
+            findings: verdict.remediation.into_iter().collect(),
+        }
+    } else {
+        HealthCheck {
+            id: "mesh".into(),
+            title: "The mesh runtime".into(),
+            status: HealthStatus::Unknown,
+            detail: "this process runs no shared server, so no mesh was activated or declined here; ask the server (GET /api/v1/health) or run `majordomus mesh doctor`".into(),
+            decided_by: "whether a shared server decided the mesh in this process".into(),
+            evidence: Vec::new(),
+            findings: Vec::new(),
+        }
+    };
+    record(&mut checks, &ctx.progress, mesh);
 
     let status = checks
         .iter()

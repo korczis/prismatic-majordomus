@@ -1,0 +1,31 @@
+id: I2475
+milestone: development-runtime
+title: "The issues are browsed: every issue of the plan by status, milestone, priority or text, each a link onward"
+slug: the-issues-are-browsed
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give majordomus ui an Issues screen (/ui/issues) that lists every issue of the plan, narrowed by the plan's own statuses as tabs and by milestone, priority and text in a GET form, each issue leading to its inspector, its milestone to the milestone's and what blocks it to that issue's."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (reference 05-issues-and-prs; pack v3 M05-01 issue list and detail). /ui/work shows only the ready and the active issues; the plan holds about 280, 152 of them blocked, and nothing let a reader find one or see a slice of them."
+current_state: "The UI shows two short lists of issues and one issue at a time on the PR Drain."
+desired_state: "/ui/issues paints at once from plan.issues, plan.status and plan.roadmap. Tabs are the statuses the issues hold with their counts; a GET form narrows by text (id, title, objective, slug), milestone (from the roadmap) and priority (from the issues), carrying the status tab; the pick stays picked. Each row shows the issue, its status, its milestone (a link to its inspector), its priority, what blocks it (each a link to that issue) and its evidence as a meter. A value that is no word of the plan is dropped."
+scope:
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2475.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1080_the_issues_are_browsed.sh"
+depends_on: ["I2470", "I2471"]
+acceptance_criteria:
+  - "/ui/issues lists every issue; a status tab narrows to it"
+  - "milestone, priority and text narrow together, and the pick stays picked"
+  - "an issue, its milestone and what blocks it are links to their inspectors"
+  - "a value that is no word of the plan is dropped"
+validation:
+  - "cargo test --lib ui::issues"
+  - "test/run.sh 1080_the_issues_are_browsed"
+evidence_required:
+  - "ui_issues_unit_tests"
+  - "ui_issues_case_1080"
+created_at: 2026-10-11
+updated_at: 2026-10-11

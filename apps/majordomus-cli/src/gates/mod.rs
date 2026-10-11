@@ -55,6 +55,7 @@
 // needs is the *documents* — the completion report and the types inside it — and those are
 // re-exported below, so the public surface is the answer and not the machinery that makes
 // it.
+pub(crate) mod closing;
 pub(crate) mod done;
 pub(crate) mod judge;
 pub(crate) mod model;
@@ -267,8 +268,9 @@ pub struct Completion {
     pub obligations: Vec<ImpliedObligation>,
     /// The done invariant: the questions a task must answer before anybody may call it
     /// finished, each with the source that answered it and the evidence it read. Composed
-    /// from the obligation closure, the gates and the change set; a question nothing here
-    /// reaches is `unknown` and names the command that would answer it.
+    /// from the obligation closure, the gates, the change set, the repository's convergence
+    /// and the closing readings; a question nothing here reaches is `unknown` and names the
+    /// command that would answer it.
     pub questions: Vec<DoneQuestion>,
     /// What could not be established, each as one line. Never empty when something was
     /// skipped: a gap is reported rather than left to be inferred.
@@ -335,6 +337,7 @@ pub(crate) fn complete(
     standing: &BTreeMap<String, ObligationStanding>,
     closure_reachable: bool,
     convergence: Option<&crate::convergence::ConvergenceReport>,
+    closing: Option<&closing::Closing>,
     on_demand: bool,
     now: &str,
     mut findings: Vec<String>,
@@ -384,6 +387,7 @@ pub(crate) fn complete(
         changed,
         closure_reachable,
         convergence,
+        closing,
     );
 
     Completion {
@@ -550,6 +554,7 @@ classes:
             &BTreeMap::new(),
             false,
             None,
+            None,
             false,
             "now",
             vec![],
@@ -581,6 +586,7 @@ classes:
             &hashes(&m, "aaaa"),
             &BTreeMap::new(),
             false,
+            None,
             None,
             false,
             "now",
@@ -621,6 +627,7 @@ classes:
             &BTreeMap::new(),
             false,
             None,
+            None,
             false,
             "now",
             vec![],
@@ -638,6 +645,7 @@ classes:
             &hashes(&m, "bbbb"),
             &BTreeMap::new(),
             false,
+            None,
             None,
             false,
             "now",
@@ -664,6 +672,7 @@ classes:
             &hashes(&m, "aaaa"),
             &BTreeMap::new(),
             false,
+            None,
             None,
             false,
             "now",

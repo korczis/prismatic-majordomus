@@ -1,0 +1,33 @@
+id: I2470
+milestone: development-runtime
+title: "The pull requests drain in the UI: a queue a reader narrows, inspects and follows to what each depends on"
+slug: the-pull-requests-drain-in-the-ui
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give majordomus ui a PR Drain screen (/ui/prs) that shows every open pull request as the integration lane assessed it, lets the reader narrow it by disposition, lane and text, inspect one pull request and the plan issue it names, and follow each dependency and overlap to the pull request it leads to; every control is a link or a GET form, so every view has an address and the screen is complete without JavaScript."
+why: "The owner asked on 2026-10-11 to implement every component and view of the UI screenshots, maximally interactive and clickable (references campaigns/majordomus-ui-unified-real-data-v2-20261011/reference/03-pr-drain.png and 05-issues-and-prs.png; pack v3 milestone M05). I2462 (PR #948) shows the queue as a table on /ui/work with one pull request's detail; nothing in it narrows, searches or leads anywhere but back to it. The data for the rest exists in integration.queue: tallies by disposition and lane, next_merge, next_refresh, starving, last_merge, and per pull request its dependencies (certainty, state, satisfied), overlaps (with the shared paths), risk factors, required checks, review and how long it has been actionable; plan.issues holds every issue with its dependencies, dependents, the intents it serves and its evidence counts."
+current_state: "The queue is a table of rows that each open one detail on /ui/work; there are no tabs, no search, no dependency or overlap navigation, no blockers view and no issue view."
+desired_state: "/ui/prs paints at once (plan.status, plan.issues) and fills the drain from /ui/panels/drain after the paint, because integration.queue asks the forge. The drain shows the lane's tallies (each a link to the lane it counts), what the lane does next (next merge, next refresh, starving, last merge, each pull request a link), the queue's own dispositions as tabs with their counts, a search over title, branch, author and number, the admitted pull requests in rank order, the blockers (conflicting or needing a repair, with what would move each), and a graph of which open pull request depends on which (a merged dependency is not drawn; one the queue does not hold is drawn small and leads to the forge). ?pr=N opens the inspector: badges, next action, reasons and since when it is actionable, the plan issues its title or branch names (each a link to that issue), gates, dependencies and overlaps (each a link to that pull request, or to the forge when it is not open), risk factors, evidence and authored paths, and a link to the pull request on the forge. ?issue=ID opens the issue: its objective, status, milestone, what it depends on, is blocked by and unblocks (each a link), the intents it serves, its scope, its evidence as a meter and its dates, and a link to the pull requests that name it. The Dashboard's queue rows lead here. A forge nobody observed says so and shows no number; a value a link carries that is not the queue's word or an issue id is dropped."
+scope:
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - ".ai/repo/project/issues/I2470.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1075_the_pull_requests_drain_in_the_ui.sh"
+depends_on: ["I2462"]
+acceptance_criteria:
+  - "/ui/prs answers 200 with a hero and a drain panel deferred to /ui/panels/drain, carrying the reader's choices in its query"
+  - "the drain's tabs are the queue's own dispositions with their counts, and each narrows the rows; the search finds a title, a branch, an author or a number"
+  - "/ui/prs?pr=N opens the inspector, with dependencies and overlaps leading to their pull requests, the forge link, and the issues the title names; a number the queue did not observe says so"
+  - "/ui/prs?issue=ID opens the issue with its dependencies and dependents as links; an id the plan does not hold says so"
+  - "the graph draws only open dependencies, and a forge that was not observed shows no tab and no number"
+validation:
+  - "cargo test --lib ui::"
+  - "test/run.sh 1075_the_pull_requests_drain_in_the_ui"
+evidence_required:
+  - "ui_prs_unit_tests"
+  - "ui_prs_case_1075"
+created_at: 2026-10-11
+updated_at: 2026-10-11

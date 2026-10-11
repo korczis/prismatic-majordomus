@@ -33,7 +33,7 @@
 
 mod common;
 
-use common::{Fixture, Served};
+use common::{run_in, Fixture, Served};
 use serde_json::{json, Value};
 
 use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig, TailscaleConfig};
@@ -70,6 +70,8 @@ fn post(s: &Served, path: &str, body: &Value) -> (u16, Value) {
 fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     let f = Fixture::new();
     f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_QUIET);
+    // committed: trust on first use is honoured only from the trunk's copy (I2135)
+    f.commit("the mesh declaration");
     let state = f.root().join("xdg-state");
     let mut s = Served::start_with_env(
         &f.root(),
@@ -480,4 +482,241 @@ fn enrolment_lists_this_machines_key_once_and_opens_the_mesh_here() {
     // and the machine is listed: the trust check passes
     let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
     assert_eq!(trust(&doctor)["ok"], json!(true), "{doctor}");
+}
+
+/// An enabled declaration whose one transport is the multicast group: the plan it implies
+/// on any machine is that group's port and nothing else — no hub, no broadcast, no link.
+const ENABLED_MULTICAST: &str =
+    "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n";
+
+/// `mesh firewall --format json` in the repository at `root`: the exit code and the report.
+fn firewall(root: &std::path::Path, extra: &[&str]) -> (i32, Value) {
+    let mut args = vec!["mesh", "firewall"];
+    args.extend_from_slice(extra);
+    args.extend_from_slice(&["--format", "json"]);
+    let (code, out, err) = run_in(root, &args, "");
+    let report = serde_json::from_str(&out).unwrap_or_else(|e| {
+        panic!(
+            "`majordomus {}` is not JSON ({e}): {out}\n{err}",
+            args.join(" ")
+        )
+    });
+    (code, report)
+}
+
+/// `mesh-firewall-is-derived`, on the command line: a mesh that is off needs nothing
+/// admitted, and `mesh firewall apply` over a plan that needs nothing is refused before
+/// any privilege is asked about — so this test runs no firewall tool on any machine, as
+/// any user, root included, and can never change the firewall of the machine it runs on.
+#[test]
+fn a_mesh_that_is_off_needs_no_firewall_rule_and_apply_refuses_without_running_anything() {
+    let f = Fixture::new();
+    let root = f.root();
+    // No declaration at all, then a disabled one: the same answer for the same reason.
+    for declaration in [None, Some(DISABLED)] {
+        if let Some(text) = declaration {
+            f.write(".ai/repo/mesh/majordomus.yaml", text);
+            f.commit("declare the mesh, disabled");
+        }
+        let (code, report) = firewall(&root, &["--port", "8741"]);
+        assert_eq!(code, 0, "nothing needed is not a failure: {report}");
+        assert_eq!(report["ok"], json!(true), "{report}");
+        assert_eq!(report["plan"]["rules"], json!([]), "{report}");
+        assert_eq!(report["commands"], json!([]), "{report}");
+        assert_eq!(report["observation"]["state"], json!("present"));
+        assert_eq!(report["platform"], json!(std::env::consts::OS));
+        assert!(
+            report.get("blocked_recently").is_none(),
+            "an empty plan reads no kernel log: {report}"
+        );
+
+        let (code, out, err) = run_in(&root, &["mesh", "firewall"], "");
+        assert_eq!(code, 0, "{err}");
+        assert!(out.starts_with("backend     "), "{out}");
+        assert!(out.contains("\nplan        0 rule(s)\n"), "{out}");
+        assert!(!out.contains("commands    "), "{out}");
+        assert!(
+            out.trim_end()
+                .lines()
+                .last()
+                .is_some_and(|l| l.starts_with("verdict     ") && l.contains("needs no inbound")),
+            "{out}"
+        );
+
+        let (code, applied) = firewall(&root, &["apply"]);
+        assert_eq!(code, 10, "a refusal exits 10: {applied}");
+        assert_eq!(applied["ok"], json!(false));
+        assert_eq!(applied["applied"], json!([]), "nothing ran: {applied}");
+        assert!(
+            applied["refused"]
+                .as_str()
+                .unwrap_or_default()
+                .ends_with("nothing to apply"),
+            "{applied}"
+        );
+        assert_eq!(applied["observation"], applied["before"]["observation"]);
+
+        let (code, out, err) = run_in(&root, &["mesh", "firewall", "apply", "--port", "8741"], "");
+        assert_eq!(code, 10, "{err}");
+        assert!(out.starts_with("refused     "), "{out}");
+        assert!(
+            out.trim_end()
+                .ends_with("verdict     the host firewall does not admit the mesh (see above)"),
+            "{out}"
+        );
+
+        // The command line renders a capability's answer and adds nothing to it: the
+        // capability, asked in this process over the same repository, refuses the same way.
+        let app = common::load_app(&f);
+        let answer = |id: &str| {
+            app.context
+                .execute(id, json!({ "port": 8741 }))
+                .unwrap_or_else(|e| panic!("{id} refused: {e:?}"))
+        };
+        let needed = answer("mesh.firewall");
+        assert_eq!(needed["ok"], json!(true), "{needed}");
+        assert_eq!(needed["plan"]["rules"], json!([]), "{needed}");
+        let refused = answer("mesh.firewall.apply");
+        assert_eq!(refused["ok"], json!(false), "{refused}");
+        assert_eq!(refused["applied"], json!([]), "{refused}");
+        assert_eq!(refused["refused"], applied["refused"], "{refused}");
+    }
+}
+
+/// The report over an enabled declaration, on whatever host runs the suite. `mesh firewall`
+/// only reads: it asks the firewall for its status and the kernel log for its last five
+/// minutes, as the invoking user, and what it cannot read it reports as unobservable. So
+/// the plan and the shape of the answer are held here on every machine, and the verdict —
+/// which is a fact of this machine's firewall — is only required to agree with itself.
+#[test]
+fn an_enabled_declaration_derives_the_group_rule_and_the_report_agrees_with_its_exit_code() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_MULTICAST);
+    f.commit("declare the mesh");
+    let root = f.root();
+
+    let (code, report) = firewall(&root, &[]);
+    let rules = report["plan"]["rules"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    assert_eq!(rules.len(), 1, "{report}");
+    assert_eq!(rules[0]["role"], json!("multicast"));
+    assert_eq!(rules[0]["protocol"], json!("udp"));
+    assert_eq!(rules[0]["port"], json!(7741));
+    assert_eq!(rules[0]["destination"], json!("239.255.77.77"));
+    assert_eq!(rules[0]["sources"], json!([]));
+    assert_eq!(report["plan"]["hub_ports"], json!([]));
+    assert_eq!(report["window_seconds"], json!(300));
+    let state = report["observation"]["state"].as_str().unwrap_or_default();
+    assert!(
+        [
+            "no_backend",
+            "inactive",
+            "present",
+            "missing",
+            "unobservable"
+        ]
+        .contains(&state),
+        "{report}"
+    );
+    let ok = report["ok"] == json!(true);
+    assert_eq!(code, if ok { 0 } else { 10 }, "{report}");
+    if state == "missing" {
+        assert!(!ok, "a rule observed missing fails the report: {report}");
+    }
+
+    // A server beyond loopback is dialed on its port, so the port is admitted too.
+    let (_, report) = firewall(&root, &["--port", "8741"]);
+    let roles: Vec<&str> = report["plan"]["rules"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|r| r["role"].as_str())
+        .collect();
+    assert_eq!(roles, ["multicast", "link"], "{report}");
+}
+
+/// I2133: a rendezvous answers a refused caller with the refusal alone, and an admitted one
+/// with this node and the trusted nodes of the caller's own repositories — never the
+/// strangers it merely observed, nor another repository's topology.
+#[test]
+fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = |name: &str| {
+        NodeIdentity::load_or_create(&dir.path().join(format!("{name}.json"))).unwrap()
+    };
+    let (hub_id, trusted_id, stranger_id, caller_id, other_id) = (
+        key("hub"),
+        key("trusted"),
+        key("stranger"),
+        key("caller"),
+        key("other"),
+    );
+    let mut config = MeshConfig {
+        schema: "mesh/v1".into(),
+        kind: "mesh-declaration".into(),
+        id: "hub".into(),
+        enabled: true,
+        multicast: MulticastConfig {
+            enabled: false,
+            ..MulticastConfig::default()
+        },
+        broadcast: Default::default(),
+        rendezvous: Default::default(),
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
+        trust: Default::default(),
+        cooperation: Default::default(),
+    };
+    // the hub lists itself (an unlisted machine keeps its mesh closed) and one trusted node
+    config.trust.allow = vec![
+        trusted_id.public.public_key.clone(),
+        hub_id.public.public_key.clone(),
+    ];
+    let hub = MeshRuntime::new();
+    hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
+        .unwrap();
+    let envelope = |id: &NodeIdentity, repos: &[&str], port: u16| {
+        let repos: Vec<String> = repos.iter().map(|r| r.to_string()).collect();
+        serde_json::to_value(advertise(
+            id,
+            1,
+            &[format!("127.0.0.1:{port}")],
+            &["http".into()],
+            &repos,
+            "n",
+        ))
+        .unwrap()
+    };
+    // the hub knows a trusted node and a stranger of repository r1
+    assert!(
+        hub.register(&envelope(&trusted_id, &["r1"], 2), "test")
+            .accepted
+    );
+    assert!(
+        hub.register(&envelope(&stranger_id, &["r1"], 3), "test")
+            .accepted
+    );
+
+    // a caller whose envelope is refused learns nothing
+    let refused = hub.register(&json!({ "v": 0 }), "test");
+    assert!(!refused.accepted);
+    assert!(refused.candidates.is_empty(), "{:?}", refused.candidates);
+
+    // a caller of r1 learns the hub and the trusted node, not the stranger
+    let same = hub.register(&envelope(&caller_id, &["r1"], 4), "test");
+    assert!(same.accepted);
+    let keys: Vec<String> = same.candidates.iter().map(|c| c.adv.pk.clone()).collect();
+    assert_eq!(keys.len(), 2, "{keys:?}");
+    assert!(keys.contains(&trusted_id.public.public_key));
+    assert!(!keys.contains(&stranger_id.public.public_key));
+
+    // a caller of another repository learns the hub alone
+    let other = hub.register(&envelope(&other_id, &["r2"], 5), "test");
+    assert!(other.accepted);
+    assert_eq!(other.candidates.len(), 1, "{:?}", other.candidates);
+    hub.stop();
 }

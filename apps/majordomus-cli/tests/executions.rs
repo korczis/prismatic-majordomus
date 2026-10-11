@@ -796,6 +796,10 @@ fn an_execution_is_never_answered_from_the_cache() {
 fn several_clients_follow_one_execution_and_a_silent_one_holds_nobody_up() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
+    // every execution of this process, subscribed before the one it must see is started: an
+    // all-executions channel replays nothing, so one opened after a 180 ms execution could
+    // miss all of it on a slow runner — and on CI's coverage build it did
+    let all = Live::open(&s.address, "/events");
     let started = start(
         &s,
         "executions.demonstrate",
@@ -806,7 +810,6 @@ fn several_clients_follow_one_execution_and_a_silent_one_holds_nobody_up() {
 
     let mut a = Live::open(&s.address, &target);
     let b = Live::open(&s.address, &target); // opened and never read from
-    let all = Live::open(&s.address, "/events"); // every execution of this process
 
     let seen = a.until(&["execution.completed"]);
     assert!(types(&seen).contains(&"execution.completed".to_string()));
