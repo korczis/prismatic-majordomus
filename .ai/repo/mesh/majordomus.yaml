@@ -19,8 +19,10 @@
 #
 # The rendezvous endpoints are the hubs: servers of this repository on the owner's jetson
 # and lundra, listening beyond loopback on port 8791, each listed by its LAN and its
-# tailnet address, and on the owner's MacBook Pro, listed by its LAN address — the hub the
-# Macs of one segment reach when jetson and lundra are off. Multicast cannot cross the tailnet, and the macOS firewall drops it
+# tailnet address, and on the owner's two MacBook Pros, each listed by its tailnet address
+# alone — the hubs the Macs reach when jetson and lundra are off. A Mac's LAN address is
+# leased by DHCP and moves (641bdb94 was declared at .93 and is now at .91); its tailnet
+# address does not. Multicast cannot cross the tailnet, and the macOS firewall drops it
 # inbound, which is why the hubs exist. Every server registers with every hub it can
 # reach, one thread per hub and a 5-second bound per request; a hub that does not answer
 # is asked less and less often (the interval doubles per failure, up to eight times) and
@@ -45,8 +47,10 @@ rendezvous:
     # lundra: LAN, tailnet
     - http://192.168.100.10:8791
     - http://100.65.22.118:8791
-    # the owner's MacBook Pro (641bdb94): LAN
-    - http://192.168.100.93:8791
+    # the owner's MacBook Pro (641bdb94): tailnet
+    - http://100.120.245.51:8791
+    # the owner's second MacBook Pro (5d81b5c9): tailnet
+    - http://100.108.237.68:8791
   interval_seconds: 30
 trust:
   policy: deny_unknown

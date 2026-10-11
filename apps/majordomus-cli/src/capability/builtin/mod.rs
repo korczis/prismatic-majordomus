@@ -320,6 +320,8 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // runs any executable capability, writers included (ADR 0126)
+                "executions.start",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"
