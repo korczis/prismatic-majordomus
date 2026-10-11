@@ -286,7 +286,18 @@ pub struct ProductQuery {
 
 impl BenchmarkCases for ProductQuery {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        let mut cases = vec![NamedCase::new("all", ProductQuery::default())];
+        // `any-status` needs nothing of the repository, so even one that declares no area or
+        // domain shows the operation with an example parameter
+        let mut cases = vec![
+            NamedCase::new("all", ProductQuery::default()),
+            NamedCase::new(
+                "any-status",
+                ProductQuery {
+                    status: Some("any".into()),
+                    ..ProductQuery::default()
+                },
+            ),
+        ];
         if let Some(a) = ctx
             .index
             .objects

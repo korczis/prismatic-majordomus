@@ -61450,7 +61450,7 @@
           "cache": "process",
           "cache_detail": "max_entries=32",
           "cli": "product list",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?area=context&domain=completion\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?status=any&area=context&domain=completion\"",
           "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
           "home": "product",
           "id": "product.features",
@@ -61464,7 +61464,12 @@
           "parameters": [
             {
               "description": "Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds.",
-              "examples": [],
+              "examples": [
+                {
+                  "case": "any-status",
+                  "value": "\"any\""
+                }
+              ],
               "name": "status",
               "required": false,
               "type": "string"

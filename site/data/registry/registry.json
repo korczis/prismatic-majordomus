@@ -6,7 +6,7 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "40d69d65d1fa68d1bfddda711064b53dc42eb968b6a94ae1039a671bb43688bd",
+    "fingerprint": "f968e895d79ad2d6b8e3050c5cb9ff21daec989096979c9a2aab385dc76235a2",
     "summary": {
       "total": 2112,
       "builtin": 184,
@@ -76114,7 +76114,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc5a9ed53bfd3c63941ce6c02bd46c2ecb24578fdc2767cff17deddc8c5a4731",
+    "fingerprint": "60926a9402177a5f5d0d11c87609e17b32c54d752f8e84cf83dd06a8970c1b68",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -135582,6 +135582,15 @@
         "cached": true
       },
       {
+        "key": "product.features|direct|any-status",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "product.features",
+        "module": "product",
+        "case": "any-status",
+        "cached": true
+      },
+      {
         "key": "product.features|direct|by-area",
         "kind": "capability",
         "transport": "direct",
@@ -135606,6 +135615,16 @@
         "id": "product.features",
         "module": "product",
         "case": "all",
+        "cached": true,
+        "tool": "majordomus_features"
+      },
+      {
+        "key": "product.features|mcp|any-status",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "product.features",
+        "module": "product",
+        "case": "any-status",
         "cached": true,
         "tool": "majordomus_features"
       },
@@ -135636,6 +135655,16 @@
         "id": "product.features",
         "module": "product",
         "case": "all",
+        "cached": true,
+        "route": "GET /api/v1/product/features"
+      },
+      {
+        "key": "product.features|http|any-status",
+        "kind": "capability",
+        "transport": "http",
+        "id": "product.features",
+        "module": "product",
+        "case": "any-status",
         "cached": true,
         "route": "GET /api/v1/product/features"
       },
@@ -140334,21 +140363,21 @@
           "module": "product",
           "transport": "direct",
           "state": "covered",
-          "cases": 3
+          "cases": 4
         },
         {
           "subject": "product.features",
           "module": "product",
           "transport": "mcp",
           "state": "covered",
-          "cases": 3
+          "cases": 4
         },
         {
           "subject": "product.features",
           "module": "product",
           "transport": "http",
           "state": "covered",
-          "cases": 3
+          "cases": 4
         },
         {
           "subject": "product.matrix",
