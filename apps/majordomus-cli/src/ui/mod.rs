@@ -46,6 +46,7 @@ pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
 pub(crate) mod mesh;
+pub(crate) mod milestone;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
 pub(crate) mod shell;
@@ -249,7 +250,7 @@ impl Ui {
         let path = req.path.trim_end_matches('/');
         let screen = match path {
             "" | PREFIX => dashboard::screen(&ctx),
-            roadmap::ROUTE => roadmap::screen(&ctx),
+            roadmap::ROUTE => roadmap::screen(&ctx, &req.query),
             work::ROUTE => work::screen(&ctx, &req.query),
             prs::ROUTE => prs::screen(&ctx, &req.query),
             mesh::ROUTE => mesh::screen(&ctx, &req.query),
@@ -348,7 +349,10 @@ mod tests {
         let ctx = repo.context().expect("a context");
         for (route, view) in [
             (PREFIX, dashboard::screen(&ctx)),
-            (roadmap::ROUTE, roadmap::screen(&ctx)),
+            (
+                roadmap::ROUTE,
+                roadmap::screen(&ctx, &[("milestone".into(), "M001".into())]),
+            ),
             (
                 work::ROUTE,
                 work::screen(&ctx, &[("pr".into(), "1".into())]),

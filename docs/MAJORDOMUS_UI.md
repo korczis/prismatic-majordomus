@@ -37,7 +37,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list` |
-| Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list` |
+| Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | PR Drain | `/ui/prs` | `plan.status`, `plan.issues` (one issue, `?issue=`); `integration.queue` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
@@ -126,7 +126,7 @@ read. This is a refresh and is said as one; nothing claims a live stream.
 ## Relationship graphs
 
 A relationship the source records is drawn as a graph: the dependencies between
-milestones (laid out in their direction), the open pull requests that depend on one another
+milestones (laid out in their direction; a node opens that milestone's inspector), the open pull requests that depend on one another
 (a dependency already merged is not drawn; one the queue does not hold is a small node that
 leads to the forge), and the mesh's machines, the runtimes they run and the sessions those
 hold (laid out by force, sessions as small leaves labelled when selected). The server puts the nodes and edges on the page (`view::graph`). The vendored

@@ -25,9 +25,17 @@ const ROADMAP: Source = Source::of("plan.roadmap");
 const PLAN: Source = Source::of("plan.status");
 const INTENTS: Source = Source::of("intents.list");
 
-/// The Roadmap screen.
-pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[ROADMAP, PLAN, INTENTS]);
+const ISSUES: Source = Source::of("plan.issues");
+
+/// The Roadmap screen; `query` may pick one milestone to inspect (`?milestone=M004`).
+pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
+    let picked = super::milestone::picked(query);
+    // the issues are asked only when a milestone is inspected, which is the one reader of them
+    let mut sources = vec![ROADMAP, PLAN, INTENTS];
+    if picked.is_some() {
+        sources.push(ISSUES);
+    }
+    let answers = ask_all(ctx, &sources);
     let (roadmap, plan, intents) = (&answers[&ROADMAP], &answers[&PLAN], &answers[&INTENTS]);
 
     let top = hero(
@@ -110,7 +118,7 @@ pub fn screen(ctx: &Context) -> View {
                     GraphNode {
                         label: id.clone(),
                         tone: status_tone(&text(m, "status")),
-                        href: format!("#milestone-{id}"),
+                        href: super::milestone::href(&id),
                         kind: "node",
                         id,
                     }
@@ -159,8 +167,11 @@ pub fn screen(ctx: &Context) -> View {
         )
     });
 
-    let grid = el("div")
-        .class("mj-ui-grid")
+    let mut grid = el("div").class("mj-ui-grid");
+    if let (Some(id), Some(issues)) = (&picked, answers.get(&ISSUES)) {
+        grid = grid.child(wide(super::milestone::inspector(roadmap, issues, id)));
+    }
+    let grid = grid
         .child(wide(panel(
             "Milestones",
             "Every milestone, in the plan's order; the plan declares no dates, so none are drawn.",

@@ -155,7 +155,7 @@ pub fn milestone_row(m: &Value) -> El {
             el("td").child(
                 el("a")
                     .class("mj-ui-row-link")
-                    .attr("href", format!("{}#milestone-{id}", super::roadmap::ROUTE))
+                    .attr("href", super::milestone::href(&id))
                     .child(el("span").class("mj-ui-mono mj-ui-dim").text(id.clone()))
                     .child(el("span").class("mj-ui-cell-title").text(text(m, "title"))),
             ),
