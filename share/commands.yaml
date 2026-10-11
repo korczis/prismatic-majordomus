@@ -24,6 +24,14 @@
 #   optional  behaves differently with and without one, and says which
 #   none      never reads the task record
 #
+# effects (optional):
+#   `class` names a command as a whole, which is the worst thing any of its argument vectors
+#   does. Where a command's subcommands or flags differ, `effects` declares the difference:
+#     subcommand: <word>   the class of that subcommand, replacing the command's own
+#     flag: <--flag>       a flag that raises the class of any argument vector it appears in
+#   A flag can only raise a class, never lower it, so an argv is never admitted as less than
+#   its worst part. A live scenario's step is judged on its whole argv against this list.
+#
 # Fields are read, not decorative. `reads` and `writes` drive the page's Reads and Writes
 # sections; `exit_codes` is reconciled against the MJ_EX_* constants each lib file
 # references; `demo` names the component that must exist; `stage` places the command on the
@@ -206,6 +214,10 @@ commands:
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, .ai/local/state/current.yaml, .ai/local/state/open-questions.md, git status, git diff]
     writes: []
     exit_codes: [0, 2, 10, 12, 13]
+    effects:
+      - flag: --checkpoint
+        class: state-mutating
+        writes: [.ai/local/state/current.yaml]
     demo: check-findings
     note: Read-only unless --checkpoint is given, which records a checkpoint after the checks run.
 
@@ -457,6 +469,17 @@ commands:
     reads: [.ai/repo/knowledge/sources.yaml, share/knowledge-sources.yaml, .ai/local/state/, .ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl, .ai/repo/policy.yaml, share/allow/knowledge.txt]
     writes: [.ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13]
+    effects:
+      - subcommand: sources
+        class: read-only
+      - subcommand: nodes
+        class: read-only
+      - subcommand: edges
+        class: read-only
+      - subcommand: candidates
+        class: read-only
+      - subcommand: check
+        class: read-only
     demo: knowledge-index
     note: "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091)."
 
