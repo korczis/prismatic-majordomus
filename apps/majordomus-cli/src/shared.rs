@@ -86,6 +86,14 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         repos,
         version,
     ) {
+        Ok(()) if !ctx.mesh.status().active => {
+            // closed by the trust list (or otherwise declined): no cooperation either,
+            // because a link is a socket too
+            let why = ctx.mesh.status().reason.unwrap_or_default();
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh not active: {why}");
+            ctx.mesh.decline_cooperation(&why);
+            return;
+        }
         Ok(()) => {
             tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration")
         }

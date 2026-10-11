@@ -281,7 +281,9 @@ fn a_disabled_declaration_opens_nothing_and_says_why() {
 #[test]
 fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
     let dir = tempfile::tempdir().unwrap();
-    let quiet = |id: &str| MeshConfig {
+    // each runtime lists only its own key: an unlisted machine stays closed, and the
+    // other's key stays unknown, so its verdict is observed
+    let quiet = |id: &str, own: &str| MeshConfig {
         schema: "mesh/v1".into(),
         kind: "mesh-declaration".into(),
         id: id.into(),
@@ -292,12 +294,19 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
-        trust: Default::default(),
+        trust: majordomus_cli::mesh::config::TrustConfig {
+            allow: vec![own.to_string()],
+            ..Default::default()
+        },
         cooperation: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();
     let a_node = a_id.public.node_id.clone();
+    let (a_key, b_key) = (
+        a_id.public.public_key.clone(),
+        b_id.public.public_key.clone(),
+    );
     let b_node = b_id.public.node_id.clone();
     let b_envelope = advertise(
         &b_id,
@@ -310,7 +319,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
 
     let a = MeshRuntime::new();
     a.activate(
-        &quiet("a"),
+        &quiet("a", &a_key),
         a_id,
         vec!["127.0.0.1:1".into()],
         vec![],
@@ -319,7 +328,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
     .unwrap();
     let b = MeshRuntime::new();
     b.activate(
-        &quiet("b"),
+        &quiet("b", &b_key),
         b_id,
         vec!["127.0.0.1:2".into()],
         vec![],
