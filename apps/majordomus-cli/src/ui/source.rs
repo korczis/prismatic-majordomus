@@ -189,6 +189,25 @@ pub fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Answer> {
     answers.into_iter().map(|a| (a.source, a)).collect()
 }
 
+/// One capability asked with an input a reader chose (a screen's query), through the
+/// executor like any other source. The source line names the capability; the input is the
+/// reader's, so it is not a constant of the screen.
+pub fn ask_input(ctx: &Context, capability: &'static str, input: Value) -> Answer {
+    let at = SystemTime::now();
+    let started = Instant::now();
+    let value = ctx.execute(capability, input).map_err(|e| e.to_string());
+    let took = started.elapsed();
+    let (route, exposure) = describe(ctx, capability);
+    Answer {
+        source: Source::of(capability),
+        route,
+        exposure,
+        value,
+        took,
+        at,
+    }
+}
+
 /// One source asked through the executor.
 pub fn ask(ctx: &Context, source: Source) -> Answer {
     let at = SystemTime::now();

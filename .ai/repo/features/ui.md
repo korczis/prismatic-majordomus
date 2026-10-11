@@ -10,7 +10,7 @@ status: draft
 weight: 95
 domain: surfaces
 areas: [observability]
-modules: [repository, health, release, distribution, plan, intents, mesh, integration, deploy, gates, evidence, rules, capabilities]
+modules: [repository, health, release, distribution, plan, intents, mesh, integration, deploy, delivery, gates, evidence, rules, capabilities, commands, executions, objects, web]
 rules: [project.ui-derived-state, project.interfaces-are-projections, project.web-surface-declared-once]
 docs: [docs/MAJORDOMUS_UI.md]
 adrs: [adr-0135]

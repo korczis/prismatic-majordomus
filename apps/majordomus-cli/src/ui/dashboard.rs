@@ -102,8 +102,15 @@ pub fn screen(ctx: &Context) -> View {
 
 /// The pull-request queue, as a panel: what the fragment request and the page without
 /// JavaScript both show.
-pub fn pull_requests_panel(ctx: &Context) -> View {
-    View::new("Pull-request queue", queue_panel(&ask(ctx, QUEUE)))
+pub fn pull_requests_panel(ctx: &Context, query: &[(String, String)]) -> View {
+    let selected = query
+        .iter()
+        .find(|(k, _)| k == "pr")
+        .and_then(|(_, v)| v.parse::<u64>().ok());
+    View::new(
+        "Pull-request queue",
+        queue_panel(&ask(ctx, QUEUE), selected),
+    )
 }
 
 /// The milestones still open, in the plan's own order, each with the issues it has done
@@ -319,7 +326,7 @@ fn queue_placeholder() -> El {
 }
 
 /// The queue: its tallies, its throughput and the pull requests in rank order.
-pub fn queue_panel(queue: &Answer) -> El {
+pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
     let body = unanswered(queue).unwrap_or_else(|| {
         if queue.read("/observed").state != Availability::Available(Value::Bool(true)) {
             return el("p").class("mj-ui-empty").text(format!(
@@ -364,9 +371,24 @@ pub fn queue_panel(queue: &Answer) -> El {
                             .collect()
                     })
                     .unwrap_or_default();
+                let n = a.get("number").and_then(Value::as_u64);
                 el("tr")
+                    .attr_if("id", n.map(|n| format!("pr-{n}")))
                     .child(el("td").class("mj-ui-mono").text(number))
-                    .child(el("td").class("mj-ui-cell-title").text(text(a, "title")))
+                    .child(
+                        el("td").child(
+                            el("a")
+                                .class("mj-ui-row-link")
+                                .attr(
+                                    "href",
+                                    n.map_or_else(
+                                        || super::work::ROUTE.to_string(),
+                                        |n| format!("{}?pr={n}#pr", super::work::ROUTE),
+                                    ),
+                                )
+                                .child(el("span").class("mj-ui-cell-title").text(text(a, "title"))),
+                        ),
+                    )
                     .child(el("td").child(state(a, "disposition")))
                     .child(el("td").text(text(a, "lane")))
                     .child(
@@ -381,8 +403,24 @@ pub fn queue_panel(queue: &Answer) -> El {
             .text()
             .map(|t| t.replace('T', " "))
             .unwrap_or_else(|| "at an unknown time".into());
+        let detail = selected.map(|n| {
+            list(queue, "/queue/assessments")
+                .into_iter()
+                .find(|a| a.get("number").and_then(Value::as_u64) == Some(n))
+                .map_or_else(
+                    || {
+                        nothing(&format!(
+                            "#{n} is not among the open pull requests the queue observed."
+                        ))
+                    },
+                    |a| pull_request_detail(&a),
+                )
+        });
         el("div")
             .class("mj-ui-stack")
+            .when(detail.is_some(), |s| {
+                s.child(detail.clone().unwrap_or_else(|| el("div")))
+            })
             .child(tallies)
             .child(table(
                 &["PR", "Title", "Disposition", "Lane", "Why"],
@@ -402,6 +440,135 @@ pub fn queue_panel(queue: &Answer) -> El {
         body,
         &[queue],
     )
+}
+
+/// One pull request as the queue assessed it: what it is, every gate with its verdict, the
+/// evidence each verdict was read from, why it stands where it stands, what would move it,
+/// and the factors of its rank. Read from the queue's own answer, so it costs nothing more.
+fn pull_request_detail(a: &Value) -> El {
+    let s = |k: &str| text(a, k);
+    let number = a.get("number").and_then(Value::as_u64).unwrap_or_default();
+    let strings = |k: &str| -> Vec<String> {
+        a.get(k)
+            .and_then(Value::as_array)
+            .map(|v| {
+                v.iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_string)
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let gates = el("ul").class("mj-ui-checks").children(
+        a.get("gates")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+            .iter()
+            .map(|g| {
+                let passed = g.get("passed").and_then(Value::as_bool);
+                el("li")
+                    .class("mj-ui-check")
+                    .child(
+                        el("span")
+                            .class("mj-ui-check-title mj-ui-mono")
+                            .text(text(g, "gate")),
+                    )
+                    .child(word_badge(match passed {
+                        Some(true) => "pass",
+                        Some(false) => "fail",
+                        None => "unknown",
+                    }))
+            }),
+    );
+    let evidence = a
+        .get("evidence")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default()
+        .iter()
+        .map(|e| {
+            el("tr")
+                .child(el("td").class("mj-ui-mono").text(text(e, "kind")))
+                .child(el("td").child(state(e, "status")))
+                .child(el("td").class("mj-ui-dim").text(text(e, "detail")))
+        })
+        .collect::<Vec<_>>();
+    let factors = a
+        .get("rank_factors")
+        .and_then(Value::as_object)
+        .map(|m| {
+            m.iter()
+                .map(|(k, v)| {
+                    el("div")
+                        .class("mj-ui-fact")
+                        .child(el("dt").text(k.replace('_', " ")))
+                        .child(el("dd").class("mj-ui-mono").text(match v {
+                            Value::String(s) => s.clone(),
+                            other => other.to_string(),
+                        }))
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    el("section")
+        .class("mj-ui-detail")
+        .attr("id", "pr")
+        .attr("aria-label", format!("Pull request #{number}"))
+        .child(
+            el("div")
+                .class("mj-ui-detail-head")
+                .child(el("p").class("mj-ui-mono mj-ui-dim").text(format!(
+                    "#{number} · {} · {} → {}",
+                    s("author"),
+                    s("head_ref"),
+                    s("base_ref")
+                )))
+                .child(el("h3").class("mj-ui-detail-title").text(s("title")))
+                .child(
+                    el("p")
+                        .class("mj-ui-badges")
+                        .child(state(a, "disposition"))
+                        .child(state(a, "lane"))
+                        .child(state(a, "risk")),
+                ),
+        )
+        .child(el("p").class("mj-ui-line").text(format!(
+            "Next: {}",
+            if s("next_action").is_empty() {
+                "nothing to do".into()
+            } else {
+                s("next_action")
+            }
+        )))
+        .child(
+            el("p")
+                .class("mj-ui-mono mj-ui-dim")
+                .text(strings("reasons").join(" · ")),
+        )
+        .child(el("h4").class("mj-ui-panel-title").text("Gates"))
+        .child(gates)
+        .child(el("h4").class("mj-ui-panel-title").text("Evidence"))
+        .child(table(
+            &["Kind", "Verdict", "What it says"],
+            evidence,
+            "No evidence was recorded.",
+        ))
+        .child(el("h4").class("mj-ui-panel-title").text("Paths it authors"))
+        .child(el("p").class("mj-ui-mono mj-ui-dim").text({
+            let paths = strings("authored_paths");
+            if paths.is_empty() {
+                "none".into()
+            } else {
+                paths.join(", ")
+            }
+        }))
+        .child(
+            el("h4")
+                .class("mj-ui-panel-title")
+                .text("Why it ranks where it does"),
+        )
+        .child(el("dl").class("mj-ui-facts").children(factors))
 }
 
 #[cfg(test)]
@@ -449,6 +616,40 @@ mod tests {
         assert!(html.contains(&format!("data-panel-src=\"{PULL_REQUESTS_PANEL}\"")));
     }
 
+    /// A selected pull request opens its detail from the queue's own answer, with its gates
+    /// and their verdicts; a number the queue did not observe says so.
+    #[test]
+    fn a_selected_pull_request_opens_its_detail() {
+        let queue = Answer {
+            source: QUEUE,
+            route: None,
+            exposure: Exposure::default(),
+            value: Ok(serde_json::json!({
+                "observed": true,
+                "queue": { "tallies": { "open": 1 }, "assessments": [{
+                    "number": 7, "title": "a change", "disposition": "needs_refresh",
+                    "gates": [{ "gate": "base", "passed": true }, { "gate": "ci", "passed": false }],
+                    "reasons": ["behind_master:2"], "next_action": "bring master in"
+                }]}
+            })),
+            took: std::time::Duration::ZERO,
+            at: std::time::SystemTime::now(),
+        };
+        let html = queue_panel(&queue, Some(7)).render();
+        assert!(
+            html.contains("id=\"pr\"") && html.contains("bring master in"),
+            "{html}"
+        );
+        assert!(html.contains(">base<") && html.contains(">ci<"));
+        assert!(
+            html.contains("/ui/work?pr=7#pr"),
+            "rows lead to their detail"
+        );
+        assert!(queue_panel(&queue, Some(8))
+            .render()
+            .contains("#8 is not among"));
+    }
+
     /// A failed source says it could not answer, and a queue never observed says so.
     #[test]
     fn a_missing_value_reads_as_missing() {
@@ -466,7 +667,7 @@ mod tests {
             value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" })),
             ..failed.clone()
         };
-        assert!(queue_panel(&unobserved)
+        assert!(queue_panel(&unobserved, None)
             .render()
             .contains("never refreshed"));
     }

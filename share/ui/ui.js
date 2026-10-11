@@ -44,7 +44,7 @@ async function fillPanel(placeholder) {
   if (!src) return;
   placeholder.setAttribute('aria-busy', 'true');
   try {
-    const response = await fetch(`${src}?fragment`, { headers: { Accept: 'text/html' } });
+    const response = await fetch(`${src}${src.includes('?') ? '&' : '?'}fragment`, { headers: { Accept: 'text/html' } });
     if (!response.ok) throw new Error(`${response.status}`);
     const html = await response.text();
     const holder = document.createElement('div');
@@ -108,7 +108,9 @@ async function drawGraphs() {
         ...data.nodes.map((n) => ({ data: n })),
         ...data.edges.map((e, i) => ({ data: { id: `e${i}`, ...e } })),
       ],
-      layout: { name: 'breadthfirst', directed: true, spacingFactor: 1.15, animate: !still, padding: 16 },
+      layout: data.layout === 'force'
+        ? { name: 'cose', animate: !still, padding: 24, nodeRepulsion: () => 9000, idealEdgeLength: () => 70 }
+        : { name: 'breadthfirst', directed: true, spacingFactor: 1.15, animate: !still, padding: 16 },
       wheelSensitivity: 0.2,
       style: [
         {
@@ -138,7 +140,8 @@ async function drawGraphs() {
             'curve-style': 'bezier',
           },
         },
-        { selector: 'node:active, node:selected', style: { 'border-color': token('--mj-accent', '#888') } },
+        { selector: 'node[kind = "leaf"]', style: { label: '', width: 12, height: 12, 'border-width': 2 } },
+        { selector: 'node:active, node:selected', style: { 'border-color': token('--mj-accent', '#888'), label: 'data(label)' } },
       ],
     });
     cy.on('tap', 'node', (evt) => {

@@ -17147,10 +17147,15 @@
             "mesh",
             "integration",
             "deploy",
+            "delivery",
             "gates",
             "evidence",
             "rules",
-            "capabilities"
+            "capabilities",
+            "commands",
+            "executions",
+            "objects",
+            "web"
           ],
           "related": [
             "cockpit",
@@ -30905,6 +30910,50 @@
             "cargo test --lib ui::",
             "cargo test --lib cockpit::assets",
             "scripts/cockpit-assets --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2462",
+        "kind": "issue",
+        "label": "I2462",
+        "summary": "The UI has every screen, and its mesh is a graph whose nodes open an inspector",
+        "route": "/cockpit/objects/issue/i2462",
+        "source": ".ai/repo/project/issues/I2462.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/command, /ui/capabilities, /ui/deployments and /ui/docs answer 200 with a hero and panels whose sources are named; a test renders every screen against a real registry",
+            "/ui/capabilities?id=plan.status shows that capability's declared input fields and its API, CLI and MCP exposure",
+            "/ui/mesh draws every machine, runtime and session the mesh runtime knows as a graph over a table fallback, and /ui/mesh?node=<name> opens that machine's inspector; an unknown name says it is unknown",
+            "The delivery report is a panel route of its own and never holds the Deployments screen back",
+            "/ui/work?pr=<n> opens that pull request's detail from the integration queue's answer, with every gate and its verdict; a queue row links to it; a number the queue did not observe says so"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "The UI shows seven screens; the mesh is a table.",
+          "depends_on": [
+            "I2461"
+          ],
+          "evidence_required": [
+            "ui_every_screen_renders_test",
+            "ui_mesh_inspector_screenshot"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            ".ai/repo/project/issues/I2462.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/features/ui.md"
+          ],
+          "slug": "the-ui-has-every-screen",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::",
+            "cargo test --test ui_surface",
+            "scripts/ci/cockpit-projection-check --ui-integrity"
           ]
         }
       },
@@ -67500,6 +67549,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2462",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2462",
+        "target": "majordomus://issue/I2461",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2462",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -76321,8 +76385,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2514,
-      "edges": 5488,
+      "nodes": 2515,
+      "edges": 5491,
       "acyclic": false,
       "truncated": false
     }

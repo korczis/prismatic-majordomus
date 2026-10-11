@@ -17,7 +17,16 @@ const PLAN: Source = Source::of("plan.status");
 const ISSUES: Source = Source::of("plan.issues");
 
 /// The Issues & PRs screen.
-pub fn screen(ctx: &Context) -> View {
+pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
+    // the selected pull request travels to the queue panel, which draws its detail
+    let selected = query
+        .iter()
+        .find(|(k, _)| k == "pr")
+        .and_then(|(_, v)| v.parse::<u64>().ok());
+    let panel_src = match selected {
+        Some(n) => format!("{PULL_REQUESTS_PANEL}?pr={n}"),
+        None => PULL_REQUESTS_PANEL.to_string(),
+    };
     let answers = ask_all(ctx, &[PLAN, ISSUES]);
     let (plan, issues) = (&answers[&PLAN], &answers[&ISSUES]);
 
@@ -41,7 +50,7 @@ pub fn screen(ctx: &Context) -> View {
     let queue = el("section")
         .class("mj-ui-panel")
         .attr("aria-label", "Pull-request queue")
-        .attr("data-panel-src", PULL_REQUESTS_PANEL)
+        .attr("data-panel-src", panel_src.clone())
         .attr("aria-busy", "false")
         .child(
             el("header")
@@ -61,7 +70,7 @@ pub fn screen(ctx: &Context) -> View {
             el("p").class("mj-ui-panel-body").child(
                 el("a")
                     .class("mj-ui-link")
-                    .attr("href", PULL_REQUESTS_PANEL)
+                    .attr("href", panel_src)
                     .text("Open the pull-request queue"),
             ),
         );

@@ -355,6 +355,18 @@ pub struct GraphNode {
     pub tone: &'static str,
     /// Where it leads.
     pub href: String,
+    /// `leaf` for a node drawn small and labelled only when selected; anything else is a
+    /// node of the graph's main kind.
+    pub kind: &'static str,
+}
+
+/// How a graph is laid out: `directed` for a dependency order, `force` for a topology.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Layout {
+    /// Breadth-first along the edges' direction.
+    Directed,
+    /// Force-directed, for a topology with no order.
+    Force,
 }
 
 /// A relationship graph: the nodes and the typed edges a source answered, drawn by the
@@ -365,7 +377,13 @@ pub struct GraphNode {
 ///
 /// Only nodes that take part in an edge are drawn: a node with no relation says nothing in a
 /// graph that its row in the fallback does not say better.
-pub fn graph(label: &str, nodes: &[GraphNode], edges: &[(String, String)], fallback: El) -> El {
+pub fn graph(
+    label: &str,
+    layout: Layout,
+    nodes: &[GraphNode],
+    edges: &[(String, String)],
+    fallback: El,
+) -> El {
     let ids: std::collections::BTreeSet<&str> = nodes.iter().map(|n| n.id.as_str()).collect();
     let related: std::collections::BTreeSet<&str> = edges
         .iter()
@@ -373,8 +391,9 @@ pub fn graph(label: &str, nodes: &[GraphNode], edges: &[(String, String)], fallb
         .flat_map(|(a, b)| [a.as_str(), b.as_str()])
         .collect();
     let data = serde_json::json!({
+        "layout": match layout { Layout::Directed => "directed", Layout::Force => "force" },
         "nodes": nodes.iter().filter(|n| related.contains(n.id.as_str())).map(|n| serde_json::json!({
-            "id": n.id, "label": n.label, "tone": n.tone, "href": n.href,
+            "id": n.id, "label": n.label, "tone": n.tone, "href": n.href, "kind": n.kind,
         })).collect::<Vec<_>>(),
         "edges": edges.iter()
             .filter(|(a, b)| ids.contains(a.as_str()) && ids.contains(b.as_str()))

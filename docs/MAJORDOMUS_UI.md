@@ -36,11 +36,15 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Screen | Route | Reads |
 |---|---|---|
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
+| Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list` |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list` |
-| Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route |
-| Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events` |
+| Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
+| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
+| Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`; one machine (`?node=`) in the inspector |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model` |
+| Deployments | `/ui/deployments` | `deploy.list`; `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report` |
+| Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report` |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
@@ -58,7 +62,15 @@ Every screen has the same shape:
 
 KPI tiles lead to the screen that explains them. A panel whose whole is on another screen
 says "View all". A milestone row leads to that milestone on the Roadmap, where the row it
-lands on is lit.
+lands on is lit. A capability row opens its detail (`?id=`), a pull request of the queue opens
+its detail (`?pr=`), and a machine of the mesh — in its table or as a node of its graph — opens
+its inspector (`?node=`); every selection is a URL, so it survives a reload and the browser's
+Back.
+
+A pull request's detail is read from the queue's own answer, so it costs no second call: what
+the pull request is, every gate with its verdict, the evidence each verdict was read from, why
+it stands where it stands, the next action that would move it, the paths it authors and the
+factors of its rank. A number the queue did not observe is said to be unobserved.
 
 ## Where a value comes from
 
@@ -112,8 +124,10 @@ read. This is a refresh and is said as one; nothing claims a live stream.
 
 ## Relationship graphs
 
-A relationship the source records is drawn as a graph, for example the dependencies between
-milestones. The server puts the nodes and edges on the page (`view::graph`). The vendored
+A relationship the source records is drawn as a graph: the dependencies between
+milestones (laid out in their direction), and the mesh's machines, the runtimes they run
+and the sessions those hold (laid out by force, sessions as small leaves labelled when
+selected). The server puts the nodes and edges on the page (`view::graph`). The vendored
 Cytoscape, loaded only by a screen that has a graph, draws them:
 - in the tones of the design system, read from the stylesheet;
 - with a layout that does not animate under reduced motion;
@@ -164,8 +178,10 @@ generate` (`apps/majordomus-cli/src/ui/icons.toml`); a test holds the two equal.
 
 - `majordomus ui` as a command, which ensures the shared server and opens this surface, is
   the next slice. Until then, open `/ui` on the address `majordomus serve status` prints.
-- Command (a schema-driven runner), Capabilities, Deployments, Documentation and Settings
-  screens are not built yet. Until they are, they are not in the navigation.
+- Nothing on the UI starts work yet: launching a capability, an issue or a milestone through
+  the executor and following its run live is the execution control plane of the V4 pack.
+  An action on a mesh node is the same, behind the executor (V5); the inspector says so.
+- There is no Settings screen: no capability holds a reader's settings.
 - No capability records per-run CI timings, so the CI/CD screen draws no build-time chart and
   says why.
 - Milestones carry no dates, so the roadmap is a sequence and a graph, never a calendar.
