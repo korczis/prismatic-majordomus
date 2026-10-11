@@ -582,10 +582,14 @@ jobs:
   # and was killed at its old bound of 25 min on the next run of the same batch (37199016404),
   # while two master runs shared the runners. A kill by the job bound reads as `cancelled`,
   # not as a failure (scripts/ci/step-bound-check), so the bound leaves room for contention.
+  # Re-measured on 2026-10-11: master's job took 31-34 min (runs at 12:14Z, 15:15Z, 19:04Z);
+  # the landing train's top, with segments 1-4's tests, 39m11s (run 38152148493), and the next
+  # run of it was killed at the 40-min bound (38169445769). The crate grew, not the runners:
+  # about a third above the worst, 40 x 1.35 = 54, so 55.
   coverage:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
-    timeout-minutes: 40
+    timeout-minutes: 55
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
