@@ -648,12 +648,12 @@ pub enum MeshCommand {
     Identity(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
     Doctor(MeshQueryArgs),
-    /// Every machine, runtime and session this checkout's server cooperates with, with each link's state
-    Peers(MeshQueryArgs),
+    /// Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim
+    Peers(MeshViewArgs),
     /// One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here
     Peer(MeshPeerArgs),
-    /// The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest
-    State(MeshQueryArgs),
+    /// The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review
+    State(MeshViewArgs),
     /// The cooperation journal's events after a Lamport stamp, in Lamport order
     Events(MeshEventsArgs),
     /// Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails
@@ -732,6 +732,111 @@ pub struct MeshEventsArgs {
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh peers` and `mesh state`: how much of the mesh to show. Without a flag the answer is
+/// the summary, which stays the same size however long the mesh's history grows; `--full`
+/// is every session, claim, handover and review the fold holds. The filters narrow either.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshViewArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "state", "--full", "--live-claims",
+///     "--after", "42", "--session", "s1", "--runtime", "a1b2", "--kind", "claims",
+///     "--limit", "5", "--open", "--matching", "#905"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::State(view) = mesh.command else { panic!("expected `state`") };
+/// let view: &MeshViewArgs = &view;
+/// assert!(view.full && view.live_claims);
+/// assert_eq!(view.pairs(), ["view=full", "claims=live", "after=42", "session=s1",
+///     "runtime=a1b2", "kind=claims", "limit=5", "open=true", "matching=#905"]);
+///
+/// // no flag is the summary, asked for by asking for nothing
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "peers"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Peers(view) = mesh.command else { panic!("expected `peers`") };
+/// assert!(view.pairs().is_empty());
+/// ```
+pub struct MeshViewArgs {
+    /// Every session, claim, handover and review, not the summary
+    #[arg(long)]
+    pub full: bool,
+    /// Only claims that are still held
+    #[arg(long)]
+    pub live_claims: bool,
+    /// Only what moved after this Lamport stamp
+    #[arg(long)]
+    pub after: Option<u64>,
+    /// Only this session: its key or its bare id
+    #[arg(long)]
+    pub session: Option<String>,
+    /// Only this runtime (`<node>-<runtime>`), or every runtime of a node id
+    #[arg(long)]
+    pub runtime: Option<String>,
+    /// Only this collection: sessions, claims, overlaps, handovers or reviews
+    #[arg(long)]
+    pub kind: Option<String>,
+    /// At most this many of each collection, the newest first kept
+    #[arg(long)]
+    pub limit: Option<usize>,
+    /// Only what is still open: active sessions, live claims, unanswered reviews, untaken handovers
+    #[arg(long)]
+    pub open: bool,
+    /// Only what mentions this text: a path, a branch, an issue, a pull request, a word
+    #[arg(long)]
+    pub matching: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+impl MeshViewArgs {
+    /// The query string's pairs, unencoded, in the order the flags are declared: what `mesh
+    /// state` and `mesh peers` send to the running server. No flag is no pair, which asks the
+    /// server for its default, the summary.
+    ///
+    /// ```
+    /// use clap::Parser;
+    /// use majordomus_cli::cli::{Cli, Command, MeshCommand};
+    ///
+    /// let cli = Cli::try_parse_from(["majordomus", "mesh", "peers", "--open"]).unwrap();
+    /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+    /// let MeshCommand::Peers(view) = mesh.command else { panic!("expected `peers`") };
+    /// assert_eq!(view.pairs(), ["open=true"]);
+    /// ```
+    pub fn pairs(&self) -> Vec<String> {
+        let mut pairs = Vec::new();
+        if self.full {
+            pairs.push("view=full".to_string());
+        }
+        if self.live_claims {
+            pairs.push("claims=live".to_string());
+        }
+        if let Some(after) = self.after {
+            pairs.push(format!("after={after}"));
+        }
+        if let Some(session) = &self.session {
+            pairs.push(format!("session={session}"));
+        }
+        if let Some(runtime) = &self.runtime {
+            pairs.push(format!("runtime={runtime}"));
+        }
+        if let Some(kind) = &self.kind {
+            pairs.push(format!("kind={kind}"));
+        }
+        if let Some(limit) = self.limit {
+            pairs.push(format!("limit={limit}"));
+        }
+        if self.open {
+            pairs.push("open=true".to_string());
+        }
+        if let Some(text) = &self.matching {
+            pairs.push(format!("matching={text}"));
+        }
+        pairs
+    }
 }
 
 #[derive(Debug, Args)]

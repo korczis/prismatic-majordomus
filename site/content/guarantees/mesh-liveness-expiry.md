@@ -33,7 +33,7 @@ freshness, so nothing is alive until it beats again.
 
 ```
 majordomus mesh peers                       # link state and "beat Ns ago" per runtime
-curl http://127.0.0.1:8741/api/v1/mesh/state | jq '.streams'
+curl 'http://127.0.0.1:8741/api/v1/mesh/state?view=full' | jq '.streams'
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation a_killed_runtime
 ```
 
