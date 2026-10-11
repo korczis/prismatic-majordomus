@@ -408,6 +408,11 @@ mod tests {
                 "majordomus_release_analysis",
                 "/api/v1/release/analysis",
             ),
+            (
+                "release.next",
+                "majordomus_release_next",
+                "/api/v1/release/next",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
