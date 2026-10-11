@@ -56,7 +56,7 @@ impl Native {
             "swagger" => Native::Swagger,
             "mcp" => Native::Mcp,
             "cockpit" => Native::Cockpit,
-            "ui" => Native::Ui,
+            crate::ui::SURFACE => Native::Ui,
             "events" => Native::Events,
             _ => return None,
         })

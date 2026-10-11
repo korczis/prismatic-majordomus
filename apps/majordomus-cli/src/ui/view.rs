@@ -552,7 +552,7 @@ pub fn day(at: &str) -> String {
 mod tests {
     use super::*;
     use crate::ui::source::{Exposure, Source};
-    use std::time::{Duration, SystemTime};
+    use std::time::Duration;
 
     fn answer(value: Result<Value, String>) -> Answer {
         Answer {
@@ -561,7 +561,6 @@ mod tests {
             exposure: Exposure::default(),
             value,
             took: Duration::from_millis(5),
-            at: SystemTime::now(),
         }
     }
 
