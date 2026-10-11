@@ -199,7 +199,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 28388 | `d5c83291eac572d2` |
 | `docs/generated/economics.md` | `economics` | markdown | 15023 | `b5c9f6fdd7df5e6f` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 23676 | `0751b4c2a8d4ee71` |
-| `docs/generated/graph.json` | `graph` | json | 2842794 | `f3ec3bcc44ef5284` |
+| `docs/generated/graph.json` | `graph` | json | 2843262 | `123e27a94bccf318` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `e03f2bbd37446cb1` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `cfcb5fdffe8782e4` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `308ec7d4d0c5d407` |
@@ -318,9 +318,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `36ed19cd6c4a38bd` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `4e9cd0eca1fa1965` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 726600 | `9ba5798a3ac160e2` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `e5c5d5a07ef0345b` |
-| `site/data/registry/product.json` | `site-product` | json | 632822 | `419fa8ef070d2ff9` |
-| `site/data/registry/registry.json` | `site-registry` | json | 6202899 | `4328ea4757aa14c6` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 92168 | `ec5a2d733b8f2d47` |
+| `site/data/registry/product.json` | `site-product` | json | 632822 | `f562682c6cff2b35` |
+| `site/data/registry/registry.json` | `site-registry` | json | 6203337 | `fa3d3c8552b0bf05` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `14739b15b59b90ff` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `ae87eaef7d9084e0` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `e83006010222f239` |

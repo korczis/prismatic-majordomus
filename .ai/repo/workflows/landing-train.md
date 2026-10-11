@@ -100,6 +100,37 @@ Measured on 2026-10-10, the first two links merged this way:
 | `5e0dac1f9c` (#881) | `2c8343df37` | `10ebd1a1e4`, the prepared head on the release record #901 (`451576e426`) | both `61715c8788` |
 | `890e112d04` (#868) | `eae89cd3f8` | `10ebd1a1e4`, the head prepared for #881 | both `293b3710e9` |
 
+## Batches: one run per segment
+
+On 2026-10-11 the owner chose, in the executor's session, to land the train in batches
+(recorded with `majordomus decision`). A segment is a run of consecutive links; only its top is
+pushed to its pull request and judged, and the top is merged by the table above. Every pull
+request below it is an ancestor of the top, so the forge marks it merged with the top; it
+needs no run of its own. A session that owns several pull requests may build them as one
+merge commit on the current top whose parents are every head, as long as each head stays an
+ancestor. The executor's loop is the prompt `landing-train`.
+
+- Push a new top as soon as it is built, even while the segment below it still runs; when a
+  higher top contains a lower one, the lower top's own run is redundant — cancel it and say so
+  on the board.
+- A fix found below the top goes in as one more commit on the top, or as a single merge of the
+  fix into the top; the links below need no rebuild, because only the top is judged.
+- Segments 1 and 2 of 2026-10-11 (thirteen pull requests) are judged by one run of #948; the
+  third segment (twenty-two pull requests) by one run of #870.
+
+## Protecting the train's runs
+
+- A loop that cancels runs by a generic rule — "the head lacks master" — cancels every train
+  link, because links lack master by design. On 2026-10-11 such a sweep cancelled the runs of
+  #860 and #907 three times. Stop it through its own stop file and say so on the board.
+- `gh run rerun --failed` restarts failed jobs, not cancelled ones: force-cancel the run
+  (`gh api -X POST repos/<repo>/actions/runs/<id>/force-cancel`) and rerun it whole.
+- A superseded run that stays queued after `gh run cancel` blocks its successor through the
+  pull request's concurrency group; force-cancel it.
+- A case or budget that fails only under a saturated pool (`95_skills` at 4085 s and 4127 s
+  against a 3890 s bound) is fixed in the lowest link of the next segment, where every top
+  above it inherits the fix.
+
 ## When the train breaks
 
 - **A merge outside the train** — any other pull request, a release record — moves master by
