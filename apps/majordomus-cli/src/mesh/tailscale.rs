@@ -244,7 +244,9 @@ pub fn peers_of(status_json: &str) -> Vec<IpAddr> {
     let Some(peers) = status.get("Peer").and_then(|p| p.as_object()) else {
         return Vec::new();
     };
-    let mut found: Vec<IpAddr> = peers
+    // a set, not a sorted list: one candidate per address, in the address's own order,
+    // and nothing here is a presentation order (`crate::order` is for those)
+    let found: std::collections::BTreeSet<IpAddr> = peers
         .values()
         .filter(|peer| peer.get("Online").and_then(|o| o.as_bool()) == Some(true))
         .filter_map(|peer| {
@@ -261,9 +263,7 @@ pub fn peers_of(status_json: &str) -> Vec<IpAddr> {
                 .copied()
         })
         .collect();
-    found.sort();
-    found.dedup();
-    found
+    found.into_iter().collect()
 }
 
 /// The rendezvous endpoints of `peers` on `port`: `http://<address>:<port>`, an IPv6 address
