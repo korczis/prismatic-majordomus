@@ -200,6 +200,21 @@ case_bound_seconds: 5300
 # same runner pool. That is the spread the paragraph above measured at 1.22, larger; it is
 # runner load, not growth, and no case came near its own bound. 56000 is about a tenth above
 # the worst total measured, 51011. The slowest-case budget stands: 3352 is under 3450.
+#
+# Re-measured on 2026-10-11, when 95_skills went over the 3890 on every head that ran the
+# whole suite, with all four shards green and every case passing (master 890e112d04's own
+# run among them):
+#
+#   run 38093056059   95_skills 4161 s                             #827 feature/mesh-firewall
+#   run 38101737743   95_skills 4153 s   54737 s over 413 cases    #914
+#   run 38101518374   95_skills 4127 s   49220 s over 413 cases    #909
+#   (run of #859)     95_skills 4085 s
+#
+# The same 413 cases cost 49220 s on one head and 54737 s on the next, an hour apart: 1.11
+# times as much, with some forty runs queued on the same runner pool. That is runner load,
+# not growth. About a tenth above the worst uncensored cost, 4161 x 1.1 = 4577, so 4580,
+# below case_bound_seconds (5300) as case 417 requires. The total stands: 54737 is under
+# 56000, though only by a fortieth.
 budget:
   # every case, summed; run 37760481991 (51011 s) and the ones above
   cases_seconds: 56000
@@ -210,5 +225,6 @@ budget:
   # table is above case_bound_seconds). Six attempts that day went over the 3450 with every
   # case passing, the v0.19.0 record among them, and each cost a rerun of about 86 minutes:
   # runner load on a shared pool, not growth. About a tenth above the worst, 3530 x 1.1 = 3883,
-  # so 3890, below the case bound as case 417 requires.
-  slowest_case_seconds: 3890
+  # so 3890, below the case bound as case 417 requires. Re-derived on 2026-10-11 from the
+  # worst of that day's runs, 4161 s (run 38093056059): 4161 x 1.1 = 4577, so 4580.
+  slowest_case_seconds: 4580
