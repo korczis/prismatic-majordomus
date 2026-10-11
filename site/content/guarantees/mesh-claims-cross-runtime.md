@@ -36,7 +36,7 @@ rising.
 
 ```
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'
-majordomus mesh state                      # every claim with held/conflicted/expired
+majordomus mesh state --full               # every claim with held/conflicted/expired
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::state
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation
 ```
