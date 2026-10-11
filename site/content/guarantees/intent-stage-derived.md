@@ -1,7 +1,7 @@
 +++
 title = "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run"
 description = "An intent under .ai/repo/project/intents/ states what must become true, the invariants that must stay true, the milestones that realise it and the criteria that settle it, each criterion naming the evidence that decides it. That statement is all it stores. Its stage — declared, planned, executing, verifying, satisfied — is read from the plan, and each criterion from the evidence ledger, on every read. Finished work satisfies nothing: an intent whose milestones are all DONE is verifying until every criterion has a current passing run."
-weight = 110
+weight = 111
 [extra]
 claim_id = "intent-stage-derived"
 status = "guaranteed"

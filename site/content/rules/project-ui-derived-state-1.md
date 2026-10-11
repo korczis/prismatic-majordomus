@@ -1,7 +1,7 @@
 +++
 title = "An interface shows only what is derived, and unknown is never drawn as healthy"
 description = "An interface shows only what is derived, and unknown is never drawn as healthy"
-weight = 157
+weight = 158
 [extra]
 kind = "rule"
 slug = "project-ui-derived-state-1"

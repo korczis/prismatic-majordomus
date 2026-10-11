@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.21.0"
   },
-  "fingerprint": "2d70175d2ed2f96be4e7b2e46715a4fcb5e4f591f5eb116ae1062b71d2e9d340",
+  "fingerprint": "7f67d1306f640ceaf427a74a58d7361faca9074a5d043436a952378f9c9bb8af",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,11 +13,11 @@
     "features_all": 28,
     "featured": 14,
     "providers": 6,
-    "modules": 53,
+    "modules": 55,
     "modules_covered": 42,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 30,
+    "kinds": 31,
     "kinds_covered": 26
   },
   "surfaces": [
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 64,
+        "capabilities": 65,
         "moments": 17
       },
       "evidence": {
@@ -3450,7 +3450,7 @@
         },
         {
           "name": "claim",
-          "objects": 237
+          "objects": 238
         }
       ],
       "rule_refs": [
@@ -3723,11 +3723,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 309,
+        "mcp_resources": 310,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 302,
+        "objects": 303,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -4735,6 +4735,15 @@
               "stability": "experimental",
               "tool": "majordomus_ci_timings",
               "route": "GET /api/v1/pull-requests/timings"
+            },
+            {
+              "id": "integration.trains",
+              "title": "The trains of stacked pull requests",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_request_trains",
+              "route": "GET /api/v1/pull-requests/trains",
+              "cli": "majordomus prs trains"
             }
           ]
         }
@@ -4997,11 +5006,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 13,
-        "mcp_tools": 13,
+        "capabilities": 14,
+        "mcp_tools": 14,
         "mcp_resources": 2,
-        "http_routes": 13,
-        "cli_paths": 9,
+        "http_routes": 14,
+        "cli_paths": 10,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -7149,7 +7158,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 87
+          "objects": 92
         },
         {
           "name": "knowledge",
@@ -7157,7 +7166,7 @@
         },
         {
           "name": "document",
-          "objects": 328
+          "objects": 332
         }
       ],
       "rule_refs": [
@@ -7430,11 +7439,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 419,
+        "mcp_resources": 428,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 416,
+        "objects": 425,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7650,7 +7659,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 165
+          "objects": 166
         }
       ],
       "rule_refs": [
@@ -8026,11 +8035,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 167,
+        "mcp_resources": 168,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 165,
+        "objects": 166,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9701,6 +9710,15 @@
               "stability": "experimental",
               "tool": "majordomus_ci_timings",
               "route": "GET /api/v1/pull-requests/timings"
+            },
+            {
+              "id": "integration.trains",
+              "title": "The trains of stacked pull requests",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_request_trains",
+              "route": "GET /api/v1/pull-requests/trains",
+              "cli": "majordomus prs trains"
             }
           ]
         },
@@ -10350,11 +10368,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 89,
-        "mcp_tools": 83,
+        "capabilities": 90,
+        "mcp_tools": 84,
         "mcp_resources": 16,
-        "http_routes": 87,
-        "cli_paths": 37,
+        "http_routes": 88,
+        "cli_paths": 38,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -11794,11 +11812,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 30
+          "objects": 34
         },
         {
           "name": "issue",
-          "objects": 285
+          "objects": 315
         },
         {
           "name": "intent",
@@ -12000,11 +12018,11 @@
       "counts": {
         "capabilities": 22,
         "mcp_tools": 22,
-        "mcp_resources": 321,
+        "mcp_resources": 355,
         "http_routes": 22,
         "cli_paths": 10,
         "commands": 1,
-        "objects": 318,
+        "objects": 352,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -12211,7 +12229,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 36
+          "objects": 37
         },
         {
           "name": "scope",
@@ -12500,11 +12518,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 41,
+        "mcp_resources": 42,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 37,
+        "objects": 38,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -15032,6 +15050,11 @@
         ]
       },
       {
+        "id": "brief",
+        "title": "The session brief",
+        "features": []
+      },
+      {
         "id": "capabilities",
         "title": "Capabilities",
         "features": [
@@ -15227,6 +15250,11 @@
         "features": [
           "models"
         ]
+      },
+      {
+        "id": "monitor",
+        "title": "The monitor",
+        "features": []
       },
       {
         "id": "objects",
@@ -15608,7 +15636,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (87)",
+        "title": "adr (92)",
         "features": [
           "knowledge"
         ]
@@ -15636,7 +15664,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (237)",
+        "title": "claim (238)",
         "features": [
           "declare-once"
         ]
@@ -15650,7 +15678,7 @@
       },
       {
         "id": "context",
-        "title": "context (36)",
+        "title": "context (37)",
         "features": [
           "context"
         ]
@@ -15663,6 +15691,11 @@
       {
         "id": "deployment",
         "title": "deployment (1)",
+        "features": []
+      },
+      {
+        "id": "derive-offload",
+        "title": "derive-offload (1)",
         "features": []
       },
       {
@@ -15700,7 +15733,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (285)",
+        "title": "issue (315)",
         "features": [
           "planning"
         ]
@@ -15721,7 +15754,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (30)",
+        "title": "milestone (34)",
         "features": [
           "planning"
         ]
@@ -15763,7 +15796,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (165)",
+        "title": "rule (166)",
         "features": [
           "doctrine"
         ]
@@ -16636,6 +16669,11 @@
       "route": "/cockpit/integration"
     },
     {
+      "id": "trains",
+      "title": "Trains",
+      "route": "/cockpit/trains"
+    },
+    {
       "id": "mesh",
       "title": "Mesh",
       "route": "/cockpit/mesh"
@@ -16692,49 +16730,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2141,
-    "builtin": 185,
-    "declarative": 1956,
-    "modules": 53,
-    "mcp_tools": 178,
-    "mcp_resources": 2010,
-    "http_routes": 182,
-    "cli_commands": 190,
+    "capabilities": 2201,
+    "builtin": 188,
+    "declarative": 2013,
+    "modules": 55,
+    "mcp_tools": 181,
+    "mcp_resources": 2067,
+    "http_routes": 185,
+    "cli_commands": 196,
     "shell_commands": 30,
-    "kinds": 33,
-    "objects": 1956,
+    "kinds": 34,
+    "objects": 2013,
     "by_kind": {
-      "adr": 87,
+      "adr": 92,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 237,
+      "claim": 238,
       "command": 31,
-      "context": 36,
+      "context": 37,
       "critique": 2,
       "deployment": 1,
+      "derive-offload": 1,
       "distribution-model": 1,
-      "document": 328,
+      "document": 332,
       "domain": 6,
       "feature": 28,
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 285,
+      "issue": 315,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 30,
+      "milestone": 34,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 20,
-      "rule": 165,
+      "rule": 166,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 419,
+      "test": 429,
       "use-case": 48,
       "workspace": 1
     },
@@ -16752,7 +16791,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 219,
+    "declared": 220,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -17740,6 +17779,12 @@
         "supported": false
       },
       "project-status-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "projected-record-edit-is-landable": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

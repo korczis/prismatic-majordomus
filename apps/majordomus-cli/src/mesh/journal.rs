@@ -1755,6 +1755,45 @@ impl Journal {
             .collect()
     }
 
+    /// The marks to tell one peer, whose own marks are `peer`: every stream this runtime
+    /// holds, and a compacted stream's tombstone only when the peer holds that stream.
+    ///
+    /// A tombstone is in the marks to stop a peer re-sending a stream this runtime dropped,
+    /// so it says something only to a peer that has the stream to send. Told to everyone,
+    /// the up to four tombstones per stream slot weighed as much as the live marks, and
+    /// together with a full event budget they took a sync message past the link bound
+    /// (I2139). A peer whose marks are not known yet is told no tombstone; what it then
+    /// sends of a dropped stream is absorbed by the tombstone, once, and its marks are known
+    /// from that round on.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, Marks, HANDOVER_RETENTION};
+    ///
+    /// let open = |n: &str| Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), n,
+    ///     "repo".into(), None).unwrap();
+    /// let (a, b) = (open("0000000000000001"), open("0000000000000002"));
+    /// a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// b.ingest(&a.missing_for(&b.marks(), 1 << 20), &|_| Ok(()));
+    /// let zero = Duration::ZERO;
+    /// assert_eq!(b.compact(zero, zero, HANDOVER_RETENTION, true), 1);
+    ///
+    /// // a peer that holds the dropped stream is told how far it got, so it sends nothing
+    /// assert_eq!(b.marks_for(&a.marks())[a.own_stream()].seq, 1);
+    /// // a peer that does not is told nothing about it
+    /// assert!(!b.marks_for(&Marks::new()).contains_key(a.own_stream()));
+    /// // and the streams b holds are told to every peer
+    /// assert!(b.marks_for(&Marks::new()).contains_key(b.own_stream()));
+    /// ```
+    pub fn marks_for(&self, peer: &Marks) -> Marks {
+        let mut marks = self.marks();
+        let inner = self.inner.lock().expect("journal lock");
+        marks.retain(|id, _| !inner.tombstones.contains_key(id) || peer.contains_key(id));
+        marks
+    }
+
     /// Merge a peer's marks. Only a higher beat carrying its origin's valid signature, from
     /// an origin `trusted` accepts, makes a stream fresher here — a relay forwards beats and
     /// cannot mint one — and the relayed age is clamped to the expiry, so a stale report can
@@ -2287,14 +2326,24 @@ impl Journal {
     /// assert_eq!(j.events_after(0, 1).len(), 1, "one page");
     /// ```
     pub fn events_after(&self, after: u64, limit: usize) -> Vec<MeshEvent> {
-        self.events()
+        let ordered: Vec<MeshEvent> = self
+            .events()
             .into_iter()
             .filter(|e| e.lamport > after)
             .map(|e| (causal_key(&e), e))
             .collect::<BTreeMap<_, _>>()
             .into_values()
-            .take(limit)
-            .collect()
+            .collect();
+        // A page never ends inside a run of equal stamps: the next page resumes after the
+        // last stamp this one carries, so an event that shares it and was cut off would never
+        // be read. Such a run is as long as the streams that wrote concurrently, not unbounded.
+        let mut page = limit.min(ordered.len());
+        if let Some(last) = page.checked_sub(1).map(|i| ordered[i].lamport) {
+            while page < ordered.len() && ordered[page].lamport == last {
+                page += 1;
+            }
+        }
+        ordered.into_iter().take(page).collect()
     }
 
     /// Drop every stream that has been expired for longer than `retention` and that nothing
@@ -2974,6 +3023,41 @@ mod tests {
         assert!(held.is_ok(), "the event is held in memory and replicated");
         assert_eq!(journal.tallies().write_failures, 1);
         assert!(!crate::mesh::doctor::journal_check(&journal.tallies()).ok);
+    }
+
+    #[test]
+    fn paging_by_stamp_returns_every_event_exactly_once() {
+        // three runtimes that wrote concurrently: their events share stamps
+        let reader = journal("0000000000000001");
+        for runtime in ["0000000000000002", "0000000000000003", "0000000000000004"] {
+            let writer = journal(runtime);
+            opened(&writer, "s1");
+            opened(&writer, "s2");
+            reader.merge_marks(&writer.marks(), &|_| true, Duration::from_secs(30));
+            reader.ingest(
+                &writer.missing_for(&reader.marks(), usize::MAX),
+                &accept_all,
+            );
+        }
+        let all = reader.events_after(0, usize::MAX);
+        assert_eq!(all.len(), 6);
+        assert!(
+            all.windows(2).any(|w| w[0].lamport == w[1].lamport),
+            "the fixture holds a tie, or it proves nothing"
+        );
+        // page by one, resuming after the last stamp each page carries
+        let mut read = Vec::new();
+        let mut after = 0;
+        loop {
+            let page = reader.events_after(after, 1);
+            let Some(last) = page.last() else { break };
+            after = last.lamport;
+            read.extend(page);
+        }
+        assert_eq!(
+            read, all,
+            "every event once, in order, however small the page"
+        );
     }
 
     #[test]

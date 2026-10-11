@@ -1,0 +1,49 @@
+id: I2463
+milestone: development-runtime
+title: "A train of stacked pull requests is a typed object, served everywhere and drawn as a graph"
+slug: the-train-is-seen
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive the trains of open pull requests (chains and DAGs of declared and base-branch stacks) from the executor's own recorded observation as a typed read model, project it once as the capability integration.trains to the command line (majordomus prs trains), HTTP and MCP, and draw it in the Cockpit at /cockpit/trains as an interactive graph with a server-rendered table beside it."
+why: "The executor already parses every `Stacked on #N` / `Depends on #N` line and every base branch that is another pull request's head into dependencies, and it prepares the next head of each link under refs/prep/<n> before pushing it at its turn. What a train is, which link is next, which prepared head is still unpushed and how far each link is behind master lived only in session messages and in local refs nobody else could read; two sessions asked each other for the order of the same eleven links in one evening. The owner asked on 2026-10-11 for an interactive, detailed visualisation of the train in the style of the Neo4j Browser."
+current_state: "Dependencies and reasons such as stacked_on:#807 are visible one pull request at a time in majordomus prs status; nothing groups them into trains, orders their turns, or compares refs/prep/<n> with the head the forge serves."
+desired_state: "majordomus prs trains, GET /api/v1/pull-requests/trains and MCP majordomus_pull_request_trains answer the same typed trains: links with number, title, branch, head, disposition and reasons, required checks, relation to master, the prepared head and whether it is pushed, turn and position, root and top; /cockpit/trains draws them with Cytoscape (colour by disposition from the design tokens, master as the anchor, labelled STACKED_ON / DEPENDS_ON arrows, property panel, filters, search, fit and zoom, keyboard access, reduced motion honoured) and lists the same facts as a table without JavaScript."
+scope:
+  - "apps/majordomus-cli/src/integration/train.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "apps/majordomus-cli/src/cockpit/nav.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/trains.rs"
+  - "share/cockpit/trains.js"
+  - ".ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md"
+  - "docs/INTEGRATION.md"
+  - "docs/COCKPIT.md"
+  - "test/cases/1072_the_train_is_seen.sh"
+  - "share/version.txt"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "apps/majordomus-cli/Cargo.lock"
+  - "docs/generated"
+  - "site/data"
+  - "site/content"
+non_scope:
+  - "Moving, pushing or deleting any ref, refs/prep/<n> included: the model reads them"
+  - "A new stream: the page polls the HTTP capability (majordomus monitor is I2400-I2407)"
+depends_on: []
+acceptance_criteria:
+  - "Trains are derived by pure, unit-tested functions from the recorded observation, the queue and the local refs/prep/<n> refs; nothing reaches the network or writes a ref"
+  - "integration.trains is declared once with capability! and projected to the command line, HTTP and MCP by majordomus generate"
+  - "/cockpit/trains draws the trains interactively and renders the same facts as a table without JavaScript; colours come from the design tokens"
+  - "test/cases/1072_the_train_is_seen.sh passes with the change and fails against master without it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::train"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1072_the_train_is_seen"
+evidence_required:
+  - "train_model_unit_tests"
+  - "trains_projection_case"
+created_at: 2026-10-11
+updated_at: 2026-10-11

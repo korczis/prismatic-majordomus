@@ -53,6 +53,20 @@ fn index(url: &str) -> Value {
     serde_json::from_str(&reply.body).expect("the index is JSON")
 }
 
+/// `GET /api/v1/ready` of a running server, parsed.
+fn readiness(url: &str) -> Value {
+    let reply = majordomus_cli::mcp::bridge::request(
+        url,
+        "GET",
+        "/api/v1/ready",
+        &[],
+        None,
+        std::time::Duration::from_secs(5),
+    )
+    .expect("the server answers its readiness");
+    serde_json::from_str(&reply.body).expect("readiness is JSON")
+}
+
 /// POST an `initialize` with no session header, and hand back the status and the body.
 fn open_session(url: &str) -> (u16, Value) {
     let body = init().to_string();
@@ -69,8 +83,49 @@ fn open_session(url: &str) -> (u16, Value) {
     (reply.status, value)
 }
 
+/// A ping on an open session, and its status.
+fn ping(url: &str, session: &str) -> u16 {
+    let body = json!({ "jsonrpc": "2.0", "id": 9, "method": "ping" }).to_string();
+    majordomus_cli::mcp::bridge::request(
+        url,
+        "POST",
+        "/mcp",
+        &[
+            ("content-type", "application/json"),
+            ("mcp-session-id", session),
+        ],
+        Some(&body),
+        std::time::Duration::from_secs(5),
+    )
+    .expect("the server answers /mcp")
+    .status
+}
+
+/// The id of a session opened now.
+fn session_id(url: &str) -> String {
+    let body = init().to_string();
+    let reply = majordomus_cli::mcp::bridge::request(
+        url,
+        "POST",
+        "/mcp",
+        &[("content-type", "application/json")],
+        Some(&body),
+        std::time::Duration::from_secs(5),
+    )
+    .expect("the server answers /mcp");
+    reply
+        .header("mcp-session-id")
+        .expect("a session id")
+        .to_string()
+}
+
 #[test]
 fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
+    // the grace a superseded server keeps its sessions for, declared before anything reads it
+    lease::declare_timings(&majordomus_cli::policy::ServerPolicy {
+        busy_grace_seconds: Some(1),
+        ..Default::default()
+    });
     let f = Fixture::new();
     let repo = Repository::discover(&f.root()).expect("the fixture is a repository");
     let app = common::load_app(&f);
@@ -93,10 +148,11 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
         lease::probe(&url, repo.root()),
         "the probe accepts the server it is looking for"
     );
+    let ready = readiness(&url);
+    assert_eq!(ready["ready"], json!(true), "{ready}");
 
     // a client that arrives now is served, and its session is the board's
-    let (status, reply) = open_session(&url);
-    assert_eq!(status, 200, "a new client is taken on: {reply}");
+    let session = session_id(&url);
     let kept = endpoint.active();
     assert_eq!(kept, 1, "one session open");
 
@@ -124,6 +180,19 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
     assert!(
         !lease::probe(&url, repo.root()),
         "a client with a remembered address is not answered as though this were the one"
+    );
+    // and its readiness says it is not ready, and why (I2157)
+    let ready = readiness(&url);
+    assert_eq!(
+        ready["ready"],
+        json!(false),
+        "a lost lease is not ready: {ready}"
+    );
+    assert!(
+        ready["reasons"].as_array().is_some_and(|r| r
+            .iter()
+            .any(|x| x.as_str().is_some_and(|x| x.starts_with("lease_lost")))),
+        "the reason is named: {ready}"
     );
 
     // its health says that what the server check describes is another process
@@ -159,11 +228,27 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
         "and says how to reach the current server: {text}"
     );
 
-    // and the session it already had is still its own: it serves the peers it has
+    // and the session it already had is still its own for the grace: a request in flight
+    // and the ones right behind it are answered where they started
     assert_eq!(
         endpoint.active(),
         kept,
         "an open session is not closed by the takeover"
+    );
+    assert_eq!(ping(&url, &session), 200, "served within the grace");
+
+    // after the grace it is handed on: answered 404, which the bridge answers by opening a
+    // session, being refused 409 and electing the current server (I2127)
+    std::thread::sleep(std::time::Duration::from_millis(1200));
+    assert_eq!(
+        ping(&url, &session),
+        404,
+        "the session is handed on after the grace"
+    );
+    assert_eq!(
+        endpoint.active(),
+        0,
+        "and this server holds no session any more"
     );
 
     running.stop();

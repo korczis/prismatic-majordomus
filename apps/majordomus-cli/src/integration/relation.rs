@@ -254,10 +254,63 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
                 .ok()
                 .and_then(|(_, s)| s.trim().parse().ok())
                 .unwrap_or(0);
-            RelationToMaster::Behind { behind, authored }
+            if clean
+                && yields_the_heads_tree(root, tree, head)
+                && lacks_only_merges(root, master, head)
+            {
+                RelationToMaster::CarriesMaster { behind, authored }
+            } else {
+                RelationToMaster::Behind { behind, authored }
+            }
         }
         Err(reason) => RelationToMaster::Unknown { reason },
     }
+}
+
+/// Whether `merged`, the tree a clean merge of `head` into master wrote, is `head`'s own tree.
+///
+/// When it is, master changed no path since the merge base that the head does not already
+/// hold in the same state, so nothing was merged path by path: no driver decided anything,
+/// the forge's own merge writes the same tree, and what the required checks judged on the
+/// head is what master becomes. A tree git cannot name is not the head's: `false`, and the
+/// head stays behind, which costs a refresh and never a wrong merge.
+fn yields_the_heads_tree(root: &Path, merged: &str, head: &str) -> bool {
+    match git(
+        root,
+        &[
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            &format!("{head}^{{tree}}"),
+        ],
+    ) {
+        Ok((true, own)) => !merged.is_empty() && own.trim() == merged,
+        _ => false,
+    }
+}
+
+/// Whether every commit master has and `head` lacks is a merge commit.
+///
+/// The tree is not all a head is judged on. Derived output is composed from history too: the
+/// changelog lists every commit that is not a merge (`git log --no-merges`). A master that
+/// took a change and reverted it has the tree it had before and two commits the head's
+/// changelog never listed, so a merge that writes the head's tree would still leave master's
+/// derived output stale. When master's own commits are all merges, and the tree says they
+/// brought nothing the head lacks, every commit a generator can list is one the head has.
+/// A count git cannot give is not zero: `false`, and the head stays behind.
+fn lacks_only_merges(root: &Path, master: &str, head: &str) -> bool {
+    matches!(
+        git(
+            root,
+            &[
+                "rev-list",
+                "--count",
+                "--no-merges",
+                &format!("{head}..{master}"),
+            ],
+        ),
+        Ok((true, n)) if n.trim() == "0"
+    )
 }
 
 /// What `head`'s merge into `master` changes, by kind ([`ChangeShape`]): every path the
@@ -433,6 +486,22 @@ mod patch_tests {
             None,
             "a merge of its own"
         );
+    }
+}
+
+#[cfg(test)]
+mod carries_tests {
+    use super::*;
+
+    /// A head git cannot name has no tree to compare, and is never taken to carry master.
+    #[test]
+    fn a_head_git_cannot_name_yields_no_tree_of_its_own() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(!yields_the_heads_tree(
+            dir.path(),
+            "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+            "0000000000000000000000000000000000000000",
+        ));
     }
 }
 

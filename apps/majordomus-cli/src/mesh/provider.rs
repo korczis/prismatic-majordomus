@@ -21,7 +21,6 @@
 //! ```
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::mpsc::Sender;
 use std::sync::Arc;
 
 use schemars::JsonSchema;
@@ -181,11 +180,103 @@ pub struct Counters {
     pub received: AtomicU64,
 }
 
+/// How many observations wait for the manager at most. A flood beyond it is dropped at the
+/// provider and counted, so a segment shouting datagrams costs this process a bounded queue
+/// and one counter, never memory without end (I2133).
+pub const OBSERVATION_QUEUE: usize = 1024;
+
+/// The providers' half of the bounded queue to the manager: a send that would wait is a drop,
+/// counted in the counter the manager reports as `overflow`.
+///
+/// ```
+/// use majordomus_cli::mesh::provider::{Observation, ObservationSender};
+/// use majordomus_cli::mesh::MeshSource;
+/// let (tx, rx) = ObservationSender::bounded(1);
+/// let seen = || Observation { source: MeshSource::UdpMulticast, path: "x".into(), bytes: vec![] };
+/// assert!(tx.send(seen()));
+/// assert!(!tx.send(seen()), "the queue is full: dropped");
+/// assert_eq!(tx.dropped(), 1);
+/// assert!(rx.try_recv().is_ok());
+/// ```
+#[derive(Clone)]
+pub struct ObservationSender {
+    tx: std::sync::mpsc::SyncSender<Observation>,
+    dropped: Arc<AtomicU64>,
+}
+
+impl ObservationSender {
+    /// A queue of `capacity`, with a counter of its own.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::provider::{Observation, ObservationSender};
+    /// use majordomus_cli::mesh::MeshSource;
+    /// let (tx, rx) = ObservationSender::bounded(2);
+    /// assert!(tx.send(Observation { source: MeshSource::UdpMulticast, path: "a".into(), bytes: vec![] }));
+    /// assert!(rx.try_recv().is_ok());
+    /// ```
+    pub fn bounded(capacity: usize) -> (Self, std::sync::mpsc::Receiver<Observation>) {
+        Self::counting(capacity, Arc::new(AtomicU64::new(0)))
+    }
+
+    /// A queue of `capacity` whose drops land in `dropped`.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::provider::{Observation, ObservationSender};
+    /// use majordomus_cli::mesh::MeshSource;
+    /// use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
+    /// let counter = Arc::new(AtomicU64::new(0));
+    /// let (tx, _rx) = ObservationSender::counting(0, Arc::clone(&counter));
+    /// tx.send(Observation { source: MeshSource::UdpMulticast, path: "a".into(), bytes: vec![] });
+    /// assert_eq!(counter.load(Ordering::Relaxed), 1, "a queue of none drops everything, counted");
+    /// ```
+    pub fn counting(
+        capacity: usize,
+        dropped: Arc<AtomicU64>,
+    ) -> (Self, std::sync::mpsc::Receiver<Observation>) {
+        let (tx, rx) = std::sync::mpsc::sync_channel(capacity);
+        (ObservationSender { tx, dropped }, rx)
+    }
+
+    /// Hand one observation over without waiting; false when it was dropped or nobody reads.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::provider::{Observation, ObservationSender};
+    /// use majordomus_cli::mesh::MeshSource;
+    /// let (tx, rx) = ObservationSender::bounded(1);
+    /// drop(rx);
+    /// assert!(!tx.send(Observation { source: MeshSource::UdpMulticast, path: "a".into(), bytes: vec![] }));
+    /// assert_eq!(tx.dropped(), 0, "nobody reading is not a drop");
+    /// ```
+    pub fn send(&self, observation: Observation) -> bool {
+        match self.tx.try_send(observation) {
+            Ok(()) => true,
+            Err(std::sync::mpsc::TrySendError::Full(_)) => {
+                self.dropped
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                false
+            }
+            Err(std::sync::mpsc::TrySendError::Disconnected(_)) => false,
+        }
+    }
+
+    /// Observations dropped because the queue was full.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::provider::{Observation, ObservationSender};
+    /// use majordomus_cli::mesh::MeshSource;
+    /// let (tx, _rx) = ObservationSender::bounded(1);
+    /// assert_eq!(tx.dropped(), 0);
+    /// ```
+    pub fn dropped(&self) -> u64 {
+        self.dropped.load(std::sync::atomic::Ordering::Relaxed)
+    }
+}
+
 /// What a provider gets to work with: the channel to the manager, the shared stop flag,
 /// and the beacon it announces.
 pub struct ProviderContext {
-    /// Where observations go.
-    pub tx: Sender<Observation>,
+    /// Where observations go: a bounded queue whose overflow is counted.
+    pub tx: ObservationSender,
     /// Set once by the manager; every provider thread ends at its next bounded wait.
     pub stop: Arc<AtomicBool>,
     /// What this node announces.

@@ -1,0 +1,25 @@
+id: I2400
+milestone: everything-is-followed-in-one-stream
+title: "A signal model and a fold join every source the server already records"
+slug: monitor-core
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add src/monitor: a Signal (cursor, at, source, kind, severity, actor, subject, summary, for_you), one reader per source (mesh journal, board, executor trail, executions) and the fold that drops unchanged session re-projections."
+why: "Each source answers its own page with its own cursor; 95% of mesh events are identical session_opened re-projections (954 of 1000 sampled 2026-10-10 21:05Z), so a reader of the journal reads noise."
+current_state: "No monitor module."
+desired_state: "src/monitor folds the four sources into ordered signals behind one opaque cursor, unit-tested per reader and for the fold."
+scope:
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/src/lib.rs"
+depends_on: []
+acceptance_criteria:
+  - "A page after a cursor repeats no signal of the previous page"
+  - "An unchanged session re-projection is suppressed and counted; a new session or a changed intent is a signal"
+  - "A signal is for_you when its reviewer, handover target, claim conflict or text names the reader"
+validation:
+  - "cargo test --lib monitor"
+evidence_required:
+  - "monitor_fold_unit_tests"
+created_at: 2026-10-10
+updated_at: 2026-10-10
