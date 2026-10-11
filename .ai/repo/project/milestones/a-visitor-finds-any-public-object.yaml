@@ -1,0 +1,60 @@
+id: a-visitor-finds-any-public-object
+title: "A visitor finds any public page of the site by name, from any page, with or without script"
+slug: a-visitor-finds-any-public-object
+order: 350
+priority: p2
+problem: "The public site publishes every feature, claim, rule, command, capability, doctrine and document of the layer as a page of its own, and offers no way to find one by name. site/config.toml:8 sets build_search_index = false, so Zola writes no index; the filters on the section pages (site/templates/entities-section.html:26, site/templates/skills-section.html:18) narrow the one list on their own page; the palette that searches objects (the objects.search capability) answers only the Cockpit over a running local server, which a visitor of majordomus.dev does not have. A reader who knows the name of what they want has to know which of the four navbar groups and which section holds it."
+outcome: "Every page the sitemap lists is findable from every page: a static index derived at build time from the same indexing test the sitemap and the robots meta already share, carrying no private data and no route the sitemap omits, fetched only when a visitor opens search; and a keyboard and touch dialog that reads it, with a plain link for a reader without script."
+current_state: "Measured at master 890e112d04. No search index is built (site/config.toml:8). The indexing test is declared once: site/templates/base.html:34-41 marks a page noindex when its front matter says so or when it sits below a section listed under [indexing] unlisted in site/data/nav.toml:143-144 (plan, registry, sessions), templates/sitemap.xml applies the same test, and scripts/ci/homepage-check:46-48 and :467-494 hold the two to each other. scripts/site-check section 12 (:522-537) scans every published file for machine paths, private hosts and credentials from apps/majordomus-cli/src/quality/leak-patterns.tsv. The homepage weight budget is site/data/homepage.toml:34-35. Atom A10 of the atomic pack is the only atom of that pack that this milestone or 'a-claim-page-shows-its-whole-proof' plans; the other fifteen are covered as the non_scope entries below record, by records on master, by tests already on master, or by the unmerged plans of b2 (chore/the-autopilot-and-convergence-packs-are-planned, I2310-I2389) and of the owner packs (chore/the-owner-packs-are-planned, I2200-I2281), cited by id in prose because none of them is on master."
+desired_state: "A built site carries one search index, sorted by route and byte-identical across two builds of one tree, holding exactly the routes sitemap.xml lists; site-check scans it like every other published file; homepage-check reports its size against a declared budget and proves the homepage does not load it. The navbar opens a search dialog on / and on Ctrl+K or Cmd+K, Escape closes it and returns focus, results are links, and the control is a link to a listing when script is off. A feature added under the layer is found by search with no edit outside its own file."
+scope:
+  - "site/config.toml"
+  - "apps/majordomus-cli/src/site.rs"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "scripts/ci/homepage-check"
+  - "site/data/homepage.toml"
+  - "site/templates/base.html"
+  - "site/templates/partials/navbar.html"
+  - "site/nav.js"
+  - "scripts/site-probe"
+  - "scripts/lib/ui-audit.mjs"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/UI.md"
+non_scope:
+  - "A remote search backend, a third-party search service or any request leaving the site's own origin: scripts/site-check section 8 refuses an external runtime dependency and that stays."
+  - "Full-text search of page bodies, unless the measured size of such an index fits the declared budget; the decision and both sizes are recorded."
+  - "A00 baseline audit: the delivery baseline is b2 I2310 (unmerged); the public-surface facts this plan relies on are measured in these records at master 890e112d04, with file and line."
+  - "A01 intent and milestone governance: these records are that atom; the site intent is b2's the-site-says-what-ships (unmerged)."
+  - "A02 public presentation schema: entities are already one projection (site/data/generated/entities.json, site/data/publication.toml), site-check refuses an orphan route and a page with no entry (scripts/site-check:195 and :612-642), and case 531 proves an entity names its public page. Not repeated."
+  - "A03 homepage story: b2 I2376 and I2380 (unmerged). Not repeated."
+  - "A04 design tokens and components: share/design/tokens.yaml, the kit pages, partials/status-badge.html and scripts/ci/design-check exist on master. Not repeated."
+  - "A05 navigation: site/data/nav.toml is the one source of navbar, mobile menu and footer, scripts/ci/nav-check and case 273 hold it, partials/breadcrumb.html exists, site/nav.js closes on Escape; the extra widths are b2 I2378 (unmerged). Not repeated."
+  - "A06 refusal walkthrough: site/data/challenge.toml and partials/challenge-replay.html replay a recorded run on master, and the generator refuses a challenge that leans on a claim that is not guaranteed; the intent-to-release walkthrough is b2 I2377 (unmerged). Not repeated."
+  - "A07 relationship graph: partials/graph.html draws product, claims, governance, roadmap and why graphs with a list fallback (cases 12c and 190). Not repeated."
+  - "A08 feature, domain and guarantee drill-down: the two gaps found, the verdict detail and the gate step of a claim's chain, are milestone a-claim-page-shows-its-whole-proof (I2422, I2423)."
+  - "A09 docs architecture: the docs hub, docs coverage (scripts/site-check section 13), scripts/ci/link-check and scripts/ci/doc-command-check exist on master; the command list read from the registry is I2229 (unmerged). Not repeated."
+  - "A11 onboarding and install: site/templates/getting-started.html reads lifecycle, policy and distribution data, the install command is derived (claim install-command-is-derived, case 84); the stranger's first change is I2255 (unmerged). Not repeated."
+  - "A12 performance, accessibility and mobile: the weight budget exists (homepage-check), rendering budget and widths are b2 I2379 and I2378 (unmerged). Not repeated."
+  - "A13 generalised enforcement: the project rules derived-once, product-surface-derived, interfaces-are-projections, no-claim-without-test and release-is-a-projection exist; wiring both ways is I2249, proof by run I2160, a new guaranteed claim with a run I2259 (all unmerged). The new gates of this plan are in I2420 and I2423."
+  - "A14 release and Pages verification: scripts/ci/pages-check and case 97_pages_fast_path hold the fast path to scripts/pages paths; the version marker of a deploy is b2 I2373 and the release chain's own verification b2 I2360 and I2299 (unmerged). Not repeated."
+  - "A15 zero-registration dogfood: case 97_product_features adds one feature file and asks the index, the command line, JSON, MCP and the site projection, then removes it; the generation-converges gate holds byte stability. The search half is an acceptance criterion of I2420."
+acceptance_criteria:
+  - "The built site's search index lists exactly the routes sitemap.xml lists, sorted by route, and two builds of one tree write it byte for byte"
+  - "A noindex page, a page under an unlisted section and a planted machine path in a fixture are each kept out of the index or refused by site-check, naming the page"
+  - "The homepage does not load the index, and homepage-check reports its size against a budget declared in site/data/homepage.toml"
+  - "The search dialog opens on / and Ctrl+K or Cmd+K, closes on Escape with focus returned, and is a plain link without script, as the browser sweep observes at its widths"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 12_site_build 97_product_features 09_site_mobile_first"
+evidence_required:
+  - "search_index_matches_sitemap"
+  - "search_dialog_probed"
+risks:
+  - "An index of page bodies grows with every recorded run and every generated page; a budget raised to make it pass is the failure homepage.toml:29-31 already forbids."
+  - "A second indexing test written for the index would drift from the one base.html, the sitemap and homepage-check share; the index must read that test, not restate it."
+depends_on: []
+created_at: 2026-10-11
+updated_at: 2026-10-11

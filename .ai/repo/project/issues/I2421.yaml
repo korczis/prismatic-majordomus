@@ -1,0 +1,40 @@
+id: I2421
+milestone: a-visitor-finds-any-public-object
+title: "Search opens from every page on / and Ctrl+K or Cmd+K, is driven by keyboard and touch, and is a plain link without script"
+slug: search-opens-from-every-page
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Add a search control to the navbar that opens an accessible dialog over the index I2420 writes, fetching it on first open, with a no-script fallback, and have the browser sweep that already runs observe it."
+why: "Atomic pack A10 deliverables (page-level affordance, responsive accessible search dialog, shortcut / or Cmd/Ctrl+K with accessible dismissal and empty states, basic E2E keyboard and mobile) and A12 (no critical data hidden behind script). At master 890e112d04 site/templates/partials/navbar.html renders the four groups of site/data/nav.toml and site/nav.js closes dropdowns on Escape (nav.js:48-49); scripts/site-check section 9 requires nav.js once per page and section 8 refuses an external runtime dependency; scripts/site-probe and scripts/lib/ui-audit.mjs sweep every route in a browser and report SKIP without Chrome. Nothing on the site opens a search."
+current_state: "No search control, no dialog, no shortcut. This issue reads the index I2420 writes and starts after I2420 lands; the order is stated here rather than in depends_on because neither record is on master yet."
+desired_state: "The navbar carries a search control on desktop and in the mobile menu. With script it opens a dialog: / and Ctrl+K or Cmd+K open it unless focus is in a text field, focus stays inside while open, Escape or the backdrop closes it and returns focus to the opener, results are links to index routes, and an empty query and an empty result each say so in words. The index is fetched on first open only. Without script the control is a link to the docs hub. The sweep opens it, types, reads a result and closes it at its widths with no horizontal overflow and no console error."
+scope:
+  - "site/templates/partials/navbar.html"
+  - "site/templates/base.html"
+  - "site/nav.js"
+  - "scripts/site-check"
+  - "scripts/site-probe"
+  - "scripts/lib/ui-audit.mjs"
+  - "test/cases/09_site_mobile_first.sh"
+  - "docs/UI.md"
+non_scope:
+  - "The index and its budget: I2420"
+  - "New widths or reduced motion in the sweep: b2 I2378 (unmerged)"
+  - "A component library or framework for the dialog: Alpine and the site's own script, as the navbar already uses"
+depends_on: []
+acceptance_criteria:
+  - "The sweep opens the dialog with / and with Ctrl+K, reads at least one result link that resolves, closes it with Escape, and finds focus back on the control"
+  - "At 320 px the open dialog causes no horizontal overflow and no console error"
+  - "With script disabled the control is a link that resolves"
+  - "homepage-check's measured homepage weight does not change by the index, which is fetched only on first open"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "scripts/site-probe"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 09_site_mobile_first"
+evidence_required:
+  - "search_dialog_probed"
+created_at: 2026-10-11
+updated_at: 2026-10-11

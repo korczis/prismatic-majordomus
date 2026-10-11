@@ -1,0 +1,39 @@
+id: I2422
+milestone: a-claim-page-shows-its-whole-proof
+title: "A claim's page shows its run's commit, date, changed inputs, detail and rerun command, and its verdict reads the same on every surface"
+slug: a-claim-shows-why-it-is-unproven
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Carry into product.json, per claim, the fields ClaimProof already derives, render them in the verdict step of the claim page, and prove in one fixture that the command line, product.json, the claim page, the feature page and the homepage band read the same state."
+why: "Derive-infer-enforce pack 03 (expose why unproven with a reproducible command; cross-check that all consumers use the same evidence service; a promised capability with no current proof must not appear proven), 05 (show declared capability against the evidence verdict, proven, stale, not run or failing, with date, revision and reproduction command; claim to test to run evidence to implementation), the master's acceptance (break a behavioural test for a public guarantee and prove the verdict is failing or stale, never proven), and atomic A08 (status semantics sourced from claims). At master 890e112d04 ClaimProof (apps/majordomus-cli/src/evidence/mod.rs:1061) carries state, meaning, execution, changed, detail and the rerun command; site.rs claim_evidence (around :1050-1125) writes only status, state, label and supported; site/templates/claim.html:19 chooses among four fixed sentences by `supported`, so stale and failing read alike, and the date, commit and changed files are dropped one layer above the page. Cases 124 and 502 prove the seven states in the executable, case 544 the homepage band's figures; none asserts the built pages agree with the executable for one claim."
+current_state: "product.json evidence.claims[<id>] is {status, state, label, supported}; the claim page prints a sentence chosen by supported; no case compares surfaces for one claim's state."
+desired_state: "Each product.json claim entry adds the execution's commit and recorded time, the changed paths, the detail sentence and the rerun command, copied from ClaimProof with nothing recomputed. The verdict step of claim.html prints the state word, a sentence from ProofState's meaning, the short commit and date of the run, the changed inputs when stale, the detail when present and the rerun command. Case 341 builds a fixture with one guaranteed claim whose test fails and one whose test changed after its passing run, and finds `failing` and `stale` respectively in `majordomus evidence show --json`, in product.json, on each claim page, on the feature page that names the claim and in the homepage band's supported figure; neither is drawn with the supported tone. docs/EVIDENCE.md says which fields the site shows."
+scope:
+  - "apps/majordomus-cli/src/site.rs"
+  - "site/templates/claim.html"
+  - "site/templates/feature.html"
+  - "scripts/site-check"
+  - "scripts/ci/homepage-check"
+  - "test/cases/341_a_claim_shows_the_test_that_settles_it.sh"
+  - "docs/EVIDENCE.md"
+non_scope:
+  - "The proof states and the join that decides them (apps/majordomus-cli/src/evidence/mod.rs): unchanged"
+  - "The age of every fact on every surface: b2 I2362 (unmerged)"
+  - "The gate step of the chain: I2423"
+  - "Re-running any test while the site is generated: the site reads the recorded ledger at the commit it is built from"
+depends_on: []
+acceptance_criteria:
+  - "In the fixture, the stale claim's page names the changed input and the failing claim's page names its run's commit and date, and the two pages print different state words"
+  - "For each of the two claims, evidence show, product.json, the claim page, the feature page and the homepage band agree on the state, and neither carries the supported tone"
+  - "A ledger detail carrying a machine path is refused by site-check section 12 on the built claim page, naming the page"
+  - "No field of the new per-claim entry is computed in site.rs: each is read from the evidence show answer"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 341_a_claim_shows_the_test_that_settles_it 124_evidence 544_the_homepage_counts_declared_apart_from_supported"
+  - "scripts/site-check"
+evidence_required:
+  - "verdict_reads_alike_on_every_surface"
+  - "claim_page_shows_run_detail"
+created_at: 2026-10-11
+updated_at: 2026-10-11

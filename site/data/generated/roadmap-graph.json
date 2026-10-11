@@ -186,6 +186,15 @@
       "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked"
     },
     {
+      "id": "a-visitor-finds-any-public-object",
+      "kind": "milestone",
+      "label": "a-visitor-finds-any-public-object",
+      "status": "PLANNED",
+      "route": "/plan/a-visitor-finds-any-public-object/",
+      "external": false,
+      "summary": "A visitor finds any public page of the site by name, from any page, with or without script"
+    },
+    {
       "id": "runtime-adapters",
       "kind": "milestone",
       "label": "0.2  runtime-adapters",
@@ -202,6 +211,15 @@
       "route": "/plan/intent-planning/",
       "external": false,
       "summary": "The plan of an intent is held to it before execution"
+    },
+    {
+      "id": "a-claim-page-shows-its-whole-proof",
+      "kind": "milestone",
+      "label": "a-claim-page-shows-its-whole-proof",
+      "status": "BLOCKED",
+      "route": "/plan/a-claim-page-shows-its-whole-proof/",
+      "external": false,
+      "summary": "A claim's public page shows every link from the statement to its proof, and the verdict reads the same on every surface"
     },
     {
       "id": "execution-telemetry",
@@ -258,6 +276,11 @@
     {
       "source": "intent-lifecycle",
       "target": "intent-planning",
+      "kind": "requires"
+    },
+    {
+      "source": "test-evidence",
+      "target": "a-claim-page-shows-its-whole-proof",
       "kind": "requires"
     },
     {

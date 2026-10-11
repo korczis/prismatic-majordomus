@@ -6,23 +6,23 @@
     "version": "0.20.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "92647bf6ef9180cdc71232303ee53ebe4981ac483c6e3f6d51530addd4c68eb7",
     "summary": {
-      "total": 2112,
+      "total": 2118,
       "builtin": 184,
-      "declarative": 1928,
+      "declarative": 1934,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1928
+        "resource": 1934
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1936
+        "implemented": 1942
       },
       "mcp_tools": 177,
-      "mcp_resources": 1982,
+      "mcp_resources": 1988,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 275,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 29,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "07cf702b638ced934ca821e02689597f9f06ae1675d42c1218ede6684a39d2c2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76190,10 +76190,10 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 275,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 29,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -81670,7 +81670,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 138180
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87959,6 +87959,50 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2420",
+        "kind": "issue",
+        "identity": "I2420",
+        "title": "The built site carries one search index holding exactly the routes its sitemap lists, derived, budgeted and fetched on demand",
+        "description": "Derive one static search index of the public site at build time from the indexing test base.html, sitemap.xml and homepage-check already share, hold it to the leak scan, a declared size budget and byte stability, and prove a newly added feature is found with no edit outside its own file.",
+        "path": ".ai/repo/project/issues/I2420.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4346
+      },
+      {
+        "uri": "majordomus://issue/I2421",
+        "kind": "issue",
+        "identity": "I2421",
+        "title": "Search opens from every page on / and Ctrl+K or Cmd+K, is driven by keyboard and touch, and is a plain link without script",
+        "description": "Add a search control to the navbar that opens an accessible dialog over the index I2420 writes, fetching it on first open, with a no-script fallback, and have the browser sweep that already runs observe it.",
+        "path": ".ai/repo/project/issues/I2421.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3181
+      },
+      {
+        "uri": "majordomus://issue/I2422",
+        "kind": "issue",
+        "identity": "I2422",
+        "title": "A claim's page shows its run's commit, date, changed inputs, detail and rerun command, and its verdict reads the same on every surface",
+        "description": "Carry into product.json, per claim, the fields ClaimProof already derives, render them in the verdict step of the claim page, and prove in one fixture that the command line, product.json, the claim page, the feature page and the homepage band read the same state.",
+        "path": ".ai/repo/project/issues/I2422.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4374
+      },
+      {
+        "uri": "majordomus://issue/I2423",
+        "kind": "issue",
+        "identity": "I2423",
+        "title": "A claim names the gates that run its test, read from the gate model, and a guaranteed claim no blocking gate runs is refused",
+        "description": "Join each claim's test to the gates of .ai/repo/ci/gates.yaml whose runner executes it, through the existing gate model and evidence subject index, draw that step on the claim page, and make claim-proof-check refuse a guaranteed claim whose test no blocking gate runs.",
+        "path": ".ai/repo/project/issues/I2423.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4314
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88035,6 +88079,28 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/a-claim-page-shows-its-whole-proof",
+        "kind": "milestone",
+        "identity": "a-claim-page-shows-its-whole-proof",
+        "title": "A claim's public page shows every link from the statement to its proof, and the verdict reads the same on every surface",
+        "description": "A reader clicks from a public claim to its implementation, its test, the gate that runs the test, the recorded run with its commit and date, what changed since and the command that reproduces it, each read from the join that decides it. A failing or stale run reads as failing or stale on the command line, the claim page, the feature page and the homepage band alike, and a guaranteed claim whose test no blocking gate runs is refused.",
+        "path": ".ai/repo/project/milestones/a-claim-page-shows-its-whole-proof.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6771
+      },
+      {
+        "uri": "majordomus://milestone/a-visitor-finds-any-public-object",
+        "kind": "milestone",
+        "identity": "a-visitor-finds-any-public-object",
+        "title": "A visitor finds any public page of the site by name, from any page, with or without script",
+        "description": "Every page the sitemap lists is findable from every page: a static index derived at build time from the same indexing test the sitemap and the robots meta already share, carrying no private data and no route the sitemap omits, fetched only when a visitor opens search; and a keyboard and touch dialog that reads it, with a plain link for a reader without script.",
+        "path": ".ai/repo/project/milestones/a-visitor-finds-any-public-object.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 8377
       },
       {
         "uri": "majordomus://milestone/adopter-upgrades",
@@ -96993,7 +97059,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 275
     },
     {
       "name": "knowledge",
@@ -97023,7 +97089,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 29
     },
     {
       "name": "moment",
