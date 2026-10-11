@@ -6,23 +6,23 @@
     "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "816a23e3a76ede8d3bbfd7fcd67902de258a04588ce04209cad082b4b220c229",
+    "fingerprint": "c508b45ae52fba07ef954fa734a4c5deb48ee1c9752fda5d36e41f5a07f4d7a3",
     "summary": {
-      "total": 2201,
+      "total": 2203,
       "builtin": 188,
-      "declarative": 2013,
+      "declarative": 2015,
       "by_kind": {
         "command": 26,
         "query": 162,
-        "resource": 2013
+        "resource": 2015
       },
       "by_stability": {
         "behaviorally_verified": 133,
         "experimental": 47,
-        "implemented": 2021
+        "implemented": 2023
       },
       "mcp_tools": 181,
-      "mcp_resources": 2067,
+      "mcp_resources": 2069,
       "http_routes": 185,
       "cli_commands": 103,
       "modules": 89,
@@ -31118,6 +31118,21 @@
                   },
                   {
                     "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
+                  },
+                  {
+                    "type": "string",
                     "const": "repair_selected",
                     "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
                   },
@@ -32594,6 +32609,21 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
                   },
                   {
                     "type": "string",
@@ -34431,6 +34461,21 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_attempted",
+                    "description": "A record pull request the workflow's token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopened",
+                    "description": "It was closed and reopened; its required check can report now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reopen_failed",
+                    "description": "Reopening it failed; the detail says whether the pull request was left closed."
                   },
                   {
                     "type": "string",
@@ -77771,7 +77816,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 315,
+        "capabilities": 316,
         "capability_ids": []
       },
       {
@@ -78318,7 +78363,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 429,
+        "capabilities": 430,
         "capability_ids": []
       },
       {
@@ -78408,7 +78453,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9b96d48251360d79d50d97974f20d92b13f8d8be568b1ead759dbdb35f100440",
+    "fingerprint": "482a03101dd97514c02dce20575bdc99914f19552f2a1eb1a15582f50885d6a8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -78448,7 +78493,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 315,
+      "issue": 316,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 34,
@@ -78462,7 +78507,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 429,
+      "test": 430,
       "use-case": 48,
       "workspace": 1
     },
@@ -83850,7 +83895,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 29585
+        "bytes": 30388
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -83994,7 +84039,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 61790
+        "bytes": 63641
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -84111,7 +84156,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 231092
+        "bytes": 235738
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -90666,6 +90711,17 @@
         "bytes": 3972
       },
       {
+        "uri": "majordomus://issue/I2296",
+        "kind": "issue",
+        "identity": "I2296",
+        "title": "The executor reopens a record pull request no run was started for",
+        "description": "Let `majordomus prs drain` close and reopen a release's record pull request itself when the workflow's token opened it and it therefore has no check of its own, so the record lands one validate cycle after publication without a person noticing.",
+        "path": ".ai/repo/project/issues/I2296.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4394
+      },
+      {
         "uri": "majordomus://issue/I2298",
         "kind": "issue",
         "identity": "I2298",
@@ -96198,6 +96254,14 @@
         "bytes": 4930
       },
       {
+        "uri": "majordomus://test/test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "kind": "test",
+        "identity": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "path": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
+        "source_class": "case",
+        "bytes": 8295
+      },
+      {
         "uri": "majordomus://test/test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
         "kind": "test",
         "identity": "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
@@ -96459,7 +96523,7 @@
         "identity": "test/cases/115_server_state_drift.sh",
         "path": "test/cases/115_server_state_drift.sh",
         "source_class": "case",
-        "bytes": 6334
+        "bytes": 6857
       },
       {
         "uri": "majordomus://test/test/cases/118_entry_converges_by_rule.sh",
@@ -99043,7 +99107,7 @@
         "identity": "test/cases/91_canonical_architecture.sh",
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
-        "bytes": 9207
+        "bytes": 9954
       },
       {
         "uri": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
@@ -100181,7 +100245,7 @@
       "identity": [
         "id"
       ],
-      "objects": 315
+      "objects": 316
     },
     {
       "name": "knowledge",
@@ -100333,7 +100397,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 429
+      "objects": 430
     },
     {
       "name": "use-case",
