@@ -80,6 +80,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
 | `/cockpit/integration` | the pull-request integration queue and its executor; with nothing observed, says so and still renders | `integration.queue` |
+| `/cockpit/trains` | the trains of stacked pull requests, drawn as an interactive graph in the manner of the Neo4j Browser (master as the anchor, links coloured by disposition, `STACKED_ON` / `DEPENDS_ON` arrows, a property panel, filters, search, fit and zoom, keyboard navigation) and listed as one table per train that needs no JavaScript; polls its route once a minute (ADR 0138) | `integration.trains` |
 | `/cockpit/reasoning` | the optional advisors, and the open task's uncertainties and conclusions; with no advisor, only the local review path | `reasoning.advisors`, `reasoning.status` |
 | `/cockpit/economics` | token economics, measured | `economics.summary` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |

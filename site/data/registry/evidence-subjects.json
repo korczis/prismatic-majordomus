@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -426,6 +426,11 @@
       "kind": "capability",
       "subject": "capability:integration.queue",
       "path": "/evidence/capabilities/integration-queue/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:integration.trains",
+      "path": "/evidence/capabilities/integration-trains/"
     },
     {
       "kind": "capability",
@@ -2879,6 +2884,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:prs trains",
+      "path": "/evidence/commands/prs-trains/"
+    },
+    {
+      "kind": "command",
       "subject": "command:prs",
       "path": "/evidence/commands/prs/"
     },
@@ -4487,6 +4497,18 @@
       "programs": [],
       "members": [
         "command:prs status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.trains": {
+      "kind": "capability",
+      "id": "integration.trains",
+      "page": "/evidence/capabilities/integration-trains/",
+      "programs": [],
+      "members": [
+        "command:prs trains"
       ],
       "routes": [],
       "mechanisms": [],
@@ -15237,6 +15259,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:prs trains": {
+      "kind": "command",
+      "id": "prs trains",
+      "page": "/evidence/commands/prs-trains/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:quality report": {
       "kind": "command",
       "id": "quality report",
@@ -19411,6 +19452,18 @@
       "programs": [],
       "members": [
         "capability:integration.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_pull_request_trains": {
+      "kind": "mcp",
+      "id": "majordomus_pull_request_trains",
+      "alias_of": "capability:integration.trains",
+      "programs": [],
+      "members": [
+        "capability:integration.trains"
       ],
       "routes": [],
       "mechanisms": [],
@@ -25685,6 +25738,7 @@
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:102_completion_shell",
+    "suite:1072_the_train_is_seen",
     "suite:107_runtime_staleness_is_loud",
     "suite:113_clean_owns_its_target",
     "suite:113_shared_server_survives_a_crash",

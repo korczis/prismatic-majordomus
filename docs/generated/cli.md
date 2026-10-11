@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -105,6 +105,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus prs cleanup`](#majordomus-prs-cleanup) | `/docs/cli/prs/cleanup/` | Close the pull requests whose work is provably on master already; without `--apply` it only lists them |
 | [`majordomus prs repair`](#majordomus-prs-repair) | `/docs/cli/prs/repair/` | Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act |
 | [`majordomus prs events`](#majordomus-prs-events) | `/docs/cli/prs/events/` | The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded |
+| [`majordomus prs trains`](#majordomus-prs-trains) | `/docs/cli/prs/trains/` | The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent |
 | [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed |
 | [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run) | `/docs/cli/prs/prove-dry-run/` | Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on |
 | [`majordomus convergence`](#majordomus-convergence) | `/docs/cli/convergence/` | Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them |
@@ -2722,7 +2723,7 @@ Examples:
 
 Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
 
-Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
+Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs trains`](#majordomus-prs-trains), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
 
 ```text
 majordomus prs [OPTIONS] [COMMAND]
@@ -2973,6 +2974,33 @@ Examples:
   ```
 
   Verified: exits 0; prints no integration action.
+
+<a id="majordomus-prs-trains"></a>
+## `majordomus prs trains`
+
+The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent
+
+```text
+majordomus prs trains [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The trains of stacked pull requests, where nothing is observed** — Every open pull request stacked on another, grouped into trains in landing order, with each link's prepared head under refs/prep/<n> and whether it was pushed. The same answer `GET /api/v1/pull-requests/trains` gives and /cockpit/trains draws. With no observation recorded it says why and exits 10.
+
+  ```console
+  $ majordomus prs trains
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-prs-brief"></a>
 ## `majordomus prs brief`

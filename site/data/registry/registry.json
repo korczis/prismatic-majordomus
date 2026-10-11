@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "743c3c0e55872df3de2242e9dd6a77552963fa11891e5c76f77233e9f548f7a0",
+    "fingerprint": "ef51116391971fa544aa15bbf082a91a79af1d7853de52c3162ee220b37de552",
     "summary": {
-      "total": 2112,
-      "builtin": 184,
-      "declarative": 1928,
+      "total": 2116,
+      "builtin": 185,
+      "declarative": 1931,
       "by_kind": {
         "command": 26,
-        "query": 158,
-        "resource": 1928
+        "query": 159,
+        "resource": 1931
       },
       "by_stability": {
         "behaviorally_verified": 132,
-        "experimental": 44,
-        "implemented": 1936
+        "experimental": 45,
+        "implemented": 1939
       },
-      "mcp_tools": 177,
-      "mcp_resources": 1982,
-      "http_routes": 181,
-      "cli_commands": 101,
+      "mcp_tools": 178,
+      "mcp_resources": 1985,
+      "http_routes": 182,
+      "cli_commands": 102,
       "modules": 86,
-      "benchmark_required": 160,
+      "benchmark_required": 161,
       "benchmark_waived": 24,
       "cached": 41
     },
@@ -34355,6 +34355,953 @@
           "pull-requests",
           "git",
           "queue"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs"
+      },
+      {
+        "id": "integration.trains",
+        "module": "integration",
+        "kind": "query",
+        "title": "The trains of stacked pull requests",
+        "description": "Every train of open pull requests — a group joined by confirmed dependencies: a base branch that is another open pull request's head, or a `Stacked on #N` / `Depends on #N` line in the body — in landing order. Per link: number, title, author, head and base branch, head commit, the forge's page and checks, disposition, lane, reasons, next action, required-check state and every check on the head, relation to master with how far behind it is and whether it carries master, the prepared head under refs/prep/<n> with whether it is the head the forge serves (pushed) or not yet (pending), its position and depth, whether its turn has come, what it stands on and what it carries, its queue rank and whether a cycle catches it. Per train: roots, tops, the next link the order allows, the edges (STACKED_ON or DEPENDS_ON, satisfied when the link below landed), and the pull requests beneath it that are no longer open. Beside them the prepared heads no train holds, the tallies and the queue's diagnostics. Read from the recorded observation, the queue `majordomus prs status` prints and the local refs: it fetches, pushes and moves nothing. `observed: false` with the reason when this checkout has recorded no observation.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "TrainsView",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "observed": {
+                "type": "boolean",
+                "description": "Whether a forge observation is recorded in this checkout."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why there are no trains to show, when nothing is observed."
+              },
+              "repository": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "`owner/name`, when observed."
+              },
+              "base": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The integration base."
+              },
+              "master_sha": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The master commit every link's relation was decided against."
+              },
+              "observed_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the forge was observed."
+              },
+              "trains": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Train"
+                },
+                "description": "Every train, the one whose next link ranks highest in the queue first."
+              },
+              "unattached_prep": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/UnattachedPrep"
+                },
+                "description": "Prepared heads under `refs/prep/` whose pull request is no link of any train: open\nand stacked on nothing, or not open at all (landed, closed)."
+              },
+              "tallies": {
+                "$ref": "#/$defs/TrainTallies",
+                "description": "Counts over every train."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What makes this answer less than a full one: the queue's own diagnostics (a stale\nobservation first), and a dependency cycle when one is found."
+              }
+            },
+            "required": [
+              "observed",
+              "trains",
+              "unattached_prep",
+              "tallies",
+              "diagnostics"
+            ],
+            "description": "Every train of the observed queue, and why there is none when there is none.",
+            "title": "TrainsView",
+            "$defs": {
+              "Train": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`train-<n>`, after the first root in turn order: stable while that link is open."
+                  },
+                  "roots": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0
+                    },
+                    "description": "The links that land first: no open link of the train is below them."
+                  },
+                  "tops": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0
+                    },
+                    "description": "The links at the top: no link of the train is stacked on them."
+                  },
+                  "next": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The first link, in turn order, whose every dependency has landed: the train's next\nmerge as far as order is concerned (its disposition says whether it can merge now)."
+                  },
+                  "links": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/TrainLink"
+                    },
+                    "description": "Every open link, in turn order — `TrainLink::position` 1 first."
+                  },
+                  "edges": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/TrainEdge"
+                    },
+                    "description": "Every confirmed dependency of a link, upper link first."
+                  },
+                  "beneath": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BeneathLink"
+                    },
+                    "description": "The pull requests below the train that are no longer open — landed, closed without a\nmerge, or unread — which a link still declares."
+                  },
+                  "by_disposition": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0
+                    },
+                    "description": "Links by disposition word."
+                  }
+                },
+                "required": [
+                  "id",
+                  "roots",
+                  "tops",
+                  "links",
+                  "edges",
+                  "beneath",
+                  "by_disposition"
+                ],
+                "description": "One train: open pull requests joined by confirmed dependencies, in the order they land."
+              },
+              "TrainLink": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request number."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "Its author's login."
+                  },
+                  "head_ref": {
+                    "type": "string",
+                    "description": "Its head branch."
+                  },
+                  "base_ref": {
+                    "type": "string",
+                    "description": "The branch it targets: the integration base, or the head of the link below."
+                  },
+                  "head_sha": {
+                    "type": "string",
+                    "description": "The head commit it was assessed at, as the forge served it."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The pull request on the forge, when the repository is known."
+                  },
+                  "checks_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its checks on the forge, when the repository is known."
+                  },
+                  "disposition": {
+                    "$ref": "#/$defs/PullRequestDisposition",
+                    "description": "The executor's classification."
+                  },
+                  "lane": {
+                    "$ref": "#/$defs/IntegrationLane",
+                    "description": "The lane that disposition belongs to."
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The machine-readable reasons, as every surface spells them (`stacked_on:#807`)."
+                  },
+                  "next_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What happens next, in words, when anything does."
+                  },
+                  "required_checks": {
+                    "$ref": "#/$defs/RequiredCheckState",
+                    "description": "The required checks on its head."
+                  },
+                  "checks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/LinkCheck"
+                    },
+                    "description": "Every check the forge reported on its head, required or not."
+                  },
+                  "relation": {
+                    "$ref": "#/$defs/RelationToMaster",
+                    "description": "What its head is to master, decided by git."
+                  },
+                  "relation_kind": {
+                    "type": "string",
+                    "description": "That relation's word (`behind`, `up_to_date`, `carries_master`, ...)."
+                  },
+                  "behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many master commits its head lacks, when the relation counts them."
+                  },
+                  "carries_master": {
+                    "type": "boolean",
+                    "description": "Whether its head carries master by a merge of its own (ADR 0129) — read from the\nrelation's word, so an executable that does not know that relation says `false`."
+                  },
+                  "prep": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PreparedHead"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The head the executor prepared for it, when `refs/prep/<n>` exists."
+                  },
+                  "position": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Its turn in the train, 1-based: every link below it comes earlier."
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many links are below it on its longest path to master; a root is 0."
+                  },
+                  "at_turn": {
+                    "type": "boolean",
+                    "description": "Every dependency it declares has landed: it is the link the order allows next."
+                  },
+                  "on": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0
+                    },
+                    "description": "The pull requests it stands on, open links and those beneath alike."
+                  },
+                  "carries": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0
+                    },
+                    "description": "The links stacked on it."
+                  },
+                  "rank": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Its rank in the queue, 1-based."
+                  },
+                  "in_cycle": {
+                    "type": "boolean",
+                    "description": "Caught in a cycle of confirmed dependencies: no link of the cycle can land first."
+                  }
+                },
+                "required": [
+                  "number",
+                  "title",
+                  "author",
+                  "head_ref",
+                  "base_ref",
+                  "head_sha",
+                  "disposition",
+                  "lane",
+                  "reasons",
+                  "required_checks",
+                  "checks",
+                  "relation",
+                  "relation_kind",
+                  "carries_master",
+                  "position",
+                  "depth",
+                  "at_turn",
+                  "on",
+                  "carries",
+                  "rank",
+                  "in_cycle"
+                ],
+                "description": "One open pull request as a link of a train."
+              },
+              "PullRequestDisposition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "needs_refresh",
+                    "description": "Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again."
+                  },
+                  {
+                    "type": "string",
+                    "const": "waiting_for_checks",
+                    "description": "Contains master; a required check has not finished on this head."
+                  },
+                  {
+                    "type": "string",
+                    "const": "waiting_for_review",
+                    "description": "A required review is missing or changes were requested."
+                  },
+                  {
+                    "type": "string",
+                    "const": "waiting_for_dependency",
+                    "description": "A declared dependency has not landed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "draft",
+                    "description": "A draft."
+                  },
+                  {
+                    "type": "string",
+                    "const": "needs_repair",
+                    "description": "A required check failed on this head."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflicting",
+                    "description": "Conflicts on authored paths: a person resolves them."
+                  },
+                  {
+                    "type": "string",
+                    "const": "blocked",
+                    "description": "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unsafe",
+                    "description": "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "redundant",
+                    "description": "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
+                  },
+                  {
+                    "type": "string",
+                    "const": "superseded",
+                    "description": "A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+                  },
+                  {
+                    "type": "string",
+                    "const": "possibly_redundant",
+                    "description": "Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically."
+                  },
+                  {
+                    "type": "string",
+                    "const": "other_base",
+                    "description": "Targets a branch other than the integration base."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Something needed to decide could not be observed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "obsolete",
+                    "description": "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
+                  }
+                ],
+                "description": "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
+              },
+              "IntegrationLane": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "The executor may merge it now."
+                  },
+                  {
+                    "type": "string",
+                    "const": "waiting",
+                    "description": "Something will happen without a person: a refresh, a check, a dependency."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair",
+                    "description": "A person must change the branch."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cleanup",
+                    "description": "Its work is on master already, or a successor that landed replaced it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
+                  }
+                ],
+                "description": "The queues the Cockpit and the status table group pull requests into."
+              },
+              "RequiredCheckState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "passed",
+                    "description": "Every required check passed on this head."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skipped",
+                    "description": "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pending",
+                    "description": "A required check is queued or running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "A required check failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "missing",
+                    "description": "A required check has not reported on this head at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "The repository's required checks could not be read."
+                  }
+                ],
+                "description": "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass."
+              },
+              "LinkCheck": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The check's name."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/CheckRunState",
+                    "description": "Where it stands."
+                  }
+                },
+                "required": [
+                  "name",
+                  "state"
+                ],
+                "description": "One check run on a link's head."
+              },
+              "CheckRunState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "passed",
+                    "description": "Completed and passed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "Completed and failed (failure, timed out, cancelled, action required)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pending",
+                    "description": "Queued or running; also what a report that says nothing is taken to be, so a\ndefault is never a pass."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skipped",
+                    "description": "Completed as skipped or neutral."
+                  }
+                ],
+                "description": "Where one check run stands."
+              },
+              "RelationToMaster": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "contained"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "description": "The head is an ancestor of master: every commit already landed."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "superseded"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "description": "Merging the head into master changes nothing: its patch is already fully there."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "commits": {
+                        "type": "integer",
+                        "format": "uint64",
+                        "minimum": 0,
+                        "description": "How many commits, every one of them already on master."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "patch_ids_upstream"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "commits"
+                    ],
+                    "description": "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "paths": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "The derived paths that would change."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "derived_only"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "paths"
+                    ],
+                    "description": "Merging changes only derived artifacts: the authored change is already on master,\nand what differs is output the generators rewrite."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "authored": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Authored (non-derived) paths the merge changes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "up_to_date"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "authored"
+                    ],
+                    "description": "The head already contains master and merges cleanly."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "behind": {
+                        "type": "integer",
+                        "format": "uint64",
+                        "minimum": 0,
+                        "description": "Commits on master the head does not have."
+                      },
+                      "authored": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Authored paths the merge changes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "behind"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "behind",
+                      "authored"
+                    ],
+                    "description": "The head does not contain master, but the merge is clean with the derived driver."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "paths": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "The conflicting authored paths."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "conflicting"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "paths"
+                    ],
+                    "description": "Merging conflicts on authored paths: a person must resolve it."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "reason": {
+                        "type": "string",
+                        "description": "Why."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "unknown"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "reason"
+                    ],
+                    "description": "Git could not answer (the head is not fetched, or git failed); the reason."
+                  }
+                ],
+                "description": "What the pull request's head is to the current master, decided locally by git with\nthis repository's own merge drivers — never by the forge's `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting."
+              },
+              "PreparedHead": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "description": "The ref."
+                  },
+                  "sha": {
+                    "type": "string",
+                    "description": "The commit it names."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/PrepState",
+                    "description": "Whether that commit is the head the forge serves."
+                  }
+                },
+                "required": [
+                  "reference",
+                  "sha",
+                  "state"
+                ],
+                "description": "The head the executor prepared for a link under `refs/prep/<n>`."
+              },
+              "PrepState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pushed",
+                    "description": "The prepared head is the pull request's head: it was pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pending",
+                    "description": "The prepared head is another commit: it waits for its turn to be pushed."
+                  }
+                ],
+                "description": "Whether a prepared head has reached the forge."
+              },
+              "TrainEdge": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The upper link: the one that depends."
+                  },
+                  "to": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request it stands on."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/TrainEdgeKind",
+                    "description": "How the dependency is declared."
+                  },
+                  "satisfied": {
+                    "type": "boolean",
+                    "description": "Whether it is satisfied: the pull request below landed."
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "kind",
+                  "satisfied"
+                ],
+                "description": "A confirmed dependency between two pull requests of a train."
+              },
+              "TrainEdgeKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "stacked_on",
+                    "description": "Its base branch is the other's head, or its body says `Stacked on #N`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "depends_on",
+                    "description": "Its body says `Depends on #N`, `Requires #N` or `Land after #N`."
+                  }
+                ],
+                "description": "How a dependency between two links is declared."
+              },
+              "BeneathLink": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its number."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/DependencyState",
+                    "description": "What the forge says became of it."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The pull request on the forge, when the repository is known."
+                  }
+                },
+                "required": [
+                  "number",
+                  "state"
+                ],
+                "description": "A pull request below a train that is not open any more."
+              },
+              "DependencyState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "open",
+                    "description": "Still open."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged",
+                    "description": "Merged: the only state that satisfies it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "closed_unmerged",
+                    "description": "Closed without a merge: its work never landed, so a person decides."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied."
+                  }
+                ],
+                "description": "What became of a pull request another one depends on."
+              },
+              "UnattachedPrep": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request the ref is named for."
+                  },
+                  "sha": {
+                    "type": "string",
+                    "description": "The commit it names."
+                  },
+                  "open": {
+                    "type": "boolean",
+                    "description": "Whether that pull request is open."
+                  }
+                },
+                "required": [
+                  "number",
+                  "sha",
+                  "open"
+                ],
+                "description": "A prepared head whose pull request is no link of any train."
+              },
+              "TrainTallies": {
+                "type": "object",
+                "properties": {
+                  "trains": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Trains."
+                  },
+                  "links": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Open links across every train."
+                  },
+                  "pending_prep": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Links whose prepared head is not the head the forge serves."
+                  },
+                  "by_disposition": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0
+                    },
+                    "description": "Links by disposition word."
+                  }
+                },
+                "required": [
+                  "trains",
+                  "links",
+                  "pending_prep",
+                  "by_disposition"
+                ],
+                "description": "Counts over every train."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::integration"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_pull_request_trains"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/pull-requests/trains"
+          },
+          "cli": {
+            "path": [
+              "prs",
+              "trains"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "integration",
+          "pull-requests",
+          "trains",
+          "graph"
         ],
         "benchmark": {
           "policy": "required"
@@ -74952,7 +75899,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 85,
+        "capabilities": 86,
         "capability_ids": []
       },
       {
@@ -75463,13 +76410,14 @@
         "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": [
           "integration.cleanup",
           "integration.events",
           "integration.explain",
           "integration.prove_dry_run",
-          "integration.queue"
+          "integration.queue",
+          "integration.trains"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs"
       },
@@ -75526,7 +76474,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 271,
+        "capabilities": 272,
         "capability_ids": []
       },
       {
@@ -76061,7 +77009,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 412,
+        "capabilities": 413,
         "capability_ids": []
       },
       {
@@ -76151,7 +77099,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fc79b2ff67f4d5b1802d949c9fc96319b826bffd8b7836ec2d7707d3c4dfdbb0",
+    "fingerprint": "4bf2912c78aa7d3ff17ef707e2942f05959648b950c4822eaa9c058f80ee1517",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76174,7 +77122,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 85,
+      "adr": 86,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -76190,7 +77138,7 @@
       "gap": 2,
       "implementation": 52,
       "intent": 3,
-      "issue": 271,
+      "issue": 272,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 27,
@@ -76204,7 +77152,7 @@
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 412,
+      "test": 413,
       "use-case": 48,
       "workspace": 1
     },
@@ -77609,6 +78557,22 @@
           "session",
           "handover",
           "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0138",
+        "kind": "adr",
+        "identity": "adr-0138",
+        "title": "A train of pull requests is a typed object that can be seen",
+        "description": "A train of pull requests is a typed object that can be seen",
+        "path": ".ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6610,
+        "tags": [
+          "integration",
+          "cockpit",
+          "pull-requests"
         ]
       },
       {
@@ -81328,7 +82292,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 46627
+        "bytes": 47037
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -81580,7 +82544,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 53676
+        "bytes": 57772
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -81670,7 +82634,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 130267
+        "bytes": 133965
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -87959,6 +88923,17 @@
         "bytes": 2285
       },
       {
+        "uri": "majordomus://issue/I2463",
+        "kind": "issue",
+        "identity": "I2463",
+        "title": "A train of stacked pull requests is a typed object, served everywhere and drawn as a graph",
+        "description": "Derive the trains of open pull requests (chains and DAGs of declared and base-branch stacks) from the executor's own recorded observation as a typed read model, project it once as the capability integration.trains to the command line (majordomus prs trains), HTTP and MCP, and draw it in the Cockpit at /cockpit/trains as an interactive graph with a server-rendered table beside it.",
+        "path": ".ai/repo/project/issues/I2463.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3989
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -93172,6 +94147,14 @@
         "bytes": 8903
       },
       {
+        "uri": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
+        "kind": "test",
+        "identity": "test/cases/1072_the_train_is_seen.sh",
+        "path": "test/cases/1072_the_train_is_seen.sh",
+        "source_class": "case",
+        "bytes": 10660
+      },
+      {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
         "kind": "test",
         "identity": "test/cases/107_design_tokens.sh",
@@ -96840,7 +97823,7 @@
       "identity": [
         "id"
       ],
-      "objects": 85
+      "objects": 86
     },
     {
       "name": "application",
@@ -96993,7 +97976,7 @@
       "identity": [
         "id"
       ],
-      "objects": 271
+      "objects": 272
     },
     {
       "name": "knowledge",
@@ -97145,7 +98128,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 412
+      "objects": 413
     },
     {
       "name": "use-case",
@@ -110119,6 +111102,118 @@
                 "command": "majordomus prs events",
                 "setup": [],
                 "expectation": "exits 0; prints no integration action"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "prs",
+              "trains"
+            ],
+            "route": "/docs/cli/prs/trains/",
+            "executable": true,
+            "usage": "majordomus prs trains [OPTIONS]",
+            "about": "The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "prs-trains-unobserved",
+                "title": "The trains of stacked pull requests, where nothing is observed",
+                "description": "Every open pull request stacked on another, grouped into trains in landing order, with each link's prepared head under refs/prep/<n> and whether it was pushed. The same answer `GET /api/v1/pull-requests/trains` gives and /cockpit/trains draws. With no observation recorded it says why and exits 10.",
+                "argv": [
+                  "prs",
+                  "trains"
+                ],
+                "command": "majordomus prs trains",
+                "setup": [],
+                "expectation": "exits 10"
               }
             ],
             "subcommands": []
@@ -127704,6 +128799,23 @@
         "output": "IntegrationStatus"
       },
       {
+        "name": "majordomus_pull_request_trains",
+        "id": "integration.trains",
+        "title": "The trains of stacked pull requests",
+        "description": "Every train of open pull requests — a group joined by confirmed dependencies: a base branch that is another open pull request's head, or a `Stacked on #N` / `Depends on #N` line in the body — in landing order. Per link: number, title, author, head and base branch, head commit, the forge's page and checks, disposition, lane, reasons, next action, required-check state and every check on the head, relation to master with how far behind it is and whether it carries master, the prepared head under refs/prep/<n> with whether it is the head the forge serves (pushed) or not yet (pending), its position and depth, whether its turn has come, what it stands on and what it carries, its queue rank and whether a cycle catches it. Per train: roots, tops, the next link the order allows, the edges (STACKED_ON or DEPENDS_ON, satisfied when the link below landed), and the pull requests beneath it that are no longer open. Beside them the prepared heads no train holds, the tallies and the queue's diagnostics. Read from the recorded observation, the queue `majordomus prs status` prints and the local refs: it fetches, pushes and moves nothing. `observed: false` with the reason when this checkout has recorded no observation.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "TrainsView"
+      },
+      {
         "name": "majordomus_intent_explain",
         "id": "intent_realization.explain",
         "title": "Why an intent stands where it stands",
@@ -130304,6 +131416,12 @@
         "method": "GET",
         "path": "/api/v1/pull-requests",
         "id": "integration.queue",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/pull-requests/trains",
+        "id": "integration.trains",
         "kind": "query"
       },
       {
@@ -133783,6 +134901,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/pull-requests"
+      },
+      {
+        "key": "integration.trains|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "integration.trains",
+        "module": "integration",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "integration.trains|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "integration.trains",
+        "module": "integration",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_pull_request_trains"
+      },
+      {
+        "key": "integration.trains|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "integration.trains",
+        "module": "integration",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/pull-requests/trains"
       },
       {
         "key": "intent_realization.explain|direct|first-intent",
@@ -139179,6 +140326,27 @@
           "cases": 1
         },
         {
+          "subject": "integration.trains",
+          "module": "integration",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "integration.trains",
+          "module": "integration",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "integration.trains",
+          "module": "integration",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "intent_realization.explain",
           "module": "intent_realization",
           "transport": "direct",
@@ -141525,22 +142693,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 184,
-          "covered": 160,
+          "required": 185,
+          "covered": 161,
           "missing": 0,
           "waived": 24,
           "inapplicable": 0
         },
         "http": {
-          "required": 181,
-          "covered": 160,
+          "required": 182,
+          "covered": 161,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 177,
-          "covered": 156,
+          "required": 178,
+          "covered": 157,
           "missing": 0,
           "waived": 21,
           "inapplicable": 0
@@ -141553,8 +142721,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 555,
-          "covered": 489,
+          "required": 558,
+          "covered": 492,
           "missing": 0,
           "waived": 66,
           "inapplicable": 0

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -758,6 +758,15 @@
         "label": "integration.queue",
         "summary": "The integration queue",
         "route": "/cockpit/capabilities/integration.queue",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.trains",
+        "kind": "capability",
+        "label": "integration.trains",
+        "summary": "The trains of stacked pull requests",
+        "route": "/cockpit/capabilities/integration.trains",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "status": "query"
       },
@@ -2327,6 +2336,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/cockpit/trains.rs",
+        "kind": "file",
+        "label": "trains.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/trains.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/command_graph/semantics.rs",
         "kind": "file",
         "label": "semantics.rs",
@@ -2684,6 +2701,14 @@
         "label": "tests.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/integration/tests.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/train.rs",
+        "kind": "file",
+        "label": "train.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/train.rs",
         "external": true
       },
       {
@@ -3620,6 +3645,14 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
+        "external": true
+      },
+      {
+        "id": "file:share/cockpit/trains.js",
+        "kind": "file",
+        "label": "trains.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/cockpit/trains.js",
         "external": true
       },
       {
@@ -6371,6 +6404,32 @@
             "session",
             "handover",
             "provider"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0138",
+        "kind": "adr",
+        "label": "adr-0138",
+        "summary": "A train of pull requests is a typed object that can be seen",
+        "route": "/cockpit/objects/adr/adr-0138",
+        "source": ".ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-11",
+          "related": [
+            "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+            "file:apps/majordomus-cli/src/integration/train.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "file:apps/majordomus-cli/src/cockpit/trains.rs",
+            "file:share/cockpit/trains.js",
+            "file:docs/INTEGRATION.md",
+            "test:test/cases/1072_the_train_is_seen.sh"
+          ],
+          "tags": [
+            "integration",
+            "cockpit",
+            "pull-requests"
           ]
         }
       },
@@ -30391,6 +30450,64 @@
         }
       },
       {
+        "id": "majordomus://issue/I2463",
+        "kind": "issue",
+        "label": "I2463",
+        "summary": "A train of stacked pull requests is a typed object, served everywhere and drawn as a graph",
+        "route": "/cockpit/objects/issue/i2463",
+        "source": ".ai/repo/project/issues/I2463.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Trains are derived by pure, unit-tested functions from the recorded observation, the queue and the local refs/prep/<n> refs; nothing reaches the network or writes a ref",
+            "integration.trains is declared once with capability! and projected to the command line, HTTP and MCP by majordomus generate",
+            "/cockpit/trains draws the trains interactively and renders the same facts as a table without JavaScript; colours come from the design tokens",
+            "test/cases/1072_the_train_is_seen.sh passes with the change and fails against master without it"
+          ],
+          "created_at": "2026-10-11",
+          "depends_on": [],
+          "evidence_required": [
+            "train_model_unit_tests",
+            "trains_projection_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Moving, pushing or deleting any ref, refs/prep/<n> included: the model reads them",
+            "A new stream: the page polls the HTTP capability (majordomus monitor is I2400-I2407)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/train.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "apps/majordomus-cli/src/cockpit/nav.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/cockpit/trains.rs",
+            "share/cockpit/trains.js",
+            ".ai/repo/adrs/0138-a-train-of-pull-requests-is-a-typed-object-that-can-be-seen.md",
+            "docs/INTEGRATION.md",
+            "docs/COCKPIT.md",
+            "test/cases/1072_the_train_is_seen.sh",
+            "share/version.txt",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "docs/generated",
+            "site/data",
+            "site/content"
+          ],
+          "slug": "the-train-is-seen",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::train",
+            "MJ_TEST_JOBS=4 bash test/run.sh 1072_the_train_is_seen"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -43070,6 +43187,13 @@
         "source": "test/cases/106_context_peers.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
+        "kind": "test",
+        "label": "test/cases/1072_the_train_is_seen.sh",
+        "route": "/cockpit/objects/test/test-cases-1072-the-train-is-seen-sh",
+        "source": "test/cases/1072_the_train_is_seen.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/107_design_tokens.sh",
         "kind": "test",
         "label": "test/cases/107_design_tokens.sh",
@@ -49545,6 +49669,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.trains",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.trains",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:intent_realization.explain",
         "target": "projection:cli",
         "kind": "projects"
@@ -54772,6 +54916,46 @@
       {
         "source": "majordomus://adr/adr-0123",
         "target": "majordomus://test/test/cases/1016_the_worker_is_asked_before_compaction.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:apps/majordomus-cli/src/cockpit/trains.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:apps/majordomus-cli/src/integration/train.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "file:share/cockpit/trains.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "majordomus://adr/adr-0101",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0138",
+        "target": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
         "kind": "put_in_force"
       },
       {
@@ -66615,6 +66799,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2463",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2463",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -69726,6 +69920,11 @@
       },
       {
         "source": "majordomus://test/test/cases/106_context_peers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1072_the_train_is_seen.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -74870,6 +75069,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:integration",
+        "target": "capability:integration.trains",
+        "kind": "composes"
+      },
+      {
         "source": "module:intent_realization",
         "target": "capability:intent_realization.explain",
         "kind": "composes"
@@ -75406,8 +75610,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2493,
-      "edges": 5446,
+      "nodes": 2500,
+      "edges": 5462,
       "acyclic": false,
       "truncated": false
     }

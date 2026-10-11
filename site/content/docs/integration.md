@@ -736,6 +736,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's gates, reasons, evidence and rank |
 | `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
+| `majordomus prs trains` | no | the trains of stacked pull requests in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn; exit 10 when the observation is stale or absent |
 | `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease and how far it reaches, the last merge, the last refresh, failure or stale decision; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
@@ -769,6 +770,67 @@ executor's recent actions. With nothing observed, it says so and names `prs refr
 `majordomus handover --derive` carries the same line under `# Current State`, so a session
 that continues drain work starts knowing what was merged, what remains, how the last step
 went, and whether an executor is running.
+
+## Trains
+
+A *train* is a group of open pull requests stacked on each other: each link stands on the one
+below it, and the train lands from the bottom up. The edges are the confirmed dependencies the
+classifier already reads ([Dependency markers](#dependency-markers)): a base branch that is
+another open pull request's head, or a `Stacked on #N` line, is a `STACKED_ON` edge; `Depends on`,
+`Requires` and `Land after` are `DEPENDS_ON` edges. An inferred dependency (a head that merely
+contains another) joins nothing. A pull request that declares a dependency on one that is no
+longer open is still a train of its own, with that pull request *beneath* it — landed, closed
+without a merge, or unread. The decision is ADR 0138; the code is `crate::integration::train`.
+
+Each link carries what the queue decided about it — disposition, lane, reasons, next action,
+required checks and every check on its head, relation to master with how far behind it is and
+whether it carries master (ADR 0129) — and what only a train can say:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Field | What |
+|---|---|
+| `position` | its turn, 1-based: a topological order, lower links first, ties broken by queue rank |
+| `depth` | links below it on its longest path to master; a root is 0 |
+| `at_turn` | every dependency it declares has landed, so the order allows it next |
+| `on`, `carries` | what it stands on, and the links stacked on it |
+| `prep` | the head the executor prepared for it under `refs/prep/<n>`, `pushed` when that commit is the head the forge serves and `pending` when it waits for its turn |
+| `in_cycle` | caught in a cycle of confirmed dependencies: no link of it can land first |
+
+</div>
+
+
+Per train: `roots` (no open link below them), `tops` (nothing stacked on them), `next` (the
+first link at its turn), the `edges` (satisfied when the pull request below landed) and the
+pull requests `beneath` it. Beside the trains, `unattached_prep` lists the prepared heads whose
+pull request is no link — open and stacked on nothing, or not open at all.
+
+It is all read: the queue from the recorded observation, the bodies and checks from the same
+observation, and the local `refs/prep/` refs with `git for-each-ref`. Nothing is fetched,
+pushed or moved; pushing a prepared head at its turn stays the executor's act.
+
+```text
+$ majordomus prs trains
+2 train(s), 5 link(s) of o/r observed at 2026-10-11T04:56:48Z; master at 1393d9ef2a; 1 prepared head(s) pending
+
+train-884  roots #884  tops #898  next #884
+   1. > #884   needs_refresh          behind 37        prep 9658f78da5 pending on master     fix(http): ...
+   2.   #898   waiting_for_dependency behind 37        no prep              on #884       fix(http): ...
+```
+
+The same answer is `GET /api/v1/pull-requests/trains` (MCP `majordomus_pull_request_trains`),
+declared once as `integration.trains`. The Cockpit draws it at `/cockpit/trains` in the manner
+of the Neo4j Browser: master as the anchor node, each link a circle with its number and title
+inside, coloured by its disposition from the design tokens (landed pull requests beneath a
+train in their own colour, dashed), labelled `STACKED_ON` / `DEPENDS_ON` arrows and a `TARGETS`
+arrow from each root to master; a force layout or a layered one, drag, zoom and pan, the
+neighbours of the node under the pointer lit, and a property panel with every field of the
+selected link and links to the pull request, its checks and `prs explain`. It filters by train
+and by disposition (the legend is the filter), searches by number, title or branch, and is
+driven from the keyboard (arrows move from link to link, Enter opens the pull request, `+`/`-`
+zoom, `0` fits, Escape clears); motion follows `prefers-reduced-motion`. It asks the route
+again once a minute while the tab is visible and shows when it last asked. Without JavaScript
+the page is one table per train with the same facts.
 
 ## Continuous mode
 

@@ -5135,7 +5135,7 @@ fn o_path(p: &OverlapPath) -> String {
 /// The badge status of a disposition: what the reader should feel about it. Of the cleanup
 /// lane, what cleanup closes (`redundant`, `superseded`) warns, and what only a person may
 /// close (`possibly_redundant`) is as undecided as a held one.
-fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
+pub(crate) fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
     use crate::integration::IntegrationLane as L;
     use crate::integration::PullRequestDisposition as D;
     match (d.lane(), d) {
@@ -5256,7 +5256,7 @@ pub fn integration(ctx: &Context) -> Page {
                 "The Cockpit reads; the command line acts, one merge at a time, each against a master observed a moment before, under the base branch's lease. Nothing here reaches the forge.",
             ))
             .child(pre(
-                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
+                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs trains                   # the stacked pull requests, in landing order\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
             )),
     );
     let Some(q) = status.queue else {
@@ -5373,6 +5373,13 @@ pub fn integration(ctx: &Context) -> Page {
             ),
             ("Lease", Node::Element(lease)),
             ("Last merge", last_merge),
+            (
+                "Trains",
+                Node::Element(link(
+                    "/cockpit/trains",
+                    "the pull requests stacked on each other, drawn as a graph",
+                )),
+            ),
             (
                 "Policy",
                 Node::Element(el("span").text(format!(

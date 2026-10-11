@@ -3131,6 +3131,8 @@ pub enum PrsCommand {
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
+    /// The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent
+    Trains,
     /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed
     Brief,
     /// Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
@@ -4863,6 +4865,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "events"],
             setup: &[],
             expect: Expect::StdoutContains(&["no integration action"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs trains",
+        examples: &[ExampleDoc {
+            id: "prs-trains-unobserved",
+            title: "The trains of stacked pull requests, where nothing is observed",
+            description: "Every open pull request stacked on another, grouped into trains in landing order, with each link's prepared head under refs/prep/<n> and whether it was pushed. The same answer `GET /api/v1/pull-requests/trains` gives and /cockpit/trains draws. With no observation recorded it says why and exits 10.",
+            argv: &["prs", "trains"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

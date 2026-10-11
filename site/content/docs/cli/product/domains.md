@@ -1,7 +1,7 @@
 +++
 title = "majordomus product domains"
 description = "The domains of the product, each with the stable features that name it and what they add up to"
-weight = 103
+weight = 104
 [extra]
 route = "/docs/cli/product/domains/"
 command = "majordomus product domains"

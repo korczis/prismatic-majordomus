@@ -1,6 +1,6 @@
 //! `majordomus prs`: the command line's rendering of [`crate::integration`].
 //!
-//! Nothing is decided here. `status`, `plan`, `explain`, `events` and `brief` render the
+//! Nothing is decided here. `status`, `plan`, `explain`, `events`, `trains` and `brief` render the
 //! queue the integration module builds from the last recorded observation — the same value
 //! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
 //! never reach the network; neither does `repair` without `--apply`, which decides on the same
@@ -83,6 +83,127 @@ fn issue_line(a: &integration::PullRequestAssessment) -> Option<String> {
         Some(m) => format!("{issue} · milestone {m}"),
         None => issue.clone(),
     })
+}
+
+/// `prs trains` as text: a header, then each train with its links in landing order, one line
+/// each, then the prepared heads no train holds and the diagnostics.
+fn render_trains(v: &integration::train::TrainsView, out: &mut impl Write) -> Result<()> {
+    use integration::train::PrepState;
+    if !v.observed {
+        return w(
+            out,
+            format!(
+                "no trains: {}",
+                v.reason.as_deref().unwrap_or("nothing is observed")
+            ),
+        );
+    }
+    w(
+        out,
+        format!(
+            "{} train(s), {} link(s) of {} observed at {}; {} at {}; {} prepared head(s) pending",
+            v.tallies.trains,
+            v.tallies.links,
+            v.repository.as_deref().unwrap_or("?"),
+            v.observed_at.as_deref().unwrap_or("?"),
+            v.base.as_deref().unwrap_or("?"),
+            short(v.master_sha.as_deref().unwrap_or("?")),
+            v.tallies.pending_prep
+        ),
+    )?;
+    if v.trains.is_empty() {
+        w(
+            out,
+            "no open pull request is stacked on another, and none declares a dependency",
+        )?;
+    }
+    for t in &v.trains {
+        let list = |ns: &[u64]| {
+            ns.iter()
+                .map(|n| format!("#{n}"))
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        w(out, "")?;
+        w(
+            out,
+            format!(
+                "{}  roots {}  tops {}  next {}",
+                t.id,
+                list(&t.roots),
+                list(&t.tops),
+                t.next
+                    .map(|n| format!("#{n}"))
+                    .unwrap_or_else(|| "none".into())
+            ),
+        )?;
+        for l in &t.links {
+            let prep = match &l.prep {
+                Some(p) if p.state == PrepState::Pushed => format!("prep {}", p.state.as_str()),
+                Some(p) => format!("prep {} {}", short(&p.sha), p.state.as_str()),
+                None => "no prep".to_string(),
+            };
+            let relation = match l.behind {
+                Some(n) if l.relation_kind == "behind" => format!("behind {n}"),
+                _ => l.relation_kind.clone(),
+            };
+            w(
+                out,
+                format!(
+                    "  {:>2}. {}#{:<5} {:<22} {:<16} {:<20} on {:<10} {}{}",
+                    l.position,
+                    if l.at_turn { "> " } else { "  " },
+                    l.number,
+                    l.disposition.as_str(),
+                    relation,
+                    prep,
+                    if l.on.is_empty() {
+                        "master".to_string()
+                    } else {
+                        list(&l.on)
+                    },
+                    trunc(&l.title, 60),
+                    if l.in_cycle { "  (in a cycle)" } else { "" }
+                ),
+            )?;
+        }
+        for b in &t.beneath {
+            w(
+                out,
+                format!(
+                    "       #{:<5} beneath, {}",
+                    b.number,
+                    serde_json::to_value(b.state)
+                        .ok()
+                        .and_then(|s| s.as_str().map(str::to_string))
+                        .unwrap_or_default()
+                ),
+            )?;
+        }
+    }
+    if !v.unattached_prep.is_empty() {
+        w(out, "")?;
+        w(out, "prepared heads no train holds:")?;
+        for p in &v.unattached_prep {
+            w(
+                out,
+                format!(
+                    "  refs/prep/{} {} ({})",
+                    p.number,
+                    short(&p.sha),
+                    if p.open {
+                        "open, stacked on nothing"
+                    } else {
+                        "not open"
+                    }
+                ),
+            )?;
+        }
+    }
+    for d in &v.diagnostics {
+        w(out, format!("! {d}"))?;
+    }
+    Ok(())
 }
 
 /// Cleanup's second part: what merged pull requests left on origin, read now and recorded
@@ -508,6 +629,19 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 w(&mut out, line)?;
             }
             Ok(0)
+        }
+        PrsCommand::Trains => {
+            let view = integration::train::trains_of(&root);
+            if format == OutputFormat::Json {
+                json(&mut out, &view)?;
+            } else {
+                render_trains(&view, &mut out)?;
+            }
+            Ok(if view.observed && view.diagnostics.is_empty() {
+                0
+            } else {
+                FINDING
+            })
         }
         PrsCommand::Events => {
             let events = drain::events(&root);

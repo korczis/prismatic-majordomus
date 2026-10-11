@@ -1360,6 +1360,23 @@
       "tool": "majordomus_pull_requests"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-trains",
+      "claims": [],
+      "cli": "majordomus prs trains",
+      "id": "integration.trains",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-trains/",
+      "slug": "integration-trains",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The trains of stacked pull requests",
+      "tool": "majordomus_pull_request_trains"
+    },
+    {
       "api_anchor": "/docs/api/intent-realization/#op-intent_realization-explain",
       "claims": [],
       "cli": "majordomus intent explain",
@@ -3907,11 +3924,11 @@
     ]
   },
   "counts": {
-    "capabilities": 184,
+    "capabilities": 185,
     "claims": 89,
     "modules": 53
   },
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 0.21.0",
   "modules": [
     {
       "capabilities": [
@@ -4560,6 +4577,11 @@
           "id": "integration.queue",
           "route": "/registry/capabilities/integration-queue/",
           "slug": "integration-queue"
+        },
+        {
+          "id": "integration.trains",
+          "route": "/registry/capabilities/integration-trains/",
+          "slug": "integration-trains"
         }
       ],
       "claims": [],
