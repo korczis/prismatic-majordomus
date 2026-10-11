@@ -1072,10 +1072,11 @@ mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 # a verify command, an editor or a server this process starts inherits the environment and
 # may outlive the directory.
 #
-# The root is made by the entry point, once, before a command runs, and not on first use: a
-# first use inside a command substitution would name a root only that subshell knows. A
-# script that sources this library without asking for a root gets `mktemp` unchanged.
-MJ_TMP_ROOT=""
+# The root is made once, before a command runs, and not on first use: a first use inside a
+# command substitution would name a root only that subshell knows. The entry point makes it
+# after its dispatch; a script that sources this library gets it as it sources it (below).
+# Sourcing the library again keeps the root this process already has.
+case "${MJ_TMP_ROOT:-}" in */mj."$$".*) ;; *) MJ_TMP_ROOT="" ;; esac
 mj_tmp_root_init() {
   local base="${TMPDIR:-/tmp}"
   MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.$$.XXXXXX")"
@@ -1119,7 +1120,10 @@ mj_cleanup() {
   mj_timing_report
   rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
   # MJ_REC_TMP above is not under the root: it is made beside the record it becomes.
-  [ -n "${MJ_TMP_ROOT:-}" ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
+  # Only the shell that made the root removes it. A subshell that sources the library again
+  # sets this trap for itself and keeps the root it inherited (above), so its exit would
+  # otherwise remove the root its parent is still writing into.
+  [ -n "${MJ_TMP_ROOT:-}" ] && [ "${BASH_SUBSHELL:-0}" = 0 ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
   # A lock this process is holding goes with it. Releasing here and not only at the end of
   # the critical section is what makes the lock crash-safe for every exit a command has:
   # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
@@ -1127,6 +1131,24 @@ mj_cleanup() {
   return 0
 }
 trap mj_cleanup EXIT
+
+# A script that sources this library makes its root here. Before this only the entry point
+# asked for one, and every script that sources the library — the derive's generators, the
+# site build and its checks, the cases — made its files directly in TMPDIR and left them:
+# the project model's directory, the manifest's and the knowledge sources' flattenings, one
+# of each per run. On 2026-10-11 TMPDIR held 65,530 entries, the most one directory holds
+# on that volume, and every `mktemp -d` on the machine failed as if its parent were gone.
+# The entry point still makes its root only after its dispatch, because a command it hands
+# to the other program is an exec, which runs no exit trap; it sets MJ_TMP_ROOT_DEFER
+# before sourcing the library to say so. A script that replaces the exit trap leaves its
+# root to the next process that starts, as a KILL does. A root that cannot be made leaves
+# `mktemp` as it was rather than stopping the script that sourced the library. A subshell
+# makes none: it shares its parent's root, and a root of its own would be named after the
+# parent's process and outlive the subshell.
+if [ -z "${MJ_TMP_ROOT_DEFER:-}" ] && [ -z "$MJ_TMP_ROOT" ] && [ "${BASH_SUBSHELL:-0}" = 0 ]; then
+  mj_tmp_root_init 2>/dev/null || true
+  [ -d "${MJ_TMP_ROOT:-}" ] || MJ_TMP_ROOT=""
+fi
 
 # ---------------------------------------------------------------- mutual exclusion
 # One named lock, taken by creating a directory, which is the one filesystem operation
