@@ -63,6 +63,7 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-ui-unified-real-data-v2-20261011` | 2026-10-11 | 33 | Majordomus UI: unified derived screens V2 | `~/Downloads/majordomus-ui-unified-real-data-v2-20261011.zip` (supersedes `majordomus-ui-fidelity-v1-20261011`, whose reference is its `01-dashboard-overview`) |
 | `majordomus-ui-ux-dx-prompt-pack` | 2026-10-05 | 15 | Majordomus UI/UX/DX Prompt Pack | `~/Downloads/majordomus-ui-ux-dx-prompt-pack.zip` |
 | `majordomus-worktree-cleanup-pack` | 2026-09-09 | 16 | Majordomus Worktree Cleanup & Merge Campaign | `~/Downloads/majordomus-worktree-cleanup-pack` |
+| `operation-zero-autonomous-night-shift` | 2026-10-11 | 11 | Operation Zero: Autonomous Night Shift | `~/Downloads/operation-zero-autonomous-night-shift.zip` (and a copy; three loose copies of its orchestrator file, all the same bytes) |
 | `prismatic-majordomus-evening-project-v0.1` | 2026-09-03 | 43 | Prismatic Majordomus | `~/Downloads/prismatic-majordomus` |
 
 ## What came of them
@@ -97,6 +98,7 @@ Where a plan is not yet on master, the branch carries it.
 | `majordomus-ui-execution-control-v4-20261011` | its first slices build on I2461; planned and built by d3 (p4), the owner's word governing as for V3 | d3 |
 | `majordomus-ui-complete-opus-fable-v3-20261011` (reconciling and superseding `majordomus-ui-unified-real-data-v2-20261011` and `majordomus-ui-fidelity-v1-20261011`), `majordomus-dashboard-concepts` | planned and built by d3 (p4) from I2460 (the overview asks its sources at once) and I2461 (the /ui surface and dashboard, ADR 0135) on; the owner's word governs over any pack text: `majordomus ui` is primary, the Cockpit is the low level | d3 |
 | `majordomus-living-site-v2-20261011` | not yet planned; its subject, a site whose freshness holds by construction, meets the-site-says-what-ships (b2) and the release verification of I2360 and I2373 | — |
+| `operation-zero-autonomous-night-shift` | executed by p5 as orchestrator and repair worker (zero open pull requests), with p7 keeping the merge loop | p5, p7 |
 | `majordomus-pr-throughput-pack-20261010`, `majordomus-release-15min-pack`, `majordomus-rapid-delivery-living-site-v3-20261010` | executed by the integration executors (`majordomus prs`, the landing train) and the release chain; no separate plan records | cd, 3d |
 
 ## Adding one
