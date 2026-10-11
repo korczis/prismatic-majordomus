@@ -33,4 +33,25 @@ evidence_required:
   - "record_reopened_once_under_the_lease_case"
   - "reopen_trail_first_unit_tests"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-11T19:00:19Z
+started_at: 2026-10-11T19:00:10Z
+started_event: sha256:f9dc1828ff5e7628d7d615ce2295b477d109b666b78dab8db25762a7525507ed
+verified_at: 2026-10-11T19:00:16Z
+verified_event: sha256:a0885b1eba4bcc96a6ccb7d5fb19550c5f9bd6b29c114fe6589cfd9569dcbc76
+completed_at: 2026-10-11T19:00:19Z
+completed_event: sha256:3c6306ba8379418321bd24795355931b2c5968b6250a26522b3cbe39897fe6e7
+evidence:
+  - covers: record_reopened_once_under_the_lease_case
+    type: ci
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 1036_the_executor_reopens_a_record_pull_request"
+    result: "ok in validate run 38141991260 at 58d0516f2b (#914, merged as afbc25924a); also ok locally at 969316d06d: a release/record pull request the workflow token opened is closed and reopened once, reopen_attempted before reopened between lease_acquired and lease_released, a dry run reaches no forge"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38141991260"
+    commit: 9f1a6335ca953ac76dfc749d63789c3aa8d9ab53
+    recorded_at: 2026-10-11T19:00:13Z
+  - covers: reopen_trail_first_unit_tests
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml integration::tests"
+    result: "ok in validate run 38141991260 (rust jobs) at 58d0516f2b, among them a_record_no_run_was_started_for_is_reopened_once_trail_first and a_reopen_the_trail_cannot_name_is_not_made"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38141991260"
+    commit: 9f1a6335ca953ac76dfc749d63789c3aa8d9ab53
+    recorded_at: 2026-10-11T19:00:14Z

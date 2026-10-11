@@ -35,4 +35,25 @@ evidence_required:
   - "pending_class_case"
   - "mutations_fail_the_case"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-11T19:00:30Z
+started_at: 2026-10-11T19:00:22Z
+started_event: sha256:fed30f7065c4c2710bc8caa1941949c987131628fcf752f0de130ff9da8b4610
+verified_at: 2026-10-11T19:00:28Z
+verified_event: sha256:cf2a2c4437d06ef44cb35b9e6bc99c9bfcfac938c9a303cae4766291a3d69c41
+completed_at: 2026-10-11T19:00:30Z
+completed_event: sha256:eb625ca8d3bc575eb63b9ad808495db6a3247d4912524669af04ea9fca4c6f56
+evidence:
+  - covers: pending_class_case
+    type: ci
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 1038_a_head_is_judged_against_what_it_changes"
+    result: "ok in validate run 38113164835 at 7624fbd2f3 (#944, merged as 7377fe6568) and in run 38141991260 at 58d0516f2b"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38113164835"
+    commit: 9f1a6335ca953ac76dfc749d63789c3aa8d9ab53
+    recorded_at: 2026-10-11T19:00:25Z
+  - covers: mutations_fail_the_case
+    type: test
+    command: "five one-line mutants of scripts/ci/github-check, each followed by bash test/run.sh 1038_a_head_is_judged_against_what_it_changes"
+    result: "5 of 5 killed at 7624fbd2f3: nothing pends, every drift pends, window ignored, unmeasured counts as all changed, renderings ignored; the unmutated head passes"
+    artifact: "https://github.com/korczis/prismatic-majordomus/pull/944#issuecomment-6108208576"
+    commit: 9f1a6335ca953ac76dfc749d63789c3aa8d9ab53
+    recorded_at: 2026-10-11T19:00:26Z
