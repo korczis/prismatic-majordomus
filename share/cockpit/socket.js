@@ -31,7 +31,9 @@ export function follow(path, handlers) {
   let closed = false;
   let attempt = 0;
   let state = OFFLINE;
-  let cursor = cursorOf(path);
+  // Sequences are dense per execution, so the cursor is one per execution followed, each
+  // starting at the `after` the path carries. An unscoped channel follows none and keeps none.
+  const cursors = cursorsOf(path);
 
   const announce = (next) => {
     if (state === next) return;
@@ -42,9 +44,12 @@ export function follow(path, handlers) {
   const url = () => {
     const target = new URL(path, window.location.href);
     target.protocol = target.protocol === 'https:' ? 'wss:' : 'ws:';
-    // a reconnection asks for what it missed rather than for everything again
-    if (cursor > 0 && target.searchParams.has('execution')) {
-      target.searchParams.set('after', String(cursor));
+    // a reconnection asks for what it missed rather than for everything again; the server
+    // takes one `after` for every execution named, so it is the lowest cursor, and what that
+    // replays again of the others is dropped below
+    if (cursors.size > 0) {
+      const lowest = Math.min(...cursors.values());
+      if (lowest > 0) target.searchParams.set('after', String(lowest));
     }
     return target.toString();
   };
@@ -70,8 +75,9 @@ export function follow(path, handlers) {
       } catch (e) {
         return; // a frame this client cannot read is ignored, never thrown
       }
-      if (typeof frame.sequence === 'number' && frame.sequence > cursor) {
-        cursor = frame.sequence;
+      if (typeof frame.sequence === 'number' && cursors.has(frame.execution_id)) {
+        if (frame.sequence <= cursors.get(frame.execution_id)) return; // already handed over
+        cursors.set(frame.execution_id, frame.sequence);
       }
       if (frame.type === 'stream.lagged') {
         // the server dropped events for this client rather than buffering them: the
@@ -128,11 +134,15 @@ export function follow(path, handlers) {
   };
 }
 
-function cursorOf(path) {
+/** One cursor per execution the path names, each at the path's `after` (0 without one). */
+function cursorsOf(path) {
+  const cursors = new Map();
   try {
-    const after = new URL(path, window.location.href).searchParams.get('after');
-    return after ? Number(after) || 0 : 0;
+    const params = new URL(path, window.location.href).searchParams;
+    const after = Number(params.get('after')) || 0;
+    for (const id of params.getAll('execution')) cursors.set(id, after);
   } catch (e) {
-    return 0;
+    // an unreadable path follows nothing it could name; the server says what it refused
   }
+  return cursors;
 }

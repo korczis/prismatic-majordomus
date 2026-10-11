@@ -14,11 +14,19 @@
 //! GET /events                                  every execution of this process, live
 //! GET /events?execution=<id>                   one execution, its whole retained history, then live
 //! GET /events?execution=<id>&after=<sequence>  the same, from a cursor: what a reconnect asks for
+//! GET /events?execution=<a>&execution=<b>      several executions, each its history, then live
 //! ```
 //!
 //! The subscription is the request target, so there is nothing to send and nothing to
 //! acknowledge: a reconnect is a new URL with the sequence the client last saw, and the
-//! server replays the gap before it goes live. What the server writes is one JSON document
+//! server replays the gap before it goes live.
+//!
+//! Sequences are dense per execution, so a connection that follows several executions keeps
+//! a cursor for each. The one `after` starts every one of those cursors: each execution
+//! named is replayed from the events after it, up to [`MAX_REPLAY`] each. A client that
+//! reconnects to several executions sends the lowest sequence it saw among them and drops,
+//! per execution, what it already holds; with one execution that is exactly the sequence it
+//! last saw, as it always was. What the server writes is one JSON document
 //! per text frame, each with a `type` and a `data`: either a
 //! [`crate::execution::ExecutionEvent`], or one of the [`StreamMessage`] control messages
 //! below. A client that does not recognise a `type` must ignore that frame; that is what
@@ -28,6 +36,7 @@
 //! when the next write fails, which the heartbeat guarantees happens; a client that sends
 //! anything is ignored, and the reason is in [`super::ws`].
 
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
@@ -51,7 +60,8 @@ pub const HEARTBEAT: Duration = Duration::from_secs(20);
 /// with a reason rather than accepted and starved.
 pub const MAX_CONNECTIONS: usize = 64;
 
-/// How many retained events a single-execution subscription replays before going live.
+/// How many retained events a scoped subscription replays, per execution it follows, before
+/// going live.
 pub const MAX_REPLAY: usize = 1_000;
 
 /// A message about the stream itself, rather than about an execution.
@@ -71,10 +81,12 @@ pub enum StreamMessage {
         /// The executions followed, for a scoped connection.
         #[serde(skip_serializing_if = "Vec::is_empty")]
         executions: Vec<String>,
-        /// How many retained events were written before this connection went live.
+        /// How many retained events were written before this connection went live, over
+        /// every execution it follows.
         replayed: usize,
         /// Whether the history before the replay had already been dropped by the store's
-        /// bound, so a client knows its picture starts in the middle.
+        /// bound, for any execution followed, so a client knows its picture starts in the
+        /// middle.
         truncated: bool,
         /// How many seconds of quiet before the server pings.
         heartbeat_seconds: u64,
@@ -183,6 +195,8 @@ pub fn accept(store: &Arc<ExecutionStore>, req: &Request) -> Result<Accepted, Re
     for (key, value) in &req.query {
         match key.as_str() {
             "execution" => match ExecutionId::parse(value) {
+                // named twice is followed once, and replayed once
+                Some(id) if executions.contains(&id) => {}
                 Some(id) => executions.push(id),
                 None => {
                     return Err(Response::error(
@@ -233,19 +247,27 @@ impl LiveStream {
         let (subscriber, rx) = self.store.subscribe(self.filter.clone());
         // subscribe first, replay second, and skip in the live stream anything the replay
         // already wrote: that is what leaves no gap between the history and the stream and
-        // no event written twice.
-        let mut written = self.after;
-        let (replayed, truncated) = match &self.filter {
-            Filter::Only(ids) if ids.len() == 1 => {
-                match self.store.events(&ids[0], self.after, MAX_REPLAY) {
-                    Some(page) => (page.events, page.truncated),
-                    None => (Vec::new(), false),
+        // no event written twice. Sequences are dense per execution, so the mark of what was
+        // written is one cursor per execution followed, each starting at `after`: a single
+        // mark across executions would take one execution's events for ones already written
+        // as soon as another had gone further.
+        let mut written: HashMap<ExecutionId, u64> = HashMap::new();
+        let mut replayed = Vec::new();
+        let mut truncated = false;
+        match &self.filter {
+            Filter::Only(ids) => {
+                for id in ids {
+                    written.insert(id.clone(), self.after);
+                    if let Some(page) = self.store.events(id, self.after, MAX_REPLAY) {
+                        truncated |= page.truncated;
+                        replayed.extend(page.events);
+                    }
                 }
             }
-            // an all-executions connection has no single cursor to replay from; a client
-            // that needs history asks for it per execution over HTTP
-            _ => (Vec::new(), false),
-        };
+            // an all-executions connection has no cursor to replay from; a client that needs
+            // history asks for it per execution over HTTP
+            Filter::All => {}
+        }
         let ready = StreamMessage::Ready {
             protocol_version: PROTOCOL_VERSION.to_string(),
             scope: match self.filter {
@@ -265,16 +287,21 @@ impl LiveStream {
             if !alive {
                 break;
             }
-            written = written.max(event.sequence);
+            if let Some(cursor) = written.get_mut(&event.execution_id) {
+                *cursor = (*cursor).max(event.sequence);
+            }
             alive = write(&mut socket, &*event);
         }
         while alive {
             match rx.recv_timeout(HEARTBEAT) {
                 Ok(Delivery::Event(event)) => {
-                    if event.sequence <= written && matches!(self.filter, Filter::Only(_)) {
-                        continue; // the replay already wrote it
+                    // only a scoped connection has cursors; an unscoped one replayed nothing
+                    if let Some(cursor) = written.get_mut(&event.execution_id) {
+                        if event.sequence <= *cursor {
+                            continue; // the replay already wrote it
+                        }
+                        *cursor = event.sequence;
                     }
-                    written = written.max(event.sequence);
                     alive = write(&mut socket, &*event);
                 }
                 Ok(Delivery::Lagged { dropped }) => {
@@ -335,9 +362,8 @@ mod tests {
         ])
     }
 
-    fn store_with_one() -> (Arc<ExecutionStore>, ExecutionId) {
-        let store = Arc::new(ExecutionStore::new(Limits::default()));
-        let id = ExecutionId::fresh();
+    /// Create an execution in a store: its `execution.created` is sequence 1.
+    fn create(store: &ExecutionStore, id: &ExecutionId) {
         store.create(
             id.clone(),
             "demo.x",
@@ -351,6 +377,12 @@ mod tests {
                 branch: None,
             },
         );
+    }
+
+    fn store_with_one() -> (Arc<ExecutionStore>, ExecutionId) {
+        let store = Arc::new(ExecutionStore::new(Limits::default()));
+        let id = ExecutionId::fresh();
+        create(&store, &id);
         store.publish(&id, EventPayload::Started);
         store.publish(
             &id,
@@ -490,6 +522,149 @@ mod tests {
         assert_eq!(ready["data"]["scope"], "all");
         assert_eq!(ready["data"]["replayed"], 0);
         assert!(ready["data"]["executions"].is_null(), "it names none");
+    }
+
+    /// Sequences are dense per execution, so a connection that follows two of them holds a
+    /// cursor for each. With one high-water mark across both, the second execution's live
+    /// events were taken for ones already written as soon as the first had gone further:
+    /// here B's sequences 1 and 2 are at or below A's 3.
+    #[test]
+    fn a_connection_to_two_executions_delivers_every_event_of_each() {
+        let store = Arc::new(ExecutionStore::new(Limits::default()));
+        let (a, b) = (ExecutionId::fresh(), ExecutionId::fresh());
+        let accepted = accept(
+            &store,
+            &upgrade_request(&format!("{PATH}?execution={a}&execution={b}")),
+        )
+        .expect("accepted");
+        // the ready frame, A's three events and B's two; the next write finds the client gone
+        let sink = SharedSink::new(6);
+        let writer = Box::new(sink.clone());
+        let handle = std::thread::spawn(move || accepted.serve(writer));
+        wait_subscribed(&store);
+        create(&store, &a);
+        store.publish(&a, EventPayload::Started);
+        store.publish(
+            &a,
+            EventPayload::Progress(ProgressView {
+                current: 1,
+                total: Some(2),
+                message: None,
+            }),
+        );
+        create(&store, &b);
+        store.publish(&b, EventPayload::Started);
+        until_gone(&store, &a, &handle);
+        handle.join().expect("ended");
+
+        let written = sequences(&sink.frames());
+        assert_eq!(
+            of(&written, &a)[..3],
+            [1, 2, 3],
+            "A's events, in order: {written:?}"
+        );
+        assert_eq!(
+            of(&written, &b),
+            [1, 2],
+            "every event of B arrives although A has gone further: {written:?}"
+        );
+    }
+
+    /// A connection that follows several executions replays each one's retained history
+    /// from the cursor, and its ready frame counts the whole replay. An execution named
+    /// twice is followed, and replayed, once.
+    #[test]
+    fn a_connection_to_two_executions_replays_each_from_the_cursor() {
+        let (store, a) = store_with_one(); // sequences 1..4
+        let b = ExecutionId::fresh();
+        create(&store, &b);
+        store.publish(&b, EventPayload::Started); // sequences 1..2
+        let accepted = accept(
+            &store,
+            &upgrade_request(&format!(
+                "{PATH}?execution={a}&execution={b}&execution={a}&after=1"
+            )),
+        )
+        .expect("accepted");
+        // the ready frame, A's 2..4 and B's 2; the next write finds the client gone
+        let sink = SharedSink::new(5);
+        let writer = Box::new(sink.clone());
+        let handle = std::thread::spawn(move || accepted.serve(writer));
+        wait_subscribed(&store);
+        until_gone(&store, &a, &handle);
+        handle.join().expect("ended");
+
+        let frames = sink.frames();
+        let ready: serde_json::Value = serde_json::from_str(&frames[0]).unwrap();
+        assert_eq!(ready["type"], "stream.ready");
+        assert_eq!(
+            ready["data"]["executions"],
+            serde_json::json!([a.to_string(), b.to_string()]),
+            "each execution is named once"
+        );
+        assert_eq!(ready["data"]["replayed"], 4, "A's 2..4 and B's 2");
+        assert_eq!(ready["data"]["truncated"], false);
+        let written = sequences(&frames);
+        assert_eq!(of(&written, &a)[..3], [2, 3, 4], "{written:?}");
+        assert_eq!(of(&written, &b), [2], "{written:?}");
+    }
+
+    /// The execution id and sequence of every execution event among the frames, in order.
+    fn sequences(frames: &[String]) -> Vec<(String, u64)> {
+        frames
+            .iter()
+            .filter_map(|f| serde_json::from_str::<serde_json::Value>(f).ok())
+            .filter_map(|v| {
+                Some((
+                    v["execution_id"].as_str()?.to_string(),
+                    v["sequence"].as_u64()?,
+                ))
+            })
+            .collect()
+    }
+
+    /// The sequences written for one execution.
+    fn of(written: &[(String, u64)], id: &ExecutionId) -> Vec<u64> {
+        let id = id.to_string();
+        written
+            .iter()
+            .filter(|(e, _)| *e == id)
+            .map(|(_, s)| *s)
+            .collect()
+    }
+
+    /// Wait until the connection has subscribed, so what is published next reaches it live.
+    fn wait_subscribed(store: &Arc<ExecutionStore>) {
+        for _ in 0..200 {
+            if store.subscribers() > 0 {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        panic!("the connection never subscribed");
+    }
+
+    /// Publish log lines on an execution until the connection finds its client gone, so a
+    /// test ends at a write rather than at a heartbeat, whatever was written before.
+    fn until_gone(
+        store: &Arc<ExecutionStore>,
+        id: &ExecutionId,
+        handle: &std::thread::JoinHandle<()>,
+    ) {
+        for _ in 0..500 {
+            if handle.is_finished() {
+                return;
+            }
+            store.publish(
+                id,
+                EventPayload::Log {
+                    stream: crate::execution::LogStream::Handler,
+                    message: "is anyone there".into(),
+                },
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        panic!("the connection never noticed its client had gone");
     }
 
     /// One more event on an execution, so a connection whose client has gone finds out at

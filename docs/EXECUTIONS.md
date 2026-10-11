@@ -150,6 +150,7 @@ not ignore safely.
 GET /events                                  every execution of this process, live
 GET /events?execution=<id>                   one execution: its retained history, then live
 GET /events?execution=<id>&after=<sequence>   the same, from a cursor — what a reconnect sends
+GET /events?execution=<a>&execution=<b>       several executions: each one's history, then live
 ```
 
 A native WebSocket (RFC 6455), upgraded on the same socket the rest of the surface is served
@@ -166,6 +167,17 @@ buffered; read the snapshot and the history again from the last sequence seen) a
 **Order and gaps.** A connection subscribes first and replays second, and skips in the live
 stream anything the replay already wrote. There is therefore no gap between the history and
 the stream, and nothing is written twice.
+
+**Several executions, one cursor each.** `sequence` is dense per execution, so a connection
+that names several executions keeps a cursor for each, and deduplicates each execution's
+events against its own. The one `after` starts every cursor: each execution named is
+replayed from the events after it, up to `max_replay` events each, and an execution named
+twice is followed once. `stream.ready` counts the whole replay in `replayed`, and
+`truncated` is true when the history of any execution followed had already been dropped. A
+client reconnecting to several executions sends the lowest sequence it saw among them and
+drops, per execution, what it already holds; the Cockpit's `share/cockpit/socket.js` does
+exactly that. With one execution that lowest sequence is the one it last saw, so a
+single-execution connection behaves as it always has.
 
 **Heartbeat and disconnection.** The server pings a quiet connection every twenty seconds
 and never reads: `tiny_http` hands over one `Read + Write` value on upgrade that cannot be
