@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.20.0"
+    "version": "0.21.0"
   },
   "registry": {
-    "fingerprint": "500c559ec698535107f9127c9686a7986faaeab111f6f4ba04df67aa00b06fe1",
+    "fingerprint": "7e429a182ed1b4c06f0891de48f83c15f16d643b43894fe4eceb14a9d4062268",
     "summary": {
-      "total": 2120,
+      "total": 2129,
       "builtin": 184,
-      "declarative": 1936,
+      "declarative": 1945,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1936
+        "resource": 1945
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1944
+        "implemented": 1953
       },
       "mcp_tools": 177,
-      "mcp_resources": 1990,
+      "mcp_resources": 1999,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75508,7 +75508,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -75580,7 +75580,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 272,
+        "capabilities": 274,
         "capability_ids": []
       },
       {
@@ -75693,7 +75693,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -75945,7 +75945,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 19,
+        "capabilities": 20,
         "capability_ids": []
       },
       {
@@ -75972,7 +75972,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 163,
+        "capabilities": 165,
         "capability_ids": []
       },
       {
@@ -76115,7 +76115,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 413,
+        "capabilities": 415,
         "capability_ids": []
       },
       {
@@ -76205,7 +76205,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c579593602fe3ddf68eae92ab5502b43e5b81bc74637f8b13c596867a5a3e9a5",
+    "fingerprint": "01921e548b43aeb76a09811a55f470baf998b201701c20ea65bdd4fb6607c1ba",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76242,23 +76242,23 @@
       "domain": 6,
       "feature": 27,
       "gap": 3,
-      "implementation": 51,
+      "implementation": 52,
       "intent": 4,
-      "issue": 272,
+      "issue": 274,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 27,
+      "milestone": 28,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 19,
-      "rule": 163,
+      "release-record": 20,
+      "rule": 165,
       "scope": 1,
       "session": 85,
       "skill": 7,
       "taxonomy": 10,
-      "test": 413,
+      "test": 415,
       "use-case": 48,
       "workspace": 1
     },
@@ -81682,7 +81682,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 11531
+        "bytes": 11636
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -81781,7 +81781,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125927
+        "bytes": 134637
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -84924,6 +84924,14 @@
         "path": "lib/knowledge.sh",
         "source_class": "library",
         "bytes": 97852
+      },
+      {
+        "uri": "majordomus://implementation/lib/machine_lock.sh",
+        "kind": "implementation",
+        "identity": "lib/machine_lock.sh",
+        "path": "lib/machine_lock.sh",
+        "source_class": "library",
+        "bytes": 9407
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -88111,6 +88119,28 @@
         "bytes": 1732
       },
       {
+        "uri": "majordomus://issue/I2114",
+        "kind": "issue",
+        "identity": "I2114",
+        "title": "A task's scope admits what its derive writes",
+        "description": "Stop the pre-push scope check from refusing a branch for the projections its own derive wrote, and give a task one supported command to widen its scope.",
+        "path": ".ai/repo/project/issues/I2114.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2884
+      },
+      {
+        "uri": "majordomus://issue/I2161",
+        "kind": "issue",
+        "identity": "I2161",
+        "title": "No answer, log line or mesh frame carries a credential the redactor knows",
+        "description": "Pass every response reason, logged request field and replicated mesh text through the one redactor, bound the fields a mesh event may carry, and make the redaction module's documentation name the callers that exist.",
+        "path": ".ai/repo/project/issues/I2161.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3307
+      },
+      {
         "uri": "majordomus://issue/I2165",
         "kind": "issue",
         "identity": "I2165",
@@ -88220,6 +88250,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3523
+      },
+      {
+        "uri": "majordomus://milestone/architecture-is-enforced",
+        "kind": "milestone",
+        "identity": "architecture-is-enforced",
+        "title": "A violated invariant fails a gate, and green means every required check ran",
+        "description": "A deliberate architectural violation fails a named gate; a red or cancelled full run is raised the day it happens; a rule is reported proven only when its proof ran; a credential shape never leaves through a response, log or frame; an installed release is proven to serve a repository that is not this one.",
+        "path": ".ai/repo/project/milestones/architecture-is-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4102
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -89314,6 +89355,16 @@
         "bytes": 2442
       },
       {
+        "uri": "majordomus://release-record/v0.20.0",
+        "kind": "release-record",
+        "identity": "v0.20.0",
+        "title": "v0.20.0",
+        "path": ".ai/repo/releases/v0.20.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
         "uri": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "identity": "v0.3.1",
@@ -90274,6 +90325,21 @@
           "campaigns",
           "evidence",
           "records"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-derive-sees-what-the-commit-will@1",
+        "kind": "rule",
+        "identity": "project.a-derive-sees-what-the-commit-will@1",
+        "title": "A derive sees what the commit will",
+        "description": "scripts/derive refuses, before it waits for the lock or builds anything, when the tree holds an untracked file that is not ignored, because a derive projects only what git tracks and the commit that adds the file would be refused.",
+        "path": ".ai/repo/rules/project/a-derive-sees-what-the-commit-will.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3372,
+        "tags": [
+          "derived",
+          "machine"
         ]
       },
       {
@@ -91275,6 +91341,22 @@
           "lifecycle",
           "events",
           "integrity"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.one-derive-at-a-time@1",
+        "kind": "rule",
+        "identity": "project.one-derive-at-a-time@1",
+        "title": "One derive at a time per machine, and a stopped derive leaves no orphans",
+        "description": "scripts/derive holds the machine's derive lock for its whole run, yields to a priority marker that names another branch, reclaims a dead owner's lock aloud, and takes its whole process tree down when it is stopped.",
+        "path": ".ai/repo/rules/project/one-derive-at-a-time.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6118,
+        "tags": [
+          "derived",
+          "machine",
+          "coordination"
         ]
       },
       {
@@ -93187,7 +93269,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 8895
+        "bytes": 9096
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -93222,12 +93304,28 @@
         "bytes": 5801
       },
       {
+        "uri": "majordomus://test/test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "kind": "test",
+        "identity": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "path": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
+        "source_class": "case",
+        "bytes": 7728
+      },
+      {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
         "kind": "test",
         "identity": "test/cases/101_command_graph.sh",
         "path": "test/cases/101_command_graph.sh",
         "source_class": "case",
         "bytes": 12197
+      },
+      {
+        "uri": "majordomus://test/test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "kind": "test",
+        "identity": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "path": "test/cases/1020_a_derive_sees_what_the_commit_will.sh",
+        "source_class": "case",
+        "bytes": 3019
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -94499,7 +94597,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 13554
+        "bytes": 13989
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -94843,7 +94941,7 @@
         "identity": "test/cases/51_derived_artifacts_committed.sh",
         "path": "test/cases/51_derived_artifacts_committed.sh",
         "source_class": "case",
-        "bytes": 3772
+        "bytes": 4381
       },
       {
         "uri": "majordomus://test/test/cases/52_generated_artifact_typing.sh",
@@ -95675,7 +95773,7 @@
         "identity": "test/cases/82_bench_check.sh",
         "path": "test/cases/82_bench_check.sh",
         "source_class": "case",
-        "bytes": 3145
+        "bytes": 3721
       },
       {
         "uri": "majordomus://test/test/cases/83_doctor_budget.sh",
@@ -97103,7 +97201,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "intent",
@@ -97123,7 +97221,7 @@
       "identity": [
         "id"
       ],
-      "objects": 272
+      "objects": 274
     },
     {
       "name": "knowledge",
@@ -97153,7 +97251,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 28
     },
     {
       "name": "moment",
@@ -97209,7 +97307,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 19
+      "objects": 20
     },
     {
       "name": "rule",
@@ -97220,7 +97318,7 @@
         "id",
         "version"
       ],
-      "objects": 163
+      "objects": 165
     },
     {
       "name": "scope",
@@ -97275,7 +97373,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 413
+      "objects": 415
     },
     {
       "name": "use-case",
