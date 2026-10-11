@@ -733,7 +733,7 @@ fn superseded(doc: &LeaseDocument) -> Option<String> {
 /// One verdict, read by the election, by `serve ensure` and by `server.status`, so that the
 /// three never disagree about whether a server is older (I2163). The installer puts each
 /// release in a directory of its own, so an upgrade changes the executable's path and
-/// [`superseded`] — same path, different file — never fires on it: before this verdict a
+/// `superseded` — same path, different file — never fires on it: before this verdict a
 /// new client attached to the old server and was served yesterday's code until it idled out.
 ///
 /// ```
