@@ -72,6 +72,9 @@ struct Memory {
     reviews: HashMap<String, (String, String, bool)>,
     /// Handovers by content digest: the branch.
     handovers: HashMap<String, String>,
+    /// Review requests the reader was asked for or answered, by `<stream>/<review>`: a
+    /// withdrawal of one of them is the reader's news.
+    involved: HashSet<String>,
 }
 
 /// Fold `events` (in causal order) after `after` into signals.
@@ -113,6 +116,12 @@ impl Memory {
             .get(&node)
             .cloned()
             .unwrap_or_else(|| node.chars().take(8).collect());
+        // a kind newer than this executable's EventBody (ADR 0133 meets I2415): read raw
+        if event.kind() == "review_withdrawn" {
+            let mut s = self.withdrawn(event, &stream, ctx)?;
+            s.machine = Some(machine);
+            return Some(s);
+        }
         let body = event.body()?;
         let mut signal = match body {
             EventBody::SessionOpened { info } => {
@@ -286,8 +295,18 @@ impl Memory {
             } => {
                 let name = self.name_of(&stream, &session);
                 let mine = ctx.reader.is(&session) || ctx.reader.is(&name);
+                // I2415 adds a body (up to 8 KiB): it can name the reader where the subject does not
+                let text = event
+                    .body
+                    .get("body")
+                    .and_then(|b| b.as_str())
+                    .unwrap_or_default();
                 let asked = reviewer.as_deref().is_some_and(|r| ctx.reader.is(r))
-                    || ctx.reader.named_in(&subject);
+                    || ctx.reader.named_in(&subject)
+                    || ctx.reader.named_in(text);
+                if asked {
+                    self.involved.insert(format!("{stream}/{review}"));
+                }
                 self.reviews.insert(
                     format!("{stream}/{review}"),
                     (name.clone(), subject.clone(), mine),
@@ -320,6 +339,9 @@ impl Memory {
                 note,
             } => {
                 let name = self.name_of(&stream, &session);
+                if ctx.reader.is(&session) || ctx.reader.is(&name) {
+                    self.involved.insert(request.clone());
+                }
                 let (requester, subject, mine) = self
                     .reviews
                     .get(&request)
@@ -357,6 +379,57 @@ impl Memory {
         };
         signal.machine = Some(machine);
         Some(signal)
+    }
+
+    /// A review withdrawn by its asker (I2415's `review_withdrawn` {request, session, note?}):
+    /// news to whoever was asked for it or answered it, a note to everyone else.
+    fn withdrawn(
+        &mut self,
+        event: &MeshEvent,
+        stream: &str,
+        ctx: &Context<'_>,
+    ) -> Option<MonitorSignal> {
+        let body = &event.body;
+        let request = body.get("request")?.as_str()?.to_string();
+        let session = body
+            .get("session")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
+        let note = body
+            .get("note")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default();
+        let name = self.name_of(stream, &session);
+        let subject = self
+            .reviews
+            .remove(&request)
+            .map(|(_, subject, _)| subject)
+            .unwrap_or_default();
+        let concerns_reader = self.involved.remove(&request);
+        let review = request.rsplit('/').next().unwrap_or(&request).to_string();
+        let mut s = MonitorSignal::new(
+            event.at,
+            MonitorSource::Mesh,
+            "review_withdrawn",
+            if concerns_reader {
+                MonitorSeverity::Attention
+            } else {
+                MonitorSeverity::Info
+            },
+            &format!(
+                "{name} withdrew {review}: {}",
+                if note.is_empty() {
+                    subject.as_str()
+                } else {
+                    note
+                }
+            ),
+        );
+        s.for_you = concerns_reader;
+        s.session = Some(session);
+        s.actor = Some(name);
+        Some(s)
     }
 
     fn name_of(&self, stream: &str, session: &str) -> String {
@@ -668,6 +741,56 @@ mod tests {
             .summary
             .ends_with("joined: the release train"));
         assert_eq!(read.suppressed, 3);
+    }
+
+    #[test]
+    fn a_withdrawn_review_is_news_to_whoever_was_asked_or_answered() {
+        let events = vec![
+            event(
+                1,
+                1,
+                json!({"kind": "review_requested", "review": "r-1", "session": "s1",
+                "subject": "read my branch", "body": "1b, the mesh part is yours"}),
+            ),
+            event(
+                2,
+                2,
+                json!({"kind": "review_requested", "review": "r-2", "session": "s1",
+                "subject": "someone else's"}),
+            ),
+            event(
+                3,
+                3,
+                json!({"kind": "review_withdrawn", "request": format!("{STREAM}/r-1"),
+                "session": "s1", "note": "landed without it"}),
+            ),
+            event(
+                4,
+                4,
+                json!({"kind": "review_withdrawn", "request": format!("{STREAM}/r-2"),
+                "session": "s1"}),
+            ),
+        ];
+        let reader = Reader::named(Some("1b"));
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        assert!(read.signals[0].1.for_you, "the body names the reader");
+        let mine = &read.signals[2].1;
+        assert_eq!(mine.kind, "review_withdrawn");
+        assert!(mine.for_you);
+        assert_eq!(mine.severity, MonitorSeverity::Attention);
+        assert!(
+            mine.summary.ends_with("withdrew r-1: landed without it"),
+            "{}",
+            mine.summary
+        );
+        let other = &read.signals[3].1;
+        assert!(!other.for_you);
+        assert!(
+            other.summary.ends_with("withdrew r-2: someone else's"),
+            "{}",
+            other.summary
+        );
     }
 
     #[test]

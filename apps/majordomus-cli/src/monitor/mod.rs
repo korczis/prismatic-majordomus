@@ -465,6 +465,29 @@ pub(crate) fn assemble(
             state.signals = counts.get(&state.source).copied().unwrap_or(0);
         }
     }
+    // one merge, two records: the executor's says how it was merged, GitHub's only that it was
+    let executor_merged: std::collections::HashSet<u64> = signals
+        .iter()
+        .filter(|s| s.source == MonitorSource::Executor && s.kind == "merged")
+        .filter_map(|s| s.pr)
+        .collect();
+    let before = signals.len();
+    signals.retain(|s| {
+        !(s.source == MonitorSource::Github
+            && s.kind == "pr_merged"
+            && s.pr.is_some_and(|n| executor_merged.contains(&n)))
+    });
+    let echoed = (before - signals.len()) as u64;
+    suppressed += echoed;
+    if echoed > 0 {
+        if let Some(state) = states
+            .iter_mut()
+            .find(|s| s.source == MonitorSource::Github)
+        {
+            state.signals = state.signals.saturating_sub(echoed as usize);
+            state.suppressed += echoed;
+        }
+    }
     let for_you = signals.iter().filter(|s| s.for_you).count();
     MonitorPage {
         more: resuming && signals.len() < total,
@@ -720,6 +743,35 @@ mod tests {
         assert_eq!(github.state, MonitorSourceHealth::Absent);
         assert_eq!(github.reason.as_deref(), Some("gh is not installed"));
         assert_eq!(page.signals.len(), 1);
+    }
+
+    #[test]
+    fn a_merge_the_executor_recorded_is_not_repeated_from_github() {
+        let mut r = reads(vec![], vec![(1, 10)], vec![(11, 11), (12, 12)]);
+        if let Ok(read) = &mut r.executor {
+            read.signals[0].1.kind = "merged".into();
+            read.signals[0].1.pr = Some(868);
+        }
+        if let Ok(read) = &mut r.github {
+            read.signals[0].1.kind = "pr_merged".into();
+            read.signals[0].1.pr = Some(868);
+            read.signals[1].1.kind = "pr_merged".into();
+            read.signals[1].1.pr = Some(901);
+        }
+        let page = assemble(r, &Cursor::default(), true, 10);
+        let kinds: Vec<(&str, Option<u64>)> = page
+            .signals
+            .iter()
+            .map(|s| (s.kind.as_str(), s.pr))
+            .collect();
+        assert_eq!(kinds, vec![("merged", Some(868)), ("pr_merged", Some(901))]);
+        assert_eq!(page.suppressed, 5, "4 read as noise plus the echo");
+        let github = page
+            .sources
+            .iter()
+            .find(|s| s.source == MonitorSource::Github)
+            .unwrap();
+        assert_eq!((github.signals, github.suppressed), (1, 1));
     }
 
     #[test]

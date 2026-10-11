@@ -68,7 +68,7 @@ checkout's running server. With no server, the command prints the reason and exi
 Kinds, by source:
 
 - **mesh**: `session_joined`, `session_changed`, `session_left`, `claimed`, `released`,
-  `handover`, `handover_taken`, `review_requested`, `review_answered`.
+  `handover`, `handover_taken`, `review_requested`, `review_answered`, `review_withdrawn`.
 - **executor**: `merged`, `merge_failed`, `verification_failed`, `refreshed`,
   `refresh_failed`, `closed`, `close_failed`, `repaired`, `repair_refused`, `lane_taken`,
   `lane_released`, `observe_failed`.
@@ -97,7 +97,8 @@ show their own. Every record is read; a record that is not news is counted in `s
 
 A signal is `for_you` when any of these holds:
 
-- a review names you as a word in its subject, or is addressed to this runtime;
+- a review names you as a word in its subject or body, or is addressed to this runtime;
+- a review you were asked for or answered is withdrawn;
 - an answer replies to a review you asked for;
 - a handover's body or branch names you;
 - a claim's intent names you;

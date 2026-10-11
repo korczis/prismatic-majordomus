@@ -110,7 +110,10 @@ pub(crate) fn wanted(list: Option<&str>) -> Result<Vec<MonitorSource>, Capabilit
 /// The runtime key (`<node>-<runtime>`) of a stream (`<node>-<runtime>-<instance>`): what a
 /// review names as its reviewer.
 pub(crate) fn runtime_of(stream: &str) -> String {
-    stream.rsplit_once('-').map_or(stream, |(runtime, _)| runtime).to_string()
+    stream
+        .rsplit_once('-')
+        .map_or(stream, |(runtime, _)| runtime)
+        .to_string()
 }
 
 fn skipped<P>() -> Result<SourceRead<P>, (MonitorSourceHealth, String)> {
@@ -144,12 +147,16 @@ fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, Capability
             .sessions
             .push(runtime_of(c.journal().own_stream().as_str()));
         let events = c.journal().events_after(0, usize::MAX);
-        let machines: HashMap<String, String> = ctx
+        let mut machines: HashMap<String, String> = ctx
             .mesh
             .nodes()
             .into_iter()
             .map(|n| (n.node_id.as_str().to_string(), n.display_name))
             .collect();
+        // the registry holds the nodes this one has heard, never itself
+        if let Some(me) = ctx.mesh.status().identity {
+            machines.insert(me.node_id.as_str().to_string(), me.display_name);
+        }
         let fold_ctx = mesh::Context {
             reader: &reader,
             machines: &machines,
