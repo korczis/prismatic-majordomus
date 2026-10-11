@@ -32,4 +32,17 @@ evidence_required:
   - backfill_applied
 risk: "High and outward-facing. It publishes 172 issues to a public repository in one run and cannot be undone cheaply. It requires the operator's explicit confirmation and must run after I1401, or the pagination ceiling will corrupt it."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-10-10T23:57:29Z
+started_at: 2026-10-10T23:57:14Z
+started_event: sha256:e7b58d41fbcfd60eb1a21d0a1ac7acdfd40eda764559daef6d5fd791fb3992d2
+verified_at: 2026-10-10T23:57:22Z
+verified_event: sha256:5515557fc6fae0a7fa28052a7e461ac678ab1e7aeb341f205c6418f4306f9bda
+completed_at: 2026-10-10T23:57:29Z
+completed_event: sha256:4b522a7c3c0c3a86c528787d882adc413e5a753e14da65c911ba650c3f0b15c1
+evidence:
+  - covers: backfill_applied
+    type: manual
+    command: "scripts/github-sync --check"
+    result: "0 drift findings: 27 milestones and 271 issues in sync with the canonical model at 890e112d04 on 2026-10-11; the projection had already been applied by earlier work, this session created none (0 created, 0 adopted); baseline lowered from missing 192 / adopt 19 to 0 / 0 with scripts/ci/github-check --write-baseline"
+    commit: 890e112d04865f767f644856c7cef01aaeba7199
+    recorded_at: 2026-10-10T23:57:03Z
